@@ -5,7 +5,7 @@ import {
   type NextRequest,
   NextResponse,
 } from "next/server";
-import { extractTenantId } from "./lib/control/tenant";
+import { resolveTenant } from "./lib/control/tenant";
 
 const REWRITE_MARKER_HEADER = "tolo-tenant-rewritten";
 const REWRITE_TOKEN = randomUUID();
@@ -32,21 +32,21 @@ export function tenantProxy(
     return NextResponse.rewrite(new URL("/not-found", request.url));
   }
 
-  const { tenantId, isInvalid } = extractTenantId(
-    request.headers.get("host") ?? "",
-  );
+  const resolution = resolveTenant(request.headers.get("host") ?? "");
 
-  if (!tenantId) {
-    return isInvalid
-      ? NextResponse.rewrite(new URL("/not-found", request.url))
-      : NextResponse.next();
+  switch (resolution.type) {
+    case "invalid":
+      return NextResponse.rewrite(new URL("/not-found", request.url));
+    case "root":
+      return NextResponse.next();
+    case "tenant": {
+      const url = request.nextUrl.clone();
+      url.pathname = `${TENANT_PATH_BASE}/${resolution.tenantId}${pathname === "/" ? "" : pathname}`;
+      const headers = new Headers(request.headers);
+      headers.set(REWRITE_MARKER_HEADER, rewriteToken);
+      return NextResponse.rewrite(url, { request: { headers } });
+    }
   }
-
-  const url = request.nextUrl.clone();
-  url.pathname = `${TENANT_PATH_BASE}/${tenantId}${pathname === "/" ? "" : pathname}`;
-  const headers = new Headers(request.headers);
-  headers.set(REWRITE_MARKER_HEADER, rewriteToken);
-  return NextResponse.rewrite(url, { request: { headers } });
 }
 
 export function createTenantProxy() {

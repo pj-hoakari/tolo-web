@@ -4,41 +4,56 @@ export function getRootDomain(): string {
 
 const RESERVED_SUBDOMAINS = new Set(["www"]);
 
-export function extractTenantId(
+export type TenantInvalidReason =
+  | "empty-host"
+  | "foreign-domain"
+  | "malformed-host"
+  | "nested-subdomain";
+
+export type TenantResolution =
+  | { type: "tenant"; tenantId: string }
+  | { type: "root" }
+  | { type: "invalid"; reason: TenantInvalidReason };
+
+export function resolveTenant(
   hostHeader: string,
   rootDomain: string = getRootDomain(),
-): { tenantId: string; isInvalid: boolean } {
+): TenantResolution {
   if (!hostHeader) {
-    return { tenantId: "", isInvalid: true };
+    return { type: "invalid", reason: "empty-host" };
   }
 
   const host = hostHeader.split(":")[0].toLowerCase();
   if (!host) {
-    return { tenantId: "", isInvalid: true };
+    return { type: "invalid", reason: "empty-host" };
   }
 
   const normalizedRoot = rootDomain.toLowerCase();
 
   if (host === normalizedRoot) {
-    return { tenantId: "", isInvalid: false };
+    return { type: "root" };
   }
 
   const suffix = `.${normalizedRoot}`;
   if (!host.endsWith(suffix)) {
-    return { tenantId: "", isInvalid: true };
+    return { type: "invalid", reason: "foreign-domain" };
   }
 
   const subdomains = host.slice(0, -suffix.length).split(".").filter(Boolean);
 
-  if (subdomains.length !== 1) {
-    return { tenantId: "", isInvalid: true };
+  if (subdomains.length === 0) {
+    return { type: "invalid", reason: "malformed-host" };
+  }
+
+  if (subdomains.length > 1) {
+    return { type: "invalid", reason: "nested-subdomain" };
   }
 
   const subdomain = subdomains[0];
 
   if (RESERVED_SUBDOMAINS.has(subdomain)) {
-    return { tenantId: "", isInvalid: false };
+    return { type: "root" };
   }
 
-  return { tenantId: subdomain, isInvalid: false };
+  return { type: "tenant", tenantId: subdomain };
 }
