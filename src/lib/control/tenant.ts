@@ -17,27 +17,28 @@ export function extractTenantId(
     return { tenantId: "", isInvalid: true };
   }
 
-  if (host === rootDomain) {
+  const normalizedRoot = rootDomain.toLowerCase();
+
+  if (host === normalizedRoot) {
     return { tenantId: "", isInvalid: false };
   }
 
-  if (!host.endsWith(rootDomain)) {
+  const suffix = `.${normalizedRoot}`;
+  if (!host.endsWith(suffix)) {
     return { tenantId: "", isInvalid: true };
   }
 
-  const subdomains = host
-    .slice(0, -rootDomain.length)
-    .split(".")
-    .filter(Boolean);
+  const subdomains = host.slice(0, -suffix.length).split(".").filter(Boolean);
 
-  if (subdomains.length === 0 || subdomains.length > 1) {
+  if (subdomains.length !== 1) {
     return { tenantId: "", isInvalid: true };
   }
 
-  if (RESERVED_SUBDOMAINS.has(subdomains[0])) {
+  const subdomain = subdomains[0];
+
+  if (RESERVED_SUBDOMAINS.has(subdomain)) {
     return { tenantId: "", isInvalid: false };
   }
 
-  const tenantId = subdomains[0];
-  return { tenantId, isInvalid: false };
+  return { tenantId: subdomain, isInvalid: false };
 }
