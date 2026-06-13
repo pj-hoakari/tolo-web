@@ -56,10 +56,46 @@ describe("extractTenantId", () => {
     expect(tenantId).toBe("");
     expect(isInvalid).toBe(true);
   });
-  test("multiple subdomains should return empty tenant id as invalid format", () => {
+  test("host not under the root domain should be invalid", () => {
     const hostHeader = "tenant1.subdomain.example.com";
     const { tenantId, isInvalid } = extractTenantId(hostHeader);
     expect(tenantId).toBe("");
     expect(isInvalid).toBe(true);
+  });
+  test("multiple subdomains under the root domain should be invalid", () => {
+    const hostHeader = "tenant1.subdomain.example.com";
+    const { tenantId, isInvalid } = extractTenantId(hostHeader, "example.com");
+    expect(tenantId).toBe("");
+    expect(isInvalid).toBe(true);
+  });
+  test("look-alike domain sharing the root suffix should be invalid", () => {
+    const hostHeader = "evilexample.com";
+    const { tenantId, isInvalid } = extractTenantId(hostHeader, "example.com");
+    expect(tenantId).toBe("");
+    expect(isInvalid).toBe(true);
+  });
+  test("uppercase host should be normalized to a lowercase tenant id", () => {
+    const hostHeader = "Tenant1.Example.com";
+    const { tenantId, isInvalid } = extractTenantId(hostHeader, "example.com");
+    expect(tenantId).toBe("tenant1");
+    expect(isInvalid).toBe(false);
+  });
+  test("uppercase root domain should still match the host", () => {
+    const hostHeader = "tenant1.example.com";
+    const { tenantId, isInvalid } = extractTenantId(hostHeader, "EXAMPLE.COM");
+    expect(tenantId).toBe("tenant1");
+    expect(isInvalid).toBe(false);
+  });
+  test("reserved subdomain with an extra level should be invalid", () => {
+    const hostHeader = "www.tenant1.example.com";
+    const { tenantId, isInvalid } = extractTenantId(hostHeader, "example.com");
+    expect(tenantId).toBe("");
+    expect(isInvalid).toBe(true);
+  });
+  test("port number is ignored while extracting a tenant id", () => {
+    const hostHeader = "tenant1.localhost:3000";
+    const { tenantId, isInvalid } = extractTenantId(hostHeader);
+    expect(tenantId).toBe("tenant1");
+    expect(isInvalid).toBe(false);
   });
 });
