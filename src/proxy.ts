@@ -45,7 +45,7 @@ export function tenantProxy(
   const url = request.nextUrl.clone();
   url.pathname = `${TENANT_PATH_BASE}/${tenantId}${pathname === "/" ? "" : pathname}`;
   const headers = new Headers(request.headers);
-  headers.set(REWRITE_MARKER_HEADER, REWRITE_TOKEN);
+  headers.set(REWRITE_MARKER_HEADER, rewriteToken);
   return NextResponse.rewrite(url, { request: { headers } });
 }
 
