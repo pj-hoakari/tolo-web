@@ -15,6 +15,14 @@ describe("internal tenant path routing detection", () => {
     const detected = isInternalTenantPath(tenantPath);
     expect(detected).toBe(true);
   });
+  test("path sharing the tenant prefix should not be detected", () => {
+    const detected = isInternalTenantPath("/tenants");
+    expect(detected).toBe(false);
+  });
+  test("unrelated path should not be detected", () => {
+    const detected = isInternalTenantPath("/about");
+    expect(detected).toBe(false);
+  });
 });
 
 describe("tenant routing proxy", () => {
@@ -30,17 +38,44 @@ describe("tenant routing proxy", () => {
   });
   test("request with tenant subdomain should be rewritten to internal tenant path", () => {
     const host = "tenant1.localhost";
+    const rewriteToken = "test-token";
     const request = new NextRequest(`http://${host}`, {
+      headers: {
+        host: host,
+      },
+    });
+    const response = tenantProxy(request, rewriteToken);
+    const url = request.nextUrl.clone();
+    url.pathname = "/tenant/tenant1";
+    expect(response.headers.get("x-middleware-rewrite")).toBe(url.toString());
+    expect(
+      response.headers.get("x-middleware-request-tolo-tenant-rewritten"),
+    ).toBe(rewriteToken);
+    expect(response.status).toBe(200);
+  });
+  test("subpath should be preserved when rewriting to the internal tenant path", () => {
+    const host = "tenant1.localhost";
+    const request = new NextRequest(`http://${host}/about`, {
       headers: {
         host: host,
       },
     });
     const response = tenantProxy(request);
     const url = request.nextUrl.clone();
-    url.pathname = "/tenant/tenant1";
+    url.pathname = "/tenant/tenant1/about";
     expect(response.headers.get("x-middleware-rewrite")).toBe(url.toString());
-    expect(response.headers.has("x-middleware-request-tolo-tenant-rewritten"));
-    expect(response.status).toBe(200);
+  });
+  test("invalid host should be denied with 404", () => {
+    const host = "tenant1.example.com";
+    const request = new NextRequest(`http://${host}`, {
+      headers: {
+        host: host,
+      },
+    });
+    const response = tenantProxy(request);
+    expect(response).toEqual(
+      NextResponse.rewrite(new URL("/not-found", request.url)),
+    );
   });
   test("direct internal tenant path request should be denied with 404", () => {
     const urlString = "http://localhost/tenant/example";
