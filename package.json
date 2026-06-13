@@ -9,7 +9,9 @@
     "lint": "biome check",
     "typecheck": "tsc --noEmit",
     "format": "biome format --write",
-    "test": "vitest",
+    "test": "vitest --project unit",
+    "test:unit": "vitest --project unit",
+    "test:all": "vitest",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
