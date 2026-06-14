@@ -11,6 +11,10 @@ const meta = {
   tags: ["autodocs"],
   args: {
     onRefresh: () => {},
+    onConnect: () => {},
+    onDisconnect: () => {},
+    connectedEdgeId: null,
+    receiveStatus: "idle",
   },
 } satisfies Meta<typeof AliveEdgeList>;
 
@@ -49,6 +53,26 @@ export const WithEdges: Story = {
     edges: sampleEdges,
     status: "ready",
     error: null,
+  },
+};
+
+export const Connected: Story = {
+  args: {
+    edges: sampleEdges,
+    status: "ready",
+    error: null,
+    connectedEdgeId: "tenant-1_event-1_8c1f0e2a",
+    receiveStatus: "connected",
+  },
+};
+
+export const Disconnected: Story = {
+  args: {
+    edges: sampleEdges,
+    status: "ready",
+    error: null,
+    connectedEdgeId: "tenant-1_event-1_8c1f0e2a",
+    receiveStatus: "disconnected",
   },
 };
 
