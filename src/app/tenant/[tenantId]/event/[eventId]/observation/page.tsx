@@ -1,5 +1,4 @@
 import { CrowdDetection } from "@/features/tenant/observation/components/CrowdDetection";
-import { EdgePresence } from "@/features/tenant/webrtc/components/EdgePresence";
 
 export default async function TenantObservation({
   params,
@@ -13,9 +12,8 @@ export default async function TenantObservation({
       <header className="mb-4 w-full">
         <h2 className="px-10 py-5 font-bold text-2xl">{tenantId} 観測ページ</h2>
       </header>
-      <main className="flex w-full flex-col items-center gap-4">
-        <CrowdDetection />
-        <EdgePresence tenantId={tenantId} eventId={eventId} />
+      <main className="w-full">
+        <CrowdDetection tenantId={tenantId} eventId={eventId} />
       </main>
     </div>
   );
