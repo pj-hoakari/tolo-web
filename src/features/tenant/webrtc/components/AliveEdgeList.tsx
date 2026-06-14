@@ -1,11 +1,19 @@
 import type { AliveEdgesStatus } from "../hooks/useAliveEdges";
-import type { AliveEdge } from "../type";
+import type { AliveEdge, ConnectionStatus } from "../type";
+import {
+  CONNECTION_STATUS_LABEL,
+  isActiveConnection,
+} from "../utils/connectionStatus";
 
 export type AliveEdgeListProps = {
   edges: AliveEdge[];
   status: AliveEdgesStatus;
   error: string | null;
   onRefresh: () => void;
+  connectedEdgeId: string | null;
+  receiveStatus: ConnectionStatus;
+  onConnect: (edgeId: string) => void;
+  onDisconnect: () => void;
 };
 
 function formatLastSeen(lastSeenAt: Date | null): string {
@@ -20,6 +28,10 @@ export function AliveEdgeList({
   status,
   error,
   onRefresh,
+  connectedEdgeId,
+  receiveStatus,
+  onConnect,
+  onDisconnect,
 }: AliveEdgeListProps) {
   const loading = status === "loading";
 
@@ -44,22 +56,50 @@ export function AliveEdgeList({
         </p>
       ) : (
         <ul className="flex flex-col gap-2">
-          {edges.map((edge) => (
-            <li
-              key={edge.id}
-              className="flex items-center justify-between gap-2 rounded border border-gray-200 p-2"
-            >
-              <div className="flex flex-col">
-                <span className="break-all text-sm">{edge.id}</span>
-                <span className="text-gray-500 text-xs">
-                  最終応答: {formatLastSeen(edge.lastSeenAt)}
-                </span>
-              </div>
-              <span className="shrink-0 rounded bg-green-100 px-2 py-1 text-green-700 text-xs">
-                接続中
-              </span>
-            </li>
-          ))}
+          {edges.map((edge) => {
+            const isConnected = edge.id === connectedEdgeId;
+            const isActive = isConnected && isActiveConnection(receiveStatus);
+
+            const canDisconnect = isConnected && receiveStatus !== "idle";
+            return (
+              <li
+                key={edge.id}
+                className="flex items-center justify-between gap-2 rounded border border-gray-200 p-2"
+              >
+                <div className="flex flex-col">
+                  <span className="break-all text-sm">{edge.id}</span>
+                  <span className="text-gray-500 text-xs">
+                    最終応答: {formatLastSeen(edge.lastSeenAt)}
+                  </span>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  {isActive && (
+                    <span className="text-gray-500 text-xs">
+                      {CONNECTION_STATUS_LABEL[receiveStatus]}
+                    </span>
+                  )}
+                  {!isActive && (
+                    <button
+                      type="button"
+                      onClick={() => onConnect(edge.id)}
+                      className="rounded bg-blue-600 px-3 py-1 text-sm text-white"
+                    >
+                      接続
+                    </button>
+                  )}
+                  {canDisconnect && (
+                    <button
+                      type="button"
+                      onClick={onDisconnect}
+                      className="rounded bg-gray-600 px-3 py-1 text-sm text-white"
+                    >
+                      切断
+                    </button>
+                  )}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
