@@ -1,4 +1,12 @@
 services:
+    firebase-emulator:
+        build:
+            context: ./firebase-emulator
+        image: tolo-firebase-emulator
+        ports:
+            - "8080:8080" # Firestore
+            - "4000:4000" # Emulator UI
+
     web:
         build:
             context: .
@@ -12,8 +20,10 @@ services:
             NODE_ENV: development
             NEXT_TELEMETRY_DISABLED: "1"
             WATCHPACK_POLLING: "true"
-            NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${FIRESTORE_PROJECT_ID:-tolo-signaling}
+            NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-tolo
             NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+        depends_on:
+            - firebase-emulator
         develop:
             watch:
                 - action: sync
