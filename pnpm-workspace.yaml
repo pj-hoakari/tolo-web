@@ -1,7 +1,9 @@
 allowBuilds:
-  esbuild: true
-  sharp: true
+    esbuild: true
+    sharp: true
 ignoredBuiltDependencies:
-  - sharp
-  - unrs-resolver
+    - sharp
+    - unrs-resolver
 minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+    - "@pj-hoakari/*"
