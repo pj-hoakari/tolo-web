@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { detectCrowd } from "../utils/detectCrowd";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { initializeCrowdDetector } from "../utils/detectCrowd";
 
 export type DetectCrowdStatus = "idle" | "loading" | "detecting" | "error";
 
@@ -35,7 +35,7 @@ export function useDetectCrowd() {
       // 検出機構のスタートアップ中はカメラ映像をそのままパススルー表示
       setStream(cameraStream);
 
-      const processedStream = await detectCrowd(cameraStream);
+      await initializeCrowdDetector();
 
       if (
         operationIdRef.current !== operationId ||
@@ -43,7 +43,6 @@ export function useDetectCrowd() {
       ) {
         return;
       }
-      setStream(processedStream);
       setStatus("detecting");
     } catch (e) {
       if (operationIdRef.current !== operationId) {
@@ -70,6 +69,19 @@ export function useDetectCrowd() {
     setStatus("idle");
   };
 
+  const reportDetectionError = useCallback((cause: unknown) => {
+    operationIdRef.current += 1;
+    for (const track of sourceStreamRef.current?.getTracks() ?? []) {
+      track.stop();
+    }
+    sourceStreamRef.current = null;
+    setStream(null);
+    setStatus("error");
+    setError(
+      cause instanceof Error ? cause.message : "人検出処理に失敗しました",
+    );
+  }, []);
+
   useEffect(() => {
     return () => {
       operationIdRef.current += 1;
@@ -79,5 +91,5 @@ export function useDetectCrowd() {
     };
   }, []);
 
-  return { stream, status, error, start, stop };
+  return { stream, status, error, start, stop, reportDetectionError };
 }

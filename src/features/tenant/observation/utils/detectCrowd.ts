@@ -1,6 +1,11 @@
 import { isWebGpuAvailable } from "@pj-hoakari/web-crowd-detection-utils/onnx";
 import {
+  createLetterboxCapturer,
+  reverseLetterboxBoxes,
+} from "@pj-hoakari/web-crowd-detection-utils/source";
+import {
   createYoloDetector,
+  type Detection,
   type YoloDetector,
 } from "@pj-hoakari/web-crowd-detection-utils/yolo";
 
@@ -10,6 +15,7 @@ const MODEL_PATH =
 const INPUT_SIZE = 640;
 
 let detectorPromise: Promise<YoloDetector> | null = null;
+let capturer: ReturnType<typeof createLetterboxCapturer> | null = null;
 
 async function fetchModel(): Promise<ArrayBuffer> {
   const response = await fetch(MODEL_PATH);
@@ -61,8 +67,13 @@ export function initializeCrowdDetector(): Promise<YoloDetector> {
   return detectorPromise;
 }
 
-export async function detectCrowd(source: MediaStream): Promise<MediaStream> {
-  await initializeCrowdDetector();
+export async function detectCrowdFrame(
+  video: HTMLVideoElement,
+): Promise<Detection[]> {
+  const detector = await initializeCrowdDetector();
+  capturer ??= createLetterboxCapturer({ inputSize: INPUT_SIZE });
+  const { imageData, params } = capturer.capture(video);
+  const detections = await detector.detect(imageData);
 
-  return source;
+  return reverseLetterboxBoxes(detections, params);
 }
