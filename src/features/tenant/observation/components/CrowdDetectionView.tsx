@@ -2,7 +2,32 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { DetectCrowdStatus } from "../hooks/useDetectCrowd";
-import { detectCrowdFrame } from "../utils/detectCrowd";
+import { detectCrowdFrame, type TrackedDetection } from "../utils/detectCrowd";
+
+type DetectionMetrics = {
+  detectedCount: number;
+  trackedCount: number;
+  totalTrackedCount: number;
+  fps: number;
+  lastDetectedAt: Date | null;
+  detections: TrackedDetection[];
+};
+
+const INITIAL_METRICS: DetectionMetrics = {
+  detectedCount: 0,
+  trackedCount: 0,
+  totalTrackedCount: 0,
+  fps: 0,
+  lastDetectedAt: null,
+  detections: [],
+};
+
+const STATUS_LABELS: Record<DetectCrowdStatus, string> = {
+  idle: "停止中",
+  loading: "起動中",
+  detecting: "検出中",
+  error: "エラー",
+};
 
 export type CrowdDetectionViewProps = {
   stream: MediaStream | null;
@@ -20,6 +45,7 @@ export function CrowdDetectionView({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [lineCount, setLineCount] = useState({ forward: 0, backward: 0 });
+  const [metrics, setMetrics] = useState<DetectionMetrics>(INITIAL_METRICS);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -32,11 +58,13 @@ export function CrowdDetectionView({
       const canvas = canvasRef.current;
       canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
       setLineCount({ forward: 0, backward: 0 });
+      setMetrics(INITIAL_METRICS);
       return;
     }
 
     let animationFrameId = 0;
     let cancelled = false;
+    let previousFrameAt = performance.now();
 
     const detectFrame = async () => {
       const video = videoRef.current;
@@ -104,6 +132,18 @@ export function CrowdDetectionView({
             ? current
             : frame.lineCount,
         );
+        const frameAt = performance.now();
+        const fps = 1000 / Math.max(1, frameAt - previousFrameAt);
+        previousFrameAt = frameAt;
+        setMetrics((current) => ({
+          detectedCount: frame.detectedCount,
+          trackedCount: frame.detections.length,
+          totalTrackedCount: frame.totalTrackedCount,
+          fps,
+          lastDetectedAt:
+            frame.detectedCount > 0 ? new Date() : current.lastDetectedAt,
+          detections: frame.detections,
+        }));
 
         animationFrameId = requestAnimationFrame(detectFrame);
       } catch (cause) {
@@ -147,6 +187,35 @@ export function CrowdDetectionView({
         <span>ライン通過 forward: {lineCount.forward}</span>
         <span>ライン通過 backward: {lineCount.backward}</span>
       </div>
+      <section className="grid w-full max-w-3xl gap-4 rounded border border-gray-200 p-4 sm:grid-cols-2 lg:grid-cols-3">
+        <p>検出状態: {STATUS_LABELS[status]}</p>
+        <p>検出人数: {metrics.detectedCount}人</p>
+        <p>追跡中人数: {metrics.trackedCount}人</p>
+        <p>累計 tracking ID: {metrics.totalTrackedCount}</p>
+        <p>FPS: {metrics.fps.toFixed(1)}</p>
+        <p>
+          最終検出時刻: {metrics.lastDetectedAt?.toLocaleTimeString() ?? "-"}
+        </p>
+      </section>
+      <section className="w-full max-w-3xl rounded border border-gray-200 p-4">
+        <h3 className="mb-2 font-bold">検出結果一覧</h3>
+        {metrics.detections.length === 0 ? (
+          <p className="text-gray-500 text-sm">検出結果はありません</p>
+        ) : (
+          <ul className="space-y-1 font-mono text-xs">
+            {metrics.detections.map((detection) => (
+              <li key={detection.trackId}>
+                ID: {detection.trackId} / confidence:{" "}
+                {detection.score.toFixed(2)}
+                {" / "}x: {Math.round(detection.x1)} / y:{" "}
+                {Math.round(detection.y1)} / w:{" "}
+                {Math.round(detection.x2 - detection.x1)} / h:{" "}
+                {Math.round(detection.y2 - detection.y1)}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
       {status === "error" && error && <p className="text-red-600">{error}</p>}
     </div>
   );

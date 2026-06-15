@@ -39,6 +39,8 @@ export type TrackedDetection = TrackedBox & Pick<Detection, "classId">;
 
 export type CrowdDetectionFrame = {
   detections: TrackedDetection[];
+  detectedCount: number;
+  totalTrackedCount: number;
   countingLine: Line;
   lineCount: LineCount;
 };
@@ -132,6 +134,8 @@ export async function detectCrowdFrame(
 
   return {
     detections: trackedDetections,
+    detectedCount: sourceDetections.length,
+    totalTrackedCount: tracker.totalCount,
     countingLine,
     lineCount: lineCrossingCounter.getLineCount(countingLine.id),
   };
