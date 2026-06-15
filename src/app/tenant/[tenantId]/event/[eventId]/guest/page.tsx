@@ -1,8 +1,13 @@
+import { LanguageProvider } from "@/features/guest/i18n/LanguageProvider";
 import CallingNumber from "@/features/guest/info/CallingNumber";
 import EstimatedWaitTime from "@/features/guest/info/EstimatedWaitTime";
-import type { GuestInfoComponent } from "@/features/guest/info/type";
+import QueueLayout from "@/features/guest/info/QueueLayout";
 import WaitingNumber from "@/features/guest/info/WaitingNumber";
-import { GuestInfoContainer } from "./_components/GuestInfoContainer";
+import { GuestHeader } from "./_components/GuestHeader";
+import {
+  GuestInfoContainer,
+  type GuestInfoRow,
+} from "./_components/GuestInfoContainer";
 
 export default async function TenantGuest({
   params,
@@ -14,26 +19,28 @@ export default async function TenantGuest({
   // TODO: Fetch tenant details using tenantId
   const tenantName = tenantId;
 
-  const infoComponents: GuestInfoComponent[] = [
-    WaitingNumber,
+  const infoRows: GuestInfoRow[] = [
+    QueueLayout,
     CallingNumber,
-    EstimatedWaitTime,
+    [EstimatedWaitTime, WaitingNumber],
   ];
 
   return (
-    <div className="flex flex-col">
-      <header className="mb-4 w-full">
-        <h2 className="text-2xl font-bold px-10 py-5">
-          {tenantName} ゲストページ
-        </h2>
-      </header>
-      <main className="w-full">
-        <GuestInfoContainer
+    <LanguageProvider>
+      <div className="min-h-full bg-canvas">
+        <GuestHeader
+          tenantName={tenantName}
           tenantId={tenantId}
           eventId={eventId}
-          components={infoComponents}
         />
-      </main>
-    </div>
+        <main className="mx-auto w-full max-w-md px-4 py-6">
+          <GuestInfoContainer
+            tenantId={tenantId}
+            eventId={eventId}
+            rows={infoRows}
+          />
+        </main>
+      </div>
+    </LanguageProvider>
   );
 }

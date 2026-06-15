@@ -12,6 +12,18 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* ゲストページの配色（#EAE4DC を基調にした温かみのあるグレージュ系パレット） */
+@theme {
+  --color-canvas: #eae4dc;
+  --color-surface: #f4efe8;
+  --color-surface-muted: #e1d8cc;
+  --color-line: #d8cec0;
+  --color-ink: #403a33;
+  --color-ink-muted: #8b8073;
+  --color-accent: #b17a56;
+  --color-accent-strong: #9a6440;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;

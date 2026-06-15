@@ -1,12 +1,22 @@
+import { InfoCard } from "./InfoCard";
+
 export type WaitingNumberViewProps = {
   waitingNumber: number;
+  label?: string;
+  unit?: string;
 };
 
-export function WaitingNumberView({ waitingNumber }: WaitingNumberViewProps) {
+export function WaitingNumberView({
+  waitingNumber,
+  label = "現在の待ち人数",
+  unit = "人",
+}: WaitingNumberViewProps) {
   return (
-    <div className="flex flex-col items-center justify-center">
-      <h1 className="text-xl mb-4">現在の待ち人数</h1>
-      <p className="text-lg">{waitingNumber} 人</p>
-    </div>
+    <InfoCard title={label}>
+      <p className="flex items-baseline gap-1 text-ink">
+        <span className="text-4xl font-bold tabular-nums">{waitingNumber}</span>
+        <span className="text-base text-ink-muted">{unit}</span>
+      </p>
+    </InfoCard>
   );
 }

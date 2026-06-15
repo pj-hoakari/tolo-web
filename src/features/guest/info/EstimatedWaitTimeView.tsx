@@ -1,12 +1,25 @@
+import { InfoCard } from "./InfoCard";
+
 export type EstimatedWaitTimeViewProps = {
   minutes: number;
+  label?: string;
+  prefix?: string;
+  unit?: string;
 };
 
-export function EstimatedWaitTimeView({ minutes }: EstimatedWaitTimeViewProps) {
+export function EstimatedWaitTimeView({
+  minutes,
+  label = "推定待ち時間",
+  prefix = "約",
+  unit = "分",
+}: EstimatedWaitTimeViewProps) {
   return (
-    <div className="flex flex-col items-center justify-center">
-      <h1 className="text-xl mb-4">推定待ち時間</h1>
-      <p className="text-lg">約 {minutes} 分</p>
-    </div>
+    <InfoCard title={label}>
+      <p className="flex items-baseline gap-1 text-ink">
+        <span className="text-base text-ink-muted">{prefix}</span>
+        <span className="text-4xl font-bold tabular-nums">{minutes}</span>
+        <span className="text-base text-ink-muted">{unit}</span>
+      </p>
+    </InfoCard>
   );
 }
