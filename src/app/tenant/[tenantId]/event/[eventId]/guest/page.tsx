@@ -1,3 +1,5 @@
+import CallingNumber from "@/features/guest/info/CallingNumber";
+import EstimatedWaitTime from "@/features/guest/info/EstimatedWaitTime";
 import type { GuestInfoComponent } from "@/features/guest/info/type";
 import WaitingNumber from "@/features/guest/info/WaitingNumber";
 import { GuestInfoContainer } from "./_components/GuestInfoContainer";
@@ -12,7 +14,11 @@ export default async function TenantGuest({
   // TODO: Fetch tenant details using tenantId
   const tenantName = tenantId;
 
-  const infoComponents: GuestInfoComponent[] = [WaitingNumber];
+  const infoComponents: GuestInfoComponent[] = [
+    WaitingNumber,
+    CallingNumber,
+    EstimatedWaitTime,
+  ];
 
   return (
     <div className="flex flex-col">

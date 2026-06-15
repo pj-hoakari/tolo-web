@@ -3,7 +3,7 @@ import { WaitingNumberView } from "./WaitingNumberView";
 
 function WaitingNumber(_props: GuestInfoComponentProps) {
   // TODO: _props.tenantId / _props.eventId を使って API から待ち人数を取得する
-  const waitingNumber = 0;
+  const waitingNumber = 5;
 
   return <WaitingNumberView waitingNumber={waitingNumber} />;
 }
