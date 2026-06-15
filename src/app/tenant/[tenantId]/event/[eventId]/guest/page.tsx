@@ -1,6 +1,9 @@
 import { LanguageProvider } from "@/features/guest/i18n/LanguageProvider";
 import CallingNumber from "@/features/guest/info/CallingNumber";
+import Congestion from "@/features/guest/info/Congestion";
 import EstimatedWaitTime from "@/features/guest/info/EstimatedWaitTime";
+import Floor from "@/features/guest/info/Floor";
+import GuideMap from "@/features/guest/info/GuideMap";
 import QueueLayout from "@/features/guest/info/QueueLayout";
 import WaitingNumber from "@/features/guest/info/WaitingNumber";
 import { GuestHeader } from "./_components/GuestHeader";
@@ -20,9 +23,11 @@ export default async function TenantGuest({
   const tenantName = tenantId;
 
   const infoRows: GuestInfoRow[] = [
-    QueueLayout,
-    CallingNumber,
+    GuideMap,
+    [Floor, CallingNumber],
     [EstimatedWaitTime, WaitingNumber],
+    QueueLayout,
+    Congestion,
   ];
 
   return (

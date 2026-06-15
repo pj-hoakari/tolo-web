@@ -22,6 +22,10 @@
   --color-ink-muted: #8b8073;
   --color-accent: #b17a56;
   --color-accent-strong: #9a6440;
+  /* 混雑レベル（low / mid / high） */
+  --color-calm: #7c8a5a;
+  --color-busy: #c8954a;
+  --color-crowded: #b0553f;
 }
 
 @media (prefers-color-scheme: dark) {

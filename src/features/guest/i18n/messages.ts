@@ -1,3 +1,4 @@
+import type { CongestionLevel } from "../info/CongestionView";
 import type { QueueEntrance, QueueShape } from "../info/QueueLayoutView";
 
 export type Lang = "ja" | "en" | "zh";
@@ -34,6 +35,18 @@ export type Messages = {
     /** 日時整形に使うロケール */
     locale: string;
   };
+  guideMap: {
+    title: string;
+    hint: string;
+    currentLocation: string;
+    /** 目的地・部屋ラベルの名称（id をキーに） */
+    destinations: Record<string, string>;
+  };
+  floor: { title: string };
+  congestion: {
+    title: string;
+    levels: Record<CongestionLevel, string>;
+  };
 };
 
 export const messages: Record<Lang, Messages> = {
@@ -65,6 +78,22 @@ export const messages: Record<Lang, Messages> = {
       ariaClose: "お知らせを閉じる",
       empty: "現在お知らせはありません",
       locale: "ja-JP",
+    },
+    guideMap: {
+      title: "案内マップ",
+      hint: "目的地を選択すると経路が表示されます",
+      currentLocation: "現在地",
+      destinations: {
+        hall: "ホール",
+        goods: "グッズ売り場",
+        cafe: "カフェ",
+        exit: "出口",
+      },
+    },
+    floor: { title: "現在のフロア" },
+    congestion: {
+      title: "混雑状況",
+      levels: { low: "低", mid: "中", high: "高" },
     },
   },
   en: {
@@ -100,6 +129,22 @@ export const messages: Record<Lang, Messages> = {
       empty: "No notices at the moment",
       locale: "en-US",
     },
+    guideMap: {
+      title: "Guide map",
+      hint: "Select a destination to see the route",
+      currentLocation: "You are here",
+      destinations: {
+        hall: "Hall",
+        goods: "Merch",
+        cafe: "Café",
+        exit: "Exit",
+      },
+    },
+    floor: { title: "Current floor" },
+    congestion: {
+      title: "Congestion",
+      levels: { low: "Low", mid: "Medium", high: "High" },
+    },
   },
   zh: {
     pageSubtitle: "访客页面",
@@ -129,6 +174,22 @@ export const messages: Record<Lang, Messages> = {
       ariaClose: "关闭通知",
       empty: "暂无通知",
       locale: "zh-CN",
+    },
+    guideMap: {
+      title: "导览图",
+      hint: "选择目的地以显示路线",
+      currentLocation: "当前位置",
+      destinations: {
+        hall: "大厅",
+        goods: "商品区",
+        cafe: "咖啡厅",
+        exit: "出口",
+      },
+    },
+    floor: { title: "当前楼层" },
+    congestion: {
+      title: "拥挤状况",
+      levels: { low: "低", mid: "中", high: "高" },
     },
   },
 };
