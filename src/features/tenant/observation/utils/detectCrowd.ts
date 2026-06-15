@@ -22,7 +22,6 @@ import {
 const MODEL_PATH =
   process.env.NEXT_PUBLIC_CROWD_DETECTION_MODEL_PATH ?? "/models/yolov8n.onnx";
 const INPUT_SIZE = 640;
-const CONFIDENCE_THRESHOLD = 0.15;
 const STATIC_SUPPRESS_FACTOR = 0.3;
 
 let detectorPromise: Promise<YoloDetector> | null = null;
@@ -43,6 +42,11 @@ export type CrowdDetectionFrame = {
   totalTrackedCount: number;
   countingLine: Line;
   lineCount: LineCount;
+};
+
+export type CrowdDetectionOptions = {
+  confidenceThreshold: number;
+  trackingDistanceThreshold: number;
 };
 
 async function fetchModel(): Promise<ArrayBuffer> {
@@ -66,6 +70,7 @@ async function createPersonDetector(): Promise<YoloDetector> {
     postprocess: {
       format: "auto" as const,
       classFilter: [0],
+      confThreshold: 0.05,
     },
   };
 
@@ -97,6 +102,7 @@ export function initializeCrowdDetector(): Promise<YoloDetector> {
 
 export async function detectCrowdFrame(
   video: HTMLVideoElement,
+  options: CrowdDetectionOptions,
 ): Promise<CrowdDetectionFrame> {
   const detector = await initializeCrowdDetector();
   capturer ??= createLetterboxCapturer({ inputSize: INPUT_SIZE });
@@ -105,12 +111,18 @@ export async function detectCrowdFrame(
   const backgroundReady = backgroundSubtractor.update(imageData);
 
   if (backgroundReady) {
-    detections = backgroundSubtractor
-      .suppressStatic(detections, STATIC_SUPPRESS_FACTOR)
-      .filter((detection) => detection.score >= CONFIDENCE_THRESHOLD);
+    detections = backgroundSubtractor.suppressStatic(
+      detections,
+      STATIC_SUPPRESS_FACTOR,
+    );
   }
 
+  detections = detections.filter(
+    (detection) => detection.score >= options.confidenceThreshold,
+  );
+
   const sourceDetections = reverseLetterboxBoxes(detections, params);
+  tracker.matchThresh = options.trackingDistanceThreshold;
   const trackedDetections = tracker.update(sourceDetections);
   const countingLine: Line = {
     id: "observation-line",

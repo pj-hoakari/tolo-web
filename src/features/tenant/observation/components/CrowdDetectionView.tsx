@@ -13,6 +13,14 @@ type DetectionMetrics = {
   detections: TrackedDetection[];
 };
 
+type DetectionSettings = {
+  confidenceThreshold: number;
+  trackingDistanceThreshold: number;
+  detectionInterval: number;
+  showBoundingBoxes: boolean;
+  showTrackingIds: boolean;
+};
+
 const INITIAL_METRICS: DetectionMetrics = {
   detectedCount: 0,
   trackedCount: 0,
@@ -20,6 +28,14 @@ const INITIAL_METRICS: DetectionMetrics = {
   fps: 0,
   lastDetectedAt: null,
   detections: [],
+};
+
+const INITIAL_SETTINGS: DetectionSettings = {
+  confidenceThreshold: 0.15,
+  trackingDistanceThreshold: 0.8,
+  detectionInterval: 100,
+  showBoundingBoxes: true,
+  showTrackingIds: true,
 };
 
 const STATUS_LABELS: Record<DetectCrowdStatus, string> = {
@@ -46,6 +62,7 @@ export function CrowdDetectionView({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [lineCount, setLineCount] = useState({ forward: 0, backward: 0 });
   const [metrics, setMetrics] = useState<DetectionMetrics>(INITIAL_METRICS);
+  const [settings, setSettings] = useState<DetectionSettings>(INITIAL_SETTINGS);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -63,6 +80,7 @@ export function CrowdDetectionView({
     }
 
     let animationFrameId = 0;
+    let timeoutId = 0;
     let cancelled = false;
     let previousFrameAt = performance.now();
 
@@ -82,7 +100,10 @@ export function CrowdDetectionView({
       }
 
       try {
-        const frame = await detectCrowdFrame(video);
+        const frame = await detectCrowdFrame(video, {
+          confidenceThreshold: settings.confidenceThreshold,
+          trackingDistanceThreshold: settings.trackingDistanceThreshold,
+        });
 
         if (cancelled) {
           return;
@@ -110,20 +131,24 @@ export function CrowdDetectionView({
         for (const detection of frame.detections) {
           const width = detection.x2 - detection.x1;
           const height = detection.y2 - detection.y1;
-          const label = `Person #${detection.trackId} ${Math.round(
-            detection.score * 100,
-          )}%`;
+          const label = settings.showTrackingIds
+            ? `Person #${detection.trackId} ${Math.round(detection.score * 100)}%`
+            : `${Math.round(detection.score * 100)}%`;
 
-          context.strokeStyle = "#22c55e";
-          context.fillStyle = "#22c55e";
-          context.strokeRect(detection.x1, detection.y1, width, height);
+          if (settings.showBoundingBoxes) {
+            context.strokeStyle = "#22c55e";
+            context.strokeRect(detection.x1, detection.y1, width, height);
+          }
 
-          const labelWidth = context.measureText(label).width + 12;
-          const labelHeight = Math.max(22, canvas.width / 32);
-          const labelY = Math.max(0, detection.y1 - labelHeight);
-          context.fillRect(detection.x1, labelY, labelWidth, labelHeight);
-          context.fillStyle = "#052e16";
-          context.fillText(label, detection.x1 + 6, labelY + labelHeight - 6);
+          if (settings.showBoundingBoxes || settings.showTrackingIds) {
+            const labelWidth = context.measureText(label).width + 12;
+            const labelHeight = Math.max(22, canvas.width / 32);
+            const labelY = Math.max(0, detection.y1 - labelHeight);
+            context.fillStyle = "#22c55e";
+            context.fillRect(detection.x1, labelY, labelWidth, labelHeight);
+            context.fillStyle = "#052e16";
+            context.fillText(label, detection.x1 + 6, labelY + labelHeight - 6);
+          }
         }
 
         setLineCount((current) =>
@@ -145,7 +170,9 @@ export function CrowdDetectionView({
           detections: frame.detections,
         }));
 
-        animationFrameId = requestAnimationFrame(detectFrame);
+        timeoutId = window.setTimeout(() => {
+          animationFrameId = requestAnimationFrame(detectFrame);
+        }, settings.detectionInterval);
       } catch (cause) {
         if (!cancelled) {
           onDetectionError(cause);
@@ -157,9 +184,10 @@ export function CrowdDetectionView({
 
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [status, onDetectionError]);
+  }, [status, onDetectionError, settings]);
 
   return (
     <div className="flex flex-col items-center gap-2 w-full">
@@ -215,6 +243,93 @@ export function CrowdDetectionView({
             ))}
           </ul>
         )}
+      </section>
+      <section className="grid w-full max-w-3xl gap-4 rounded border border-gray-200 p-4 sm:grid-cols-2">
+        <h3 className="font-bold sm:col-span-2">検出設定</h3>
+        <label className="flex flex-col gap-1 text-sm">
+          <span>
+            confidence threshold: {settings.confidenceThreshold.toFixed(2)}
+          </span>
+          <input
+            type="range"
+            min="0.05"
+            max="1"
+            step="0.05"
+            value={settings.confidenceThreshold}
+            onChange={(event) =>
+              setSettings((current) => ({
+                ...current,
+                confidenceThreshold: Number(event.target.value),
+              }))
+            }
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span>
+            tracking distance threshold:{" "}
+            {settings.trackingDistanceThreshold.toFixed(2)}
+          </span>
+          <input
+            type="range"
+            min="0.1"
+            max="1"
+            step="0.05"
+            value={settings.trackingDistanceThreshold}
+            onChange={(event) =>
+              setSettings((current) => ({
+                ...current,
+                trackingDistanceThreshold: Number(event.target.value),
+              }))
+            }
+          />
+          <small className="text-gray-500">
+            高いほど緩い IoU distance 判定
+          </small>
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span>検出間隔: {settings.detectionInterval}ms</span>
+          <input
+            type="range"
+            min="0"
+            max="1000"
+            step="50"
+            value={settings.detectionInterval}
+            onChange={(event) =>
+              setSettings((current) => ({
+                ...current,
+                detectionInterval: Number(event.target.value),
+              }))
+            }
+          />
+        </label>
+        <div className="flex flex-col gap-3 text-sm">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={settings.showBoundingBoxes}
+              onChange={(event) =>
+                setSettings((current) => ({
+                  ...current,
+                  showBoundingBoxes: event.target.checked,
+                }))
+              }
+            />
+            bounding box を表示
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={settings.showTrackingIds}
+              onChange={(event) =>
+                setSettings((current) => ({
+                  ...current,
+                  showTrackingIds: event.target.checked,
+                }))
+              }
+            />
+            tracking ID を表示
+          </label>
+        </div>
       </section>
       {status === "error" && error && <p className="text-red-600">{error}</p>}
     </div>
