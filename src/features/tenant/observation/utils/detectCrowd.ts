@@ -1,3 +1,4 @@
+import { BackgroundSubtractor } from "@pj-hoakari/web-crowd-detection-utils/background";
 import {
   BYTETracker,
   type TrackedBox,
@@ -14,13 +15,19 @@ import {
 } from "@pj-hoakari/web-crowd-detection-utils/yolo";
 
 const MODEL_PATH =
-  process.env.NEXT_PUBLIC_CROWD_DETECTION_MODEL_PATH ??
-  "/models/person-detection.onnx";
+  process.env.NEXT_PUBLIC_CROWD_DETECTION_MODEL_PATH ?? "/models/yolov8n.onnx";
 const INPUT_SIZE = 640;
+const CONFIDENCE_THRESHOLD = 0.15;
+const STATIC_SUPPRESS_FACTOR = 0.3;
 
 let detectorPromise: Promise<YoloDetector> | null = null;
 let capturer: ReturnType<typeof createLetterboxCapturer> | null = null;
 const tracker = new BYTETracker();
+const backgroundSubtractor = new BackgroundSubtractor({
+  width: INPUT_SIZE,
+  height: INPUT_SIZE,
+  alpha: 0.005,
+});
 
 export type TrackedDetection = TrackedBox & Pick<Detection, "classId">;
 
@@ -80,7 +87,15 @@ export async function detectCrowdFrame(
   const detector = await initializeCrowdDetector();
   capturer ??= createLetterboxCapturer({ inputSize: INPUT_SIZE });
   const { imageData, params } = capturer.capture(video);
-  const detections = await detector.detect(imageData);
+  let detections = await detector.detect(imageData);
+  const backgroundReady = backgroundSubtractor.update(imageData);
+
+  if (backgroundReady) {
+    detections = backgroundSubtractor
+      .suppressStatic(detections, STATIC_SUPPRESS_FACTOR)
+      .filter((detection) => detection.score >= CONFIDENCE_THRESHOLD);
+  }
+
   const sourceDetections = reverseLetterboxBoxes(detections, params);
 
   return tracker.update(sourceDetections);
@@ -88,4 +103,5 @@ export async function detectCrowdFrame(
 
 export function resetCrowdTracking(): void {
   tracker.reset();
+  backgroundSubtractor.reset();
 }
