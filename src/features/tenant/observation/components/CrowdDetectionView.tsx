@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { DetectCrowdStatus } from "../hooks/useDetectCrowd";
 import { detectCrowdFrame } from "../utils/detectCrowd";
 
@@ -19,6 +19,7 @@ export function CrowdDetectionView({
 }: CrowdDetectionViewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [lineCount, setLineCount] = useState({ forward: 0, backward: 0 });
 
   useEffect(() => {
     if (videoRef.current) {
@@ -30,6 +31,7 @@ export function CrowdDetectionView({
     if (status !== "detecting") {
       const canvas = canvasRef.current;
       canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
+      setLineCount({ forward: 0, backward: 0 });
       return;
     }
 
@@ -52,7 +54,7 @@ export function CrowdDetectionView({
       }
 
       try {
-        const detections = await detectCrowdFrame(video);
+        const frame = await detectCrowdFrame(video);
 
         if (cancelled) {
           return;
@@ -69,8 +71,15 @@ export function CrowdDetectionView({
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.lineWidth = Math.max(2, canvas.width / 320);
         context.font = `${Math.max(16, canvas.width / 40)}px sans-serif`;
+        context.strokeStyle = "#f59e0b";
+        context.setLineDash([12, 8]);
+        context.beginPath();
+        context.moveTo(frame.countingLine.p1.x, frame.countingLine.p1.y);
+        context.lineTo(frame.countingLine.p2.x, frame.countingLine.p2.y);
+        context.stroke();
+        context.setLineDash([]);
 
-        for (const detection of detections) {
+        for (const detection of frame.detections) {
           const width = detection.x2 - detection.x1;
           const height = detection.y2 - detection.y1;
           const label = `Person #${detection.trackId} ${Math.round(
@@ -88,6 +97,13 @@ export function CrowdDetectionView({
           context.fillStyle = "#052e16";
           context.fillText(label, detection.x1 + 6, labelY + labelHeight - 6);
         }
+
+        setLineCount((current) =>
+          current.forward === frame.lineCount.forward &&
+          current.backward === frame.lineCount.backward
+            ? current
+            : frame.lineCount,
+        );
 
         animationFrameId = requestAnimationFrame(detectFrame);
       } catch (cause) {
@@ -126,6 +142,10 @@ export function CrowdDetectionView({
             起動中…
           </div>
         )}
+      </div>
+      <div className="flex gap-6 text-sm">
+        <span>ライン通過 forward: {lineCount.forward}</span>
+        <span>ライン通過 backward: {lineCount.backward}</span>
       </div>
       {status === "error" && error && <p className="text-red-600">{error}</p>}
     </div>

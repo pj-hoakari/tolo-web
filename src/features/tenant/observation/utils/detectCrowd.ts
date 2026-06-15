@@ -3,6 +3,11 @@ import {
   BYTETracker,
   type TrackedBox,
 } from "@pj-hoakari/web-crowd-detection-utils/bytetrack";
+import {
+  type Line,
+  type LineCount,
+  LineCrossingCounter,
+} from "@pj-hoakari/web-crowd-detection-utils/line-crossing";
 import { isWebGpuAvailable } from "@pj-hoakari/web-crowd-detection-utils/onnx";
 import {
   createLetterboxCapturer,
@@ -23,6 +28,7 @@ const STATIC_SUPPRESS_FACTOR = 0.3;
 let detectorPromise: Promise<YoloDetector> | null = null;
 let capturer: ReturnType<typeof createLetterboxCapturer> | null = null;
 const tracker = new BYTETracker();
+const lineCrossingCounter = new LineCrossingCounter();
 const backgroundSubtractor = new BackgroundSubtractor({
   width: INPUT_SIZE,
   height: INPUT_SIZE,
@@ -30,6 +36,12 @@ const backgroundSubtractor = new BackgroundSubtractor({
 });
 
 export type TrackedDetection = TrackedBox & Pick<Detection, "classId">;
+
+export type CrowdDetectionFrame = {
+  detections: TrackedDetection[];
+  countingLine: Line;
+  lineCount: LineCount;
+};
 
 async function fetchModel(): Promise<ArrayBuffer> {
   const response = await fetch(MODEL_PATH);
@@ -83,7 +95,7 @@ export function initializeCrowdDetector(): Promise<YoloDetector> {
 
 export async function detectCrowdFrame(
   video: HTMLVideoElement,
-): Promise<TrackedDetection[]> {
+): Promise<CrowdDetectionFrame> {
   const detector = await initializeCrowdDetector();
   capturer ??= createLetterboxCapturer({ inputSize: INPUT_SIZE });
   const { imageData, params } = capturer.capture(video);
@@ -97,11 +109,36 @@ export async function detectCrowdFrame(
   }
 
   const sourceDetections = reverseLetterboxBoxes(detections, params);
+  const trackedDetections = tracker.update(sourceDetections);
+  const countingLine: Line = {
+    id: "observation-line",
+    p1: { x: 0, y: params.sourceHeight * 0.6 },
+    p2: { x: params.sourceWidth, y: params.sourceHeight * 0.6 },
+  };
+  const trackedPoints = trackedDetections.map((detection) => ({
+    trackId: detection.trackId,
+    point: {
+      x: (detection.x1 + detection.x2) / 2,
+      y: detection.y2,
+    },
+  }));
 
-  return tracker.update(sourceDetections);
+  lineCrossingCounter.update(trackedPoints, [countingLine], {
+    assist: {
+      enabled: true,
+      rescueDistance: params.sourceWidth * (60 / INPUT_SIZE),
+    },
+  });
+
+  return {
+    detections: trackedDetections,
+    countingLine,
+    lineCount: lineCrossingCounter.getLineCount(countingLine.id),
+  };
 }
 
 export function resetCrowdTracking(): void {
   tracker.reset();
+  lineCrossingCounter.reset();
   backgroundSubtractor.reset();
 }
