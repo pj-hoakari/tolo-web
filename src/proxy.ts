@@ -59,7 +59,7 @@ export const proxy: NextProxy = createTenantProxy();
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|ico)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|ico|onnx)$).*)",
   ],
 };
 
