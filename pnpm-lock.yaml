@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@pj-hoakari/web-crowd-detection-utils':
-        specifier: ^0.5.1
-        version: 0.5.1
+        specifier: ^0.6.0
+        version: 0.6.0
       next:
         specifier: 16.2.7
         version: 16.2.7(@babel/core@7.29.7)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -893,9 +893,10 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@pj-hoakari/web-crowd-detection-utils@0.5.1':
-    resolution: {integrity: sha512-Q9nvTXCNsBTIok5tR7LS+t1aZMQ/STS8mx6SLc70QlZbuqjSiJy8zoMaH862WwCYu4nTboMBidqXBJzvl1zA8Q==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/web-crowd-detection-utils/0.5.1/3743174d4b6aea36866cab4da28ec2f0d9c7e499}
+  '@pj-hoakari/web-crowd-detection-utils@0.6.0':
+    resolution: {integrity: sha512-2SnGVpNNdsIFVHkg/w0cT9Yx/vCApfhcisZtjlRqS85AbkylG8sWxN8UrB7geISv9XeF9+cb1VKHc/KzEWwB0w==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/web-crowd-detection-utils/0.6.0/a230f90f5992a9e006eeb1b3f81d5f9b8b60f695}
     engines: {node: '>=20'}
+    hasBin: true
 
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
@@ -2908,7 +2909,7 @@ snapshots:
   '@oxc-resolver/binding-win32-x64-msvc@11.20.0':
     optional: true
 
-  '@pj-hoakari/web-crowd-detection-utils@0.5.1':
+  '@pj-hoakari/web-crowd-detection-utils@0.6.0':
     dependencies:
       onnxruntime-web: 1.26.0
 
