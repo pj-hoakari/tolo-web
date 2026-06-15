@@ -1,9 +1,10 @@
 allowBuilds:
-    esbuild: true
-    sharp: true
+  esbuild: true
+  protobufjs: true
+  sharp: true
 ignoredBuiltDependencies:
-    - sharp
-    - unrs-resolver
+  - sharp
+  - unrs-resolver
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
-    - "@pj-hoakari/*"
+  - "@pj-hoakari/*"
