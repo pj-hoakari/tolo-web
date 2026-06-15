@@ -1,10 +1,11 @@
 services:
     firebase:
-        image: node:24-slim
+        build:
+            context: ./firebase-emulator
+        image: tolo-firebase-emulator
         working_dir: /app
         command: >
-            sh -c "corepack enable &&
-            npx -y firebase-tools@latest emulators:start
+            sh -c "firebase emulators:start
             --only firestore
             --project $${FIRESTORE_PROJECT_ID:-tolo-signaling}"
         ports:

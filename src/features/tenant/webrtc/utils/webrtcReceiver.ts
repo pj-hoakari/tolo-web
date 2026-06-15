@@ -55,7 +55,13 @@ export async function startWebRtcReceiver({
 
   pc.onicecandidate = (event) => {
     if (event.candidate) {
-      void signaling.send({ type: "candidate", data: event.candidate });
+      void signaling
+        .send({ type: "candidate", data: event.candidate.toJSON() })
+        .catch((error) => {
+          console.error("[webrtc-receiver] failed to send candidate", error);
+          onError?.("通信候補の送信に失敗しました");
+          onStatusChange?.("error");
+        });
     }
   };
 
@@ -76,17 +82,23 @@ export async function startWebRtcReceiver({
   };
 
   signaling.onMessage(async (message) => {
-    if (message.type === "offer") {
-      onStatusChange?.("negotiating");
-      await pc.setRemoteDescription(message.data);
-      await flushCandidates();
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      await signaling.send({ type: "answer", data: answer });
-      return;
-    }
-    if (message.type === "candidate") {
-      await addCandidate(message.data);
+    try {
+      if (message.type === "offer") {
+        onStatusChange?.("negotiating");
+        await pc.setRemoteDescription(message.data);
+        await flushCandidates();
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        await signaling.send({ type: "answer", data: answer });
+        return;
+      }
+      if (message.type === "candidate") {
+        await addCandidate(message.data);
+      }
+    } catch (error) {
+      console.error("[webrtc-receiver] failed to handle signal", error);
+      onError?.("WebRTCシグナリングの処理に失敗しました");
+      onStatusChange?.("error");
     }
   });
 
