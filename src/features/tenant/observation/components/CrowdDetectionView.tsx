@@ -73,7 +73,9 @@ export function CrowdDetectionView({
         for (const detection of detections) {
           const width = detection.x2 - detection.x1;
           const height = detection.y2 - detection.y1;
-          const label = `${Math.round(detection.score * 100)}%`;
+          const label = `Person #${detection.trackId} ${Math.round(
+            detection.score * 100,
+          )}%`;
 
           context.strokeStyle = "#22c55e";
           context.fillStyle = "#22c55e";

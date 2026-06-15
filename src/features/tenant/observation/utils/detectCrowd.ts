@@ -1,3 +1,7 @@
+import {
+  BYTETracker,
+  type TrackedBox,
+} from "@pj-hoakari/web-crowd-detection-utils/bytetrack";
 import { isWebGpuAvailable } from "@pj-hoakari/web-crowd-detection-utils/onnx";
 import {
   createLetterboxCapturer,
@@ -16,6 +20,9 @@ const INPUT_SIZE = 640;
 
 let detectorPromise: Promise<YoloDetector> | null = null;
 let capturer: ReturnType<typeof createLetterboxCapturer> | null = null;
+const tracker = new BYTETracker();
+
+export type TrackedDetection = TrackedBox & Pick<Detection, "classId">;
 
 async function fetchModel(): Promise<ArrayBuffer> {
   const response = await fetch(MODEL_PATH);
@@ -69,11 +76,16 @@ export function initializeCrowdDetector(): Promise<YoloDetector> {
 
 export async function detectCrowdFrame(
   video: HTMLVideoElement,
-): Promise<Detection[]> {
+): Promise<TrackedDetection[]> {
   const detector = await initializeCrowdDetector();
   capturer ??= createLetterboxCapturer({ inputSize: INPUT_SIZE });
   const { imageData, params } = capturer.capture(video);
   const detections = await detector.detect(imageData);
+  const sourceDetections = reverseLetterboxBoxes(detections, params);
 
-  return reverseLetterboxBoxes(detections, params);
+  return tracker.update(sourceDetections);
+}
+
+export function resetCrowdTracking(): void {
+  tracker.reset();
 }

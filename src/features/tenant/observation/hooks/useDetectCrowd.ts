@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { initializeCrowdDetector } from "../utils/detectCrowd";
+import {
+  initializeCrowdDetector,
+  resetCrowdTracking,
+} from "../utils/detectCrowd";
 
 export type DetectCrowdStatus = "idle" | "loading" | "detecting" | "error";
 
@@ -14,6 +17,7 @@ export function useDetectCrowd() {
 
   const start = async () => {
     const operationId = ++operationIdRef.current;
+    resetCrowdTracking();
     setError(null);
     setStatus("loading");
 
@@ -61,6 +65,7 @@ export function useDetectCrowd() {
 
   const stop = () => {
     operationIdRef.current += 1;
+    resetCrowdTracking();
     for (const track of sourceStreamRef.current?.getTracks() ?? []) {
       track.stop();
     }
@@ -71,6 +76,7 @@ export function useDetectCrowd() {
 
   const reportDetectionError = useCallback((cause: unknown) => {
     operationIdRef.current += 1;
+    resetCrowdTracking();
     for (const track of sourceStreamRef.current?.getTracks() ?? []) {
       track.stop();
     }
@@ -85,6 +91,7 @@ export function useDetectCrowd() {
   useEffect(() => {
     return () => {
       operationIdRef.current += 1;
+      resetCrowdTracking();
       for (const track of sourceStreamRef.current?.getTracks() ?? []) {
         track.stop();
       }
