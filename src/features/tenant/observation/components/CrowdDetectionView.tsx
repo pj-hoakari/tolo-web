@@ -63,6 +63,11 @@ export function CrowdDetectionView({
   const [lineCount, setLineCount] = useState({ forward: 0, backward: 0 });
   const [metrics, setMetrics] = useState<DetectionMetrics>(INITIAL_METRICS);
   const [settings, setSettings] = useState<DetectionSettings>(INITIAL_SETTINGS);
+  const settingsRef = useRef(settings);
+
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -100,9 +105,10 @@ export function CrowdDetectionView({
       }
 
       try {
+        const currentSettings = settingsRef.current;
         const frame = await detectCrowdFrame(video, {
-          confidenceThreshold: settings.confidenceThreshold,
-          trackingDistanceThreshold: settings.trackingDistanceThreshold,
+          confidenceThreshold: currentSettings.confidenceThreshold,
+          trackingDistanceThreshold: currentSettings.trackingDistanceThreshold,
         });
 
         if (cancelled) {
@@ -131,16 +137,19 @@ export function CrowdDetectionView({
         for (const detection of frame.detections) {
           const width = detection.x2 - detection.x1;
           const height = detection.y2 - detection.y1;
-          const label = settings.showTrackingIds
+          const label = currentSettings.showTrackingIds
             ? `Person #${detection.trackId} ${Math.round(detection.score * 100)}%`
             : `${Math.round(detection.score * 100)}%`;
 
-          if (settings.showBoundingBoxes) {
+          if (currentSettings.showBoundingBoxes) {
             context.strokeStyle = "#22c55e";
             context.strokeRect(detection.x1, detection.y1, width, height);
           }
 
-          if (settings.showBoundingBoxes || settings.showTrackingIds) {
+          if (
+            currentSettings.showBoundingBoxes ||
+            currentSettings.showTrackingIds
+          ) {
             const labelWidth = context.measureText(label).width + 12;
             const labelHeight = Math.max(22, canvas.width / 32);
             const labelY = Math.max(0, detection.y1 - labelHeight);
@@ -172,7 +181,7 @@ export function CrowdDetectionView({
 
         timeoutId = window.setTimeout(() => {
           animationFrameId = requestAnimationFrame(detectFrame);
-        }, settings.detectionInterval);
+        }, settingsRef.current.detectionInterval);
       } catch (cause) {
         if (!cancelled) {
           onDetectionError(cause);
@@ -187,7 +196,7 @@ export function CrowdDetectionView({
       clearTimeout(timeoutId);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [status, onDetectionError, settings]);
+  }, [status, onDetectionError]);
 
   return (
     <div className="flex flex-col items-center gap-2 w-full">
