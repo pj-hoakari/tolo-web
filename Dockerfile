@@ -1,5 +1,5 @@
 ARG NODE_VERSION=24
-ARG PNPM_VERSION=11.5.2
+ARG PNPM_VERSION=11.6
 
 FROM node:${NODE_VERSION}-slim AS base
 ENV PNPM_HOME=/pnpm
@@ -13,6 +13,7 @@ FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN --mount=type=secret,id=npm_token \
     NPM_TOKEN="$(cat /run/secrets/npm_token)" \
+    PNPM_CONFIG_NPMRC_AUTH_FILE=/app/.npmrc \
     pnpm install --frozen-lockfile
 
 FROM base AS dev
