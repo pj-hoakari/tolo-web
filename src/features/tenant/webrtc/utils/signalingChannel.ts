@@ -63,11 +63,19 @@ export async function clearSession(
   sessionRef: DocumentReference,
 ): Promise<void> {
   const signalsRef = collection(sessionRef, SIGNALS_SUBCOLLECTION);
-  const snapshot = await getDocs(signalsRef);
+  await clearSignals(signalsRef);
   const batch = writeBatch(sessionRef.firestore);
+  batch.delete(sessionRef);
+  await batch.commit();
+}
+
+export async function clearSignals(
+  signalsRef: CollectionReference,
+): Promise<void> {
+  const snapshot = await getDocs(signalsRef);
+  const batch = writeBatch(signalsRef.firestore);
   for (const docSnapshot of snapshot.docs) {
     batch.delete(docSnapshot.ref);
   }
-  batch.delete(sessionRef);
   await batch.commit();
 }
