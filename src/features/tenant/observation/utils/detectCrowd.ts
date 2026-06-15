@@ -20,7 +20,7 @@ import {
 } from "@pj-hoakari/web-crowd-detection-utils/yolo";
 
 const MODEL_PATH =
-  process.env.NEXT_PUBLIC_CROWD_DETECTION_MODEL_PATH ?? "/models/yolov8n.onnx";
+  process.env.NEXT_PUBLIC_CROWD_DETECTION_MODEL_PATH ?? "/models/yolo26n.onnx";
 const INPUT_SIZE = 640;
 const STATIC_SUPPRESS_FACTOR = 0.3;
 

@@ -6,7 +6,7 @@ describe("proxy matcher", () => {
   test("detection runtime assets should bypass tenant routing", () => {
     const matcher = new RegExp(`^${config.matcher[0]}$`);
 
-    expect(matcher.test("/models/yolov8n.onnx")).toBe(false);
+    expect(matcher.test("/models/yolo26n.onnx")).toBe(false);
     expect(matcher.test("/onnxruntime/runtime.wasm")).toBe(false);
     expect(matcher.test("/onnxruntime/runtime.mjs")).toBe(false);
     expect(matcher.test("/event/test/observation")).toBe(true);
