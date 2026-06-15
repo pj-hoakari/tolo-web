@@ -21,6 +21,11 @@ import {
 
 const MODEL_PATH =
   process.env.NEXT_PUBLIC_CROWD_DETECTION_MODEL_PATH ?? "/models/yolo26n.onnx";
+// Path under which the ONNX Runtime WASM assets are served. They are copied
+// into `public/onnxruntime/` at build time by the `wcdu-copy-runtime-assets`
+// CLI (see package.json scripts), so the runtime loads them from here instead
+// of relying on the bundler to emit them.
+const ONNX_RUNTIME_PATH = "/onnxruntime/";
 const INPUT_SIZE = 640;
 const STATIC_SUPPRESS_FACTOR = 0.3;
 
@@ -71,6 +76,9 @@ async function createPersonDetector(): Promise<YoloDetector> {
       format: "auto" as const,
       classFilter: [0],
       confThreshold: 0.05,
+    },
+    session: {
+      wasmPaths: ONNX_RUNTIME_PATH,
     },
   };
 
