@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { describe, expect, test } from "vitest";
-import { __test__, tenantProxy } from "./proxy";
+import { __test__, config, tenantProxy } from "./proxy";
+
+describe("proxy matcher", () => {
+  test("detection runtime assets should bypass tenant routing", () => {
+    const matcher = new RegExp(`^${config.matcher[0]}$`);
+
+    expect(matcher.test("/models/yolo26n.onnx")).toBe(false);
+    expect(matcher.test("/onnxruntime/runtime.wasm")).toBe(false);
+    expect(matcher.test("/onnxruntime/runtime.mjs")).toBe(false);
+    expect(matcher.test("/event/test/observation")).toBe(true);
+  });
+});
 
 describe("internal tenant path routing detection", () => {
   const isInternalTenantPath = __test__.isInternalTenantPath;
