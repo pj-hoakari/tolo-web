@@ -12,7 +12,9 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN --mount=type=secret,id=npm_token \
-    NPM_TOKEN="$(cat /run/secrets/npm_token)" \
+    NPM_TOKEN="$(cat /run/secrets/npm_token)" && \
+    if [ -z "$NPM_TOKEN" ]; then echo "NPM_TOKEN is required to install GitHub Packages dependencies" >&2; exit 1; fi && \
+    pnpm config set "//npm.pkg.github.com/:_authToken" "$NPM_TOKEN" --location=user && \
     pnpm install --frozen-lockfile
 
 FROM base AS dev

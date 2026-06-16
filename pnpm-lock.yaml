@@ -1203,7 +1203,7 @@ packages:
     os: [win32]
 
   '@pj-hoakari/tolo-signaling-client-es@0.1.0-rc':
-    resolution: {integrity: sha512-kRDFEWnaiEYJGrzzdXhxoNeq9trEygRJWNBwrgs1MdWBXSnu7KlPLldxEMuOvwAPJrgNxEvjtOjIlNkx1DIQzQ==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-signaling-client-es/0.1.0-rc/2e3ace382ab0e639e36e97c5177fd2386e6db4a3}
+    resolution: {integrity: sha512-kRDFEWnaiEYJGrzzdXhxoNeq9trEygRJWNBwrgs1MdWBXSnu7KlPLldxEMuOvwAPJrgNxEvjtOjIlNkx1DIQzQ==}
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
