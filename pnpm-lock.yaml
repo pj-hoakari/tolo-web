@@ -1203,7 +1203,7 @@ packages:
     os: [win32]
 
   '@pj-hoakari/tolo-signaling-client-es@0.1.0-rc':
-    resolution: {integrity: sha512-kRDFEWnaiEYJGrzzdXhxoNeq9trEygRJWNBwrgs1MdWBXSnu7KlPLldxEMuOvwAPJrgNxEvjtOjIlNkx1DIQzQ==}
+    resolution: {integrity: sha512-kRDFEWnaiEYJGrzzdXhxoNeq9trEygRJWNBwrgs1MdWBXSnu7KlPLldxEMuOvwAPJrgNxEvjtOjIlNkx1DIQzQ==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-signaling-client-es/0.1.0-rc/2e3ace382ab0e639e36e97c5177fd2386e6db4a3}
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
@@ -2477,6 +2477,10 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
+  tagged-tag@1.0.0:
+    resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
+    engines: {node: '>=20'}
+
   tailwindcss@4.3.1:
     resolution: {integrity: sha512-hk+TB1m+K8CYNrP6rjQaq/Y+4Zylwpa87mLYBKCunwnnQ9p+fHb7kmSfGqyEJoxF/O6CDyABWVFEafNSYKll+Q==}
 
@@ -2524,6 +2528,7 @@ packages:
   tsconfck@3.1.6:
     resolution: {integrity: sha512-ks6Vjr/jEw0P1gmOVwutM3B7fWxoWBL2KRDb1JfqGVawBmO5UsvmWOQFGHBPl5yxYz4eERr19E6L7NMv+Fej4w==}
     engines: {node: ^18 || >=20}
+    deprecated: unmaintained
     hasBin: true
     peerDependencies:
       typescript: ^5.0.0
@@ -5037,6 +5042,8 @@ snapshots:
       has-flag: 4.0.0
 
   supports-preserve-symlinks-flag@1.0.0: {}
+
+  tagged-tag@1.0.0: {}
 
   tailwindcss@4.3.1: {}
 
