@@ -1,4 +1,5 @@
 import { ICE_SERVERS } from "./config";
+import { setupIceExchange } from "./iceExchange";
 import type { PeerSignaling } from "./peerSignaling";
 
 export function connectAsReceiver(
@@ -7,7 +8,6 @@ export function connectAsReceiver(
 ): RTCPeerConnection {
   const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
   const remoteStream = new MediaStream();
-  const pendingCandidates: RTCIceCandidateInit[] = [];
 
   pc.addEventListener("track", (event) => {
     if (event.streams[0]) {
@@ -18,9 +18,7 @@ export function connectAsReceiver(
     onRemoteStream(remoteStream);
   });
 
-  pc.addEventListener("icecandidate", (event) => {
-    signaling.sendCandidate(event.candidate?.toJSON() ?? null);
-  });
+  const ice = setupIceExchange(pc, signaling);
 
   signaling.onDescription(async (description) => {
     if (
@@ -31,36 +29,12 @@ export function connectAsReceiver(
       return;
     }
     await pc.setRemoteDescription(description);
-    await flushCandidates(pc, pendingCandidates);
+    await ice.flush();
 
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
     signaling.sendDescription(answer);
   });
 
-  signaling.onCandidate(async (candidate) => {
-    if (!candidate) {
-      return;
-    }
-    if (!pc.remoteDescription) {
-      pendingCandidates.push(candidate);
-      return;
-    }
-    await pc.addIceCandidate(candidate);
-  });
-
   return pc;
-}
-
-// remote description 確定までに貯めた candidate をまとめて追加
-async function flushCandidates(
-  pc: RTCPeerConnection,
-  pending: RTCIceCandidateInit[],
-): Promise<void> {
-  while (pending.length > 0) {
-    const candidate = pending.shift();
-    if (candidate) {
-      await pc.addIceCandidate(candidate);
-    }
-  }
 }

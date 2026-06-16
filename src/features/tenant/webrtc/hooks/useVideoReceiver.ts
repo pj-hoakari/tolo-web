@@ -1,16 +1,12 @@
 "use client";
 
-import { collection, type DocumentReference, doc } from "firebase/firestore";
+import type { DocumentReference } from "firebase/firestore";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { orpc } from "@/lib/orpc";
 import type { ConnectionStatus } from "../type";
-import {
-  EDGES_COLLECTION,
-  SESSIONS_SUBCOLLECTION,
-  SIGNALS_SUBCOLLECTION,
-} from "../utils/config";
 import { getDb } from "../utils/firebase";
 import { PeerSignalingAdapter } from "../utils/peerSignaling";
+import { sessionDoc, signalsCollection } from "../utils/refs";
 import {
   clearSession,
   createFirestoreSignalingChannel,
@@ -84,15 +80,9 @@ export function useVideoReceiver(): VideoReceiverController {
           edgeId,
         });
         const db = getDb();
-        const sessionRef = doc(
-          db,
-          EDGES_COLLECTION,
-          edgeId,
-          SESSIONS_SUBCOLLECTION,
-          sessionId,
-        );
+        const sessionRef = sessionDoc(db, edgeId, sessionId);
         sessionRefRef.current = sessionRef;
-        const signalsRef = collection(sessionRef, SIGNALS_SUBCOLLECTION);
+        const signalsRef = signalsCollection(sessionRef);
         const channel = createFirestoreSignalingChannel({
           signalsRef,
           self: "management",

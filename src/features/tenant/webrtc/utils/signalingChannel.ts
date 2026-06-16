@@ -1,14 +1,13 @@
 import {
   addDoc,
   type CollectionReference,
-  collection,
   type DocumentReference,
   getDocs,
   onSnapshot,
   serverTimestamp,
   writeBatch,
 } from "firebase/firestore";
-import { SIGNALS_SUBCOLLECTION } from "./config";
+import { signalsCollection } from "./refs";
 
 export type SignalMessage =
   | { kind: "description"; description: RTCSessionDescriptionInit }
@@ -62,7 +61,7 @@ export function createFirestoreSignalingChannel(params: {
 export async function clearSession(
   sessionRef: DocumentReference,
 ): Promise<void> {
-  const signalsRef = collection(sessionRef, SIGNALS_SUBCOLLECTION);
+  const signalsRef = signalsCollection(sessionRef);
   await clearSignals(signalsRef);
   const batch = writeBatch(sessionRef.firestore);
   batch.delete(sessionRef);

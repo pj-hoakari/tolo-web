@@ -1,14 +1,14 @@
 "use client";
 
-import { collection, onSnapshot } from "firebase/firestore";
+import { onSnapshot } from "firebase/firestore";
 import { useEffect, useRef } from "react";
-import {
-  EDGES_COLLECTION,
-  SESSIONS_SUBCOLLECTION,
-  SIGNALS_SUBCOLLECTION,
-} from "../utils/config";
 import { getDb } from "../utils/firebase";
 import { PeerSignalingAdapter } from "../utils/peerSignaling";
+import {
+  sessionDoc,
+  sessionsCollection,
+  signalsCollection,
+} from "../utils/refs";
 import {
   clearSignals,
   createFirestoreSignalingChannel,
@@ -81,12 +81,7 @@ export function useVideoSender(params: {
     sessionsListenerRef.current = null;
 
     const db = getDb();
-    const sessionsCol = collection(
-      db,
-      EDGES_COLLECTION,
-      edgeId,
-      SESSIONS_SUBCOLLECTION,
-    );
+    const sessionsCol = sessionsCollection(db, edgeId);
     const sessions = sessionsRef.current;
     const startingSessionIds = startingSessionIdsRef.current;
     let disposed = false;
@@ -112,14 +107,7 @@ export function useVideoSender(params: {
         return;
       }
       try {
-        const signalsRef = collection(
-          db,
-          EDGES_COLLECTION,
-          edgeId,
-          SESSIONS_SUBCOLLECTION,
-          sessionId,
-          SIGNALS_SUBCOLLECTION,
-        );
+        const signalsRef = signalsCollection(sessionDoc(db, edgeId, sessionId));
         await clearSignals(signalsRef);
         if (disposed) {
           return;

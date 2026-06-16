@@ -1,4 +1,5 @@
 import { ICE_SERVERS } from "./config";
+import { setupIceExchange } from "./iceExchange";
 import type { PeerSignaling } from "./peerSignaling";
 
 export function connectAsSender(
@@ -11,11 +12,7 @@ export function connectAsSender(
     pc.addTrack(track, stream);
   }
 
-  pc.addEventListener("icecandidate", (event) => {
-    signaling.sendCandidate(event.candidate?.toJSON() ?? null);
-  });
-
-  const pendingCandidates: RTCIceCandidateInit[] = [];
+  const ice = setupIceExchange(pc, signaling);
 
   signaling.onDescription(async (description) => {
     if (description.type !== "answer") {
@@ -35,18 +32,7 @@ export function connectAsSender(
       return;
     }
     await pc.setRemoteDescription(description);
-    await flushCandidates(pc, pendingCandidates);
-  });
-
-  signaling.onCandidate(async (candidate) => {
-    if (!candidate) {
-      return;
-    }
-    if (!pc.remoteDescription) {
-      pendingCandidates.push(candidate);
-      return;
-    }
-    await pc.addIceCandidate(candidate);
+    await ice.flush();
   });
 
   void sendOffer(pc, signaling);
@@ -64,18 +50,5 @@ async function sendOffer(
     signaling.sendDescription(offer);
   } catch (error) {
     console.error("[webrtc-sender] failed to create/send offer", error);
-  }
-}
-
-// remote description 確定までに貯めた candidate をまとめて追加
-async function flushCandidates(
-  pc: RTCPeerConnection,
-  pending: RTCIceCandidateInit[],
-): Promise<void> {
-  while (pending.length > 0) {
-    const candidate = pending.shift();
-    if (candidate) {
-      await pc.addIceCandidate(candidate);
-    }
   }
 }
