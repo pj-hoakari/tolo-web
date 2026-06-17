@@ -1,7 +1,13 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { BroadcastIndicator } from "@/features/tenant/webrtc/components/BroadcastIndicator";
 import { useVideoSender } from "@/features/tenant/webrtc/hooks/useVideoSender";
+import {
+  type DetectionSettings,
+  INITIAL_SETTINGS,
+  useCrowdDetectionLoop,
+} from "../hooks/useCrowdDetectionLoop";
 import { useDetectCrowd } from "../hooks/useDetectCrowd";
 import { CrowdDetectionControls } from "./CrowdDetectionControls";
 import { CrowdDetectionView } from "./CrowdDetectionView";
@@ -15,10 +21,26 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
   const { stream, status, error, start, stop, reportDetectionError } =
     useDetectCrowd();
 
+  const [broadcastStream, setBroadcastStream] = useState<MediaStream | null>(
+    null,
+  );
+  const [settings, setSettings] = useState<DetectionSettings>(INITIAL_SETTINGS);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  const { lineCount, metrics } = useCrowdDetectionLoop({
+    videoRef,
+    overlayCanvasRef,
+    status,
+    settings,
+    onBroadcastStreamChange: setBroadcastStream,
+    onDetectionError: reportDetectionError,
+  });
+
   const { active, edgeId } = useVideoSender({
     tenantId,
     eventId,
-    stream,
+    stream: broadcastStream,
   });
 
   return (
@@ -28,7 +50,12 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
         stream={stream}
         status={status}
         error={error}
-        onDetectionError={reportDetectionError}
+        lineCount={lineCount}
+        metrics={metrics}
+        settings={settings}
+        onSettingsChange={setSettings}
+        videoRef={videoRef}
+        overlayCanvasRef={overlayCanvasRef}
       />
       <BroadcastIndicator active={active} edgeId={edgeId} />
     </div>
