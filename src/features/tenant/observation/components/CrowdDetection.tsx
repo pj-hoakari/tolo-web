@@ -18,7 +18,7 @@ export type CrowdDetectionProps = {
 };
 
 export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
-  const { stream, status, error, start, stop, reportDetectionError } =
+  const { videoSource, status, error, start, stop, reportDetectionError } =
     useDetectCrowd();
 
   const [broadcastStream, setBroadcastStream] = useState<MediaStream | null>(
@@ -47,7 +47,7 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
     <div className="flex flex-col items-center gap-4 w-full">
       <CrowdDetectionControls status={status} onStart={start} onStop={stop} />
       <CrowdDetectionView
-        stream={stream}
+        videoSource={videoSource}
         status={status}
         error={error}
         lineCount={lineCount}
