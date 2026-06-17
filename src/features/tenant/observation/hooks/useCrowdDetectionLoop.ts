@@ -55,6 +55,17 @@ export const INITIAL_SETTINGS: DetectionSettings = {
 
 const INITIAL_LINE_COUNT: DetectionLineCount = { forward: 0, backward: 0 };
 
+function syncCanvasSize(
+  canvas: HTMLCanvasElement,
+  width: number,
+  height: number,
+): void {
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+}
+
 function drawDetectionOverlay(
   context: CanvasRenderingContext2D,
   frame: CrowdDetectionFrame,
@@ -119,6 +130,7 @@ export function useCrowdDetectionLoop({
 }: UseCrowdDetectionLoopParams): UseCrowdDetectionLoopResult {
   const broadcastCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const broadcastStreamRef = useRef<MediaStream | null>(null);
+  const latestFrameRef = useRef<CrowdDetectionFrame | null>(null);
   const settingsRef = useRef(settings);
   const [lineCount, setLineCount] =
     useState<DetectionLineCount>(INITIAL_LINE_COUNT);
@@ -143,29 +155,36 @@ export function useCrowdDetectionLoop({
     if (status !== "detecting") {
       const canvas = overlayCanvasRef.current;
       canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
+      latestFrameRef.current = null;
       setLineCount(INITIAL_LINE_COUNT);
       setMetrics(INITIAL_METRICS);
       stopBroadcast();
       return;
     }
 
-    let animationFrameId = 0;
-    let timeoutId = 0;
     let cancelled = false;
-    let previousFrameAt = performance.now();
+    let detectTimeoutId = 0;
+    let renderRafId = 0;
+    let previousDetectionAt = performance.now();
 
-    const detectFrame = async () => {
+    const isVideoReady = (
+      video: HTMLVideoElement | null,
+    ): video is HTMLVideoElement =>
+      !!video &&
+      video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
+      video.videoWidth > 0 &&
+      video.videoHeight > 0;
+
+    const detectLoop = async () => {
+      if (cancelled) {
+        return;
+      }
       const video = videoRef.current;
-      const canvas = overlayCanvasRef.current;
-
-      if (
-        !video ||
-        !canvas ||
-        video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA ||
-        video.videoWidth === 0 ||
-        video.videoHeight === 0
-      ) {
-        animationFrameId = requestAnimationFrame(detectFrame);
+      if (!isVideoReady(video)) {
+        detectTimeoutId = window.setTimeout(
+          detectLoop,
+          settingsRef.current.detectionInterval,
+        );
         return;
       }
 
@@ -180,38 +199,7 @@ export function useCrowdDetectionLoop({
           return;
         }
 
-        const width = video.videoWidth;
-        const height = video.videoHeight;
-
-        canvas.width = width;
-        canvas.height = height;
-        const context = canvas.getContext("2d");
-
-        if (!context) {
-          throw new Error("検出結果を描画する canvas を初期化できませんでした");
-        }
-
-        context.clearRect(0, 0, width, height);
-        drawDetectionOverlay(context, frame, currentSettings, width);
-
-        let broadcastCanvas = broadcastCanvasRef.current;
-        if (!broadcastCanvas) {
-          broadcastCanvas = document.createElement("canvas");
-          broadcastCanvasRef.current = broadcastCanvas;
-        }
-        broadcastCanvas.width = width;
-        broadcastCanvas.height = height;
-        const broadcastContext = broadcastCanvas.getContext("2d");
-
-        if (broadcastContext) {
-          broadcastContext.drawImage(video, 0, 0, width, height);
-          drawDetectionOverlay(broadcastContext, frame, currentSettings, width);
-
-          if (!broadcastStreamRef.current) {
-            broadcastStreamRef.current = broadcastCanvas.captureStream();
-            onBroadcastStreamChange(broadcastStreamRef.current);
-          }
-        }
+        latestFrameRef.current = frame;
 
         setLineCount((current) =>
           current.forward === frame.lineCount.forward &&
@@ -219,9 +207,9 @@ export function useCrowdDetectionLoop({
             ? current
             : frame.lineCount,
         );
-        const frameAt = performance.now();
-        const fps = 1000 / Math.max(1, frameAt - previousFrameAt);
-        previousFrameAt = frameAt;
+        const detectionAt = performance.now();
+        const fps = 1000 / Math.max(1, detectionAt - previousDetectionAt);
+        previousDetectionAt = detectionAt;
         setMetrics((current) => ({
           detectedCount: frame.detectedCount,
           trackedCount: frame.detections.length,
@@ -231,23 +219,81 @@ export function useCrowdDetectionLoop({
             frame.detectedCount > 0 ? new Date() : current.lastDetectedAt,
           detections: frame.detections,
         }));
-
-        timeoutId = window.setTimeout(() => {
-          animationFrameId = requestAnimationFrame(detectFrame);
-        }, settingsRef.current.detectionInterval);
       } catch (cause) {
         if (!cancelled) {
           onDetectionError(cause);
         }
+        return;
       }
+
+      detectTimeoutId = window.setTimeout(
+        detectLoop,
+        settingsRef.current.detectionInterval,
+      );
     };
 
-    animationFrameId = requestAnimationFrame(detectFrame);
+    const renderLoop = () => {
+      if (cancelled) {
+        return;
+      }
+      const video = videoRef.current;
+
+      if (isVideoReady(video)) {
+        const width = video.videoWidth;
+        const height = video.videoHeight;
+        const frame = latestFrameRef.current;
+        const currentSettings = settingsRef.current;
+
+        const overlay = overlayCanvasRef.current;
+        if (overlay) {
+          syncCanvasSize(overlay, width, height);
+          const context = overlay.getContext("2d");
+          if (context) {
+            context.clearRect(0, 0, width, height);
+            if (frame) {
+              drawDetectionOverlay(context, frame, currentSettings, width);
+            }
+          }
+        }
+
+        let broadcastCanvas = broadcastCanvasRef.current;
+        if (!broadcastCanvas) {
+          broadcastCanvas = document.createElement("canvas");
+          broadcastCanvasRef.current = broadcastCanvas;
+        }
+        syncCanvasSize(broadcastCanvas, width, height);
+        const broadcastContext = broadcastCanvas.getContext("2d");
+        if (broadcastContext) {
+          broadcastContext.drawImage(video, 0, 0, width, height);
+          if (frame) {
+            drawDetectionOverlay(
+              broadcastContext,
+              frame,
+              currentSettings,
+              width,
+            );
+          }
+          if (!broadcastStreamRef.current) {
+            broadcastStreamRef.current = broadcastCanvas.captureStream();
+            onBroadcastStreamChange(broadcastStreamRef.current);
+          }
+        }
+      }
+
+      renderRafId = requestAnimationFrame(renderLoop);
+    };
+
+    detectLoop().catch((cause) => {
+      if (!cancelled) {
+        onDetectionError(cause);
+      }
+    });
+    renderRafId = requestAnimationFrame(renderLoop);
 
     return () => {
       cancelled = true;
-      clearTimeout(timeoutId);
-      cancelAnimationFrame(animationFrameId);
+      clearTimeout(detectTimeoutId);
+      cancelAnimationFrame(renderRafId);
       stopBroadcast();
     };
   }, [
