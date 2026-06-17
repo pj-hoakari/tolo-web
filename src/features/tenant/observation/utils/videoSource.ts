@@ -34,3 +34,29 @@ export function createCameraVideoSource(): CrowdVideoSource {
     },
   };
 }
+
+export type VideoFileSourceOptions = {
+  loop?: boolean;
+};
+
+export function createVideoFileSource(
+  file: File,
+  options: VideoFileSourceOptions = {},
+): CrowdVideoSource {
+  const { loop = true } = options;
+  let objectUrl: string | null = null;
+
+  return {
+    label: `File: ${file.name}`,
+    async open() {
+      objectUrl = URL.createObjectURL(file);
+      return { kind: "objectUrl", url: objectUrl, loop };
+    },
+    close() {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+        objectUrl = null;
+      }
+    },
+  };
+}
