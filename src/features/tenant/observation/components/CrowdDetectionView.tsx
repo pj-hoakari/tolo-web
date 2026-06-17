@@ -7,6 +7,7 @@ import type {
   DetectionSettings,
 } from "../hooks/useCrowdDetectionLoop";
 import type { DetectCrowdStatus } from "../hooks/useDetectCrowd";
+import type { VideoSourceDescriptor } from "../utils/videoSource";
 
 const STATUS_LABELS: Record<DetectCrowdStatus, string> = {
   idle: "停止中",
@@ -16,7 +17,7 @@ const STATUS_LABELS: Record<DetectCrowdStatus, string> = {
 };
 
 export type CrowdDetectionViewProps = {
-  stream: MediaStream | null;
+  videoSource: VideoSourceDescriptor | null;
   status: DetectCrowdStatus;
   error: string | null;
   lineCount: DetectionLineCount;
@@ -28,7 +29,7 @@ export type CrowdDetectionViewProps = {
 };
 
 export function CrowdDetectionView({
-  stream,
+  videoSource,
   status,
   error,
   lineCount,
@@ -39,10 +40,29 @@ export function CrowdDetectionView({
   overlayCanvasRef,
 }: CrowdDetectionViewProps) {
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream;
+    const video = videoRef.current;
+    if (!video) {
+      return;
     }
-  }, [stream, videoRef]);
+
+    if (!videoSource) {
+      video.srcObject = null;
+      video.removeAttribute("src");
+      video.loop = false;
+      video.load();
+      return;
+    }
+
+    if (videoSource.kind === "stream") {
+      video.removeAttribute("src");
+      video.loop = false;
+      video.srcObject = videoSource.stream;
+    } else {
+      video.srcObject = null;
+      video.loop = videoSource.loop;
+      video.src = videoSource.url;
+    }
+  }, [videoSource, videoRef]);
 
   return (
     <div className="flex flex-col items-center gap-2 w-full">
