@@ -9,8 +9,15 @@ import {
   useCrowdDetectionLoop,
 } from "../hooks/useCrowdDetectionLoop";
 import { useDetectCrowd } from "../hooks/useDetectCrowd";
+import {
+  type CrowdVideoSourceFactory,
+  createCameraVideoSource,
+} from "../utils/videoSource";
 import { CrowdDetectionControls } from "./CrowdDetectionControls";
 import { CrowdDetectionView } from "./CrowdDetectionView";
+import { DevVideoSourcePanel } from "./DevVideoSourcePanel";
+
+const DEV_VIDEO_SOURCE_ENABLED = process.env.NODE_ENV === "development";
 
 export type CrowdDetectionProps = {
   tenantId: string;
@@ -18,8 +25,12 @@ export type CrowdDetectionProps = {
 };
 
 export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
+  const [sourceFactory, setSourceFactory] = useState<CrowdVideoSourceFactory>(
+    () => createCameraVideoSource,
+  );
+
   const { videoSource, status, error, start, stop, reportDetectionError } =
-    useDetectCrowd();
+    useDetectCrowd(sourceFactory);
 
   const [broadcastStream, setBroadcastStream] = useState<MediaStream | null>(
     null,
@@ -45,6 +56,12 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
+      {DEV_VIDEO_SOURCE_ENABLED && (
+        <DevVideoSourcePanel
+          status={status}
+          onSourceChange={(factory) => setSourceFactory(() => factory)}
+        />
+      )}
       <CrowdDetectionControls status={status} onStart={start} onStop={stop} />
       <CrowdDetectionView
         videoSource={videoSource}
