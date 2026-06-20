@@ -59,4 +59,49 @@ describe("toGraphData", () => {
     const result = toGraphData([], edges);
     expect(result.edges[0].data?.direction).toBe("both");
   });
+
+  it("紐づけた観測点(observationPointIds)を保持する", () => {
+    const nodes: GraphNodeType[] = [
+      {
+        id: "n1",
+        type: "graph",
+        position: { x: 0, y: 0 },
+        data: {
+          label: "A",
+          nodeType: "GOAL",
+          observationPointIds: ["edge-1", "edge-2"],
+        },
+      },
+    ];
+    const edges: GraphEdgeType[] = [
+      {
+        id: "e1",
+        source: "n1",
+        target: "n2",
+        type: "graph",
+        data: { direction: "both", observationPointIds: ["edge-3"] },
+      },
+    ];
+
+    const result = toGraphData(nodes, edges);
+
+    expect(result.nodes[0].data.observationPointIds).toEqual([
+      "edge-1",
+      "edge-2",
+    ]);
+    expect(result.edges[0].data?.observationPointIds).toEqual(["edge-3"]);
+  });
+
+  it("観測点が空のときは observationPointIds を出力しない", () => {
+    const nodes: GraphNodeType[] = [
+      {
+        id: "n1",
+        type: "graph",
+        position: { x: 0, y: 0 },
+        data: { label: "A", nodeType: "GOAL", observationPointIds: [] },
+      },
+    ];
+    const result = toGraphData(nodes, []);
+    expect(result.nodes[0].data.observationPointIds).toBeUndefined();
+  });
 });

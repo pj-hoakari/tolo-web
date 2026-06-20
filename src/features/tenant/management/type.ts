@@ -25,6 +25,11 @@ export type GraphNodeData = {
   label: string;
   nodeType: NodeType;
   /**
+   * 紐づけた観測点（接続エッジ）の ID 一覧。
+   * ID は webrtc の接続エッジ（AliveEdge）の id に対応
+   */
+  observationPointIds?: string[];
+  /**
    * エッジ接続状況から派生的に注入されるレンダリング情報
    */
   handles?: NodeHandles;
@@ -40,6 +45,11 @@ export type GraphEdgeData = {
    * 新規作成時の既定は "both"（両通行）
    */
   direction: EdgeDirection;
+  /**
+   * 紐づけた観測点（接続エッジ）の ID 一覧。
+   * ID は webrtc の接続エッジ（AliveEdge）の id に対応
+   */
+  observationPointIds?: string[];
 };
 
 export type GraphNodeType = Node<GraphNodeData, "graph">;
