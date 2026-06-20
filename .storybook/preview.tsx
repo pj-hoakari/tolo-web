@@ -1,6 +1,8 @@
 import type { Preview } from "@storybook/nextjs-vite";
 import { initialize, mswLoader } from "msw-storybook-addon";
 import { handlers } from "../src/mocks/handlers";
+// TailwindCSS を含むグローバルスタイルを Storybook に読み込む
+import "../src/app/globals.css";
 
 // Storybook 起動時に MSW worker を初期化
 // 宣言の無いリクエストはbypass
