@@ -16,10 +16,7 @@ import type {
   GraphNodeData,
   GraphNodeType,
 } from "../type";
-import {
-  compactHandlesAfterRemoval,
-  deriveNodeHandles,
-} from "../utils/handles";
+import { assignHandlesByPosition, deriveNodeHandles } from "../utils/handles";
 import { newId } from "../utils/idGen";
 
 export type GraphSelection =
@@ -32,10 +29,15 @@ export function useGraphEditor() {
   const [edges, setEdges] = useState<GraphEdgeType[]>([]);
   const [selection, setSelection] = useState<GraphSelection>(null);
 
-  // 各ノードのハンドル配置（使用中＋空き1）をエッジ状況から導出
-  const derivedNodes = useMemo(
-    () => deriveNodeHandles(nodes, edges),
+  // ノード位置から各エッジの接続辺(上下左右)を決定
+  // それに合わせて各ノードのハンドル配置（使用中＋空き1）を導出
+  const derivedEdges = useMemo(
+    () => assignHandlesByPosition(nodes, edges),
     [nodes, edges],
+  );
+  const derivedNodes = useMemo(
+    () => deriveNodeHandles(nodes, derivedEdges),
+    [nodes, derivedEdges],
   );
 
   const onNodesChange = useCallback(
@@ -56,18 +58,7 @@ export function useGraphEditor() {
 
   const onEdgesChange = useCallback(
     (changes: EdgeChange<GraphEdgeType>[]) => {
-      const removedIds = new Set<string>();
-      for (const change of changes) {
-        if (change.type === "remove") removedIds.add(change.id);
-      }
-      setEdges((eds) => {
-        const removedEdges =
-          removedIds.size > 0 ? eds.filter((e) => removedIds.has(e.id)) : [];
-        const applied = applyEdgeChanges(changes, eds);
-        return removedEdges.length > 0
-          ? compactHandlesAfterRemoval(removedEdges, applied)
-          : applied;
-      });
+      setEdges((eds) => applyEdgeChanges(changes, eds));
       for (const change of changes) {
         if (
           change.type === "remove" &&
@@ -81,26 +72,12 @@ export function useGraphEditor() {
     [selection],
   );
 
-  // 同じハンドルを複数エッジで使い回さない
-  // 自己ループを防ぐ
   const isValidConnection = useCallback(
     (connection: Connection | GraphEdgeType): boolean => {
       const src = connection.source;
       const tgt = connection.target;
-      const srcH = connection.sourceHandle ?? null;
-      const tgtH = connection.targetHandle ?? null;
-      if (!src || !tgt || !srcH || !tgtH) return false;
-      if (src === tgt && srcH === tgtH) return false;
-      for (const e of edges) {
-        if (
-          (e.source === src && e.sourceHandle === srcH) ||
-          (e.target === src && e.targetHandle === srcH) ||
-          (e.source === tgt && e.sourceHandle === tgtH) ||
-          (e.target === tgt && e.targetHandle === tgtH)
-        ) {
-          return false;
-        }
-      }
+      if (!src || !tgt) return false;
+      if (src === tgt) return false; // 自己ループは不可
       // ノードタイプの制約
       // 既定 "both" が不可でも有効な方向があれば接続可とする
       if (resolveConnectionDirection(src, tgt, nodes, edges) === null) {
@@ -113,14 +90,7 @@ export function useGraphEditor() {
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      if (
-        !connection.source ||
-        !connection.target ||
-        !connection.sourceHandle ||
-        !connection.targetHandle
-      ) {
-        return;
-      }
+      if (!connection.source || !connection.target) return;
 
       const direction =
         resolveConnectionDirection(
@@ -133,8 +103,8 @@ export function useGraphEditor() {
         id: newId("e"),
         source: connection.source,
         target: connection.target,
-        sourceHandle: connection.sourceHandle,
-        targetHandle: connection.targetHandle,
+        // 接続辺(sourceHandle/targetHandle)は位置から自動決定
+        // 描画時に assignHandlesByPosition が付与。
         type: "graph",
         data: { direction },
       };
@@ -166,21 +136,13 @@ export function useGraphEditor() {
     if (!selection) return;
     if (selection.type === "node") {
       setNodes((nds) => nds.filter((n) => n.id !== selection.id));
-      setEdges((eds) => {
-        const removed = eds.filter(
-          (e) => e.source === selection.id || e.target === selection.id,
-        );
-        const remaining = eds.filter(
+      setEdges((eds) =>
+        eds.filter(
           (e) => e.source !== selection.id && e.target !== selection.id,
-        );
-        return compactHandlesAfterRemoval(removed, remaining);
-      });
+        ),
+      );
     } else {
-      setEdges((eds) => {
-        const removed = eds.filter((e) => e.id === selection.id);
-        const remaining = eds.filter((e) => e.id !== selection.id);
-        return compactHandlesAfterRemoval(removed, remaining);
-      });
+      setEdges((eds) => eds.filter((e) => e.id !== selection.id));
     }
     setSelection(null);
   }, [selection]);
@@ -215,15 +177,7 @@ export function useGraphEditor() {
   const reverseEdge = useCallback((id: string) => {
     setEdges((eds) =>
       eds.map((e) =>
-        e.id === id
-          ? {
-              ...e,
-              source: e.target,
-              target: e.source,
-              sourceHandle: e.targetHandle,
-              targetHandle: e.sourceHandle,
-            }
-          : e,
+        e.id === id ? { ...e, source: e.target, target: e.source } : e,
       ),
     );
   }, []);
@@ -242,16 +196,16 @@ export function useGraphEditor() {
 
   const selectedNode =
     selection?.type === "node"
-      ? nodes.find((n) => n.id === selection.id)
+      ? derivedNodes.find((n) => n.id === selection.id)
       : undefined;
   const selectedEdge =
     selection?.type === "edge"
-      ? edges.find((e) => e.id === selection.id)
+      ? derivedEdges.find((e) => e.id === selection.id)
       : undefined;
 
   return {
     nodes: derivedNodes,
-    edges,
+    edges: derivedEdges,
     selection,
     selectedNode,
     selectedEdge,
