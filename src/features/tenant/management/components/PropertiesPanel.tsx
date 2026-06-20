@@ -26,10 +26,17 @@ type Props = {
   /** 紐づけ候補となる観測点（接続中のエッジ）一覧 */
   observationPoints: AliveEdge[];
   observationPointsStatus?: AliveEdgesStatus;
+  /** いずれかのノード/ルートで使用中（＝他では選択不可）の観測点 ID 集合 */
+  usedObservationPointIds: ReadonlySet<string>;
   onRefreshObservationPoints?: () => void;
   onUpdateNode: (id: string, patch: Partial<GraphNodeData>) => void;
   onUpdateEdge: (id: string, patch: Partial<GraphEdgeData>) => void;
   onReverseEdge: (id: string) => void;
+  /** 観測点のリンク操作（対象の紐づけを ids に更新する） */
+  onLinkObservationPoints: (
+    target: { type: "node" | "edge"; id: string },
+    ids: string[],
+  ) => void;
   onDelete: () => void;
 };
 
@@ -40,10 +47,12 @@ export function PropertiesPanel({
   edges,
   observationPoints,
   observationPointsStatus,
+  usedObservationPointIds,
   onRefreshObservationPoints,
   onUpdateNode,
   onUpdateEdge,
   onReverseEdge,
+  onLinkObservationPoints,
   onDelete,
 }: Props) {
   const hasSelection = Boolean(selectedNode || selectedEdge);
@@ -60,8 +69,15 @@ export function PropertiesPanel({
             edges={edges}
             observationPoints={observationPoints}
             observationPointsStatus={observationPointsStatus}
+            usedObservationPointIds={usedObservationPointIds}
             onRefreshObservationPoints={onRefreshObservationPoints}
             onChange={(patch) => onUpdateNode(selectedNode.id, patch)}
+            onChangeObservationPoints={(ids) =>
+              onLinkObservationPoints(
+                { type: "node", id: selectedNode.id },
+                ids,
+              )
+            }
           />
         ) : selectedEdge ? (
           <EdgeForm
@@ -70,7 +86,14 @@ export function PropertiesPanel({
             edges={edges}
             observationPoints={observationPoints}
             observationPointsStatus={observationPointsStatus}
+            usedObservationPointIds={usedObservationPointIds}
             onRefreshObservationPoints={onRefreshObservationPoints}
+            onChangeObservationPoints={(ids) =>
+              onLinkObservationPoints(
+                { type: "edge", id: selectedEdge.id },
+                ids,
+              )
+            }
             sourceLabel={
               nodes.find((n) => n.id === selectedEdge.source)?.data.label ??
               selectedEdge.source
@@ -133,16 +156,20 @@ function NodeForm({
   edges,
   observationPoints,
   observationPointsStatus,
+  usedObservationPointIds,
   onRefreshObservationPoints,
   onChange,
+  onChangeObservationPoints,
 }: {
   node: GraphNodeType;
   nodes: GraphNodeType[];
   edges: GraphEdgeType[];
   observationPoints: AliveEdge[];
   observationPointsStatus?: AliveEdgesStatus;
+  usedObservationPointIds: ReadonlySet<string>;
   onRefreshObservationPoints?: () => void;
   onChange: (patch: Partial<GraphNodeData>) => void;
+  onChangeObservationPoints: (ids: string[]) => void;
 }) {
   return (
     <div className="space-y-3 rounded-md border border-zinc-200 bg-white p-3">
@@ -206,8 +233,9 @@ function NodeForm({
         linkedIds={node.data.observationPointIds ?? []}
         available={observationPoints}
         status={observationPointsStatus}
+        usedIds={usedObservationPointIds}
         onRefresh={onRefreshObservationPoints}
-        onChange={(observationPointIds) => onChange({ observationPointIds })}
+        onChange={onChangeObservationPoints}
       />
     </div>
   );
@@ -219,22 +247,26 @@ function EdgeForm({
   edges,
   observationPoints,
   observationPointsStatus,
+  usedObservationPointIds,
   onRefreshObservationPoints,
   sourceLabel,
   targetLabel,
   onChange,
   onReverse,
+  onChangeObservationPoints,
 }: {
   edge: GraphEdgeType;
   nodes: GraphNodeType[];
   edges: GraphEdgeType[];
   observationPoints: AliveEdge[];
   observationPointsStatus?: AliveEdgesStatus;
+  usedObservationPointIds: ReadonlySet<string>;
   onRefreshObservationPoints?: () => void;
   sourceLabel: string;
   targetLabel: string;
   onChange: (patch: Partial<GraphEdgeData>) => void;
   onReverse: () => void;
+  onChangeObservationPoints: (ids: string[]) => void;
 }) {
   const direction: EdgeDirection = edge.data?.direction ?? "both";
 
@@ -310,8 +342,9 @@ function EdgeForm({
         linkedIds={edge.data?.observationPointIds ?? []}
         available={observationPoints}
         status={observationPointsStatus}
+        usedIds={usedObservationPointIds}
         onRefresh={onRefreshObservationPoints}
-        onChange={(observationPointIds) => onChange({ observationPointIds })}
+        onChange={onChangeObservationPoints}
       />
     </div>
   );
@@ -320,17 +353,20 @@ function EdgeForm({
 /**
  * 観測点（接続中のエッジ）をノード/ルートに紐づけるピッカー
  * 接続中の観測点+紐づけ済みだが現在オフラインの観測点
+ * いずれかの要素で使用中の観測点は、この要素で未選択なら選択不可
  */
 function ObservationPointPicker({
   linkedIds,
   available,
   status,
+  usedIds,
   onRefresh,
   onChange,
 }: {
   linkedIds: string[];
   available: AliveEdge[];
   status?: AliveEdgesStatus;
+  usedIds: ReadonlySet<string>;
   onRefresh?: () => void;
   onChange: (ids: string[]) => void;
 }) {
@@ -381,17 +417,23 @@ function ObservationPointPicker({
         <ul className="space-y-1">
           {rows.map((row) => {
             const checked = linkedIds.includes(row.id);
+            // 自分で選択済みは解除可。他で使用中の未選択のみ選択不可
+            const disabled = !checked && usedIds.has(row.id);
             return (
               <li key={row.id}>
                 <button
                   type="button"
                   aria-pressed={checked}
+                  disabled={disabled}
                   onClick={() => toggle(row.id)}
                   className={[
                     "flex w-full items-start gap-2 rounded-md border px-2 py-1.5 text-left transition",
                     checked
                       ? "border-sky-500 bg-sky-50 ring-1 ring-sky-200"
                       : "border-zinc-200 hover:bg-zinc-50",
+                    disabled
+                      ? "cursor-not-allowed opacity-50 hover:bg-white"
+                      : "",
                   ].join(" ")}
                 >
                   <span
@@ -419,7 +461,11 @@ function ObservationPointPicker({
                         {row.id}
                       </span>
                     </span>
-                    {!row.online ? (
+                    {disabled ? (
+                      <span className="text-[9px] text-amber-600">
+                        他のポイント / ルートで使用中
+                      </span>
+                    ) : !row.online ? (
                       <span className="text-[9px] text-zinc-400">
                         オフライン
                       </span>

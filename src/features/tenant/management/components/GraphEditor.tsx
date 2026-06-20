@@ -46,6 +46,7 @@ function GraphEditorInner({
     edges,
     selectedNode,
     selectedEdge,
+    usedObservationPointIds,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -55,6 +56,7 @@ function GraphEditorInner({
     updateNodeData,
     updateEdgeData,
     reverseEdge,
+    linkObservationPoints,
     selectNode,
     selectEdge,
     clearSelection,
@@ -119,10 +121,12 @@ function GraphEditorInner({
           edges={edges}
           observationPoints={observationPoints}
           observationPointsStatus={observationPointsStatus}
+          usedObservationPointIds={usedObservationPointIds}
           onRefreshObservationPoints={refreshObservationPoints}
           onUpdateNode={updateNodeData}
           onUpdateEdge={updateEdgeData}
           onReverseEdge={reverseEdge}
+          onLinkObservationPoints={linkObservationPoints}
           onDelete={deleteSelection}
         />
       </div>

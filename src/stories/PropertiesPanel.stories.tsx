@@ -32,12 +32,14 @@ const meta = {
     edges,
     observationPoints,
     observationPointsStatus: "ready",
+    usedObservationPointIds: new Set<string>(),
     onRefreshObservationPoints: () => {},
     selectedNode: undefined,
     selectedEdge: undefined,
     onUpdateNode: () => {},
     onUpdateEdge: () => {},
     onReverseEdge: () => {},
+    onLinkObservationPoints: () => {},
     onDelete: () => {},
   },
 } satisfies Meta<typeof PropertiesPanel>;
@@ -65,6 +67,10 @@ export const NodeWithObservationPoints: Story = {
         observationPointIds: ["demo_event_cam-booth-a", "demo_event_cam-old"],
       },
     } as (typeof nodes)[number],
+    usedObservationPointIds: new Set([
+      "demo_event_cam-booth-a",
+      "demo_event_cam-old",
+    ]),
   },
 };
 
@@ -79,5 +85,13 @@ export const NoObservationPoints: Story = {
   args: {
     selectedNode: nodes.find((n) => n.id === "ph_booth"),
     observationPoints: [],
+  },
+};
+
+export const ObservationPointUsedElsewhere: Story = {
+  args: {
+    // cam-hall が他の要素で使用中 → ph_booth 選択時に cam-hall は選択不可
+    selectedNode: nodes.find((n) => n.id === "ph_booth"),
+    usedObservationPointIds: new Set(["demo_event_cam-hall"]),
   },
 };
