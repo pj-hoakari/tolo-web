@@ -126,7 +126,7 @@ export function useGraphEditor() {
           y: 80 + Math.random() * 240,
         },
         data: {
-          label: `ノード ${nodes.length + 1}`,
+          label: `ポイント ${nodes.length + 1}`,
           nodeType,
         },
       };

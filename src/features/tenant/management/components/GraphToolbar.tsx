@@ -2,6 +2,7 @@
 
 import { NODE_TYPE_DEFS } from "../nodeTypes";
 import type { NodeType } from "../type";
+import { NodeTypeIcon } from "./NodeTypeIcon";
 
 type Props = {
   onAddNode: (type: NodeType) => void;
@@ -23,11 +24,7 @@ export function GraphToolbar({ onAddNode }: Props) {
             className="flex items-center gap-1 rounded-md border border-zinc-300 bg-white px-2 py-1.5 font-medium text-xs text-zinc-700 shadow-sm hover:bg-zinc-50"
           >
             <span className="text-zinc-400">+</span>
-            <span
-              className="inline-block h-2 w-2 shrink-0 rounded-full"
-              style={{ backgroundColor: def.color }}
-              aria-hidden
-            />
+            <NodeTypeIcon type={def.type} />
             {def.label}
           </button>
         ))}

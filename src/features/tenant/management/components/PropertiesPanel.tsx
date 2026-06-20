@@ -14,6 +14,7 @@ import type {
   GraphNodeData,
   GraphNodeType,
 } from "../type";
+import { NodeTypeIcon } from "./NodeTypeIcon";
 
 type Props = {
   selectedNode: GraphNodeType | undefined;
@@ -68,7 +69,7 @@ export function PropertiesPanel({
           />
         ) : (
           <p className="text-xs text-zinc-500">
-            ノードまたはエッジを選択するとここに表示されます。
+            ポイントまたはルートを選択するとここに表示されます。
           </p>
         )}
       </div>
@@ -79,7 +80,7 @@ export function PropertiesPanel({
             onClick={onDelete}
             className="w-full rounded-md border border-red-300 bg-white px-3 py-1.5 font-medium text-red-600 text-xs shadow-sm hover:bg-red-50"
           >
-            {selectedNode ? "このノードを削除" : "このエッジを削除"}
+            {selectedNode ? "このポイントを削除" : "このルートを削除"}
           </button>
         </div>
       ) : null}
@@ -126,7 +127,7 @@ function NodeForm({
     <div className="space-y-3 rounded-md border border-zinc-200 bg-white p-3">
       <div className="flex items-center justify-between">
         <span className="rounded-full bg-sky-100 px-2 py-0.5 font-semibold text-[10px] text-sky-700">
-          ノード
+          ポイント
         </span>
         <code className="text-[10px] text-zinc-400">{node.id}</code>
       </div>
@@ -164,10 +165,7 @@ function NodeForm({
                   ].join(" ")}
                 >
                   <span className="flex items-center gap-1.5 font-medium text-xs text-zinc-900">
-                    <span
-                      className="inline-block h-2 w-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: def.color }}
-                    />
+                    <NodeTypeIcon type={def.type} />
                     {def.label}
                   </span>
                   <span className="mt-0.5 text-[10px] text-zinc-500">
@@ -221,7 +219,7 @@ function EdgeForm({
     <div className="space-y-3 rounded-md border border-zinc-200 bg-white p-3">
       <div className="flex items-center justify-between">
         <span className="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-[10px] text-amber-700">
-          エッジ
+          ルート
         </span>
         <code className="text-[10px] text-zinc-400">{edge.id}</code>
       </div>

@@ -42,11 +42,16 @@ export type NodeShape =
       clipPath: string;
     });
 
+export type NodeIcon =
+  | { kind: "circle"; r: number }
+  | { kind: "polygon"; points: string };
+
 export type NodeTypeDef = {
   type: NodeType;
   label: string;
   description: string;
   color: string;
+  icon: NodeIcon;
   shape: NodeShape;
   constraints?: NodeTypeConstraint[];
 };
@@ -63,6 +68,8 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
     label: "目的地",
     description: "例: 展示ブース",
     color: "#0ea5e9",
+    // 四角形（正方形）
+    icon: { kind: "polygon", points: "12,12 88,12 88,88 12,88" },
     // 四角形
     shape: { kind: "rounded", borderRadius: "8px" },
   },
@@ -71,6 +78,8 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
     label: "目的地 / 通過",
     description: "例: 壁展示（目的地にも通過にもなりうる）",
     color: "#22c55e",
+    // 円形
+    icon: { kind: "circle", r: 44 },
     // 角丸が強い四角形
     shape: { kind: "rounded", borderRadius: "22px" },
   },
@@ -79,6 +88,8 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
     label: "通過のみ",
     description: "例: 通路の分岐",
     color: "#a1a1aa",
+    // ひし形
+    icon: { kind: "polygon", points: "50,6 94,50 50,94 6,50" },
     // 四隅を切り落とした、ひし形に近い四角形（八角形）
     shape: {
       kind: "clip",
@@ -91,6 +102,8 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
     label: "入退出点",
     description: "入力または出力のどちらか一方のみ",
     color: "#f59e0b",
+    // 三角形（▷）
+    icon: { kind: "polygon", points: "16,8 92,50 16,92" },
     // 横向きの三角形(▷)に近い台形
     shape: {
       kind: "clip",

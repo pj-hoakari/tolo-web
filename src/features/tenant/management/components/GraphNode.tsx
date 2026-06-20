@@ -9,6 +9,7 @@ import {
 import { type CSSProperties, useEffect, useMemo } from "react";
 import { getNodeTypeDef } from "../nodeTypes";
 import type { GraphNodeType, HandleSide, HandleSlot } from "../type";
+import { NodeTypeIcon } from "./NodeTypeIcon";
 
 const positionMap: Record<HandleSide, Position> = {
   top: Position.Top,
@@ -67,10 +68,7 @@ export function GraphNode({ id, data, selected }: NodeProps<GraphNodeType>) {
         ].join(" ")}
       >
         <div className="flex items-center justify-center gap-1 text-[10px] text-zinc-500">
-          <span
-            className="inline-block h-2 w-2 shrink-0 rounded-full"
-            style={{ backgroundColor: typeDef.color }}
-          />
+          <NodeTypeIcon type={data.nodeType} />
           {typeDef.label}
         </div>
         <div className="text-center font-semibold text-sm text-zinc-900">
