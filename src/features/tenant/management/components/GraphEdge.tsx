@@ -5,6 +5,10 @@ import type { GraphEdgeType } from "../type";
 
 const STROKE = "#475569";
 const STROKE_SELECTED = "#2563eb";
+/** ルート上を通過する円アイコンの半径 */
+const DOT_RADIUS = 3.5;
+/** 円アイコンが1区間（始点→終点）を通過する時間(秒) */
+const DOT_LEG_DURATION = 2;
 
 export function GraphEdge({
   id,
@@ -27,19 +31,56 @@ export function GraphEdge({
   });
 
   const direction = data?.direction ?? "both";
+  const both = direction === "both";
   const stroke = selected ? STROKE_SELECTED : STROKE;
-  const strokeWidth = selected ? 2.5 : 1.6;
+  const strokeWidth = selected ? 2.5 : 2;
   const marker = selected ? "url(#graph-arrow-selected)" : "url(#graph-arrow)";
-  const markerStart = direction === "both" ? marker : undefined;
 
   return (
-    <BaseEdge
-      id={id}
-      path={path}
-      style={{ stroke, strokeWidth }}
-      markerEnd={marker}
-      markerStart={markerStart}
-    />
+    <>
+      <BaseEdge
+        id={id}
+        path={path}
+        markerStart={both ? marker : undefined}
+        markerEnd={marker}
+        style={{ stroke, strokeWidth }}
+      />
+      {/* ルート上を定期的に通過する円アイコン
+          片側通行は始点→終点へ1つ、
+          両通行は逆向きの2つを同周期で流して交差 */}
+      <RouteDot path={path} color={stroke} />
+      {both ? <RouteDot path={path} color={stroke} reverse /> : null}
+    </>
+  );
+}
+
+/** ルート(path)上を一定周期で通過する円アイコン reverse=終点→始点。 */
+function RouteDot({
+  path,
+  color,
+  reverse,
+}: {
+  path: string;
+  color: string;
+  reverse?: boolean;
+}) {
+  return (
+    <circle
+      r={DOT_RADIUS}
+      fill={color}
+      stroke="#ffffff"
+      strokeWidth={1.5}
+      style={{ pointerEvents: "none" }}
+    >
+      <animateMotion
+        dur={`${DOT_LEG_DURATION}s`}
+        repeatCount="indefinite"
+        path={path}
+        calcMode="linear"
+        keyPoints={reverse ? "1;0" : "0;1"}
+        keyTimes="0;1"
+      />
+    </circle>
   );
 }
 
