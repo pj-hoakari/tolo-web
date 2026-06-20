@@ -1,5 +1,3 @@
-"use client";
-
 import { useId } from "react";
 import type { AliveEdgesStatus } from "@/features/tenant/webrtc/hooks/useAliveEdges";
 import type { AliveEdge } from "@/features/tenant/webrtc/type";

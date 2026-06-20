@@ -1,5 +1,3 @@
-"use client";
-
 import { type ChangeEvent, useId, useState } from "react";
 import type { DetectCrowdStatus } from "../hooks/useDetectCrowd";
 import {
