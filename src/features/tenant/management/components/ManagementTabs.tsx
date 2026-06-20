@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { ConnectedEdges } from "@/features/tenant/webrtc/components/ConnectedEdges";
+import type { GraphData } from "../type";
 import { GraphEditor } from "./GraphEditor";
 
 type TabId = "graph" | "edges";
@@ -9,6 +10,7 @@ type TabId = "graph" | "edges";
 type Props = {
   tenantId: string;
   eventId: string;
+  initialGraph?: GraphData;
 };
 
 const TABS: { id: TabId; label: string }[] = [
@@ -16,7 +18,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "edges", label: "接続エッジ" },
 ];
 
-export function ManagementTabs({ tenantId, eventId }: Props) {
+export function ManagementTabs({ tenantId, eventId, initialGraph }: Props) {
   const [active, setActive] = useState<TabId>("graph");
   const baseId = useId();
   const tabId = (id: TabId) => `${baseId}-tab-${id}`;
@@ -62,7 +64,7 @@ export function ManagementTabs({ tenantId, eventId }: Props) {
           className="h-full"
         >
           <div className="h-full w-full overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
-            <GraphEditor />
+            <GraphEditor initialGraph={initialGraph} />
           </div>
         </div>
 

@@ -44,3 +44,8 @@ export type GraphEdgeData = {
 
 export type GraphNodeType = Node<GraphNodeData, "graph">;
 export type GraphEdgeType = Edge<GraphEdgeData, "graph">;
+
+export type GraphData = {
+  nodes: GraphNodeType[];
+  edges: GraphEdgeType[];
+};

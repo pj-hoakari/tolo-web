@@ -14,7 +14,7 @@ import {
 } from "@xyflow/react";
 import { useGraphEditor } from "../hooks/useGraphEditor";
 import { DEFAULT_NODE_TYPE, getNodeTypeDef } from "../nodeTypes";
-import type { GraphNodeType } from "../type";
+import type { GraphData, GraphNodeType } from "../type";
 import { GraphEdge, GraphEdgeMarkers } from "./GraphEdge";
 import { GraphNode } from "./GraphNode";
 import { GraphToolbar } from "./GraphToolbar";
@@ -23,7 +23,7 @@ import { PropertiesPanel } from "./PropertiesPanel";
 const nodeTypes: NodeTypes = { graph: GraphNode };
 const edgeTypes: EdgeTypes = { graph: GraphEdge };
 
-function GraphEditorInner() {
+function GraphEditorInner({ initialGraph }: { initialGraph?: GraphData }) {
   const {
     nodes,
     edges,
@@ -41,7 +41,7 @@ function GraphEditorInner() {
     selectNode,
     selectEdge,
     clearSelection,
-  } = useGraphEditor();
+  } = useGraphEditor(initialGraph);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -93,10 +93,10 @@ function GraphEditorInner() {
   );
 }
 
-export function GraphEditor() {
+export function GraphEditor({ initialGraph }: { initialGraph?: GraphData }) {
   return (
     <ReactFlowProvider>
-      <GraphEditorInner />
+      <GraphEditorInner initialGraph={initialGraph} />
     </ReactFlowProvider>
   );
 }

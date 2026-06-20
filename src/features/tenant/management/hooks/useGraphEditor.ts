@@ -10,7 +10,9 @@ import {
 } from "@xyflow/react";
 import { useCallback, useMemo, useState } from "react";
 import { DEFAULT_NODE_TYPE, resolveConnectionDirection } from "../nodeTypes";
+import { PLACEHOLDER_GRAPH } from "../placeholderGraph";
 import type {
+  GraphData,
   GraphEdgeData,
   GraphEdgeType,
   GraphNodeData,
@@ -25,9 +27,13 @@ export type GraphSelection =
   | { type: "edge"; id: string }
   | null;
 
-export function useGraphEditor() {
-  const [nodes, setNodes] = useState<GraphNodeType[]>([]);
-  const [edges, setEdges] = useState<GraphEdgeType[]>([]);
+export function useGraphEditor(initial?: GraphData) {
+  const [nodes, setNodes] = useState<GraphNodeType[]>(
+    initial?.nodes ?? PLACEHOLDER_GRAPH.nodes,
+  );
+  const [edges, setEdges] = useState<GraphEdgeType[]>(
+    initial?.edges ?? PLACEHOLDER_GRAPH.edges,
+  );
   const [selection, setSelection] = useState<GraphSelection>(null);
 
   // ノード位置から各エッジの接続辺(上下左右)を決定
