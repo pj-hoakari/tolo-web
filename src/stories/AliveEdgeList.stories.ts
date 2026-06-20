@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { AliveEdgeList } from "@/features/tenant/webrtc/components/AliveEdgeList";
+import { sampleAliveEdges } from "@/mocks/fixtures/edges";
 
 const meta = {
   title: "Tenant/WebRTC/AliveEdgeList",
@@ -21,16 +22,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const sampleEdges = [
-  {
-    id: "tenant-1_event-1_8c1f0e2a",
-    lastSeenAt: new Date("2026-06-14T10:00:00"),
-  },
-  {
-    id: "tenant-1_event-1_3b9d77f4",
-    lastSeenAt: new Date("2026-06-14T10:00:05"),
-  },
-];
+const sampleEdges = sampleAliveEdges;
 
 export const Empty: Story = {
   args: {
