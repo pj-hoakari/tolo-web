@@ -1,6 +1,12 @@
 "use client";
 
 import { useId } from "react";
+import {
+  NODE_TYPE_DEFS,
+  validateAssignType,
+  validateEdgeDirection,
+  validateReverseEdge,
+} from "../nodeTypes";
 import type {
   EdgeDirection,
   GraphEdgeData,
@@ -13,6 +19,7 @@ type Props = {
   selectedNode: GraphNodeType | undefined;
   selectedEdge: GraphEdgeType | undefined;
   nodes: GraphNodeType[];
+  edges: GraphEdgeType[];
   onUpdateNode: (id: string, patch: Partial<GraphNodeData>) => void;
   onUpdateEdge: (id: string, patch: Partial<GraphEdgeData>) => void;
   onReverseEdge: (id: string) => void;
@@ -22,6 +29,7 @@ export function PropertiesPanel({
   selectedNode,
   selectedEdge,
   nodes,
+  edges,
   onUpdateNode,
   onUpdateEdge,
   onReverseEdge,
@@ -35,11 +43,15 @@ export function PropertiesPanel({
         {selectedNode ? (
           <NodeForm
             node={selectedNode}
+            nodes={nodes}
+            edges={edges}
             onChange={(patch) => onUpdateNode(selectedNode.id, patch)}
           />
         ) : selectedEdge ? (
           <EdgeForm
             edge={selectedEdge}
+            nodes={nodes}
+            edges={edges}
             sourceLabel={
               nodes.find((n) => n.id === selectedEdge.source)?.data.label ??
               selectedEdge.source
@@ -87,9 +99,13 @@ function Field({
 
 function NodeForm({
   node,
+  nodes,
+  edges,
   onChange,
 }: {
   node: GraphNodeType;
+  nodes: GraphNodeType[];
+  edges: GraphEdgeType[];
   onChange: (patch: Partial<GraphNodeData>) => void;
 }) {
   return (
@@ -110,24 +126,83 @@ function NodeForm({
           />
         )}
       </Field>
+
+      <div>
+        <p className="mb-1 font-medium text-[11px] text-zinc-600">タイプ</p>
+        <div className="space-y-1">
+          {NODE_TYPE_DEFS.map((def) => {
+            const selected = def.type === node.data.nodeType;
+            const result = validateAssignType(def.type, node.id, nodes, edges);
+            const assignable = selected || result.ok;
+            return (
+              <div key={def.type} className="space-y-0.5">
+                <button
+                  type="button"
+                  aria-pressed={selected}
+                  disabled={!assignable}
+                  onClick={() => onChange({ nodeType: def.type })}
+                  className={[
+                    "flex w-full flex-col rounded-md border px-2 py-1.5 text-left transition",
+                    selected
+                      ? "border-sky-500 bg-sky-50 ring-1 ring-sky-200"
+                      : "border-zinc-200 hover:bg-zinc-50",
+                    assignable ? "" : "cursor-not-allowed opacity-40",
+                  ].join(" ")}
+                >
+                  <span className="flex items-center gap-1.5 font-medium text-xs text-zinc-900">
+                    <span
+                      className="inline-block h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: def.color }}
+                    />
+                    {def.label}
+                  </span>
+                  <span className="mt-0.5 text-[10px] text-zinc-500">
+                    {def.description}
+                  </span>
+                </button>
+                {!selected && !result.ok ? (
+                  <ConstraintNote message={result.message} />
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
 
 function EdgeForm({
   edge,
+  nodes,
+  edges,
   sourceLabel,
   targetLabel,
   onChange,
   onReverse,
 }: {
   edge: GraphEdgeType;
+  nodes: GraphNodeType[];
+  edges: GraphEdgeType[];
   sourceLabel: string;
   targetLabel: string;
   onChange: (patch: Partial<GraphEdgeData>) => void;
   onReverse: () => void;
 }) {
   const direction: EdgeDirection = edge.data?.direction ?? "both";
+
+  const bothResult = validateEdgeDirection(edge, "both", nodes, edges);
+  const onewayResult = validateEdgeDirection(edge, "oneway", nodes, edges);
+  const bothDisabled = direction !== "both" && !bothResult.ok;
+  const onewayDisabled = direction !== "oneway" && !onewayResult.ok;
+  const directionReason = !bothResult.ok
+    ? bothResult.message
+    : !onewayResult.ok
+      ? onewayResult.message
+      : null;
+
+  const reverseResult = validateReverseEdge(edge, nodes, edges);
+
   return (
     <div className="space-y-3 rounded-md border border-zinc-200 bg-white p-3">
       <div className="flex items-center justify-between">
@@ -152,40 +227,58 @@ function EdgeForm({
         <div className="flex gap-1 rounded-md bg-zinc-100 p-0.5">
           <SegmentToggle
             active={direction === "both"}
+            disabled={bothDisabled}
             onClick={() => onChange({ direction: "both" })}
             label="両通行可 ⇌"
           />
           <SegmentToggle
             active={direction === "oneway"}
+            disabled={onewayDisabled}
             onClick={() => onChange({ direction: "oneway" })}
             label="片方向 →"
           />
         </div>
+        {directionReason ? (
+          <div className="mt-1">
+            <ConstraintNote message={directionReason} />
+          </div>
+        ) : null}
       </div>
 
-      <button
-        type="button"
-        onClick={onReverse}
-        disabled={direction === "both"}
-        title={
-          direction === "both"
-            ? "両通行可のエッジは反転の必要がありません"
-            : "始点と終点を入れ替えます"
-        }
-        className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        向きを反転（始点↔終点）
-      </button>
+      <div className="space-y-1">
+        <button
+          type="button"
+          onClick={onReverse}
+          disabled={direction === "both" || !reverseResult.ok}
+          className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          向きを反転（始点↔終点）
+        </button>
+        {direction !== "both" && !reverseResult.ok ? (
+          <ConstraintNote message={reverseResult.message} />
+        ) : null}
+      </div>
     </div>
+  );
+}
+
+function ConstraintNote({ message }: { message: string }) {
+  return (
+    <p className="flex items-start gap-1 text-[10px] text-amber-600">
+      <span aria-hidden>⚠</span>
+      <span>{message}</span>
+    </p>
   );
 }
 
 function SegmentToggle({
   active,
+  disabled,
   onClick,
   label,
 }: {
   active: boolean;
+  disabled?: boolean;
   onClick: () => void;
   label: string;
 }) {
@@ -193,12 +286,14 @@ function SegmentToggle({
     <button
       type="button"
       aria-pressed={active}
+      disabled={disabled}
       onClick={onClick}
       className={[
         "flex-1 rounded-[5px] px-2 py-1 font-medium text-xs transition",
         active
           ? "bg-white text-sky-700 shadow-sm"
           : "text-zinc-500 hover:text-zinc-700",
+        disabled ? "cursor-not-allowed opacity-40 hover:text-zinc-500" : "",
       ].join(" ")}
     >
       {label}

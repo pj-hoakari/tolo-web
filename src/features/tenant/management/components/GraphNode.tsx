@@ -7,6 +7,7 @@ import {
   useUpdateNodeInternals,
 } from "@xyflow/react";
 import { useEffect, useMemo } from "react";
+import { getNodeTypeDef } from "../nodeTypes";
 import type { GraphNodeType, HandleSide, HandleSlot } from "../type";
 
 const positionMap: Record<HandleSide, Position> = {
@@ -20,6 +21,7 @@ const SIDES: HandleSide[] = ["top", "right", "bottom", "left"];
 
 export function GraphNode({ id, data, selected }: NodeProps<GraphNodeType>) {
   const handles = data.handles;
+  const typeDef = getNodeTypeDef(data.nodeType);
   const updateNodeInternals = useUpdateNodeInternals();
 
   // ハンドル構成（id・index・total）が変化したら React Flow の内部キャッシュを更新し、
@@ -45,6 +47,13 @@ export function GraphNode({ id, data, selected }: NodeProps<GraphNodeType>) {
           : "border-zinc-300 hover:border-zinc-400",
       ].join(" ")}
     >
+      <div className="flex items-center justify-center gap-1 text-[10px] text-zinc-500">
+        <span
+          className="inline-block h-2 w-2 shrink-0 rounded-full"
+          style={{ backgroundColor: typeDef.color }}
+        />
+        {typeDef.label}
+      </div>
       <div className="text-center font-semibold text-sm text-zinc-900">
         {data.label}
       </div>

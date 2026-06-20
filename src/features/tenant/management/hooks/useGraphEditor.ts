@@ -9,6 +9,7 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 import { useCallback, useMemo, useState } from "react";
+import { DEFAULT_NODE_TYPE, resolveConnectionDirection } from "../nodeTypes";
 import type {
   GraphEdgeData,
   GraphEdgeType,
@@ -100,32 +101,48 @@ export function useGraphEditor() {
           return false;
         }
       }
+      // ノードタイプの制約
+      // 既定 "both" が不可でも有効な方向があれば接続可とする
+      if (resolveConnectionDirection(src, tgt, nodes, edges) === null) {
+        return false;
+      }
       return true;
     },
-    [edges],
+    [nodes, edges],
   );
 
-  const onConnect = useCallback((connection: Connection) => {
-    if (
-      !connection.source ||
-      !connection.target ||
-      !connection.sourceHandle ||
-      !connection.targetHandle
-    ) {
-      return;
-    }
-    const newEdge: GraphEdgeType = {
-      id: newId("e"),
-      source: connection.source,
-      target: connection.target,
-      sourceHandle: connection.sourceHandle,
-      targetHandle: connection.targetHandle,
-      type: "graph",
-      data: { direction: "both" },
-    };
-    setEdges((eds) => addEdge(newEdge, eds));
-    setSelection({ type: "edge", id: newEdge.id });
-  }, []);
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      if (
+        !connection.source ||
+        !connection.target ||
+        !connection.sourceHandle ||
+        !connection.targetHandle
+      ) {
+        return;
+      }
+
+      const direction =
+        resolveConnectionDirection(
+          connection.source,
+          connection.target,
+          nodes,
+          edges,
+        ) ?? "both";
+      const newEdge: GraphEdgeType = {
+        id: newId("e"),
+        source: connection.source,
+        target: connection.target,
+        sourceHandle: connection.sourceHandle,
+        targetHandle: connection.targetHandle,
+        type: "graph",
+        data: { direction },
+      };
+      setEdges((eds) => addEdge(newEdge, eds));
+      setSelection({ type: "edge", id: newEdge.id });
+    },
+    [nodes, edges],
+  );
 
   const addNode = useCallback(() => {
     const id = newId("n");
@@ -136,7 +153,10 @@ export function useGraphEditor() {
         x: 80 + Math.random() * 320,
         y: 80 + Math.random() * 240,
       },
-      data: { label: `ノード ${nodes.length + 1}` },
+      data: {
+        label: `ノード ${nodes.length + 1}`,
+        nodeType: DEFAULT_NODE_TYPE,
+      },
     };
     setNodes((nds) => [...nds, newNode]);
     setSelection({ type: "node", id });

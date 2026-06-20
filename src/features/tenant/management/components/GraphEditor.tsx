@@ -13,6 +13,8 @@ import {
   ReactFlowProvider,
 } from "@xyflow/react";
 import { useGraphEditor } from "../hooks/useGraphEditor";
+import { DEFAULT_NODE_TYPE, getNodeTypeDef } from "../nodeTypes";
+import type { GraphNodeType } from "../type";
 import { GraphEdge, GraphEdgeMarkers } from "./GraphEdge";
 import { GraphNode } from "./GraphNode";
 import { GraphToolbar } from "./GraphToolbar";
@@ -74,7 +76,9 @@ function GraphEditorInner() {
             <MiniMap
               pannable
               zoomable
-              nodeColor={() => "#0ea5e9"}
+              nodeColor={(n: GraphNodeType) =>
+                getNodeTypeDef(n.data?.nodeType ?? DEFAULT_NODE_TYPE).color
+              }
               maskColor="rgba(0,0,0,0.08)"
             />
           </ReactFlow>
@@ -83,6 +87,7 @@ function GraphEditorInner() {
           selectedNode={selectedNode}
           selectedEdge={selectedEdge}
           nodes={nodes}
+          edges={edges}
           onUpdateNode={updateNodeData}
           onUpdateEdge={updateEdgeData}
           onReverseEdge={reverseEdge}

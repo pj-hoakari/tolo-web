@@ -15,8 +15,15 @@ export type HandleSlot = {
 
 export type NodeHandles = Record<HandleSide, HandleSlot[]>;
 
+export type NodeType =
+  | "GOAL"
+  | "GOAL_TRANSIT_MIXED"
+  | "TRANSIT_ONLY"
+  | "BOUNDARY";
+
 export type GraphNodeData = {
   label: string;
+  nodeType: NodeType;
   /**
    * エッジ接続状況から派生的に注入されるレンダリング情報
    */
