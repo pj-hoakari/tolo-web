@@ -1,5 +1,3 @@
-"use client";
-
 import { NODE_TYPE_DEFS } from "../nodeTypes";
 import type { NodeType } from "../type";
 import { NodeTypeIcon } from "./NodeTypeIcon";
