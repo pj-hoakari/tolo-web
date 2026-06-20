@@ -23,9 +23,10 @@ export function GraphNode({ id, data, selected }: NodeProps<GraphNodeType>) {
   const handles = data.handles;
   const typeDef = getNodeTypeDef(data.nodeType);
   const shape = typeDef.shape;
-  const shapeStyle: CSSProperties = shape.clipPath
-    ? { clipPath: shape.clipPath }
-    : { borderRadius: shape.borderRadius };
+  const shapeStyle: CSSProperties =
+    shape.kind === "clip"
+      ? { clipPath: shape.clipPath }
+      : { borderRadius: shape.borderRadius };
   const updateNodeInternals = useUpdateNodeInternals();
 
   // ハンドル構成（id・index・total）が変化したら React Flow の内部キャッシュを更新し、

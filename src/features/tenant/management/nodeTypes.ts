@@ -24,18 +24,23 @@ export type NodeTypeConstraint = {
   validate: (ctx: NodeValidationContext) => boolean;
 };
 
-/**
- * ノードの描画形状。多角形は clipPath、角丸四角は borderRadius で表現する。
- * どちらか一方を指定する。
- */
-export type NodeShape = {
-  /** CSS clip-path */
-  clipPath?: string;
-  /** CSS border-radius（角丸四角） */
-  borderRadius?: string;
-  /** 内容側に付与する追加クラス（はみ出し回避余白等） */
+type NodeShapeBase = {
   contentClassName?: string;
 };
+
+export type NodeShape =
+  | (NodeShapeBase & {
+      /** border-radius による四角形ベースの描画 */
+      kind: "rounded";
+      /** CSS border-radius */
+      borderRadius: string;
+    })
+  | (NodeShapeBase & {
+      /** clip-path による多角形の描画 */
+      kind: "clip";
+      /** CSS clip-path */
+      clipPath: string;
+    });
 
 export type NodeTypeDef = {
   type: NodeType;
@@ -59,7 +64,7 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
     description: "例: 展示ブース",
     color: "#0ea5e9",
     // 四角形
-    shape: { borderRadius: "8px" },
+    shape: { kind: "rounded", borderRadius: "8px" },
   },
   {
     type: "GOAL_TRANSIT_MIXED",
@@ -67,7 +72,7 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
     description: "例: 壁展示（目的地にも通過にもなりうる）",
     color: "#22c55e",
     // 角丸が強い四角形
-    shape: { borderRadius: "22px" },
+    shape: { kind: "rounded", borderRadius: "22px" },
   },
   {
     type: "TRANSIT_ONLY",
@@ -76,6 +81,7 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
     color: "#a1a1aa",
     // 四隅を切り落とした、ひし形に近い四角形（八角形）
     shape: {
+      kind: "clip",
       clipPath:
         "polygon(25% 0, 75% 0, 100% 35%, 100% 65%, 75% 100%, 25% 100%, 0 65%, 0 35%)",
     },
@@ -87,6 +93,7 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
     color: "#f59e0b",
     // 横向きの三角形(▷)に近い台形
     shape: {
+      kind: "clip",
       clipPath: "polygon(0 0, 100% 24%, 100% 76%, 0 100%)",
       contentClassName: "pr-3",
     },
