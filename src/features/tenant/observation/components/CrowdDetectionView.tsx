@@ -70,7 +70,7 @@ export function CrowdDetectionView({
           autoPlay
           playsInline
           muted
-          className="aspect-video w-full rounded bg-black"
+          className="block h-auto w-full rounded bg-black"
         >
           <track kind="captions" />
         </video>
