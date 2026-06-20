@@ -55,7 +55,7 @@ export function ManagementTabs({ tenantId, eventId, initialGraph }: Props) {
         })}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-hidden px-10 py-6">
+      <div className="min-h-0 flex-1 overflow-hidden px-2 py-2">
         <div
           role="tabpanel"
           id={panelId("graph")}

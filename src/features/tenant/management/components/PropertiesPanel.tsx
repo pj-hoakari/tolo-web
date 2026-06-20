@@ -69,7 +69,7 @@ export function PropertiesPanel({
           />
         ) : (
           <p className="text-xs text-zinc-500">
-            ポイントまたはルートを選択するとここに表示されます。
+            ポイントまたはルートを選択してください。
           </p>
         )}
       </div>
