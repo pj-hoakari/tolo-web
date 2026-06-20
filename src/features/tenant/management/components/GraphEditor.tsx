@@ -13,6 +13,7 @@ import {
   ReactFlowProvider,
 } from "@xyflow/react";
 import { type Ref, useImperativeHandle } from "react";
+import { useAliveEdges } from "@/features/tenant/webrtc/hooks/useAliveEdges";
 import { useGraphEditor } from "../hooks/useGraphEditor";
 import { DEFAULT_NODE_TYPE, getNodeTypeDef } from "../nodeTypes";
 import type { GraphData, GraphNodeType } from "../type";
@@ -29,10 +30,14 @@ export type GraphEditorHandle = {
 };
 
 type GraphEditorProps = {
+  tenantId: string;
+  eventId: string;
   initialGraph?: GraphData;
 };
 
 function GraphEditorInner({
+  tenantId,
+  eventId,
   initialGraph,
   handleRef,
 }: GraphEditorProps & { handleRef?: Ref<GraphEditorHandle> }) {
@@ -41,6 +46,7 @@ function GraphEditorInner({
     edges,
     selectedNode,
     selectedEdge,
+    usedObservationPointIds,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -50,11 +56,19 @@ function GraphEditorInner({
     updateNodeData,
     updateEdgeData,
     reverseEdge,
+    linkObservationPoints,
     selectNode,
     selectEdge,
     clearSelection,
     getGraphData,
   } = useGraphEditor(initialGraph);
+
+  // 紐づけ候補となる観測点（接続中のエッジ）一覧
+  const {
+    edges: observationPoints,
+    status: observationPointsStatus,
+    refresh: refreshObservationPoints,
+  } = useAliveEdges({ tenantId, eventId });
 
   // 親から ref 経由で編集済みデータを取得できるように
   useImperativeHandle(handleRef, () => ({ getGraphData }), [getGraphData]);
@@ -105,9 +119,14 @@ function GraphEditorInner({
           selectedEdge={selectedEdge}
           nodes={nodes}
           edges={edges}
+          observationPoints={observationPoints}
+          observationPointsStatus={observationPointsStatus}
+          usedObservationPointIds={usedObservationPointIds}
+          onRefreshObservationPoints={refreshObservationPoints}
           onUpdateNode={updateNodeData}
           onUpdateEdge={updateEdgeData}
           onReverseEdge={reverseEdge}
+          onLinkObservationPoints={linkObservationPoints}
           onDelete={deleteSelection}
         />
       </div>
@@ -116,12 +135,19 @@ function GraphEditorInner({
 }
 
 export function GraphEditor({
+  tenantId,
+  eventId,
   initialGraph,
   ref,
 }: GraphEditorProps & { ref?: Ref<GraphEditorHandle> }) {
   return (
     <ReactFlowProvider>
-      <GraphEditorInner initialGraph={initialGraph} handleRef={ref} />
+      <GraphEditorInner
+        tenantId={tenantId}
+        eventId={eventId}
+        initialGraph={initialGraph}
+        handleRef={ref}
+      />
     </ReactFlowProvider>
   );
 }

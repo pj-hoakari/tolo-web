@@ -64,7 +64,11 @@ export function ManagementTabs({ tenantId, eventId, initialGraph }: Props) {
           className="h-full"
         >
           <div className="h-full w-full overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
-            <GraphEditor initialGraph={initialGraph} />
+            <GraphEditor
+              tenantId={tenantId}
+              eventId={eventId}
+              initialGraph={initialGraph}
+            />
           </div>
         </div>
 

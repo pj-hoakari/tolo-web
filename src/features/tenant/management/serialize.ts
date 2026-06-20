@@ -17,7 +17,13 @@ export function toGraphData(
         x: Math.round(n.position.x),
         y: Math.round(n.position.y),
       },
-      data: { label: n.data.label, nodeType: n.data.nodeType },
+      data: {
+        label: n.data.label,
+        nodeType: n.data.nodeType,
+        ...(n.data.observationPointIds && n.data.observationPointIds.length > 0
+          ? { observationPointIds: n.data.observationPointIds }
+          : {}),
+      },
     })),
     edges: edges.map((e) => ({
       id: e.id,
@@ -27,6 +33,9 @@ export function toGraphData(
       data: {
         direction: e.data?.direction ?? "both",
         ...(e.data?.label !== undefined ? { label: e.data.label } : {}),
+        ...(e.data?.observationPointIds && e.data.observationPointIds.length > 0
+          ? { observationPointIds: e.data.observationPointIds }
+          : {}),
       },
     })),
   };
