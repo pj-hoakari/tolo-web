@@ -1,4 +1,4 @@
-import { ConnectedEdges } from "@/features/tenant/webrtc/components/ConnectedEdges";
+import { ManagementTabs } from "@/features/tenant/management/components/ManagementTabs";
 
 export default async function TenantManagement({
   params,
@@ -8,12 +8,12 @@ export default async function TenantManagement({
   const { tenantId, eventId } = await params;
 
   return (
-    <div className="flex flex-col">
-      <header className="mb-4 w-full">
+    <div className="flex h-screen flex-col">
+      <header className="w-full">
         <h2 className="px-10 py-5 font-bold text-2xl">{tenantId} 管理ページ</h2>
       </header>
-      <main className="flex w-full flex-col items-center gap-4">
-        <ConnectedEdges tenantId={tenantId} eventId={eventId} />
+      <main className="flex w-full min-h-0 flex-1">
+        <ManagementTabs tenantId={tenantId} eventId={eventId} />
       </main>
     </div>
   );

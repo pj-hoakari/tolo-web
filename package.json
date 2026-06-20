@@ -19,13 +19,14 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@pj-hoakari/web-crowd-detection-utils": "^0.6.0",
     "@bufbuild/protobuf": "^2.12.0",
     "@connectrpc/connect": "^2.1.2",
     "@connectrpc/connect-node": "^2.1.2",
     "@orpc/client": "^1.14.6",
     "@orpc/server": "^1.14.6",
     "@pj-hoakari/tolo-signaling-client-es": "0.1.0-rc",
+    "@pj-hoakari/web-crowd-detection-utils": "^0.6.0",
+    "@xyflow/react": "^12.11.0",
     "firebase": "^12.14.0",
     "next": "16.2.9",
     "react": "19.2.7",
