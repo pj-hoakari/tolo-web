@@ -17,13 +17,13 @@ export function VideoReceiverView({
 }: VideoReceiverViewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  const stopped = status === "disconnected";
+
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.srcObject = stream;
     }
   }, [stream]);
-
-  const stopped = status === "disconnected";
 
   return (
     <div className="flex w-full flex-col items-center gap-2">
@@ -39,7 +39,7 @@ export function VideoReceiverView({
               ref={videoRef}
               autoPlay
               playsInline
-              className="aspect-video w-full rounded bg-black"
+              className="block h-auto w-full rounded bg-black"
             >
               <track kind="captions" />
             </video>
