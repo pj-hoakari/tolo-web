@@ -14,6 +14,7 @@ export function GraphEdge({
   targetY,
   sourcePosition,
   targetPosition,
+  data,
   selected,
 }: EdgeProps<GraphEdgeType>) {
   const [path] = getBezierPath({
@@ -25,18 +26,19 @@ export function GraphEdge({
     targetPosition,
   });
 
+  const direction = data?.direction ?? "both";
   const stroke = selected ? STROKE_SELECTED : STROKE;
   const strokeWidth = selected ? 2.5 : 1.6;
-  const markerEnd = selected
-    ? "url(#graph-arrow-selected)"
-    : "url(#graph-arrow)";
+  const marker = selected ? "url(#graph-arrow-selected)" : "url(#graph-arrow)";
+  const markerStart = direction === "both" ? marker : undefined;
 
   return (
     <BaseEdge
       id={id}
       path={path}
       style={{ stroke, strokeWidth }}
-      markerEnd={markerEnd}
+      markerEnd={marker}
+      markerStart={markerStart}
     />
   );
 }

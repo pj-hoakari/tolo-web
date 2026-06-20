@@ -1,16 +1,15 @@
 import type { Edge, Node } from "@xyflow/react";
 
-/** ノードの4辺。各辺に複数のハンドル（接続点）を配置する。 */
+/** ノードの4辺。各辺に複数のハンドル（接続点）を配置 */
 export type HandleSide = "top" | "right" | "bottom" | "left";
 
-/** 1つのハンドル（エッジの接続点）を表すレンダリング用スロット。 */
+/** 1つのハンドル（エッジの接続点）を表すレンダリング用スロット */
 export type HandleSlot = {
   id: string;
   side: HandleSide;
   index: number;
-  /** すでにエッジに使用されているか。 */
   used: boolean;
-  /** 同じ辺上のスロット総数（座標計算に使用）。 */
+  /** 同じ辺上のスロット総数（座標計算に使用） */
   total: number;
 };
 
@@ -19,18 +18,21 @@ export type NodeHandles = Record<HandleSide, HandleSlot[]>;
 export type GraphNodeData = {
   label: string;
   /**
-   * エッジ接続状況から派生的に注入されるレンダリング情報。
-   * 永続化対象には含めない。
+   * エッジ接続状況から派生的に注入されるレンダリング情報
    */
   handles?: NodeHandles;
 };
 
-/**
- * エッジ（有向の通路）の付加情報。
- * プロパティ編集 UI は今は持たないため最小限。後から拡張する。
- */
+/** エッジ（通路）の通行方向。両通行可 / 片方向（source→target） */
+export type EdgeDirection = "both" | "oneway";
+
+/** エッジ（通路）の付加情報。プロパティパネルから編集 */
 export type GraphEdgeData = {
   label?: string;
+  /** 通行方向
+   * 新規作成時の既定は "both"（両通行）
+   */
+  direction: EdgeDirection;
 };
 
 export type GraphNodeType = Node<GraphNodeData, "graph">;

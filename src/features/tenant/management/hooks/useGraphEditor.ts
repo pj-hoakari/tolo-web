@@ -9,7 +9,12 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 import { useCallback, useMemo, useState } from "react";
-import type { GraphEdgeType, GraphNodeType } from "../type";
+import type {
+  GraphEdgeData,
+  GraphEdgeType,
+  GraphNodeData,
+  GraphNodeType,
+} from "../type";
 import {
   compactHandlesAfterRemoval,
   deriveNodeHandles,
@@ -116,7 +121,7 @@ export function useGraphEditor() {
       sourceHandle: connection.sourceHandle,
       targetHandle: connection.targetHandle,
       type: "graph",
-      data: {},
+      data: { direction: "both" },
     };
     setEdges((eds) => addEdge(newEdge, eds));
     setSelection({ type: "edge", id: newEdge.id });
@@ -160,6 +165,49 @@ export function useGraphEditor() {
     setSelection(null);
   }, [selection]);
 
+  const updateNodeData = useCallback(
+    (id: string, patch: Partial<GraphNodeData>) => {
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === id ? { ...n, data: { ...n.data, ...patch } } : n,
+        ),
+      );
+    },
+    [],
+  );
+
+  const updateEdgeData = useCallback(
+    (id: string, patch: Partial<GraphEdgeData>) => {
+      setEdges((eds) =>
+        eds.map((e) =>
+          e.id === id
+            ? {
+                ...e,
+                data: { ...(e.data ?? { direction: "both" }), ...patch },
+              }
+            : e,
+        ),
+      );
+    },
+    [],
+  );
+
+  const reverseEdge = useCallback((id: string) => {
+    setEdges((eds) =>
+      eds.map((e) =>
+        e.id === id
+          ? {
+              ...e,
+              source: e.target,
+              target: e.source,
+              sourceHandle: e.targetHandle,
+              targetHandle: e.sourceHandle,
+            }
+          : e,
+      ),
+    );
+  }, []);
+
   const selectNode = useCallback((id: string) => {
     setSelection({ type: "node", id });
   }, []);
@@ -172,10 +220,21 @@ export function useGraphEditor() {
     setSelection(null);
   }, []);
 
+  const selectedNode =
+    selection?.type === "node"
+      ? nodes.find((n) => n.id === selection.id)
+      : undefined;
+  const selectedEdge =
+    selection?.type === "edge"
+      ? edges.find((e) => e.id === selection.id)
+      : undefined;
+
   return {
     nodes: derivedNodes,
     edges,
     selection,
+    selectedNode,
+    selectedEdge,
     nodeCount: nodes.length,
     edgeCount: edges.length,
     hasSelection: selection !== null,
@@ -185,6 +244,9 @@ export function useGraphEditor() {
     isValidConnection,
     addNode,
     deleteSelection,
+    updateNodeData,
+    updateEdgeData,
+    reverseEdge,
     selectNode,
     selectEdge,
     clearSelection,
