@@ -6,7 +6,7 @@ import {
   Position,
   useUpdateNodeInternals,
 } from "@xyflow/react";
-import { useEffect, useMemo } from "react";
+import { type CSSProperties, useEffect, useMemo } from "react";
 import { getNodeTypeDef } from "../nodeTypes";
 import type { GraphNodeType, HandleSide, HandleSlot } from "../type";
 
@@ -22,6 +22,10 @@ const SIDES: HandleSide[] = ["top", "right", "bottom", "left"];
 export function GraphNode({ id, data, selected }: NodeProps<GraphNodeType>) {
   const handles = data.handles;
   const typeDef = getNodeTypeDef(data.nodeType);
+  const shape = typeDef.shape;
+  const shapeStyle: CSSProperties = shape.clipPath
+    ? { clipPath: shape.clipPath }
+    : { borderRadius: shape.borderRadius };
   const updateNodeInternals = useUpdateNodeInternals();
 
   // ハンドル構成（id・index・total）が変化したら React Flow の内部キャッシュを更新し、
@@ -39,23 +43,38 @@ export function GraphNode({ id, data, selected }: NodeProps<GraphNodeType>) {
   }, [id, handleSignature, updateNodeInternals]);
 
   return (
-    <div
-      className={[
-        "relative min-w-40 rounded-lg border bg-white px-3 py-2 shadow-sm transition",
-        selected
-          ? "border-sky-500 ring-2 ring-sky-200"
-          : "border-zinc-300 hover:border-zinc-400",
-      ].join(" ")}
-    >
-      <div className="flex items-center justify-center gap-1 text-[10px] text-zinc-500">
-        <span
-          className="inline-block h-2 w-2 shrink-0 rounded-full"
-          style={{ backgroundColor: typeDef.color }}
-        />
-        {typeDef.label}
-      </div>
-      <div className="text-center font-semibold text-sm text-zinc-900">
-        {data.label}
+    <div className="group relative min-w-40 drop-shadow-sm">
+      {/* 選択時のハロー */}
+      {selected ? (
+        <div className="absolute inset-0.75 bg-sky-200" style={shapeStyle} />
+      ) : null}
+      {/* 枠線レイヤ */}
+      <div
+        className={[
+          "absolute inset-0 transition-colors",
+          selected ? "bg-sky-500" : "bg-zinc-300 group-hover:bg-zinc-400",
+        ].join(" ")}
+        style={shapeStyle}
+      />
+      {/* 塗りレイヤ */}
+      <div className="absolute inset-[1.5px] bg-white" style={shapeStyle} />
+      {/* 内容 */}
+      <div
+        className={[
+          "relative flex min-h-14 flex-col justify-center px-3 py-2",
+          shape.contentClassName ?? "",
+        ].join(" ")}
+      >
+        <div className="flex items-center justify-center gap-1 text-[10px] text-zinc-500">
+          <span
+            className="inline-block h-2 w-2 shrink-0 rounded-full"
+            style={{ backgroundColor: typeDef.color }}
+          />
+          {typeDef.label}
+        </div>
+        <div className="text-center font-semibold text-sm text-zinc-900">
+          {data.label}
+        </div>
       </div>
 
       {handles
