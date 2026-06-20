@@ -11,6 +11,7 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { DEFAULT_NODE_TYPE, resolveConnectionDirection } from "../nodeTypes";
 import { PLACEHOLDER_GRAPH } from "../placeholderGraph";
+import { toGraphData } from "../serialize";
 import type {
   GraphData,
   GraphEdgeData,
@@ -204,6 +205,12 @@ export function useGraphEditor(initial?: GraphData) {
     setSelection(null);
   }, []);
 
+  // 編集済みのグラフデータ（描画用の派生情報を除いた送信/永続化用）を取得
+  const getGraphData = useCallback(
+    () => toGraphData(nodes, edges),
+    [nodes, edges],
+  );
+
   const selectedNode =
     selection?.type === "node"
       ? derivedNodes.find((n) => n.id === selection.id)
@@ -234,5 +241,6 @@ export function useGraphEditor(initial?: GraphData) {
     selectNode,
     selectEdge,
     clearSelection,
+    getGraphData,
   };
 }

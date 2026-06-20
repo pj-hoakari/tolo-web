@@ -12,6 +12,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
 } from "@xyflow/react";
+import { type Ref, useImperativeHandle } from "react";
 import { useGraphEditor } from "../hooks/useGraphEditor";
 import { DEFAULT_NODE_TYPE, getNodeTypeDef } from "../nodeTypes";
 import type { GraphData, GraphNodeType } from "../type";
@@ -23,7 +24,18 @@ import { PropertiesPanel } from "./PropertiesPanel";
 const nodeTypes: NodeTypes = { graph: GraphNode };
 const edgeTypes: EdgeTypes = { graph: GraphEdge };
 
-function GraphEditorInner({ initialGraph }: { initialGraph?: GraphData }) {
+export type GraphEditorHandle = {
+  getGraphData: () => GraphData;
+};
+
+type GraphEditorProps = {
+  initialGraph?: GraphData;
+};
+
+function GraphEditorInner({
+  initialGraph,
+  handleRef,
+}: GraphEditorProps & { handleRef?: Ref<GraphEditorHandle> }) {
   const {
     nodes,
     edges,
@@ -41,11 +53,21 @@ function GraphEditorInner({ initialGraph }: { initialGraph?: GraphData }) {
     selectNode,
     selectEdge,
     clearSelection,
+    getGraphData,
   } = useGraphEditor(initialGraph);
+
+  // 親から ref 経由で編集済みデータを取得できるように
+  useImperativeHandle(handleRef, () => ({ getGraphData }), [getGraphData]);
+
+  const handleSave = () => {
+    const graph = getGraphData();
+    // TODO: API 送信に差し替え
+    console.log(graph);
+  };
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <GraphToolbar onAddNode={addNode} />
+      <GraphToolbar onAddNode={addNode} onSave={handleSave} />
       <div className="flex min-h-0 flex-1">
         <div className="relative min-h-0 flex-1">
           <GraphEdgeMarkers />
@@ -93,10 +115,13 @@ function GraphEditorInner({ initialGraph }: { initialGraph?: GraphData }) {
   );
 }
 
-export function GraphEditor({ initialGraph }: { initialGraph?: GraphData }) {
+export function GraphEditor({
+  initialGraph,
+  ref,
+}: GraphEditorProps & { ref?: Ref<GraphEditorHandle> }) {
   return (
     <ReactFlowProvider>
-      <GraphEditorInner initialGraph={initialGraph} />
+      <GraphEditorInner initialGraph={initialGraph} handleRef={ref} />
     </ReactFlowProvider>
   );
 }
