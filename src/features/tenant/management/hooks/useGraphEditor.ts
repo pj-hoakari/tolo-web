@@ -15,6 +15,7 @@ import type {
   GraphEdgeType,
   GraphNodeData,
   GraphNodeType,
+  NodeType,
 } from "../type";
 import { assignHandlesByPosition, deriveNodeHandles } from "../utils/handles";
 import { newId } from "../utils/idGen";
@@ -114,23 +115,26 @@ export function useGraphEditor() {
     [nodes, edges],
   );
 
-  const addNode = useCallback(() => {
-    const id = newId("n");
-    const newNode: GraphNodeType = {
-      id,
-      type: "graph",
-      position: {
-        x: 80 + Math.random() * 320,
-        y: 80 + Math.random() * 240,
-      },
-      data: {
-        label: `ノード ${nodes.length + 1}`,
-        nodeType: DEFAULT_NODE_TYPE,
-      },
-    };
-    setNodes((nds) => [...nds, newNode]);
-    setSelection({ type: "node", id });
-  }, [nodes.length]);
+  const addNode = useCallback(
+    (nodeType: NodeType = DEFAULT_NODE_TYPE) => {
+      const id = newId("n");
+      const newNode: GraphNodeType = {
+        id,
+        type: "graph",
+        position: {
+          x: 80 + Math.random() * 320,
+          y: 80 + Math.random() * 240,
+        },
+        data: {
+          label: `ノード ${nodes.length + 1}`,
+          nodeType,
+        },
+      };
+      setNodes((nds) => [...nds, newNode]);
+      setSelection({ type: "node", id });
+    },
+    [nodes.length],
+  );
 
   const deleteSelection = useCallback(() => {
     if (!selection) return;

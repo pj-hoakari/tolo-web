@@ -29,7 +29,6 @@ function GraphEditorInner() {
     edges,
     selectedNode,
     selectedEdge,
-    hasSelection,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -46,11 +45,7 @@ function GraphEditorInner() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <GraphToolbar
-        hasSelection={hasSelection}
-        onAddNode={addNode}
-        onDeleteSelection={deleteSelection}
-      />
+      <GraphToolbar onAddNode={addNode} />
       <div className="flex min-h-0 flex-1">
         <div className="relative min-h-0 flex-1">
           <GraphEdgeMarkers />
@@ -91,6 +86,7 @@ function GraphEditorInner() {
           onUpdateNode={updateNodeData}
           onUpdateEdge={updateEdgeData}
           onReverseEdge={reverseEdge}
+          onDelete={deleteSelection}
         />
       </div>
     </div>

@@ -1,35 +1,36 @@
 "use client";
 
+import { NODE_TYPE_DEFS } from "../nodeTypes";
+import type { NodeType } from "../type";
+
 type Props = {
-  hasSelection: boolean;
-  onAddNode: () => void;
-  onDeleteSelection: () => void;
+  onAddNode: (type: NodeType) => void;
 };
 
-export function GraphToolbar({
-  hasSelection,
-  onAddNode,
-  onDeleteSelection,
-}: Props) {
+export function GraphToolbar({ onAddNode }: Props) {
   return (
-    <div className="flex items-center justify-between border-zinc-200 border-b bg-white px-4 py-2">
-      <p className="font-semibold text-sm text-zinc-900">会場エディタ</p>
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onAddNode}
-          className="rounded-md bg-sky-600 px-3 py-1.5 font-medium text-white text-xs shadow-sm hover:bg-sky-500"
-        >
-          + ノードを追加
-        </button>
-        <button
-          type="button"
-          onClick={onDeleteSelection}
-          disabled={!hasSelection}
-          className="rounded-md border border-zinc-300 px-3 py-1.5 font-medium text-xs text-zinc-700 shadow-sm hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          選択を削除
-        </button>
+    <div className="flex items-center justify-between gap-3 border-zinc-200 border-b bg-white px-4 py-2">
+      <p className="shrink-0 font-semibold text-sm text-zinc-900">
+        会場エディタ
+      </p>
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {NODE_TYPE_DEFS.map((def) => (
+          <button
+            key={def.type}
+            type="button"
+            onClick={() => onAddNode(def.type)}
+            title={`${def.label}を追加`}
+            className="flex items-center gap-1 rounded-md border border-zinc-300 bg-white px-2 py-1.5 font-medium text-xs text-zinc-700 shadow-sm hover:bg-zinc-50"
+          >
+            <span className="text-zinc-400">+</span>
+            <span
+              className="inline-block h-2 w-2 shrink-0 rounded-full"
+              style={{ backgroundColor: def.color }}
+              aria-hidden
+            />
+            {def.label}
+          </button>
+        ))}
       </div>
     </div>
   );

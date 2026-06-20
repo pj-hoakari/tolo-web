@@ -23,6 +23,7 @@ type Props = {
   onUpdateNode: (id: string, patch: Partial<GraphNodeData>) => void;
   onUpdateEdge: (id: string, patch: Partial<GraphEdgeData>) => void;
   onReverseEdge: (id: string) => void;
+  onDelete: () => void;
 };
 
 export function PropertiesPanel({
@@ -33,7 +34,9 @@ export function PropertiesPanel({
   onUpdateNode,
   onUpdateEdge,
   onReverseEdge,
+  onDelete,
 }: Props) {
+  const hasSelection = Boolean(selectedNode || selectedEdge);
   return (
     <aside className="flex w-72 shrink-0 flex-col border-zinc-200 border-l bg-white">
       <div className="border-zinc-200 border-b px-4 py-2">
@@ -69,6 +72,17 @@ export function PropertiesPanel({
           </p>
         )}
       </div>
+      {hasSelection ? (
+        <div className="border-zinc-200 border-t p-3">
+          <button
+            type="button"
+            onClick={onDelete}
+            className="w-full rounded-md border border-red-300 bg-white px-3 py-1.5 font-medium text-red-600 text-xs shadow-sm hover:bg-red-50"
+          >
+            {selectedNode ? "このノードを削除" : "このエッジを削除"}
+          </button>
+        </div>
+      ) : null}
     </aside>
   );
 }
