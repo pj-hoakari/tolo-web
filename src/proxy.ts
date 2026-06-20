@@ -59,7 +59,7 @@ export const proxy: NextProxy = createTenantProxy();
 
 export const config = {
   matcher: [
-    "/((?!api|rpc|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|ico|onnx|wasm|mjs)$).*)",
+    "/((?!api|rpc|_next/static|_next/image|favicon.ico|mockServiceWorker.js|.*\\.(?:svg|png|ico|onnx|wasm|mjs)$).*)",
   ],
 };
 

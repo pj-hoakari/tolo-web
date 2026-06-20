@@ -9,6 +9,8 @@ describe("proxy matcher", () => {
     expect(matcher.test("/models/yolo26n.onnx")).toBe(false);
     expect(matcher.test("/onnxruntime/runtime.wasm")).toBe(false);
     expect(matcher.test("/onnxruntime/runtime.mjs")).toBe(false);
+    // MSW の Service Worker はテナント Host でもリライトせず静的配信する
+    expect(matcher.test("/mockServiceWorker.js")).toBe(false);
     expect(matcher.test("/event/test/observation")).toBe(true);
   });
 });
