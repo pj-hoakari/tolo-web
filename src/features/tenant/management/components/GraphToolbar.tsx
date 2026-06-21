@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { NODE_TYPE_DEFS } from "../nodeTypes";
 import type { NodeType } from "../type";
 import { NodeTypeIcon } from "./NodeTypeIcon";
@@ -15,26 +16,23 @@ export function GraphToolbar({ onAddNode, onSave }: Props) {
       </p>
       <div className="flex flex-wrap items-center justify-end gap-2">
         {NODE_TYPE_DEFS.map((def) => (
-          <button
+          <Button
             key={def.type}
-            type="button"
-            onClick={() => onAddNode(def.type)}
-            title={`${def.label}を追加`}
-            className="flex items-center gap-1 rounded-md border border-zinc-300 bg-white px-2 py-1.5 font-medium text-xs text-zinc-700 shadow-sm hover:bg-zinc-50"
+            variant="outline"
+            size="sm"
+            onPress={() => onAddNode(def.type)}
+            aria-label={`${def.label}を追加`}
+            className="gap-1.5"
           >
             <span className="text-zinc-400">+</span>
             <NodeTypeIcon type={def.type} />
             {def.label}
-          </button>
+          </Button>
         ))}
         <div className="ml-1 border-zinc-200 border-l pl-2">
-          <button
-            type="button"
-            onClick={onSave}
-            className="rounded-md bg-sky-600 px-3 py-1.5 font-medium text-white text-xs shadow-sm hover:bg-sky-500"
-          >
+          <Button size="sm" onPress={onSave}>
             保存
-          </button>
+          </Button>
         </div>
       </div>
     </div>
