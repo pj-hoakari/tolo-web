@@ -1,4 +1,8 @@
-import { useId } from "react";
+import { Button } from "@/components/ui/button";
+import { Checkbox, CheckboxGroup } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/field";
+import { Input, TextField } from "@/components/ui/textfield";
+import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
 import type { AliveEdgesStatus } from "@/features/tenant/webrtc/hooks/useAliveEdges";
 import type { AliveEdge } from "@/features/tenant/webrtc/type";
 import {
@@ -13,6 +17,7 @@ import type {
   GraphEdgeType,
   GraphNodeData,
   GraphNodeType,
+  NodeType,
 } from "../type";
 import { NodeTypeIcon } from "./NodeTypeIcon";
 
@@ -111,40 +116,17 @@ export function PropertiesPanel({
       </div>
       {hasSelection ? (
         <div className="border-zinc-200 border-t p-3">
-          <button
-            type="button"
-            onClick={onDelete}
-            className="w-full rounded-md border border-red-300 bg-white px-3 py-1.5 font-medium text-red-600 text-xs shadow-sm hover:bg-red-50"
+          <Button
+            variant="destructive"
+            size="sm"
+            onPress={onDelete}
+            className="w-full"
           >
             {selectedNode ? "このポイントを削除" : "このルートを削除"}
-          </button>
+          </Button>
         </div>
       ) : null}
     </aside>
-  );
-}
-
-const inputClass =
-  "block w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500";
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: (id: string) => React.ReactNode;
-}) {
-  const id = useId();
-  return (
-    <div>
-      <label
-        htmlFor={id}
-        className="mb-1 block font-medium text-[11px] text-zinc-600"
-      >
-        {label}
-      </label>
-      {children(id)}
-    </div>
   );
 }
 
@@ -177,54 +159,54 @@ function NodeForm({
         </span>
         <code className="text-[10px] text-zinc-400">{node.id}</code>
       </div>
-      <Field label="ラベル">
-        {(id) => (
-          <input
-            id={id}
-            className={inputClass}
-            value={node.data.label}
-            onChange={(e) => onChange({ label: e.target.value })}
-          />
-        )}
-      </Field>
+      <TextField
+        value={node.data.label}
+        onChange={(value) => onChange({ label: value })}
+        className="flex flex-col gap-1"
+      >
+        <Label className="text-[11px] text-zinc-600">ラベル</Label>
+        <Input className="h-auto px-2 py-1 text-xs" />
+      </TextField>
 
       <div>
         <p className="mb-1 font-medium text-[11px] text-zinc-600">タイプ</p>
-        <div className="space-y-1">
+        <ToggleButtonGroup
+          selectionMode="single"
+          disallowEmptySelection
+          selectedKeys={[node.data.nodeType]}
+          onSelectionChange={(keys) => {
+            const next = [...keys][0] as NodeType | undefined;
+            if (next) onChange({ nodeType: next });
+          }}
+          className="flex-col items-stretch gap-1"
+        >
           {NODE_TYPE_DEFS.map((def) => {
             const selected = def.type === node.data.nodeType;
             const result = validateAssignType(def.type, node.id, nodes, edges);
             const assignable = selected || result.ok;
             return (
               <div key={def.type} className="space-y-0.5">
-                <button
-                  type="button"
-                  aria-pressed={selected}
-                  disabled={!assignable}
-                  onClick={() => onChange({ nodeType: def.type })}
-                  className={[
-                    "flex w-full flex-col rounded-md border px-2 py-1.5 text-left transition",
-                    selected
-                      ? "border-sky-500 bg-sky-50 ring-1 ring-sky-200"
-                      : "border-zinc-200 hover:bg-zinc-50",
-                    assignable ? "" : "cursor-not-allowed opacity-40",
-                  ].join(" ")}
+                <Toggle
+                  id={def.type}
+                  variant="outline"
+                  isDisabled={!assignable}
+                  className="h-auto w-full flex-col items-start gap-0.5 px-2 py-1.5 text-left selected:border-primary selected:bg-accent"
                 >
                   <span className="flex items-center gap-1.5 font-medium text-xs text-zinc-900">
                     <NodeTypeIcon type={def.type} />
                     {def.label}
                   </span>
-                  <span className="mt-0.5 text-[10px] text-zinc-500">
+                  <span className="text-[10px] text-zinc-500">
                     {def.description}
                   </span>
-                </button>
+                </Toggle>
                 {!selected && !result.ok ? (
                   <ConstraintNote message={result.message} />
                 ) : null}
               </div>
             );
           })}
-        </div>
+        </ToggleButtonGroup>
       </div>
 
       <ObservationPointPicker
@@ -301,20 +283,31 @@ function EdgeForm({
 
       <div>
         <p className="mb-1 font-medium text-[11px] text-zinc-600">方向</p>
-        <div className="flex gap-1 rounded-md bg-zinc-100 p-0.5">
-          <SegmentToggle
-            active={direction === "both"}
-            disabled={bothDisabled}
-            onClick={() => onChange({ direction: "both" })}
-            label="両通行可 ⇌"
-          />
-          <SegmentToggle
-            active={direction === "oneway"}
-            disabled={onewayDisabled}
-            onClick={() => onChange({ direction: "oneway" })}
-            label="片方向 →"
-          />
-        </div>
+        <ToggleButtonGroup
+          selectionMode="single"
+          disallowEmptySelection
+          selectedKeys={[direction]}
+          onSelectionChange={(keys) => {
+            const next = [...keys][0] as EdgeDirection | undefined;
+            if (next) onChange({ direction: next });
+          }}
+          className="w-full gap-1 rounded-md bg-muted p-1"
+        >
+          <Toggle
+            id="both"
+            isDisabled={bothDisabled}
+            className="h-auto flex-1 rounded-sm px-2 py-1 font-medium text-xs selected:bg-background selected:text-foreground selected:shadow-sm"
+          >
+            両通行可 ⇌
+          </Toggle>
+          <Toggle
+            id="oneway"
+            isDisabled={onewayDisabled}
+            className="h-auto flex-1 rounded-sm px-2 py-1 font-medium text-xs selected:bg-background selected:text-foreground selected:shadow-sm"
+          >
+            片方向 →
+          </Toggle>
+        </ToggleButtonGroup>
         {directionReason ? (
           <div className="mt-1">
             <ConstraintNote message={directionReason} />
@@ -323,14 +316,15 @@ function EdgeForm({
       </div>
 
       <div className="space-y-1">
-        <button
-          type="button"
-          onClick={onReverse}
-          disabled={direction === "both" || !reverseResult.ok}
-          className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+        <Button
+          variant="outline"
+          size="sm"
+          onPress={onReverse}
+          isDisabled={direction === "both" || !reverseResult.ok}
+          className="w-full"
         >
           向きを反転（始点↔終点）
-        </button>
+        </Button>
         {direction !== "both" && !reverseResult.ok ? (
           <ConstraintNote message={reverseResult.message} />
         ) : null}
@@ -377,14 +371,6 @@ function ObservationPointPicker({
       .map((id) => ({ id, online: false })),
   ];
 
-  const toggle = (id: string) => {
-    onChange(
-      linkedIds.includes(id)
-        ? linkedIds.filter((x) => x !== id)
-        : [...linkedIds, id],
-    );
-  };
-
   const loading = status === "loading";
 
   return (
@@ -394,14 +380,14 @@ function ObservationPointPicker({
           観測点{linkedIds.length > 0 ? `（${linkedIds.length}）` : ""}
         </p>
         {onRefresh ? (
-          <button
-            type="button"
-            onClick={onRefresh}
-            disabled={loading}
-            className="text-[10px] text-sky-600 hover:text-sky-700 disabled:opacity-50"
+          <Button
+            variant="link"
+            onPress={onRefresh}
+            isDisabled={loading}
+            className="h-auto px-1 py-0 text-[10px]"
           >
             更新
-          </button>
+          </Button>
         ) : null}
       </div>
 
@@ -412,68 +398,51 @@ function ObservationPointPicker({
           {loading ? "読み込み中…" : "接続中の観測点がありません"}
         </p>
       ) : (
-        <ul className="space-y-1">
+        <CheckboxGroup
+          aria-label="観測点"
+          value={linkedIds}
+          onChange={onChange}
+          className="space-y-1"
+        >
           {rows.map((row) => {
             const checked = linkedIds.includes(row.id);
             // 自分で選択済みは解除可。他で使用中の未選択のみ選択不可
             const disabled = !checked && usedIds.has(row.id);
             return (
-              <li key={row.id}>
-                <button
-                  type="button"
-                  aria-pressed={checked}
-                  disabled={disabled}
-                  onClick={() => toggle(row.id)}
-                  className={[
-                    "flex w-full items-start gap-2 rounded-md border px-2 py-1.5 text-left transition",
-                    checked
-                      ? "border-sky-500 bg-sky-50 ring-1 ring-sky-200"
-                      : "border-zinc-200 hover:bg-zinc-50",
-                    disabled
-                      ? "cursor-not-allowed opacity-50 hover:bg-white"
-                      : "",
-                  ].join(" ")}
-                >
-                  <span
-                    aria-hidden
-                    className={[
-                      "mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border text-[9px] text-white",
-                      checked
-                        ? "border-sky-500 bg-sky-500"
-                        : "border-zinc-300 bg-white",
-                    ].join(" ")}
-                  >
-                    {checked ? "✓" : ""}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1">
-                      <span
-                        aria-hidden
-                        title={row.online ? "接続中" : "オフライン"}
-                        className={[
-                          "inline-block h-1.5 w-1.5 shrink-0 rounded-full",
-                          row.online ? "bg-emerald-500" : "bg-zinc-300",
-                        ].join(" ")}
-                      />
-                      <span className="break-all font-mono text-[10px] text-zinc-700">
-                        {row.id}
-                      </span>
+              <Checkbox
+                key={row.id}
+                value={row.id}
+                isDisabled={disabled}
+                className="w-full items-start rounded-md border border-zinc-200 px-2 py-1.5 font-normal hover:bg-zinc-50 selected:border-primary selected:bg-accent"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-1">
+                    <span
+                      aria-hidden
+                      title={row.online ? "接続中" : "オフライン"}
+                      className={[
+                        "inline-block h-1.5 w-1.5 shrink-0 rounded-full",
+                        row.online ? "bg-emerald-500" : "bg-zinc-300",
+                      ].join(" ")}
+                    />
+                    <span className="break-all font-mono text-[10px] text-zinc-700">
+                      {row.id}
                     </span>
-                    {disabled ? (
-                      <span className="text-[9px] text-amber-600">
-                        他のポイント / ルートで使用中
-                      </span>
-                    ) : !row.online ? (
-                      <span className="text-[9px] text-zinc-400">
-                        オフライン
-                      </span>
-                    ) : null}
                   </span>
-                </button>
-              </li>
+                  {disabled ? (
+                    <span className="block text-[9px] text-amber-600">
+                      他のポイント / ルートで使用中
+                    </span>
+                  ) : !row.online ? (
+                    <span className="block text-[9px] text-zinc-400">
+                      オフライン
+                    </span>
+                  ) : null}
+                </span>
+              </Checkbox>
             );
           })}
-        </ul>
+        </CheckboxGroup>
       )}
     </div>
   );
@@ -485,35 +454,5 @@ function ConstraintNote({ message }: { message: string }) {
       <span aria-hidden>⚠</span>
       <span>{message}</span>
     </p>
-  );
-}
-
-function SegmentToggle({
-  active,
-  disabled,
-  onClick,
-  label,
-}: {
-  active: boolean;
-  disabled?: boolean;
-  onClick: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      disabled={disabled}
-      onClick={onClick}
-      className={[
-        "flex-1 rounded-[5px] px-2 py-1 font-medium text-xs transition",
-        active
-          ? "bg-white text-sky-700 shadow-sm"
-          : "text-zinc-500 hover:text-zinc-700",
-        disabled ? "cursor-not-allowed opacity-40 hover:text-zinc-500" : "",
-      ].join(" ")}
-    >
-      {label}
-    </button>
   );
 }
