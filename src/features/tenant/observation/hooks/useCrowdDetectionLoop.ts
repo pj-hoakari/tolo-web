@@ -149,12 +149,33 @@ function drawCountingLine(
 
 function drawDetectionOverlay(
   context: CanvasRenderingContext2D,
-  _frame: CrowdDetectionFrame,
+  frame: CrowdDetectionFrame,
   countingLines: CrowdCountingLine[],
   width: number,
 ): void {
   for (const countingLine of countingLines) {
     drawCountingLine(context, countingLine, width);
+  }
+
+  context.font = `${Math.max(16, width / 40)}px sans-serif`;
+
+  for (const detection of frame.detections) {
+    const boxWidth = detection.x2 - detection.x1;
+    const boxHeight = detection.y2 - detection.y1;
+    const label = `Person #${detection.trackId} ${Math.round(
+      detection.score * 100,
+    )}%`;
+
+    context.strokeStyle = "#22c55e";
+    context.strokeRect(detection.x1, detection.y1, boxWidth, boxHeight);
+
+    const labelWidth = context.measureText(label).width + 12;
+    const labelHeight = Math.max(22, width / 32);
+    const labelY = Math.max(0, detection.y1 - labelHeight);
+    context.fillStyle = "#22c55e";
+    context.fillRect(detection.x1, labelY, labelWidth, labelHeight);
+    context.fillStyle = "#052e16";
+    context.fillText(label, detection.x1 + 6, labelY + labelHeight - 6);
   }
 }
 
