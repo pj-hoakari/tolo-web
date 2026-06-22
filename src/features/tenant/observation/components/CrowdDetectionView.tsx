@@ -7,7 +7,6 @@ import {
   useState,
 } from "react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import type {
   DetectionCountingLineSetting,
   DetectionLineCount,
@@ -437,25 +436,6 @@ export function CrowdDetectionView({
           最終検出時刻: {metrics.lastDetectedAt?.toLocaleTimeString() ?? "-"}
         </p>
       </section>
-      <section className="w-full max-w-3xl rounded border border-gray-200 p-4">
-        <h3 className="mb-2 font-bold">検出結果一覧</h3>
-        {metrics.detections.length === 0 ? (
-          <p className="text-gray-500 text-sm">検出結果はありません</p>
-        ) : (
-          <ul className="space-y-1 font-mono text-xs">
-            {metrics.detections.map((detection) => (
-              <li key={detection.trackId}>
-                ID: {detection.trackId} / confidence:{" "}
-                {detection.score.toFixed(2)}
-                {" / "}x: {Math.round(detection.x1)} / y:{" "}
-                {Math.round(detection.y1)} / w:{" "}
-                {Math.round(detection.x2 - detection.x1)} / h:{" "}
-                {Math.round(detection.y2 - detection.y1)}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
       <section className="grid w-full max-w-3xl gap-4 rounded border border-gray-200 p-4 sm:grid-cols-2">
         <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2">
           <h3 className="font-bold">検出設定</h3>
@@ -550,30 +530,6 @@ export function CrowdDetectionView({
             }
           />
         </label>
-        <div className="flex flex-col gap-3 text-sm">
-          <Checkbox
-            isSelected={settings.showBoundingBoxes}
-            onChange={(showBoundingBoxes) =>
-              onSettingsChange({
-                ...settings,
-                showBoundingBoxes,
-              })
-            }
-          >
-            bounding box を表示
-          </Checkbox>
-          <Checkbox
-            isSelected={settings.showTrackingIds}
-            onChange={(showTrackingIds) =>
-              onSettingsChange({
-                ...settings,
-                showTrackingIds,
-              })
-            }
-          >
-            tracking ID を表示
-          </Checkbox>
-        </div>
       </section>
       {status === "error" && error && <p className="text-red-600">{error}</p>}
     </div>

@@ -10,7 +10,6 @@ import {
   type CrowdDetectionFrame,
   detectCrowdFrame,
   resetCrowdLineCount,
-  type TrackedDetection,
 } from "../utils/detectCrowd";
 import type { DetectCrowdStatus } from "./useDetectCrowd";
 
@@ -20,15 +19,12 @@ export type DetectionMetrics = {
   totalTrackedCount: number;
   fps: number;
   lastDetectedAt: Date | null;
-  detections: TrackedDetection[];
 };
 
 export type DetectionSettings = {
   confidenceThreshold: number;
   trackingDistanceThreshold: number;
   detectionInterval: number;
-  showBoundingBoxes: boolean;
-  showTrackingIds: boolean;
   countingLines: DetectionCountingLineSetting[];
 };
 
@@ -54,15 +50,12 @@ export const INITIAL_METRICS: DetectionMetrics = {
   totalTrackedCount: 0,
   fps: 0,
   lastDetectedAt: null,
-  detections: [],
 };
 
 export const INITIAL_SETTINGS: DetectionSettings = {
   confidenceThreshold: 0.15,
   trackingDistanceThreshold: 0.8,
   detectionInterval: 100,
-  showBoundingBoxes: true,
-  showTrackingIds: true,
   countingLines: [
     {
       id: "line-1",
@@ -156,37 +149,12 @@ function drawCountingLine(
 
 function drawDetectionOverlay(
   context: CanvasRenderingContext2D,
-  frame: CrowdDetectionFrame,
-  settings: Pick<DetectionSettings, "showBoundingBoxes" | "showTrackingIds">,
+  _frame: CrowdDetectionFrame,
   countingLines: CrowdCountingLine[],
   width: number,
 ): void {
   for (const countingLine of countingLines) {
     drawCountingLine(context, countingLine, width);
-  }
-  context.font = `${Math.max(16, width / 40)}px sans-serif`;
-
-  for (const detection of frame.detections) {
-    const boxWidth = detection.x2 - detection.x1;
-    const boxHeight = detection.y2 - detection.y1;
-    const label = settings.showTrackingIds
-      ? `Person #${detection.trackId} ${Math.round(detection.score * 100)}%`
-      : `${Math.round(detection.score * 100)}%`;
-
-    if (settings.showBoundingBoxes) {
-      context.strokeStyle = "#22c55e";
-      context.strokeRect(detection.x1, detection.y1, boxWidth, boxHeight);
-    }
-
-    if (settings.showBoundingBoxes || settings.showTrackingIds) {
-      const labelWidth = context.measureText(label).width + 12;
-      const labelHeight = Math.max(22, width / 32);
-      const labelY = Math.max(0, detection.y1 - labelHeight);
-      context.fillStyle = "#22c55e";
-      context.fillRect(detection.x1, labelY, labelWidth, labelHeight);
-      context.fillStyle = "#052e16";
-      context.fillText(label, detection.x1 + 6, labelY + labelHeight - 6);
-    }
   }
 }
 
@@ -331,7 +299,6 @@ export function useCrowdDetectionLoop({
           fps,
           lastDetectedAt:
             frame.detectedCount > 0 ? new Date() : current.lastDetectedAt,
-          detections: frame.detections,
         }));
       } catch (cause) {
         if (!cancelled) {
@@ -370,13 +337,7 @@ export function useCrowdDetectionLoop({
           if (context) {
             context.clearRect(0, 0, width, height);
             if (frame) {
-              drawDetectionOverlay(
-                context,
-                frame,
-                currentSettings,
-                countingLines,
-                width,
-              );
+              drawDetectionOverlay(context, frame, countingLines, width);
             } else {
               for (const countingLine of countingLines) {
                 drawCountingLine(context, countingLine, width);
@@ -395,13 +356,7 @@ export function useCrowdDetectionLoop({
         if (broadcastContext) {
           broadcastContext.drawImage(video, 0, 0, width, height);
           if (frame) {
-            drawDetectionOverlay(
-              broadcastContext,
-              frame,
-              currentSettings,
-              countingLines,
-              width,
-            );
+            drawDetectionOverlay(broadcastContext, frame, countingLines, width);
           } else {
             for (const countingLine of countingLines) {
               drawCountingLine(broadcastContext, countingLine, width);
