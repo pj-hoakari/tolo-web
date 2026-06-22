@@ -12,7 +12,23 @@ cp .env.example .env
 
 ### GitHubトークンの作成
 
-TBD
+1. GitHubのトークンページを開く  
+  [Personal Access Tokens (Classic)](https://github.com/settings/tokens)
+2. 「Generate new token」をクリック
+3. 「Generate new token (classic)」を選択  
+  ⚠「(clssic)」であることを確認
+4. 「Note」に任意の名前を入力
+5. 「Expiration」を選択
+6. 「Select scopes」で以下の権限を選択  
+    - `read:packages`（パッケージの読み取り）  
+7. 「Generate token」をクリック  
+  ⚠次の画面でトークンが表示される，コピーを忘れずに閉じることがないように注意
+8. 生成されたトークンをコピー  
+  ⚠コピーを忘れて閉じないように注意
+
+
+トークンの「Select scopes」については以下の画像を参照
+![Select scops](./assets/token-scopes-for-npm-package.png)
 
 ### トークンの.envファイルへの設定
 
