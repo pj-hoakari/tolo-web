@@ -1,3 +1,4 @@
+import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
 import { InfoCard } from "./InfoCard";
 
 export type MapPoint = { x: number; y: number };
@@ -62,26 +63,28 @@ export function GuideMapView({
 
   return (
     <InfoCard title={title}>
-      <div className="mb-4 flex flex-wrap gap-2">
-        {destinations.map((destination) => {
-          const active = destination.id === selectedDestinationId;
-          return (
-            <button
-              key={destination.id}
-              type="button"
-              aria-pressed={active}
-              onClick={() => onSelectDestination(destination.id)}
-              className={
-                active
-                  ? "rounded-full bg-guest-accent px-3 py-1 text-sm font-medium text-guest-surface"
-                  : "rounded-full border border-guest-line bg-guest-surface px-3 py-1 text-sm text-guest-ink-muted hover:text-guest-accent"
-              }
-            >
-              {destination.name}
-            </button>
-          );
-        })}
-      </div>
+      <ToggleButtonGroup
+        selectionMode="single"
+        disallowEmptySelection
+        selectedKeys={selectedDestinationId ? [selectedDestinationId] : []}
+        onSelectionChange={(keys) => {
+          const next = [...keys][0];
+          if (next != null) onSelectDestination(String(next));
+        }}
+        aria-label="目的地"
+        className="mb-4 flex-wrap justify-start gap-2"
+      >
+        {destinations.map((destination) => (
+          <Toggle
+            key={destination.id}
+            id={destination.id}
+            size="sm"
+            className="h-auto rounded-full border border-guest-line bg-guest-surface px-3 py-1 text-sm text-guest-ink-muted hover:bg-guest-surface hover:text-guest-accent selected:border-guest-accent selected:bg-guest-accent selected:font-medium selected:text-guest-surface"
+          >
+            {destination.name}
+          </Toggle>
+        ))}
+      </ToggleButtonGroup>
 
       <svg
         viewBox={`0 0 ${width} ${height}`}
