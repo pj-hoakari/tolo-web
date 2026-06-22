@@ -1,7 +1,15 @@
-import { type PointerEvent, type RefObject, useEffect, useRef } from "react";
+import { MousePointer2, Plus, RotateCcw, Trash2 } from "lucide-react";
+import {
+  type PointerEvent,
+  type RefObject,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import type {
+  DetectionCountingLineSetting,
   DetectionLineCount,
   DetectionMetrics,
   DetectionPoint,
@@ -18,16 +26,32 @@ const STATUS_LABELS: Record<DetectCrowdStatus, string> = {
 };
 
 type LineDragTarget = "p1" | "p2" | "line";
-type DragTargetDetection = {
-  target: LineDragTarget;
-  snapToPointer: boolean;
-};
+type DragState =
+  | {
+      kind: "edit";
+      lineId: string;
+      target: LineDragTarget;
+      pointerId: number;
+      startPoint: DetectionPoint;
+      startLines: DetectionCountingLineSetting[];
+    }
+  | {
+      kind: "create";
+      lineId: string;
+      pointerId: number;
+      startPoint: DetectionPoint;
+      startLines: DetectionCountingLineSetting[];
+    };
 
-const DEFAULT_COUNTING_LINE = {
-  p1: { x: 0, y: 0.6 },
-  p2: { x: 1, y: 0.6 },
-};
+const DEFAULT_COUNTING_LINES: DetectionCountingLineSetting[] = [
+  {
+    id: "line-1",
+    p1: { x: 0, y: 0.6 },
+    p2: { x: 1, y: 0.6 },
+  },
+];
 const LINE_HIT_RADIUS_PX = 18;
+const MIN_CREATED_LINE_LENGTH_PX = 8;
 
 function clampUnit(value: number): number {
   return Math.min(1, Math.max(0, value));
@@ -68,7 +92,7 @@ export type CrowdDetectionViewProps = {
   videoSource: VideoSourceDescriptor | null;
   status: DetectCrowdStatus;
   error: string | null;
-  lineCount: DetectionLineCount;
+  lineCounts: Record<string, DetectionLineCount>;
   metrics: DetectionMetrics;
   settings: DetectionSettings;
   onSettingsChange: (settings: DetectionSettings) => void;
@@ -80,19 +104,18 @@ export function CrowdDetectionView({
   videoSource,
   status,
   error,
-  lineCount,
+  lineCounts,
   metrics,
   settings,
   onSettingsChange,
   videoRef,
   overlayCanvasRef,
 }: CrowdDetectionViewProps) {
-  const dragStateRef = useRef<{
-    target: LineDragTarget;
-    pointerId: number;
-    startPoint: DetectionPoint;
-    startLine: DetectionSettings["countingLine"];
-  } | null>(null);
+  const dragStateRef = useRef<DragState | null>(null);
+  const [lineCreationMode, setLineCreationMode] = useState(false);
+  const [selectedLineId, setSelectedLineId] = useState(
+    settings.countingLines[0]?.id ?? "line-1",
+  );
 
   useEffect(() => {
     const video = videoRef.current;
@@ -119,6 +142,12 @@ export function CrowdDetectionView({
     }
   }, [videoSource, videoRef]);
 
+  useEffect(() => {
+    if (!settings.countingLines.some((line) => line.id === selectedLineId)) {
+      setSelectedLineId(settings.countingLines[0]?.id ?? "line-1");
+    }
+  }, [selectedLineId, settings.countingLines]);
+
   const getPointerPoint = (
     event: PointerEvent<HTMLCanvasElement>,
   ): DetectionPoint | null => {
@@ -135,51 +164,69 @@ export function CrowdDetectionView({
   };
 
   const getAbsoluteLine = (
+    line: DetectionCountingLineSetting,
     canvas: HTMLCanvasElement,
   ): { p1: DetectionPoint; p2: DetectionPoint } => ({
     p1: {
-      x: settings.countingLine.p1.x * canvas.width,
-      y: settings.countingLine.p1.y * canvas.height,
+      x: line.p1.x * canvas.width,
+      y: line.p1.y * canvas.height,
     },
     p2: {
-      x: settings.countingLine.p2.x * canvas.width,
-      y: settings.countingLine.p2.y * canvas.height,
+      x: line.p2.x * canvas.width,
+      y: line.p2.y * canvas.height,
     },
   });
 
   const detectDragTarget = (
     point: DetectionPoint,
     canvas: HTMLCanvasElement,
-  ): DragTargetDetection => {
-    const line = getAbsoluteLine(canvas);
+  ): { lineId: string; target: LineDragTarget } | null => {
+    for (const lineSetting of [...settings.countingLines].reverse()) {
+      const line = getAbsoluteLine(lineSetting, canvas);
 
-    if (distance(point, line.p1) <= LINE_HIT_RADIUS_PX) {
-      return { target: "p1", snapToPointer: false };
+      if (distance(point, line.p1) <= LINE_HIT_RADIUS_PX) {
+        return { lineId: lineSetting.id, target: "p1" };
+      }
+      if (distance(point, line.p2) <= LINE_HIT_RADIUS_PX) {
+        return { lineId: lineSetting.id, target: "p2" };
+      }
+      if (distanceToSegment(point, line.p1, line.p2) <= LINE_HIT_RADIUS_PX) {
+        return { lineId: lineSetting.id, target: "line" };
+      }
     }
-    if (distance(point, line.p2) <= LINE_HIT_RADIUS_PX) {
-      return { target: "p2", snapToPointer: false };
-    }
-    return distanceToSegment(point, line.p1, line.p2) <= LINE_HIT_RADIUS_PX
-      ? { target: "line", snapToPointer: false }
-      : { target: "p2", snapToPointer: true };
+
+    return null;
   };
 
-  const applyCountingLine = (
-    countingLine: DetectionSettings["countingLine"],
+  const applyCountingLines = (
+    countingLines: DetectionCountingLineSetting[],
   ) => {
     onSettingsChange({
       ...settings,
-      countingLine: {
+      countingLines: countingLines.map((line) => ({
+        ...line,
         p1: {
-          x: clampUnit(countingLine.p1.x),
-          y: clampUnit(countingLine.p1.y),
+          x: clampUnit(line.p1.x),
+          y: clampUnit(line.p1.y),
         },
         p2: {
-          x: clampUnit(countingLine.p2.x),
-          y: clampUnit(countingLine.p2.y),
+          x: clampUnit(line.p2.x),
+          y: clampUnit(line.p2.y),
         },
-      },
+      })),
     });
+  };
+
+  const createLineId = () => {
+    const nextNumber =
+      Math.max(
+        0,
+        ...settings.countingLines.map((line) => {
+          const match = /^line-(\d+)$/.exec(line.id);
+          return match ? Number(match[1]) : 0;
+        }),
+      ) + 1;
+    return `line-${nextNumber}`;
   };
 
   const handleLinePointerDown = (event: PointerEvent<HTMLCanvasElement>) => {
@@ -190,27 +237,42 @@ export function CrowdDetectionView({
     }
 
     event.currentTarget.setPointerCapture(event.pointerId);
-    const dragTarget = detectDragTarget(point, canvas);
-    const startLine =
-      dragTarget.snapToPointer && dragTarget.target !== "line"
-        ? {
-            ...settings.countingLine,
-            [dragTarget.target]: {
-              x: point.x / canvas.width,
-              y: point.y / canvas.height,
-            },
-          }
-        : settings.countingLine;
+    const unitPoint = {
+      x: point.x / canvas.width,
+      y: point.y / canvas.height,
+    };
 
-    if (dragTarget.snapToPointer) {
-      applyCountingLine(startLine);
+    if (lineCreationMode) {
+      const lineId = createLineId();
+      const nextLines = [
+        ...settings.countingLines,
+        { id: lineId, p1: unitPoint, p2: unitPoint },
+      ];
+      setSelectedLineId(lineId);
+      applyCountingLines(nextLines);
+      dragStateRef.current = {
+        kind: "create",
+        lineId,
+        pointerId: event.pointerId,
+        startPoint: point,
+        startLines: nextLines,
+      };
+      return;
     }
 
+    const dragTarget = detectDragTarget(point, canvas);
+    if (!dragTarget) {
+      return;
+    }
+
+    setSelectedLineId(dragTarget.lineId);
     dragStateRef.current = {
+      kind: "edit",
+      lineId: dragTarget.lineId,
       target: dragTarget.target,
       pointerId: event.pointerId,
       startPoint: point,
-      startLine,
+      startLines: settings.countingLines,
     };
   };
 
@@ -224,37 +286,102 @@ export function CrowdDetectionView({
 
     const dx = (point.x - dragState.startPoint.x) / canvas.width;
     const dy = (point.y - dragState.startPoint.y) / canvas.height;
-    const nextLine =
-      dragState.target === "line"
-        ? {
+
+    if (dragState.kind === "create") {
+      applyCountingLines(
+        dragState.startLines.map((line) =>
+          line.id === dragState.lineId
+            ? {
+                ...line,
+                p2: {
+                  x: line.p1.x + dx,
+                  y: line.p1.y + dy,
+                },
+              }
+            : line,
+        ),
+      );
+      return;
+    }
+
+    applyCountingLines(
+      dragState.startLines.map((line) => {
+        if (line.id !== dragState.lineId) {
+          return line;
+        }
+
+        if (dragState.target === "line") {
+          return {
+            ...line,
             p1: {
-              x: dragState.startLine.p1.x + dx,
-              y: dragState.startLine.p1.y + dy,
+              x: line.p1.x + dx,
+              y: line.p1.y + dy,
             },
             p2: {
-              x: dragState.startLine.p2.x + dx,
-              y: dragState.startLine.p2.y + dy,
-            },
-          }
-        : {
-            ...dragState.startLine,
-            [dragState.target]: {
-              x:
-                dragState.startLine[dragState.target].x +
-                (point.x - dragState.startPoint.x) / canvas.width,
-              y:
-                dragState.startLine[dragState.target].y +
-                (point.y - dragState.startPoint.y) / canvas.height,
+              x: line.p2.x + dx,
+              y: line.p2.y + dy,
             },
           };
+        }
 
-    applyCountingLine(nextLine);
+        return {
+          ...line,
+          [dragState.target]: {
+            x: line[dragState.target].x + dx,
+            y: line[dragState.target].y + dy,
+          },
+        };
+      }),
+    );
   };
 
   const handleLinePointerUp = (event: PointerEvent<HTMLCanvasElement>) => {
-    if (dragStateRef.current?.pointerId === event.pointerId) {
-      dragStateRef.current = null;
+    const dragState = dragStateRef.current;
+    const canvas = overlayCanvasRef.current;
+    const point = getPointerPoint(event);
+    if (dragState?.pointerId !== event.pointerId) {
+      return;
     }
+
+    if (
+      dragState.kind === "create" &&
+      canvas &&
+      point &&
+      distance(dragState.startPoint, point) < MIN_CREATED_LINE_LENGTH_PX
+    ) {
+      applyCountingLines(
+        dragState.startLines.map((line) =>
+          line.id === dragState.lineId
+            ? {
+                ...line,
+                p2: {
+                  x: line.p1.x + 0.25,
+                  y: line.p1.y,
+                },
+              }
+            : line,
+        ),
+      );
+    }
+
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    dragStateRef.current = null;
+  };
+
+  const resetCountingLines = () => {
+    setSelectedLineId(DEFAULT_COUNTING_LINES[0].id);
+    applyCountingLines(DEFAULT_COUNTING_LINES);
+  };
+
+  const deleteSelectedLine = () => {
+    if (settings.countingLines.length <= 1) {
+      return;
+    }
+    const nextLines = settings.countingLines.filter(
+      (line) => line.id !== selectedLineId,
+    );
+    setSelectedLineId(nextLines[0]?.id ?? "line-1");
+    applyCountingLines(nextLines);
   };
 
   return (
@@ -283,9 +410,22 @@ export function CrowdDetectionView({
           </div>
         )}
       </div>
-      <div className="flex gap-6 text-sm">
-        <span>ライン通過 forward: {lineCount.forward}</span>
-        <span>ライン通過 backward: {lineCount.backward}</span>
+      <div className="flex w-full max-w-3xl flex-wrap gap-3 text-sm">
+        {settings.countingLines.map((line, index) => {
+          const count = lineCounts[line.id] ?? { forward: 0, backward: 0 };
+          return (
+            <Button
+              type="button"
+              key={line.id}
+              variant={selectedLineId === line.id ? "default" : "outline"}
+              size="sm"
+              onPress={() => setSelectedLineId(line.id)}
+            >
+              ライン {index + 1}: forward {count.forward} / backward{" "}
+              {count.backward}
+            </Button>
+          );
+        })}
       </div>
       <section className="grid w-full max-w-3xl gap-4 rounded border border-gray-200 p-4 sm:grid-cols-2 lg:grid-cols-3">
         <p>検出状態: {STATUS_LABELS[status]}</p>
@@ -319,19 +459,40 @@ export function CrowdDetectionView({
       <section className="grid w-full max-w-3xl gap-4 rounded border border-gray-200 p-4 sm:grid-cols-2">
         <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2">
           <h3 className="font-bold">検出設定</h3>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onPress={() =>
-              onSettingsChange({
-                ...settings,
-                countingLine: DEFAULT_COUNTING_LINE,
-              })
-            }
-          >
-            ラインを初期位置に戻す
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant={lineCreationMode ? "default" : "outline"}
+              size="sm"
+              onPress={() => setLineCreationMode((enabled) => !enabled)}
+            >
+              {lineCreationMode ? (
+                <MousePointer2 className="mr-2 size-4" />
+              ) : (
+                <Plus className="mr-2 size-4" />
+              )}
+              {lineCreationMode ? "編集モード" : "ライン生成"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onPress={deleteSelectedLine}
+              isDisabled={settings.countingLines.length <= 1}
+            >
+              <Trash2 className="mr-2 size-4" />
+              選択ラインを削除
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onPress={resetCountingLines}
+            >
+              <RotateCcw className="mr-2 size-4" />
+              ラインを初期位置に戻す
+            </Button>
+          </div>
         </div>
         <label className="flex flex-col gap-1 text-sm">
           <span>

@@ -46,14 +46,14 @@ export type CrowdDetectionFrame = {
   detections: TrackedDetection[];
   detectedCount: number;
   totalTrackedCount: number;
-  countingLine: Line;
-  lineCount: LineCount;
+  countingLines: Line[];
+  lineCounts: Record<string, LineCount>;
 };
 
 export type CrowdDetectionOptions = {
   confidenceThreshold: number;
   trackingDistanceThreshold: number;
-  countingLine: CrowdCountingLine;
+  countingLines: CrowdCountingLine[];
 };
 
 async function fetchModel(): Promise<ArrayBuffer> {
@@ -134,7 +134,7 @@ export async function detectCrowdFrame(
   const sourceDetections = reverseLetterboxBoxes(detections, params);
   tracker.matchThresh = options.trackingDistanceThreshold;
   const trackedDetections = tracker.update(sourceDetections);
-  const countingLine = options.countingLine;
+  const countingLines = options.countingLines;
   const trackedPoints = trackedDetections.map((detection) => ({
     trackId: detection.trackId,
     point: {
@@ -143,7 +143,7 @@ export async function detectCrowdFrame(
     },
   }));
 
-  lineCrossingCounter.update(trackedPoints, [countingLine], {
+  lineCrossingCounter.update(trackedPoints, countingLines, {
     assist: {
       enabled: true,
       rescueDistance: params.sourceWidth * (60 / INPUT_SIZE),
@@ -154,8 +154,13 @@ export async function detectCrowdFrame(
     detections: trackedDetections,
     detectedCount: sourceDetections.length,
     totalTrackedCount: tracker.totalCount,
-    countingLine,
-    lineCount: lineCrossingCounter.getLineCount(countingLine.id),
+    countingLines,
+    lineCounts: Object.fromEntries(
+      countingLines.map((line) => [
+        line.id,
+        lineCrossingCounter.getLineCount(line.id),
+      ]),
+    ),
   };
 }
 

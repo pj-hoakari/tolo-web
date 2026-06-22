@@ -69,7 +69,7 @@ const meta = {
     videoSource: null,
     status: "idle",
     error: null,
-    lineCount: { forward: 0, backward: 0 },
+    lineCounts: { "line-1": { forward: 0, backward: 0 } },
     metrics: INITIAL_METRICS,
     settings: INITIAL_SETTINGS,
   },
@@ -87,7 +87,7 @@ export const Loading: Story = {
 export const Detecting: Story = {
   args: {
     status: "detecting",
-    lineCount: { forward: 12, backward: 7 },
+    lineCounts: { "line-1": { forward: 12, backward: 7 } },
     metrics: detectingMetrics,
   },
 };
