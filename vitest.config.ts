@@ -19,6 +19,8 @@ export default defineConfig({
           name: "unit",
           environment: "node",
           include: ["src/**/*.{test,spec}.{ts,tsx}"],
+          // MSW のモック API（/rpc）を node 環境で有効化
+          setupFiles: ["./src/mocks/setup.ts"],
         },
       },
       {

@@ -44,3 +44,13 @@ next-env.d.ts
 
 *storybook.log
 storybook-static
+
+
+
+# YOLO models are supplied locally
+/public/models/*.onnx
+/public/models/*.pt
+
+# ONNX Runtime WASM assets are copied from the package at build time
+# (see the wcdu-copy-runtime-assets scripts in package.json)
+/public/onnxruntime/

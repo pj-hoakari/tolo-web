@@ -5,7 +5,7 @@ export default async function TenantObservation({
 }: {
   params: Promise<{ tenantId: string; eventId: string }>;
 }) {
-  const { tenantId } = await params;
+  const { tenantId, eventId } = await params;
 
   return (
     <div className="flex flex-col">
@@ -13,7 +13,7 @@ export default async function TenantObservation({
         <h2 className="px-10 py-5 font-bold text-2xl">{tenantId} 観測ページ</h2>
       </header>
       <main className="w-full">
-        <CrowdDetection />
+        <CrowdDetection tenantId={tenantId} eventId={eventId} />
       </main>
     </div>
   );

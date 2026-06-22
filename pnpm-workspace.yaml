@@ -1,5 +1,8 @@
 allowBuilds:
+    "@firebase/util": false
     esbuild: true
+    msw: false
+    protobufjs: false
     sharp: true
 ignoredBuiltDependencies:
     - sharp
