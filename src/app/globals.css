@@ -49,26 +49,35 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* ゲストページの配色（#EAE4DC を基調にした温かみのあるグレージュ系パレット） */
+/* ゲストページ専用の配色（#EAE4DC を基調にした温かみのあるグレージュ系パレット）
+   shadcn のトークンと衝突しないよう、すべて guest- プレフィックスで分離している。 */
 @theme {
-  --color-canvas: #eae4dc;
-  --color-surface: #f4efe8;
-  --color-surface-muted: #e1d8cc;
-  --color-line: #d8cec0;
-  --color-ink: #403a33;
-  --color-ink-muted: #8b8073;
-  --color-accent: #b17a56;
-  --color-accent-strong: #9a6440;
+  --color-guest-canvas: #eae4dc;
+  --color-guest-surface: #f4efe8;
+  --color-guest-surface-muted: #e1d8cc;
+  --color-guest-line: #d8cec0;
+  --color-guest-ink: #403a33;
+  --color-guest-ink-muted: #8b8073;
+  --color-guest-accent: #b17a56;
+  --color-guest-accent-strong: #9a6440;
   /* 混雑レベル（low / mid / high） */
-  --color-calm: #7c8a5a;
-  --color-busy: #c8954a;
-  --color-crowded: #b0553f;
+  --color-guest-calm: #7c8a5a;
+  --color-guest-busy: #c8954a;
+  --color-guest-crowded: #b0553f;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ゲストページの並び替え（iPhone ホーム画面風）の小刻みな揺れアニメーション */
+@theme {
+  --animate-guest-jiggle: guest-jiggle 0.3s ease-in-out infinite;
+}
+
+@keyframes guest-jiggle {
+  0%,
+  100% {
+    transform: rotate(-1.1deg);
+  }
+  50% {
+    transform: rotate(1.1deg);
   }
 }
 

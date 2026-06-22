@@ -1,31 +1,34 @@
 "use client";
 
+import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
 import { useLanguage } from "./LanguageProvider";
-import { LANGS } from "./messages";
+import { type Lang, LANGS } from "./messages";
 
 export function LanguageSwitcher() {
   const { lang, setLang } = useLanguage();
 
   return (
-    <div className="flex items-center gap-1 rounded-full border border-line bg-surface p-1">
-      {LANGS.map(({ code, label }) => {
-        const active = code === lang;
-        return (
-          <button
-            key={code}
-            type="button"
-            aria-pressed={active}
-            onClick={() => setLang(code)}
-            className={
-              active
-                ? "rounded-full bg-accent px-2.5 py-1 text-xs font-bold text-surface"
-                : "rounded-full px-2.5 py-1 text-xs font-medium text-ink-muted hover:text-accent"
-            }
-          >
-            {label}
-          </button>
-        );
-      })}
-    </div>
+    <ToggleButtonGroup
+      selectionMode="single"
+      disallowEmptySelection
+      selectedKeys={[lang]}
+      onSelectionChange={(keys) => {
+        const next = [...keys][0];
+        if (next != null) setLang(next as Lang);
+      }}
+      aria-label="表示言語"
+      className="gap-1 rounded-full border border-guest-line bg-guest-surface p-1"
+    >
+      {LANGS.map(({ code, label }) => (
+        <Toggle
+          key={code}
+          id={code}
+          size="sm"
+          className="h-auto rounded-full px-2.5 py-1 text-xs font-medium text-guest-ink-muted hover:bg-transparent hover:text-guest-accent selected:bg-guest-accent selected:font-bold selected:text-guest-surface"
+        >
+          {label}
+        </Toggle>
+      ))}
+    </ToggleButtonGroup>
   );
 }

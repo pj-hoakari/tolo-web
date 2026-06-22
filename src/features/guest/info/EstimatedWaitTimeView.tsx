@@ -15,10 +15,10 @@ export function EstimatedWaitTimeView({
 }: EstimatedWaitTimeViewProps) {
   return (
     <InfoCard title={label}>
-      <p className="flex items-baseline gap-1 text-ink">
-        <span className="text-base text-ink-muted">{prefix}</span>
+      <p className="flex items-baseline gap-1 text-guest-ink">
+        <span className="text-base text-guest-ink-muted">{prefix}</span>
         <span className="text-4xl font-bold tabular-nums">{minutes}</span>
-        <span className="text-base text-ink-muted">{unit}</span>
+        <span className="text-base text-guest-ink-muted">{unit}</span>
       </p>
     </InfoCard>
   );
