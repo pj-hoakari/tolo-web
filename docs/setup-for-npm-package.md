@@ -83,3 +83,14 @@ cp .envrc.example .envrc
 ```bash
 direnv allow
 ```
+
+## pnpmの設定
+pnpmにGitHub Packages用のトークンを設定する
+
+pnpm v11.6.0以降，projectの`.npmrc`では環境変数が展開されなくなったため，user/globalレベルでの設定が必要　　
+
+[Release pnpm 11.6 · pnpm/pnpm](https://github.com/pnpm/pnpm/releases/tag/v11.6.0)
+
+```bash
+pnpm config set "//npm.pkg.github.com/:_authToken" "$NPM_TOKEN"
+```
