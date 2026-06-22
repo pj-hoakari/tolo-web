@@ -6,8 +6,10 @@ import {
   useState,
 } from "react";
 import {
+  type CrowdCountingLine,
   type CrowdDetectionFrame,
   detectCrowdFrame,
+  resetCrowdLineCount,
   type TrackedDetection,
 } from "../utils/detectCrowd";
 import type { DetectCrowdStatus } from "./useDetectCrowd";
@@ -27,11 +29,22 @@ export type DetectionSettings = {
   detectionInterval: number;
   showBoundingBoxes: boolean;
   showTrackingIds: boolean;
+  countingLine: DetectionCountingLineSetting;
 };
 
 export type DetectionLineCount = {
   forward: number;
   backward: number;
+};
+
+export type DetectionPoint = {
+  x: number;
+  y: number;
+};
+
+export type DetectionCountingLineSetting = {
+  p1: DetectionPoint;
+  p2: DetectionPoint;
 };
 
 export const INITIAL_METRICS: DetectionMetrics = {
@@ -49,6 +62,10 @@ export const INITIAL_SETTINGS: DetectionSettings = {
   detectionInterval: 100,
   showBoundingBoxes: true,
   showTrackingIds: true,
+  countingLine: {
+    p1: { x: 0, y: 0.6 },
+    p2: { x: 1, y: 0.6 },
+  },
 };
 
 const INITIAL_LINE_COUNT: DetectionLineCount = { forward: 0, backward: 0 };
@@ -64,21 +81,71 @@ function syncCanvasSize(
   }
 }
 
+function clampUnit(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
+
+export function toCrowdCountingLine(
+  countingLine: DetectionCountingLineSetting,
+  width: number,
+  height: number,
+): CrowdCountingLine {
+  return {
+    id: "observation-line",
+    p1: {
+      x: clampUnit(countingLine.p1.x) * width,
+      y: clampUnit(countingLine.p1.y) * height,
+    },
+    p2: {
+      x: clampUnit(countingLine.p2.x) * width,
+      y: clampUnit(countingLine.p2.y) * height,
+    },
+  };
+}
+
+function drawCountingLine(
+  context: CanvasRenderingContext2D,
+  countingLine: CrowdCountingLine,
+  width: number,
+): void {
+  context.lineWidth = Math.max(2, width / 320);
+  context.strokeStyle = "#f59e0b";
+  context.fillStyle = "#f59e0b";
+  context.setLineDash([12, 8]);
+  context.beginPath();
+  context.moveTo(countingLine.p1.x, countingLine.p1.y);
+  context.lineTo(countingLine.p2.x, countingLine.p2.y);
+  context.stroke();
+  context.setLineDash([]);
+
+  const handleRadius = Math.max(6, width / 96);
+  context.beginPath();
+  context.arc(
+    countingLine.p1.x,
+    countingLine.p1.y,
+    handleRadius,
+    0,
+    Math.PI * 2,
+  );
+  context.arc(
+    countingLine.p2.x,
+    countingLine.p2.y,
+    handleRadius,
+    0,
+    Math.PI * 2,
+  );
+  context.fill();
+}
+
 function drawDetectionOverlay(
   context: CanvasRenderingContext2D,
   frame: CrowdDetectionFrame,
   settings: Pick<DetectionSettings, "showBoundingBoxes" | "showTrackingIds">,
+  countingLine: CrowdCountingLine,
   width: number,
 ): void {
-  context.lineWidth = Math.max(2, width / 320);
+  drawCountingLine(context, countingLine, width);
   context.font = `${Math.max(16, width / 40)}px sans-serif`;
-  context.strokeStyle = "#f59e0b";
-  context.setLineDash([12, 8]);
-  context.beginPath();
-  context.moveTo(frame.countingLine.p1.x, frame.countingLine.p1.y);
-  context.lineTo(frame.countingLine.p2.x, frame.countingLine.p2.y);
-  context.stroke();
-  context.setLineDash([]);
 
   for (const detection of frame.detections) {
     const boxWidth = detection.x2 - detection.x1;
@@ -130,12 +197,27 @@ export function useCrowdDetectionLoop({
   const broadcastStreamRef = useRef<MediaStream | null>(null);
   const latestFrameRef = useRef<CrowdDetectionFrame | null>(null);
   const settingsRef = useRef(settings);
+  const previousCountingLineRef = useRef(settings.countingLine);
   const [lineCount, setLineCount] =
     useState<DetectionLineCount>(INITIAL_LINE_COUNT);
   const [metrics, setMetrics] = useState<DetectionMetrics>(INITIAL_METRICS);
 
   useEffect(() => {
+    const previousCountingLine = previousCountingLineRef.current;
+    const nextCountingLine = settings.countingLine;
     settingsRef.current = settings;
+
+    if (
+      previousCountingLine.p1.x !== nextCountingLine.p1.x ||
+      previousCountingLine.p1.y !== nextCountingLine.p1.y ||
+      previousCountingLine.p2.x !== nextCountingLine.p2.x ||
+      previousCountingLine.p2.y !== nextCountingLine.p2.y
+    ) {
+      latestFrameRef.current = null;
+      resetCrowdLineCount();
+      setLineCount(INITIAL_LINE_COUNT);
+      previousCountingLineRef.current = nextCountingLine;
+    }
   }, [settings]);
 
   const stopBroadcast = useCallback(() => {
@@ -188,9 +270,15 @@ export function useCrowdDetectionLoop({
 
       try {
         const currentSettings = settingsRef.current;
+        const countingLine = toCrowdCountingLine(
+          currentSettings.countingLine,
+          video.videoWidth,
+          video.videoHeight,
+        );
         const frame = await detectCrowdFrame(video, {
           confidenceThreshold: currentSettings.confidenceThreshold,
           trackingDistanceThreshold: currentSettings.trackingDistanceThreshold,
+          countingLine,
         });
 
         if (cancelled) {
@@ -241,6 +329,11 @@ export function useCrowdDetectionLoop({
         const height = video.videoHeight;
         const frame = latestFrameRef.current;
         const currentSettings = settingsRef.current;
+        const countingLine = toCrowdCountingLine(
+          currentSettings.countingLine,
+          width,
+          height,
+        );
 
         const overlay = overlayCanvasRef.current;
         if (overlay) {
@@ -249,7 +342,15 @@ export function useCrowdDetectionLoop({
           if (context) {
             context.clearRect(0, 0, width, height);
             if (frame) {
-              drawDetectionOverlay(context, frame, currentSettings, width);
+              drawDetectionOverlay(
+                context,
+                frame,
+                currentSettings,
+                countingLine,
+                width,
+              );
+            } else {
+              drawCountingLine(context, countingLine, width);
             }
           }
         }
@@ -268,8 +369,11 @@ export function useCrowdDetectionLoop({
               broadcastContext,
               frame,
               currentSettings,
+              countingLine,
               width,
             );
+          } else {
+            drawCountingLine(broadcastContext, countingLine, width);
           }
           if (!broadcastStreamRef.current) {
             broadcastStreamRef.current = broadcastCanvas.captureStream();

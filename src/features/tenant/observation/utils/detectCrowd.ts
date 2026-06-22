@@ -40,6 +40,7 @@ const backgroundSubtractor = new BackgroundSubtractor({
 });
 
 export type TrackedDetection = TrackedBox & Pick<Detection, "classId">;
+export type CrowdCountingLine = Line;
 
 export type CrowdDetectionFrame = {
   detections: TrackedDetection[];
@@ -52,6 +53,7 @@ export type CrowdDetectionFrame = {
 export type CrowdDetectionOptions = {
   confidenceThreshold: number;
   trackingDistanceThreshold: number;
+  countingLine: CrowdCountingLine;
 };
 
 async function fetchModel(): Promise<ArrayBuffer> {
@@ -132,11 +134,7 @@ export async function detectCrowdFrame(
   const sourceDetections = reverseLetterboxBoxes(detections, params);
   tracker.matchThresh = options.trackingDistanceThreshold;
   const trackedDetections = tracker.update(sourceDetections);
-  const countingLine: Line = {
-    id: "observation-line",
-    p1: { x: 0, y: params.sourceHeight * 0.6 },
-    p2: { x: params.sourceWidth, y: params.sourceHeight * 0.6 },
-  };
+  const countingLine = options.countingLine;
   const trackedPoints = trackedDetections.map((detection) => ({
     trackId: detection.trackId,
     point: {
@@ -165,4 +163,8 @@ export function resetCrowdTracking(): void {
   tracker.reset();
   lineCrossingCounter.reset();
   backgroundSubtractor.reset();
+}
+
+export function resetCrowdLineCount(): void {
+  lineCrossingCounter.reset();
 }
