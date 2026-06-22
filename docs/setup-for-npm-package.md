@@ -36,11 +36,22 @@ Ubuntuの場合
 sudo apt install direnv
 ```
 
+macOSの場合
+```bash
+brew install direnv
+```
+
 ### direnvとシェルの連携
 [Setup | direnv](https://direnv.net/docs/hook.html)
 
+Ubuntuの場合（bashを使用している場合）
 ```bash
 echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
+```
+
+macOSの場合（zshを使用している場合）
+```bash
+echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc
 ```
 
 ### .envrcファイルの作成
