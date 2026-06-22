@@ -49,6 +49,29 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* ゲストページの配色（#EAE4DC を基調にした温かみのあるグレージュ系パレット） */
+@theme {
+  --color-canvas: #eae4dc;
+  --color-surface: #f4efe8;
+  --color-surface-muted: #e1d8cc;
+  --color-line: #d8cec0;
+  --color-ink: #403a33;
+  --color-ink-muted: #8b8073;
+  --color-accent: #b17a56;
+  --color-accent-strong: #9a6440;
+  /* 混雑レベル（low / mid / high） */
+  --color-calm: #7c8a5a;
+  --color-busy: #c8954a;
+  --color-crowded: #b0553f;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.147 0.004 49.3);
