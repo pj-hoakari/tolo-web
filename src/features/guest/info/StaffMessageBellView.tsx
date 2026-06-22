@@ -38,7 +38,7 @@ export function StaffMessageBellView({
         onClick={onToggle}
         aria-label={ariaOpen}
         aria-expanded={isOpen}
-        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface text-ink-muted hover:text-accent"
+        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-guest-line bg-guest-surface text-guest-ink-muted hover:text-guest-accent"
       >
         <svg
           viewBox="0 0 24 24"
@@ -54,7 +54,7 @@ export function StaffMessageBellView({
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-strong px-1 text-xs font-bold text-surface">
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-guest-accent-strong px-1 text-xs font-bold text-guest-surface">
             {unreadCount}
           </span>
         )}
@@ -68,8 +68,8 @@ export function StaffMessageBellView({
             onClick={onToggle}
             className="fixed inset-0 z-10 cursor-default"
           />
-          <div className="absolute right-0 z-20 mt-2 w-80 rounded-2xl border border-line bg-surface p-4 shadow-lg">
-            <h2 className="mb-3 text-sm font-medium tracking-wide text-ink-muted">
+          <div className="absolute right-0 z-20 mt-2 w-80 rounded-2xl border border-guest-line bg-guest-surface p-4 shadow-lg">
+            <h2 className="mb-3 text-sm font-medium tracking-wide text-guest-ink-muted">
               {title}
             </h2>
             <StaffMessageView
