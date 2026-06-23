@@ -49,7 +49,9 @@ export function StaffMessageView({
           <div className="mt-3 flex items-center justify-between text-xs text-guest-ink-muted">
             <span>
               {message.staffName}
-              <span className="ml-1 text-guest-ink-muted">{message.staffRole}</span>
+              <span className="ml-1 text-guest-ink-muted">
+                {message.staffRole}
+              </span>
             </span>
             <time dateTime={message.deliveredAt}>
               {dateFormatter.format(new Date(message.deliveredAt))}
