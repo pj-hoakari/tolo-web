@@ -14,7 +14,7 @@ export default async function TenantManagement({
         <h2 className="font-bold text-2xl">{tenantId} 管理ページ</h2>
         <ThemeToggle />
       </header>
-      <main className="flex w-full min-h-0 flex-1">
+      <main className="flex min-h-0 w-full flex-1">
         <ManagementTabs tenantId={tenantId} eventId={eventId} />
       </main>
     </div>

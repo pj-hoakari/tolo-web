@@ -56,7 +56,7 @@ export function StaffMessageBellView({
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-guest-accent-strong px-1 text-xs font-bold text-guest-surface">
+          <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-guest-accent-strong px-1 font-bold text-guest-surface text-xs">
             {unreadCount}
           </span>
         )}
@@ -71,7 +71,7 @@ export function StaffMessageBellView({
             className="fixed inset-0 z-10 block h-auto w-auto cursor-default rounded-none bg-transparent p-0 hover:bg-transparent"
           />
           <div className="absolute right-0 z-20 mt-2 w-80 rounded-2xl border border-guest-line bg-guest-surface p-4 shadow-lg">
-            <h2 className="mb-3 text-sm font-medium tracking-wide text-guest-ink-muted">
+            <h2 className="mb-3 font-medium text-guest-ink-muted text-sm tracking-wide">
               {title}
             </h2>
             <StaffMessageView

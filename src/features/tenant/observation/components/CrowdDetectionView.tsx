@@ -63,7 +63,7 @@ export function CrowdDetectionView({
   }, [videoSource, videoRef]);
 
   return (
-    <div className="flex flex-col items-center gap-2 w-full">
+    <div className="flex w-full flex-col items-center gap-2">
       <div className="relative w-full max-w-3xl">
         <video
           ref={videoRef}

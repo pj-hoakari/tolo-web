@@ -65,9 +65,9 @@ const MenuItem = ({ children, className, ...props }: AriaMenuItemProps) => (
         /* Disabled */
         "disabled:pointer-events-none disabled:opacity-50",
         /* Focused */
-        "focus:bg-accent focus:text-accent-foreground ",
+        "focus:bg-accent focus:text-accent-foreground",
         /* Selection Mode */
-        "selection-single:pl-8 selection-multiple:pl-8",
+        "selection-multiple:pl-8 selection-single:pl-8",
         className,
       ),
     )}
@@ -109,7 +109,7 @@ const MenuHeader = ({
 }: MenuHeaderProps) => (
   <AriaHeader
     className={cn(
-      "px-3 py-1.5 text-sm font-semibold",
+      "px-3 py-1.5 font-semibold text-sm",
       inset && "pl-8",
       separator && "-mx-1 mb-1 border-b border-b-border pb-2.5",
       className,

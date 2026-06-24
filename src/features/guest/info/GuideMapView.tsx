@@ -79,7 +79,7 @@ export function GuideMapView({
             key={destination.id}
             id={destination.id}
             size="sm"
-            className="h-auto rounded-full border border-guest-line bg-guest-surface px-3 py-1 text-sm text-guest-ink-muted hover:bg-guest-surface hover:text-guest-accent selected:border-guest-accent selected:bg-guest-accent selected:font-medium selected:text-guest-surface"
+            className="h-auto rounded-full border border-guest-line selected:border-guest-accent bg-guest-surface selected:bg-guest-accent px-3 py-1 selected:font-medium selected:text-guest-surface text-guest-ink-muted text-sm hover:bg-guest-surface hover:text-guest-accent"
           >
             {destination.name}
           </Toggle>
@@ -175,7 +175,7 @@ export function GuideMapView({
       </svg>
 
       {selectedDestinationId === null && (
-        <p className="mt-3 text-sm text-guest-ink-muted">{hint}</p>
+        <p className="mt-3 text-guest-ink-muted text-sm">{hint}</p>
       )}
     </InfoCard>
   );
