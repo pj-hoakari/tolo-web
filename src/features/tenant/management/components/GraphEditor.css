@@ -1,0 +1,44 @@
+.react-flow {
+  /* 背景ドット */
+  --xy-background-pattern-color: var(--border);
+  /* 新規エッジ作成時の接続線 */
+  --xy-connectionline-stroke: var(--muted-foreground);
+  /* MiniMap 本体・マスク（非表示領域のオーバーレイ） */
+  --xy-minimap-background-color: var(--card);
+  --xy-minimap-mask-background-color: color-mix(
+    in oklab,
+    var(--foreground) 8%,
+    transparent
+  );
+  /* 右下 "React Flow" 表記 */
+  --xy-attribution-background-color: color-mix(
+    in oklab,
+    var(--card) 70%,
+    transparent
+  );
+}
+
+/* Controls は base.css が構造のみで配色変数を持たないため明示する */
+.react-flow__controls {
+  overflow: hidden;
+  border-radius: var(--radius);
+  box-shadow: 0 0 0 1px var(--border);
+}
+.react-flow__controls-button {
+  border-bottom: 1px solid var(--border);
+  background-color: var(--card);
+  color: var(--foreground);
+}
+.react-flow__controls-button:hover {
+  background-color: var(--accent);
+}
+.react-flow__controls-button:last-child {
+  border-bottom: none;
+}
+
+/* エッジ配色（GraphEdge.tsx と矢印 marker が参照）
+   marker SVGは .react-flow の外に描画されるため :root に置く */
+:root {
+  --graph-edge-stroke: var(--muted-foreground);
+  --graph-edge-stroke-selected: var(--primary);
+}
