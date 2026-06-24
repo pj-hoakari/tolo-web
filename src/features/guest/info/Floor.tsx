@@ -18,4 +18,4 @@ function Floor(_props: GuestInfoComponentProps) {
   );
 }
 
-export default defineGuestInfoComponent("floor", Floor);
+export default defineGuestInfoComponent("floor", Floor, { span: 1 });

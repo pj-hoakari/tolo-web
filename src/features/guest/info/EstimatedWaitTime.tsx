@@ -25,4 +25,5 @@ function EstimatedWaitTime(_props: GuestInfoComponentProps) {
 export default defineGuestInfoComponent(
   "estimated-wait-time",
   EstimatedWaitTime,
+  { span: 1 },
 );

@@ -21,4 +21,6 @@ function CallingNumber(_props: GuestInfoComponentProps) {
   );
 }
 
-export default defineGuestInfoComponent("calling-number", CallingNumber);
+export default defineGuestInfoComponent("calling-number", CallingNumber, {
+  span: 1,
+});
