@@ -1,3 +1,4 @@
+import { withThemeByClassName } from "@storybook/addon-themes";
 import type { Preview } from "@storybook/nextjs-vite";
 import { initialize, mswLoader } from "msw-storybook-addon";
 import { handlers } from "../src/mocks/handlers";
@@ -28,6 +29,15 @@ const preview: Preview = {
     // 各 Story は parameters.msw.handlers で上書き
     msw: { handlers },
   },
+  decorators: [
+    withThemeByClassName({
+      themes: {
+        light: "",
+        dark: "dark",
+      },
+      defaultTheme: "light",
+    }),
+  ],
   loaders: [mswLoader],
 };
 
