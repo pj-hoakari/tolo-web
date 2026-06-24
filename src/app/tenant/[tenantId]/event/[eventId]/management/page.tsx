@@ -1,3 +1,4 @@
+import { ThemeToggle } from "@/components/theme-toggle";
 import { ManagementTabs } from "@/features/tenant/management/components/ManagementTabs";
 
 export default async function TenantManagement({
@@ -9,8 +10,9 @@ export default async function TenantManagement({
 
   return (
     <div className="flex h-screen flex-col">
-      <header className="w-full">
-        <h2 className="px-10 py-5 font-bold text-2xl">{tenantId} 管理ページ</h2>
+      <header className="flex w-full items-center justify-between px-10 py-5">
+        <h2 className="font-bold text-2xl">{tenantId} 管理ページ</h2>
+        <ThemeToggle />
       </header>
       <main className="flex w-full min-h-0 flex-1">
         <ManagementTabs tenantId={tenantId} eventId={eventId} />
