@@ -35,6 +35,15 @@
       "preset": "recommended",
       "suspicious": {
         "noUnknownAtRules": "off"
+      },
+      "nursery": {
+        "useSortedClasses": {
+          "fix": "safe",
+          "level": "error",
+          "options": {
+            "functions": ["twMerge", "cn"]
+          }
+        }
       }
     },
     "domains": {
