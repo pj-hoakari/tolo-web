@@ -1,4 +1,5 @@
-import "@xyflow/react/dist/style.css";
+import "@xyflow/react/dist/base.css";
+import "@/features/tenant/management/components/GraphEditor.css";
 
 import {
   Background,
@@ -47,7 +48,7 @@ export function GraphCanvas({
           fitViewOptions={{ padding: 0.3 }}
           proOptions={{ hideAttribution: true }}
         >
-          <Background gap={20} size={1} color="#d4d4d8" />
+          <Background gap={20} size={1} />
         </ReactFlow>
       </ReactFlowProvider>
     </div>

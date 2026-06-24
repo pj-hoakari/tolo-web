@@ -3,8 +3,9 @@
 import { BaseEdge, type EdgeProps, getBezierPath } from "@xyflow/react";
 import type { GraphEdgeType } from "../type";
 
-const STROKE = "#475569";
-const STROKE_SELECTED = "#2563eb";
+// GraphEditor.css
+const STROKE = "var(--graph-edge-stroke)";
+const STROKE_SELECTED = "var(--graph-edge-stroke-selected)";
 /** ルート上を通過する円アイコンの半径 */
 const DOT_RADIUS = 3.5;
 /** 円アイコンが1区間（始点→終点）を通過する時間(秒) */
@@ -68,7 +69,7 @@ function RouteDot({
     <circle
       r={DOT_RADIUS}
       fill={color}
-      stroke="#ffffff"
+      stroke="var(--background)"
       strokeWidth={1.5}
       style={{ pointerEvents: "none" }}
     >

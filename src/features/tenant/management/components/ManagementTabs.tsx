@@ -42,7 +42,7 @@ export function ManagementTabs({ tenantId, eventId, initialGraph }: Props) {
           shouldForceMount
           className="h-full data-inert:hidden"
         >
-          <div className="h-full w-full overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
+          <div className="h-full w-full overflow-hidden rounded-lg border border-border bg-background">
             <GraphEditor
               tenantId={tenantId}
               eventId={eventId}

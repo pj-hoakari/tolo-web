@@ -48,18 +48,20 @@ export function GraphNode({ id, data, selected }: NodeProps<GraphNodeType>) {
     <div className="group relative min-w-40 drop-shadow-sm">
       {/* 選択時のハロー */}
       {selected ? (
-        <div className="absolute inset-0.75 bg-sky-200" style={shapeStyle} />
+        <div className="absolute inset-0.75 bg-primary/20" style={shapeStyle} />
       ) : null}
       {/* 枠線レイヤ */}
       <div
         className={[
           "absolute inset-0 transition-colors",
-          selected ? "bg-sky-500" : "bg-zinc-300 group-hover:bg-zinc-400",
+          selected
+            ? "bg-primary"
+            : "bg-border group-hover:bg-muted-foreground/40",
         ].join(" ")}
         style={shapeStyle}
       />
       {/* 塗りレイヤ */}
-      <div className="absolute inset-[1.5px] bg-white" style={shapeStyle} />
+      <div className="absolute inset-[1.5px] bg-card" style={shapeStyle} />
       {/* 内容 */}
       <div
         className={[
@@ -67,11 +69,11 @@ export function GraphNode({ id, data, selected }: NodeProps<GraphNodeType>) {
           shape.contentClassName ?? "",
         ].join(" ")}
       >
-        <div className="flex items-center justify-center gap-1 text-[10px] text-zinc-500">
+        <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
           <NodeTypeIcon type={data.nodeType} />
           {typeDef.label}
         </div>
-        <div className="text-center font-semibold text-sm text-zinc-900">
+        <div className="text-center font-semibold text-foreground text-sm">
           {data.label}
         </div>
       </div>
@@ -95,8 +97,8 @@ function HandlePort({ slot }: { slot: HandleSlot }) {
       : { top: `${percentage}%` };
 
   const cls = slot.used
-    ? "!h-2.5 !w-2.5 !rounded-full !border-2 !border-white !bg-sky-500"
-    : "!h-2.5 !w-2.5 !rounded-full !border !border-sky-400 !bg-white hover:!bg-sky-100";
+    ? "!h-2.5 !w-2.5 !rounded-full !border-2 !border-card !bg-primary"
+    : "!h-2.5 !w-2.5 !rounded-full !border !border-primary !bg-secondary hover:!bg-primary/10";
 
   return (
     <Handle
