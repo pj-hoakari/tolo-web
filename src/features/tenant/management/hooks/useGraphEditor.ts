@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  addEdge,
   applyEdgeChanges,
   applyNodeChanges,
   type Connection,
@@ -137,7 +136,9 @@ export function useGraphEditor(initial?: GraphData) {
         type: "graph",
         data: { direction },
       };
-      setEdges((eds) => addEdge(newEdge, eds));
+      // addEdge経由で追加すると，connectionExistsによって重複が拒否される
+      // 仕様として同一ポイント間の複数ルートを想定するため，直接追加
+      setEdges((eds) => [...eds, newEdge]);
       setSelection({ type: "edge", id: newEdge.id });
     },
     [nodes, edges],
@@ -208,7 +209,10 @@ export function useGraphEditor(initial?: GraphData) {
           e.id === id
             ? {
                 ...e,
-                data: { ...(e.data ?? { direction: "both" }), ...patch },
+                data: {
+                  ...(e.data ?? { direction: "both" }),
+                  ...patch,
+                },
               }
             : e,
         ),
@@ -240,7 +244,13 @@ export function useGraphEditor(initial?: GraphData) {
         setNodes((nds) =>
           nds.map((n) =>
             n.id === target.id
-              ? { ...n, data: { ...n.data, observationPointIds: nextIds } }
+              ? {
+                  ...n,
+                  data: {
+                    ...n.data,
+                    observationPointIds: nextIds,
+                  },
+                }
               : n,
           ),
         );
