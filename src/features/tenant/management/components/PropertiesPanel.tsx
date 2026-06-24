@@ -190,7 +190,7 @@ function NodeForm({
                   id={def.type}
                   variant="outline"
                   isDisabled={!assignable}
-                  className="h-auto w-full flex-col items-start gap-0.5 px-2 py-1.5 text-left selected:border-primary selected:bg-accent"
+                  className="h-auto w-full flex-col items-start gap-0.5 selected:border-primary selected:bg-accent px-2 py-1.5 text-left"
                 >
                   <span className="flex items-center gap-1.5 font-medium text-xs text-zinc-900">
                     <NodeTypeIcon type={def.type} />
@@ -296,14 +296,14 @@ function EdgeForm({
           <Toggle
             id="both"
             isDisabled={bothDisabled}
-            className="h-auto flex-1 rounded-sm px-2 py-1 font-medium text-xs selected:bg-background selected:text-foreground selected:shadow-sm"
+            className="h-auto flex-1 rounded-sm selected:bg-background px-2 py-1 font-medium selected:text-foreground text-xs selected:shadow-sm"
           >
             両通行可 ⇌
           </Toggle>
           <Toggle
             id="oneway"
             isDisabled={onewayDisabled}
-            className="h-auto flex-1 rounded-sm px-2 py-1 font-medium text-xs selected:bg-background selected:text-foreground selected:shadow-sm"
+            className="h-auto flex-1 rounded-sm selected:bg-background px-2 py-1 font-medium selected:text-foreground text-xs selected:shadow-sm"
           >
             片方向 →
           </Toggle>
@@ -413,7 +413,7 @@ function ObservationPointPicker({
                 key={row.id}
                 value={row.id}
                 isDisabled={disabled}
-                className="w-full items-start rounded-md border border-zinc-200 px-2 py-1.5 font-normal hover:bg-zinc-50 selected:border-primary selected:bg-accent"
+                className="w-full items-start rounded-md border border-zinc-200 selected:border-primary selected:bg-accent px-2 py-1.5 font-normal hover:bg-zinc-50"
               >
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1">

@@ -101,7 +101,7 @@ export function DevVideoSourcePanel({
         <button
           type="button"
           onClick={() => setHidden(true)}
-          className="underline text-xs"
+          className="text-xs underline"
         >
           非表示
         </button>

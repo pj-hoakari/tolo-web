@@ -33,7 +33,7 @@ export function ScreenWakeControl() {
         isSelected={enabled}
         onChange={handleChange}
         aria-label="画面の常時点灯"
-        className="selected:border-primary selected:bg-primary selected:text-primary-foreground border-2 px-6 font-semibold text-base shadow-sm"
+        className="border-2 selected:border-primary selected:bg-primary px-6 font-semibold selected:text-primary-foreground text-base shadow-sm"
       >
         {enabled ? (
           <MonitorCheck className="mr-2 size-5" aria-hidden="true" />

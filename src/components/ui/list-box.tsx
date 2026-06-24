@@ -57,7 +57,7 @@ const ListBoxItem = <T extends object>({
           /* Hovered */
           "hover:bg-accent hover:text-accent-foreground",
           /* Selection */
-          "selection-single:pl-8 selection-multiple:pl-8",
+          "selection-multiple:pl-8 selection-single:pl-8",
           className,
         ),
       )}
@@ -83,7 +83,7 @@ function ListBoxHeader({
 }: React.ComponentProps<typeof AriaHeader>) {
   return (
     <AriaHeader
-      className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold", className)}
+      className={cn("py-1.5 pr-2 pl-8 font-semibold text-sm", className)}
       {...props}
     />
   );

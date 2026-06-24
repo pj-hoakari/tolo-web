@@ -20,9 +20,9 @@ const Popover = ({ className, offset = 4, ...props }: AriaPopoverProps) => (
       cn(
         "z-50 rounded-md border bg-popover text-popover-foreground shadow-md outline-none",
         /* Entering */
-        "entering:animate-in entering:fade-in-0 entering:zoom-in-95",
+        "entering:fade-in-0 entering:zoom-in-95 entering:animate-in",
         /* Exiting */
-        "exiting:animate-out exiting:fade-out-0 exiting:zoom-out-95",
+        "exiting:fade-out-0 exiting:zoom-out-95 exiting:animate-out",
         /* Placement */
         "placement-bottom:slide-in-from-top-2 placement-left:slide-in-from-right-2 placement-right:slide-in-from-left-2 placement-top:slide-in-from-bottom-2",
         className,

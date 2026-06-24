@@ -12,7 +12,7 @@ export type InfoCardProps = {
 export function InfoCard({ title, children }: InfoCardProps) {
   return (
     <section className="h-full rounded-2xl border border-guest-line bg-guest-surface p-6 shadow-sm">
-      <h2 className="text-sm font-medium tracking-wide text-guest-ink-muted">
+      <h2 className="font-medium text-guest-ink-muted text-sm tracking-wide">
         {title}
       </h2>
       <div className="mt-3">{children}</div>

@@ -20,13 +20,13 @@ export function GuestHeader({
   const t = messages[lang];
 
   return (
-    <header className="border-b border-guest-line bg-guest-surface">
+    <header className="border-guest-line border-b bg-guest-surface">
       <div className="mx-auto flex w-full max-w-md items-start justify-between px-4 py-4">
         <div>
-          <p className="text-xs font-medium tracking-wide text-guest-ink-muted">
+          <p className="font-medium text-guest-ink-muted text-xs tracking-wide">
             {t.pageSubtitle}
           </p>
-          <h1 className="text-xl font-bold text-guest-ink">{tenantName}</h1>
+          <h1 className="font-bold text-guest-ink text-xl">{tenantName}</h1>
         </div>
         <div className="flex items-center gap-2">
           <StaffMessageBell tenantId={tenantId} eventId={eventId} />

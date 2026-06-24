@@ -131,7 +131,7 @@ function JollySelect<T extends object>({
         <SelectValue />
       </SelectTrigger>
       {description && (
-        <Text className="text-sm text-muted-foreground" slot="description">
+        <Text className="text-muted-foreground text-sm" slot="description">
           {description}
         </Text>
       )}

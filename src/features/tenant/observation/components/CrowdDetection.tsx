@@ -55,7 +55,7 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
   });
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full">
+    <div className="flex w-full flex-col items-center gap-4">
       {DEV_VIDEO_SOURCE_ENABLED && (
         <DevVideoSourcePanel
           status={status}

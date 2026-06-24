@@ -38,7 +38,7 @@ const Checkbox = ({ className, children, ...props }: AriaCheckboxProps) => (
             /* Focus Visible */
             "group-focus-visible/checkbox:outline-none group-focus-visible/checkbox:ring-2 group-focus-visible/checkbox:ring-ring group-focus-visible/checkbox:ring-offset-2",
             /* Selected */
-            "group-indeterminate/checkbox:bg-primary group-selected/checkbox:bg-primary group-indeterminate/checkbox:text-primary-foreground group-selected/checkbox:text-primary-foreground",
+            "group-indeterminate/checkbox:bg-primary group-indeterminate/checkbox:text-primary-foreground group-selected/checkbox:bg-primary group-selected/checkbox:text-primary-foreground",
             /* Disabled */
             "group-disabled/checkbox:cursor-not-allowed group-disabled/checkbox:opacity-50",
             /* Invalid */
@@ -85,7 +85,7 @@ function JollyCheckboxGroup({
           <Label>{label}</Label>
           {children}
           {description && (
-            <Text className="text-sm text-muted-foreground" slot="description">
+            <Text className="text-muted-foreground text-sm" slot="description">
               {description}
             </Text>
           )}
