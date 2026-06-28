@@ -16,6 +16,7 @@ import {
 import { CrowdDetectionControls } from "./CrowdDetectionControls";
 import { CrowdDetectionView } from "./CrowdDetectionView";
 import { DevVideoSourcePanel } from "./DevVideoSourcePanel";
+import { ObservationSoftLock } from "./ObservationSoftLock";
 
 const DEV_VIDEO_SOURCE_ENABLED = process.env.NODE_ENV === "development";
 
@@ -55,7 +56,7 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
   });
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full">
+    <ObservationSoftLock tenantId={tenantId} eventId={eventId}>
       {DEV_VIDEO_SOURCE_ENABLED && (
         <DevVideoSourcePanel
           status={status}
@@ -75,6 +76,6 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
         overlayCanvasRef={overlayCanvasRef}
       />
       <BroadcastIndicator active={active} edgeId={edgeId} />
-    </div>
+    </ObservationSoftLock>
   );
 }
