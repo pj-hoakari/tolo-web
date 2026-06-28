@@ -38,11 +38,8 @@ function CrowdDetectionViewStory({
 }
 
 const detectingMetrics: DetectionMetrics = {
-  detectedCount: 2,
   trackedCount: 2,
-  totalTrackedCount: 5,
   fps: 23.4,
-  lastDetectedAt: new Date("2026-06-20T12:00:00"),
 };
 
 const meta = {

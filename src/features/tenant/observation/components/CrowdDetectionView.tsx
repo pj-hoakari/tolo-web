@@ -519,15 +519,10 @@ export function CrowdDetectionView({
           );
         })}
       </div>
-      <section className="grid w-full max-w-3xl gap-4 rounded border border-gray-200 p-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="grid w-full max-w-3xl gap-4 rounded border border-gray-200 p-4 sm:grid-cols-3">
         <p>検出状態: {STATUS_LABELS[status]}</p>
-        <p>検出人数: {metrics.detectedCount}人</p>
         <p>追跡中人数: {metrics.trackedCount}人</p>
-        <p>累計 tracking ID: {metrics.totalTrackedCount}</p>
         <p>FPS: {metrics.fps.toFixed(1)}</p>
-        <p>
-          最終検出時刻: {metrics.lastDetectedAt?.toLocaleTimeString() ?? "-"}
-        </p>
       </section>
       <section className="grid w-full max-w-3xl gap-4 rounded border border-gray-200 p-4 sm:grid-cols-2">
         <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2">

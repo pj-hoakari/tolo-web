@@ -14,11 +14,8 @@ import {
 import type { DetectCrowdStatus } from "./useDetectCrowd";
 
 export type DetectionMetrics = {
-  detectedCount: number;
   trackedCount: number;
-  totalTrackedCount: number;
   fps: number;
-  lastDetectedAt: Date | null;
 };
 
 export type DetectionSettings = {
@@ -45,11 +42,8 @@ export type DetectionCountingLineSetting = {
 };
 
 export const INITIAL_METRICS: DetectionMetrics = {
-  detectedCount: 0,
   trackedCount: 0,
-  totalTrackedCount: 0,
   fps: 0,
-  lastDetectedAt: null,
 };
 
 export const INITIAL_SETTINGS: DetectionSettings = {
@@ -313,14 +307,10 @@ export function useCrowdDetectionLoop({
         const detectionAt = performance.now();
         const fps = 1000 / Math.max(1, detectionAt - previousDetectionAt);
         previousDetectionAt = detectionAt;
-        setMetrics((current) => ({
-          detectedCount: frame.detectedCount,
+        setMetrics({
           trackedCount: frame.detections.length,
-          totalTrackedCount: frame.totalTrackedCount,
           fps,
-          lastDetectedAt:
-            frame.detectedCount > 0 ? new Date() : current.lastDetectedAt,
-        }));
+        });
       } catch (cause) {
         if (!cancelled) {
           onDetectionError(cause);
