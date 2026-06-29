@@ -402,7 +402,7 @@ export function CrowdDetectionView({
           onPointerMove={handleLinePointerMove}
           onPointerUp={handleLinePointerUp}
           onPointerCancel={handleLinePointerUp}
-          className="absolute inset-0 h-full w-full touch-none rounded cursor-crosshair"
+          className="absolute inset-0 h-full w-full cursor-crosshair touch-none rounded"
         />
         {status === "loading" && (
           <div className="absolute inset-0 flex items-center justify-center rounded bg-black/40 text-white">
