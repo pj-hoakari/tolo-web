@@ -32,7 +32,7 @@ export default async function TenantGuest({
 
   return (
     <LanguageProvider>
-      <div className="min-h-full bg-guest-canvas">
+      <div className="min-h-full guest-glow">
         <GuestHeader
           tenantName={tenantName}
           tenantId={tenantId}

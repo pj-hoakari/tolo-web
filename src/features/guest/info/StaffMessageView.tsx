@@ -33,7 +33,7 @@ export function StaffMessageView({
   });
 
   if (messages.length === 0) {
-    return <p className="text-sm text-guest-ink-muted">{emptyText}</p>;
+    return <p className="text-sm text-guest-primary/55">{emptyText}</p>;
   }
 
   return (
@@ -41,15 +41,15 @@ export function StaffMessageView({
       {messages.map((message) => (
         <li
           key={message.id}
-          className="rounded-xl border border-guest-line bg-guest-surface-muted p-4"
+          className="rounded-xl border border-guest-primary/12 bg-guest-primary/15 p-4"
         >
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-guest-ink">
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-guest-primary">
             {message.body}
           </p>
-          <div className="mt-3 flex items-center justify-between text-xs text-guest-ink-muted">
+          <div className="mt-3 flex items-center justify-between text-xs text-guest-primary/55">
             <span>
               {message.staffName}
-              <span className="ml-1 text-guest-ink-muted">{message.staffRole}</span>
+              <span className="ml-1 text-guest-primary/55">{message.staffRole}</span>
             </span>
             <time dateTime={message.deliveredAt}>
               {dateFormatter.format(new Date(message.deliveredAt))}

@@ -1,5 +1,14 @@
 import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
+import { cn } from "@/lib/utils";
 import { InfoCard } from "./InfoCard";
+
+/** 部屋 id ごとの淡いタイント色（未定義の部屋はクリームのまま） */
+const ROOM_FILL: Record<string, string> = {
+  hall: "fill-guest-room-amber",
+  goods: "fill-guest-room-rose",
+  cafe: "fill-guest-room-sage",
+  exit: "fill-guest-room-sky",
+};
 
 export type MapPoint = { x: number; y: number };
 
@@ -79,7 +88,7 @@ export function GuideMapView({
             key={destination.id}
             id={destination.id}
             size="sm"
-            className="h-auto rounded-full border border-guest-line bg-guest-surface px-3 py-1 text-sm text-guest-ink-muted hover:bg-guest-surface hover:text-guest-accent selected:border-guest-accent selected:bg-guest-accent selected:font-medium selected:text-guest-surface"
+            className="h-auto rounded-full border border-guest-primary/12 bg-guest-secondary px-3 py-1 text-sm text-guest-primary/55 hover:bg-guest-secondary hover:text-guest-accent selected:border-guest-accent selected:bg-guest-accent selected:font-medium selected:text-guest-secondary"
           >
             {destination.name}
           </Toggle>
@@ -88,7 +97,7 @@ export function GuideMapView({
 
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="w-full rounded-xl border border-guest-line bg-guest-surface-muted"
+        className="w-full rounded-xl border border-guest-primary/15 bg-guest-primary/12"
         role="img"
         aria-label={title}
       >
@@ -101,14 +110,17 @@ export function GuideMapView({
               height={room.height}
               rx={4}
               strokeWidth={1.5}
-              className="fill-guest-surface stroke-guest-line"
+              className={cn(
+                ROOM_FILL[room.id] ?? "fill-guest-secondary",
+                "stroke-guest-primary/25",
+              )}
             />
             <text
               x={room.x + room.width / 2}
               y={room.y + room.height / 2}
               textAnchor="middle"
               dominantBaseline="middle"
-              className="fill-guest-ink-muted text-[10px]"
+              className="fill-guest-primary/70 text-[10px]"
             >
               {room.label}
             </text>
@@ -121,13 +133,13 @@ export function GuideMapView({
               cx={waypoint.point.x}
               cy={waypoint.point.y}
               r={4}
-              className="fill-guest-line"
+              className="fill-guest-primary/35"
             />
             <text
               x={waypoint.point.x}
               y={waypoint.point.y - 7}
               textAnchor="middle"
-              className="fill-guest-ink-muted text-[8px]"
+              className="fill-guest-primary/65 text-[8px]"
             >
               {waypoint.label}
             </text>
@@ -151,13 +163,13 @@ export function GuideMapView({
             cy={start.y}
             r={6}
             strokeWidth={2}
-            className="fill-guest-ink stroke-guest-surface"
+            className="fill-guest-primary stroke-guest-secondary"
           />
           <text
             x={start.x}
             y={start.y + 16}
             textAnchor="middle"
-            className="fill-guest-ink text-[8px]"
+            className="fill-guest-primary text-[8px]"
           >
             {currentLocationLabel}
           </text>
@@ -169,13 +181,13 @@ export function GuideMapView({
             cy={destinationPoint.y}
             r={6}
             strokeWidth={2}
-            className="fill-guest-accent stroke-guest-surface"
+            className="fill-guest-accent stroke-guest-secondary"
           />
         )}
       </svg>
 
       {selectedDestinationId === null && (
-        <p className="mt-3 text-sm text-guest-ink-muted">{hint}</p>
+        <p className="mt-3 text-sm text-guest-primary/55">{hint}</p>
       )}
     </InfoCard>
   );
