@@ -2,7 +2,7 @@
 
 import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
 import { useLanguage } from "./LanguageProvider";
-import { type Lang, LANGS } from "./messages";
+import { LANGS, type Lang } from "./messages";
 
 export function LanguageSwitcher() {
   const { lang, setLang } = useLanguage();

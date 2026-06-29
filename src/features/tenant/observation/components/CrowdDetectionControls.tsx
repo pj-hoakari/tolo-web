@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import type { DetectCrowdStatus } from "../hooks/useDetectCrowd";
 
 export type CrowdDetectionControlsProps = {
@@ -15,22 +16,17 @@ export function CrowdDetectionControls({
 
   return (
     <div className="flex gap-2">
-      <button
-        type="button"
-        onClick={onStart}
-        disabled={isActive}
-        className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
-      >
+      <Button type="button" onPress={onStart} isDisabled={isActive}>
         カメラを起動
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
-        onClick={onStop}
-        disabled={!isActive}
-        className="rounded bg-gray-600 px-4 py-2 text-white disabled:opacity-50"
+        variant="secondary"
+        onPress={onStop}
+        isDisabled={!isActive}
       >
         停止
-      </button>
+      </Button>
     </div>
   );
 }

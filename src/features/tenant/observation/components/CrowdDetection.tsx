@@ -16,6 +16,7 @@ import {
 import { CrowdDetectionControls } from "./CrowdDetectionControls";
 import { CrowdDetectionView } from "./CrowdDetectionView";
 import { DevVideoSourcePanel } from "./DevVideoSourcePanel";
+import { ObservationSoftLock } from "./ObservationSoftLock";
 
 const DEV_VIDEO_SOURCE_ENABLED = process.env.NODE_ENV === "development";
 
@@ -39,7 +40,7 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  const { lineCount, metrics } = useCrowdDetectionLoop({
+  const { lineCounts, metrics } = useCrowdDetectionLoop({
     videoRef,
     overlayCanvasRef,
     status,
@@ -55,26 +56,28 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
   });
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full">
-      {DEV_VIDEO_SOURCE_ENABLED && (
-        <DevVideoSourcePanel
+    <ObservationSoftLock tenantId={tenantId} eventId={eventId}>
+      <div className="flex w-full flex-col items-center gap-4">
+        {DEV_VIDEO_SOURCE_ENABLED && (
+          <DevVideoSourcePanel
+            status={status}
+            onSourceChange={(factory) => setSourceFactory(() => factory)}
+          />
+        )}
+        <CrowdDetectionControls status={status} onStart={start} onStop={stop} />
+        <CrowdDetectionView
+          videoSource={videoSource}
           status={status}
-          onSourceChange={(factory) => setSourceFactory(() => factory)}
+          error={error}
+          lineCounts={lineCounts}
+          metrics={metrics}
+          settings={settings}
+          onSettingsChange={setSettings}
+          videoRef={videoRef}
+          overlayCanvasRef={overlayCanvasRef}
         />
-      )}
-      <CrowdDetectionControls status={status} onStart={start} onStop={stop} />
-      <CrowdDetectionView
-        videoSource={videoSource}
-        status={status}
-        error={error}
-        lineCount={lineCount}
-        metrics={metrics}
-        settings={settings}
-        onSettingsChange={setSettings}
-        videoRef={videoRef}
-        overlayCanvasRef={overlayCanvasRef}
-      />
-      <BroadcastIndicator active={active} edgeId={edgeId} />
-    </div>
+        <BroadcastIndicator active={active} edgeId={edgeId} />
+      </div>
+    </ObservationSoftLock>
   );
 }

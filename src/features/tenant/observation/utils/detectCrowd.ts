@@ -19,8 +19,10 @@ import {
   type YoloDetector,
 } from "@pj-hoakari/web-crowd-detection-utils/yolo";
 
+// ブラウザがモデルを取得する配信URL
 const MODEL_PATH =
   process.env.NEXT_PUBLIC_CROWD_DETECTION_MODEL_PATH ?? "/models/yolo26n.onnx";
+
 // Path under which the ONNX Runtime WASM assets are served. They are copied
 // into `public/onnxruntime/` at build time by the `wcdu-copy-runtime-assets`
 // CLI (see package.json scripts), so the runtime loads them from here instead
@@ -40,18 +42,20 @@ const backgroundSubtractor = new BackgroundSubtractor({
 });
 
 export type TrackedDetection = TrackedBox & Pick<Detection, "classId">;
+export type CrowdCountingLine = Line;
 
 export type CrowdDetectionFrame = {
   detections: TrackedDetection[];
   detectedCount: number;
   totalTrackedCount: number;
-  countingLine: Line;
-  lineCount: LineCount;
+  countingLines: Line[];
+  lineCounts: Record<string, LineCount>;
 };
 
 export type CrowdDetectionOptions = {
   confidenceThreshold: number;
   trackingDistanceThreshold: number;
+  countingLines: CrowdCountingLine[];
 };
 
 async function fetchModel(): Promise<ArrayBuffer> {
@@ -132,11 +136,7 @@ export async function detectCrowdFrame(
   const sourceDetections = reverseLetterboxBoxes(detections, params);
   tracker.matchThresh = options.trackingDistanceThreshold;
   const trackedDetections = tracker.update(sourceDetections);
-  const countingLine: Line = {
-    id: "observation-line",
-    p1: { x: 0, y: params.sourceHeight * 0.6 },
-    p2: { x: params.sourceWidth, y: params.sourceHeight * 0.6 },
-  };
+  const countingLines = options.countingLines;
   const trackedPoints = trackedDetections.map((detection) => ({
     trackId: detection.trackId,
     point: {
@@ -145,7 +145,7 @@ export async function detectCrowdFrame(
     },
   }));
 
-  lineCrossingCounter.update(trackedPoints, [countingLine], {
+  lineCrossingCounter.update(trackedPoints, countingLines, {
     assist: {
       enabled: true,
       rescueDistance: params.sourceWidth * (60 / INPUT_SIZE),
@@ -156,8 +156,13 @@ export async function detectCrowdFrame(
     detections: trackedDetections,
     detectedCount: sourceDetections.length,
     totalTrackedCount: tracker.totalCount,
-    countingLine,
-    lineCount: lineCrossingCounter.getLineCount(countingLine.id),
+    countingLines,
+    lineCounts: Object.fromEntries(
+      countingLines.map((line) => [
+        line.id,
+        lineCrossingCounter.getLineCount(line.id),
+      ]),
+    ),
   };
 }
 
@@ -165,4 +170,8 @@ export function resetCrowdTracking(): void {
   tracker.reset();
   lineCrossingCounter.reset();
   backgroundSubtractor.reset();
+}
+
+export function resetCrowdLineCount(): void {
+  lineCrossingCounter.reset();
 }

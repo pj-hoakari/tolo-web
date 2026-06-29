@@ -6,27 +6,23 @@ import {
   useState,
 } from "react";
 import {
+  type CrowdCountingLine,
   type CrowdDetectionFrame,
   detectCrowdFrame,
-  type TrackedDetection,
+  resetCrowdLineCount,
 } from "../utils/detectCrowd";
 import type { DetectCrowdStatus } from "./useDetectCrowd";
 
 export type DetectionMetrics = {
-  detectedCount: number;
   trackedCount: number;
-  totalTrackedCount: number;
   fps: number;
-  lastDetectedAt: Date | null;
-  detections: TrackedDetection[];
 };
 
 export type DetectionSettings = {
   confidenceThreshold: number;
   trackingDistanceThreshold: number;
   detectionInterval: number;
-  showBoundingBoxes: boolean;
-  showTrackingIds: boolean;
+  countingLines: DetectionCountingLineSetting[];
 };
 
 export type DetectionLineCount = {
@@ -34,24 +30,39 @@ export type DetectionLineCount = {
   backward: number;
 };
 
+export type DetectionPoint = {
+  x: number;
+  y: number;
+};
+
+export type DetectionCountingLineSetting = {
+  id: string;
+  p1: DetectionPoint;
+  p2: DetectionPoint;
+};
+
 export const INITIAL_METRICS: DetectionMetrics = {
-  detectedCount: 0,
   trackedCount: 0,
-  totalTrackedCount: 0,
   fps: 0,
-  lastDetectedAt: null,
-  detections: [],
 };
 
 export const INITIAL_SETTINGS: DetectionSettings = {
   confidenceThreshold: 0.15,
   trackingDistanceThreshold: 0.8,
   detectionInterval: 100,
-  showBoundingBoxes: true,
-  showTrackingIds: true,
+  countingLines: [
+    {
+      id: "line-1",
+      p1: { x: 0, y: 0.6 },
+      p2: { x: 1, y: 0.6 },
+    },
+  ],
 };
 
 const INITIAL_LINE_COUNT: DetectionLineCount = { forward: 0, backward: 0 };
+const INITIAL_LINE_COUNTS: Record<string, DetectionLineCount> = {
+  "line-1": INITIAL_LINE_COUNT,
+};
 
 function syncCanvasSize(
   canvas: HTMLCanvasElement,
@@ -64,43 +75,101 @@ function syncCanvasSize(
   }
 }
 
-function drawDetectionOverlay(
+function clampUnit(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
+
+export function toCrowdCountingLine(
+  countingLine: DetectionCountingLineSetting,
+  width: number,
+  height: number,
+): CrowdCountingLine {
+  return {
+    id: countingLine.id,
+    p1: {
+      x: clampUnit(countingLine.p1.x) * width,
+      y: clampUnit(countingLine.p1.y) * height,
+    },
+    p2: {
+      x: clampUnit(countingLine.p2.x) * width,
+      y: clampUnit(countingLine.p2.y) * height,
+    },
+  };
+}
+
+export function toCrowdCountingLines(
+  countingLines: DetectionCountingLineSetting[],
+  width: number,
+  height: number,
+): CrowdCountingLine[] {
+  return countingLines.map((countingLine) =>
+    toCrowdCountingLine(countingLine, width, height),
+  );
+}
+
+function drawCountingLine(
   context: CanvasRenderingContext2D,
-  frame: CrowdDetectionFrame,
-  settings: Pick<DetectionSettings, "showBoundingBoxes" | "showTrackingIds">,
+  countingLine: CrowdCountingLine,
   width: number,
 ): void {
   context.lineWidth = Math.max(2, width / 320);
-  context.font = `${Math.max(16, width / 40)}px sans-serif`;
   context.strokeStyle = "#f59e0b";
+  context.fillStyle = "#f59e0b";
   context.setLineDash([12, 8]);
   context.beginPath();
-  context.moveTo(frame.countingLine.p1.x, frame.countingLine.p1.y);
-  context.lineTo(frame.countingLine.p2.x, frame.countingLine.p2.y);
+  context.moveTo(countingLine.p1.x, countingLine.p1.y);
+  context.lineTo(countingLine.p2.x, countingLine.p2.y);
   context.stroke();
   context.setLineDash([]);
+
+  const handleRadius = Math.max(6, width / 96);
+  context.beginPath();
+  context.arc(
+    countingLine.p1.x,
+    countingLine.p1.y,
+    handleRadius,
+    0,
+    Math.PI * 2,
+  );
+  context.arc(
+    countingLine.p2.x,
+    countingLine.p2.y,
+    handleRadius,
+    0,
+    Math.PI * 2,
+  );
+  context.fill();
+}
+
+function drawDetectionOverlay(
+  context: CanvasRenderingContext2D,
+  frame: CrowdDetectionFrame,
+  countingLines: CrowdCountingLine[],
+  width: number,
+): void {
+  for (const countingLine of countingLines) {
+    drawCountingLine(context, countingLine, width);
+  }
+
+  context.font = `${Math.max(16, width / 40)}px sans-serif`;
 
   for (const detection of frame.detections) {
     const boxWidth = detection.x2 - detection.x1;
     const boxHeight = detection.y2 - detection.y1;
-    const label = settings.showTrackingIds
-      ? `Person #${detection.trackId} ${Math.round(detection.score * 100)}%`
-      : `${Math.round(detection.score * 100)}%`;
+    const label = `Person #${detection.trackId} ${Math.round(
+      detection.score * 100,
+    )}%`;
 
-    if (settings.showBoundingBoxes) {
-      context.strokeStyle = "#22c55e";
-      context.strokeRect(detection.x1, detection.y1, boxWidth, boxHeight);
-    }
+    context.strokeStyle = "#22c55e";
+    context.strokeRect(detection.x1, detection.y1, boxWidth, boxHeight);
 
-    if (settings.showBoundingBoxes || settings.showTrackingIds) {
-      const labelWidth = context.measureText(label).width + 12;
-      const labelHeight = Math.max(22, width / 32);
-      const labelY = Math.max(0, detection.y1 - labelHeight);
-      context.fillStyle = "#22c55e";
-      context.fillRect(detection.x1, labelY, labelWidth, labelHeight);
-      context.fillStyle = "#052e16";
-      context.fillText(label, detection.x1 + 6, labelY + labelHeight - 6);
-    }
+    const labelWidth = context.measureText(label).width + 12;
+    const labelHeight = Math.max(22, width / 32);
+    const labelY = Math.max(0, detection.y1 - labelHeight);
+    context.fillStyle = "#22c55e";
+    context.fillRect(detection.x1, labelY, labelWidth, labelHeight);
+    context.fillStyle = "#052e16";
+    context.fillText(label, detection.x1 + 6, labelY + labelHeight - 6);
   }
 }
 
@@ -114,7 +183,7 @@ export type UseCrowdDetectionLoopParams = {
 };
 
 export type UseCrowdDetectionLoopResult = {
-  lineCount: DetectionLineCount;
+  lineCounts: Record<string, DetectionLineCount>;
   metrics: DetectionMetrics;
 };
 
@@ -130,12 +199,29 @@ export function useCrowdDetectionLoop({
   const broadcastStreamRef = useRef<MediaStream | null>(null);
   const latestFrameRef = useRef<CrowdDetectionFrame | null>(null);
   const settingsRef = useRef(settings);
-  const [lineCount, setLineCount] =
-    useState<DetectionLineCount>(INITIAL_LINE_COUNT);
+  const previousCountingLinesRef = useRef(settings.countingLines);
+  const [lineCounts, setLineCounts] =
+    useState<Record<string, DetectionLineCount>>(INITIAL_LINE_COUNTS);
   const [metrics, setMetrics] = useState<DetectionMetrics>(INITIAL_METRICS);
 
   useEffect(() => {
+    const previousCountingLines = previousCountingLinesRef.current;
+    const nextCountingLines = settings.countingLines;
     settingsRef.current = settings;
+
+    if (
+      JSON.stringify(previousCountingLines) !==
+      JSON.stringify(nextCountingLines)
+    ) {
+      latestFrameRef.current = null;
+      resetCrowdLineCount();
+      setLineCounts(
+        Object.fromEntries(
+          nextCountingLines.map((line) => [line.id, INITIAL_LINE_COUNT]),
+        ),
+      );
+      previousCountingLinesRef.current = nextCountingLines;
+    }
   }, [settings]);
 
   const stopBroadcast = useCallback(() => {
@@ -154,7 +240,14 @@ export function useCrowdDetectionLoop({
       const canvas = overlayCanvasRef.current;
       canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
       latestFrameRef.current = null;
-      setLineCount(INITIAL_LINE_COUNT);
+      setLineCounts(
+        Object.fromEntries(
+          settingsRef.current.countingLines.map((line) => [
+            line.id,
+            INITIAL_LINE_COUNT,
+          ]),
+        ),
+      );
       setMetrics(INITIAL_METRICS);
       stopBroadcast();
       return;
@@ -188,9 +281,15 @@ export function useCrowdDetectionLoop({
 
       try {
         const currentSettings = settingsRef.current;
+        const countingLines = toCrowdCountingLines(
+          currentSettings.countingLines,
+          video.videoWidth,
+          video.videoHeight,
+        );
         const frame = await detectCrowdFrame(video, {
           confidenceThreshold: currentSettings.confidenceThreshold,
           trackingDistanceThreshold: currentSettings.trackingDistanceThreshold,
+          countingLines,
         });
 
         if (cancelled) {
@@ -199,24 +298,19 @@ export function useCrowdDetectionLoop({
 
         latestFrameRef.current = frame;
 
-        setLineCount((current) =>
-          current.forward === frame.lineCount.forward &&
-          current.backward === frame.lineCount.backward
-            ? current
-            : frame.lineCount,
-        );
+        setLineCounts((current) => {
+          const next = frame.lineCounts;
+          const currentJson = JSON.stringify(current);
+          const nextJson = JSON.stringify(next);
+          return currentJson === nextJson ? current : next;
+        });
         const detectionAt = performance.now();
         const fps = 1000 / Math.max(1, detectionAt - previousDetectionAt);
         previousDetectionAt = detectionAt;
-        setMetrics((current) => ({
-          detectedCount: frame.detectedCount,
+        setMetrics({
           trackedCount: frame.detections.length,
-          totalTrackedCount: frame.totalTrackedCount,
           fps,
-          lastDetectedAt:
-            frame.detectedCount > 0 ? new Date() : current.lastDetectedAt,
-          detections: frame.detections,
-        }));
+        });
       } catch (cause) {
         if (!cancelled) {
           onDetectionError(cause);
@@ -241,6 +335,11 @@ export function useCrowdDetectionLoop({
         const height = video.videoHeight;
         const frame = latestFrameRef.current;
         const currentSettings = settingsRef.current;
+        const countingLines = toCrowdCountingLines(
+          currentSettings.countingLines,
+          width,
+          height,
+        );
 
         const overlay = overlayCanvasRef.current;
         if (overlay) {
@@ -249,7 +348,11 @@ export function useCrowdDetectionLoop({
           if (context) {
             context.clearRect(0, 0, width, height);
             if (frame) {
-              drawDetectionOverlay(context, frame, currentSettings, width);
+              drawDetectionOverlay(context, frame, countingLines, width);
+            } else {
+              for (const countingLine of countingLines) {
+                drawCountingLine(context, countingLine, width);
+              }
             }
           }
         }
@@ -264,12 +367,11 @@ export function useCrowdDetectionLoop({
         if (broadcastContext) {
           broadcastContext.drawImage(video, 0, 0, width, height);
           if (frame) {
-            drawDetectionOverlay(
-              broadcastContext,
-              frame,
-              currentSettings,
-              width,
-            );
+            drawDetectionOverlay(broadcastContext, frame, countingLines, width);
+          } else {
+            for (const countingLine of countingLines) {
+              drawCountingLine(broadcastContext, countingLine, width);
+            }
           }
           if (!broadcastStreamRef.current) {
             broadcastStreamRef.current = broadcastCanvas.captureStream();
@@ -303,5 +405,5 @@ export function useCrowdDetectionLoop({
     overlayCanvasRef,
   ]);
 
-  return { lineCount, metrics };
+  return { lineCounts, metrics };
 }
