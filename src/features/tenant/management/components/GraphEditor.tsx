@@ -1,6 +1,7 @@
 "use client";
 
-import "@xyflow/react/dist/style.css";
+import "@xyflow/react/dist/base.css";
+import "./GraphEditor.css";
 
 import {
   Background,
@@ -102,7 +103,7 @@ function GraphEditorInner({
             fitView
             fitViewOptions={{ padding: 0.2 }}
           >
-            <Background gap={20} size={1} color="#d4d4d8" />
+            <Background gap={20} size={1} />
             <Controls position="bottom-right" />
             <MiniMap
               pannable
@@ -110,7 +111,6 @@ function GraphEditorInner({
               nodeColor={(n: GraphNodeType) =>
                 getNodeTypeDef(n.data?.nodeType ?? DEFAULT_NODE_TYPE).color
               }
-              maskColor="rgba(0,0,0,0.08)"
             />
           </ReactFlow>
         </div>

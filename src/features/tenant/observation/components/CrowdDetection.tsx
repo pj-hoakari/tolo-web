@@ -57,6 +57,7 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
 
   return (
     <ObservationSoftLock tenantId={tenantId} eventId={eventId}>
+    <div className="flex w-full flex-col items-center gap-4">
       {DEV_VIDEO_SOURCE_ENABLED && (
         <DevVideoSourcePanel
           status={status}

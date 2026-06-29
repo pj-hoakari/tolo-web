@@ -17,9 +17,9 @@ export type CongestionViewProps = {
 };
 
 const LEVEL_DOT: Record<CongestionLevel, string> = {
-  low: "bg-calm",
-  mid: "bg-busy",
-  high: "bg-crowded",
+  low: "bg-guest-calm",
+  mid: "bg-guest-busy",
+  high: "bg-guest-crowded",
 };
 
 const DEFAULT_LEVEL_LABELS: Record<CongestionLevel, string> = {
@@ -38,12 +38,12 @@ export function CongestionView({
       <ul className="flex flex-col gap-2.5">
         {areas.map((area) => (
           <li key={area.id} className="flex items-center justify-between">
-            <span className="text-sm text-ink">{area.name}</span>
+            <span className="text-guest-ink text-sm">{area.name}</span>
             <span className="flex items-center gap-2">
               <span
                 className={`h-2.5 w-2.5 rounded-full ${LEVEL_DOT[area.level]}`}
               />
-              <span className="w-8 text-right text-sm font-medium text-ink-muted">
+              <span className="w-8 text-right font-medium text-guest-ink-muted text-sm">
                 {levelLabels[area.level]}
               </span>
             </span>
