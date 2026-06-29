@@ -57,26 +57,27 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
 
   return (
     <ObservationSoftLock tenantId={tenantId} eventId={eventId}>
-    <div className="flex w-full flex-col items-center gap-4">
-      {DEV_VIDEO_SOURCE_ENABLED && (
-        <DevVideoSourcePanel
+      <div className="flex w-full flex-col items-center gap-4">
+        {DEV_VIDEO_SOURCE_ENABLED && (
+          <DevVideoSourcePanel
+            status={status}
+            onSourceChange={(factory) => setSourceFactory(() => factory)}
+          />
+        )}
+        <CrowdDetectionControls status={status} onStart={start} onStop={stop} />
+        <CrowdDetectionView
+          videoSource={videoSource}
           status={status}
-          onSourceChange={(factory) => setSourceFactory(() => factory)}
+          error={error}
+          lineCounts={lineCounts}
+          metrics={metrics}
+          settings={settings}
+          onSettingsChange={setSettings}
+          videoRef={videoRef}
+          overlayCanvasRef={overlayCanvasRef}
         />
-      )}
-      <CrowdDetectionControls status={status} onStart={start} onStop={stop} />
-      <CrowdDetectionView
-        videoSource={videoSource}
-        status={status}
-        error={error}
-        lineCounts={lineCounts}
-        metrics={metrics}
-        settings={settings}
-        onSettingsChange={setSettings}
-        videoRef={videoRef}
-        overlayCanvasRef={overlayCanvasRef}
-      />
-      <BroadcastIndicator active={active} edgeId={edgeId} />
+        <BroadcastIndicator active={active} edgeId={edgeId} />
+      </div>
     </ObservationSoftLock>
   );
 }
