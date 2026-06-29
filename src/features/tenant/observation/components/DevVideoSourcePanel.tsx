@@ -1,4 +1,8 @@
-import { type ChangeEvent, useId, useState } from "react";
+import { type ChangeEvent, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/field";
+import { Input, TextField } from "@/components/ui/textfield";
 import type { DetectCrowdStatus } from "../hooks/useDetectCrowd";
 import {
   type CrowdVideoSourceFactory,
@@ -17,8 +21,6 @@ export function DevVideoSourcePanel({
   status,
   onSourceChange,
 }: DevVideoSourcePanelProps) {
-  const fileInputId = useId();
-  const loopInputId = useId();
   const [mode, setMode] = useState<SourceMode>("camera");
   const [file, setFile] = useState<File | null>(null);
   const [loop, setLoop] = useState(true);
@@ -46,8 +48,7 @@ export function DevVideoSourcePanel({
     onSourceChange(() => createVideoFileSource(selected, { loop }));
   };
 
-  const handleLoopChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const next = event.target.checked;
+  const handleLoopChange = (next: boolean) => {
     setLoop(next);
     if (mode === "file" && file) {
       onSourceChange(() => createVideoFileSource(file, { loop: next }));
@@ -59,38 +60,30 @@ export function DevVideoSourcePanel({
       <details open>
         <summary className="font-bold text-xs">映像ソース</summary>
 
-        <label className="mt-2 flex flex-col gap-1" htmlFor={fileInputId}>
-          <span>映像ファイル</span>
-          <input
-            id={fileInputId}
-            type="file"
-            accept="video/*"
-            disabled={isActive}
-            onChange={handleFileChange}
-            className="disabled:opacity-50"
-          />
-        </label>
+        <TextField className="mt-2 flex flex-col gap-1" isDisabled={isActive}>
+          <Label>映像ファイル</Label>
+          <Input type="file" accept="video/*" onChange={handleFileChange} />
+        </TextField>
 
-        <label className="flex items-center gap-2" htmlFor={loopInputId}>
-          <input
-            id={loopInputId}
-            type="checkbox"
-            checked={loop}
-            disabled={isActive}
-            onChange={handleLoopChange}
-          />
+        <Checkbox
+          isSelected={loop}
+          isDisabled={isActive}
+          onChange={handleLoopChange}
+        >
           ループ再生
-        </label>
+        </Checkbox>
 
         <div>
-          <button
+          <Button
             type="button"
-            onClick={useCamera}
-            disabled={isActive || mode === "camera"}
-            className="underline disabled:opacity-50"
+            variant="link"
+            size="sm"
+            onPress={useCamera}
+            isDisabled={isActive || mode === "camera"}
+            className="h-auto p-0"
           >
             カメラに戻す
-          </button>
+          </Button>
         </div>
 
         <p className="break-all text-xs">
@@ -98,13 +91,13 @@ export function DevVideoSourcePanel({
           {isActive ? "（切替は停止後）" : "（選択後に起動で反映）"}
         </p>
 
-        <button
+        <Button
           type="button"
           onClick={() => setHidden(true)}
           className="text-xs underline"
         >
           非表示
-        </button>
+        </Button>
       </details>
     </section>
   );
