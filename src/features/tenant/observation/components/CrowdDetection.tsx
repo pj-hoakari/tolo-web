@@ -39,7 +39,7 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  const { lineCount, metrics } = useCrowdDetectionLoop({
+  const { lineCounts, metrics } = useCrowdDetectionLoop({
     videoRef,
     overlayCanvasRef,
     status,
@@ -67,7 +67,7 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
         videoSource={videoSource}
         status={status}
         error={error}
-        lineCount={lineCount}
+        lineCounts={lineCounts}
         metrics={metrics}
         settings={settings}
         onSettingsChange={setSettings}
