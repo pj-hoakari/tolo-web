@@ -182,7 +182,7 @@ export function QueueLayoutView({
     <InfoCard title={l.title}>
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="w-full rounded-xl border border-guest-line bg-guest-surface-muted"
+        className="w-full rounded-xl border border-guest-primary/12 bg-guest-primary/15"
         role="img"
         aria-label={l.title}
       >
@@ -198,7 +198,7 @@ export function QueueLayoutView({
               y2={py(b.y)}
               strokeWidth={4}
               strokeLinecap="round"
-              className="stroke-guest-line"
+              className="stroke-guest-primary/12"
             />
           );
         })}
@@ -219,8 +219,8 @@ export function QueueLayoutView({
                   filled
                     ? "fill-guest-accent stroke-guest-accent"
                     : isEntrance
-                      ? "fill-guest-surface stroke-guest-ink"
-                      : "fill-guest-surface stroke-guest-line"
+                      ? "fill-guest-secondary stroke-guest-primary"
+                      : "fill-guest-secondary stroke-guest-primary/12"
                 }
               />
               {isEntrance && (
@@ -228,7 +228,7 @@ export function QueueLayoutView({
                   x={px(p.x)}
                   y={py(p.y) + RADIUS + 11}
                   textAnchor="middle"
-                  className="fill-guest-ink text-[9px]"
+                  className="fill-guest-primary text-[9px]"
                 >
                   {l.entranceMarker}
                 </text>
@@ -238,7 +238,7 @@ export function QueueLayoutView({
         })}
       </svg>
 
-      <p className="mt-3 text-guest-ink text-sm">
+      <p className="mt-3 text-guest-primary text-sm">
         {l.current} <span className="font-bold tabular-nums">{occupied}</span>{" "}
         {l.people} / {l.max} <span className="tabular-nums">{total}</span>{" "}
         {l.people}

@@ -49,21 +49,50 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* ゲストページ専用の配色（#EAE4DC を基調にした温かみのあるグレージュ系パレット）
-   shadcn のトークンと衝突しないよう、すべて guest- プレフィックスで分離している。 */
+/* ゲストページ専用のカラートークン（oklch）。
+   primary / secondary / accent の 3 軸で構成し、細かな濃淡は Tailwind 流に
+   opacity 修飾子（例: text-guest-primary/55, border-guest-primary/12）で表現する。
+   - primary  : 濃い前景（文字・罫線・微弱な塗りのベース）
+   - secondary : 明るい面（カード背景）
+   - accent   : ブラウンの強調色
+   shadcn の primary/secondary/accent と衝突しないよう guest- プレフィックスで分離。
+   混雑レベル（calm/busy/crowded）は意味的に独立した色なので別トークンとして保持。 */
 @theme {
-  --color-guest-canvas: #eae4dc;
-  --color-guest-surface: #f4efe8;
-  --color-guest-surface-muted: #e1d8cc;
-  --color-guest-line: #d8cec0;
-  --color-guest-ink: #403a33;
-  --color-guest-ink-muted: #8b8073;
-  --color-guest-accent: #b17a56;
-  --color-guest-accent-strong: #9a6440;
+  --color-guest-primary: oklch(0.3 0.02 60);
+  --color-guest-secondary: oklch(0.975 0.011 84);
+  --color-guest-accent: oklch(0.61 0.105 57);
+  /* 通知バッジなどの強調（赤系） */
+  --color-guest-notify: oklch(0.6 0.21 25);
+
   /* 混雑レベル（low / mid / high） */
-  --color-guest-calm: #7c8a5a;
-  --color-guest-busy: #c8954a;
-  --color-guest-crowded: #b0553f;
+  --color-guest-calm: oklch(0.58 0.062 122);
+  --color-guest-busy: oklch(0.69 0.096 67);
+  --color-guest-crowded: oklch(0.53 0.122 32);
+
+  /* 案内マップの部屋タイント（淡いパステル。文字が読めるよう高明度・低彩度） */
+  --color-guest-room-amber: oklch(0.94 0.035 72);
+  --color-guest-room-rose: oklch(0.93 0.034 30);
+  --color-guest-room-sage: oklch(0.93 0.03 150);
+  --color-guest-room-sky: oklch(0.93 0.03 238);
+}
+
+/* ゲストページ背景：灯篭のような暖かいグロー（中央が明るく外側ほど暖色のタン）。
+   カード（guest-secondary 単色）が常に背景より明るく浮くよう、グローは
+   secondary に accent を少量混ぜた色で構成する。 */
+.guest-glow {
+  background: radial-gradient(
+    135% 100% at 50% 18%,
+    color-mix(
+      in oklab,
+      var(--color-guest-accent) 6%,
+      var(--color-guest-secondary)
+    ),
+    color-mix(
+      in oklab,
+      var(--color-guest-accent) 20%,
+      var(--color-guest-secondary)
+    )
+  );
 }
 
 :root {

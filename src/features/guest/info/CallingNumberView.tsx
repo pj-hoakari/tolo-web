@@ -17,7 +17,7 @@ export function CallingNumberView({
         <span className="font-bold text-5xl text-guest-accent tabular-nums">
           {callingNumber}
         </span>
-        <span className="text-base text-guest-ink-muted">{unit}</span>
+        <span className="text-base text-guest-primary/55">{unit}</span>
       </p>
     </InfoCard>
   );

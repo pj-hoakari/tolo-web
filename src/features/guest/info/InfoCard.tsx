@@ -11,8 +11,8 @@ export type InfoCardProps = {
  */
 export function InfoCard({ title, children }: InfoCardProps) {
   return (
-    <section className="h-full rounded-2xl border border-guest-line bg-guest-surface p-6 shadow-sm">
-      <h2 className="font-medium text-guest-ink-muted text-sm tracking-wide">
+    <section className="rounded-2xl border border-guest-primary/12 bg-guest-secondary p-6 shadow-sm">
+      <h2 className="font-medium text-guest-primary/55 text-sm tracking-wide">
         {title}
       </h2>
       <div className="mt-3">{children}</div>
