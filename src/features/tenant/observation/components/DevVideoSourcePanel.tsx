@@ -93,8 +93,10 @@ export function DevVideoSourcePanel({
 
         <Button
           type="button"
-          onClick={() => setHidden(true)}
-          className="text-xs underline"
+          variant="link"
+          size="sm"
+          onPress={() => setHidden(true)}
+          className="h-auto self-start p-0 text-xs"
         >
           非表示
         </Button>
