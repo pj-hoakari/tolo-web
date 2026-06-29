@@ -12,7 +12,9 @@ export function FloorView({
 }: FloorViewProps) {
   return (
     <InfoCard title={title}>
-      <p className="text-4xl font-bold tabular-nums text-ink">{floorName}</p>
+      <p className="font-bold text-4xl text-guest-ink tabular-nums">
+        {floorName}
+      </p>
     </InfoCard>
   );
 }

@@ -75,8 +75,9 @@ export default defineGuestInfoComponent("foo", Foo);
 ```
 
 - props は必ず `GuestInfoComponentProps`（`{ tenantId, eventId }`）。
-- `defineGuestInfoComponent(id, component)` の **第1引数 id は他のパーツと重複しないユニークな文字列**（一覧の `key` に使われる。kebab-case 推奨、例: `"waiting-number"`）。
+- `defineGuestInfoComponent(id, component, options?)` の **第1引数 id は他のパーツと重複しないユニークな文字列**（一覧の `key` に使われる。kebab-case 推奨、例: `"waiting-number"`）。
 - default export は **必ず `defineGuestInfoComponent` の戻り値**にする。素のコンポーネントを export すると `GuestInfoComponent` 型として扱えず、並べる側で弾かれる。
+- **グリッド上の幅は `options.span` で宣言する**（並べる側は 2 列グリッド）。既定は `2`（`col-span-2` = 1 行全体）。横に 2 つ並べたい小さいパーツは `{ span: 1 }`（`col-span-1`）を指定する。例: `defineGuestInfoComponent("floor", Floor, { span: 1 })`。レイアウト幅はパーツ自身の責務として持たせ、並べる側（ページ）はフラットな `GuestInfoComponent[]` に並び順だけを書く。
 
 ### 3. Storybook（View の story）
 
@@ -134,7 +135,8 @@ components.map((Component) => (
 ```
 
 - 受け取る型を `GuestInfoComponent[]` にすることが制限の本体。素のコンポーネントや、props 形状だけ合わせたコンポーネントは代入できない。
-- `key` などに使う id は `getGuestInfoComponentId(Component)` で取得する（id はブランドシンボルに隠蔽されているため直接アクセスしない）。
+- `key` などに使う id は `getGuestInfoComponentId(Component)` で取得する（id はブランドシンボルに隠蔽されているため直接アクセスしない）。span は `getGuestInfoComponentSpan(Component)` で取得し `col-span-1` / `col-span-2` を出し分ける。
+- **ブランド（id / span）を読む側はクライアントコンポーネントにする**。ブランドは `defineGuestInfoComponent` の `Object.assign` で**クライアントバンドル側**のコンポーネント関数に付与される。各パーツ（`"use client"`）をサーバーコンポーネントから読むと client reference 化されてブランドが見えず、`getGuestInfoComponentId` / `getGuestInfoComponentSpan` が `undefined` を返す（key 重複・`reading 'span'` クラッシュの原因）。リスト自体はサーバー（ページ）で組み立てて `components` prop として注入してよい（クライアントで解決される際にブランドは復元される）が、**読み出す並べる側コンポーネントには `"use client"` を付ける**こと。
 
 ## チェックリスト
 

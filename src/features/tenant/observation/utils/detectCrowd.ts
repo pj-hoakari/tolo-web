@@ -19,8 +19,10 @@ import {
   type YoloDetector,
 } from "@pj-hoakari/web-crowd-detection-utils/yolo";
 
+// ブラウザがモデルを取得する配信URL
 const MODEL_PATH =
   process.env.NEXT_PUBLIC_CROWD_DETECTION_MODEL_PATH ?? "/models/yolo26n.onnx";
+
 // Path under which the ONNX Runtime WASM assets are served. They are copied
 // into `public/onnxruntime/` at build time by the `wcdu-copy-runtime-assets`
 // CLI (see package.json scripts), so the runtime loads them from here instead

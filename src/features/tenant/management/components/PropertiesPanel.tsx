@@ -60,9 +60,9 @@ export function PropertiesPanel({
 }: Props) {
   const hasSelection = Boolean(selectedNode || selectedEdge);
   return (
-    <aside className="flex w-72 shrink-0 flex-col border-zinc-200 border-l bg-white">
-      <div className="border-zinc-200 border-b px-4 py-2">
-        <p className="font-semibold text-sm text-zinc-900">プロパティ</p>
+    <aside className="flex w-72 shrink-0 flex-col border-border border-l bg-card">
+      <div className="border-border border-b px-4 py-2">
+        <p className="font-semibold text-foreground text-sm">プロパティ</p>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {selectedNode ? (
@@ -109,13 +109,13 @@ export function PropertiesPanel({
             onReverse={() => onReverseEdge(selectedEdge.id)}
           />
         ) : (
-          <p className="text-xs text-zinc-500">
+          <p className="text-muted-foreground text-xs">
             ポイントまたはルートを選択してください。
           </p>
         )}
       </div>
       {hasSelection ? (
-        <div className="border-zinc-200 border-t p-3">
+        <div className="border-border border-t p-3">
           <Button
             variant="destructive"
             size="sm"
@@ -152,24 +152,26 @@ function NodeForm({
   onChangeObservationPoints: (ids: string[]) => void;
 }) {
   return (
-    <div className="space-y-3 rounded-md border border-zinc-200 bg-white p-3">
+    <div className="space-y-3 rounded-md border border-border bg-card p-3">
       <div className="flex items-center justify-between">
-        <span className="rounded-full bg-sky-100 px-2 py-0.5 font-semibold text-[10px] text-sky-700">
+        <span className="rounded-full bg-sky-100 px-2 py-0.5 font-semibold text-[10px] text-sky-700 dark:bg-sky-950 dark:text-sky-300">
           ポイント
         </span>
-        <code className="text-[10px] text-zinc-400">{node.id}</code>
+        <code className="text-[10px] text-muted-foreground">{node.id}</code>
       </div>
       <TextField
         value={node.data.label}
         onChange={(value) => onChange({ label: value })}
         className="flex flex-col gap-1"
       >
-        <Label className="text-[11px] text-zinc-600">ラベル</Label>
+        <Label className="text-[11px] text-muted-foreground">ラベル</Label>
         <Input className="h-auto px-2 py-1 text-xs" />
       </TextField>
 
       <div>
-        <p className="mb-1 font-medium text-[11px] text-zinc-600">タイプ</p>
+        <p className="mb-1 font-medium text-[11px] text-muted-foreground">
+          タイプ
+        </p>
         <ToggleButtonGroup
           selectionMode="single"
           disallowEmptySelection
@@ -190,13 +192,13 @@ function NodeForm({
                   id={def.type}
                   variant="outline"
                   isDisabled={!assignable}
-                  className="h-auto w-full flex-col items-start gap-0.5 px-2 py-1.5 text-left selected:border-primary selected:bg-accent"
+                  className="h-auto w-full flex-col items-start gap-0.5 selected:border-primary selected:bg-accent px-2 py-1.5 text-left"
                 >
-                  <span className="flex items-center gap-1.5 font-medium text-xs text-zinc-900">
+                  <span className="flex items-center gap-1.5 font-medium text-foreground text-xs">
                     <NodeTypeIcon type={def.type} />
                     {def.label}
                   </span>
-                  <span className="text-[10px] text-zinc-500">
+                  <span className="text-[10px] text-muted-foreground">
                     {def.description}
                   </span>
                 </Toggle>
@@ -263,18 +265,18 @@ function EdgeForm({
   const reverseResult = validateReverseEdge(edge, nodes, edges);
 
   return (
-    <div className="space-y-3 rounded-md border border-zinc-200 bg-white p-3">
+    <div className="space-y-3 rounded-md border border-border bg-card p-3">
       <div className="flex items-center justify-between">
-        <span className="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-[10px] text-amber-700">
+        <span className="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-[10px] text-amber-700 dark:bg-amber-950 dark:text-amber-300">
           ルート
         </span>
-        <code className="text-[10px] text-zinc-400">{edge.id}</code>
+        <code className="text-[10px] text-muted-foreground">{edge.id}</code>
       </div>
 
-      <div className="rounded-md bg-zinc-50 p-2 text-xs text-zinc-700">
+      <div className="rounded-md bg-muted p-2 text-foreground text-xs">
         <div className="flex items-center gap-2">
           <span className="font-medium">{sourceLabel}</span>
-          <span className="font-mono text-base text-zinc-500">
+          <span className="font-mono text-base text-muted-foreground">
             {direction === "both" ? "⇌" : "→"}
           </span>
           <span className="font-medium">{targetLabel}</span>
@@ -282,7 +284,9 @@ function EdgeForm({
       </div>
 
       <div>
-        <p className="mb-1 font-medium text-[11px] text-zinc-600">方向</p>
+        <p className="mb-1 font-medium text-[11px] text-muted-foreground">
+          方向
+        </p>
         <ToggleButtonGroup
           selectionMode="single"
           disallowEmptySelection
@@ -296,14 +300,14 @@ function EdgeForm({
           <Toggle
             id="both"
             isDisabled={bothDisabled}
-            className="h-auto flex-1 rounded-sm px-2 py-1 font-medium text-xs selected:bg-background selected:text-foreground selected:shadow-sm"
+            className="h-auto flex-1 rounded-sm selected:bg-background px-2 py-1 font-medium selected:text-foreground text-xs selected:shadow-sm"
           >
             両通行可 ⇌
           </Toggle>
           <Toggle
             id="oneway"
             isDisabled={onewayDisabled}
-            className="h-auto flex-1 rounded-sm px-2 py-1 font-medium text-xs selected:bg-background selected:text-foreground selected:shadow-sm"
+            className="h-auto flex-1 rounded-sm selected:bg-background px-2 py-1 font-medium selected:text-foreground text-xs selected:shadow-sm"
           >
             片方向 →
           </Toggle>
@@ -376,7 +380,7 @@ function ObservationPointPicker({
   return (
     <div>
       <div className="mb-1 flex items-center justify-between">
-        <p className="font-medium text-[11px] text-zinc-600">
+        <p className="font-medium text-[11px] text-muted-foreground">
           観測点{linkedIds.length > 0 ? `（${linkedIds.length}）` : ""}
         </p>
         {onRefresh ? (
@@ -392,9 +396,11 @@ function ObservationPointPicker({
       </div>
 
       {status === "error" ? (
-        <p className="text-[10px] text-red-600">観測点の取得に失敗しました</p>
+        <p className="text-[10px] text-destructive">
+          観測点の取得に失敗しました
+        </p>
       ) : rows.length === 0 ? (
-        <p className="text-[10px] text-zinc-500">
+        <p className="text-[10px] text-muted-foreground">
           {loading ? "読み込み中…" : "接続中の観測点がありません"}
         </p>
       ) : (
@@ -413,7 +419,7 @@ function ObservationPointPicker({
                 key={row.id}
                 value={row.id}
                 isDisabled={disabled}
-                className="w-full items-start rounded-md border border-zinc-200 px-2 py-1.5 font-normal hover:bg-zinc-50 selected:border-primary selected:bg-accent"
+                className="w-full items-start rounded-md border border-border selected:border-primary selected:bg-accent px-2 py-1.5 font-normal hover:bg-accent"
               >
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1">
@@ -422,19 +428,21 @@ function ObservationPointPicker({
                       title={row.online ? "接続中" : "オフライン"}
                       className={[
                         "inline-block h-1.5 w-1.5 shrink-0 rounded-full",
-                        row.online ? "bg-emerald-500" : "bg-zinc-300",
+                        row.online
+                          ? "bg-emerald-500"
+                          : "bg-muted-foreground/40",
                       ].join(" ")}
                     />
-                    <span className="break-all font-mono text-[10px] text-zinc-700">
+                    <span className="break-all font-mono text-[10px] text-muted-foreground">
                       {row.id}
                     </span>
                   </span>
                   {disabled ? (
-                    <span className="block text-[9px] text-amber-600">
+                    <span className="block text-[9px] text-amber-600 dark:text-amber-400">
                       他のポイント / ルートで使用中
                     </span>
                   ) : !row.online ? (
-                    <span className="block text-[9px] text-zinc-400">
+                    <span className="block text-[9px] text-muted-foreground">
                       オフライン
                     </span>
                   ) : null}
@@ -450,7 +458,7 @@ function ObservationPointPicker({
 
 function ConstraintNote({ message }: { message: string }) {
   return (
-    <p className="flex items-start gap-1 text-[10px] text-amber-600">
+    <p className="flex items-start gap-1 text-[10px] text-amber-600 dark:text-amber-400">
       <span aria-hidden>⚠</span>
       <span>{message}</span>
     </p>

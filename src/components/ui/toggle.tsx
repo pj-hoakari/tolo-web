@@ -71,7 +71,7 @@ const ToggleButtonGroup = ({
   <AriaToggleButtonGroup
     className={composeRenderProps(className, (className) =>
       cn(
-        "group/togglegroup flex items-center justify-center gap-1 orientation-vertical:flex-col",
+        "group/togglegroup flex orientation-vertical:flex-col items-center justify-center gap-1",
         className,
       ),
     )}
