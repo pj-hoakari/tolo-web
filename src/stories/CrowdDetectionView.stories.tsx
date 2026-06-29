@@ -10,7 +10,6 @@ import {
   INITIAL_METRICS,
   INITIAL_SETTINGS,
 } from "@/features/tenant/observation/hooks/useCrowdDetectionLoop";
-import type { TrackedDetection } from "@/features/tenant/observation/utils/detectCrowd";
 
 // videoRef / overlayCanvasRef は Story 側の wrapper で生成
 // 設定は内部 state で扱う
@@ -38,18 +37,9 @@ function CrowdDetectionViewStory({
   );
 }
 
-const sampleDetections: TrackedDetection[] = [
-  { trackId: 1, score: 0.91, x1: 120, y1: 80, x2: 200, y2: 260, classId: 0 },
-  { trackId: 2, score: 0.78, x1: 320, y1: 140, x2: 400, y2: 320, classId: 0 },
-];
-
 const detectingMetrics: DetectionMetrics = {
-  detectedCount: 2,
   trackedCount: 2,
-  totalTrackedCount: 5,
   fps: 23.4,
-  lastDetectedAt: new Date("2026-06-20T12:00:00"),
-  detections: sampleDetections,
 };
 
 const meta = {

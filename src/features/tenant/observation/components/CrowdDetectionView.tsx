@@ -7,7 +7,8 @@ import {
   useState,
 } from "react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/field";
+import { Input, TextField } from "@/components/ui/textfield";
 import type {
   DetectionCountingLineSetting,
   DetectionLineCount,
@@ -53,8 +54,55 @@ const DEFAULT_COUNTING_LINES: DetectionCountingLineSetting[] = [
 const LINE_HIT_RADIUS_PX = 18;
 const MIN_CREATED_LINE_LENGTH_PX = 8;
 
+type NumberSettingKey =
+  | "confidenceThreshold"
+  | "trackingDistanceThreshold"
+  | "detectionInterval";
+
+type NumberSettingPreset = {
+  label: string;
+  value: number;
+};
+
+const CONFIDENCE_PRESETS: NumberSettingPreset[] = [
+  { label: "広め", value: 0.1 },
+  { label: "標準", value: 0.15 },
+  { label: "厳しめ", value: 0.3 },
+];
+
+const TRACKING_PRESETS: NumberSettingPreset[] = [
+  { label: "安定", value: 0.6 },
+  { label: "標準", value: 0.8 },
+  { label: "追従優先", value: 0.95 },
+];
+
+const DETECTION_INTERVAL_PRESETS: NumberSettingPreset[] = [
+  { label: "高頻度", value: 50 },
+  { label: "標準", value: 100 },
+  { label: "省負荷", value: 250 },
+];
+
 function clampUnit(value: number): number {
   return Math.min(1, Math.max(0, value));
+}
+
+function isSameNumberSetting(a: number, b: number): boolean {
+  return Math.abs(a - b) < 0.001;
+}
+
+function clampNumberSetting(key: NumberSettingKey, value: number): number {
+  if (!Number.isFinite(value)) {
+    return key === "detectionInterval" ? 100 : 0.15;
+  }
+
+  switch (key) {
+    case "confidenceThreshold":
+      return Math.min(1, Math.max(0.05, value));
+    case "trackingDistanceThreshold":
+      return Math.min(1, Math.max(0.1, value));
+    case "detectionInterval":
+      return Math.min(1000, Math.max(0, Math.round(value)));
+  }
 }
 
 function distance(a: DetectionPoint, b: DetectionPoint): number {
@@ -113,6 +161,7 @@ export function CrowdDetectionView({
 }: CrowdDetectionViewProps) {
   const dragStateRef = useRef<DragState | null>(null);
   const [lineCreationMode, setLineCreationMode] = useState(false);
+  const [fineTuningOpen, setFineTuningOpen] = useState(false);
   const [selectedLineId, setSelectedLineId] = useState(
     settings.countingLines[0]?.id ?? "line-1",
   );
@@ -384,6 +433,49 @@ export function CrowdDetectionView({
     applyCountingLines(nextLines);
   };
 
+  const setNumberSetting = (key: NumberSettingKey, value: number) => {
+    onSettingsChange({
+      ...settings,
+      [key]: clampNumberSetting(key, value),
+    });
+  };
+
+  const renderPresetGroup = ({
+    title,
+    value,
+    presets,
+    settingKey,
+    valueLabel,
+  }: {
+    title: string;
+    value: number;
+    presets: NumberSettingPreset[];
+    settingKey: NumberSettingKey;
+    valueLabel: string;
+  }) => (
+    <div className="flex flex-col gap-2 text-sm">
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-medium">{title}</span>
+        <span className="text-gray-500">{valueLabel}</span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {presets.map((preset) => (
+          <Button
+            key={`${settingKey}-${preset.value}`}
+            type="button"
+            variant={
+              isSameNumberSetting(value, preset.value) ? "default" : "outline"
+            }
+            size="sm"
+            onPress={() => setNumberSetting(settingKey, preset.value)}
+          >
+            {preset.label}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex w-full flex-col items-center gap-2">
       <div className="relative w-full max-w-3xl">
@@ -427,34 +519,10 @@ export function CrowdDetectionView({
           );
         })}
       </div>
-      <section className="grid w-full max-w-3xl gap-4 rounded border border-gray-200 p-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="grid w-full max-w-3xl gap-4 rounded border border-gray-200 p-4 sm:grid-cols-3">
         <p>検出状態: {STATUS_LABELS[status]}</p>
-        <p>検出人数: {metrics.detectedCount}人</p>
         <p>追跡中人数: {metrics.trackedCount}人</p>
-        <p>累計 tracking ID: {metrics.totalTrackedCount}</p>
         <p>FPS: {metrics.fps.toFixed(1)}</p>
-        <p>
-          最終検出時刻: {metrics.lastDetectedAt?.toLocaleTimeString() ?? "-"}
-        </p>
-      </section>
-      <section className="w-full max-w-3xl rounded border border-gray-200 p-4">
-        <h3 className="mb-2 font-bold">検出結果一覧</h3>
-        {metrics.detections.length === 0 ? (
-          <p className="text-gray-500 text-sm">検出結果はありません</p>
-        ) : (
-          <ul className="space-y-1 font-mono text-xs">
-            {metrics.detections.map((detection) => (
-              <li key={detection.trackId}>
-                ID: {detection.trackId} / confidence:{" "}
-                {detection.score.toFixed(2)}
-                {" / "}x: {Math.round(detection.x1)} / y:{" "}
-                {Math.round(detection.y1)} / w:{" "}
-                {Math.round(detection.x2 - detection.x1)} / h:{" "}
-                {Math.round(detection.y2 - detection.y1)}
-              </li>
-            ))}
-          </ul>
-        )}
       </section>
       <section className="grid w-full max-w-3xl gap-4 rounded border border-gray-200 p-4 sm:grid-cols-2">
         <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2">
@@ -494,86 +562,89 @@ export function CrowdDetectionView({
             </Button>
           </div>
         </div>
-        <label className="flex flex-col gap-1 text-sm">
-          <span>
-            confidence threshold: {settings.confidenceThreshold.toFixed(2)}
-          </span>
-          <input
-            type="range"
-            min="0.05"
-            max="1"
-            step="0.05"
-            value={settings.confidenceThreshold}
-            onChange={(event) =>
-              onSettingsChange({
-                ...settings,
-                confidenceThreshold: Number(event.target.value),
-              })
-            }
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span>
-            tracking distance threshold:{" "}
-            {settings.trackingDistanceThreshold.toFixed(2)}
-          </span>
-          <input
-            type="range"
-            min="0.1"
-            max="1"
-            step="0.05"
-            value={settings.trackingDistanceThreshold}
-            onChange={(event) =>
-              onSettingsChange({
-                ...settings,
-                trackingDistanceThreshold: Number(event.target.value),
-              })
-            }
-          />
-          <small className="text-gray-500">
-            高いほど緩い IoU distance 判定
-          </small>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span>検出間隔: {settings.detectionInterval}ms</span>
-          <input
-            type="range"
-            min="0"
-            max="1000"
-            step="50"
-            value={settings.detectionInterval}
-            onChange={(event) =>
-              onSettingsChange({
-                ...settings,
-                detectionInterval: Number(event.target.value),
-              })
-            }
-          />
-        </label>
-        <div className="flex flex-col gap-3 text-sm">
-          <Checkbox
-            isSelected={settings.showBoundingBoxes}
-            onChange={(showBoundingBoxes) =>
-              onSettingsChange({
-                ...settings,
-                showBoundingBoxes,
-              })
-            }
+        {renderPresetGroup({
+          title: "検出感度",
+          value: settings.confidenceThreshold,
+          presets: CONFIDENCE_PRESETS,
+          settingKey: "confidenceThreshold",
+          valueLabel: settings.confidenceThreshold.toFixed(2),
+        })}
+        {renderPresetGroup({
+          title: "追跡のつながりやすさ",
+          value: settings.trackingDistanceThreshold,
+          presets: TRACKING_PRESETS,
+          settingKey: "trackingDistanceThreshold",
+          valueLabel: settings.trackingDistanceThreshold.toFixed(2),
+        })}
+        {renderPresetGroup({
+          title: "検出頻度",
+          value: settings.detectionInterval,
+          presets: DETECTION_INTERVAL_PRESETS,
+          settingKey: "detectionInterval",
+          valueLabel: `${settings.detectionInterval}ms`,
+        })}
+        <div className="sm:col-span-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onPress={() => setFineTuningOpen((open) => !open)}
           >
-            bounding box を表示
-          </Checkbox>
-          <Checkbox
-            isSelected={settings.showTrackingIds}
-            onChange={(showTrackingIds) =>
-              onSettingsChange({
-                ...settings,
-                showTrackingIds,
-              })
-            }
-          >
-            tracking ID を表示
-          </Checkbox>
+            {fineTuningOpen ? "詳細調整を閉じる" : "詳細調整"}
+          </Button>
         </div>
+        {fineTuningOpen && (
+          <div className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
+            <TextField className="flex flex-col gap-2">
+              <Label>検出感度</Label>
+              <Input
+                type="number"
+                min={0.05}
+                max={1}
+                step={0.01}
+                value={settings.confidenceThreshold}
+                onChange={(event) =>
+                  setNumberSetting(
+                    "confidenceThreshold",
+                    Number(event.currentTarget.value),
+                  )
+                }
+              />
+            </TextField>
+            <TextField className="flex flex-col gap-2">
+              <Label>追跡のつながりやすさ</Label>
+              <Input
+                type="number"
+                min={0.1}
+                max={1}
+                step={0.01}
+                value={settings.trackingDistanceThreshold}
+                onChange={(event) =>
+                  setNumberSetting(
+                    "trackingDistanceThreshold",
+                    Number(event.currentTarget.value),
+                  )
+                }
+              />
+            </TextField>
+            <TextField className="flex flex-col gap-2">
+              <Label>検出間隔 ms</Label>
+              <Input
+                type="number"
+                min={0}
+                max={1000}
+                step={10}
+                value={settings.detectionInterval}
+                onChange={(event) =>
+                  setNumberSetting(
+                    "detectionInterval",
+                    Number(event.currentTarget.value),
+                  )
+                }
+              />
+            </TextField>
+          </div>
+        )}
       </section>
       {status === "error" && error && <p className="text-red-600">{error}</p>}
     </div>
