@@ -35,12 +35,9 @@ jobs:
             - name: Typecheck
               run: pnpm typecheck
 
-            - name: Format
-              run: pnpm format
+            - name: Autofix linting issues
+              run: pnpm check:fix
 
             - uses: autofix-ci/action@c5b2d67aa2274e7b5a18224e8171550871fc7e4a # v1.3.4
               with:
                   commit-message: "style: Format"
-
-            - name: Lint
-              run: pnpm lint
