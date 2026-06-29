@@ -238,7 +238,7 @@ export function QueueLayoutView({
         })}
       </svg>
 
-      <p className="mt-3 text-sm text-guest-primary">
+      <p className="mt-3 text-guest-primary text-sm">
         {l.current} <span className="font-bold tabular-nums">{occupied}</span>{" "}
         {l.people} / {l.max} <span className="tabular-nums">{total}</span>{" "}
         {l.people}

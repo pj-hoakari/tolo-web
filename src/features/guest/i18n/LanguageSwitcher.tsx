@@ -24,7 +24,7 @@ export function LanguageSwitcher() {
           key={code}
           id={code}
           size="sm"
-          className="h-auto rounded-full px-2.5 py-1 text-xs font-medium text-guest-primary/55 hover:bg-transparent hover:text-guest-accent selected:bg-guest-accent selected:font-bold selected:text-guest-secondary"
+          className="h-auto rounded-full selected:bg-guest-accent px-2.5 py-1 font-medium selected:font-bold selected:text-guest-secondary text-guest-primary/55 text-xs hover:bg-transparent hover:text-guest-accent"
         >
           {label}
         </Toggle>

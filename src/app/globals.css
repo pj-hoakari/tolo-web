@@ -82,8 +82,16 @@
 .guest-glow {
   background: radial-gradient(
     135% 100% at 50% 18%,
-    color-mix(in oklab, var(--color-guest-accent) 6%, var(--color-guest-secondary)),
-    color-mix(in oklab, var(--color-guest-accent) 20%, var(--color-guest-secondary))
+    color-mix(
+      in oklab,
+      var(--color-guest-accent) 6%,
+      var(--color-guest-secondary)
+    ),
+    color-mix(
+      in oklab,
+      var(--color-guest-accent) 20%,
+      var(--color-guest-secondary)
+    )
   );
 }
 

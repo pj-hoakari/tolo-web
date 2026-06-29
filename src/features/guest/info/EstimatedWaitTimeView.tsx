@@ -17,7 +17,7 @@ export function EstimatedWaitTimeView({
     <InfoCard title={label}>
       <p className="flex items-baseline gap-1 text-guest-primary">
         <span className="text-base text-guest-primary/55">{prefix}</span>
-        <span className="text-4xl font-bold tabular-nums">{minutes}</span>
+        <span className="font-bold text-4xl tabular-nums">{minutes}</span>
         <span className="text-base text-guest-primary/55">{unit}</span>
       </p>
     </InfoCard>

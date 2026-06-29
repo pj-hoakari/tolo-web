@@ -38,12 +38,12 @@ export function CongestionView({
       <ul className="flex flex-col gap-2.5">
         {areas.map((area) => (
           <li key={area.id} className="flex items-center justify-between">
-            <span className="text-sm text-guest-primary">{area.name}</span>
+            <span className="text-guest-primary text-sm">{area.name}</span>
             <span className="flex items-center gap-2">
               <span
                 className={`h-2.5 w-2.5 rounded-full ${LEVEL_DOT[area.level]}`}
               />
-              <span className="w-8 text-right text-sm font-medium text-guest-primary/55">
+              <span className="w-8 text-right font-medium text-guest-primary/55 text-sm">
                 {levelLabels[area.level]}
               </span>
             </span>
