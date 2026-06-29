@@ -37,6 +37,11 @@ services:
         depends_on:
             - firebase-emulator
             - tolo-signaling
+        volumes:
+            - type: bind
+              source: ./public/models
+              target: /app/public/models
+              read_only: true
         develop:
             watch:
                 - action: sync
@@ -47,6 +52,7 @@ services:
                       - .next/
                       - .git/
                       - .env
+                      - public/models/
                 - action: rebuild
                   path: package.json
                 - action: rebuild

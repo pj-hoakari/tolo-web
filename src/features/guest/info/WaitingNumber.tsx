@@ -21,4 +21,6 @@ function WaitingNumber(_props: GuestInfoComponentProps) {
   );
 }
 
-export default defineGuestInfoComponent("waiting-number", WaitingNumber);
+export default defineGuestInfoComponent("waiting-number", WaitingNumber, {
+  span: 1,
+});

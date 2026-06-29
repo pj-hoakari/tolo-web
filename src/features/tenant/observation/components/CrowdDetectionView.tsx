@@ -477,7 +477,7 @@ export function CrowdDetectionView({
   );
 
   return (
-    <div className="flex flex-col items-center gap-2 w-full">
+    <div className="flex w-full flex-col items-center gap-2">
       <div className="relative w-full max-w-3xl">
         <video
           ref={videoRef}
@@ -494,7 +494,7 @@ export function CrowdDetectionView({
           onPointerMove={handleLinePointerMove}
           onPointerUp={handleLinePointerUp}
           onPointerCancel={handleLinePointerUp}
-          className="absolute inset-0 h-full w-full touch-none rounded cursor-crosshair"
+          className="absolute inset-0 h-full w-full cursor-crosshair touch-none rounded"
         />
         {status === "loading" && (
           <div className="absolute inset-0 flex items-center justify-center rounded bg-black/40 text-white">
