@@ -1,4 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>pj-hoakari/renovate-config", "customManagers:biomeVersions"]
+  "extends": [
+    "github>pj-hoakari/renovate-config",
+    "customManagers:biomeVersions"
+  ]
 }
