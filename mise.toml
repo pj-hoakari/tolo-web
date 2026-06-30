@@ -1,3 +1,11 @@
 [tools]
+betterleaks = "latest"
+lefthook = "latest"
 node = "24"
 pnpm = "11"
+
+[hooks]
+postinstall = "if [ -z \"${CI:-}\" ] && git rev-parse --git-dir > /dev/null 2>&1; then lefthook install; fi"
+
+[settings]
+experimental = true
