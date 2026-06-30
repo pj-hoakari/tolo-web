@@ -1,0 +1,35 @@
+name: Renovate
+
+on:
+    schedule:
+        - cron: "0 5,17 * * *"
+    workflow_dispatch: {}
+
+permissions:
+    contents: read
+    packages: read
+
+jobs:
+    renovate:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+            - name: Generate GitHub App token
+              id: app-token
+              uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+              with:
+                  app-id: ${{ vars.RENOVATE_APP_ID }}
+                  private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
+                  owner: ${{ github.repository_owner }}
+                  repositories: tolo-web
+
+            - name: Self-hosted Renovate
+              uses: renovatebot/github-action@dd5302ec17783b2fc721b19ae7209b57b1587765 # v46.1.17
+              with:
+                  token: ${{ steps.app-token.outputs.token }}
+                  configurationFile: .github/renovate/config.js
+              env:
+                  LOG_LEVEL: info
+                  RENOVATE_PLATFORM_COMMIT: "enabled"
+                  RENOVATE_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
