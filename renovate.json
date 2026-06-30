@@ -3,5 +3,12 @@
   "extends": [
     "github>pj-hoakari/renovate-config",
     "customManagers:biomeVersions"
+  ],
+  "packageRules": [
+    {
+      "description": "Disable minimum release age checks for internal dependencies",
+      "matchPackageNames": ["@pj-hoakari/*"],
+      "minimumReleaseAge": null
+    }
   ]
 }
