@@ -9,5 +9,4 @@ module.exports = {
       token: process.env.RENOVATE_PACKAGES_TOKEN,
     },
   ],
-  dryRun: "full",
 };
