@@ -3,3 +3,5 @@ pre-commit:
     jobs:
         - name: Scan credential leaks
           run: mise exec -- betterleaks git --pre-commit --redact --staged --verbose
+        - name: Biome check
+          run: pnpm check
