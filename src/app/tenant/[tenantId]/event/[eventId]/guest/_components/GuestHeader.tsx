@@ -1,5 +1,6 @@
 "use client";
 
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useLanguage } from "@/features/guest/i18n/LanguageProvider";
 import { LanguageSwitcher } from "@/features/guest/i18n/LanguageSwitcher";
 import { messages } from "@/features/guest/i18n/messages";
@@ -31,6 +32,7 @@ export function GuestHeader({
         <div className="flex items-center gap-2">
           <StaffMessageBell tenantId={tenantId} eventId={eventId} />
           <LanguageSwitcher />
+          <ThemeToggle />
         </div>
       </div>
     </header>
