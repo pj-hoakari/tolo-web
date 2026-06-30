@@ -8,7 +8,7 @@ services:
             - "4000:4000" # Emulator UI
 
     tolo-signaling:
-        image: ghcr.io/pj-hoakari/tolo-signaling:0.1.0-rc
+        image: ghcr.io/pj-hoakari/tolo-signaling:0.1.0-rc@sha256:f7d1a2108e7eedc4d520cf07cb5a88a62e9b5ef871cbce0acfb7affaa739c410
         ports:
             - "8787:8787"
         environment:
