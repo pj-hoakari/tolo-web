@@ -2,6 +2,7 @@ module.exports = {
   platform: "github",
   platformCommit: "enabled",
   branchPrefix: "renovate-action/",
+  dependencyDashboardTitle: "Dependency Dashboard (self-hosted)",
   repositories: ["pj-hoakari/tolo-web"],
   hostRules: [
     {
