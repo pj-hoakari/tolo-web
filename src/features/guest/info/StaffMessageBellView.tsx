@@ -40,7 +40,7 @@ export function StaffMessageBellView({
         aria-expanded={isOpen}
         variant="ghost"
         size="icon"
-        className="relative h-10 w-10 rounded-full border border-guest-primary/12 bg-guest-secondary text-guest-primary/55 hover:bg-guest-secondary hover:text-guest-accent"
+        className="relative h-10 w-10 rounded-full border border-primary/12 bg-secondary text-primary/55 hover:bg-secondary hover:text-accent"
       >
         <svg
           viewBox="0 0 24 24"
@@ -56,7 +56,7 @@ export function StaffMessageBellView({
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-guest-notify px-1 font-bold text-guest-secondary text-xs">
+          <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-guest-notify px-1 font-bold text-secondary text-xs">
             {unreadCount}
           </span>
         )}
@@ -70,8 +70,8 @@ export function StaffMessageBellView({
             variant="ghost"
             className="fixed inset-0 z-10 block h-auto w-auto cursor-default rounded-none bg-transparent p-0 hover:bg-transparent"
           />
-          <div className="absolute right-0 z-20 mt-2 w-80 rounded-2xl border border-guest-primary/12 bg-guest-secondary p-4 shadow-lg">
-            <h2 className="mb-3 font-medium text-guest-primary/55 text-sm tracking-wide">
+          <div className="absolute right-0 z-20 mt-2 w-80 rounded-2xl border border-primary/12 bg-secondary p-4 shadow-lg">
+            <h2 className="mb-3 font-medium text-primary/55 text-sm tracking-wide">
               {title}
             </h2>
             <StaffMessageView
