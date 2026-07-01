@@ -88,7 +88,7 @@ export function GuideMapView({
             key={destination.id}
             id={destination.id}
             size="sm"
-            className="h-auto rounded-full border border-guest-primary/12 selected:border-guest-accent bg-guest-secondary selected:bg-guest-accent px-3 py-1 selected:font-medium selected:text-guest-secondary text-guest-primary/55 text-sm hover:bg-guest-secondary hover:text-guest-accent"
+            className="h-auto rounded-full border border-primary/12 selected:border-accent bg-secondary selected:bg-accent px-3 py-1 selected:font-medium selected:text-secondary text-primary/55 text-sm hover:bg-secondary hover:text-accent"
           >
             {destination.name}
           </Toggle>
@@ -97,7 +97,7 @@ export function GuideMapView({
 
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="w-full rounded-xl border border-guest-primary/15 bg-guest-primary/12"
+        className="w-full rounded-xl border border-primary/15 bg-primary/12"
         role="img"
         aria-label={title}
       >
@@ -111,8 +111,8 @@ export function GuideMapView({
               rx={4}
               strokeWidth={1.5}
               className={cn(
-                ROOM_FILL[room.id] ?? "fill-guest-secondary",
-                "stroke-guest-primary/25",
+                ROOM_FILL[room.id] ?? "fill-secondary",
+                "stroke-primary/25",
               )}
             />
             <text
@@ -120,7 +120,7 @@ export function GuideMapView({
               y={room.y + room.height / 2}
               textAnchor="middle"
               dominantBaseline="middle"
-              className="fill-guest-primary/70 text-[10px]"
+              className="fill-primary/70 text-[10px]"
             >
               {room.label}
             </text>
@@ -133,13 +133,13 @@ export function GuideMapView({
               cx={waypoint.point.x}
               cy={waypoint.point.y}
               r={4}
-              className="fill-guest-primary/35"
+              className="fill-primary/35"
             />
             <text
               x={waypoint.point.x}
               y={waypoint.point.y - 7}
               textAnchor="middle"
-              className="fill-guest-primary/65 text-[8px]"
+              className="fill-primary/65 text-[8px]"
             >
               {waypoint.label}
             </text>
@@ -153,7 +153,7 @@ export function GuideMapView({
             strokeWidth={3}
             strokeLinejoin="round"
             strokeLinecap="round"
-            className="stroke-guest-accent"
+            className="stroke-accent"
           />
         )}
 
@@ -163,13 +163,13 @@ export function GuideMapView({
             cy={start.y}
             r={6}
             strokeWidth={2}
-            className="fill-guest-primary stroke-guest-secondary"
+            className="fill-primary stroke-secondary"
           />
           <text
             x={start.x}
             y={start.y + 16}
             textAnchor="middle"
-            className="fill-guest-primary text-[8px]"
+            className="fill-primary text-[8px]"
           >
             {currentLocationLabel}
           </text>
@@ -181,13 +181,13 @@ export function GuideMapView({
             cy={destinationPoint.y}
             r={6}
             strokeWidth={2}
-            className="fill-guest-accent stroke-guest-secondary"
+            className="fill-accent stroke-secondary"
           />
         )}
       </svg>
 
       {selectedDestinationId === null && (
-        <p className="mt-3 text-guest-primary/55 text-sm">{hint}</p>
+        <p className="mt-3 text-primary/55 text-sm">{hint}</p>
       )}
     </InfoCard>
   );

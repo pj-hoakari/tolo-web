@@ -1,3 +1,4 @@
+import "@/features/guest/guest-theme.css";
 import { LanguageProvider } from "@/features/guest/i18n/LanguageProvider";
 import CallingNumber from "@/features/guest/info/CallingNumber";
 import Congestion from "@/features/guest/info/Congestion";
@@ -34,7 +35,7 @@ export default async function TenantGuest({
 
   return (
     <LanguageProvider>
-      <div className="guest-glow min-h-full">
+      <div className="guest-theme guest-glow min-h-full">
         <GuestHeader
           tenantName={tenantName}
           tenantId={tenantId}

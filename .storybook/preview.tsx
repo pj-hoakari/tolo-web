@@ -4,6 +4,8 @@ import { initialize, mswLoader } from "msw-storybook-addon";
 import { handlers } from "../src/mocks/handlers";
 // TailwindCSS を含むグローバルスタイルを Storybook に読み込む
 import "../src/app/globals.css";
+// ゲスト系ストーリー（Guest/*）を .guest-theme スコープ下で描画
+import "../src/features/guest/guest-theme.css";
 
 // Storybook 起動時に MSW worker を初期化
 // 宣言の無いリクエストはbypass
@@ -37,6 +39,16 @@ const preview: Preview = {
       },
       defaultTheme: "light",
     }),
+    // "Guest/*" のストーリーはゲストページと同じトークン再マッピング
+    // .guest-theme 配下で描画
+    (Story, { title }) =>
+      title.startsWith("Guest/") ? (
+        <div className="guest-theme">
+          <Story />
+        </div>
+      ) : (
+        <Story />
+      ),
   ],
   loaders: [mswLoader],
 };
