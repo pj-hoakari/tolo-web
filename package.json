@@ -76,5 +76,6 @@
     "workerDirectory": [
       "public"
     ]
-  }
+  },
+  "packageManager": "pnpm@11.8.0"
 }
