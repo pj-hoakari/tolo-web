@@ -32,7 +32,7 @@ export function GuestHeader({
         <div className="flex items-center gap-2">
           <StaffMessageBell tenantId={tenantId} eventId={eventId} />
           <LanguageSwitcher />
-          <ThemeToggle />
+          <ThemeToggle className="bg-secondary" />
         </div>
       </div>
     </header>
