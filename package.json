@@ -77,5 +77,10 @@
       "public"
     ]
   },
+  "engines": {
+    "npm": "⚠use pnpm",
+    "yarn": "⚠use pnpm",
+    "node": ">=24.17.0"
+  },
   "packageManager": "pnpm@11.9.0"
 }
