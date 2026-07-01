@@ -12,7 +12,11 @@ const THEME_OPTIONS = [
   { id: "system", label: "システム" },
 ] as const;
 
-export function ThemeToggle() {
+type ThemeToggleProps = {
+  className?: string;
+};
+
+export function ThemeToggle({ className }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme();
 
   const handleSelectionChange = (keys: Selection) => {
@@ -27,7 +31,12 @@ export function ThemeToggle() {
 
   return (
     <MenuTrigger>
-      <Button variant="outline" size="icon" aria-label="テーマを切り替え">
+      <Button
+        variant="outline"
+        size="icon"
+        aria-label="テーマを切り替え"
+        className={className}
+      >
         <Sun className="size-5 dark:hidden" aria-hidden />
         <Moon className="hidden size-5 dark:block" aria-hidden />
       </Button>
