@@ -1,0 +1,9 @@
+/* ゲストページのカラーテーマ・スコープ
+   このクラスを付けた要素の配下でのみ、ゲスト専用トークン（--guest-*）を
+   共通トークン名（--primary / --secondary / --accent）へ再マッピング */
+
+.guest-theme {
+  --primary: var(--guest-primary);
+  --secondary: var(--guest-secondary);
+  --accent: var(--guest-accent);
+}
