@@ -1,7 +1,7 @@
 name: Renovate auto-approve
 on:
     pull_request:
-        types: [opened, reopened, synchronize]
+        types: [opened, reopened, synchronize, labeled]
         branches: [develop, main]
 
 permissions:
@@ -10,7 +10,9 @@ permissions:
 
 jobs:
     auto-approve:
-        if: github.event.pull_request.user.login == 'renovate-actions[bot]'
+        if: >-
+            github.event.pull_request.user.login == (vars.RENOVATE_BOT_LOGIN || 'renovate-actions[bot]')
+            && contains(github.event.pull_request.labels.*.name, (vars.RENOVATE_AUTOMERGE_LABEL || 'automerge'))
         runs-on: ubuntu-latest
         steps:
             - name: Approve Renovate PR
