@@ -1,0 +1,29 @@
+name: Renovate auto-approve
+on:
+    pull_request:
+        types: [opened, reopened, synchronize]
+        branches: [develop, main]
+
+permissions:
+    contents: read
+    pull-requests: write
+
+jobs:
+    auto-approve:
+        if: github.event.pull_request.user.login == 'renovate-actions[bot]'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Approve Renovate PR
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  REPO: ${{ github.repository }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+              run: |
+                  approved=$(gh api --paginate "repos/${REPO}/pulls/${PR_NUMBER}/reviews" \
+                      --jq '[.[] | select(.user.login == "github-actions[bot]" and .state == "APPROVED")] | length')
+                  if [ "${approved:-0}" -gt 0 ]; then
+                      echo "Already approved by github-actions[bot]; skipping."
+                      exit 0
+                  fi
+                  gh pr review "${PR_NUMBER}" --repo "${REPO}" --approve \
+                      --body "Auto-approving Self-hosted Renovate dependency update to satisfy the branch protection review requirement and enable automerge."
