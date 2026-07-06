@@ -8,7 +8,11 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 import { useCallback, useMemo, useState } from "react";
-import { DEFAULT_NODE_TYPE, resolveConnectionDirection } from "../nodeTypes";
+import {
+  DEFAULT_NODE_TYPE,
+  deriveNodeNotices,
+  resolveConnectionDirection,
+} from "../nodeTypes";
 import { PLACEHOLDER_GRAPH } from "../placeholderGraph";
 import { toGraphData } from "../serialize";
 import type {
@@ -64,7 +68,8 @@ export function useGraphEditor(initial?: GraphData) {
     [nodes, edges],
   );
   const derivedNodes = useMemo(
-    () => deriveNodeHandles(nodes, derivedEdges),
+    () =>
+      deriveNodeNotices(deriveNodeHandles(nodes, derivedEdges), derivedEdges),
     [nodes, derivedEdges],
   );
 

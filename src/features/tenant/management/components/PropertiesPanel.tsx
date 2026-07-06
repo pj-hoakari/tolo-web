@@ -1,3 +1,4 @@
+import { Info, type LucideIcon, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox, CheckboxGroup } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/field";
@@ -5,6 +6,7 @@ import { Input, TextField } from "@/components/ui/textfield";
 import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
 import type { AliveEdgesStatus } from "@/features/tenant/webrtc/hooks/useAliveEdges";
 import type { AliveEdge } from "@/features/tenant/webrtc/type";
+import { cn } from "@/lib/utils";
 import {
   NODE_TYPE_DEFS,
   validateAssignType,
@@ -18,6 +20,7 @@ import type {
   GraphNodeData,
   GraphNodeType,
   NodeType,
+  NoticeLevel,
 } from "../type";
 import { NodeTypeIcon } from "./NodeTypeIcon";
 
@@ -203,8 +206,18 @@ function NodeForm({
                   </span>
                 </Toggle>
                 {!selected && !result.ok ? (
-                  <ConstraintNote message={result.message} />
+                  <Notice message={result.message} />
                 ) : null}
+                {selected
+                  ? node.data.notices?.map((notice) => (
+                      <Notice
+                        className="mt-2"
+                        key={notice.message}
+                        level={notice.level}
+                        message={notice.message}
+                      />
+                    ))
+                  : null}
               </div>
             );
           })}
@@ -314,7 +327,7 @@ function EdgeForm({
         </ToggleButtonGroup>
         {directionReason ? (
           <div className="mt-1">
-            <ConstraintNote message={directionReason} />
+            <Notice message={directionReason} />
           </div>
         ) : null}
       </div>
@@ -330,7 +343,7 @@ function EdgeForm({
           向きを反転（始点↔終点）
         </Button>
         {direction !== "both" && !reverseResult.ok ? (
-          <ConstraintNote message={reverseResult.message} />
+          <Notice message={reverseResult.message} />
         ) : null}
       </div>
 
@@ -456,10 +469,35 @@ function ObservationPointPicker({
   );
 }
 
-function ConstraintNote({ message }: { message: string }) {
+const NOTICE_ICON: Record<NoticeLevel, LucideIcon> = {
+  warning: TriangleAlert,
+  info: Info,
+};
+
+const NOTICE_TEXT: Record<NoticeLevel, string> = {
+  warning: "text-amber-600 dark:text-amber-400",
+  info: "text-accent-foreground",
+};
+
+function Notice({
+  className,
+  level = "warning",
+  message,
+}: {
+  className?: string;
+  level?: NoticeLevel;
+  message: string;
+}) {
+  const Icon = NOTICE_ICON[level];
   return (
-    <p className="flex items-start gap-1 text-[10px] text-amber-600 dark:text-amber-400">
-      <span aria-hidden>⚠</span>
+    <p
+      className={cn(
+        "flex items-start gap-1 text-[10px]",
+        NOTICE_TEXT[level],
+        className,
+      )}
+    >
+      <Icon aria-hidden className="mt-px size-3 shrink-0" />
       <span>{message}</span>
     </p>
   );

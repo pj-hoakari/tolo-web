@@ -1,10 +1,45 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { PropertiesPanel } from "@/features/tenant/management/components/PropertiesPanel";
+import { deriveNodeNotices } from "@/features/tenant/management/nodeTypes";
 import { PLACEHOLDER_GRAPH } from "@/features/tenant/management/placeholderGraph";
+import type {
+  GraphEdgeType,
+  GraphNodeType,
+} from "@/features/tenant/management/type";
 import type { AliveEdge } from "@/features/tenant/webrtc/type";
 
 const { nodes, edges } = PLACEHOLDER_GRAPH;
+
+// 入退出（入力・出力）の両方を担う入退出点。両通行ルートに接続することで
+// 両方向のロールを持ち、パネル上部に info の通知が表示される。
+const dualBoundaryNodes: GraphNodeType[] = [
+  {
+    id: "gate",
+    type: "graph",
+    position: { x: 0, y: 0 },
+    data: { label: "入退出口", nodeType: "BOUNDARY" },
+  },
+  {
+    id: "hall",
+    type: "graph",
+    position: { x: 300, y: 0 },
+    data: { label: "ホール", nodeType: "TRANSIT_ONLY" },
+  },
+];
+const dualBoundaryEdges: GraphEdgeType[] = [
+  {
+    id: "de1",
+    source: "gate",
+    target: "hall",
+    type: "graph",
+    data: { direction: "both" },
+  },
+];
+const derivedDualBoundary = deriveNodeNotices(
+  dualBoundaryNodes,
+  dualBoundaryEdges,
+);
 
 // 紐づけ候補となる観測点（接続中のエッジ）のサンプル
 const observationPoints: AliveEdge[] = [
@@ -78,6 +113,15 @@ export const EdgeSelected: Story = {
   args: {
     // junction → booth（両通行）を選択した状態
     selectedEdge: edges.find((e) => e.id === "ph_e2"),
+  },
+};
+
+export const BoundaryDualDirection: Story = {
+  args: {
+    // 入退出の両方を担う入退出点を選択 → パネル上部に info 通知が表示される
+    nodes: dualBoundaryNodes,
+    edges: dualBoundaryEdges,
+    selectedNode: derivedDualBoundary.find((n) => n.id === "gate"),
   },
 };
 
