@@ -2,7 +2,9 @@ import type {
   EdgeDirection,
   GraphEdgeType,
   GraphNodeType,
+  GraphNotice,
   NodeType,
+  NoticeLevel,
 } from "./type";
 
 export type NodeRole = "in" | "out";
@@ -22,6 +24,17 @@ export type NodeValidationContext = {
 export type NodeTypeConstraint = {
   message: string;
   validate: (ctx: NodeValidationContext) => boolean;
+};
+
+/**
+ * 制約違反ではないが、利用者に強調して伝えたい状態を表す通知。
+ * validation 機構（NodeTypeConstraint）と同じコンテキストで条件を評価する。
+ */
+export type NodeTypeNotice = {
+  level: NoticeLevel;
+  message: string;
+  /** この通知を出す条件 */
+  match: (ctx: NodeValidationContext) => boolean;
 };
 
 type NodeShapeBase = {
@@ -54,12 +67,14 @@ export type NodeTypeDef = {
   icon: NodeIcon;
   shape: NodeShape;
   constraints?: NodeTypeConstraint[];
+  notices?: NodeTypeNotice[];
 };
 
-/** 入力(in)と出力(out)を同時には持てない制約 */
-const singleDirectionConstraint: NodeTypeConstraint = {
-  message: "入退出点は入力または出力のどちらか一方のみ可能です",
-  validate: (ctx) => !(ctx.roles.has("in") && ctx.roles.has("out")),
+/** 入力(in)と出力(out)の両方を担っている入退出点を強調する通知 */
+const dualDirectionNotice: NodeTypeNotice = {
+  level: "info",
+  message: "入退出（入力・出力）の両方を担っています",
+  match: (ctx) => ctx.roles.has("in") && ctx.roles.has("out"),
 };
 
 export const NODE_TYPE_DEFS: NodeTypeDef[] = [
@@ -100,7 +115,7 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
   {
     type: "BOUNDARY",
     label: "入退出点",
-    description: "入力または出力のどちらか一方のみ",
+    description: "例: 会場の入口・出口",
     color: "#f59e0b",
     // 三角形（▷）
     icon: { kind: "polygon", points: "16,8 92,50 16,92" },
@@ -110,7 +125,7 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
       clipPath: "polygon(0 0, 100% 24%, 100% 76%, 0 100%)",
       contentClassName: "pr-3",
     },
-    constraints: [singleDirectionConstraint],
+    notices: [dualDirectionNotice],
   },
 ];
 
@@ -164,6 +179,21 @@ export function validateNodeType(
   return VALID;
 }
 
+/** タイプ `type` が、コンテキスト `ctx` の下で該当する通知を収集 */
+export function collectNodeTypeNotices(
+  type: NodeType,
+  ctx: NodeValidationContext,
+): GraphNotice[] {
+  const def = getNodeTypeDef(type);
+  const notices: GraphNotice[] = [];
+  for (const notice of def.notices ?? []) {
+    if (notice.match(ctx)) {
+      notices.push({ level: notice.level, message: notice.message });
+    }
+  }
+  return notices;
+}
+
 function contextFor(
   nodeId: string,
   nodes: GraphNodeType[],
@@ -201,6 +231,35 @@ export function validateAssignType(
   edges: GraphEdgeType[],
 ): ValidationResult {
   return validateNodeType(type, contextFor(nodeId, nodes, edges));
+}
+
+/** 指定ノードの現タイプ・接続状況で該当する通知を収集 */
+export function collectNodeNotices(
+  nodeId: string,
+  nodes: GraphNodeType[],
+  edges: GraphEdgeType[],
+): GraphNotice[] {
+  const node = nodes.find((n) => n.id === nodeId);
+  if (!node) return [];
+  return collectNodeTypeNotices(
+    node.data.nodeType,
+    contextFor(nodeId, nodes, edges),
+  );
+}
+
+/**
+ * 各ノードの現タイプ・接続状況から通知を算出し、描画用にノードデータへ注入
+ * （handles と同様の派生情報。永続化時には除外される）
+ */
+export function deriveNodeNotices(
+  nodes: GraphNodeType[],
+  edges: GraphEdgeType[],
+): GraphNodeType[] {
+  return nodes.map((n) => {
+    const notices = collectNodeNotices(n.id, nodes, edges);
+    if (notices.length === 0) return n;
+    return { ...n, data: { ...n.data, notices } };
+  });
 }
 
 /**
