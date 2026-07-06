@@ -45,7 +45,7 @@ export function GraphNode({ id, data, selected }: NodeProps<GraphNodeType>) {
   }, [id, handleSignature, updateNodeInternals]);
 
   return (
-    <div className="group relative min-w-40 drop-shadow-sm">
+    <div className="group relative min-w-40 drop-shadow-md">
       {/* 選択時のハロー */}
       {selected ? (
         <div className="absolute inset-0.75 bg-primary/20" style={shapeStyle} />
@@ -56,7 +56,7 @@ export function GraphNode({ id, data, selected }: NodeProps<GraphNodeType>) {
           "absolute inset-0 transition-colors",
           selected
             ? "bg-primary"
-            : "bg-border group-hover:bg-muted-foreground/40",
+            : "bg-muted-foreground group-hover:bg-muted-foreground/40",
         ].join(" ")}
         style={shapeStyle}
       />
@@ -97,8 +97,8 @@ function HandlePort({ slot }: { slot: HandleSlot }) {
       : { top: `${percentage}%` };
 
   const cls = slot.used
-    ? "!h-2.5 !w-2.5 !rounded-full !border-2 !border-card !bg-primary"
-    : "!h-2.5 !w-2.5 !rounded-full !border !border-primary !bg-secondary hover:!bg-primary/10";
+    ? "!h-2.5 !w-2.5 !rounded-full !border-2 !border-card !bg-muted-foreground"
+    : "!h-2.5 !w-2.5 !rounded-full !border !border-muted-foreground !bg-secondary hover:!bg-primary/10";
 
   return (
     <Handle

@@ -84,7 +84,7 @@ function GraphEditorInner({
     <div className="flex h-full min-h-0 flex-col">
       <GraphToolbar onAddNode={addNode} onSave={handleSave} />
       <div className="flex min-h-0 flex-1">
-        <div className="relative min-h-0 flex-1">
+        <div className="relative min-h-0 flex-1 bg-secondary">
           <GraphEdgeMarkers />
           <ReactFlow
             nodes={nodes}
