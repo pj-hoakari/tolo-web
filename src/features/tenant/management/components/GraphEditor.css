@@ -1,6 +1,10 @@
 .react-flow {
   /* 背景ドット */
-  --xy-background-pattern-color: var(--border);
+  --xy-background-pattern-color: color-mix(
+    in oklab,
+    var(--primary) 30%,
+    transparent
+  );
   /* 新規エッジ作成時の接続線 */
   --xy-connectionline-stroke: var(--muted-foreground);
   /* MiniMap 本体・マスク（非表示領域のオーバーレイ） */
