@@ -7,3 +7,50 @@
   --secondary: var(--guest-secondary);
   --accent: var(--guest-accent);
 }
+
+/* 案内マップの経路を進行方向へ流す破線アニメーション。
+   破線の長さごとに周期（＝破線 + 隙間）に合わせたキーフレームを用意し、
+   速さは animation-duration（インライン指定）で切り替える。 */
+@keyframes route-flow-24 {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+@keyframes route-flow-40 {
+  to {
+    stroke-dashoffset: -40;
+  }
+}
+
+@keyframes route-flow-58 {
+  to {
+    stroke-dashoffset: -58;
+  }
+}
+
+.route-flow {
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.route-flow-short {
+  stroke-dasharray: 14 10;
+  animation-name: route-flow-24;
+}
+
+.route-flow-normal {
+  stroke-dasharray: 26 14;
+  animation-name: route-flow-40;
+}
+
+.route-flow-long {
+  stroke-dasharray: 40 18;
+  animation-name: route-flow-58;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-flow {
+    animation: none;
+  }
+}
