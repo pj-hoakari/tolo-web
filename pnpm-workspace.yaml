@@ -1,12 +1,14 @@
 allowBuilds:
-    "@firebase/util": false
-    esbuild: true
-    msw: false
-    protobufjs: false
-    sharp: true
+  "@firebase/util": false
+  esbuild: true
+  msw: false
+  protobufjs: false
+  sharp: true
 ignoredBuiltDependencies:
-    - sharp
-    - unrs-resolver
+  - sharp
+  - unrs-resolver
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
-    - "@pj-hoakari/*"
+  - "@pj-hoakari/*"
+  # Renovate security update: next@16.2.11
+  - next@16.2.11
