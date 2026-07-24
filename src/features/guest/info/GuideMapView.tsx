@@ -1,3 +1,12 @@
+"use client";
+
+import { Minus, Plus } from "lucide-react";
+import {
+  type PointerEvent as ReactPointerEvent,
+  useRef,
+  useState,
+} from "react";
+import { Button } from "@/components/ui/button";
 import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
 import { cn } from "@/lib/utils";
 import { InfoCard } from "./InfoCard";
@@ -20,6 +29,12 @@ export type GuideMapRoom = {
   y: number;
   width: number;
   height: number;
+  /** 塗り色クラス。未指定なら id ごとの既定色を使う */
+  fill?: string;
+  /** 形状（circle は角丸を最大にして円・楕円として描く） */
+  shape?: "rect" | "circle";
+  /** 中心を軸にした回転角（度） */
+  rotation?: number;
 };
 
 /** 階段・エレベーターなどの経由地点 */
@@ -42,15 +57,20 @@ export type GuideMapViewProps = {
   waypoints: GuideMapWaypoint[];
   /** QR コード読み取り地点（現在地） */
   start: MapPoint;
-  destinations: GuideMapDestination[];
+  /** 目的地の選択ボタン。省略（または空）なら選択 UI を出さず、渡された経路だけを描く */
+  destinations?: GuideMapDestination[];
   /** 選択中の目的地 ID（未選択は null） */
-  selectedDestinationId: string | null;
+  selectedDestinationId?: string | null;
   /** 現在地→目的地の経路（経由点の順序リスト。未選択なら空） */
   route: MapPoint[];
-  onSelectDestination: (destinationId: string) => void;
+  onSelectDestination?: (destinationId: string) => void;
   title?: string;
   hint?: string;
   currentLocationLabel?: string;
+  /** 経路を流れる破線にするクラス（例: "route-flow route-flow-normal"） */
+  routeFlowClassName?: string;
+  /** 流れる速さ（animation-duration。例: "1.1s"） */
+  routeFlowDuration?: string;
 };
 
 export function GuideMapView({
@@ -59,134 +79,233 @@ export function GuideMapView({
   rooms,
   waypoints,
   start,
-  destinations,
-  selectedDestinationId,
+  destinations = [],
+  selectedDestinationId = null,
   route,
   onSelectDestination,
   title = "案内マップ",
   hint = "目的地を選択すると経路が表示されます",
   currentLocationLabel = "現在地",
+  routeFlowClassName,
+  routeFlowDuration,
 }: GuideMapViewProps) {
+  // 右上の＋ボタンで拡大表示に切り替える（拡大中は横スクロールで全体を見る）
+  const [expanded, setExpanded] = useState(false);
+
+  // 拡大中はドラッグでも左右に動かせるようにする
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ pointerX: number; scrollLeft: number } | null>(null);
+
+  function handleDragStart(event: ReactPointerEvent<HTMLDivElement>) {
+    const element = scrollRef.current;
+    if (!expanded || !element) return;
+    element.setPointerCapture(event.pointerId);
+    dragRef.current = {
+      pointerX: event.clientX,
+      scrollLeft: element.scrollLeft,
+    };
+  }
+
+  function handleDragMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current;
+    const element = scrollRef.current;
+    if (!drag || !element) return;
+    element.scrollLeft = drag.scrollLeft - (event.clientX - drag.pointerX);
+  }
+
+  function handleDragEnd(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!dragRef.current) return;
+    dragRef.current = null;
+    scrollRef.current?.releasePointerCapture(event.pointerId);
+  }
+
   const routePoints = route.map((p) => `${p.x},${p.y}`).join(" ");
   const destinationPoint = route.length > 0 ? route[route.length - 1] : null;
 
+  // SVG は高さ固定で描くため、文字・マーカーは viewBox の高さに比例させて
+  // 実際の見た目のサイズが一定になるようにする
+  const labelSize = Math.round(height * 0.0375);
+  const subLabelSize = Math.round(height * 0.03);
+  const markerRadius = Math.round(height * 0.022);
+  const waypointRadius = Math.round(height * 0.014);
+
   return (
     <InfoCard title={title}>
-      <ToggleButtonGroup
-        selectionMode="single"
-        disallowEmptySelection
-        selectedKeys={selectedDestinationId ? [selectedDestinationId] : []}
-        onSelectionChange={(keys) => {
-          const next = [...keys][0];
-          if (next != null) onSelectDestination(String(next));
-        }}
-        aria-label="目的地"
-        className="mb-4 flex-wrap justify-start gap-2"
-      >
-        {destinations.map((destination) => (
-          <Toggle
-            key={destination.id}
-            id={destination.id}
-            size="sm"
-            className="h-auto rounded-full border border-primary/12 selected:border-accent bg-secondary selected:bg-accent px-3 py-1 selected:font-medium selected:text-secondary text-primary/55 text-sm hover:bg-secondary hover:text-accent"
-          >
-            {destination.name}
-          </Toggle>
-        ))}
-      </ToggleButtonGroup>
-
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="w-full rounded-xl border border-primary/15 bg-primary/12"
-        role="img"
-        aria-label={title}
-      >
-        {rooms.map((room) => (
-          <g key={room.id}>
-            <rect
-              x={room.x}
-              y={room.y}
-              width={room.width}
-              height={room.height}
-              rx={4}
-              strokeWidth={1.5}
-              className={cn(
-                ROOM_FILL[room.id] ?? "fill-secondary",
-                "stroke-primary/25",
-              )}
-            />
-            <text
-              x={room.x + room.width / 2}
-              y={room.y + room.height / 2}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              className="fill-primary/70 text-[10px]"
+      {destinations.length > 0 && (
+        <ToggleButtonGroup
+          selectionMode="single"
+          disallowEmptySelection
+          selectedKeys={selectedDestinationId ? [selectedDestinationId] : []}
+          onSelectionChange={(keys) => {
+            const next = [...keys][0];
+            if (next != null) onSelectDestination?.(String(next));
+          }}
+          aria-label="目的地"
+          className="mb-4 flex-wrap justify-start gap-2"
+        >
+          {destinations.map((destination) => (
+            <Toggle
+              key={destination.id}
+              id={destination.id}
+              size="sm"
+              className="h-auto rounded-full border border-primary/12 selected:border-accent bg-secondary selected:bg-accent px-3 py-1 selected:font-medium selected:text-secondary text-primary/55 text-sm hover:bg-secondary hover:text-accent"
             >
-              {room.label}
-            </text>
-          </g>
-        ))}
+              {destination.name}
+            </Toggle>
+          ))}
+        </ToggleButtonGroup>
+      )}
 
-        {waypoints.map((waypoint) => (
-          <g key={waypoint.id}>
-            <circle
-              cx={waypoint.point.x}
-              cy={waypoint.point.y}
-              r={4}
-              className="fill-primary/35"
-            />
-            <text
-              x={waypoint.point.x}
-              y={waypoint.point.y - 7}
-              textAnchor="middle"
-              className="fill-primary/65 text-[8px]"
-            >
-              {waypoint.label}
-            </text>
-          </g>
-        ))}
+      <div className="relative">
+        {/* 右上の拡大／縮小ボタン */}
+        <Button
+          size="icon"
+          variant="secondary"
+          aria-label={expanded ? "地図を縮小" : "地図を拡大"}
+          onPress={() => setExpanded((current) => !current)}
+          className="absolute top-2 right-2 z-10 size-8 rounded-full border border-primary/15 bg-secondary/85 text-primary/70 shadow-sm backdrop-blur-sm hover:bg-secondary hover:text-primary"
+        >
+          {expanded ? (
+            <Minus className="size-4" />
+          ) : (
+            <Plus className="size-4" />
+          )}
+        </Button>
 
-        {route.length > 1 && (
-          <polyline
-            points={routePoints}
-            fill="none"
-            strokeWidth={3}
-            strokeLinejoin="round"
-            strokeLinecap="round"
-            className="stroke-accent"
-          />
-        )}
-
-        <g>
-          <circle
-            cx={start.x}
-            cy={start.y}
-            r={6}
-            strokeWidth={2}
-            className="fill-primary stroke-secondary"
-          />
-          <text
-            x={start.x}
-            y={start.y + 16}
-            textAnchor="middle"
-            className="fill-primary text-[8px]"
+        <div
+          ref={scrollRef}
+          onPointerDown={handleDragStart}
+          onPointerMove={handleDragMove}
+          onPointerUp={handleDragEnd}
+          onPointerCancel={handleDragEnd}
+          className={cn(
+            "rounded-xl border border-primary/15 bg-primary/12",
+            // 拡大中は高さを伸ばし、はみ出す分は横スクロール／ドラッグで見る
+            expanded &&
+              "cursor-grab select-none overflow-x-auto active:cursor-grabbing",
+          )}
+        >
+          <svg
+            viewBox={`0 0 ${width} ${height}`}
+            className={cn(
+              expanded
+                ? "h-[clamp(280px,60vh,480px)] w-auto min-w-full"
+                : "h-auto w-full",
+            )}
+            role="img"
+            aria-label={title}
           >
-            {currentLocationLabel}
-          </text>
-        </g>
+            {rooms.map((room) => {
+              const cx = room.x + room.width / 2;
+              const cy = room.y + room.height / 2;
+              return (
+                <g
+                  key={room.id}
+                  transform={
+                    room.rotation
+                      ? `rotate(${room.rotation} ${cx} ${cy})`
+                      : undefined
+                  }
+                >
+                  <rect
+                    x={room.x}
+                    y={room.y}
+                    width={room.width}
+                    height={room.height}
+                    rx={
+                      room.shape === "circle"
+                        ? Math.min(room.width, room.height) / 2
+                        : 4
+                    }
+                    strokeWidth={1.5}
+                    className={cn(
+                      room.fill ?? ROOM_FILL[room.id] ?? "fill-secondary",
+                      "stroke-primary/25",
+                    )}
+                  />
+                  <text
+                    x={cx}
+                    y={cy}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize={labelSize}
+                    className="fill-primary/70"
+                  >
+                    {room.label}
+                  </text>
+                </g>
+              );
+            })}
 
-        {destinationPoint && (
-          <circle
-            cx={destinationPoint.x}
-            cy={destinationPoint.y}
-            r={6}
-            strokeWidth={2}
-            className="fill-accent stroke-secondary"
-          />
-        )}
-      </svg>
+            {waypoints.map((waypoint) => (
+              <g key={waypoint.id}>
+                <circle
+                  cx={waypoint.point.x}
+                  cy={waypoint.point.y}
+                  r={waypointRadius}
+                  className="fill-primary/35"
+                />
+                <text
+                  x={waypoint.point.x}
+                  y={waypoint.point.y - waypointRadius - 4}
+                  textAnchor="middle"
+                  fontSize={subLabelSize}
+                  className="fill-primary/65"
+                >
+                  {waypoint.label}
+                </text>
+              </g>
+            ))}
 
-      {selectedDestinationId === null && (
+            {route.length > 1 && (
+              <polyline
+                points={routePoints}
+                fill="none"
+                strokeWidth={3}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                className={cn("stroke-accent", routeFlowClassName)}
+                style={
+                  routeFlowDuration
+                    ? { animationDuration: routeFlowDuration }
+                    : undefined
+                }
+              />
+            )}
+
+            <g>
+              <circle
+                cx={start.x}
+                cy={start.y}
+                r={markerRadius}
+                strokeWidth={2}
+                className="fill-primary stroke-secondary"
+              />
+              <text
+                x={start.x}
+                y={start.y + markerRadius + subLabelSize}
+                textAnchor="middle"
+                fontSize={subLabelSize}
+                className="fill-primary"
+              >
+                {currentLocationLabel}
+              </text>
+            </g>
+
+            {destinationPoint && (
+              <circle
+                cx={destinationPoint.x}
+                cy={destinationPoint.y}
+                r={markerRadius}
+                strokeWidth={2}
+                className="fill-accent stroke-secondary"
+              />
+            )}
+          </svg>
+        </div>
+      </div>
+
+      {destinations.length > 0 && selectedDestinationId === null && (
         <p className="mt-3 text-primary/55 text-sm">{hint}</p>
       )}
     </InfoCard>
