@@ -1,4 +1,5 @@
-import { type ChangeEvent, useState } from "react";
+import { useState } from "react";
+import { FileTrigger } from "react-aria-components";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -6,8 +7,6 @@ import {
   DisclosureHeader,
   DisclosurePanel,
 } from "@/components/ui/disclosure";
-import { Label } from "@/components/ui/field";
-import { Input, TextField } from "@/components/ui/textfield";
 import type { DetectCrowdStatus } from "../hooks/useDetectCrowd";
 import {
   type CrowdVideoSourceFactory,
@@ -43,8 +42,8 @@ export function DevVideoSourcePanel({
     onSourceChange(createCameraVideoSource);
   };
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const selected = event.target.files?.[0] ?? null;
+  const handleFileSelect = (files: FileList | null) => {
+    const selected = files?.[0] ?? null;
     if (!selected) {
       return;
     }
@@ -68,10 +67,20 @@ export function DevVideoSourcePanel({
         </DisclosureHeader>
 
         <DisclosurePanel className="flex flex-col gap-2 pt-2 pb-0">
-          <TextField className="flex flex-col gap-1" isDisabled={isActive}>
-            <Label>映像ファイル</Label>
-            <Input type="file" accept="video/*" onChange={handleFileChange} />
-          </TextField>
+          <FileTrigger
+            acceptedFileTypes={["video/*"]}
+            onSelect={handleFileSelect}
+          >
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              isDisabled={isActive}
+              className="self-start"
+            >
+              映像ファイルを選択
+            </Button>
+          </FileTrigger>
 
           <Checkbox
             isSelected={loop}
