@@ -1,14 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { BroadcastIndicator } from "@/features/tenant/webrtc/components/BroadcastIndicator";
 import { useVideoSender } from "@/features/tenant/webrtc/hooks/useVideoSender";
-import {
-  type DetectionSettings,
-  INITIAL_SETTINGS,
-  useCrowdDetectionLoop,
-} from "../hooks/useCrowdDetectionLoop";
+import { useCrowdDetectionLoop } from "../hooks/useCrowdDetectionLoop";
 import { useDetectCrowd } from "../hooks/useDetectCrowd";
+import { useDetectionStores } from "../stores/detectionStore";
 import {
   type CrowdVideoSourceFactory,
   createCameraVideoSource,
@@ -36,15 +33,16 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
   const [broadcastStream, setBroadcastStream] = useState<MediaStream | null>(
     null,
   );
-  const [settings, setSettings] = useState<DetectionSettings>(INITIAL_SETTINGS);
+  const { settingsStore, resultStore, viewStateStore } = useDetectionStores();
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  const { lineCounts, metrics } = useCrowdDetectionLoop({
+  useCrowdDetectionLoop({
     videoRef,
     overlayCanvasRef,
     status,
-    settings,
+    settingsStore,
+    resultStore,
     onBroadcastStreamChange: setBroadcastStream,
     onDetectionError: reportDetectionError,
   });
@@ -55,13 +53,17 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
     stream: broadcastStream,
   });
 
+  const handleSourceChange = useCallback((factory: CrowdVideoSourceFactory) => {
+    setSourceFactory(() => factory);
+  }, []);
+
   return (
     <ObservationSoftLock tenantId={tenantId} eventId={eventId}>
       <div className="flex w-full flex-col items-center gap-4">
         {DEV_VIDEO_SOURCE_ENABLED && (
           <DevVideoSourcePanel
             status={status}
-            onSourceChange={(factory) => setSourceFactory(() => factory)}
+            onSourceChange={handleSourceChange}
           />
         )}
         <CrowdDetectionControls status={status} onStart={start} onStop={stop} />
@@ -69,12 +71,11 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
           videoSource={videoSource}
           status={status}
           error={error}
-          lineCounts={lineCounts}
-          metrics={metrics}
-          settings={settings}
-          onSettingsChange={setSettings}
           videoRef={videoRef}
           overlayCanvasRef={overlayCanvasRef}
+          settingsStore={settingsStore}
+          resultStore={resultStore}
+          viewStateStore={viewStateStore}
         />
         <BroadcastIndicator active={active} edgeId={edgeId} />
       </div>

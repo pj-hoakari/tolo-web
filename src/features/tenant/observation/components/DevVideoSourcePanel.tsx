@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { FileTrigger } from "react-aria-components";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,7 +21,7 @@ export type DevVideoSourcePanelProps = {
   onSourceChange: (factory: CrowdVideoSourceFactory) => void;
 };
 
-export function DevVideoSourcePanel({
+function DevVideoSourcePanelComponent({
   status,
   onSourceChange,
 }: DevVideoSourcePanelProps) {
@@ -122,3 +122,5 @@ export function DevVideoSourcePanel({
     </section>
   );
 }
+
+export const DevVideoSourcePanel = memo(DevVideoSourcePanelComponent);

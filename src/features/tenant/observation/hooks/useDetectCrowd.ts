@@ -30,7 +30,7 @@ export function useDetectCrowd(
     sourceRef.current = null;
   }, []);
 
-  const start = async () => {
+  const start = useCallback(async () => {
     const operationId = ++operationIdRef.current;
     resetCrowdTracking();
     setError(null);
@@ -73,15 +73,15 @@ export function useDetectCrowd(
         e instanceof Error ? e.message : "映像ソースの取得に失敗しました",
       );
     }
-  };
+  }, [createSource]);
 
-  const stop = () => {
+  const stop = useCallback(() => {
     operationIdRef.current += 1;
     resetCrowdTracking();
     releaseSource();
     setVideoSource(null);
     setStatus("idle");
-  };
+  }, [releaseSource]);
 
   const reportDetectionError = useCallback(
     (cause: unknown) => {
