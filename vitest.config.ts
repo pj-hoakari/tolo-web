@@ -11,6 +11,12 @@ const dirname =
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
+  // tsconfig の paths と揃える（node 環境の unit プロジェクトでも `@/` を解決する）
+  resolve: {
+    alias: {
+      "@": path.resolve(dirname, "src"),
+    },
+  },
   test: {
     projects: [
       {
