@@ -21,7 +21,7 @@ import type { GraphData, GraphNodeType } from "../type";
 import { GraphEdge, GraphEdgeMarkers } from "./GraphEdge";
 import { GraphNode } from "./GraphNode";
 import { GraphToolbar } from "./GraphToolbar";
-import { PropertiesPanel } from "./PropertiesPanel";
+import { PropertiesPanel } from "./properties";
 
 const nodeTypes: NodeTypes = { graph: GraphNode };
 const edgeTypes: EdgeTypes = { graph: GraphEdge };
@@ -117,12 +117,13 @@ function GraphEditorInner({
         <PropertiesPanel
           selectedNode={selectedNode}
           selectedEdge={selectedEdge}
-          nodes={nodes}
-          edges={edges}
-          observationPoints={observationPoints}
-          observationPointsStatus={observationPointsStatus}
-          usedObservationPointIds={usedObservationPointIds}
-          onRefreshObservationPoints={refreshObservationPoints}
+          graph={{ nodes, edges }}
+          observationPoints={{
+            available: observationPoints,
+            status: observationPointsStatus,
+            usedIds: usedObservationPointIds,
+            onRefresh: refreshObservationPoints,
+          }}
           onUpdateNode={updateNodeData}
           onUpdateEdge={updateEdgeData}
           onReverseEdge={reverseEdge}
