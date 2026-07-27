@@ -1,26 +1,24 @@
 import { Button } from "@/components/ui/button";
-import type { AliveEdgesStatus } from "@/features/tenant/webrtc/hooks/useAliveEdges";
-import type { AliveEdge } from "@/features/tenant/webrtc/type";
 import type {
+  GraphData,
   GraphEdgeData,
   GraphEdgeType,
   GraphNodeData,
   GraphNodeType,
 } from "../../type";
 import { EdgeProperties } from "./EdgeProperties";
+import { resolveEdgeDirectionState } from "./edgeDirectionState";
 import { NodeProperties } from "./NodeProperties";
+import { buildNodeTypeOptions } from "./nodeTypeOptions";
+import type { ObservationPointsSource } from "./ObservationPointPicker";
 
 type Props = {
   selectedNode: GraphNodeType | undefined;
   selectedEdge: GraphEdgeType | undefined;
-  nodes: GraphNodeType[];
-  edges: GraphEdgeType[];
-  /** 紐づけ候補となる観測点（接続中のエッジ）一覧 */
-  observationPoints: AliveEdge[];
-  observationPointsStatus?: AliveEdgesStatus;
-  /** いずれかのノード/ルートで使用中（＝他では選択不可）の観測点 ID 集合 */
-  usedObservationPointIds: ReadonlySet<string>;
-  onRefreshObservationPoints?: () => void;
+  /** 制約の検証と端点ラベルの解決に使うグラフ全体 */
+  graph: GraphData;
+  /** 紐づけ候補となる観測点（接続中のエッジ）一式 */
+  observationPoints: ObservationPointsSource;
   onUpdateNode: (id: string, patch: Partial<GraphNodeData>) => void;
   onUpdateEdge: (id: string, patch: Partial<GraphEdgeData>) => void;
   onReverseEdge: (id: string) => void;
@@ -35,18 +33,15 @@ type Props = {
 export function PropertiesPanel({
   selectedNode,
   selectedEdge,
-  nodes,
-  edges,
+  graph,
   observationPoints,
-  observationPointsStatus,
-  usedObservationPointIds,
-  onRefreshObservationPoints,
   onUpdateNode,
   onUpdateEdge,
   onReverseEdge,
   onLinkObservationPoints,
   onDelete,
 }: Props) {
+  const { nodes, edges } = graph;
   const hasSelection = Boolean(selectedNode || selectedEdge);
   return (
     <aside className="flex w-72 shrink-0 flex-col border-border border-l bg-card">
@@ -57,12 +52,13 @@ export function PropertiesPanel({
         {selectedNode ? (
           <NodeProperties
             node={selectedNode}
-            nodes={nodes}
-            edges={edges}
+            typeOptions={buildNodeTypeOptions(
+              selectedNode.id,
+              selectedNode.data.nodeType,
+              nodes,
+              edges,
+            )}
             observationPoints={observationPoints}
-            observationPointsStatus={observationPointsStatus}
-            usedObservationPointIds={usedObservationPointIds}
-            onRefreshObservationPoints={onRefreshObservationPoints}
             onChange={(patch) => onUpdateNode(selectedNode.id, patch)}
             onChangeObservationPoints={(ids) =>
               onLinkObservationPoints(
@@ -74,28 +70,28 @@ export function PropertiesPanel({
         ) : selectedEdge ? (
           <EdgeProperties
             edge={selectedEdge}
-            nodes={nodes}
-            edges={edges}
+            directionState={resolveEdgeDirectionState(
+              selectedEdge,
+              nodes,
+              edges,
+            )}
+            endpoints={{
+              sourceLabel:
+                nodes.find((n) => n.id === selectedEdge.source)?.data.label ??
+                selectedEdge.source,
+              targetLabel:
+                nodes.find((n) => n.id === selectedEdge.target)?.data.label ??
+                selectedEdge.target,
+            }}
             observationPoints={observationPoints}
-            observationPointsStatus={observationPointsStatus}
-            usedObservationPointIds={usedObservationPointIds}
-            onRefreshObservationPoints={onRefreshObservationPoints}
+            onChange={(patch) => onUpdateEdge(selectedEdge.id, patch)}
+            onReverse={() => onReverseEdge(selectedEdge.id)}
             onChangeObservationPoints={(ids) =>
               onLinkObservationPoints(
                 { type: "edge", id: selectedEdge.id },
                 ids,
               )
             }
-            sourceLabel={
-              nodes.find((n) => n.id === selectedEdge.source)?.data.label ??
-              selectedEdge.source
-            }
-            targetLabel={
-              nodes.find((n) => n.id === selectedEdge.target)?.data.label ??
-              selectedEdge.target
-            }
-            onChange={(patch) => onUpdateEdge(selectedEdge.id, patch)}
-            onReverse={() => onReverseEdge(selectedEdge.id)}
           />
         ) : (
           <p className="text-muted-foreground text-xs">

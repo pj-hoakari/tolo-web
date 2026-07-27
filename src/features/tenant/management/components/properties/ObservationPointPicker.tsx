@@ -5,15 +5,22 @@ import type { AliveEdge } from "@/features/tenant/webrtc/type";
 import { cn } from "@/lib/utils";
 import { buildObservationPointRows } from "./observationPointRows";
 
-export type ObservationPointPickerProps = {
-  /** この要素に紐づけ済みの観測点 ID */
-  linkedIds: string[];
+/**
+ * 観測点ピッカーに渡す選択肢データ一式。
+ * 中間層はこの1つを受け取ってそのまま展開する（`{...observationPoints}`）。
+ */
+export type ObservationPointsSource = {
   /** 現在接続中の観測点 */
   available: AliveEdge[];
   status?: AliveEdgesStatus;
   /** いずれかの要素で使用中（＝他では選択不可）の観測点 ID 集合 */
   usedIds: ReadonlySet<string>;
   onRefresh?: () => void;
+};
+
+export type ObservationPointPickerProps = ObservationPointsSource & {
+  /** この要素に紐づけ済みの観測点 ID */
+  linkedIds: string[];
   onChange: (ids: string[]) => void;
 };
 

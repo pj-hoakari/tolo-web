@@ -2,7 +2,11 @@ export {
   EdgeDirectionField,
   type EdgeDirectionFieldProps,
 } from "./EdgeDirectionField";
-export { EdgeEndpoints, type EdgeEndpointsProps } from "./EdgeEndpoints";
+export {
+  type EdgeEndpointLabels,
+  EdgeEndpoints,
+  type EdgeEndpointsProps,
+} from "./EdgeEndpoints";
 export { EdgeProperties, type EdgePropertiesProps } from "./EdgeProperties";
 export {
   EdgeReverseButton,
@@ -26,6 +30,7 @@ export {
 export {
   ObservationPointPicker,
   type ObservationPointPickerProps,
+  type ObservationPointsSource,
 } from "./ObservationPointPicker";
 export {
   buildObservationPointRows,

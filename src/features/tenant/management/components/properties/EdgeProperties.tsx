@@ -1,23 +1,20 @@
-import type { AliveEdgesStatus } from "@/features/tenant/webrtc/hooks/useAliveEdges";
-import type { AliveEdge } from "@/features/tenant/webrtc/type";
-import type { GraphEdgeData, GraphEdgeType, GraphNodeType } from "../../type";
+import type { GraphEdgeData, GraphEdgeType } from "../../type";
 import { EdgeDirectionField } from "./EdgeDirectionField";
-import { EdgeEndpoints } from "./EdgeEndpoints";
+import { type EdgeEndpointLabels, EdgeEndpoints } from "./EdgeEndpoints";
 import { EdgeReverseButton } from "./EdgeReverseButton";
-import { resolveEdgeDirectionState } from "./edgeDirectionState";
-import { ObservationPointPicker } from "./ObservationPointPicker";
+import type { EdgeDirectionState } from "./edgeDirectionState";
+import {
+  ObservationPointPicker,
+  type ObservationPointsSource,
+} from "./ObservationPointPicker";
 import { SelectionHeader } from "./SelectionHeader";
 
 export type EdgePropertiesProps = {
   edge: GraphEdgeType;
-  nodes: GraphNodeType[];
-  edges: GraphEdgeType[];
-  observationPoints: AliveEdge[];
-  observationPointsStatus?: AliveEdgesStatus;
-  usedObservationPointIds: ReadonlySet<string>;
-  onRefreshObservationPoints?: () => void;
-  sourceLabel: string;
-  targetLabel: string;
+  /** 方向・反転操作の可否（`resolveEdgeDirectionState` の結果） */
+  directionState: EdgeDirectionState;
+  endpoints: EdgeEndpointLabels;
+  observationPoints: ObservationPointsSource;
   onChange: (patch: Partial<GraphEdgeData>) => void;
   onReverse: () => void;
   onChangeObservationPoints: (ids: string[]) => void;
@@ -26,14 +23,9 @@ export type EdgePropertiesProps = {
 /** ルート（エッジ）を選択しているときの編集フォーム */
 export function EdgeProperties({
   edge,
-  nodes,
-  edges,
+  directionState,
+  endpoints,
   observationPoints,
-  observationPointsStatus,
-  usedObservationPointIds,
-  onRefreshObservationPoints,
-  sourceLabel,
-  targetLabel,
   onChange,
   onReverse,
   onChangeObservationPoints,
@@ -45,17 +37,13 @@ export function EdgeProperties({
     directionReason,
     reverseDisabled,
     reverseReason,
-  } = resolveEdgeDirectionState(edge, nodes, edges);
+  } = directionState;
 
   return (
     <div className="space-y-3 rounded-md border border-border bg-card p-3">
       <SelectionHeader kind="edge" id={edge.id} />
 
-      <EdgeEndpoints
-        sourceLabel={sourceLabel}
-        targetLabel={targetLabel}
-        direction={direction}
-      />
+      <EdgeEndpoints {...endpoints} direction={direction} />
 
       <EdgeDirectionField
         value={direction}
@@ -72,11 +60,8 @@ export function EdgeProperties({
       />
 
       <ObservationPointPicker
+        {...observationPoints}
         linkedIds={edge.data?.observationPointIds ?? []}
-        available={observationPoints}
-        status={observationPointsStatus}
-        usedIds={usedObservationPointIds}
-        onRefresh={onRefreshObservationPoints}
         onChange={onChangeObservationPoints}
       />
     </div>

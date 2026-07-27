@@ -117,12 +117,13 @@ function GraphEditorInner({
         <PropertiesPanel
           selectedNode={selectedNode}
           selectedEdge={selectedEdge}
-          nodes={nodes}
-          edges={edges}
-          observationPoints={observationPoints}
-          observationPointsStatus={observationPointsStatus}
-          usedObservationPointIds={usedObservationPointIds}
-          onRefreshObservationPoints={refreshObservationPoints}
+          graph={{ nodes, edges }}
+          observationPoints={{
+            available: observationPoints,
+            status: observationPointsStatus,
+            usedIds: usedObservationPointIds,
+            onRefresh: refreshObservationPoints,
+          }}
           onUpdateNode={updateNodeData}
           onUpdateEdge={updateEdgeData}
           onReverseEdge={reverseEdge}

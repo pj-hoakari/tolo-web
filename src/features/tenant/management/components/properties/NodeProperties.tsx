@@ -1,21 +1,19 @@
 import { Label } from "@/components/ui/field";
 import { Input, TextField } from "@/components/ui/textfield";
-import type { AliveEdgesStatus } from "@/features/tenant/webrtc/hooks/useAliveEdges";
-import type { AliveEdge } from "@/features/tenant/webrtc/type";
-import type { GraphEdgeType, GraphNodeData, GraphNodeType } from "../../type";
+import type { GraphNodeData, GraphNodeType } from "../../type";
 import { NodeTypeSelector } from "./NodeTypeSelector";
-import { buildNodeTypeOptions } from "./nodeTypeOptions";
-import { ObservationPointPicker } from "./ObservationPointPicker";
+import type { NodeTypeOption } from "./nodeTypeOptions";
+import {
+  ObservationPointPicker,
+  type ObservationPointsSource,
+} from "./ObservationPointPicker";
 import { SelectionHeader } from "./SelectionHeader";
 
 export type NodePropertiesProps = {
   node: GraphNodeType;
-  nodes: GraphNodeType[];
-  edges: GraphEdgeType[];
-  observationPoints: AliveEdge[];
-  observationPointsStatus?: AliveEdgesStatus;
-  usedObservationPointIds: ReadonlySet<string>;
-  onRefreshObservationPoints?: () => void;
+  /** 各ノードタイプの選択可否（`buildNodeTypeOptions` の結果） */
+  typeOptions: NodeTypeOption[];
+  observationPoints: ObservationPointsSource;
   onChange: (patch: Partial<GraphNodeData>) => void;
   onChangeObservationPoints: (ids: string[]) => void;
 };
@@ -23,22 +21,11 @@ export type NodePropertiesProps = {
 /** ポイント（ノード）を選択しているときの編集フォーム */
 export function NodeProperties({
   node,
-  nodes,
-  edges,
+  typeOptions,
   observationPoints,
-  observationPointsStatus,
-  usedObservationPointIds,
-  onRefreshObservationPoints,
   onChange,
   onChangeObservationPoints,
 }: NodePropertiesProps) {
-  const typeOptions = buildNodeTypeOptions(
-    node.id,
-    node.data.nodeType,
-    nodes,
-    edges,
-  );
-
   return (
     <div className="space-y-3 rounded-md border border-border bg-card p-3">
       <SelectionHeader kind="node" id={node.id} />
@@ -60,11 +47,8 @@ export function NodeProperties({
       />
 
       <ObservationPointPicker
+        {...observationPoints}
         linkedIds={node.data.observationPointIds ?? []}
-        available={observationPoints}
-        status={observationPointsStatus}
-        usedIds={usedObservationPointIds}
-        onRefresh={onRefreshObservationPoints}
         onChange={onChangeObservationPoints}
       />
     </div>

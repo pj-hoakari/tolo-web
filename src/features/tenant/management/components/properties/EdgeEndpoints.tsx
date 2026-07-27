@@ -1,8 +1,12 @@
 import type { EdgeDirection } from "../../type";
 
-export type EdgeEndpointsProps = {
+/** ルートの両端に表示するラベル */
+export type EdgeEndpointLabels = {
   sourceLabel: string;
   targetLabel: string;
+};
+
+export type EdgeEndpointsProps = EdgeEndpointLabels & {
   direction: EdgeDirection;
 };
 
