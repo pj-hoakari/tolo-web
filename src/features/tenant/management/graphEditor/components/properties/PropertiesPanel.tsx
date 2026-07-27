@@ -12,7 +12,7 @@ import { NodeProperties } from "./NodeProperties";
 import { buildNodeTypeOptions } from "./nodeTypeOptions";
 import type { ObservationPointsSource } from "./ObservationPointPicker";
 
-type Props = {
+export type PropertiesPanelProps = {
   selectedNode: GraphNodeType | undefined;
   selectedEdge: GraphEdgeType | undefined;
   /** 制約の検証と端点ラベルの解決に使うグラフ全体 */
@@ -22,11 +22,6 @@ type Props = {
   onUpdateNode: (id: string, patch: Partial<GraphNodeData>) => void;
   onUpdateEdge: (id: string, patch: Partial<GraphEdgeData>) => void;
   onReverseEdge: (id: string) => void;
-  /** 観測点のリンク操作（対象の紐づけを ids に更新する） */
-  onLinkObservationPoints: (
-    target: { type: "node" | "edge"; id: string },
-    ids: string[],
-  ) => void;
   onDelete: () => void;
 };
 
@@ -38,9 +33,8 @@ export function PropertiesPanel({
   onUpdateNode,
   onUpdateEdge,
   onReverseEdge,
-  onLinkObservationPoints,
   onDelete,
-}: Props) {
+}: PropertiesPanelProps) {
   const { nodes, edges } = graph;
   const hasSelection = Boolean(selectedNode || selectedEdge);
   return (
@@ -60,12 +54,6 @@ export function PropertiesPanel({
             )}
             observationPoints={observationPoints}
             onChange={(patch) => onUpdateNode(selectedNode.id, patch)}
-            onChangeObservationPoints={(ids) =>
-              onLinkObservationPoints(
-                { type: "node", id: selectedNode.id },
-                ids,
-              )
-            }
           />
         ) : selectedEdge ? (
           <EdgeProperties
@@ -86,12 +74,6 @@ export function PropertiesPanel({
             observationPoints={observationPoints}
             onChange={(patch) => onUpdateEdge(selectedEdge.id, patch)}
             onReverse={() => onReverseEdge(selectedEdge.id)}
-            onChangeObservationPoints={(ids) =>
-              onLinkObservationPoints(
-                { type: "edge", id: selectedEdge.id },
-                ids,
-              )
-            }
           />
         ) : (
           <p className="text-muted-foreground text-xs">

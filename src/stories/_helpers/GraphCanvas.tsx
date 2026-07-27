@@ -1,5 +1,5 @@
 import "@xyflow/react/dist/base.css";
-import "@/features/tenant/management/components/GraphEditor.css";
+import "@/features/tenant/management/graphEditor/components/GraphEditor.css";
 
 import {
   Background,
@@ -12,13 +12,13 @@ import {
 import {
   GraphEdge,
   GraphEdgeMarkers,
-} from "@/features/tenant/management/components/GraphEdge";
-import { GraphNode } from "@/features/tenant/management/components/GraphNode";
-import type { GraphData } from "@/features/tenant/management/type";
+} from "@/features/tenant/management/graphEditor/components/GraphEdge";
+import { GraphNode } from "@/features/tenant/management/graphEditor/components/GraphNode";
+import type { GraphData } from "@/features/tenant/management/graphEditor/type";
 import {
   assignHandlesByPosition,
   deriveNodeHandles,
-} from "@/features/tenant/management/utils/handles";
+} from "@/features/tenant/management/graphEditor/utils/handles";
 
 const nodeTypes: NodeTypes = { graph: GraphNode };
 const edgeTypes: EdgeTypes = { graph: GraphEdge };

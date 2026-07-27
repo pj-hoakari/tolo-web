@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, userEvent, within } from "storybook/test";
 
-import { ObservationPointPicker } from "@/features/tenant/management/components/properties";
+import { ObservationPointPicker } from "@/features/tenant/management/graphEditor/components/properties";
 import { OBSERVATION_POINTS, PanelFrame } from "./_helpers/propertiesFixtures";
 
 const meta = {
-  title: "Tenant/Management/Properties/ObservationPointPicker",
+  title: "Tenant/Management/GraphEditor/Properties/ObservationPointPicker",
   component: ObservationPointPicker,
   parameters: {
     layout: "padded",

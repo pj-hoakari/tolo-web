@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import { GraphToolbar } from "@/features/tenant/management/components/GraphToolbar";
+import { GraphToolbar } from "@/features/tenant/management/graphEditor/components/GraphToolbar";
 
 const meta = {
-  title: "Tenant/Management/GraphToolbar",
+  title: "Tenant/Management/GraphEditor/GraphToolbar",
   component: GraphToolbar,
   parameters: {
     layout: "fullscreen",

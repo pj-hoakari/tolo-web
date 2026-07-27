@@ -2,8 +2,7 @@
 
 import { Tab, TabList, TabPanel, Tabs } from "@/components/ui/tabs";
 import { ConnectedEdges } from "@/features/tenant/webrtc/components/ConnectedEdges";
-import type { GraphData } from "../type";
-import { GraphEditor } from "./GraphEditor";
+import { type GraphData, GraphEditor } from "../graphEditor";
 
 type TabId = "graph" | "edges";
 

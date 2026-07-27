@@ -15,7 +15,6 @@ export type NodePropertiesProps = {
   typeOptions: NodeTypeOption[];
   observationPoints: ObservationPointsSource;
   onChange: (patch: Partial<GraphNodeData>) => void;
-  onChangeObservationPoints: (ids: string[]) => void;
 };
 
 /** ポイント（ノード）を選択しているときの編集フォーム */
@@ -24,7 +23,6 @@ export function NodeProperties({
   typeOptions,
   observationPoints,
   onChange,
-  onChangeObservationPoints,
 }: NodePropertiesProps) {
   return (
     <div className="space-y-3 rounded-md border border-border bg-card p-3">
@@ -49,7 +47,7 @@ export function NodeProperties({
       <ObservationPointPicker
         {...observationPoints}
         linkedIds={node.data.observationPointIds ?? []}
-        onChange={onChangeObservationPoints}
+        onChange={(ids) => onChange({ observationPointIds: ids })}
       />
     </div>
   );

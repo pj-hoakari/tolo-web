@@ -36,7 +36,10 @@ export {
   buildObservationPointRows,
   type ObservationPointRow,
 } from "./observationPointRows";
-export { PropertiesPanel } from "./PropertiesPanel";
+export {
+  PropertiesPanel,
+  type PropertiesPanelProps,
+} from "./PropertiesPanel";
 export { PropertyNotice, type PropertyNoticeProps } from "./PropertyNotice";
 export {
   SelectionHeader,

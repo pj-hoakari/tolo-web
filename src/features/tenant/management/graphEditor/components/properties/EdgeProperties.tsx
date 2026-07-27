@@ -17,7 +17,6 @@ export type EdgePropertiesProps = {
   observationPoints: ObservationPointsSource;
   onChange: (patch: Partial<GraphEdgeData>) => void;
   onReverse: () => void;
-  onChangeObservationPoints: (ids: string[]) => void;
 };
 
 /** ルート（エッジ）を選択しているときの編集フォーム */
@@ -28,7 +27,6 @@ export function EdgeProperties({
   observationPoints,
   onChange,
   onReverse,
-  onChangeObservationPoints,
 }: EdgePropertiesProps) {
   const {
     direction,
@@ -62,7 +60,7 @@ export function EdgeProperties({
       <ObservationPointPicker
         {...observationPoints}
         linkedIds={edge.data?.observationPointIds ?? []}
-        onChange={onChangeObservationPoints}
+        onChange={(ids) => onChange({ observationPointIds: ids })}
       />
     </div>
   );

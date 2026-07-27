@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import type {
   GraphNodeType,
   NodeType,
-} from "@/features/tenant/management/type";
+} from "@/features/tenant/management/graphEditor/type";
 import { GraphCanvas } from "./_helpers/GraphCanvas";
 
 // 単一ノードを最小 ReactFlow キャンバスに載せて表示
@@ -25,7 +25,7 @@ function SingleNode({ nodeType, label, selected }: SingleNodeArgs) {
 }
 
 const meta = {
-  title: "Tenant/Management/GraphNode",
+  title: "Tenant/Management/GraphEditor/GraphNode",
   component: SingleNode,
   parameters: {
     layout: "padded",
