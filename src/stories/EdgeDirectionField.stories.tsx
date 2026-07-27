@@ -5,8 +5,8 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import {
   EdgeDirectionField,
   type EdgeDirectionFieldProps,
-} from "@/features/tenant/management/components/properties";
-import type { EdgeDirection } from "@/features/tenant/management/type";
+} from "@/features/tenant/management/graphEditor/components/properties";
+import type { EdgeDirection } from "@/features/tenant/management/graphEditor/type";
 import { PanelFrame } from "./_helpers/propertiesFixtures";
 
 /** 選択状態を自分で保持して、実際の切り替えを確認できるようにするラッパー */
@@ -29,7 +29,7 @@ function StatefulEdgeDirectionField({
 }
 
 const meta = {
-  title: "Tenant/Management/Properties/EdgeDirectionField",
+  title: "Tenant/Management/GraphEditor/Properties/EdgeDirectionField",
   component: EdgeDirectionField,
   parameters: {
     layout: "padded",

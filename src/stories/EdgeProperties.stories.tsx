@@ -4,7 +4,7 @@ import { fn } from "storybook/test";
 import {
   EdgeProperties,
   resolveEdgeDirectionState,
-} from "@/features/tenant/management/components/properties";
+} from "@/features/tenant/management/graphEditor/components/properties";
 import {
   GRAPH_EDGES,
   GRAPH_NODES,
@@ -18,7 +18,7 @@ function directionStateOf(edgeId: string) {
 }
 
 const meta = {
-  title: "Tenant/Management/Properties/EdgeProperties",
+  title: "Tenant/Management/GraphEditor/Properties/EdgeProperties",
   component: EdgeProperties,
   parameters: {
     layout: "padded",
@@ -41,7 +41,6 @@ const meta = {
     observationPoints: observationPointsSource({ onRefresh: fn() }),
     onChange: fn(),
     onReverse: fn(),
-    onChangeObservationPoints: fn(),
   },
 } satisfies Meta<typeof EdgeProperties>;
 

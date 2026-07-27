@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import { SelectionHeader } from "@/features/tenant/management/components/properties";
+import { SelectionHeader } from "@/features/tenant/management/graphEditor/components/properties";
 import { PanelFrame } from "./_helpers/propertiesFixtures";
 
 const meta = {
-  title: "Tenant/Management/Properties/SelectionHeader",
+  title: "Tenant/Management/GraphEditor/Properties/SelectionHeader",
   component: SelectionHeader,
   parameters: {
     layout: "padded",

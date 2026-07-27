@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
-import { PropertiesPanel } from "@/features/tenant/management/components/properties";
+import { PropertiesPanel } from "@/features/tenant/management/graphEditor/components/properties";
 import {
   DUAL_BOUNDARY_EDGES,
   DUAL_BOUNDARY_NODES,
@@ -14,7 +14,7 @@ import {
 } from "./_helpers/propertiesFixtures";
 
 const meta = {
-  title: "Tenant/Management/PropertiesPanel",
+  title: "Tenant/Management/GraphEditor/PropertiesPanel",
   component: PropertiesPanel,
   parameters: {
     layout: "fullscreen",
@@ -35,7 +35,6 @@ const meta = {
     onUpdateNode: fn(),
     onUpdateEdge: fn(),
     onReverseEdge: fn(),
-    onLinkObservationPoints: fn(),
     onDelete: fn(),
   },
 } satisfies Meta<typeof PropertiesPanel>;

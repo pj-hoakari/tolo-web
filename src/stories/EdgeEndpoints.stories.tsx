@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import { EdgeEndpoints } from "@/features/tenant/management/components/properties";
+import { EdgeEndpoints } from "@/features/tenant/management/graphEditor/components/properties";
 import { PanelFrame } from "./_helpers/propertiesFixtures";
 
 const meta = {
-  title: "Tenant/Management/Properties/EdgeEndpoints",
+  title: "Tenant/Management/GraphEditor/Properties/EdgeEndpoints",
   component: EdgeEndpoints,
   parameters: {
     layout: "padded",

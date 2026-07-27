@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import type { ObservationPointsSource } from "@/features/tenant/management/components/properties";
 import { useAliveEdges } from "@/features/tenant/webrtc/hooks/useAliveEdges";
+import type { ObservationPointsSource } from "../components/properties";
 import type { GraphData } from "../type";
 import { collectObservationPointIds } from "../utils/observationPoints";
 
