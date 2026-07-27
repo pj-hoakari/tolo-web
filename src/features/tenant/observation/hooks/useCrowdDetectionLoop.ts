@@ -1,10 +1,15 @@
+import { type RefObject, useCallback, useEffect, useRef } from "react";
 import {
-  type RefObject,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+  applyLineCounts,
+  applyMetrics,
+  areCountingLinesEqual,
+  clampUnit,
+  createInitialLineCounts,
+  type DetectionCountingLineSetting,
+  type DetectionResultStore,
+  type DetectionSettingsStore,
+  INITIAL_METRICS,
+} from "../stores/detectionStore";
 import {
   type CrowdCountingLine,
   type CrowdDetectionFrame,
@@ -12,57 +17,6 @@ import {
   resetCrowdLineCount,
 } from "../utils/detectCrowd";
 import type { DetectCrowdStatus } from "./useDetectCrowd";
-
-export type DetectionMetrics = {
-  trackedCount: number;
-  fps: number;
-};
-
-export type DetectionSettings = {
-  confidenceThreshold: number;
-  trackingDistanceThreshold: number;
-  detectionInterval: number;
-  countingLines: DetectionCountingLineSetting[];
-};
-
-export type DetectionLineCount = {
-  forward: number;
-  backward: number;
-};
-
-export type DetectionPoint = {
-  x: number;
-  y: number;
-};
-
-export type DetectionCountingLineSetting = {
-  id: string;
-  p1: DetectionPoint;
-  p2: DetectionPoint;
-};
-
-export const INITIAL_METRICS: DetectionMetrics = {
-  trackedCount: 0,
-  fps: 0,
-};
-
-export const INITIAL_SETTINGS: DetectionSettings = {
-  confidenceThreshold: 0.15,
-  trackingDistanceThreshold: 0.8,
-  detectionInterval: 100,
-  countingLines: [
-    {
-      id: "line-1",
-      p1: { x: 0, y: 0.6 },
-      p2: { x: 1, y: 0.6 },
-    },
-  ],
-};
-
-const INITIAL_LINE_COUNT: DetectionLineCount = { forward: 0, backward: 0 };
-const INITIAL_LINE_COUNTS: Record<string, DetectionLineCount> = {
-  "line-1": INITIAL_LINE_COUNT,
-};
 
 function syncCanvasSize(
   canvas: HTMLCanvasElement,
@@ -73,10 +27,6 @@ function syncCanvasSize(
     canvas.width = width;
     canvas.height = height;
   }
-}
-
-function clampUnit(value: number): number {
-  return Math.min(1, Math.max(0, value));
 }
 
 export function toCrowdCountingLine(
@@ -177,52 +127,49 @@ export type UseCrowdDetectionLoopParams = {
   videoRef: RefObject<HTMLVideoElement | null>;
   overlayCanvasRef: RefObject<HTMLCanvasElement | null>;
   status: DetectCrowdStatus;
-  settings: DetectionSettings;
+  settingsStore: DetectionSettingsStore;
+  resultStore: DetectionResultStore;
   onBroadcastStreamChange: (stream: MediaStream | null) => void;
   onDetectionError: (cause: unknown) => void;
 };
 
-export type UseCrowdDetectionLoopResult = {
-  lineCounts: Record<string, DetectionLineCount>;
-  metrics: DetectionMetrics;
-};
-
+/**
+ * 検出ループ
+ *
+ * 検出結果（追跡人数 / FPS / ライン通過数）は React state ではなく
+ * resultStore に書き込む。
+ * 設定も settingsStore から直接読み，設定変更のたびにループを
+ * 組み直さないようにする。
+ */
 export function useCrowdDetectionLoop({
   videoRef,
   overlayCanvasRef,
   status,
-  settings,
+  settingsStore,
+  resultStore,
   onBroadcastStreamChange,
   onDetectionError,
-}: UseCrowdDetectionLoopParams): UseCrowdDetectionLoopResult {
+}: UseCrowdDetectionLoopParams): void {
   const broadcastCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const broadcastStreamRef = useRef<MediaStream | null>(null);
   const latestFrameRef = useRef<CrowdDetectionFrame | null>(null);
-  const settingsRef = useRef(settings);
-  const previousCountingLinesRef = useRef(settings.countingLines);
-  const [lineCounts, setLineCounts] =
-    useState<Record<string, DetectionLineCount>>(INITIAL_LINE_COUNTS);
-  const [metrics, setMetrics] = useState<DetectionMetrics>(INITIAL_METRICS);
 
+  // カウントラインが変わったら通過数を数え直す
   useEffect(() => {
-    const previousCountingLines = previousCountingLinesRef.current;
-    const nextCountingLines = settings.countingLines;
-    settingsRef.current = settings;
+    let previousCountingLines = settingsStore.getState().countingLines;
 
-    if (
-      JSON.stringify(previousCountingLines) !==
-      JSON.stringify(nextCountingLines)
-    ) {
+    return settingsStore.subscribe(() => {
+      const nextCountingLines = settingsStore.getState().countingLines;
+      if (areCountingLinesEqual(previousCountingLines, nextCountingLines)) {
+        return;
+      }
+      previousCountingLines = nextCountingLines;
+
       latestFrameRef.current = null;
       resetCrowdLineCount();
-      setLineCounts(
-        Object.fromEntries(
-          nextCountingLines.map((line) => [line.id, INITIAL_LINE_COUNT]),
-        ),
-      );
-      previousCountingLinesRef.current = nextCountingLines;
-    }
-  }, [settings]);
+      applyLineCounts(resultStore, createInitialLineCounts(nextCountingLines));
+    });
+  }, [settingsStore, resultStore]);
 
   const stopBroadcast = useCallback(() => {
     if (!broadcastStreamRef.current) {
@@ -240,15 +187,11 @@ export function useCrowdDetectionLoop({
       const canvas = overlayCanvasRef.current;
       canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
       latestFrameRef.current = null;
-      setLineCounts(
-        Object.fromEntries(
-          settingsRef.current.countingLines.map((line) => [
-            line.id,
-            INITIAL_LINE_COUNT,
-          ]),
-        ),
+      applyLineCounts(
+        resultStore,
+        createInitialLineCounts(settingsStore.getState().countingLines),
       );
-      setMetrics(INITIAL_METRICS);
+      applyMetrics(resultStore, INITIAL_METRICS);
       stopBroadcast();
       return;
     }
@@ -274,13 +217,13 @@ export function useCrowdDetectionLoop({
       if (!isVideoReady(video)) {
         detectTimeoutId = window.setTimeout(
           detectLoop,
-          settingsRef.current.detectionInterval,
+          settingsStore.getState().detectionInterval,
         );
         return;
       }
 
       try {
-        const currentSettings = settingsRef.current;
+        const currentSettings = settingsStore.getState();
         const countingLines = toCrowdCountingLines(
           currentSettings.countingLines,
           video.videoWidth,
@@ -298,16 +241,11 @@ export function useCrowdDetectionLoop({
 
         latestFrameRef.current = frame;
 
-        setLineCounts((current) => {
-          const next = frame.lineCounts;
-          const currentJson = JSON.stringify(current);
-          const nextJson = JSON.stringify(next);
-          return currentJson === nextJson ? current : next;
-        });
+        applyLineCounts(resultStore, frame.lineCounts);
         const detectionAt = performance.now();
         const fps = 1000 / Math.max(1, detectionAt - previousDetectionAt);
         previousDetectionAt = detectionAt;
-        setMetrics({
+        applyMetrics(resultStore, {
           trackedCount: frame.detections.length,
           fps,
         });
@@ -320,7 +258,7 @@ export function useCrowdDetectionLoop({
 
       detectTimeoutId = window.setTimeout(
         detectLoop,
-        settingsRef.current.detectionInterval,
+        settingsStore.getState().detectionInterval,
       );
     };
 
@@ -334,9 +272,8 @@ export function useCrowdDetectionLoop({
         const width = video.videoWidth;
         const height = video.videoHeight;
         const frame = latestFrameRef.current;
-        const currentSettings = settingsRef.current;
         const countingLines = toCrowdCountingLines(
-          currentSettings.countingLines,
+          settingsStore.getState().countingLines,
           width,
           height,
         );
@@ -403,7 +340,7 @@ export function useCrowdDetectionLoop({
     stopBroadcast,
     videoRef,
     overlayCanvasRef,
+    settingsStore,
+    resultStore,
   ]);
-
-  return { lineCounts, metrics };
 }

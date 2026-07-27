@@ -1,9 +1,11 @@
+import { memo } from "react";
+
 export type BroadcastIndicatorProps = {
   active: boolean;
   edgeId: string | null;
 };
 
-export function BroadcastIndicator({
+function BroadcastIndicatorComponent({
   active,
   edgeId,
 }: BroadcastIndicatorProps) {
@@ -22,3 +24,5 @@ export function BroadcastIndicator({
     </div>
   );
 }
+
+export const BroadcastIndicator = memo(BroadcastIndicatorComponent);

@@ -1,38 +1,66 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   CrowdDetectionView,
   type CrowdDetectionViewProps,
 } from "@/features/tenant/observation/components/CrowdDetectionView";
 import {
+  applyLineCounts,
+  applyMetrics,
+  createDetectionStores,
+  type DetectionLineCount,
   type DetectionMetrics,
+  type DetectionSettings,
   INITIAL_METRICS,
   INITIAL_SETTINGS,
-} from "@/features/tenant/observation/hooks/useCrowdDetectionLoop";
+} from "@/features/tenant/observation/stores/detectionStore";
 
 // videoRef / overlayCanvasRef は Story 側の wrapper で生成
-// 設定は内部 state で扱う
+// 設定・検出結果はストア経由で渡す
 type StoryArgs = Omit<
   CrowdDetectionViewProps,
-  "videoRef" | "overlayCanvasRef" | "onSettingsChange"
->;
+  | "videoRef"
+  | "overlayCanvasRef"
+  | "settingsStore"
+  | "resultStore"
+  | "viewStateStore"
+> & {
+  settings: DetectionSettings;
+  lineCounts: Record<string, DetectionLineCount>;
+  metrics: DetectionMetrics;
+};
 
 function CrowdDetectionViewStory({
-  settings: initialSettings,
+  settings,
+  lineCounts,
+  metrics,
   ...rest
 }: StoryArgs) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [settings, setSettings] = useState(initialSettings);
+  const [stores] = useState(() => createDetectionStores(settings));
+
+  useEffect(() => {
+    stores.settingsStore.setState(settings, true);
+  }, [stores, settings]);
+
+  useEffect(() => {
+    applyLineCounts(stores.resultStore, lineCounts);
+  }, [stores, lineCounts]);
+
+  useEffect(() => {
+    applyMetrics(stores.resultStore, metrics);
+  }, [stores, metrics]);
 
   return (
     <CrowdDetectionView
       {...rest}
-      settings={settings}
-      onSettingsChange={setSettings}
       videoRef={videoRef}
       overlayCanvasRef={overlayCanvasRef}
+      settingsStore={stores.settingsStore}
+      resultStore={stores.resultStore}
+      viewStateStore={stores.viewStateStore}
     />
   );
 }

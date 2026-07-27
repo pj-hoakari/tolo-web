@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import type { DetectCrowdStatus } from "../hooks/useDetectCrowd";
 
@@ -7,7 +8,7 @@ export type CrowdDetectionControlsProps = {
   onStop: () => void;
 };
 
-export function CrowdDetectionControls({
+function CrowdDetectionControlsComponent({
   status,
   onStart,
   onStop,
@@ -30,3 +31,5 @@ export function CrowdDetectionControls({
     </div>
   );
 }
+
+export const CrowdDetectionControls = memo(CrowdDetectionControlsComponent);
