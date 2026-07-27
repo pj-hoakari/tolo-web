@@ -1,0 +1,110 @@
+import { describe, expect, it } from "vitest";
+import type { ValidationResult } from "../../nodeTypes";
+import type { GraphEdgeType, GraphNodeType, NodeType } from "../../type";
+import {
+  deriveEdgeDirectionState,
+  resolveEdgeDirectionState,
+} from "./edgeDirectionState";
+
+const OK: ValidationResult = { ok: true };
+const NG = (message: string): ValidationResult => ({ ok: false, message });
+
+describe("deriveEdgeDirectionState: 方向トグルの操作可否", () => {
+  it("すべての検証を通れば両方の方向が選択でき、理由も出さない", () => {
+    const state = deriveEdgeDirectionState("both", OK, OK, OK);
+
+    expect(state.bothDisabled).toBe(false);
+    expect(state.onewayDisabled).toBe(false);
+    expect(state.directionReason).toBeNull();
+  });
+
+  it("選択中の方向は制約違反でも選択解除されないよう有効のまま", () => {
+    const state = deriveEdgeDirectionState("both", NG("両通行は不可"), OK, OK);
+
+    expect(state.bothDisabled).toBe(false);
+    expect(state.directionReason).toBe("両通行は不可");
+  });
+
+  it("選択していない方向が制約違反なら無効化して理由を出す", () => {
+    const state = deriveEdgeDirectionState("both", OK, NG("片方向は不可"), OK);
+
+    expect(state.onewayDisabled).toBe(true);
+    expect(state.directionReason).toBe("片方向は不可");
+  });
+
+  it("両方が制約違反なら両通行側の理由を優先して出す", () => {
+    const state = deriveEdgeDirectionState(
+      "oneway",
+      NG("両通行は不可"),
+      NG("片方向は不可"),
+      OK,
+    );
+
+    expect(state.bothDisabled).toBe(true);
+    expect(state.onewayDisabled).toBe(false);
+    expect(state.directionReason).toBe("両通行は不可");
+  });
+});
+
+describe("deriveEdgeDirectionState: 反転操作の可否", () => {
+  it("両通行のルートは向きの概念が無いため反転できず、理由も出さない", () => {
+    const state = deriveEdgeDirectionState("both", OK, OK, NG("反転は不可"));
+
+    expect(state.reverseDisabled).toBe(true);
+    expect(state.reverseReason).toBeNull();
+  });
+
+  it("片方向で反転が制約違反なら無効化して理由を出す", () => {
+    const state = deriveEdgeDirectionState("oneway", OK, OK, NG("反転は不可"));
+
+    expect(state.reverseDisabled).toBe(true);
+    expect(state.reverseReason).toBe("反転は不可");
+  });
+
+  it("片方向で反転できるなら有効", () => {
+    const state = deriveEdgeDirectionState("oneway", OK, OK, OK);
+
+    expect(state.reverseDisabled).toBe(false);
+    expect(state.reverseReason).toBeNull();
+  });
+});
+
+function node(id: string, nodeType: NodeType): GraphNodeType {
+  return {
+    id,
+    type: "graph",
+    position: { x: 0, y: 0 },
+    data: { label: id, nodeType },
+  };
+}
+
+describe("resolveEdgeDirectionState: グラフ状態からの解決", () => {
+  const nodes = [node("a", "BOUNDARY"), node("b", "TRANSIT_ONLY")];
+
+  it("エッジの方向をそのまま反映する", () => {
+    const edge: GraphEdgeType = {
+      id: "e1",
+      source: "a",
+      target: "b",
+      type: "graph",
+      data: { direction: "oneway" },
+    };
+
+    expect(resolveEdgeDirectionState(edge, nodes, [edge]).direction).toBe(
+      "oneway",
+    );
+  });
+
+  it("data が無いエッジは両通行として扱う", () => {
+    const edge = {
+      id: "e1",
+      source: "a",
+      target: "b",
+      type: "graph",
+    } as GraphEdgeType;
+
+    expect(resolveEdgeDirectionState(edge, nodes, [edge]).direction).toBe(
+      "both",
+    );
+  });
+});

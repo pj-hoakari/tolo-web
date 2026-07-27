@@ -21,7 +21,7 @@ import type { GraphData, GraphNodeType } from "../type";
 import { GraphEdge, GraphEdgeMarkers } from "./GraphEdge";
 import { GraphNode } from "./GraphNode";
 import { GraphToolbar } from "./GraphToolbar";
-import { PropertiesPanel } from "./PropertiesPanel";
+import { PropertiesPanel } from "./properties";
 
 const nodeTypes: NodeTypes = { graph: GraphNode };
 const edgeTypes: EdgeTypes = { graph: GraphEdge };
