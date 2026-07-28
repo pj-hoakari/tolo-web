@@ -21,7 +21,11 @@ export function createCameraVideoSource(): CrowdVideoSource {
     label: "Camera",
     async open() {
       stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 30 },
+        },
         audio: false,
       });
       return { kind: "stream", stream };

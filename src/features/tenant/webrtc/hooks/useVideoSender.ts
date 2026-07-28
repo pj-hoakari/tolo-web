@@ -1,7 +1,8 @@
 "use client";
 
 import { onSnapshot } from "firebase/firestore";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import type { DetectionOverlayFrame } from "../utils/detectionOverlay";
 import { getDb } from "../utils/firebase";
 import { PeerSignalingAdapter } from "../utils/peerSignaling";
 import {
@@ -18,6 +19,7 @@ import { useEdgePresence } from "./useEdgePresence";
 
 interface SenderSession {
   pc: RTCPeerConnection;
+  dataChannel: RTCDataChannel;
   unsubscribe: () => void;
 }
 
@@ -29,6 +31,8 @@ interface SessionsListener {
 export interface VideoSenderController {
   active: boolean;
   edgeId: string | null;
+  /** 検出結果を全視聴セッションへ送る。null はオーバーレイのクリア通知 */
+  sendDetectionFrame: (frame: DetectionOverlayFrame | null) => void;
 }
 
 function applyStream(pc: RTCPeerConnection, stream: MediaStream | null): void {
@@ -56,6 +60,26 @@ export function useVideoSender(params: {
   const startingSessionIdsRef = useRef<Set<string>>(new Set());
   const effectRunIdRef = useRef(0);
   const sessionsListenerRef = useRef<SessionsListener | null>(null);
+  const latestDetectionMessageRef = useRef<string | null>(null);
+
+  const sendDetectionFrame = useCallback(
+    (frame: DetectionOverlayFrame | null) => {
+      const message = JSON.stringify(frame);
+      // 接続直後のセッションにも最新の状態を届けられるよう保持しておく
+      latestDetectionMessageRef.current = frame === null ? null : message;
+      for (const { dataChannel } of sessionsRef.current.values()) {
+        if (dataChannel.readyState !== "open") {
+          continue;
+        }
+        try {
+          dataChannel.send(message);
+        } catch (e) {
+          console.error("[webrtc-sender] send detection frame", e);
+        }
+      }
+    },
+    [],
+  );
 
   // 最新ストリームを保持し
   // 既存の視聴者接続にも replaceTrack で反映
@@ -117,7 +141,17 @@ export function useVideoSender(params: {
           self: "edge",
         });
         const adapter = new PeerSignalingAdapter(channel.send);
-        const pc = connectAsSender(currentStream, adapter);
+        const { pc, dataChannel } = connectAsSender(currentStream, adapter);
+        dataChannel.addEventListener("open", () => {
+          const latestMessage = latestDetectionMessageRef.current;
+          if (latestMessage !== null) {
+            try {
+              dataChannel.send(latestMessage);
+            } catch (e) {
+              console.error("[webrtc-sender] send initial detection frame", e);
+            }
+          }
+        });
         const unsubscribe = channel.listen((message) =>
           adapter.deliver(message),
         );
@@ -126,7 +160,7 @@ export function useVideoSender(params: {
           pc.close();
           return;
         }
-        sessions.set(sessionId, { pc, unsubscribe });
+        sessions.set(sessionId, { pc, dataChannel, unsubscribe });
       } finally {
         startingSessionIds.delete(sessionId);
       }
@@ -185,5 +219,5 @@ export function useVideoSender(params: {
     };
   }, [edgeId, active]);
 
-  return { active, edgeId };
+  return { active, edgeId, sendDetectionFrame };
 }

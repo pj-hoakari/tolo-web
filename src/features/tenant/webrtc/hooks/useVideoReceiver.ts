@@ -1,9 +1,19 @@
 "use client";
 
 import type { DocumentReference } from "firebase/firestore";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { orpc } from "@/lib/orpc";
 import type { ConnectionStatus } from "../type";
+import {
+  type DetectionOverlayFrame,
+  parseDetectionOverlayFrame,
+} from "../utils/detectionOverlay";
 import { getDb } from "../utils/firebase";
 import { PeerSignalingAdapter } from "../utils/peerSignaling";
 import { sessionDoc, signalsCollection } from "../utils/refs";
@@ -17,6 +27,11 @@ export interface VideoReceiverController {
   status: ConnectionStatus;
   error: string | null;
   stream: MediaStream | null;
+  /**
+   * 受信した最新の検出結果。描画側が rAF で参照する前提の ref で，
+   * メッセージ受信のたびに再レンダリングは発生させない。
+   */
+  detectionFrameRef: RefObject<DetectionOverlayFrame | null>;
   connectedEdgeId: string | null;
   connect: (edgeId: string) => void;
   disconnect: () => void;
@@ -31,12 +46,14 @@ export function useVideoReceiver(): VideoReceiverController {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const sessionRefRef = useRef<DocumentReference | null>(null);
+  const detectionFrameRef = useRef<DetectionOverlayFrame | null>(null);
 
   const closePeer = useCallback(() => {
     pcRef.current?.close();
     pcRef.current = null;
     unsubscribeRef.current?.();
     unsubscribeRef.current = null;
+    detectionFrameRef.current = null;
   }, []);
 
   const disconnect = useCallback(() => {
@@ -90,8 +107,12 @@ export function useVideoReceiver(): VideoReceiverController {
         const adapter = new PeerSignalingAdapter(channel.send);
 
         setStatus("negotiating");
-        const pc = connectAsReceiver(adapter, (remoteStream) =>
-          setStream(remoteStream),
+        const pc = connectAsReceiver(
+          adapter,
+          (remoteStream) => setStream(remoteStream),
+          (data) => {
+            detectionFrameRef.current = parseDetectionOverlayFrame(data);
+          },
         );
         pcRef.current = pc;
         watchConnection(pc);
@@ -115,6 +136,7 @@ export function useVideoReceiver(): VideoReceiverController {
     status,
     error,
     stream,
+    detectionFrameRef,
     connectedEdgeId,
     connect,
     disconnect,
