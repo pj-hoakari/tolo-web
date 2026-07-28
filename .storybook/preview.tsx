@@ -1,6 +1,5 @@
 import { withThemeByClassName } from "@storybook/addon-themes";
 import type { Preview } from "@storybook/nextjs-vite";
-import { setupWorker } from "msw/browser";
 import { mswLoader } from "msw-storybook-addon/csf3";
 import { handlers } from "../src/mocks/handlers";
 // TailwindCSS を含むグローバルスタイルを Storybook に読み込む
@@ -43,15 +42,8 @@ const preview: Preview = {
         <Story />
       ),
   ],
-  loaders: [
-    mswLoader(async () => {
-      const worker = setupWorker();
-      await worker.start({ onUnhandledRequest: "bypass" });
-      return worker;
-    }),
-  ],
+  loaders: [mswLoader()],
   // 既定で /rpc をモック
-  // 各 Story は parameters.msw.handlers で上書き
   beforeEach({ msw }) {
     msw.use(...handlers);
   },
