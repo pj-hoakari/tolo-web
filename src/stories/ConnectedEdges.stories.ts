@@ -24,13 +24,13 @@ type Story = StoryObj<typeof meta>;
 export const WithEdges: Story = {};
 
 export const Empty: Story = {
-  parameters: {
-    msw: { handlers: edgesHandlers([]) },
+  beforeEach({ msw }) {
+    msw.use(...edgesHandlers([]));
   },
 };
 
 export const ErrorState: Story = {
-  parameters: {
-    msw: { handlers: edgesErrorHandlers() },
+  beforeEach({ msw }) {
+    msw.use(...edgesErrorHandlers());
   },
 };

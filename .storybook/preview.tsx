@@ -1,15 +1,11 @@
 import { withThemeByClassName } from "@storybook/addon-themes";
 import type { Preview } from "@storybook/nextjs-vite";
-import { initialize, mswLoader } from "msw-storybook-addon";
+import { mswLoader } from "msw-storybook-addon/csf3";
 import { handlers } from "../src/mocks/handlers";
 // TailwindCSS を含むグローバルスタイルを Storybook に読み込む
 import "../src/app/globals.css";
 // ゲスト系ストーリー（Guest/*）を .guest-theme スコープ下で描画
 import "../src/features/guest/guest-theme.css";
-
-// Storybook 起動時に MSW worker を初期化
-// 宣言の無いリクエストはbypass
-initialize({ onUnhandledRequest: "bypass" });
 
 const preview: Preview = {
   parameters: {
@@ -26,10 +22,6 @@ const preview: Preview = {
       // 'off' - skip a11y checks entirely
       test: "todo",
     },
-
-    // 既定で /rpc をモック
-    // 各 Story は parameters.msw.handlers で上書き
-    msw: { handlers },
   },
   decorators: [
     withThemeByClassName({
@@ -50,7 +42,11 @@ const preview: Preview = {
         <Story />
       ),
   ],
-  loaders: [mswLoader],
+  loaders: [mswLoader()],
+  // 既定で /rpc をモック
+  beforeEach({ msw }) {
+    msw.use(...handlers);
+  },
 };
 
 export default preview;
