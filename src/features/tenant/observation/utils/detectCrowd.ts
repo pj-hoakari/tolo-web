@@ -83,6 +83,12 @@ async function createPersonDetector(): Promise<YoloDetector> {
     },
     session: {
       wasmPaths: ONNX_RUNTIME_PATH,
+      sessionOptions: {
+        // WebGPU 利用時、shape 系ノードが意図的に CPU へ割り当てられることによる
+        // 既知の無害な警告（VerifyEachNodeIsAssignedToAnEp）がセッション作成のたびに
+        // 出力されるため、セッションのログはエラー以上のみに絞る。
+        logSeverityLevel: 3 as const,
+      },
     },
   };
 
