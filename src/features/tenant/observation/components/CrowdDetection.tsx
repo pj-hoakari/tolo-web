@@ -37,6 +37,12 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
 
+  const { active, edgeId, sendDetectionFrame } = useVideoSender({
+    tenantId,
+    eventId,
+    stream: broadcastStream,
+  });
+
   useCrowdDetectionLoop({
     videoRef,
     overlayCanvasRef,
@@ -44,13 +50,8 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
     settingsStore,
     resultStore,
     onBroadcastStreamChange: setBroadcastStream,
+    onDetectionFrame: sendDetectionFrame,
     onDetectionError: reportDetectionError,
-  });
-
-  const { active, edgeId } = useVideoSender({
-    tenantId,
-    eventId,
-    stream: broadcastStream,
   });
 
   const handleSourceChange = useCallback((factory: CrowdVideoSourceFactory) => {

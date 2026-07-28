@@ -1,5 +1,9 @@
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 import {
+  type DetectionOverlayFrame,
+  drawDetectionOverlay,
+} from "@/features/tenant/webrtc/utils/detectionOverlay";
+import {
   applyLineCounts,
   applyMetrics,
   areCountingLinesEqual,
@@ -10,6 +14,10 @@ import {
   type DetectionSettingsStore,
   INITIAL_METRICS,
 } from "../stores/detectionStore";
+import {
+  type BroadcastStreamHandle,
+  createBroadcastStream,
+} from "../utils/broadcastStream";
 import {
   type CrowdCountingLine,
   type CrowdDetectionFrame,
@@ -57,70 +65,27 @@ export function toCrowdCountingLines(
   );
 }
 
-function drawCountingLine(
-  context: CanvasRenderingContext2D,
-  countingLine: CrowdCountingLine,
-  width: number,
-): void {
-  context.lineWidth = Math.max(2, width / 320);
-  context.strokeStyle = "#f59e0b";
-  context.fillStyle = "#f59e0b";
-  context.setLineDash([12, 8]);
-  context.beginPath();
-  context.moveTo(countingLine.p1.x, countingLine.p1.y);
-  context.lineTo(countingLine.p2.x, countingLine.p2.y);
-  context.stroke();
-  context.setLineDash([]);
-
-  const handleRadius = Math.max(6, width / 96);
-  context.beginPath();
-  context.arc(
-    countingLine.p1.x,
-    countingLine.p1.y,
-    handleRadius,
-    0,
-    Math.PI * 2,
-  );
-  context.arc(
-    countingLine.p2.x,
-    countingLine.p2.y,
-    handleRadius,
-    0,
-    Math.PI * 2,
-  );
-  context.fill();
-}
-
-function drawDetectionOverlay(
-  context: CanvasRenderingContext2D,
-  frame: CrowdDetectionFrame,
+function toDetectionOverlayFrame(
+  frame: CrowdDetectionFrame | null,
   countingLines: CrowdCountingLine[],
   width: number,
-): void {
-  for (const countingLine of countingLines) {
-    drawCountingLine(context, countingLine, width);
-  }
-
-  context.font = `${Math.max(16, width / 40)}px sans-serif`;
-
-  for (const detection of frame.detections) {
-    const boxWidth = detection.x2 - detection.x1;
-    const boxHeight = detection.y2 - detection.y1;
-    const label = `Person #${detection.trackId} ${Math.round(
-      detection.score * 100,
-    )}%`;
-
-    context.strokeStyle = "#22c55e";
-    context.strokeRect(detection.x1, detection.y1, boxWidth, boxHeight);
-
-    const labelWidth = context.measureText(label).width + 12;
-    const labelHeight = Math.max(22, width / 32);
-    const labelY = Math.max(0, detection.y1 - labelHeight);
-    context.fillStyle = "#22c55e";
-    context.fillRect(detection.x1, labelY, labelWidth, labelHeight);
-    context.fillStyle = "#052e16";
-    context.fillText(label, detection.x1 + 6, labelY + labelHeight - 6);
-  }
+  height: number,
+): DetectionOverlayFrame {
+  return {
+    width,
+    height,
+    detections: (frame?.detections ?? []).map(
+      ({ trackId, score, x1, y1, x2, y2 }) => ({
+        trackId,
+        score,
+        x1,
+        y1,
+        x2,
+        y2,
+      }),
+    ),
+    countingLines,
+  };
 }
 
 export type UseCrowdDetectionLoopParams = {
@@ -130,6 +95,7 @@ export type UseCrowdDetectionLoopParams = {
   settingsStore: DetectionSettingsStore;
   resultStore: DetectionResultStore;
   onBroadcastStreamChange: (stream: MediaStream | null) => void;
+  onDetectionFrame: (frame: DetectionOverlayFrame | null) => void;
   onDetectionError: (cause: unknown) => void;
 };
 
@@ -140,6 +106,8 @@ export type UseCrowdDetectionLoopParams = {
  * resultStore に書き込む。
  * 設定も settingsStore から直接読み，設定変更のたびにループを
  * 組み直さないようにする。
+ * 検出のたびに onDetectionFrame へオーバーレイ用フレームを渡し，
+ * 配信先（management）でのボックス描画に使う。
  */
 export function useCrowdDetectionLoop({
   videoRef,
@@ -148,10 +116,10 @@ export function useCrowdDetectionLoop({
   settingsStore,
   resultStore,
   onBroadcastStreamChange,
+  onDetectionFrame,
   onDetectionError,
 }: UseCrowdDetectionLoopParams): void {
-  const broadcastCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const broadcastStreamRef = useRef<MediaStream | null>(null);
+  const broadcastRef = useRef<BroadcastStreamHandle | null>(null);
   const latestFrameRef = useRef<CrowdDetectionFrame | null>(null);
 
   // カウントラインが変わったら通過数を数え直す
@@ -172,15 +140,18 @@ export function useCrowdDetectionLoop({
   }, [settingsStore, resultStore]);
 
   const stopBroadcast = useCallback(() => {
-    if (!broadcastStreamRef.current) {
+    onDetectionFrame(null);
+    const broadcast = broadcastRef.current;
+    if (!broadcast) {
       return;
     }
-    for (const track of broadcastStreamRef.current.getTracks()) {
+    broadcast.dispose();
+    for (const track of broadcast.stream.getTracks()) {
       track.stop();
     }
-    broadcastStreamRef.current = null;
+    broadcastRef.current = null;
     onBroadcastStreamChange(null);
-  }, [onBroadcastStreamChange]);
+  }, [onBroadcastStreamChange, onDetectionFrame]);
 
   useEffect(() => {
     if (status !== "detecting") {
@@ -249,6 +220,14 @@ export function useCrowdDetectionLoop({
           trackedCount: frame.detections.length,
           fps,
         });
+        onDetectionFrame(
+          toDetectionOverlayFrame(
+            frame,
+            countingLines,
+            video.videoWidth,
+            video.videoHeight,
+          ),
+        );
       } catch (cause) {
         if (!cancelled) {
           onDetectionError(cause);
@@ -271,7 +250,6 @@ export function useCrowdDetectionLoop({
       if (isVideoReady(video)) {
         const width = video.videoWidth;
         const height = video.videoHeight;
-        const frame = latestFrameRef.current;
         const countingLines = toCrowdCountingLines(
           settingsStore.getState().countingLines,
           width,
@@ -284,35 +262,26 @@ export function useCrowdDetectionLoop({
           const context = overlay.getContext("2d");
           if (context) {
             context.clearRect(0, 0, width, height);
-            if (frame) {
-              drawDetectionOverlay(context, frame, countingLines, width);
-            } else {
-              for (const countingLine of countingLines) {
-                drawCountingLine(context, countingLine, width);
-              }
-            }
+            drawDetectionOverlay(
+              context,
+              toDetectionOverlayFrame(
+                latestFrameRef.current,
+                countingLines,
+                width,
+                height,
+              ),
+            );
           }
         }
 
-        let broadcastCanvas = broadcastCanvasRef.current;
-        if (!broadcastCanvas) {
-          broadcastCanvas = document.createElement("canvas");
-          broadcastCanvasRef.current = broadcastCanvas;
-        }
-        syncCanvasSize(broadcastCanvas, width, height);
-        const broadcastContext = broadcastCanvas.getContext("2d");
-        if (broadcastContext) {
-          broadcastContext.drawImage(video, 0, 0, width, height);
-          if (frame) {
-            drawDetectionOverlay(broadcastContext, frame, countingLines, width);
-          } else {
-            for (const countingLine of countingLines) {
-              drawCountingLine(broadcastContext, countingLine, width);
+        if (!broadcastRef.current) {
+          const broadcast = createBroadcastStream(video);
+          if (broadcast) {
+            for (const track of broadcast.stream.getVideoTracks()) {
+              track.contentHint = "motion";
             }
-          }
-          if (!broadcastStreamRef.current) {
-            broadcastStreamRef.current = broadcastCanvas.captureStream();
-            onBroadcastStreamChange(broadcastStreamRef.current);
+            broadcastRef.current = broadcast;
+            onBroadcastStreamChange(broadcast.stream);
           }
         }
       }
@@ -337,6 +306,7 @@ export function useCrowdDetectionLoop({
     status,
     onDetectionError,
     onBroadcastStreamChange,
+    onDetectionFrame,
     stopBroadcast,
     videoRef,
     overlayCanvasRef,

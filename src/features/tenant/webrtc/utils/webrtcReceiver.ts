@@ -5,6 +5,7 @@ import type { PeerSignaling } from "./peerSignaling";
 export function connectAsReceiver(
   signaling: PeerSignaling,
   onRemoteStream: (stream: MediaStream) => void,
+  onDetectionMessage?: (data: string) => void,
 ): RTCPeerConnection {
   const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
   const remoteStream = new MediaStream();
@@ -16,6 +17,15 @@ export function connectAsReceiver(
     }
     remoteStream.addTrack(event.track);
     onRemoteStream(remoteStream);
+  });
+
+  // 送信側が開く検出結果チャンネル（ボックス・カウントライン）を受け取る
+  pc.addEventListener("datachannel", (event) => {
+    event.channel.addEventListener("message", (messageEvent) => {
+      if (typeof messageEvent.data === "string") {
+        onDetectionMessage?.(messageEvent.data);
+      }
+    });
   });
 
   const ice = setupIceExchange(pc, signaling);

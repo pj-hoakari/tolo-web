@@ -19,6 +19,7 @@ export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
     status: receiveStatus,
     error: receiveError,
     stream,
+    detectionFrameRef,
     connectedEdgeId,
     connect,
     disconnect,
@@ -41,6 +42,7 @@ export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
           stream={stream}
           status={receiveStatus}
           error={receiveError}
+          detectionFrameRef={detectionFrameRef}
         />
       )}
     </div>
