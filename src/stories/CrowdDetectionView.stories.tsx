@@ -1,10 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useEffect, useRef, useState } from "react";
-
-import {
-  CrowdDetectionView,
-  type CrowdDetectionViewProps,
-} from "@/features/tenant/observation/components/CrowdDetectionView";
 import {
   applyLineCounts,
   applyMetrics,
@@ -14,7 +9,11 @@ import {
   type DetectionSettings,
   INITIAL_METRICS,
   INITIAL_SETTINGS,
-} from "@/features/tenant/observation/stores/detectionStore";
+} from "@/features/tenant/detection/stores/detectionStore";
+import {
+  CrowdDetectionView,
+  type CrowdDetectionViewProps,
+} from "@/features/tenant/observation/components/CrowdDetectionView";
 
 // videoRef / overlayCanvasRef は Story 側の wrapper で生成
 // 設定・検出結果はストア経由で渡す
