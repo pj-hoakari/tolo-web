@@ -1,4 +1,5 @@
 import { ICE_SERVERS } from "./config";
+import { DETECTION_CONTROL_CHANNEL_LABEL } from "./detectionControl";
 import { setupIceExchange } from "./iceExchange";
 import type { PeerSignaling } from "./peerSignaling";
 
@@ -12,6 +13,7 @@ const MAX_VIDEO_FRAMERATE = 30;
 export interface SenderConnection {
   pc: RTCPeerConnection;
   dataChannel: RTCDataChannel;
+  controlChannel: RTCDataChannel;
 }
 
 export function connectAsSender(
@@ -23,6 +25,8 @@ export function connectAsSender(
   // 検出結果（ボックス・カウントライン）は映像に焼き込まず
   // DataChannel で送り，受信側で描画する
   const dataChannel = pc.createDataChannel(DETECTION_DATA_CHANNEL_LABEL);
+  // 検出設定は management 側からも変更できるよう別チャンネルで双方向にやり取りする
+  const controlChannel = pc.createDataChannel(DETECTION_CONTROL_CHANNEL_LABEL);
 
   for (const track of stream.getTracks()) {
     pc.addTrack(track, stream);
@@ -54,7 +58,7 @@ export function connectAsSender(
 
   void sendOffer(pc, signaling);
 
-  return { pc, dataChannel };
+  return { pc, dataChannel, controlChannel };
 }
 
 // ネゴシエーション完了後（encodings が確定してから）に呼ぶ

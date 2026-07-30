@@ -1,19 +1,19 @@
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 import {
-  type DetectionOverlayFrame,
-  drawDetectionOverlay,
-} from "@/features/tenant/webrtc/utils/detectionOverlay";
-import {
   applyLineCounts,
   applyMetrics,
   areCountingLinesEqual,
-  clampUnit,
   createInitialLineCounts,
-  type DetectionCountingLineSetting,
   type DetectionResultStore,
   type DetectionSettingsStore,
+  INITIAL_LINE_COUNT,
   INITIAL_METRICS,
-} from "../stores/detectionStore";
+} from "@/features/tenant/detection/stores/detectionStore";
+import {
+  type DetectionOverlayFrame,
+  drawDetectionOverlay,
+  toOverlayCountingLines,
+} from "@/features/tenant/webrtc/utils/detectionOverlay";
 import {
   type BroadcastStreamHandle,
   createBroadcastStream,
@@ -37,34 +37,6 @@ function syncCanvasSize(
   }
 }
 
-export function toCrowdCountingLine(
-  countingLine: DetectionCountingLineSetting,
-  width: number,
-  height: number,
-): CrowdCountingLine {
-  return {
-    id: countingLine.id,
-    p1: {
-      x: clampUnit(countingLine.p1.x) * width,
-      y: clampUnit(countingLine.p1.y) * height,
-    },
-    p2: {
-      x: clampUnit(countingLine.p2.x) * width,
-      y: clampUnit(countingLine.p2.y) * height,
-    },
-  };
-}
-
-export function toCrowdCountingLines(
-  countingLines: DetectionCountingLineSetting[],
-  width: number,
-  height: number,
-): CrowdCountingLine[] {
-  return countingLines.map((countingLine) =>
-    toCrowdCountingLine(countingLine, width, height),
-  );
-}
-
 function toDetectionOverlayFrame(
   frame: CrowdDetectionFrame | null,
   countingLines: CrowdCountingLine[],
@@ -85,6 +57,11 @@ function toDetectionOverlayFrame(
       }),
     ),
     countingLines,
+    lineCounts:
+      frame?.lineCounts ??
+      Object.fromEntries(
+        countingLines.map((line) => [line.id, INITIAL_LINE_COUNT]),
+      ),
   };
 }
 
@@ -195,7 +172,7 @@ export function useCrowdDetectionLoop({
 
       try {
         const currentSettings = settingsStore.getState();
-        const countingLines = toCrowdCountingLines(
+        const countingLines = toOverlayCountingLines(
           currentSettings.countingLines,
           video.videoWidth,
           video.videoHeight,
@@ -250,7 +227,7 @@ export function useCrowdDetectionLoop({
       if (isVideoReady(video)) {
         const width = video.videoWidth;
         const height = video.videoHeight;
-        const countingLines = toCrowdCountingLines(
+        const countingLines = toOverlayCountingLines(
           settingsStore.getState().countingLines,
           width,
           height,

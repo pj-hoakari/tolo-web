@@ -8,8 +8,19 @@ import {
   useRef,
   useState,
 } from "react";
+import {
+  applyLineCounts,
+  applySettings,
+  type DetectionStores,
+  useDetectionStores,
+} from "@/features/tenant/detection/stores/detectionStore";
 import { orpc } from "@/lib/orpc";
 import type { ConnectionStatus } from "../type";
+import {
+  encodeDetectionControlRequest,
+  parseDetectionControlNotice,
+  sendOverDataChannel,
+} from "../utils/detectionControl";
 import {
   type DetectionOverlayFrame,
   parseDetectionOverlayFrame,
@@ -32,6 +43,13 @@ export interface VideoReceiverController {
    * メッセージ受信のたびに再レンダリングは発生させない。
    */
   detectionFrameRef: RefObject<DetectionOverlayFrame | null>;
+  /**
+   * observation 側と同期している検出設定・検出結果・画面操作の状態。
+   * 設定ストアへの書き込みはそのまま observation 側への変更要求になる。
+   */
+  stores: DetectionStores;
+  /** 検出設定を一度でも受け取ったか。受け取るまでは設定 UI を出さない */
+  settingsSynced: boolean;
   connectedEdgeId: string | null;
   connect: (edgeId: string) => void;
   disconnect: () => void;
@@ -42,11 +60,34 @@ export function useVideoReceiver(): VideoReceiverController {
   const [error, setError] = useState<string | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [connectedEdgeId, setConnectedEdgeId] = useState<string | null>(null);
+  const [settingsSynced, setSettingsSynced] = useState(false);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const sessionRefRef = useRef<DocumentReference | null>(null);
   const detectionFrameRef = useRef<DetectionOverlayFrame | null>(null);
+  const controlChannelRef = useRef<RTCDataChannel | null>(null);
+  // observation から受け取った設定を反映している間の変更要求を止める
+  const applyingRemoteSettingsRef = useRef(false);
+
+  const stores = useDetectionStores();
+  const { settingsStore, resultStore } = stores;
+
+  // ローカルの設定変更をそのまま observation 側への変更要求として送る。
+  // 手元のストアは先に更新してあるので，操作は往復を待たずに反映される。
+  useEffect(
+    () =>
+      settingsStore.subscribe((settings) => {
+        if (applyingRemoteSettingsRef.current) {
+          return;
+        }
+        sendOverDataChannel(
+          controlChannelRef.current,
+          encodeDetectionControlRequest(settings),
+        );
+      }),
+    [settingsStore],
+  );
 
   const closePeer = useCallback(() => {
     pcRef.current?.close();
@@ -54,6 +95,7 @@ export function useVideoReceiver(): VideoReceiverController {
     unsubscribeRef.current?.();
     unsubscribeRef.current = null;
     detectionFrameRef.current = null;
+    controlChannelRef.current = null;
   }, []);
 
   const disconnect = useCallback(() => {
@@ -67,6 +109,7 @@ export function useVideoReceiver(): VideoReceiverController {
     }
     setStream(null);
     setConnectedEdgeId(null);
+    setSettingsSynced(false);
     setStatus("idle");
   }, [closePeer]);
 
@@ -84,6 +127,34 @@ export function useVideoReceiver(): VideoReceiverController {
       }
     });
   }, []);
+
+  const handleDetectionMessage = useCallback(
+    (data: string) => {
+      const frame = parseDetectionOverlayFrame(data);
+      detectionFrameRef.current = frame;
+      if (frame) {
+        applyLineCounts(resultStore, frame.lineCounts);
+      }
+    },
+    [resultStore],
+  );
+
+  const handleControlMessage = useCallback(
+    (data: string) => {
+      const notice = parseDetectionControlNotice(data);
+      if (!notice) {
+        return;
+      }
+      applyingRemoteSettingsRef.current = true;
+      try {
+        applySettings(settingsStore, notice.settings);
+      } finally {
+        applyingRemoteSettingsRef.current = false;
+      }
+      setSettingsSynced(true);
+    },
+    [settingsStore],
+  );
 
   const connect = useCallback(
     (edgeId: string) => {
@@ -107,13 +178,14 @@ export function useVideoReceiver(): VideoReceiverController {
         const adapter = new PeerSignalingAdapter(channel.send);
 
         setStatus("negotiating");
-        const pc = connectAsReceiver(
-          adapter,
-          (remoteStream) => setStream(remoteStream),
-          (data) => {
-            detectionFrameRef.current = parseDetectionOverlayFrame(data);
+        const pc = connectAsReceiver(adapter, {
+          onRemoteStream: (remoteStream) => setStream(remoteStream),
+          onDetectionMessage: handleDetectionMessage,
+          onControlMessage: handleControlMessage,
+          onControlChannelChange: (controlChannel) => {
+            controlChannelRef.current = controlChannel;
           },
-        );
+        });
         pcRef.current = pc;
         watchConnection(pc);
 
@@ -127,7 +199,7 @@ export function useVideoReceiver(): VideoReceiverController {
         setStatus("error");
       });
     },
-    [disconnect, watchConnection],
+    [disconnect, watchConnection, handleDetectionMessage, handleControlMessage],
   );
 
   useEffect(() => disconnect, [disconnect]);
@@ -137,6 +209,8 @@ export function useVideoReceiver(): VideoReceiverController {
     error,
     stream,
     detectionFrameRef,
+    stores,
+    settingsSynced,
     connectedEdgeId,
     connect,
     disconnect,
