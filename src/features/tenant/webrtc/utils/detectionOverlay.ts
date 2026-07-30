@@ -1,3 +1,9 @@
+import {
+  clampUnit,
+  type DetectionCountingLineSetting,
+  type DetectionLineCount,
+} from "@/features/tenant/detection/stores/detectionStore";
+
 export type DetectionOverlayPoint = {
   x: number;
   y: number;
@@ -30,7 +36,28 @@ export type DetectionOverlayFrame = {
   height: number;
   detections: DetectionOverlayBox[];
   countingLines: DetectionOverlayLine[];
+  /** ライン通過数。management 側でも observation と同じ一覧を出すために載せる */
+  lineCounts: Record<string, DetectionLineCount>;
 };
+
+/** 0〜1 で保持している設定値を元映像のピクセル空間へ移す */
+export function toOverlayCountingLines(
+  countingLines: DetectionCountingLineSetting[],
+  width: number,
+  height: number,
+): DetectionOverlayLine[] {
+  return countingLines.map((countingLine) => ({
+    id: countingLine.id,
+    p1: {
+      x: clampUnit(countingLine.p1.x) * width,
+      y: clampUnit(countingLine.p1.y) * height,
+    },
+    p2: {
+      x: clampUnit(countingLine.p2.x) * width,
+      y: clampUnit(countingLine.p2.y) * height,
+    },
+  }));
+}
 
 export function drawCountingLine(
   context: CanvasRenderingContext2D,
@@ -113,7 +140,9 @@ export function parseDetectionOverlayFrame(
       typeof (frame as DetectionOverlayFrame).width !== "number" ||
       typeof (frame as DetectionOverlayFrame).height !== "number" ||
       !Array.isArray((frame as DetectionOverlayFrame).detections) ||
-      !Array.isArray((frame as DetectionOverlayFrame).countingLines)
+      !Array.isArray((frame as DetectionOverlayFrame).countingLines) ||
+      typeof (frame as DetectionOverlayFrame).lineCounts !== "object" ||
+      (frame as DetectionOverlayFrame).lineCounts === null
     ) {
       return null;
     }

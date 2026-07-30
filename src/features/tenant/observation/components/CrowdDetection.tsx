@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { useDetectionStores } from "@/features/tenant/detection/stores/detectionStore";
 import { BroadcastIndicator } from "@/features/tenant/webrtc/components/BroadcastIndicator";
 import { useVideoSender } from "@/features/tenant/webrtc/hooks/useVideoSender";
 import { useCrowdDetectionLoop } from "../hooks/useCrowdDetectionLoop";
 import { useDetectCrowd } from "../hooks/useDetectCrowd";
-import { useDetectionStores } from "../stores/detectionStore";
 import {
   type CrowdVideoSourceFactory,
   createCameraVideoSource,
@@ -41,6 +41,7 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
     tenantId,
     eventId,
     stream: broadcastStream,
+    settingsStore,
   });
 
   useCrowdDetectionLoop({
