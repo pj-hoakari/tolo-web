@@ -1,6 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
+import { createDetectionStores } from "@/features/tenant/detection/stores/detectionStore";
 import { VideoReceiverView } from "@/features/tenant/webrtc/components/VideoReceiverView";
+import {
+  type DetectionOverlayFrame,
+  toOverlayCountingLines,
+} from "@/features/tenant/webrtc/utils/detectionOverlay";
 
 const meta = {
   title: "Tenant/WebRTC/VideoReceiverView",
@@ -40,5 +45,29 @@ export const ErrorState: Story = {
   args: {
     status: "error",
     error: "接続に失敗しました",
+  },
+};
+
+// 管理ページからカウントラインを編集できる状態
+const editableStores = createDetectionStores();
+
+const editableFrame: DetectionOverlayFrame = {
+  width: 960,
+  height: 540,
+  detections: [{ trackId: 1, score: 0.82, x1: 380, y1: 180, x2: 500, y2: 470 }],
+  countingLines: toOverlayCountingLines(
+    editableStores.settingsStore.getState().countingLines,
+    960,
+    540,
+  ),
+  lineCounts: { "line-1": { forward: 3, backward: 1 } },
+};
+
+export const Editable: Story = {
+  args: {
+    status: "connected",
+    detectionFrameRef: { current: editableFrame },
+    settingsStore: editableStores.settingsStore,
+    viewStateStore: editableStores.viewStateStore,
   },
 };

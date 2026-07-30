@@ -193,6 +193,18 @@ export function areCountingLinesEqual(
   );
 }
 
+export function areSettingsEqual(
+  a: DetectionSettings,
+  b: DetectionSettings,
+): boolean {
+  return (
+    a.confidenceThreshold === b.confidenceThreshold &&
+    a.trackingDistanceThreshold === b.trackingDistanceThreshold &&
+    a.detectionInterval === b.detectionInterval &&
+    areCountingLinesEqual(a.countingLines, b.countingLines)
+  );
+}
+
 // --- セレクタ（参照を安定させるためモジュールスコープに置く） ---
 
 export const selectCountingLines = (state: DetectionSettings) =>
@@ -216,15 +228,21 @@ export const selectLineCreationMode = (state: DetectionViewState) =>
 
 // --- 更新 ---
 
+export function clampCountingLines(
+  countingLines: DetectionCountingLineSetting[],
+): DetectionCountingLineSetting[] {
+  return countingLines.map((line) => ({
+    id: line.id,
+    p1: { x: clampUnit(line.p1.x), y: clampUnit(line.p1.y) },
+    p2: { x: clampUnit(line.p2.x), y: clampUnit(line.p2.y) },
+  }));
+}
+
 export function applyCountingLines(
   store: DetectionSettingsStore,
   countingLines: DetectionCountingLineSetting[],
 ): void {
-  const clamped = countingLines.map((line) => ({
-    ...line,
-    p1: { x: clampUnit(line.p1.x), y: clampUnit(line.p1.y) },
-    p2: { x: clampUnit(line.p2.x), y: clampUnit(line.p2.y) },
-  }));
+  const clamped = clampCountingLines(countingLines);
 
   store.setState(
     (current) =>
@@ -244,6 +262,38 @@ export function applyNumberSetting(
   store.setState(
     (current) =>
       current[key] === next ? current : { ...current, [key]: next },
+    true,
+  );
+}
+
+/**
+ * 設定一式をまとめて反映する
+ *
+ * WebRTC 越しに受け取った設定を適用する用途を想定し，
+ * 購読側への通知が 1 回で済むよう 1 度の setState で置き換える。
+ */
+export function applySettings(
+  store: DetectionSettingsStore,
+  settings: DetectionSettings,
+): void {
+  const next: DetectionSettings = {
+    confidenceThreshold: clampNumberSetting(
+      "confidenceThreshold",
+      settings.confidenceThreshold,
+    ),
+    trackingDistanceThreshold: clampNumberSetting(
+      "trackingDistanceThreshold",
+      settings.trackingDistanceThreshold,
+    ),
+    detectionInterval: clampNumberSetting(
+      "detectionInterval",
+      settings.detectionInterval,
+    ),
+    countingLines: clampCountingLines(settings.countingLines),
+  };
+
+  store.setState(
+    (current) => (areSettingsEqual(current, next) ? current : next),
     true,
   );
 }
@@ -295,4 +345,77 @@ export function toggleLineCreationMode(store: DetectionViewStateStore): void {
     }),
     true,
   );
+}
+
+// --- 受信データの検証 ---
+// WebRTC 越しに届く JSON は信用できないため，形が合うものだけを通す
+// （値の範囲は applySettings 側で丸める）
+
+function parsePoint(value: unknown): DetectionPoint | null {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  const { x, y } = value as Partial<DetectionPoint>;
+  if (typeof x !== "number" || typeof y !== "number") {
+    return null;
+  }
+  return { x, y };
+}
+
+function parseCountingLine(
+  value: unknown,
+): DetectionCountingLineSetting | null {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  const { id, p1, p2 } = value as Partial<DetectionCountingLineSetting>;
+  const parsedP1 = parsePoint(p1);
+  const parsedP2 = parsePoint(p2);
+  if (typeof id !== "string" || !parsedP1 || !parsedP2) {
+    return null;
+  }
+  return { id, p1: parsedP1, p2: parsedP2 };
+}
+
+export function parseDetectionSettings(
+  value: unknown,
+): DetectionSettings | null {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  const {
+    confidenceThreshold,
+    trackingDistanceThreshold,
+    detectionInterval,
+    countingLines,
+  } = value as Partial<DetectionSettings>;
+
+  if (
+    typeof confidenceThreshold !== "number" ||
+    typeof trackingDistanceThreshold !== "number" ||
+    typeof detectionInterval !== "number" ||
+    !Array.isArray(countingLines)
+  ) {
+    return null;
+  }
+
+  const parsedLines: DetectionCountingLineSetting[] = [];
+  for (const line of countingLines) {
+    const parsedLine = parseCountingLine(line);
+    if (!parsedLine) {
+      return null;
+    }
+    parsedLines.push(parsedLine);
+  }
+  // ライン 0 本の設定は削除・リセットの前提を崩すため受け付けない
+  if (parsedLines.length === 0) {
+    return null;
+  }
+
+  return {
+    confidenceThreshold,
+    trackingDistanceThreshold,
+    detectionInterval,
+    countingLines: parsedLines,
+  };
 }

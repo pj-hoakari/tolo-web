@@ -1,13 +1,13 @@
 import { memo, type RefObject } from "react";
-import type { DetectCrowdStatus } from "../hooks/useDetectCrowd";
+import { DetectionLineCountList } from "@/features/tenant/detection/components/DetectionLineCountList";
+import { DetectionSettingsPanel } from "@/features/tenant/detection/components/DetectionSettingsPanel";
 import type {
   DetectionResultStore,
   DetectionSettingsStore,
   DetectionViewStateStore,
-} from "../stores/detectionStore";
+} from "@/features/tenant/detection/stores/detectionStore";
+import type { DetectCrowdStatus } from "../hooks/useDetectCrowd";
 import type { VideoSourceDescriptor } from "../utils/videoSource";
-import { DetectionLineCountList } from "./DetectionLineCountList";
-import { DetectionSettingsPanel } from "./DetectionSettingsPanel";
 import { DetectionStatusPanel } from "./DetectionStatusPanel";
 import { DetectionVideoStage } from "./DetectionVideoStage";
 

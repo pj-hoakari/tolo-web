@@ -4,7 +4,11 @@ import {
   applyLineCounts,
   applyMetrics,
   applyNumberSetting,
+  applySettings,
   createDetectionStores,
+  type DetectionSettings,
+  INITIAL_SETTINGS,
+  parseDetectionSettings,
   selectLine,
   toggleLineCreationMode,
 } from "./detectionStore";
@@ -52,6 +56,82 @@ describe("applyNumberSetting", () => {
     applyNumberSetting(settingsStore, "detectionInterval", 100.4);
 
     expect(listener).not.toHaveBeenCalled();
+  });
+});
+
+describe("applySettings", () => {
+  it("すべての値を丸めて 1 度の通知で反映する", () => {
+    const { settingsStore } = createDetectionStores();
+    const listener = vi.fn();
+    settingsStore.subscribe(listener);
+
+    applySettings(settingsStore, {
+      confidenceThreshold: 2,
+      trackingDistanceThreshold: 0,
+      detectionInterval: 5000,
+      countingLines: [
+        { id: "line-9", p1: { x: -1, y: 0.5 }, p2: { x: 2, y: 0.5 } },
+      ],
+    });
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(settingsStore.getState()).toEqual({
+      confidenceThreshold: 1,
+      trackingDistanceThreshold: 0.1,
+      detectionInterval: 1000,
+      countingLines: [
+        { id: "line-9", p1: { x: 0, y: 0.5 }, p2: { x: 1, y: 0.5 } },
+      ],
+    });
+  });
+
+  it("丸めた結果が同じなら通知しない", () => {
+    const { settingsStore } = createDetectionStores();
+    const listener = vi.fn();
+    settingsStore.subscribe(listener);
+
+    applySettings(settingsStore, INITIAL_SETTINGS);
+
+    expect(listener).not.toHaveBeenCalled();
+  });
+});
+
+describe("parseDetectionSettings", () => {
+  const valid: DetectionSettings = {
+    confidenceThreshold: 0.2,
+    trackingDistanceThreshold: 0.7,
+    detectionInterval: 120,
+    countingLines: [
+      { id: "line-1", p1: { x: 0, y: 0.6 }, p2: { x: 1, y: 0.6 } },
+    ],
+  };
+
+  it("形が合っていれば通す", () => {
+    expect(parseDetectionSettings(structuredClone(valid))).toEqual(valid);
+  });
+
+  it("余計なキーは落とす", () => {
+    const parsed = parseDetectionSettings({
+      ...structuredClone(valid),
+      injected: "x",
+      countingLines: [{ ...valid.countingLines[0], injected: "x" }],
+    });
+
+    expect(parsed).toEqual(valid);
+  });
+
+  it.each([
+    ["数値でない設定", { ...valid, confidenceThreshold: "0.2" }],
+    ["ラインが配列でない", { ...valid, countingLines: {} }],
+    ["ラインが空", { ...valid, countingLines: [] }],
+    [
+      "座標が欠けたライン",
+      { ...valid, countingLines: [{ id: "line-1", p1: { x: 0 }, p2: {} }] },
+    ],
+    ["オブジェクトでない", "settings"],
+    ["null", null],
+  ])("%s は弾く", (_label, value) => {
+    expect(parseDetectionSettings(value)).toBeNull();
   });
 });
 

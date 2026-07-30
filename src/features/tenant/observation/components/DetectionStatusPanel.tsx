@@ -1,10 +1,10 @@
 import { memo } from "react";
 import { useStore } from "zustand";
-import type { DetectCrowdStatus } from "../hooks/useDetectCrowd";
 import {
   type DetectionResultStore,
   selectMetrics,
-} from "../stores/detectionStore";
+} from "@/features/tenant/detection/stores/detectionStore";
+import type { DetectCrowdStatus } from "../hooks/useDetectCrowd";
 
 const STATUS_LABELS: Record<DetectCrowdStatus, string> = {
   idle: "停止中",

@@ -2,6 +2,15 @@
 
 import { onSnapshot } from "firebase/firestore";
 import { useCallback, useEffect, useRef } from "react";
+import {
+  applySettings,
+  type DetectionSettingsStore,
+} from "@/features/tenant/detection/stores/detectionStore";
+import {
+  encodeDetectionControlNotice,
+  parseDetectionControlRequest,
+  sendOverDataChannel,
+} from "../utils/detectionControl";
 import type { DetectionOverlayFrame } from "../utils/detectionOverlay";
 import { getDb } from "../utils/firebase";
 import { PeerSignalingAdapter } from "../utils/peerSignaling";
@@ -20,6 +29,7 @@ import { useEdgePresence } from "./useEdgePresence";
 interface SenderSession {
   pc: RTCPeerConnection;
   dataChannel: RTCDataChannel;
+  controlChannel: RTCDataChannel;
   unsubscribe: () => void;
 }
 
@@ -49,8 +59,10 @@ export function useVideoSender(params: {
   tenantId: string;
   eventId: string;
   stream: MediaStream | null;
+  /** management 側と共有する検出設定 */
+  settingsStore: DetectionSettingsStore;
 }): VideoSenderController {
-  const { tenantId, eventId, stream } = params;
+  const { tenantId, eventId, stream, settingsStore } = params;
   const active = stream !== null;
 
   const { edgeId } = useEdgePresence({ tenantId, eventId, enabled: active });
@@ -61,6 +73,24 @@ export function useVideoSender(params: {
   const effectRunIdRef = useRef(0);
   const sessionsListenerRef = useRef<SessionsListener | null>(null);
   const latestDetectionMessageRef = useRef<string | null>(null);
+  // 設定変更の要求元セッション。要求した本人へ送り返すと
+  // 操作中の値が古い状態で上書きされるため，配信対象から外す
+  const settingsOriginSessionIdRef = useRef<string | null>(null);
+
+  // 設定が変わったら（自分で変えた分も含めて）視聴側へ配信する
+  useEffect(
+    () =>
+      settingsStore.subscribe((settings) => {
+        const message = encodeDetectionControlNotice(settings);
+        for (const [sessionId, session] of sessionsRef.current) {
+          if (sessionId === settingsOriginSessionIdRef.current) {
+            continue;
+          }
+          sendOverDataChannel(session.controlChannel, message);
+        }
+      }),
+    [settingsStore],
+  );
 
   const sendDetectionFrame = useCallback(
     (frame: DetectionOverlayFrame | null) => {
@@ -141,7 +171,10 @@ export function useVideoSender(params: {
           self: "edge",
         });
         const adapter = new PeerSignalingAdapter(channel.send);
-        const { pc, dataChannel } = connectAsSender(currentStream, adapter);
+        const { pc, dataChannel, controlChannel } = connectAsSender(
+          currentStream,
+          adapter,
+        );
         dataChannel.addEventListener("open", () => {
           const latestMessage = latestDetectionMessageRef.current;
           if (latestMessage !== null) {
@@ -152,6 +185,27 @@ export function useVideoSender(params: {
             }
           }
         });
+        controlChannel.addEventListener("open", () => {
+          sendOverDataChannel(
+            controlChannel,
+            encodeDetectionControlNotice(settingsStore.getState()),
+          );
+        });
+        controlChannel.addEventListener("message", (event) => {
+          if (typeof event.data !== "string") {
+            return;
+          }
+          const request = parseDetectionControlRequest(event.data);
+          if (!request) {
+            return;
+          }
+          settingsOriginSessionIdRef.current = sessionId;
+          try {
+            applySettings(settingsStore, request.settings);
+          } finally {
+            settingsOriginSessionIdRef.current = null;
+          }
+        });
         const unsubscribe = channel.listen((message) =>
           adapter.deliver(message),
         );
@@ -160,7 +214,12 @@ export function useVideoSender(params: {
           pc.close();
           return;
         }
-        sessions.set(sessionId, { pc, dataChannel, unsubscribe });
+        sessions.set(sessionId, {
+          pc,
+          dataChannel,
+          controlChannel,
+          unsubscribe,
+        });
       } finally {
         startingSessionIds.delete(sessionId);
       }
@@ -217,7 +276,7 @@ export function useVideoSender(params: {
       }
       startingSessionIds.clear();
     };
-  }, [edgeId, active]);
+  }, [edgeId, active, settingsStore]);
 
   return { active, edgeId, sendDetectionFrame };
 }
