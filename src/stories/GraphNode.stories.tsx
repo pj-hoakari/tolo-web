@@ -4,7 +4,7 @@ import type {
   GraphNodeType,
   NodeType,
 } from "@/features/tenant/management/graphEditor/type";
-import { GraphCanvas } from "./_helpers/GraphCanvas";
+import { StoryGraphCanvas } from "./_helpers/StoryGraphCanvas";
 
 // 単一ノードを最小 ReactFlow キャンバスに載せて表示
 type SingleNodeArgs = {
@@ -21,7 +21,7 @@ function SingleNode({ nodeType, label, selected }: SingleNodeArgs) {
     data: { label, nodeType },
     selected,
   };
-  return <GraphCanvas nodes={[node]} edges={[]} height={240} />;
+  return <StoryGraphCanvas nodes={[node]} edges={[]} height={240} />;
 }
 
 const meta = {

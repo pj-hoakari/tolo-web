@@ -25,8 +25,9 @@ const edgeTypes: EdgeTypes = { graph: GraphEdge };
 
 /**
  * GraphNode / GraphEdge を単独表示するための最小 ReactFlow キャンバス
+ * （機能側の `GraphCanvas` と違い、ツールバーや MiniMap を持たない Story 専用）
  */
-export function GraphCanvas({
+export function StoryGraphCanvas({
   nodes,
   edges,
   height = 360,

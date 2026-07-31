@@ -5,7 +5,7 @@ import type {
   GraphEdgeType,
   GraphNodeType,
 } from "@/features/tenant/management/graphEditor/type";
-import { GraphCanvas } from "./_helpers/GraphCanvas";
+import { StoryGraphCanvas } from "./_helpers/StoryGraphCanvas";
 
 // 2 ノード間に 1 本のエッジを張った最小 ReactFlow キャンバスで表示
 type SingleEdgeArgs = {
@@ -39,7 +39,7 @@ function SingleEdge({ direction, selected }: SingleEdgeArgs) {
       selected,
     },
   ];
-  return <GraphCanvas nodes={nodes} edges={edges} height={240} />;
+  return <StoryGraphCanvas nodes={nodes} edges={edges} height={240} />;
 }
 
 const meta = {

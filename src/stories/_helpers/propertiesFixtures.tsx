@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { ObservationPointsSource } from "@/features/tenant/management/graphEditor/components/properties";
+import type { ObservationPointsSource } from "@/features/tenant/management/graphEditor/components/observation";
 import { deriveNodeNotices } from "@/features/tenant/management/graphEditor/nodeTypes";
 import { PLACEHOLDER_GRAPH } from "@/features/tenant/management/graphEditor/placeholderGraph";
 import type {
