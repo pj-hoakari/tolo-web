@@ -28,15 +28,6 @@ export {
   type NodeTypeOption,
 } from "./nodeTypeOptions";
 export {
-  ObservationPointPicker,
-  type ObservationPointPickerProps,
-  type ObservationPointsSource,
-} from "./ObservationPointPicker";
-export {
-  buildObservationPointRows,
-  type ObservationPointRow,
-} from "./observationPointRows";
-export {
   PropertiesPanel,
   type PropertiesPanelProps,
 } from "./PropertiesPanel";

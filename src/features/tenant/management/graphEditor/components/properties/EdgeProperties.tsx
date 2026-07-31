@@ -3,10 +3,6 @@ import { EdgeDirectionField } from "./EdgeDirectionField";
 import { type EdgeEndpointLabels, EdgeEndpoints } from "./EdgeEndpoints";
 import { EdgeReverseButton } from "./EdgeReverseButton";
 import type { EdgeDirectionState } from "./edgeDirectionState";
-import {
-  ObservationPointPicker,
-  type ObservationPointsSource,
-} from "./ObservationPointPicker";
 import { SelectionHeader } from "./SelectionHeader";
 
 export type EdgePropertiesProps = {
@@ -14,17 +10,19 @@ export type EdgePropertiesProps = {
   /** 方向・反転操作の可否（`resolveEdgeDirectionState` の結果） */
   directionState: EdgeDirectionState;
   endpoints: EdgeEndpointLabels;
-  observationPoints: ObservationPointsSource;
   onChange: (patch: Partial<GraphEdgeData>) => void;
   onReverse: () => void;
 };
 
-/** ルート（エッジ）を選択しているときの編集フォーム */
+/**
+ * ルート（エッジ）を選択しているときの編集フォーム。
+ * 扱うのはグラフ構造そのものだけで、観測点の紐づけは表示側
+ * （`ObservationLinkPanel`）が担当する。
+ */
 export function EdgeProperties({
   edge,
   directionState,
   endpoints,
-  observationPoints,
   onChange,
   onReverse,
 }: EdgePropertiesProps) {
@@ -55,12 +53,6 @@ export function EdgeProperties({
         isDisabled={reverseDisabled}
         reason={reverseReason}
         onPress={onReverse}
-      />
-
-      <ObservationPointPicker
-        {...observationPoints}
-        linkedIds={edge.data?.observationPointIds ?? []}
-        onChange={(ids) => onChange({ observationPointIds: ids })}
       />
     </div>
   );

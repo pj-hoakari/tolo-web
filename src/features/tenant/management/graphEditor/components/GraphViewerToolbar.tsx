@@ -1,34 +1,34 @@
+import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { NODE_TYPE_DEFS } from "../nodeTypes";
-import type { NodeType } from "../type";
-import { NodeTypeIcon } from "./NodeTypeIcon";
 
-type Props = {
-  onAddNode: (type: NodeType) => void;
+export type GraphViewerToolbarProps = {
+  /** 編集ページへの遷移。未指定なら編集への導線を出さない */
+  onEditGraph?: () => void;
   onSave: () => void;
 };
 
-export function GraphToolbar({ onAddNode, onSave }: Props) {
+/** 表示専用ビューのツールバー（編集ページへの導線・紐づけの保存） */
+export function GraphViewerToolbar({
+  onEditGraph,
+  onSave,
+}: GraphViewerToolbarProps) {
   return (
     <div className="flex items-center justify-between gap-3 border-border border-b bg-card px-4 py-2">
       <p className="shrink-0 font-semibold text-foreground text-sm">
-        会場エディタ
+        会場グラフ
       </p>
       <div className="flex flex-wrap items-center justify-end gap-2">
-        {NODE_TYPE_DEFS.map((def) => (
+        {onEditGraph ? (
           <Button
-            key={def.type}
             variant="outline"
             size="sm"
-            onPress={() => onAddNode(def.type)}
-            aria-label={`${def.label}を追加`}
+            onPress={onEditGraph}
             className="gap-1.5"
           >
-            <span className="text-muted-foreground">+</span>
-            <NodeTypeIcon type={def.type} />
-            {def.label}
+            <Pencil aria-hidden className="size-3.5" />
+            グラフを編集
           </Button>
-        ))}
+        ) : null}
         <div className="ml-1 border-border border-l pl-2">
           <Button size="sm" onPress={onSave}>
             保存

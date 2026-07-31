@@ -2,7 +2,10 @@
 
 import type { Connection, EdgeChange, NodeChange } from "@xyflow/react";
 import { useCallback } from "react";
-import type { GraphEditorCanvasProps } from "../components/GraphEditorCanvas";
+import type {
+  GraphCanvasEditing,
+  GraphCanvasProps,
+} from "../components/GraphCanvas";
 import type { PropertiesPanelProps } from "../components/properties";
 import { DEFAULT_NODE_TYPE, resolveConnectionDirection } from "../nodeTypes";
 import { PLACEHOLDER_GRAPH } from "../placeholderGraph";
@@ -24,15 +27,13 @@ export type GraphToolbarBindings = {
 };
 
 /** プロパティパネルに渡す props のうち、編集状態から決まるもの */
-export type PropertiesPanelBindings = Omit<
-  PropertiesPanelProps,
-  "graph" | "observationPoints"
->;
+export type PropertiesPanelBindings = Omit<PropertiesPanelProps, "graph">;
 
 export type GraphEditorApi = {
   /** 描画用のグラフ（ハンドル・通知を注入済み） */
   graph: GraphData;
-  canvas: GraphEditorCanvasProps;
+  /** 構造編集を有効にしたキャンバスの props */
+  canvas: GraphCanvasProps & { editing: GraphCanvasEditing };
   toolbar: GraphToolbarBindings;
   properties: PropertiesPanelBindings;
   /** 送信・永続化用のグラフデータを取り出す */
@@ -157,11 +158,10 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
       edges,
       onNodesChange,
       onEdgesChange,
-      onConnect,
-      isValidConnection,
       onSelectNode: selectNode,
       onSelectEdge: selectEdge,
       onClearSelection: clearSelection,
+      editing: { onConnect, isValidConnection },
     },
     toolbar: { onAddNode: addNode },
     properties: {
