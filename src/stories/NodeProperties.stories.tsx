@@ -4,7 +4,7 @@ import { fn } from "storybook/test";
 import {
   buildNodeTypeOptions,
   NodeProperties,
-} from "@/features/tenant/management/graphEditor/components/properties";
+} from "@/features/tenant/management/graph/components/properties";
 import {
   DUAL_BOUNDARY_EDGES,
   DUAL_BOUNDARY_NODES,
@@ -23,7 +23,7 @@ const boothTypeOptions = buildNodeTypeOptions(
 );
 
 const meta = {
-  title: "Tenant/Management/GraphEditor/Properties/NodeProperties",
+  title: "Tenant/Management/Graph/Properties/NodeProperties",
   component: NodeProperties,
   parameters: {
     layout: "padded",

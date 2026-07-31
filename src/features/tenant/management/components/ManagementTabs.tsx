@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Tab, TabList, TabPanel, Tabs } from "@/components/ui/tabs";
 import { ConnectedEdges } from "@/features/tenant/webrtc/components/ConnectedEdges";
-import { type GraphData, GraphViewer } from "../graphEditor";
+import { type GraphData, GraphViewer } from "../graph";
 import { graphEditPath } from "../routes";
 
 type TabId = "graph" | "edges";

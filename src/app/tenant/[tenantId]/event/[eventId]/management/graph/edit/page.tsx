@@ -1,6 +1,6 @@
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ManagementBackButton } from "@/features/tenant/management/components/ManagementBackButton";
-import { GraphEditor } from "@/features/tenant/management/graphEditor";
+import { GraphEditor } from "@/features/tenant/management/graph";
 
 export default async function TenantGraphEdit({
   params,

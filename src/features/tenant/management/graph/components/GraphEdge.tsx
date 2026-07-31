@@ -3,7 +3,7 @@
 import { BaseEdge, type EdgeProps, getBezierPath } from "@xyflow/react";
 import type { GraphEdgeType } from "../type";
 
-// GraphEditor.css
+// GraphCanvas.css
 const STROKE = "var(--graph-edge-stroke)";
 const STROKE_SELECTED = "var(--graph-edge-stroke-selected)";
 /** ルート上を通過する円アイコンの半径 */

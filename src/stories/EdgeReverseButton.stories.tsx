@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, userEvent, within } from "storybook/test";
 
-import { EdgeReverseButton } from "@/features/tenant/management/graphEditor/components/properties";
+import { EdgeReverseButton } from "@/features/tenant/management/graph/components/properties";
 import { PanelFrame } from "./_helpers/propertiesFixtures";
 
 const meta = {
-  title: "Tenant/Management/GraphEditor/Properties/EdgeReverseButton",
+  title: "Tenant/Management/Graph/Properties/EdgeReverseButton",
   component: EdgeReverseButton,
   parameters: {
     layout: "padded",

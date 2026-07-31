@@ -1,5 +1,5 @@
 import "@xyflow/react/dist/base.css";
-import "./GraphEditor.css";
+import "./GraphCanvas.css";
 
 import {
   Background,

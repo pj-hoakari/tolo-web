@@ -2,15 +2,15 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { ReactFlowProvider } from "@xyflow/react";
 import { fn } from "storybook/test";
 
-import { GraphCanvas } from "@/features/tenant/management/graphEditor/components/GraphCanvas";
-import { useGraphEditor } from "@/features/tenant/management/graphEditor/hooks/useGraphEditor";
-import { useGraphViewer } from "@/features/tenant/management/graphEditor/hooks/useGraphViewer";
-import { deriveNodeNotices } from "@/features/tenant/management/graphEditor/nodeTypes";
-import { PLACEHOLDER_GRAPH } from "@/features/tenant/management/graphEditor/placeholderGraph";
+import { GraphCanvas } from "@/features/tenant/management/graph/components/GraphCanvas";
+import { useGraphEditor } from "@/features/tenant/management/graph/hooks/useGraphEditor";
+import { useGraphViewer } from "@/features/tenant/management/graph/hooks/useGraphViewer";
+import { deriveNodeNotices } from "@/features/tenant/management/graph/nodeTypes";
+import { PLACEHOLDER_GRAPH } from "@/features/tenant/management/graph/placeholderGraph";
 import {
   assignHandlesByPosition,
   deriveNodeHandles,
-} from "@/features/tenant/management/graphEditor/utils/handles";
+} from "@/features/tenant/management/graph/utils/handles";
 
 const derivedEdges = assignHandlesByPosition(
   PLACEHOLDER_GRAPH.nodes,
@@ -34,7 +34,7 @@ function ViewOnlyCanvas() {
 }
 
 const meta = {
-  title: "Tenant/Management/GraphEditor/GraphCanvas",
+  title: "Tenant/Management/Graph/GraphCanvas",
   component: GraphCanvas,
   parameters: {
     layout: "fullscreen",

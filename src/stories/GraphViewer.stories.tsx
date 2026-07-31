@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
-import { GraphViewer } from "@/features/tenant/management/graphEditor";
+import { GraphViewer } from "@/features/tenant/management/graph";
 import { SAMPLE_EVENT_ID, SAMPLE_TENANT_ID } from "@/mocks/fixtures/edges";
 
 const meta = {
-  title: "Tenant/Management/GraphEditor/GraphViewer",
+  title: "Tenant/Management/Graph/GraphViewer",
   component: GraphViewer,
   parameters: {
     layout: "fullscreen",

@@ -5,9 +5,9 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import {
   NodeTypeSelector,
   type NodeTypeSelectorProps,
-} from "@/features/tenant/management/graphEditor/components/properties";
-import { NODE_TYPE_DEFS } from "@/features/tenant/management/graphEditor/nodeTypes";
-import type { NodeType } from "@/features/tenant/management/graphEditor/type";
+} from "@/features/tenant/management/graph/components/properties";
+import { NODE_TYPE_DEFS } from "@/features/tenant/management/graph/nodeTypes";
+import type { NodeType } from "@/features/tenant/management/graph/type";
 import { PanelFrame } from "./_helpers/propertiesFixtures";
 
 /** すべてのタイプが選択可能な状態の選択肢 */
@@ -37,7 +37,7 @@ function StatefulNodeTypeSelector({
 }
 
 const meta = {
-  title: "Tenant/Management/GraphEditor/Properties/NodeTypeSelector",
+  title: "Tenant/Management/Graph/Properties/NodeTypeSelector",
   component: NodeTypeSelector,
   parameters: {
     layout: "padded",

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, userEvent, within } from "storybook/test";
 
-import { ObservationLinkPanel } from "@/features/tenant/management/graphEditor/components/observation";
+import { ObservationLinkPanel } from "@/features/tenant/management/graph/components/observation";
 import {
   GRAPH_EDGES,
   GRAPH_NODES,
@@ -11,7 +11,7 @@ import {
 } from "./_helpers/propertiesFixtures";
 
 const meta = {
-  title: "Tenant/Management/GraphEditor/Observation/ObservationLinkPanel",
+  title: "Tenant/Management/Graph/Observation/ObservationLinkPanel",
   component: ObservationLinkPanel,
   parameters: {
     layout: "fullscreen",
