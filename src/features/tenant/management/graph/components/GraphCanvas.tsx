@@ -12,7 +12,10 @@ import {
   type NodeChange,
   type NodeTypes,
   ReactFlow,
+  useNodesInitialized,
+  useReactFlow,
 } from "@xyflow/react";
+import { useEffect, useRef } from "react";
 import { DEFAULT_NODE_TYPE, getNodeTypeDef } from "../nodeTypes";
 import type { GraphEdgeType, GraphNodeType } from "../type";
 import { GraphEdge, GraphEdgeMarkers } from "./GraphEdge";
@@ -20,6 +23,36 @@ import { GraphNode } from "./GraphNode";
 
 const nodeTypes: NodeTypes = { graph: GraphNode };
 const edgeTypes: EdgeTypes = { graph: GraphEdge };
+
+// React Flow の既定値（50%）だと、広い会場グラフを fitView しても
+// 下限で止まり、端のノードが画面外に残る。
+const MIN_ZOOM = 0.01;
+const FIT_VIEW_OPTIONS = { padding: 0.2, minZoom: MIN_ZOOM };
+
+/** ノードの実寸法が確定してから、初回だけグラフ全体を表示する。 */
+function InitialFitView({ hasNodes }: { hasNodes: boolean }) {
+  const nodesInitialized = useNodesInitialized();
+  const { fitView, viewportInitialized } = useReactFlow<
+    GraphNodeType,
+    GraphEdgeType
+  >();
+  const hasFitted = useRef(false);
+
+  useEffect(() => {
+    if (
+      !hasNodes ||
+      !nodesInitialized ||
+      !viewportInitialized ||
+      hasFitted.current
+    )
+      return;
+
+    hasFitted.current = true;
+    void fitView(FIT_VIEW_OPTIONS);
+  }, [fitView, hasNodes, nodesInitialized, viewportInitialized]);
+
+  return null;
+}
 
 /** グラフ構造そのものを編集するためのハンドラ一式 */
 export type GraphCanvasEditing = {
@@ -80,11 +113,17 @@ export function GraphCanvas({
         onEdgeClick={(_, e) => onSelectEdge(e.id)}
         onPaneClick={onClearSelection}
         connectionMode={ConnectionMode.Loose}
+        minZoom={MIN_ZOOM}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
+        fitViewOptions={FIT_VIEW_OPTIONS}
       >
+        <InitialFitView hasNodes={nodes.length > 0} />
         <Background gap={20} size={1} />
-        <Controls position="bottom-right" showInteractive={editable} />
+        <Controls
+          position="bottom-right"
+          showInteractive={editable}
+          fitViewOptions={FIT_VIEW_OPTIONS}
+        />
         <MiniMap
           pannable
           zoomable
