@@ -104,6 +104,29 @@ describe("useGraphEditor: 接続数によるエッジ端点の増減", () => {
   });
 });
 
+describe("useGraphEditor: エッジ方向のコンテキスト操作", () => {
+  it("片側通行への変更と向きの反転を行える", () => {
+    const initial: GraphData = {
+      nodes: [node("n1", 0, 0), node("n2", 300, 0)],
+      edges: [edge("e1", "n1", "n2")],
+    };
+    const { result } = renderHook(() => useGraphEditor(initial));
+
+    act(() => {
+      result.current.canvas.editing.onSetEdgeDirection("e1", "oneway");
+    });
+    expect(result.current.canvas.edges[0].data?.direction).toBe("oneway");
+
+    act(() => {
+      result.current.canvas.editing.onReverseEdge("e1");
+    });
+    expect(result.current.canvas.edges[0]).toMatchObject({
+      source: "n2",
+      target: "n1",
+    });
+  });
+});
+
 describe("useGraphEditor: ポイント移動によるハンドル接続位置の変化", () => {
   it("ノードを移動すると接続辺が変わる", () => {
     const initial: GraphData = {

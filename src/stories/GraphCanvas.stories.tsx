@@ -72,6 +72,8 @@ export const Editing: Story = {
     editing: {
       onConnect: fn(),
       isValidConnection: () => true,
+      onSetEdgeDirection: fn(),
+      onReverseEdge: fn(),
     },
   },
 };

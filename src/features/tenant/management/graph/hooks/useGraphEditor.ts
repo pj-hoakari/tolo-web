@@ -11,6 +11,7 @@ import { DEFAULT_NODE_TYPE, resolveConnectionDirection } from "../nodeTypes";
 import { PLACEHOLDER_GRAPH } from "../placeholderGraph";
 import { toGraphData } from "../serialize";
 import type {
+  EdgeDirection,
   GraphData,
   GraphEdgeType,
   GraphNodeType,
@@ -124,6 +125,13 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     [source, appendEdge, selectEdge],
   );
 
+  const setEdgeDirection = useCallback(
+    (id: string, direction: EdgeDirection) => {
+      updateEdgeData(id, { direction });
+    },
+    [updateEdgeData],
+  );
+
   const addNode = useCallback(
     (nodeType: NodeType = DEFAULT_NODE_TYPE) => {
       const node = createNode({
@@ -161,7 +169,12 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
       onSelectNode: selectNode,
       onSelectEdge: selectEdge,
       onClearSelection: clearSelection,
-      editing: { onConnect, isValidConnection },
+      editing: {
+        onConnect,
+        isValidConnection,
+        onSetEdgeDirection: setEdgeDirection,
+        onReverseEdge: reverseEdge,
+      },
     },
     toolbar: { onAddNode: addNode },
     properties: {

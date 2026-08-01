@@ -31,6 +31,7 @@ import {
 } from "../utils/connectionPreview";
 import { addVirtualHandle } from "../utils/handles";
 import { GraphEdge, GraphEdgeMarkers } from "./GraphEdge";
+import { GraphEdgeContextMenu } from "./GraphEdgeContextMenu";
 import { GraphNode } from "./GraphNode";
 
 const nodeTypes: NodeTypes = { graph: GraphNode };
@@ -176,6 +177,8 @@ function InitialFitView({ hasNodes }: { hasNodes: boolean }) {
 export type GraphCanvasEditing = {
   onConnect: (connection: Connection) => void;
   isValidConnection: (connection: Connection | GraphEdgeType) => boolean;
+  onSetEdgeDirection: (id: string, direction: "both" | "oneway") => void;
+  onReverseEdge: (id: string) => void;
 };
 
 export type GraphCanvasProps = {
@@ -213,6 +216,11 @@ export function GraphCanvas({
   const editable = editing !== undefined;
   const viewport = useViewport();
   const nativeConnectionHandled = useRef(false);
+  const [contextMenu, setContextMenu] = useState<{
+    edgeId: string;
+    x: number;
+    y: number;
+  } | null>(null);
   const [virtualHandle, setVirtualHandle] = useState<VirtualHandle | null>(
     null,
   );
@@ -281,10 +289,32 @@ export function GraphCanvas({
       ) : null,
     [editing, nodes, viewport, virtualHandle],
   );
+  const handleEdgeContextMenu = useCallback(
+    (event: React.MouseEvent, edge: GraphEdgeType) => {
+      event.preventDefault();
+      onSelectEdge(edge.id);
+      setContextMenu({ edgeId: edge.id, x: event.clientX, y: event.clientY });
+    },
+    [onSelectEdge],
+  );
+  const contextMenuEdge = contextMenu
+    ? edges.find((edge) => edge.id === contextMenu.edgeId)
+    : undefined;
 
   return (
     <div className="relative min-h-0 flex-1 bg-secondary">
       <GraphEdgeMarkers />
+      {contextMenuEdge && editing && contextMenu ? (
+        <GraphEdgeContextMenu
+          edge={contextMenuEdge}
+          nodes={nodes}
+          edges={edges}
+          position={contextMenu}
+          onSetDirection={editing.onSetEdgeDirection}
+          onReverse={editing.onReverseEdge}
+          onClose={() => setContextMenu(null)}
+        />
+      ) : null}
       <ReactFlow
         nodes={displayNodes}
         edges={edges}
@@ -305,6 +335,7 @@ export function GraphCanvas({
         deleteKeyCode={editable ? ["Delete", "Backspace"] : null}
         onNodeClick={(_, n) => onSelectNode(n.id)}
         onEdgeClick={(_, e) => onSelectEdge(e.id)}
+        onEdgeContextMenu={editable ? handleEdgeContextMenu : undefined}
         onPaneClick={onClearSelection}
         connectionMode={ConnectionMode.Loose}
         connectionRadius={CONNECTION_PREVIEW_RADIUS}
