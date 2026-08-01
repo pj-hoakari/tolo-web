@@ -10,26 +10,23 @@ import { EdgeProperties } from "./EdgeProperties";
 import { resolveEdgeDirectionState } from "./edgeDirectionState";
 import { NodeProperties } from "./NodeProperties";
 import { buildNodeTypeOptions } from "./nodeTypeOptions";
-import type { ObservationPointsSource } from "./ObservationPointPicker";
 
 export type PropertiesPanelProps = {
   selectedNode: GraphNodeType | undefined;
   selectedEdge: GraphEdgeType | undefined;
   /** 制約の検証と端点ラベルの解決に使うグラフ全体 */
   graph: GraphData;
-  /** 紐づけ候補となる観測点（接続中のエッジ）一式 */
-  observationPoints: ObservationPointsSource;
   onUpdateNode: (id: string, patch: Partial<GraphNodeData>) => void;
   onUpdateEdge: (id: string, patch: Partial<GraphEdgeData>) => void;
   onReverseEdge: (id: string) => void;
   onDelete: () => void;
 };
 
+/** グラフ構造（ポイント・ルート）を編集するプロパティパネル */
 export function PropertiesPanel({
   selectedNode,
   selectedEdge,
   graph,
-  observationPoints,
   onUpdateNode,
   onUpdateEdge,
   onReverseEdge,
@@ -52,7 +49,6 @@ export function PropertiesPanel({
               nodes,
               edges,
             )}
-            observationPoints={observationPoints}
             onChange={(patch) => onUpdateNode(selectedNode.id, patch)}
           />
         ) : selectedEdge ? (
@@ -71,7 +67,6 @@ export function PropertiesPanel({
                 nodes.find((n) => n.id === selectedEdge.target)?.data.label ??
                 selectedEdge.target,
             }}
-            observationPoints={observationPoints}
             onChange={(patch) => onUpdateEdge(selectedEdge.id, patch)}
             onReverse={() => onReverseEdge(selectedEdge.id)}
           />

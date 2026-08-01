@@ -3,8 +3,8 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import type {
   GraphNodeType,
   NodeType,
-} from "@/features/tenant/management/graphEditor/type";
-import { GraphCanvas } from "./_helpers/GraphCanvas";
+} from "@/features/tenant/management/graph/type";
+import { StoryGraphCanvas } from "./_helpers/StoryGraphCanvas";
 
 // 単一ノードを最小 ReactFlow キャンバスに載せて表示
 type SingleNodeArgs = {
@@ -21,11 +21,11 @@ function SingleNode({ nodeType, label, selected }: SingleNodeArgs) {
     data: { label, nodeType },
     selected,
   };
-  return <GraphCanvas nodes={[node]} edges={[]} height={240} />;
+  return <StoryGraphCanvas nodes={[node]} edges={[]} height={240} />;
 }
 
 const meta = {
-  title: "Tenant/Management/GraphEditor/GraphNode",
+  title: "Tenant/Management/Graph/GraphNode",
   component: SingleNode,
   parameters: {
     layout: "padded",

@@ -54,13 +54,13 @@ describe("useGraphEditor: 同一ポイント間の複数ルート", () => {
     expect(result.current.canvas.edges.length).toBe(0);
 
     act(() => {
-      result.current.canvas.onConnect(connection("n1", "n2"));
+      result.current.canvas.editing.onConnect(connection("n1", "n2"));
     });
     expect(result.current.canvas.edges.length).toBe(1);
 
     // 同一ポイント間でも 2 本目が拒否されず追加される
     act(() => {
-      result.current.canvas.onConnect(connection("n1", "n2"));
+      result.current.canvas.editing.onConnect(connection("n1", "n2"));
     });
     expect(result.current.canvas.edges.length).toBe(2);
 
@@ -94,14 +94,14 @@ describe("useGraphEditor: 接続数によるハンドルの増減", () => {
 
     // 接続1: 使用済み1 + 空き
     act(() => {
-      result.current.canvas.onConnect(connection("n1", "n2"));
+      result.current.canvas.editing.onConnect(connection("n1", "n2"));
     });
     expect(usedCount(result.current.canvas.nodes, "n1", "right")).toBe(1);
     expect(freeCount(result.current.canvas.nodes, "n1", "right")).toBe(1);
 
     // 2本目接続: 使用済み 1 → 2 + 空き
     act(() => {
-      result.current.canvas.onConnect(connection("n1", "n2"));
+      result.current.canvas.editing.onConnect(connection("n1", "n2"));
     });
     expect(usedCount(result.current.canvas.nodes, "n1", "right")).toBe(2);
     expect(freeCount(result.current.canvas.nodes, "n1", "right")).toBe(1); // 常に空き1

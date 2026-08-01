@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import { PropertyNotice } from "@/features/tenant/management/graphEditor/components/properties";
+import { PropertyNotice } from "@/features/tenant/management/graph/components/properties";
 import { PanelFrame } from "./_helpers/propertiesFixtures";
 
 const meta = {
-  title: "Tenant/Management/GraphEditor/Properties/PropertyNotice",
+  title: "Tenant/Management/Graph/Properties/PropertyNotice",
   component: PropertyNotice,
   parameters: {
     layout: "padded",

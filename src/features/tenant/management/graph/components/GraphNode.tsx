@@ -20,7 +20,12 @@ const positionMap: Record<HandleSide, Position> = {
 
 const SIDES: HandleSide[] = ["top", "right", "bottom", "left"];
 
-export function GraphNode({ id, data, selected }: NodeProps<GraphNodeType>) {
+export function GraphNode({
+  id,
+  data,
+  selected,
+  isConnectable,
+}: NodeProps<GraphNodeType>) {
   const handles = data.handles;
   const typeDef = getNodeTypeDef(data.nodeType);
   const shape = typeDef.shape;
@@ -80,9 +85,11 @@ export function GraphNode({ id, data, selected }: NodeProps<GraphNodeType>) {
 
       {handles
         ? SIDES.flatMap((side) =>
-            handles[side].map((slot) => (
-              <HandlePort key={slot.id} slot={slot} />
-            )),
+            handles[side]
+              // 接続できないキャンバス（表示専用）では空きスロットを出さない。
+              // 使用中のスロットはエッジ端点の座標計算に必要なため常に描画する。
+              .filter((slot) => isConnectable || slot.used)
+              .map((slot) => <HandlePort key={slot.id} slot={slot} />),
           )
         : null}
     </div>

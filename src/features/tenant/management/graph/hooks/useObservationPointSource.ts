@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useAliveEdges } from "@/features/tenant/webrtc/hooks/useAliveEdges";
-import type { ObservationPointsSource } from "../components/properties";
+import type { ObservationPointsSource } from "../components/observation";
 import type { GraphData } from "../type";
 import { collectObservationPointIds } from "../utils/observationPoints";
 

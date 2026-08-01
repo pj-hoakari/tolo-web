@@ -3,25 +3,23 @@ import { Input, TextField } from "@/components/ui/textfield";
 import type { GraphNodeData, GraphNodeType } from "../../type";
 import { NodeTypeSelector } from "./NodeTypeSelector";
 import type { NodeTypeOption } from "./nodeTypeOptions";
-import {
-  ObservationPointPicker,
-  type ObservationPointsSource,
-} from "./ObservationPointPicker";
 import { SelectionHeader } from "./SelectionHeader";
 
 export type NodePropertiesProps = {
   node: GraphNodeType;
   /** 各ノードタイプの選択可否（`buildNodeTypeOptions` の結果） */
   typeOptions: NodeTypeOption[];
-  observationPoints: ObservationPointsSource;
   onChange: (patch: Partial<GraphNodeData>) => void;
 };
 
-/** ポイント（ノード）を選択しているときの編集フォーム */
+/**
+ * ポイント（ノード）を選択しているときの編集フォーム。
+ * 扱うのはグラフ構造そのものだけで、観測点の紐づけは表示側
+ * （`ObservationLinkPanel`）が担当する。
+ */
 export function NodeProperties({
   node,
   typeOptions,
-  observationPoints,
   onChange,
 }: NodePropertiesProps) {
   return (
@@ -42,12 +40,6 @@ export function NodeProperties({
         options={typeOptions}
         notices={node.data.notices}
         onChange={(nodeType) => onChange({ nodeType })}
-      />
-
-      <ObservationPointPicker
-        {...observationPoints}
-        linkedIds={node.data.observationPointIds ?? []}
-        onChange={(ids) => onChange({ observationPointIds: ids })}
       />
     </div>
   );

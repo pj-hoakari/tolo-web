@@ -4,7 +4,7 @@ import { fn } from "storybook/test";
 import {
   buildNodeTypeOptions,
   NodeProperties,
-} from "@/features/tenant/management/graphEditor/components/properties";
+} from "@/features/tenant/management/graph/components/properties";
 import {
   DUAL_BOUNDARY_EDGES,
   DUAL_BOUNDARY_NODES,
@@ -12,7 +12,6 @@ import {
   GRAPH_EDGES,
   GRAPH_NODES,
   graphNode,
-  observationPointsSource,
   PanelFrame,
 } from "./_helpers/propertiesFixtures";
 
@@ -24,7 +23,7 @@ const boothTypeOptions = buildNodeTypeOptions(
 );
 
 const meta = {
-  title: "Tenant/Management/GraphEditor/Properties/NodeProperties",
+  title: "Tenant/Management/Graph/Properties/NodeProperties",
   component: NodeProperties,
   parameters: {
     layout: "padded",
@@ -40,7 +39,6 @@ const meta = {
   args: {
     node: graphNode("ph_booth"),
     typeOptions: boothTypeOptions,
-    observationPoints: observationPointsSource({ onRefresh: fn() }),
     onChange: fn(),
   },
 } satisfies Meta<typeof NodeProperties>;
@@ -61,24 +59,6 @@ export const Boundary: Story = {
       GRAPH_NODES,
       GRAPH_EDGES,
     ),
-  },
-};
-
-/** 観測点を紐づけ済み（1つは接続中、1つは現在オフライン） */
-export const WithObservationPoints: Story = {
-  args: {
-    node: {
-      ...graphNode("ph_booth"),
-      data: {
-        label: "ブースA",
-        nodeType: "GOAL",
-        observationPointIds: ["demo_event_cam-booth-a", "demo_event_cam-old"],
-      },
-    },
-    observationPoints: observationPointsSource({
-      usedIds: new Set(["demo_event_cam-booth-a", "demo_event_cam-old"]),
-      onRefresh: fn(),
-    }),
   },
 };
 
@@ -107,15 +87,5 @@ export const WithDisabledType: Story = {
           }
         : option,
     ),
-  },
-};
-
-/** 接続中の観測点が無い状態 */
-export const NoObservationPoints: Story = {
-  args: {
-    observationPoints: observationPointsSource({
-      available: [],
-      onRefresh: fn(),
-    }),
   },
 };

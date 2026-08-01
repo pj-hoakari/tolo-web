@@ -2,14 +2,15 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { ReactFlowProvider } from "@xyflow/react";
 import { fn } from "storybook/test";
 
-import { GraphEditorCanvas } from "@/features/tenant/management/graphEditor/components/GraphEditorCanvas";
-import { useGraphEditor } from "@/features/tenant/management/graphEditor/hooks/useGraphEditor";
-import { deriveNodeNotices } from "@/features/tenant/management/graphEditor/nodeTypes";
-import { PLACEHOLDER_GRAPH } from "@/features/tenant/management/graphEditor/placeholderGraph";
+import { GraphCanvas } from "@/features/tenant/management/graph/components/GraphCanvas";
+import { useGraphEditor } from "@/features/tenant/management/graph/hooks/useGraphEditor";
+import { useGraphViewer } from "@/features/tenant/management/graph/hooks/useGraphViewer";
+import { deriveNodeNotices } from "@/features/tenant/management/graph/nodeTypes";
+import { PLACEHOLDER_GRAPH } from "@/features/tenant/management/graph/placeholderGraph";
 import {
   assignHandlesByPosition,
   deriveNodeHandles,
-} from "@/features/tenant/management/graphEditor/utils/handles";
+} from "@/features/tenant/management/graph/utils/handles";
 
 const derivedEdges = assignHandlesByPosition(
   PLACEHOLDER_GRAPH.nodes,
@@ -23,12 +24,18 @@ const derivedNodes = deriveNodeNotices(
 /** 実際の編集操作（移動・接続・選択）が効く状態のキャンバス */
 function EditableCanvas() {
   const { canvas } = useGraphEditor(PLACEHOLDER_GRAPH);
-  return <GraphEditorCanvas {...canvas} />;
+  return <GraphCanvas {...canvas} />;
+}
+
+/** 表示専用（移動・接続ができない）状態のキャンバス */
+function ViewOnlyCanvas() {
+  const { canvas } = useGraphViewer(PLACEHOLDER_GRAPH);
+  return <GraphCanvas {...canvas} />;
 }
 
 const meta = {
-  title: "Tenant/Management/GraphEditor/GraphEditorCanvas",
-  component: GraphEditorCanvas,
+  title: "Tenant/Management/Graph/GraphCanvas",
+  component: GraphCanvas,
   parameters: {
     layout: "fullscreen",
   },
@@ -47,19 +54,27 @@ const meta = {
     edges: derivedEdges,
     onNodesChange: fn(),
     onEdgesChange: fn(),
-    onConnect: fn(),
-    isValidConnection: () => true,
     onSelectNode: fn(),
     onSelectEdge: fn(),
     onClearSelection: fn(),
   },
-} satisfies Meta<typeof GraphEditorCanvas>;
+} satisfies Meta<typeof GraphCanvas>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** 状態を持たない表示のみ（操作は Actions に記録される） */
+/** editing を渡さない表示専用の状態（操作は Actions に記録される） */
 export const Default: Story = {};
+
+/** editing を渡した編集可能な状態（接続用の空きハンドルが出る） */
+export const Editing: Story = {
+  args: {
+    editing: {
+      onConnect: fn(),
+      isValidConnection: () => true,
+    },
+  },
+};
 
 /** ポイントが無い状態 */
 export const Empty: Story = {
@@ -69,4 +84,9 @@ export const Empty: Story = {
 /** useGraphEditor と繋いだ編集可能な状態 */
 export const Editable: Story = {
   render: () => <EditableCanvas />,
+};
+
+/** useGraphViewer と繋いだ表示専用の状態（選択のみできる） */
+export const ViewOnly: Story = {
+  render: () => <ViewOnlyCanvas />,
 };

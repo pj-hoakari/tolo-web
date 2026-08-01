@@ -3,12 +3,16 @@ import { NODE_TYPE_DEFS } from "../nodeTypes";
 import type { NodeType } from "../type";
 import { NodeTypeIcon } from "./NodeTypeIcon";
 
-type Props = {
+export type GraphEditorToolbarProps = {
   onAddNode: (type: NodeType) => void;
   onSave: () => void;
 };
 
-export function GraphToolbar({ onAddNode, onSave }: Props) {
+/** グラフ構造を編集するときのツールバー（ポイント追加・保存） */
+export function GraphEditorToolbar({
+  onAddNode,
+  onSave,
+}: GraphEditorToolbarProps) {
   return (
     <div className="flex items-center justify-between gap-3 border-border border-b bg-card px-4 py-2">
       <p className="shrink-0 font-semibold text-foreground text-sm">

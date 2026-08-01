@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
-import type { ObservationPointsSource } from "@/features/tenant/management/graphEditor/components/properties";
-import { deriveNodeNotices } from "@/features/tenant/management/graphEditor/nodeTypes";
-import { PLACEHOLDER_GRAPH } from "@/features/tenant/management/graphEditor/placeholderGraph";
+import type { ObservationPointsSource } from "@/features/tenant/management/graph/components/observation";
+import { deriveNodeNotices } from "@/features/tenant/management/graph/nodeTypes";
+import { PLACEHOLDER_GRAPH } from "@/features/tenant/management/graph/placeholderGraph";
 import type {
   GraphEdgeType,
   GraphNodeType,
-} from "@/features/tenant/management/graphEditor/type";
+} from "@/features/tenant/management/graph/type";
 import type { AliveEdge } from "@/features/tenant/webrtc/type";
 
 export const GRAPH_NODES = PLACEHOLDER_GRAPH.nodes;

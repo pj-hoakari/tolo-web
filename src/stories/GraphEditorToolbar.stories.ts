@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import { GraphToolbar } from "@/features/tenant/management/graphEditor/components/GraphToolbar";
+import { GraphEditorToolbar } from "@/features/tenant/management/graph/components/GraphEditorToolbar";
 
 const meta = {
-  title: "Tenant/Management/GraphEditor/GraphToolbar",
-  component: GraphToolbar,
+  title: "Tenant/Management/Graph/GraphEditorToolbar",
+  component: GraphEditorToolbar,
   parameters: {
     layout: "fullscreen",
   },
@@ -13,7 +13,7 @@ const meta = {
     onAddNode: () => {},
     onSave: () => {},
   },
-} satisfies Meta<typeof GraphToolbar>;
+} satisfies Meta<typeof GraphEditorToolbar>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

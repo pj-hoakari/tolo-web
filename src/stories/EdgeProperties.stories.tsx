@@ -4,12 +4,11 @@ import { fn } from "storybook/test";
 import {
   EdgeProperties,
   resolveEdgeDirectionState,
-} from "@/features/tenant/management/graphEditor/components/properties";
+} from "@/features/tenant/management/graph/components/properties";
 import {
   GRAPH_EDGES,
   GRAPH_NODES,
   graphEdge,
-  observationPointsSource,
   PanelFrame,
 } from "./_helpers/propertiesFixtures";
 
@@ -18,7 +17,7 @@ function directionStateOf(edgeId: string) {
 }
 
 const meta = {
-  title: "Tenant/Management/GraphEditor/Properties/EdgeProperties",
+  title: "Tenant/Management/Graph/Properties/EdgeProperties",
   component: EdgeProperties,
   parameters: {
     layout: "padded",
@@ -38,7 +37,6 @@ const meta = {
       sourceLabel: "エントランスホール",
       targetLabel: "ブースA",
     },
-    observationPoints: observationPointsSource({ onRefresh: fn() }),
     onChange: fn(),
     onReverse: fn(),
   },
@@ -70,32 +68,5 @@ export const DirectionRestricted: Story = {
       onewayDisabled: true,
       directionReason: "接続中のポイントのタイプでは片方向にできません",
     },
-  },
-};
-
-/** 観測点を紐づけ済みのルート */
-export const WithObservationPoints: Story = {
-  args: {
-    edge: {
-      ...graphEdge("ph_e2"),
-      data: {
-        direction: "both",
-        observationPointIds: ["demo_event_cam-hall"],
-      },
-    },
-    observationPoints: observationPointsSource({
-      usedIds: new Set(["demo_event_cam-hall"]),
-      onRefresh: fn(),
-    }),
-  },
-};
-
-/** 接続中の観測点が無い状態 */
-export const NoObservationPoints: Story = {
-  args: {
-    observationPoints: observationPointsSource({
-      available: [],
-      onRefresh: fn(),
-    }),
   },
 };

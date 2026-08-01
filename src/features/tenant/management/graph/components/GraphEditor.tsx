@@ -3,10 +3,9 @@
 import { ReactFlowProvider } from "@xyflow/react";
 import { type Ref, useImperativeHandle } from "react";
 import { useGraphEditor } from "../hooks/useGraphEditor";
-import { useObservationPointSource } from "../hooks/useObservationPointSource";
 import type { GraphData } from "../type";
-import { GraphEditorCanvas } from "./GraphEditorCanvas";
-import { GraphToolbar } from "./GraphToolbar";
+import { GraphCanvas } from "./GraphCanvas";
+import { GraphEditorToolbar } from "./GraphEditorToolbar";
 import { PropertiesPanel } from "./properties";
 
 export type GraphEditorHandle = {
@@ -14,25 +13,15 @@ export type GraphEditorHandle = {
 };
 
 type GraphEditorProps = {
-  tenantId: string;
-  eventId: string;
   initialGraph?: GraphData;
 };
 
 function GraphEditorInner({
-  tenantId,
-  eventId,
   initialGraph,
   handleRef,
 }: GraphEditorProps & { handleRef?: Ref<GraphEditorHandle> }) {
   const { graph, canvas, toolbar, properties, getGraphData } =
     useGraphEditor(initialGraph);
-
-  const observationPoints = useObservationPointSource({
-    tenantId,
-    eventId,
-    graph,
-  });
 
   // 親から ref 経由で編集済みデータを取得できるように
   useImperativeHandle(handleRef, () => ({ getGraphData }), [getGraphData]);
@@ -45,33 +34,26 @@ function GraphEditorInner({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <GraphToolbar {...toolbar} onSave={handleSave} />
+      <GraphEditorToolbar {...toolbar} onSave={handleSave} />
       <div className="flex min-h-0 flex-1">
-        <GraphEditorCanvas {...canvas} />
-        <PropertiesPanel
-          {...properties}
-          graph={graph}
-          observationPoints={observationPoints}
-        />
+        <GraphCanvas {...canvas} />
+        <PropertiesPanel {...properties} graph={graph} />
       </div>
     </div>
   );
 }
 
+/**
+ * 会場グラフの構造（ポイント・ルート）を編集するエディタ。
+ * 観測点などの付随情報は扱わず、紐づけは `GraphViewer` が担当する。
+ */
 export function GraphEditor({
-  tenantId,
-  eventId,
   initialGraph,
   ref,
 }: GraphEditorProps & { ref?: Ref<GraphEditorHandle> }) {
   return (
     <ReactFlowProvider>
-      <GraphEditorInner
-        tenantId={tenantId}
-        eventId={eventId}
-        initialGraph={initialGraph}
-        handleRef={ref}
-      />
+      <GraphEditorInner initialGraph={initialGraph} handleRef={ref} />
     </ReactFlowProvider>
   );
 }

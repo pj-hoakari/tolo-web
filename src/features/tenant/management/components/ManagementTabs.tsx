@@ -2,7 +2,8 @@
 
 import { Tab, TabList, TabPanel, Tabs } from "@/components/ui/tabs";
 import { ConnectedEdges } from "@/features/tenant/webrtc/components/ConnectedEdges";
-import { type GraphData, GraphEditor } from "../graphEditor";
+import { type GraphData, GraphViewer } from "../graph";
+import { graphEditPath } from "../routes";
 
 type TabId = "graph" | "edges";
 
@@ -35,17 +36,18 @@ export function ManagementTabs({ tenantId, eventId, initialGraph }: Props) {
       </TabList>
 
       <div className="min-h-0 flex-1 overflow-hidden px-2 py-2">
-        {/* グラフは編集状態を保持するためタブ非選択時もマウントしたまま隠す */}
+        {/* グラフは紐づけの状態を保持するためタブ非選択時もマウントしたまま隠す */}
         <TabPanel
           id="graph"
           shouldForceMount
           className="h-full data-inert:hidden"
         >
           <div className="h-full w-full overflow-hidden rounded-lg border border-border bg-background">
-            <GraphEditor
+            <GraphViewer
               tenantId={tenantId}
               eventId={eventId}
               initialGraph={initialGraph}
+              editHref={graphEditPath(eventId)}
             />
           </div>
         </TabPanel>

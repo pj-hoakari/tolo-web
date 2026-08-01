@@ -1,5 +1,5 @@
 import "@xyflow/react/dist/base.css";
-import "@/features/tenant/management/graphEditor/components/GraphEditor.css";
+import "@/features/tenant/management/graph/components/GraphCanvas.css";
 
 import {
   Background,
@@ -12,21 +12,22 @@ import {
 import {
   GraphEdge,
   GraphEdgeMarkers,
-} from "@/features/tenant/management/graphEditor/components/GraphEdge";
-import { GraphNode } from "@/features/tenant/management/graphEditor/components/GraphNode";
-import type { GraphData } from "@/features/tenant/management/graphEditor/type";
+} from "@/features/tenant/management/graph/components/GraphEdge";
+import { GraphNode } from "@/features/tenant/management/graph/components/GraphNode";
+import type { GraphData } from "@/features/tenant/management/graph/type";
 import {
   assignHandlesByPosition,
   deriveNodeHandles,
-} from "@/features/tenant/management/graphEditor/utils/handles";
+} from "@/features/tenant/management/graph/utils/handles";
 
 const nodeTypes: NodeTypes = { graph: GraphNode };
 const edgeTypes: EdgeTypes = { graph: GraphEdge };
 
 /**
  * GraphNode / GraphEdge を単独表示するための最小 ReactFlow キャンバス
+ * （機能側の `GraphCanvas` と違い、ツールバーや MiniMap を持たない Story 専用）
  */
-export function GraphCanvas({
+export function StoryGraphCanvas({
   nodes,
   edges,
   height = 360,
