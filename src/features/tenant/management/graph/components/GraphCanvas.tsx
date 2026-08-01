@@ -15,6 +15,7 @@ import {
   type NodeTypes,
   type OnConnectEnd,
   type OnConnectStart,
+  Panel,
   Position,
   ReactFlow,
   useNodesInitialized,
@@ -22,6 +23,7 @@ import {
   useViewport,
 } from "@xyflow/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { DEFAULT_NODE_TYPE, getNodeTypeDef } from "../nodeTypes";
 import type {
   GraphEdgeType,
@@ -38,7 +40,11 @@ import { addVirtualHandle } from "../utils/handles";
 import { GraphCanvasContextMenu } from "./GraphCanvasContextMenu";
 import { GraphEdge, GraphEdgeMarkers } from "./GraphEdge";
 import { GraphEdgeContextMenu } from "./GraphEdgeContextMenu";
-import { GraphNode, GraphNodeLabelEditingContext } from "./GraphNode";
+import {
+  GraphNode,
+  GraphNodeEasyConnectContext,
+  GraphNodeLabelEditingContext,
+} from "./GraphNode";
 import { GraphNodeContextMenu } from "./GraphNodeContextMenu";
 
 const nodeTypes: NodeTypes = { graph: GraphNode };
@@ -74,7 +80,7 @@ function VirtualConnectionLine({
   toY,
   connectionLineStyle,
 }: ConnectionLineComponentProps<GraphNodeType> & {
-  virtualHandle: VirtualHandle;
+  virtualHandle: VirtualHandle | null;
   nodes: GraphNodeType[];
   viewport: { x: number; y: number; zoom: number };
   isValidConnection: GraphCanvasEditing["isValidConnection"];
@@ -94,10 +100,11 @@ function VirtualConnectionLine({
     : null;
   const virtualPreview =
     preview && connection && isValidConnection(connection) ? preview : null;
-  const virtualSlot = fromNode.data.handles?.[virtualHandle.side].find(
-    (slot) => slot.virtual,
-  );
+  const virtualSlot = virtualHandle
+    ? fromNode.data.handles?.[virtualHandle.side].find((slot) => slot.virtual)
+    : undefined;
   const shouldUseVirtualSlot =
+    virtualHandle !== null &&
     fromNode.id === virtualHandle.nodeId &&
     fromHandle.id === `connect-${virtualHandle.side}` &&
     virtualSlot !== undefined;
@@ -246,6 +253,7 @@ export function GraphCanvas({
   const [virtualHandle, setVirtualHandle] = useState<VirtualHandle | null>(
     null,
   );
+  const [easyConnectActive, setEasyConnectActive] = useState(false);
   const displayNodes = useMemo(
     () =>
       virtualHandle
@@ -254,9 +262,9 @@ export function GraphCanvas({
     [nodes, virtualHandle],
   );
   const handleConnectStart = useCallback<OnConnectStart>((_, params) => {
+    nativeConnectionHandled.current = false;
     const side = params.handleId?.replace("connect-", "") as HandleSide;
     if (!params.nodeId || !SIDES.includes(side)) return;
-    nativeConnectionHandled.current = false;
     setVirtualHandle({ nodeId: params.nodeId, side });
   }, []);
   const handleConnect = useCallback(
@@ -271,9 +279,15 @@ export function GraphCanvas({
   const handleConnectEnd = useCallback<OnConnectEnd>(
     (_, connectionState) => {
       setVirtualHandle(null);
+      const wasEasyConnect = easyConnectActive;
       const wasHandledNatively = nativeConnectionHandled.current;
       nativeConnectionHandled.current = false;
-      if (wasHandledNatively) return;
+      if (wasHandledNatively) {
+        return;
+      }
+      if (wasEasyConnect) {
+        return;
+      }
       if (!editing || !connectionState.fromNode || !connectionState.pointer)
         return;
 
@@ -296,11 +310,11 @@ export function GraphCanvas({
         editing.onConnect(connection);
       }
     },
-    [editing, nodes, viewport],
+    [easyConnectActive, editing, nodes, viewport],
   );
   const connectionLineComponent = useCallback(
     (props: ConnectionLineComponentProps<GraphNodeType>) =>
-      virtualHandle && editing ? (
+      (virtualHandle || easyConnectActive) && editing ? (
         <VirtualConnectionLine
           {...props}
           virtualHandle={virtualHandle}
@@ -309,8 +323,27 @@ export function GraphCanvas({
           isValidConnection={editing.isValidConnection}
         />
       ) : null,
-    [editing, nodes, viewport, virtualHandle],
+    [easyConnectActive, editing, nodes, viewport, virtualHandle],
   );
+  const startEasyConnect = useCallback(() => {
+    setEasyConnectActive(true);
+  }, []);
+  const endEasyConnect = useCallback(() => {
+    setEasyConnectActive(false);
+  }, []);
+  const handlePaneClick = useCallback(() => {
+    endEasyConnect();
+    onClearSelection();
+  }, [endEasyConnect, onClearSelection]);
+  useEffect(() => {
+    if (!easyConnectActive) return;
+
+    const cancelEasyConnect = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setEasyConnectActive(false);
+    };
+    window.addEventListener("keydown", cancelEasyConnect);
+    return () => window.removeEventListener("keydown", cancelEasyConnect);
+  }, [easyConnectActive]);
   const handleEdgeContextMenu = useCallback(
     (event: React.MouseEvent, edge: GraphEdgeType) => {
       event.preventDefault();
@@ -377,6 +410,9 @@ export function GraphCanvas({
           nodePosition={canvasContextMenu.nodePosition}
           nodeType="GOAL_TRANSIT_MIXED"
           onAddNode={editing.onAddNodeAtPosition}
+          isEdgeCreationActive={easyConnectActive}
+          onStartEdgeCreation={startEasyConnect}
+          onEndEdgeCreation={endEasyConnect}
           onClose={() => setContextMenu(null)}
         />
       ) : null}
@@ -403,53 +439,77 @@ export function GraphCanvas({
           onClose={() => setContextMenu(null)}
         />
       ) : null}
-      <GraphNodeLabelEditingContext.Provider value={editing?.onSetNodeLabel}>
-        <ReactFlow
-          nodes={displayNodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={editable ? handleConnect : undefined}
-          onConnectStart={editable ? handleConnectStart : undefined}
-          onConnectEnd={editable ? handleConnectEnd : undefined}
-          connectionLineComponent={
-            virtualHandle ? connectionLineComponent : undefined
-          }
-          isValidConnection={editing?.isValidConnection}
-          // 表示専用のときは選択だけを許し、構造を変える操作は塞ぐ
-          nodesDraggable={editable}
-          nodesConnectable={editable}
-          deleteKeyCode={editable ? ["Delete", "Backspace"] : null}
-          onNodeClick={(_, n) => onSelectNode(n.id)}
-          onNodeContextMenu={editable ? handleNodeContextMenu : undefined}
-          onEdgeClick={(_, e) => onSelectEdge(e.id)}
-          onEdgeContextMenu={editable ? handleEdgeContextMenu : undefined}
-          onPaneClick={onClearSelection}
-          onPaneContextMenu={editable ? handlePaneContextMenu : undefined}
-          connectionMode={ConnectionMode.Loose}
-          connectionRadius={CONNECTION_PREVIEW_RADIUS}
-          minZoom={MIN_ZOOM}
-          fitView
-          fitViewOptions={FIT_VIEW_OPTIONS}
-        >
-          <InitialFitView hasNodes={nodes.length > 0} />
-          <Background gap={20} size={1} />
-          <Controls
-            position="bottom-right"
-            showInteractive={editable}
-            fitViewOptions={FIT_VIEW_OPTIONS}
-          />
-          <MiniMap
-            pannable
-            zoomable
-            nodeColor={(n: GraphNodeType) =>
-              getNodeTypeDef(n.data?.nodeType ?? DEFAULT_NODE_TYPE).color
+      <GraphNodeEasyConnectContext.Provider value={easyConnectActive}>
+        <GraphNodeLabelEditingContext.Provider value={editing?.onSetNodeLabel}>
+          <ReactFlow
+            nodes={displayNodes}
+            edges={edges}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={editable ? handleConnect : undefined}
+            onConnectStart={editable ? handleConnectStart : undefined}
+            onConnectEnd={editable ? handleConnectEnd : undefined}
+            connectionLineComponent={
+              virtualHandle || easyConnectActive
+                ? connectionLineComponent
+                : undefined
             }
-          />
-        </ReactFlow>
-      </GraphNodeLabelEditingContext.Provider>
+            isValidConnection={editing?.isValidConnection}
+            // 表示専用のときは選択だけを許し、構造を変える操作は塞ぐ
+            nodesDraggable={editable && !easyConnectActive}
+            nodesConnectable={editable}
+            deleteKeyCode={editable ? ["Delete", "Backspace"] : null}
+            onNodeClick={(_, n) => onSelectNode(n.id)}
+            onNodeContextMenu={editable ? handleNodeContextMenu : undefined}
+            onEdgeClick={(_, e) => onSelectEdge(e.id)}
+            onEdgeContextMenu={editable ? handleEdgeContextMenu : undefined}
+            onPaneClick={handlePaneClick}
+            onPaneContextMenu={editable ? handlePaneContextMenu : undefined}
+            connectionMode={ConnectionMode.Loose}
+            connectionRadius={CONNECTION_PREVIEW_RADIUS}
+            minZoom={MIN_ZOOM}
+            fitView
+            fitViewOptions={FIT_VIEW_OPTIONS}
+          >
+            <InitialFitView hasNodes={nodes.length > 0} />
+            {easyConnectActive ? (
+              <Panel position="top-center">
+                <div className="flex items-center rounded-md border border-primary bg-card px-3 py-2 text-foreground text-sm shadow-sm">
+                  <div>
+                    ルートを追加: ポイントから別のポイントへドラッグ
+                    <span className="ml-2 text-muted-foreground text-xs">
+                      Esc でキャンセル
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="ml-3 h-7"
+                    onPress={endEasyConnect}
+                  >
+                    ルート追加を終了
+                  </Button>
+                </div>
+              </Panel>
+            ) : null}
+            <Background gap={20} size={1} />
+            <Controls
+              position="bottom-right"
+              showInteractive={editable}
+              fitViewOptions={FIT_VIEW_OPTIONS}
+            />
+            <MiniMap
+              pannable
+              zoomable
+              nodeColor={(n: GraphNodeType) =>
+                getNodeTypeDef(n.data?.nodeType ?? DEFAULT_NODE_TYPE).color
+              }
+            />
+          </ReactFlow>
+        </GraphNodeLabelEditingContext.Provider>
+      </GraphNodeEasyConnectContext.Provider>
     </div>
   );
 }

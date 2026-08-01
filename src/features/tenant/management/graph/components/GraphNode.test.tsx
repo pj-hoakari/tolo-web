@@ -4,7 +4,11 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { type NodeProps, ReactFlowProvider } from "@xyflow/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { GraphNodeType } from "../type";
-import { GraphNode, GraphNodeLabelEditingContext } from "./GraphNode";
+import {
+  GraphNode,
+  GraphNodeEasyConnectContext,
+  GraphNodeLabelEditingContext,
+} from "./GraphNode";
 
 const nodeProps = {
   id: "n1",
@@ -81,5 +85,20 @@ describe("GraphNode", () => {
     fireEvent.keyDown(input, { key: "Escape" });
 
     expect(onUpdate).not.toHaveBeenCalled();
+  });
+
+  it("ルート追加モード中はノード全体を接続領域にする", () => {
+    const { container } = render(
+      <ReactFlowProvider>
+        <GraphNodeEasyConnectContext.Provider value>
+          <GraphNode {...nodeProps} isConnectable />
+        </GraphNodeEasyConnectContext.Provider>
+      </ReactFlowProvider>,
+    );
+
+    const handle = container.querySelector('[data-handleid="easy-connect"]');
+    expect(handle).not.toBeNull();
+    expect(handle?.classList.contains("z-20!")).toBe(true);
+    expect(handle?.classList.contains("pointer-events-auto!")).toBe(true);
   });
 });

@@ -14,6 +14,9 @@ describe("GraphCanvasContextMenu", () => {
         nodePosition={{ x: 420, y: 180 }}
         nodeType="GOAL_TRANSIT_MIXED"
         onAddNode={onAddNode}
+        isEdgeCreationActive={false}
+        onStartEdgeCreation={vi.fn()}
+        onEndEdgeCreation={vi.fn()}
         onClose={onClose}
       />,
     );
@@ -24,6 +27,53 @@ describe("GraphCanvasContextMenu", () => {
       { x: 420, y: 180 },
       "GOAL_TRANSIT_MIXED",
     );
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("ルート追加モードを開始できる", () => {
+    const onStartEdgeCreation = vi.fn();
+    const onClose = vi.fn();
+
+    render(
+      <GraphCanvasContextMenu
+        position={{ x: 100, y: 100 }}
+        nodePosition={{ x: 420, y: 180 }}
+        nodeType="GOAL_TRANSIT_MIXED"
+        onAddNode={vi.fn()}
+        isEdgeCreationActive={false}
+        onStartEdgeCreation={onStartEdgeCreation}
+        onEndEdgeCreation={vi.fn()}
+        onClose={onClose}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("menuitem", { name: "ルートを追加" }));
+
+    expect(onStartEdgeCreation).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("ルート追加モードを終了できる", () => {
+    const onEndEdgeCreation = vi.fn();
+    const onClose = vi.fn();
+
+    render(
+      <GraphCanvasContextMenu
+        position={{ x: 100, y: 100 }}
+        nodePosition={{ x: 420, y: 180 }}
+        nodeType="GOAL_TRANSIT_MIXED"
+        onAddNode={vi.fn()}
+        isEdgeCreationActive
+        onStartEdgeCreation={vi.fn()}
+        onEndEdgeCreation={onEndEdgeCreation}
+        onClose={onClose}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("menuitem", { name: "ルート追加を終了" }));
+
+    expect(screen.getAllByRole("menuitem")).toHaveLength(1);
+    expect(onEndEdgeCreation).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
   });
 });

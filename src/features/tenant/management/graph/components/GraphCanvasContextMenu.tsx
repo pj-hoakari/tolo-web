@@ -10,6 +10,9 @@ export type GraphCanvasContextMenuProps = {
   nodePosition: XYPosition;
   nodeType: NodeType;
   onAddNode: (position: XYPosition, nodeType: NodeType) => void;
+  isEdgeCreationActive: boolean;
+  onStartEdgeCreation: () => void;
+  onEndEdgeCreation: () => void;
   onClose: () => void;
 };
 
@@ -19,6 +22,9 @@ export function GraphCanvasContextMenu({
   nodePosition,
   nodeType,
   onAddNode,
+  isEdgeCreationActive,
+  onStartEdgeCreation,
+  onEndEdgeCreation,
   onClose,
 }: GraphCanvasContextMenuProps) {
   const anchorRef = useRef<HTMLSpanElement>(null);
@@ -43,15 +49,38 @@ export function GraphCanvasContextMenu({
         className="min-w-40"
       >
         <Menu aria-label="グラフ操作">
-          <MenuItem
-            id="add-node"
-            onAction={() => {
-              onAddNode(nodePosition, nodeType);
-              onClose();
-            }}
-          >
-            ポイントを追加
-          </MenuItem>
+          {isEdgeCreationActive ? (
+            <MenuItem
+              id="end-edge-creation"
+              onAction={() => {
+                onEndEdgeCreation();
+                onClose();
+              }}
+            >
+              ルート追加を終了
+            </MenuItem>
+          ) : (
+            <>
+              <MenuItem
+                id="add-node"
+                onAction={() => {
+                  onAddNode(nodePosition, nodeType);
+                  onClose();
+                }}
+              >
+                ポイントを追加
+              </MenuItem>
+              <MenuItem
+                id="add-edge"
+                onAction={() => {
+                  onStartEdgeCreation();
+                  onClose();
+                }}
+              >
+                ルートを追加
+              </MenuItem>
+            </>
+          )}
         </Menu>
       </MenuPopover>
     </>

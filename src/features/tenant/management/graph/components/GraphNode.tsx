@@ -36,6 +36,9 @@ export const GraphNodeLabelEditingContext = createContext<
   ((id: string, label: string) => void) | undefined
 >(undefined);
 
+/** グローバルなルート追加モードでは、ノード全体を接続領域として扱う。 */
+export const GraphNodeEasyConnectContext = createContext(false);
+
 export function GraphNode({
   id,
   data,
@@ -47,6 +50,7 @@ export function GraphNode({
   const typeDef = getNodeTypeDef(data.nodeType);
   const updateNodeInternals = useUpdateNodeInternals();
   const onUpdateLabel = useContext(GraphNodeLabelEditingContext);
+  const easyConnectActive = useContext(GraphNodeEasyConnectContext);
   const connection = useConnection<GraphNodeType>();
   const isConnecting =
     connection.inProgress &&
@@ -77,10 +81,11 @@ export function GraphNode({
       0,
     );
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: handleSignature をトリガー依存として扱う
+  // ハンドル構成または全体接続領域が変化したら、React Flow の内部キャッシュを更新する。
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handleSignature と easyConnectActive は DOM 上のハンドル構成を表すトリガーとして扱う
   useEffect(() => {
     updateNodeInternals(id);
-  }, [id, handleSignature, updateNodeInternals]);
+  }, [easyConnectActive, handleSignature, id, updateNodeInternals]);
 
   return (
     <div className="group relative flex w-fit min-w-40 justify-center">
@@ -109,6 +114,7 @@ export function GraphNode({
       {isConnectable
         ? SIDES.map((side) => <BorderConnectionHandle key={side} side={side} />)
         : null}
+      {easyConnectActive && isConnectable ? <EasyConnectHandle /> : null}
     </div>
   );
 }
@@ -283,6 +289,25 @@ function BorderConnectionHandle({ side }: { side: HandleSide }) {
       id={`connect-${side}`}
       style={style}
       className="rounded-none! border-0! bg-transparent!"
+    />
+  );
+}
+
+/** ルート追加モード中だけノード全体を覆う接続領域。 */
+function EasyConnectHandle() {
+  return (
+    <Handle
+      type="source"
+      position={Position.Top}
+      id="easy-connect"
+      style={{
+        width: "100%",
+        height: "100%",
+        top: 0,
+        left: 0,
+        transform: "none",
+      }}
+      className="pointer-events-auto! z-20! rounded-lg! border-0! bg-transparent! opacity-0!"
     />
   );
 }
