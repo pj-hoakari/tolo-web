@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import {
   Menu,
+  MenuHeader,
   MenuItem,
   MenuPopover,
   MenuSeparator,
@@ -60,6 +61,7 @@ export function GraphNodeContextMenu({
         className="min-w-48"
       >
         <Menu aria-label="ポイントのタイプを変更">
+          <MenuHeader className="px-2 text-xs">タイプを変更</MenuHeader>
           {options.map((option) => {
             const def = getNodeTypeDef(option.type);
             return (

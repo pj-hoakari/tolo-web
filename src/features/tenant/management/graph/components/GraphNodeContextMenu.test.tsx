@@ -28,6 +28,7 @@ describe("GraphNodeContextMenu", () => {
       />,
     );
 
+    expect(screen.getByText("タイプを変更")).toBeTruthy();
     fireEvent.click(screen.getByRole("menuitem", { name: "通過のみ" }));
 
     expect(onSetType).toHaveBeenCalledWith("n1", "TRANSIT_ONLY");
