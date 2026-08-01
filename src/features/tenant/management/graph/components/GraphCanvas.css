@@ -40,6 +40,12 @@
   border-bottom: none;
 }
 
+/* React Flow のキーボードフォーカスはノードコンポーネントの外側に付くため、
+   共通フレームだけをここから強調する。 */
+.react-flow__node:focus-visible .graph-node-frame {
+  border-color: var(--primary);
+}
+
 /* エッジ配色（GraphEdge.tsx と矢印 marker が参照）
    marker SVGは .react-flow の外に描画されるため :root に置く */
 :root {

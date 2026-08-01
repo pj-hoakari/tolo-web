@@ -19,7 +19,7 @@ describe("GraphNode", () => {
   it("文字幅にフィットするラベルを、ノードのサイズを変えずにポップアップ編集できる", () => {
     const onUpdate = vi.fn();
 
-    render(
+    const { container } = render(
       <ReactFlowProvider>
         <GraphNodeLabelEditingContext.Provider value={onUpdate}>
           <GraphNode {...nodeProps} />
@@ -30,13 +30,32 @@ describe("GraphNode", () => {
     const labelButton = screen.getByRole("button", {
       name: "「ポイント 1」のラベルを編集",
     });
+    const frame = container.querySelector(".graph-node-frame");
+    const badge = container.querySelector(".graph-node-type-badge");
+    const badgeIcon = badge?.querySelector("svg");
+    expect(frame?.classList.contains("bg-card")).toBe(true);
+    expect(frame?.classList.contains("border-border")).toBe(true);
+    expect(badge?.classList.contains("-top-1")).toBe(true);
+    expect(badge?.classList.contains("-left-1")).toBe(true);
+    expect(badge?.classList.contains("rounded-full")).toBe(true);
+    expect(badge?.classList.contains("bg-card")).toBe(true);
+    expect(badge?.classList.contains("shadow-sm")).toBe(false);
+    expect(badgeIcon?.classList.contains("size-4")).toBe(true);
+    expect(screen.getByText("目的地").parentElement).toBe(badge);
     expect(labelButton.classList.contains("w-fit")).toBe(true);
     expect(labelButton.classList.contains("w-full")).toBe(false);
+    expect(labelButton.classList.contains("text-left")).toBe(true);
+    expect(screen.getByText("目的地").classList.contains("text-[10px]")).toBe(
+      true,
+    );
     fireEvent.click(labelButton);
 
     const input = screen.getByRole("textbox", { name: "ポイントのラベル" });
     expect(document.activeElement).toBe(input);
-    expect(input.closest(".absolute")).not.toBeNull();
+    const popup = input.closest(".absolute");
+    expect(popup).not.toBeNull();
+    expect(popup?.classList.contains("top-1/2")).toBe(true);
+    expect(popup?.classList.contains("left-1/2")).toBe(true);
     fireEvent.change(input, { target: { value: "エントランス" } });
     fireEvent.keyDown(input, { key: "Enter" });
 

@@ -37,24 +37,6 @@ export type NodeTypeNotice = {
   match: (ctx: NodeValidationContext) => boolean;
 };
 
-type NodeShapeBase = {
-  contentClassName?: string;
-};
-
-export type NodeShape =
-  | (NodeShapeBase & {
-      /** border-radius による四角形ベースの描画 */
-      kind: "rounded";
-      /** CSS border-radius */
-      borderRadius: string;
-    })
-  | (NodeShapeBase & {
-      /** SVG による多角形の描画 */
-      kind: "polygon";
-      /** 100 × 100 の viewBox 内における頂点座標 */
-      points: string;
-    });
-
 export type NodeIcon =
   | { kind: "circle"; r: number }
   | { kind: "polygon"; points: string };
@@ -65,7 +47,6 @@ export type NodeTypeDef = {
   description: string;
   color: string;
   icon: NodeIcon;
-  shape: NodeShape;
   constraints?: NodeTypeConstraint[];
   notices?: NodeTypeNotice[];
 };
@@ -85,8 +66,6 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
     color: "#0ea5e9",
     // 四角形（正方形）
     icon: { kind: "polygon", points: "12,12 88,12 88,88 12,88" },
-    // 四角形
-    shape: { kind: "rounded", borderRadius: "8px" },
   },
   {
     type: "GOAL_TRANSIT_MIXED",
@@ -95,8 +74,6 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
     color: "#22c55e",
     // 円形
     icon: { kind: "circle", r: 44 },
-    // 角丸が強い四角形
-    shape: { kind: "rounded", borderRadius: "22px" },
   },
   {
     type: "TRANSIT_ONLY",
@@ -105,11 +82,6 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
     color: "#a1a1aa",
     // ひし形
     icon: { kind: "polygon", points: "50,6 94,50 50,94 6,50" },
-    // 四隅を切り落とした、ひし形に近い四角形（八角形）
-    shape: {
-      kind: "polygon",
-      points: "25,0 75,0 100,35 100,65 75,100 25,100 0,65 0,35",
-    },
   },
   {
     type: "BOUNDARY",
@@ -118,12 +90,6 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
     color: "#f59e0b",
     // 三角形（▷）
     icon: { kind: "polygon", points: "16,8 92,50 16,92" },
-    // 横向きの三角形(▷)に近い台形
-    shape: {
-      kind: "polygon",
-      points: "0,0 100,24 100,76 0,100",
-      contentClassName: "pr-3",
-    },
     notices: [dualDirectionNotice],
   },
 ];

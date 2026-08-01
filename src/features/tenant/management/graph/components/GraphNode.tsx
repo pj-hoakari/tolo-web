@@ -4,6 +4,7 @@ import {
   Handle,
   type NodeProps,
   Position,
+  useConnection,
   useUpdateNodeInternals,
 } from "@xyflow/react";
 import {
@@ -16,7 +17,7 @@ import {
 } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, TextField } from "@/components/ui/textfield";
-import { getNodeTypeDef, type NodeShape } from "../nodeTypes";
+import { getNodeTypeDef } from "../nodeTypes";
 import type { GraphNodeType, HandleSide, HandleSlot } from "../type";
 import { makeHandleId } from "../utils/handles";
 import { NodeTypeIcon } from "./NodeTypeIcon";
@@ -39,13 +40,17 @@ export function GraphNode({
   id,
   data,
   selected,
+  dragging,
   isConnectable,
 }: NodeProps<GraphNodeType>) {
   const handles = data.handles;
   const typeDef = getNodeTypeDef(data.nodeType);
-  const shape = typeDef.shape;
   const updateNodeInternals = useUpdateNodeInternals();
   const onUpdateLabel = useContext(GraphNodeLabelEditingContext);
+  const connection = useConnection<GraphNodeType>();
+  const isConnecting =
+    connection.inProgress &&
+    (connection.fromNode?.id === id || connection.toNode?.id === id);
 
   // ハンドル構成（id・index・total）が変化したら React Flow の内部キャッシュを更新し、
   // エッジ端点の座標を再計算させる。
@@ -78,19 +83,15 @@ export function GraphNode({
   }, [id, handleSignature, updateNodeInternals]);
 
   return (
-    <div className="group relative min-w-40 drop-shadow-md">
-      <NodeFrame shape={shape} selected={selected} />
+    <div className="group relative flex w-fit min-w-40 justify-center">
+      <NodeFrame
+        selected={selected}
+        dragging={dragging}
+        isConnecting={isConnecting}
+      />
+      <NodeTypeBadge type={data.nodeType} label={typeDef.label} />
       {/* 内容 */}
-      <div
-        className={[
-          "relative flex min-h-14 flex-col justify-center px-3 py-2",
-          shape.contentClassName ?? "",
-        ].join(" ")}
-      >
-        <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
-          <NodeTypeIcon type={data.nodeType} />
-          {typeDef.label}
-        </div>
+      <div className="relative min-w-0 px-4 py-5">
         <InlineNodeLabel id={id} label={data.label} onUpdate={onUpdateLabel} />
       </div>
 
@@ -144,19 +145,19 @@ function InlineNodeLabel({
 
   if (!onUpdate) {
     return (
-      <div className="text-center font-semibold text-foreground text-sm">
+      <div className="text-left font-semibold text-foreground text-sm">
         {label}
       </div>
     );
   }
 
   return (
-    <div className="relative self-center">
+    <div className="relative self-start">
       <Button
         aria-label={`「${label}」のラベルを編集`}
         variant="ghost"
         isDisabled={isEditing}
-        className="nodrag nowheel h-auto min-h-0 w-fit max-w-full whitespace-normal rounded-sm px-1 py-0 font-semibold text-foreground text-sm"
+        className="nodrag nowheel h-auto min-h-0 w-fit max-w-full whitespace-normal rounded-sm px-0 py-0 text-left font-semibold text-foreground text-sm"
         onPointerDown={(event) => event.stopPropagation()}
         onPress={startEditing}
       >
@@ -171,7 +172,7 @@ function InlineNodeLabel({
           <Input
             aria-label="ポイントのラベル"
             autoFocus
-            className="nodrag nowheel h-8 w-full bg-popover px-2 text-center font-semibold text-sm shadow-lg"
+            className="nodrag nowheel h-8 w-full border-none bg-popover px-2 text-left font-semibold text-sm"
             onBlur={() => finishEditing(true)}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
@@ -193,46 +194,43 @@ function InlineNodeLabel({
   );
 }
 
-/** 塗りと枠線をひとつの図形として描画し、線幅の歪みを防ぐ。 */
+/** 外形は全ノード共通。操作中だけ輪郭を表示する。 */
 function NodeFrame({
-  shape,
   selected,
+  dragging,
+  isConnecting,
 }: {
-  shape: NodeShape;
   selected: boolean;
+  dragging: boolean;
+  isConnecting: boolean;
 }) {
-  const borderClass = selected
-    ? "border-primary"
-    : "border-muted-foreground group-hover:border-muted-foreground/40";
-  const strokeClass = selected
-    ? "text-primary"
-    : "text-muted-foreground group-hover:text-muted-foreground/40";
-
-  if (shape.kind === "rounded") {
-    return (
-      <div
-        className={`absolute inset-0 border-2 bg-card transition-colors ${borderClass}`}
-        style={{ borderRadius: shape.borderRadius }}
-      />
-    );
-  }
+  const borderClass =
+    selected || dragging || isConnecting
+      ? "border-primary"
+      : "border-border group-hover:border-muted-foreground group-focus-within:border-primary";
 
   return (
-    <svg
-      aria-hidden="true"
-      className={`pointer-events-none absolute inset-0 h-full w-full overflow-visible transition-colors ${strokeClass}`}
-      preserveAspectRatio="none"
-      viewBox="-1 -1 102 102"
-    >
-      <polygon
-        fill="var(--card)"
-        points={shape.points}
-        stroke="currentColor"
-        strokeLinejoin="round"
-        strokeWidth="1.5"
-        vectorEffect="non-scaling-stroke"
-      />
-    </svg>
+    <div
+      className={`graph-node-frame pointer-events-none absolute inset-0 rounded-lg border-2 bg-card shadow-sm transition-colors ${borderClass}`}
+    />
+  );
+}
+
+/** タイプを示すアイコンと名前を、ノード左上のピル型バッジとして表示する。 */
+function NodeTypeBadge({
+  type,
+  label,
+}: {
+  type: GraphNodeType["data"]["nodeType"];
+  label: string;
+}) {
+  return (
+    <div className="graph-node-type-badge pointer-events-none absolute -top-1 -left-1 z-10 flex items-center gap-1 rounded-full border border-border bg-card px-2 py-1">
+      <NodeTypeIcon type={type} className="size-4" />
+      <span className="font-medium text-[10px] text-muted-foreground">
+        {label}
+      </span>
+    </div>
   );
 }
 
