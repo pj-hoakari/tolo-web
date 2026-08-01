@@ -1,13 +1,15 @@
 import type { XYPosition } from "@xyflow/react";
 import { useRef } from "react";
 import { Menu, MenuItem, MenuPopover } from "@/components/ui/menu";
+import type { NodeType } from "../type";
 
 type ContextMenuPosition = { x: number; y: number };
 
 export type GraphCanvasContextMenuProps = {
   position: ContextMenuPosition;
   nodePosition: XYPosition;
-  onAddNode: (position: XYPosition) => void;
+  nodeType: NodeType;
+  onAddNode: (position: XYPosition, nodeType: NodeType) => void;
   onClose: () => void;
 };
 
@@ -15,6 +17,7 @@ export type GraphCanvasContextMenuProps = {
 export function GraphCanvasContextMenu({
   position,
   nodePosition,
+  nodeType,
   onAddNode,
   onClose,
 }: GraphCanvasContextMenuProps) {
@@ -43,7 +46,7 @@ export function GraphCanvasContextMenu({
           <MenuItem
             id="add-node"
             onAction={() => {
-              onAddNode(nodePosition);
+              onAddNode(nodePosition, nodeType);
               onClose();
             }}
           >

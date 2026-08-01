@@ -23,7 +23,12 @@ import {
 } from "@xyflow/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_NODE_TYPE, getNodeTypeDef } from "../nodeTypes";
-import type { GraphEdgeType, GraphNodeType, HandleSide } from "../type";
+import type {
+  GraphEdgeType,
+  GraphNodeType,
+  HandleSide,
+  NodeType,
+} from "../type";
 import {
   CONNECTION_PREVIEW_RADIUS,
   findConnectionPreview,
@@ -183,7 +188,10 @@ export type GraphCanvasEditing = {
   onReverseEdge: (id: string) => void;
   onSetNodeType: (id: string, type: GraphNodeType["data"]["nodeType"]) => void;
   onSetNodeLabel: (id: string, label: string) => void;
-  onAddNodeAtPosition: (position: { x: number; y: number }) => void;
+  onAddNodeAtPosition: (
+    position: { x: number; y: number },
+    nodeType?: NodeType,
+  ) => void;
   onDeleteNode: (id: string) => void;
   onDeleteEdge: (id: string) => void;
 };
@@ -367,6 +375,7 @@ export function GraphCanvas({
         <GraphCanvasContextMenu
           position={canvasContextMenu}
           nodePosition={canvasContextMenu.nodePosition}
+          nodeType="GOAL_TRANSIT_MIXED"
           onAddNode={editing.onAddNodeAtPosition}
           onClose={() => setContextMenu(null)}
         />

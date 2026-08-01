@@ -12,6 +12,7 @@ describe("GraphCanvasContextMenu", () => {
       <GraphCanvasContextMenu
         position={{ x: 100, y: 100 }}
         nodePosition={{ x: 420, y: 180 }}
+        nodeType="GOAL_TRANSIT_MIXED"
         onAddNode={onAddNode}
         onClose={onClose}
       />,
@@ -19,7 +20,10 @@ describe("GraphCanvasContextMenu", () => {
 
     fireEvent.click(screen.getByRole("menuitem", { name: "ポイントを追加" }));
 
-    expect(onAddNode).toHaveBeenCalledWith({ x: 420, y: 180 });
+    expect(onAddNode).toHaveBeenCalledWith(
+      { x: 420, y: 180 },
+      "GOAL_TRANSIT_MIXED",
+    );
     expect(onClose).toHaveBeenCalled();
   });
 });
