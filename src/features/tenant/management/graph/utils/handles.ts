@@ -160,6 +160,18 @@ function sidesForEdge(
   return { sourceSide: horizontalSource, targetSide: verticalTarget };
 }
 
+/**
+ * 接続完了後に割り当てる、両端ノードの接続辺を返す。
+ * エッジ作成中のプレビューもこの結果を使うことで、ポインタがノード上を
+ * 移動しても確定後と同じ向きに表示できる。
+ */
+export function getConnectionSides(
+  source: GraphNodeType,
+  target: GraphNodeType,
+): { sourceSide: HandleSide; targetSide: HandleSide } {
+  return sidesForEdge(nodeCenter(source), nodeCenter(target));
+}
+
 type Attach = {
   edgeId: string;
   role: "source" | "target";
@@ -177,8 +189,7 @@ export function assignHandlesByPosition(
   nodes: GraphNodeType[],
   edges: GraphEdgeType[],
 ): GraphEdgeType[] {
-  const centerById = new Map<string, Vec2>();
-  for (const n of nodes) centerById.set(n.id, nodeCenter(n));
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
 
   const sideByEdge = new Map<
     string,
@@ -195,22 +206,24 @@ export function assignHandlesByPosition(
   };
 
   for (const e of edges) {
-    const s = centerById.get(e.source);
-    const t = centerById.get(e.target);
+    const s = nodeById.get(e.source);
+    const t = nodeById.get(e.target);
     if (!s || !t) continue;
-    const sides = sidesForEdge(s, t);
+    const sides = getConnectionSides(s, t);
+    const sourceCenter = nodeCenter(s);
+    const targetCenter = nodeCenter(t);
     sideByEdge.set(e.id, sides);
     addAttach(e.source, {
       edgeId: e.id,
       role: "source",
       side: sides.sourceSide,
-      other: t,
+      other: targetCenter,
     });
     addAttach(e.target, {
       edgeId: e.id,
       role: "target",
       side: sides.targetSide,
-      other: s,
+      other: sourceCenter,
     });
   }
 

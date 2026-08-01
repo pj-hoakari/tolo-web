@@ -13,14 +13,22 @@ import {
   MiniMap,
   type NodeChange,
   type NodeTypes,
+  type OnConnectEnd,
   type OnConnectStart,
+  Position,
   ReactFlow,
   useNodesInitialized,
   useReactFlow,
+  useViewport,
 } from "@xyflow/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_NODE_TYPE, getNodeTypeDef } from "../nodeTypes";
 import type { GraphEdgeType, GraphNodeType, HandleSide } from "../type";
+import {
+  CONNECTION_PREVIEW_RADIUS,
+  findConnectionPreview,
+  toFlowPosition,
+} from "../utils/connectionPreview";
 import { addVirtualHandle } from "../utils/handles";
 import { GraphEdge, GraphEdgeMarkers } from "./GraphEdge";
 import { GraphNode } from "./GraphNode";
@@ -33,23 +41,51 @@ const edgeTypes: EdgeTypes = { graph: GraphEdge };
 const MIN_ZOOM = 0.01;
 const FIT_VIEW_OPTIONS = { padding: 0.2, minZoom: MIN_ZOOM };
 const SIDES: HandleSide[] = ["top", "right", "bottom", "left"];
+const positionBySide: Record<HandleSide, Position> = {
+  top: Position.Top,
+  right: Position.Right,
+  bottom: Position.Bottom,
+  left: Position.Left,
+};
 
 type VirtualHandle = { nodeId: string; side: HandleSide };
 
 function VirtualConnectionLine({
   virtualHandle,
+  nodes,
+  viewport,
+  isValidConnection,
   fromHandle,
   fromNode,
   fromPosition,
   fromX,
   fromY,
+  pointer,
   toPosition,
   toX,
   toY,
   connectionLineStyle,
 }: ConnectionLineComponentProps<GraphNodeType> & {
   virtualHandle: VirtualHandle;
+  nodes: GraphNodeType[];
+  viewport: { x: number; y: number; zoom: number };
+  isValidConnection: GraphCanvasEditing["isValidConnection"];
 }) {
+  const preview = findConnectionPreview(
+    toFlowPosition(pointer, viewport),
+    nodes,
+    fromNode.id,
+  );
+  const connection = preview
+    ? {
+        source: preview.sourceId,
+        sourceHandle: null,
+        target: preview.targetId,
+        targetHandle: null,
+      }
+    : null;
+  const virtualPreview =
+    preview && connection && isValidConnection(connection) ? preview : null;
   const virtualSlot = fromNode.data.handles?.[virtualHandle.side].find(
     (slot) => slot.virtual,
   );
@@ -57,16 +93,23 @@ function VirtualConnectionLine({
     fromNode.id === virtualHandle.nodeId &&
     fromHandle.id === `connect-${virtualHandle.side}` &&
     virtualSlot !== undefined;
-  const source = shouldUseVirtualSlot
-    ? virtualSlotPosition(fromNode, virtualSlot)
-    : { x: fromX, y: fromY };
+  const source = virtualPreview
+    ? virtualPreview.sourcePosition
+    : shouldUseVirtualSlot
+      ? virtualSlotPosition(fromNode, virtualSlot)
+      : { x: fromX, y: fromY };
+  const target = virtualPreview?.targetPosition ?? { x: toX, y: toY };
   const [path] = getBezierPath({
     sourceX: source.x,
     sourceY: source.y,
-    sourcePosition: fromPosition,
-    targetX: toX,
-    targetY: toY,
-    targetPosition: toPosition,
+    sourcePosition: virtualPreview
+      ? positionBySide[virtualPreview.sourceSide]
+      : fromPosition,
+    targetX: target.x,
+    targetY: target.y,
+    targetPosition: virtualPreview
+      ? positionBySide[virtualPreview.targetSide]
+      : toPosition,
   });
 
   return (
@@ -74,7 +117,11 @@ function VirtualConnectionLine({
       d={path}
       fill="none"
       className="react-flow__connection-path"
-      style={connectionLineStyle}
+      style={
+        virtualPreview
+          ? { ...connectionLineStyle, strokeDasharray: "6 4" }
+          : connectionLineStyle
+      }
     />
   );
 }
@@ -164,6 +211,8 @@ export function GraphCanvas({
   editing,
 }: GraphCanvasProps) {
   const editable = editing !== undefined;
+  const viewport = useViewport();
+  const nativeConnectionHandled = useRef(false);
   const [virtualHandle, setVirtualHandle] = useState<VirtualHandle | null>(
     null,
   );
@@ -177,15 +226,60 @@ export function GraphCanvas({
   const handleConnectStart = useCallback<OnConnectStart>((_, params) => {
     const side = params.handleId?.replace("connect-", "") as HandleSide;
     if (!params.nodeId || !SIDES.includes(side)) return;
+    nativeConnectionHandled.current = false;
     setVirtualHandle({ nodeId: params.nodeId, side });
   }, []);
-  const handleConnectEnd = useCallback(() => setVirtualHandle(null), []);
+  const handleConnect = useCallback(
+    (connection: Connection) => {
+      // React Flow がハンドル上へのドロップを先に確定した場合は、
+      // onConnectEnd のフォールバックで重ねて追加しない。
+      nativeConnectionHandled.current = true;
+      editing?.onConnect(connection);
+    },
+    [editing],
+  );
+  const handleConnectEnd = useCallback<OnConnectEnd>(
+    (_, connectionState) => {
+      setVirtualHandle(null);
+      const wasHandledNatively = nativeConnectionHandled.current;
+      nativeConnectionHandled.current = false;
+      if (wasHandledNatively) return;
+      if (!editing || !connectionState.fromNode || !connectionState.pointer)
+        return;
+
+      const preview = findConnectionPreview(
+        toFlowPosition(connectionState.pointer, viewport),
+        nodes,
+        connectionState.fromNode.id,
+      );
+      if (!preview) return;
+
+      const connection: Connection = {
+        source: preview.sourceId,
+        sourceHandle: null,
+        target: preview.targetId,
+        targetHandle: null,
+      };
+      if (editing.isValidConnection(connection)) {
+        // 同じドラッグに対する end イベントが重複しても、追加は一度に留める。
+        nativeConnectionHandled.current = true;
+        editing.onConnect(connection);
+      }
+    },
+    [editing, nodes, viewport],
+  );
   const connectionLineComponent = useCallback(
     (props: ConnectionLineComponentProps<GraphNodeType>) =>
-      virtualHandle ? (
-        <VirtualConnectionLine {...props} virtualHandle={virtualHandle} />
+      virtualHandle && editing ? (
+        <VirtualConnectionLine
+          {...props}
+          virtualHandle={virtualHandle}
+          nodes={nodes}
+          viewport={viewport}
+          isValidConnection={editing.isValidConnection}
+        />
       ) : null,
-    [virtualHandle],
+    [editing, nodes, viewport, virtualHandle],
   );
 
   return (
@@ -198,7 +292,7 @@ export function GraphCanvas({
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={editing?.onConnect}
+        onConnect={editable ? handleConnect : undefined}
         onConnectStart={editable ? handleConnectStart : undefined}
         onConnectEnd={editable ? handleConnectEnd : undefined}
         connectionLineComponent={
@@ -213,6 +307,7 @@ export function GraphCanvas({
         onEdgeClick={(_, e) => onSelectEdge(e.id)}
         onPaneClick={onClearSelection}
         connectionMode={ConnectionMode.Loose}
+        connectionRadius={CONNECTION_PREVIEW_RADIUS}
         minZoom={MIN_ZOOM}
         fitView
         fitViewOptions={FIT_VIEW_OPTIONS}
