@@ -6,8 +6,8 @@ import {
   Position,
   useUpdateNodeInternals,
 } from "@xyflow/react";
-import { type CSSProperties, useEffect, useMemo } from "react";
-import { getNodeTypeDef } from "../nodeTypes";
+import { useEffect, useMemo } from "react";
+import { getNodeTypeDef, type NodeShape } from "../nodeTypes";
 import type { GraphNodeType, HandleSide, HandleSlot } from "../type";
 import { NodeTypeIcon } from "./NodeTypeIcon";
 
@@ -29,10 +29,6 @@ export function GraphNode({
   const handles = data.handles;
   const typeDef = getNodeTypeDef(data.nodeType);
   const shape = typeDef.shape;
-  const shapeStyle: CSSProperties =
-    shape.kind === "clip"
-      ? { clipPath: shape.clipPath }
-      : { borderRadius: shape.borderRadius };
   const updateNodeInternals = useUpdateNodeInternals();
 
   // ハンドル構成（id・index・total）が変化したら React Flow の内部キャッシュを更新し、
@@ -51,22 +47,7 @@ export function GraphNode({
 
   return (
     <div className="group relative min-w-40 drop-shadow-md">
-      {/* 選択時のハロー */}
-      {selected ? (
-        <div className="absolute inset-0.75 bg-primary/20" style={shapeStyle} />
-      ) : null}
-      {/* 枠線レイヤ */}
-      <div
-        className={[
-          "absolute inset-0 transition-colors",
-          selected
-            ? "bg-primary"
-            : "bg-muted-foreground group-hover:bg-muted-foreground/40",
-        ].join(" ")}
-        style={shapeStyle}
-      />
-      {/* 塗りレイヤ */}
-      <div className="absolute inset-[1.5px] bg-card" style={shapeStyle} />
+      <NodeFrame shape={shape} selected={selected} />
       {/* 内容 */}
       <div
         className={[
@@ -93,6 +74,49 @@ export function GraphNode({
           )
         : null}
     </div>
+  );
+}
+
+/** 塗りと枠線をひとつの図形として描画し、線幅の歪みを防ぐ。 */
+function NodeFrame({
+  shape,
+  selected,
+}: {
+  shape: NodeShape;
+  selected: boolean;
+}) {
+  const borderClass = selected
+    ? "border-primary"
+    : "border-muted-foreground group-hover:border-muted-foreground/40";
+  const strokeClass = selected
+    ? "text-primary"
+    : "text-muted-foreground group-hover:text-muted-foreground/40";
+
+  if (shape.kind === "rounded") {
+    return (
+      <div
+        className={`absolute inset-0 border-2 bg-card transition-colors ${borderClass}`}
+        style={{ borderRadius: shape.borderRadius }}
+      />
+    );
+  }
+
+  return (
+    <svg
+      aria-hidden="true"
+      className={`pointer-events-none absolute inset-0 h-full w-full overflow-visible transition-colors ${strokeClass}`}
+      preserveAspectRatio="none"
+      viewBox="-1 -1 102 102"
+    >
+      <polygon
+        fill="var(--card)"
+        points={shape.points}
+        stroke="currentColor"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
   );
 }
 

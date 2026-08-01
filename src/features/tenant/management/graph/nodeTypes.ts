@@ -49,10 +49,10 @@ export type NodeShape =
       borderRadius: string;
     })
   | (NodeShapeBase & {
-      /** clip-path による多角形の描画 */
-      kind: "clip";
-      /** CSS clip-path */
-      clipPath: string;
+      /** SVG による多角形の描画 */
+      kind: "polygon";
+      /** 100 × 100 の viewBox 内における頂点座標 */
+      points: string;
     });
 
 export type NodeIcon =
@@ -107,9 +107,8 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
     icon: { kind: "polygon", points: "50,6 94,50 50,94 6,50" },
     // 四隅を切り落とした、ひし形に近い四角形（八角形）
     shape: {
-      kind: "clip",
-      clipPath:
-        "polygon(25% 0, 75% 0, 100% 35%, 100% 65%, 75% 100%, 25% 100%, 0 65%, 0 35%)",
+      kind: "polygon",
+      points: "25,0 75,0 100,35 100,65 75,100 25,100 0,65 0,35",
     },
   },
   {
@@ -121,8 +120,8 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
     icon: { kind: "polygon", points: "16,8 92,50 16,92" },
     // 横向きの三角形(▷)に近い台形
     shape: {
-      kind: "clip",
-      clipPath: "polygon(0 0, 100% 24%, 100% 76%, 0 100%)",
+      kind: "polygon",
+      points: "0,0 100,24 100,76 0,100",
       contentClassName: "pr-3",
     },
     notices: [dualDirectionNotice],
