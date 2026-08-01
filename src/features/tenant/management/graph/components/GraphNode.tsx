@@ -172,7 +172,7 @@ function HandlePort({
       position={positionMap[side]}
       id={makeHandleId(side, index)}
       style={style}
-      className="!rounded-none !border-0 !bg-transparent"
+      className="rounded-none! border-0! bg-transparent!"
     />
   );
 }
@@ -190,7 +190,7 @@ function BorderConnectionHandle({ side }: { side: HandleSide }) {
       position={positionMap[side]}
       id={`connect-${side}`}
       style={style}
-      className="!rounded-none !border-0 !bg-transparent"
+      className="rounded-none! border-0! bg-transparent!"
     />
   );
 }
