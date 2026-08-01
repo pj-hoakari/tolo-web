@@ -74,6 +74,8 @@ export const Editing: Story = {
       isValidConnection: () => true,
       onSetEdgeDirection: fn(),
       onReverseEdge: fn(),
+      onSetNodeType: fn(),
+      onAddNodeAtPosition: fn(),
     },
   },
 };

@@ -127,6 +127,38 @@ describe("useGraphEditor: エッジ方向のコンテキスト操作", () => {
   });
 });
 
+describe("useGraphEditor: ノードタイプのコンテキスト操作", () => {
+  it("ノードタイプを変更できる", () => {
+    const initial: GraphData = {
+      nodes: [node("n1", 0, 0)],
+      edges: [],
+    };
+    const { result } = renderHook(() => useGraphEditor(initial));
+
+    act(() => {
+      result.current.canvas.editing.onSetNodeType("n1", "TRANSIT_ONLY");
+    });
+
+    expect(result.current.canvas.nodes[0].data.nodeType).toBe("TRANSIT_ONLY");
+  });
+});
+
+describe("useGraphEditor: グローバルコンテキスト操作", () => {
+  it("指定した位置にノードを追加できる", () => {
+    const initial: GraphData = { nodes: [], edges: [] };
+    const { result } = renderHook(() => useGraphEditor(initial));
+
+    act(() => {
+      result.current.canvas.editing.onAddNodeAtPosition({ x: 420, y: 180 });
+    });
+
+    expect(result.current.canvas.nodes[0]).toMatchObject({
+      position: { x: 420, y: 180 },
+      data: { label: "ポイント 1", nodeType: "GOAL" },
+    });
+  });
+});
+
 describe("useGraphEditor: ポイント移動によるハンドル接続位置の変化", () => {
   it("ノードを移動すると接続辺が変わる", () => {
     const initial: GraphData = {

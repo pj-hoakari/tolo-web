@@ -30,9 +30,11 @@ import {
   toFlowPosition,
 } from "../utils/connectionPreview";
 import { addVirtualHandle } from "../utils/handles";
+import { GraphCanvasContextMenu } from "./GraphCanvasContextMenu";
 import { GraphEdge, GraphEdgeMarkers } from "./GraphEdge";
 import { GraphEdgeContextMenu } from "./GraphEdgeContextMenu";
 import { GraphNode } from "./GraphNode";
+import { GraphNodeContextMenu } from "./GraphNodeContextMenu";
 
 const nodeTypes: NodeTypes = { graph: GraphNode };
 const edgeTypes: EdgeTypes = { graph: GraphEdge };
@@ -179,6 +181,8 @@ export type GraphCanvasEditing = {
   isValidConnection: (connection: Connection | GraphEdgeType) => boolean;
   onSetEdgeDirection: (id: string, direction: "both" | "oneway") => void;
   onReverseEdge: (id: string) => void;
+  onSetNodeType: (id: string, type: GraphNodeType["data"]["nodeType"]) => void;
+  onAddNodeAtPosition: (position: { x: number; y: number }) => void;
 };
 
 export type GraphCanvasProps = {
@@ -215,12 +219,19 @@ export function GraphCanvas({
 }: GraphCanvasProps) {
   const editable = editing !== undefined;
   const viewport = useViewport();
+  const { screenToFlowPosition } = useReactFlow<GraphNodeType, GraphEdgeType>();
   const nativeConnectionHandled = useRef(false);
-  const [contextMenu, setContextMenu] = useState<{
-    edgeId: string;
-    x: number;
-    y: number;
-  } | null>(null);
+  const [contextMenu, setContextMenu] = useState<
+    | { kind: "edge"; elementId: string; x: number; y: number }
+    | { kind: "node"; elementId: string; x: number; y: number }
+    | {
+        kind: "canvas";
+        x: number;
+        y: number;
+        nodePosition: { x: number; y: number };
+      }
+    | null
+  >(null);
   const [virtualHandle, setVirtualHandle] = useState<VirtualHandle | null>(
     null,
   );
@@ -292,18 +303,71 @@ export function GraphCanvas({
   const handleEdgeContextMenu = useCallback(
     (event: React.MouseEvent, edge: GraphEdgeType) => {
       event.preventDefault();
+      event.stopPropagation();
       onSelectEdge(edge.id);
-      setContextMenu({ edgeId: edge.id, x: event.clientX, y: event.clientY });
+      setContextMenu({
+        kind: "edge",
+        elementId: edge.id,
+        x: event.clientX,
+        y: event.clientY,
+      });
     },
     [onSelectEdge],
   );
+  const handleNodeContextMenu = useCallback(
+    (event: React.MouseEvent, node: GraphNodeType) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onSelectNode(node.id);
+      setContextMenu({
+        kind: "node",
+        elementId: node.id,
+        x: event.clientX,
+        y: event.clientY,
+      });
+    },
+    [onSelectNode],
+  );
+  const handlePaneContextMenu = useCallback(
+    (event: MouseEvent | React.MouseEvent) => {
+      event.preventDefault();
+      onClearSelection();
+      setContextMenu({
+        kind: "canvas",
+        x: event.clientX,
+        y: event.clientY,
+        nodePosition: screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        }),
+      });
+    },
+    [onClearSelection, screenToFlowPosition],
+  );
   const contextMenuEdge = contextMenu
-    ? edges.find((edge) => edge.id === contextMenu.edgeId)
+    ? contextMenu.kind === "edge"
+      ? edges.find((edge) => edge.id === contextMenu.elementId)
+      : undefined
     : undefined;
+  const contextMenuNode = contextMenu
+    ? contextMenu.kind === "node"
+      ? nodes.find((node) => node.id === contextMenu.elementId)
+      : undefined
+    : undefined;
+  const canvasContextMenu =
+    contextMenu?.kind === "canvas" ? contextMenu : undefined;
 
   return (
     <div className="relative min-h-0 flex-1 bg-secondary">
       <GraphEdgeMarkers />
+      {canvasContextMenu && editing ? (
+        <GraphCanvasContextMenu
+          position={canvasContextMenu}
+          nodePosition={canvasContextMenu.nodePosition}
+          onAddNode={editing.onAddNodeAtPosition}
+          onClose={() => setContextMenu(null)}
+        />
+      ) : null}
       {contextMenuEdge && editing && contextMenu ? (
         <GraphEdgeContextMenu
           edge={contextMenuEdge}
@@ -312,6 +376,16 @@ export function GraphCanvas({
           position={contextMenu}
           onSetDirection={editing.onSetEdgeDirection}
           onReverse={editing.onReverseEdge}
+          onClose={() => setContextMenu(null)}
+        />
+      ) : null}
+      {contextMenuNode && editing && contextMenu ? (
+        <GraphNodeContextMenu
+          node={contextMenuNode}
+          nodes={nodes}
+          edges={edges}
+          position={contextMenu}
+          onSetType={editing.onSetNodeType}
           onClose={() => setContextMenu(null)}
         />
       ) : null}
@@ -334,9 +408,11 @@ export function GraphCanvas({
         nodesConnectable={editable}
         deleteKeyCode={editable ? ["Delete", "Backspace"] : null}
         onNodeClick={(_, n) => onSelectNode(n.id)}
+        onNodeContextMenu={editable ? handleNodeContextMenu : undefined}
         onEdgeClick={(_, e) => onSelectEdge(e.id)}
         onEdgeContextMenu={editable ? handleEdgeContextMenu : undefined}
         onPaneClick={onClearSelection}
+        onPaneContextMenu={editable ? handlePaneContextMenu : undefined}
         connectionMode={ConnectionMode.Loose}
         connectionRadius={CONNECTION_PREVIEW_RADIUS}
         minZoom={MIN_ZOOM}

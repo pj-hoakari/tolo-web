@@ -132,18 +132,35 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     [updateEdgeData],
   );
 
-  const addNode = useCallback(
-    (nodeType: NodeType = DEFAULT_NODE_TYPE) => {
+  const setNodeType = useCallback(
+    (id: string, nodeType: NodeType) => {
+      updateNodeData(id, { nodeType });
+    },
+    [updateNodeData],
+  );
+
+  const addNodeAtPosition = useCallback(
+    (
+      position: { x: number; y: number },
+      nodeType: NodeType = DEFAULT_NODE_TYPE,
+    ) => {
       const node = createNode({
         id: newId("n"),
         label: `ポイント ${source.nodes.length + 1}`,
         nodeType,
-        position: randomPosition(),
+        position,
       });
       appendNode(node);
       selectNode(node.id);
     },
     [source.nodes.length, appendNode, selectNode],
+  );
+
+  const addNode = useCallback(
+    (nodeType: NodeType = DEFAULT_NODE_TYPE) => {
+      addNodeAtPosition(randomPosition(), nodeType);
+    },
+    [addNodeAtPosition],
   );
 
   const deleteSelection = useCallback(() => {
@@ -174,6 +191,8 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
         isValidConnection,
         onSetEdgeDirection: setEdgeDirection,
         onReverseEdge: reverseEdge,
+        onSetNodeType: setNodeType,
+        onAddNodeAtPosition: addNodeAtPosition,
       },
     },
     toolbar: { onAddNode: addNode },
