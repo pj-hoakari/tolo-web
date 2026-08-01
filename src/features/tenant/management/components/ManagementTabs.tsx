@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Tab, TabList, TabPanel, Tabs } from "@/components/ui/tabs";
 import { ConnectedEdges } from "@/features/tenant/webrtc/components/ConnectedEdges";
 import { type GraphData, GraphViewer } from "../graph";
@@ -20,8 +19,6 @@ const TABS: { id: TabId; label: string }[] = [
 ];
 
 export function ManagementTabs({ tenantId, eventId, initialGraph }: Props) {
-  const router = useRouter();
-
   return (
     <Tabs
       defaultSelectedKey="graph"
@@ -50,7 +47,7 @@ export function ManagementTabs({ tenantId, eventId, initialGraph }: Props) {
               tenantId={tenantId}
               eventId={eventId}
               initialGraph={initialGraph}
-              onEditGraph={() => router.push(graphEditPath(eventId))}
+              editHref={graphEditPath(eventId)}
             />
           </div>
         </TabPanel>

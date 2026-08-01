@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
 import { GraphViewerToolbar } from "@/features/tenant/management/graph/components/GraphViewerToolbar";
+import { graphEditPath } from "@/features/tenant/management/routes";
+import { SAMPLE_EVENT_ID } from "@/mocks/fixtures/edges";
 
 const meta = {
   title: "Tenant/Management/Graph/GraphViewerToolbar",
@@ -11,7 +13,7 @@ const meta = {
   },
   tags: ["autodocs"],
   args: {
-    onEditGraph: fn(),
+    editHref: graphEditPath(SAMPLE_EVENT_ID),
     onSave: fn(),
   },
 } satisfies Meta<typeof GraphViewerToolbar>;
@@ -23,5 +25,5 @@ export const Default: Story = {};
 
 /** 編集ページへの導線を出さない呼び出し */
 export const WithoutEditAction: Story = {
-  args: { onEditGraph: undefined },
+  args: { editHref: undefined },
 };

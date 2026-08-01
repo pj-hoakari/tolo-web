@@ -17,15 +17,15 @@ type GraphViewerProps = {
   tenantId: string;
   eventId: string;
   initialGraph?: GraphData;
-  /** 編集ページへの遷移。未指定なら編集への導線を出さない */
-  onEditGraph?: () => void;
+  /** 編集ページのパス。未指定なら編集への導線を出さない */
+  editHref?: string;
 };
 
 function GraphViewerInner({
   tenantId,
   eventId,
   initialGraph,
-  onEditGraph,
+  editHref,
   handleRef,
 }: GraphViewerProps & { handleRef?: Ref<GraphViewerHandle> }) {
   const { graph, canvas, links, getGraphData } = useGraphViewer(initialGraph);
@@ -47,7 +47,7 @@ function GraphViewerInner({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <GraphViewerToolbar onEditGraph={onEditGraph} onSave={handleSave} />
+      <GraphViewerToolbar editHref={editHref} onSave={handleSave} />
       <div className="flex min-h-0 flex-1">
         {/* editing を渡さない＝表示専用（移動・接続・削除ができない）キャンバス */}
         <GraphCanvas {...canvas} />
@@ -70,7 +70,7 @@ export function GraphViewer({
   tenantId,
   eventId,
   initialGraph,
-  onEditGraph,
+  editHref,
   ref,
 }: GraphViewerProps & { ref?: Ref<GraphViewerHandle> }) {
   return (
@@ -79,7 +79,7 @@ export function GraphViewer({
         tenantId={tenantId}
         eventId={eventId}
         initialGraph={initialGraph}
-        onEditGraph={onEditGraph}
+        editHref={editHref}
         handleRef={ref}
       />
     </ReactFlowProvider>

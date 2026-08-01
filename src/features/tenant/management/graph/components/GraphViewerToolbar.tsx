@@ -1,15 +1,16 @@
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/components/ui/link";
 
 export type GraphViewerToolbarProps = {
-  /** 編集ページへの遷移。未指定なら編集への導線を出さない */
-  onEditGraph?: () => void;
+  /** 編集ページのパス。未指定なら編集への導線を出さない */
+  editHref?: string;
   onSave: () => void;
 };
 
 /** 表示専用ビューのツールバー（編集ページへの導線・紐づけの保存） */
 export function GraphViewerToolbar({
-  onEditGraph,
+  editHref,
   onSave,
 }: GraphViewerToolbarProps) {
   return (
@@ -18,16 +19,11 @@ export function GraphViewerToolbar({
         会場グラフ
       </p>
       <div className="flex flex-wrap items-center justify-end gap-2">
-        {onEditGraph ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onPress={onEditGraph}
-            className="gap-1.5"
-          >
+        {editHref ? (
+          <Link href={editHref} variant="outline" size="sm" className="gap-1.5">
             <Pencil aria-hidden className="size-3.5" />
             グラフを編集
-          </Button>
+          </Link>
         ) : null}
         <div className="ml-1 border-border border-l pl-2">
           <Button size="sm" onPress={onSave}>

@@ -6,6 +6,7 @@ import {
   Playfair_Display,
 } from "next/font/google";
 import "./globals.css";
+import { AriaRouterProvider } from "@/components/aria-router-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 import { MswBootstrap } from "./_mocks/MswBootstrap";
@@ -58,7 +59,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <MswBootstrap>{children}</MswBootstrap>
+          <AriaRouterProvider>
+            <MswBootstrap>{children}</MswBootstrap>
+          </AriaRouterProvider>
         </ThemeProvider>
       </body>
     </html>
