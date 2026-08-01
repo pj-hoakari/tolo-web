@@ -143,6 +143,22 @@ describe("useGraphEditor: ノードタイプのコンテキスト操作", () => 
   });
 });
 
+describe("useGraphEditor: ノード内ラベル編集", () => {
+  it("ラベルを更新できる", () => {
+    const initial: GraphData = {
+      nodes: [node("n1", 0, 0)],
+      edges: [],
+    };
+    const { result } = renderHook(() => useGraphEditor(initial));
+
+    act(() => {
+      result.current.canvas.editing.onSetNodeLabel("n1", "エントランス");
+    });
+
+    expect(result.current.canvas.nodes[0].data.label).toBe("エントランス");
+  });
+});
+
 describe("useGraphEditor: グローバルコンテキスト操作", () => {
   it("指定した位置にノードを追加できる", () => {
     const initial: GraphData = { nodes: [], edges: [] };

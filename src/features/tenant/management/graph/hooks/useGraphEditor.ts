@@ -139,6 +139,13 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     [updateNodeData],
   );
 
+  const setNodeLabel = useCallback(
+    (id: string, label: string) => {
+      updateNodeData(id, { label });
+    },
+    [updateNodeData],
+  );
+
   const addNodeAtPosition = useCallback(
     (
       position: { x: number; y: number },
@@ -207,6 +214,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
         onSetEdgeDirection: setEdgeDirection,
         onReverseEdge: reverseEdge,
         onSetNodeType: setNodeType,
+        onSetNodeLabel: setNodeLabel,
         onAddNodeAtPosition: addNodeAtPosition,
         onDeleteNode: deleteNode,
         onDeleteEdge: deleteEdge,

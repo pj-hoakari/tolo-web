@@ -33,7 +33,7 @@ import { addVirtualHandle } from "../utils/handles";
 import { GraphCanvasContextMenu } from "./GraphCanvasContextMenu";
 import { GraphEdge, GraphEdgeMarkers } from "./GraphEdge";
 import { GraphEdgeContextMenu } from "./GraphEdgeContextMenu";
-import { GraphNode } from "./GraphNode";
+import { GraphNode, GraphNodeLabelEditingContext } from "./GraphNode";
 import { GraphNodeContextMenu } from "./GraphNodeContextMenu";
 
 const nodeTypes: NodeTypes = { graph: GraphNode };
@@ -182,6 +182,7 @@ export type GraphCanvasEditing = {
   onSetEdgeDirection: (id: string, direction: "both" | "oneway") => void;
   onReverseEdge: (id: string) => void;
   onSetNodeType: (id: string, type: GraphNodeType["data"]["nodeType"]) => void;
+  onSetNodeLabel: (id: string, label: string) => void;
   onAddNodeAtPosition: (position: { x: number; y: number }) => void;
   onDeleteNode: (id: string) => void;
   onDeleteEdge: (id: string) => void;
@@ -393,51 +394,53 @@ export function GraphCanvas({
           onClose={() => setContextMenu(null)}
         />
       ) : null}
-      <ReactFlow
-        nodes={displayNodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={editable ? handleConnect : undefined}
-        onConnectStart={editable ? handleConnectStart : undefined}
-        onConnectEnd={editable ? handleConnectEnd : undefined}
-        connectionLineComponent={
-          virtualHandle ? connectionLineComponent : undefined
-        }
-        isValidConnection={editing?.isValidConnection}
-        // 表示専用のときは選択だけを許し、構造を変える操作は塞ぐ
-        nodesDraggable={editable}
-        nodesConnectable={editable}
-        deleteKeyCode={editable ? ["Delete", "Backspace"] : null}
-        onNodeClick={(_, n) => onSelectNode(n.id)}
-        onNodeContextMenu={editable ? handleNodeContextMenu : undefined}
-        onEdgeClick={(_, e) => onSelectEdge(e.id)}
-        onEdgeContextMenu={editable ? handleEdgeContextMenu : undefined}
-        onPaneClick={onClearSelection}
-        onPaneContextMenu={editable ? handlePaneContextMenu : undefined}
-        connectionMode={ConnectionMode.Loose}
-        connectionRadius={CONNECTION_PREVIEW_RADIUS}
-        minZoom={MIN_ZOOM}
-        fitView
-        fitViewOptions={FIT_VIEW_OPTIONS}
-      >
-        <InitialFitView hasNodes={nodes.length > 0} />
-        <Background gap={20} size={1} />
-        <Controls
-          position="bottom-right"
-          showInteractive={editable}
-          fitViewOptions={FIT_VIEW_OPTIONS}
-        />
-        <MiniMap
-          pannable
-          zoomable
-          nodeColor={(n: GraphNodeType) =>
-            getNodeTypeDef(n.data?.nodeType ?? DEFAULT_NODE_TYPE).color
+      <GraphNodeLabelEditingContext.Provider value={editing?.onSetNodeLabel}>
+        <ReactFlow
+          nodes={displayNodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={editable ? handleConnect : undefined}
+          onConnectStart={editable ? handleConnectStart : undefined}
+          onConnectEnd={editable ? handleConnectEnd : undefined}
+          connectionLineComponent={
+            virtualHandle ? connectionLineComponent : undefined
           }
-        />
-      </ReactFlow>
+          isValidConnection={editing?.isValidConnection}
+          // 表示専用のときは選択だけを許し、構造を変える操作は塞ぐ
+          nodesDraggable={editable}
+          nodesConnectable={editable}
+          deleteKeyCode={editable ? ["Delete", "Backspace"] : null}
+          onNodeClick={(_, n) => onSelectNode(n.id)}
+          onNodeContextMenu={editable ? handleNodeContextMenu : undefined}
+          onEdgeClick={(_, e) => onSelectEdge(e.id)}
+          onEdgeContextMenu={editable ? handleEdgeContextMenu : undefined}
+          onPaneClick={onClearSelection}
+          onPaneContextMenu={editable ? handlePaneContextMenu : undefined}
+          connectionMode={ConnectionMode.Loose}
+          connectionRadius={CONNECTION_PREVIEW_RADIUS}
+          minZoom={MIN_ZOOM}
+          fitView
+          fitViewOptions={FIT_VIEW_OPTIONS}
+        >
+          <InitialFitView hasNodes={nodes.length > 0} />
+          <Background gap={20} size={1} />
+          <Controls
+            position="bottom-right"
+            showInteractive={editable}
+            fitViewOptions={FIT_VIEW_OPTIONS}
+          />
+          <MiniMap
+            pannable
+            zoomable
+            nodeColor={(n: GraphNodeType) =>
+              getNodeTypeDef(n.data?.nodeType ?? DEFAULT_NODE_TYPE).color
+            }
+          />
+        </ReactFlow>
+      </GraphNodeLabelEditingContext.Provider>
     </div>
   );
 }

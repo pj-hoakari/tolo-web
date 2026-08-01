@@ -6,7 +6,16 @@ import {
   Position,
   useUpdateNodeInternals,
 } from "@xyflow/react";
-import { useEffect, useMemo } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Button } from "@/components/ui/button";
+import { Input, TextField } from "@/components/ui/textfield";
 import { getNodeTypeDef, type NodeShape } from "../nodeTypes";
 import type { GraphNodeType, HandleSide, HandleSlot } from "../type";
 import { makeHandleId } from "../utils/handles";
@@ -21,6 +30,11 @@ const positionMap: Record<HandleSide, Position> = {
 
 const SIDES: HandleSide[] = ["top", "right", "bottom", "left"];
 
+/** 編集キャンバスからノード内ラベル編集を受け取るためのコールバック。 */
+export const GraphNodeLabelEditingContext = createContext<
+  ((id: string, label: string) => void) | undefined
+>(undefined);
+
 export function GraphNode({
   id,
   data,
@@ -31,6 +45,7 @@ export function GraphNode({
   const typeDef = getNodeTypeDef(data.nodeType);
   const shape = typeDef.shape;
   const updateNodeInternals = useUpdateNodeInternals();
+  const onUpdateLabel = useContext(GraphNodeLabelEditingContext);
 
   // ハンドル構成（id・index・total）が変化したら React Flow の内部キャッシュを更新し、
   // エッジ端点の座標を再計算させる。
@@ -76,9 +91,7 @@ export function GraphNode({
           <NodeTypeIcon type={data.nodeType} />
           {typeDef.label}
         </div>
-        <div className="text-center font-semibold text-foreground text-sm">
-          {data.label}
-        </div>
+        <InlineNodeLabel id={id} label={data.label} onUpdate={onUpdateLabel} />
       </div>
 
       {SIDES.flatMap((side) =>
@@ -95,6 +108,87 @@ export function GraphNode({
       {isConnectable
         ? SIDES.map((side) => <BorderConnectionHandle key={side} side={side} />)
         : null}
+    </div>
+  );
+}
+
+function InlineNodeLabel({
+  id,
+  label,
+  onUpdate,
+}: {
+  id: string;
+  label: string;
+  onUpdate: ((id: string, label: string) => void) | undefined;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftLabel, setDraftLabel] = useState(label);
+  const isFinishing = useRef(false);
+
+  useEffect(() => {
+    if (!isEditing) setDraftLabel(label);
+  }, [isEditing, label]);
+
+  const startEditing = () => {
+    isFinishing.current = false;
+    setDraftLabel(label);
+    setIsEditing(true);
+  };
+
+  const finishEditing = (commit: boolean) => {
+    if (isFinishing.current) return;
+    isFinishing.current = true;
+    if (commit && draftLabel !== label) onUpdate?.(id, draftLabel);
+    setIsEditing(false);
+  };
+
+  if (!onUpdate) {
+    return (
+      <div className="text-center font-semibold text-foreground text-sm">
+        {label}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative self-center">
+      <Button
+        aria-label={`「${label}」のラベルを編集`}
+        variant="ghost"
+        isDisabled={isEditing}
+        className="nodrag nowheel h-auto min-h-0 w-fit max-w-full whitespace-normal rounded-sm px-1 py-0 font-semibold text-foreground text-sm"
+        onPointerDown={(event) => event.stopPropagation()}
+        onPress={startEditing}
+      >
+        {label}
+      </Button>
+      {isEditing ? (
+        <TextField
+          value={draftLabel}
+          onChange={setDraftLabel}
+          className="absolute top-1/2 left-1/2 z-10 w-56 -translate-x-1/2 -translate-y-1/2"
+        >
+          <Input
+            aria-label="ポイントのラベル"
+            autoFocus
+            className="nodrag nowheel h-8 w-full bg-popover px-2 text-center font-semibold text-sm shadow-lg"
+            onBlur={() => finishEditing(true)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                event.stopPropagation();
+                finishEditing(true);
+              }
+              if (event.key === "Escape") {
+                event.preventDefault();
+                event.stopPropagation();
+                finishEditing(false);
+              }
+            }}
+            onPointerDown={(event) => event.stopPropagation()}
+          />
+        </TextField>
+      ) : null}
     </div>
   );
 }

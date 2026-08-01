@@ -75,6 +75,7 @@ export const Editing: Story = {
       onSetEdgeDirection: fn(),
       onReverseEdge: fn(),
       onSetNodeType: fn(),
+      onSetNodeLabel: fn(),
       onAddNodeAtPosition: fn(),
       onDeleteNode: fn(),
       onDeleteEdge: fn(),
