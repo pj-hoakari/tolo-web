@@ -1,5 +1,10 @@
 import { useRef } from "react";
-import { Menu, MenuItem, MenuPopover } from "@/components/ui/menu";
+import {
+  Menu,
+  MenuItem,
+  MenuPopover,
+  MenuSeparator,
+} from "@/components/ui/menu";
 import type { EdgeDirection, GraphEdgeType, GraphNodeType } from "../type";
 import { resolveEdgeDirectionState } from "./properties/edgeDirectionState";
 
@@ -12,6 +17,7 @@ export type GraphEdgeContextMenuProps = {
   position: ContextMenuPosition;
   onSetDirection: (id: string, direction: EdgeDirection) => void;
   onReverse: (id: string) => void;
+  onDelete: (id: string) => void;
   onClose: () => void;
 };
 
@@ -23,6 +29,7 @@ export function GraphEdgeContextMenu({
   position,
   onSetDirection,
   onReverse,
+  onDelete,
   onClose,
 }: GraphEdgeContextMenuProps) {
   const anchorRef = useRef<HTMLSpanElement>(null);
@@ -88,6 +95,17 @@ export function GraphEdgeContextMenu({
               </MenuItem>
             </>
           )}
+          <MenuSeparator />
+          <MenuItem
+            id="delete"
+            className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+            onAction={() => {
+              onDelete(edge.id);
+              onClose();
+            }}
+          >
+            このルートを削除
+          </MenuItem>
         </Menu>
       </MenuPopover>
     </>

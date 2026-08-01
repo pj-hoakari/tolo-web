@@ -159,6 +159,34 @@ describe("useGraphEditor: グローバルコンテキスト操作", () => {
   });
 });
 
+describe("useGraphEditor: コンテキストメニューからの削除", () => {
+  const initial = (): GraphData => ({
+    nodes: [node("n1", 0, 0), node("n2", 300, 0)],
+    edges: [edge("e1", "n1", "n2")],
+  });
+
+  it("エッジを削除できる", () => {
+    const { result } = renderHook(() => useGraphEditor(initial()));
+
+    act(() => {
+      result.current.canvas.editing.onDeleteEdge("e1");
+    });
+
+    expect(result.current.canvas.edges).toEqual([]);
+  });
+
+  it("ノードを削除すると接続エッジも削除する", () => {
+    const { result } = renderHook(() => useGraphEditor(initial()));
+
+    act(() => {
+      result.current.canvas.editing.onDeleteNode("n1");
+    });
+
+    expect(result.current.canvas.nodes.map((node) => node.id)).toEqual(["n2"]);
+    expect(result.current.canvas.edges).toEqual([]);
+  });
+});
+
 describe("useGraphEditor: ポイント移動によるハンドル接続位置の変化", () => {
   it("ノードを移動すると接続辺が変わる", () => {
     const initial: GraphData = {

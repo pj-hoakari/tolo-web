@@ -23,13 +23,38 @@ describe("GraphNodeContextMenu", () => {
         edges={[]}
         position={{ x: 100, y: 100 }}
         onSetType={onSetType}
+        onDelete={vi.fn()}
         onClose={onClose}
       />,
     );
 
-    fireEvent.click(screen.getByRole("menuitemradio", { name: "通過のみ" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "通過のみ" }));
 
     expect(onSetType).toHaveBeenCalledWith("n1", "TRANSIT_ONLY");
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("destructive 色のメニューからノードを削除できる", () => {
+    const onDelete = vi.fn();
+
+    render(
+      <GraphNodeContextMenu
+        node={node}
+        nodes={[node]}
+        edges={[]}
+        position={{ x: 100, y: 100 }}
+        onSetType={vi.fn()}
+        onDelete={onDelete}
+        onClose={vi.fn()}
+      />,
+    );
+
+    const deleteItem = screen.getByRole("menuitem", {
+      name: "このポイントを削除",
+    });
+    expect(deleteItem.classList.contains("text-destructive")).toBe(true);
+    fireEvent.click(deleteItem);
+
+    expect(onDelete).toHaveBeenCalledWith("n1");
   });
 });

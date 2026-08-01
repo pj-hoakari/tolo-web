@@ -163,13 +163,28 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     [addNodeAtPosition],
   );
 
+  const deleteNode = useCallback(
+    (id: string) => {
+      // ノードに接続しているルートも一緒に削除される。
+      removeNode(id);
+      clearSelection();
+    },
+    [removeNode, clearSelection],
+  );
+
+  const deleteEdge = useCallback(
+    (id: string) => {
+      removeEdge(id);
+      clearSelection();
+    },
+    [removeEdge, clearSelection],
+  );
+
   const deleteSelection = useCallback(() => {
     if (!selection) return;
-    // ノードは接続しているルートも一緒に削除される
-    if (selection.type === "node") removeNode(selection.id);
-    else removeEdge(selection.id);
-    clearSelection();
-  }, [selection, removeNode, removeEdge, clearSelection]);
+    if (selection.type === "node") deleteNode(selection.id);
+    else deleteEdge(selection.id);
+  }, [selection, deleteNode, deleteEdge]);
 
   const getGraphData = useCallback(
     () => toGraphData(source.nodes, source.edges),
@@ -193,6 +208,8 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
         onReverseEdge: reverseEdge,
         onSetNodeType: setNodeType,
         onAddNodeAtPosition: addNodeAtPosition,
+        onDeleteNode: deleteNode,
+        onDeleteEdge: deleteEdge,
       },
     },
     toolbar: { onAddNode: addNode },

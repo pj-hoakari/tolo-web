@@ -183,6 +183,8 @@ export type GraphCanvasEditing = {
   onReverseEdge: (id: string) => void;
   onSetNodeType: (id: string, type: GraphNodeType["data"]["nodeType"]) => void;
   onAddNodeAtPosition: (position: { x: number; y: number }) => void;
+  onDeleteNode: (id: string) => void;
+  onDeleteEdge: (id: string) => void;
 };
 
 export type GraphCanvasProps = {
@@ -376,6 +378,7 @@ export function GraphCanvas({
           position={contextMenu}
           onSetDirection={editing.onSetEdgeDirection}
           onReverse={editing.onReverseEdge}
+          onDelete={editing.onDeleteEdge}
           onClose={() => setContextMenu(null)}
         />
       ) : null}
@@ -386,6 +389,7 @@ export function GraphCanvas({
           edges={edges}
           position={contextMenu}
           onSetType={editing.onSetNodeType}
+          onDelete={editing.onDeleteNode}
           onClose={() => setContextMenu(null)}
         />
       ) : null}

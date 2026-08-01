@@ -43,6 +43,7 @@ describe("GraphEdgeContextMenu", () => {
         position={{ x: 100, y: 100 }}
         onSetDirection={onSetDirection}
         onReverse={vi.fn()}
+        onDelete={vi.fn()}
         onClose={onClose}
       />,
     );
@@ -69,6 +70,7 @@ describe("GraphEdgeContextMenu", () => {
         position={{ x: 100, y: 100 }}
         onSetDirection={vi.fn()}
         onReverse={onReverse}
+        onDelete={vi.fn()}
         onClose={vi.fn()}
       />,
     );
@@ -78,5 +80,31 @@ describe("GraphEdgeContextMenu", () => {
     );
 
     expect(onReverse).toHaveBeenCalledWith("e1");
+  });
+
+  it("destructive 色のメニューからエッジを削除できる", () => {
+    const onDelete = vi.fn();
+    const currentEdge = edge("both");
+
+    render(
+      <GraphEdgeContextMenu
+        edge={currentEdge}
+        nodes={nodes}
+        edges={[currentEdge]}
+        position={{ x: 100, y: 100 }}
+        onSetDirection={vi.fn()}
+        onReverse={vi.fn()}
+        onDelete={onDelete}
+        onClose={vi.fn()}
+      />,
+    );
+
+    const deleteItem = screen.getByRole("menuitem", {
+      name: "このルートを削除",
+    });
+    expect(deleteItem.classList.contains("text-destructive")).toBe(true);
+    fireEvent.click(deleteItem);
+
+    expect(onDelete).toHaveBeenCalledWith("e1");
   });
 });

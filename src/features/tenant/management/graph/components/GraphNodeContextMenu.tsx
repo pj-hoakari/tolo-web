@@ -1,5 +1,10 @@
 import { useRef } from "react";
-import { Menu, MenuItem, MenuPopover } from "@/components/ui/menu";
+import {
+  Menu,
+  MenuItem,
+  MenuPopover,
+  MenuSeparator,
+} from "@/components/ui/menu";
 import { getNodeTypeDef } from "../nodeTypes";
 import type { GraphEdgeType, GraphNodeType, NodeType } from "../type";
 import { NodeTypeIcon } from "./NodeTypeIcon";
@@ -13,6 +18,7 @@ export type GraphNodeContextMenuProps = {
   edges: GraphEdgeType[];
   position: ContextMenuPosition;
   onSetType: (id: string, type: NodeType) => void;
+  onDelete: (id: string) => void;
   onClose: () => void;
 };
 
@@ -23,6 +29,7 @@ export function GraphNodeContextMenu({
   edges,
   position,
   onSetType,
+  onDelete,
   onClose,
 }: GraphNodeContextMenuProps) {
   const anchorRef = useRef<HTMLSpanElement>(null);
@@ -52,11 +59,7 @@ export function GraphNodeContextMenu({
         offset={0}
         className="min-w-48"
       >
-        <Menu
-          aria-label="ポイントのタイプを変更"
-          selectionMode="single"
-          selectedKeys={[node.data.nodeType]}
-        >
+        <Menu aria-label="ポイントのタイプを変更">
           {options.map((option) => {
             const def = getNodeTypeDef(option.type);
             return (
@@ -74,9 +77,21 @@ export function GraphNodeContextMenu({
               >
                 <NodeTypeIcon type={option.type} />
                 {def.label}
+                {option.type === node.data.nodeType ? "（現在）" : null}
               </MenuItem>
             );
           })}
+          <MenuSeparator />
+          <MenuItem
+            id="delete"
+            className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+            onAction={() => {
+              onDelete(node.id);
+              onClose();
+            }}
+          >
+            このポイントを削除
+          </MenuItem>
         </Menu>
       </MenuPopover>
     </>
