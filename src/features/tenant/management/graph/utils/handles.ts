@@ -2,6 +2,7 @@ import type {
   GraphEdgeType,
   GraphNodeType,
   HandleSide,
+  HandleSlot,
   NodeHandles,
 } from "../type";
 
@@ -53,15 +54,15 @@ export function deriveNodeHandles(
     const used = usedByNode.get(n.id);
     const handles: NodeHandles = { top: [], right: [], bottom: [], left: [] };
     for (const side of SIDES) {
-      const usedSet = used?.[side] ?? new Set<number>();
-      const maxUsed = usedSet.size > 0 ? Math.max(...usedSet) : -1;
-      const total = maxUsed + 2; // 既使用 + 空き1
-      for (let i = 0; i < total; i++) {
+      const edgeIndexes = [...(used?.[side] ?? new Set<number>())].sort(
+        (a, b) => a - b,
+      );
+      const total = edgeIndexes.length;
+      for (const [index, edgeIndex] of edgeIndexes.entries()) {
         handles[side].push({
-          id: makeHandleId(side, i),
+          id: makeHandleId(side, edgeIndex),
           side,
-          index: i,
-          used: usedSet.has(i),
+          index,
           total,
         });
       }
@@ -70,6 +71,37 @@ export function deriveNodeHandles(
       ...n,
       data: { ...n.data, handles },
     };
+  });
+}
+
+/**
+ * 接続ドラッグ中の開始ノードにだけ仮想端点を1つ追加する。
+ * 同じ辺の既存端点も total を更新するため、実際にエッジが1本増えた場合と
+ * 同じ間隔で再配置される。
+ */
+export function addVirtualHandle(
+  nodes: GraphNodeType[],
+  nodeId: string,
+  side: HandleSide,
+): GraphNodeType[] {
+  return nodes.map((node) => {
+    if (node.id !== nodeId || !node.data.handles) return node;
+
+    const existing = node.data.handles[side];
+    const total = existing.length + 1;
+    const virtual: HandleSlot = {
+      id: `virtual-${side}`,
+      side,
+      index: existing.length,
+      total,
+      virtual: true,
+    };
+    const handles: NodeHandles = {
+      ...node.data.handles,
+      [side]: [...existing.map((handle) => ({ ...handle, total })), virtual],
+    };
+
+    return { ...node, data: { ...node.data, handles } };
   });
 }
 

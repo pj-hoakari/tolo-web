@@ -4,20 +4,24 @@ import "./GraphCanvas.css";
 import {
   Background,
   type Connection,
+  type ConnectionLineComponentProps,
   ConnectionMode,
   Controls,
   type EdgeChange,
   type EdgeTypes,
+  getBezierPath,
   MiniMap,
   type NodeChange,
   type NodeTypes,
+  type OnConnectStart,
   ReactFlow,
   useNodesInitialized,
   useReactFlow,
 } from "@xyflow/react";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_NODE_TYPE, getNodeTypeDef } from "../nodeTypes";
-import type { GraphEdgeType, GraphNodeType } from "../type";
+import type { GraphEdgeType, GraphNodeType, HandleSide } from "../type";
+import { addVirtualHandle } from "../utils/handles";
 import { GraphEdge, GraphEdgeMarkers } from "./GraphEdge";
 import { GraphNode } from "./GraphNode";
 
@@ -28,6 +32,73 @@ const edgeTypes: EdgeTypes = { graph: GraphEdge };
 // 下限で止まり、端のノードが画面外に残る。
 const MIN_ZOOM = 0.01;
 const FIT_VIEW_OPTIONS = { padding: 0.2, minZoom: MIN_ZOOM };
+const SIDES: HandleSide[] = ["top", "right", "bottom", "left"];
+
+type VirtualHandle = { nodeId: string; side: HandleSide };
+
+function VirtualConnectionLine({
+  virtualHandle,
+  fromHandle,
+  fromNode,
+  fromPosition,
+  fromX,
+  fromY,
+  toPosition,
+  toX,
+  toY,
+  connectionLineStyle,
+}: ConnectionLineComponentProps<GraphNodeType> & {
+  virtualHandle: VirtualHandle;
+}) {
+  const virtualSlot = fromNode.data.handles?.[virtualHandle.side].find(
+    (slot) => slot.virtual,
+  );
+  const shouldUseVirtualSlot =
+    fromNode.id === virtualHandle.nodeId &&
+    fromHandle.id === `connect-${virtualHandle.side}` &&
+    virtualSlot !== undefined;
+  const source = shouldUseVirtualSlot
+    ? virtualSlotPosition(fromNode, virtualSlot)
+    : { x: fromX, y: fromY };
+  const [path] = getBezierPath({
+    sourceX: source.x,
+    sourceY: source.y,
+    sourcePosition: fromPosition,
+    targetX: toX,
+    targetY: toY,
+    targetPosition: toPosition,
+  });
+
+  return (
+    <path
+      d={path}
+      fill="none"
+      className="react-flow__connection-path"
+      style={connectionLineStyle}
+    />
+  );
+}
+
+function virtualSlotPosition(
+  node: ConnectionLineComponentProps<GraphNodeType>["fromNode"],
+  slot: { side: HandleSide; index: number; total: number },
+) {
+  const width = node.measured.width ?? node.width ?? 0;
+  const height = node.measured.height ?? node.height ?? 0;
+  const position = (slot.index + 1) / (slot.total + 1);
+  const { x, y } = node.internals.positionAbsolute;
+
+  switch (slot.side) {
+    case "top":
+      return { x: x + width * position, y };
+    case "right":
+      return { x: x + width, y: y + height * position };
+    case "bottom":
+      return { x: x + width * position, y: y + height };
+    case "left":
+      return { x, y: y + height * position };
+  }
+}
 
 /** ノードの実寸法が確定してから、初回だけグラフ全体を表示する。 */
 function InitialFitView({ hasNodes }: { hasNodes: boolean }) {
@@ -78,7 +149,8 @@ export type GraphCanvasProps = {
 
 /**
  * 会場グラフを描画する ReactFlow キャンバス。
- * 状態は持たず、描画と入力イベントの受け渡しのみを担う。
+ * グラフ本体の状態は持たず、描画と入力イベントの受け渡しを担う。
+ * 接続ドラッグ中だけは端点をずらすための一時的な描画状態を持つ。
  * 呼び出し側で ReactFlowProvider の内側に置くこと。
  */
 export function GraphCanvas({
@@ -92,18 +164,46 @@ export function GraphCanvas({
   editing,
 }: GraphCanvasProps) {
   const editable = editing !== undefined;
+  const [virtualHandle, setVirtualHandle] = useState<VirtualHandle | null>(
+    null,
+  );
+  const displayNodes = useMemo(
+    () =>
+      virtualHandle
+        ? addVirtualHandle(nodes, virtualHandle.nodeId, virtualHandle.side)
+        : nodes,
+    [nodes, virtualHandle],
+  );
+  const handleConnectStart = useCallback<OnConnectStart>((_, params) => {
+    const side = params.handleId?.replace("connect-", "") as HandleSide;
+    if (!params.nodeId || !SIDES.includes(side)) return;
+    setVirtualHandle({ nodeId: params.nodeId, side });
+  }, []);
+  const handleConnectEnd = useCallback(() => setVirtualHandle(null), []);
+  const connectionLineComponent = useCallback(
+    (props: ConnectionLineComponentProps<GraphNodeType>) =>
+      virtualHandle ? (
+        <VirtualConnectionLine {...props} virtualHandle={virtualHandle} />
+      ) : null,
+    [virtualHandle],
+  );
 
   return (
     <div className="relative min-h-0 flex-1 bg-secondary">
       <GraphEdgeMarkers />
       <ReactFlow
-        nodes={nodes}
+        nodes={displayNodes}
         edges={edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={editing?.onConnect}
+        onConnectStart={editable ? handleConnectStart : undefined}
+        onConnectEnd={editable ? handleConnectEnd : undefined}
+        connectionLineComponent={
+          virtualHandle ? connectionLineComponent : undefined
+        }
         isValidConnection={editing?.isValidConnection}
         // 表示専用のときは選択だけを許し、構造を変える操作は塞ぐ
         nodesDraggable={editable}

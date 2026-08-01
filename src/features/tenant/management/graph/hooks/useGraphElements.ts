@@ -34,7 +34,7 @@ export function useGraphElements(initial: GraphData) {
   const [edges, setEdges] = useState<GraphEdgeType[]>(initial.edges);
 
   // ノード位置から各エッジの接続辺(上下左右)を決定
-  // それに合わせて各ノードのハンドル配置（使用中＋空き1）を導出
+  // それに合わせて各ノードの接続済みエッジ端点を導出
   const derivedEdges = useMemo(
     () => assignHandlesByPosition(nodes, edges),
     [nodes, edges],

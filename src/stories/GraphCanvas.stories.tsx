@@ -66,7 +66,7 @@ type Story = StoryObj<typeof meta>;
 /** editing を渡さない表示専用の状態（操作は Actions に記録される） */
 export const Default: Story = {};
 
-/** editing を渡した編集可能な状態（接続用の空きハンドルが出る） */
+/** editing を渡した編集可能な状態（枠線から接続できる） */
 export const Editing: Story = {
   args: {
     editing: {

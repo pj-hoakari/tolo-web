@@ -35,14 +35,6 @@ function slotsOf(nodes: GraphNodeType[], nodeId: string, side: HandleSide) {
   return nodes.find((n) => n.id === nodeId)?.data.handles?.[side] ?? [];
 }
 
-function usedCount(nodes: GraphNodeType[], nodeId: string, side: HandleSide) {
-  return slotsOf(nodes, nodeId, side).filter((s) => s.used).length;
-}
-
-function freeCount(nodes: GraphNodeType[], nodeId: string, side: HandleSide) {
-  return slotsOf(nodes, nodeId, side).filter((s) => !s.used).length;
-}
-
 describe("useGraphEditor: 同一ポイント間の複数ルート", () => {
   it("同じポイント間で　onConnect を繰り返すと独立したルートが増える", () => {
     const initial: GraphData = {
@@ -74,39 +66,32 @@ describe("useGraphEditor: 同一ポイント間の複数ルート", () => {
   });
 });
 
-describe("useGraphEditor: 接続数によるハンドルの増減", () => {
+describe("useGraphEditor: 接続数によるエッジ端点の増減", () => {
   const initial = (): GraphData => ({
     nodes: [node("n1", 0, 0), node("n2", 300, 0)],
     edges: [],
   });
 
-  it("接続が無いときは各辺に空きハンドルが1つ", () => {
+  it("接続が無いときは各辺にエッジ端点用ハンドルを作らない", () => {
     const { result } = renderHook(() => useGraphEditor(initial()));
     for (const side of SIDES) {
-      const slots = slotsOf(result.current.canvas.nodes, "n1", side);
-      expect(slots).toHaveLength(1);
-      expect(slots[0].used).toBe(false);
+      expect(slotsOf(result.current.canvas.nodes, "n1", side)).toEqual([]);
     }
   });
 
-  it("接続を追加するとハンドルが増え、削除すると減る（常に空き1）", () => {
+  it("接続を追加すると端点が増え、削除すると減る", () => {
     const { result } = renderHook(() => useGraphEditor(initial()));
 
-    // 接続1: 使用済み1 + 空き
     act(() => {
       result.current.canvas.editing.onConnect(connection("n1", "n2"));
     });
-    expect(usedCount(result.current.canvas.nodes, "n1", "right")).toBe(1);
-    expect(freeCount(result.current.canvas.nodes, "n1", "right")).toBe(1);
+    expect(slotsOf(result.current.canvas.nodes, "n1", "right")).toHaveLength(1);
 
-    // 2本目接続: 使用済み 1 → 2 + 空き
     act(() => {
       result.current.canvas.editing.onConnect(connection("n1", "n2"));
     });
-    expect(usedCount(result.current.canvas.nodes, "n1", "right")).toBe(2);
-    expect(freeCount(result.current.canvas.nodes, "n1", "right")).toBe(1); // 常に空き1
+    expect(slotsOf(result.current.canvas.nodes, "n1", "right")).toHaveLength(2);
 
-    // 1本削除: 使用済み 2 → 1 + 空き
     const removedId = result.current.canvas.edges[0].id;
     act(() => {
       result.current.canvas.onSelectEdge(removedId);
@@ -115,8 +100,7 @@ describe("useGraphEditor: 接続数によるハンドルの増減", () => {
       result.current.properties.onDelete();
     });
     expect(result.current.canvas.edges.length).toBe(1);
-    expect(usedCount(result.current.canvas.nodes, "n1", "right")).toBe(1);
-    expect(freeCount(result.current.canvas.nodes, "n1", "right")).toBe(1); // 常に空き1
+    expect(slotsOf(result.current.canvas.nodes, "n1", "right")).toHaveLength(1);
   });
 });
 

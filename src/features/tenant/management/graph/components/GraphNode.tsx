@@ -9,6 +9,7 @@ import {
 import { useEffect, useMemo } from "react";
 import { getNodeTypeDef, type NodeShape } from "../nodeTypes";
 import type { GraphNodeType, HandleSide, HandleSlot } from "../type";
+import { makeHandleId } from "../utils/handles";
 import { NodeTypeIcon } from "./NodeTypeIcon";
 
 const positionMap: Record<HandleSide, Position> = {
@@ -40,6 +41,22 @@ export function GraphNode({
     ).join("|");
   }, [handles]);
 
+  // 接続可能な領域は BorderConnectionHandle が担うため、ここに空きスロットという
+  // UI 上の概念はない。一方で React Flow は edge.sourceHandle / targetHandle が
+  // 評価される時点で同じ ID の Handle が登録済みであることを求める。
+  //
+  // 辺の追加・移動・仮想端点の追加では、派生した端点 ID の反映より先に Edge が
+  // 再計算されることがある。ノードの接続数 + 1 件分を各辺に常時登録しておくことで、
+  // 次の端点 ID も含めてこの短い同期ずれを吸収する。これらは不可視の内部アンカーで、
+  // 新規接続できる場所や表示上のスロットを増やすものではない。
+  const endpointHandleCount =
+    1 +
+    SIDES.reduce(
+      (count, side) =>
+        count + (handles?.[side].filter((slot) => !slot.virtual).length ?? 0),
+      0,
+    );
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: handleSignature をトリガー依存として扱う
   useEffect(() => {
     updateNodeInternals(id);
@@ -64,14 +81,19 @@ export function GraphNode({
         </div>
       </div>
 
-      {handles
-        ? SIDES.flatMap((side) =>
-            handles[side]
-              // 接続できないキャンバス（表示専用）では空きスロットを出さない。
-              // 使用中のスロットはエッジ端点の座標計算に必要なため常に描画する。
-              .filter((slot) => isConnectable || slot.used)
-              .map((slot) => <HandlePort key={slot.id} slot={slot} />),
-          )
+      {SIDES.flatMap((side) =>
+        Array.from({ length: endpointHandleCount }, (_, index) => (
+          <HandlePort
+            key={makeHandleId(side, index)}
+            side={side}
+            index={index}
+            layoutSlot={handles?.[side].find((slot) => slot.index === index)}
+            fallbackTotal={(handles?.[side].length ?? 0) + 1}
+          />
+        )),
+      )}
+      {isConnectable
+        ? SIDES.map((side) => <BorderConnectionHandle key={side} side={side} />)
         : null}
     </div>
   );
@@ -120,24 +142,55 @@ function NodeFrame({
   );
 }
 
-function HandlePort({ slot }: { slot: HandleSlot }) {
+function HandlePort({
+  side,
+  index,
+  layoutSlot,
+  fallbackTotal,
+}: {
+  side: HandleSide;
+  index: number;
+  layoutSlot?: HandleSlot;
+  fallbackTotal: number;
+}) {
+  const slot = layoutSlot ?? {
+    side,
+    // 未使用の内部アンカーは、次に追加される端点と同じ位置に置く。
+    index: Math.min(index, fallbackTotal - 1),
+    total: fallbackTotal,
+  };
+  const horizontal = side === "top" || side === "bottom";
   const percentage = ((slot.index + 1) / (slot.total + 1)) * 100;
-  const style =
-    slot.side === "top" || slot.side === "bottom"
-      ? { left: `${percentage}%` }
-      : { top: `${percentage}%` };
+  const style = horizontal
+    ? { left: `${percentage}%` }
+    : { top: `${percentage}%` };
 
-  const cls = slot.used
-    ? "!h-2.5 !w-2.5 !rounded-full !border-2 !border-card !bg-muted-foreground"
-    : "!h-2.5 !w-2.5 !rounded-full !border !border-muted-foreground !bg-secondary hover:!bg-primary/10";
+  // エッジの端点は安定した ID で登録し、配置だけを接続状況に応じて変える。
+  return (
+    <Handle
+      type="source"
+      position={positionMap[side]}
+      id={makeHandleId(side, index)}
+      style={style}
+      className="!rounded-none !border-0 !bg-transparent"
+    />
+  );
+}
+
+/** 新規接続用。空きスロットを確保せず、各辺全体を接続領域にする。 */
+function BorderConnectionHandle({ side }: { side: HandleSide }) {
+  const horizontal = side === "top" || side === "bottom";
+  const style = horizontal
+    ? { width: "100%", height: 12 }
+    : { width: 12, height: "100%" };
 
   return (
     <Handle
       type="source"
-      position={positionMap[slot.side]}
-      id={slot.id}
+      position={positionMap[side]}
+      id={`connect-${side}`}
       style={style}
-      className={cls}
+      className="!rounded-none !border-0 !bg-transparent"
     />
   );
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { GraphEdgeType, GraphNodeType, HandleSide } from "../type";
 import {
+  addVirtualHandle,
   assignHandlesByPosition,
   deriveNodeHandles,
   makeHandleId,
@@ -39,16 +40,14 @@ function slotsOf(nodes: GraphNodeType[], nodeId: string, side: HandleSide) {
 }
 
 describe("deriveNodeHandles（接続状況からのハンドル導出）", () => {
-  it("接続が無い辺は常に空きハンドルが1つ", () => {
+  it("接続が無い辺にはエッジ端点用ハンドルを作らない", () => {
     const derived = deriveNodeHandles([node("n1", 0, 0)], []);
     for (const side of SIDES) {
-      const slots = slotsOf(derived, "n1", side);
-      expect(slots).toHaveLength(1);
-      expect(slots[0].used).toBe(false);
+      expect(slotsOf(derived, "n1", side)).toEqual([]);
     }
   });
 
-  it("接続のある辺のハンドルは使用済み＋空き1", () => {
+  it("接続のある辺にだけエッジ端点用ハンドルを作る", () => {
     const nodes = [node("n1", 0, 0), node("n2", 300, 0)];
     const edges = [
       edge("e1", "n1", "n2", {
@@ -60,15 +59,13 @@ describe("deriveNodeHandles（接続状況からのハンドル導出）", () =>
     const derived = deriveNodeHandles(nodes, edges);
 
     const right = slotsOf(derived, "n1", "right");
-    expect(right).toHaveLength(2); // 使用済み + 空き
-    expect(right[0].used).toBe(true);
-    expect(right[1].used).toBe(false);
+    expect(right).toHaveLength(1);
+    expect(right[0].id).toBe(makeHandleId("right", 0));
 
-    // 接続の無い辺は空き1
-    expect(slotsOf(derived, "n1", "top")).toHaveLength(1);
+    expect(slotsOf(derived, "n1", "top")).toEqual([]);
   });
 
-  it("同一辺への接続が増えるとハンドルが増え、空きが常に1つ", () => {
+  it("同一辺への接続数に合わせて端点用ハンドルを増やす", () => {
     const nodes = [node("n1", 0, 0), node("n2", 300, 0), node("n3", 300, 100)];
     const edges = [
       edge("e1", "n1", "n2", {
@@ -83,12 +80,8 @@ describe("deriveNodeHandles（接続状況からのハンドル導出）", () =>
 
     const right = slotsOf(deriveNodeHandles(nodes, edges), "n1", "right");
 
-    expect(right).toHaveLength(3); // 使用済み2 + 空き
-    expect(right.filter((s) => s.used)).toHaveLength(2);
-    expect(right.filter((s) => !s.used)).toHaveLength(1);
-
-    // 末尾が常に空き
-    expect(right[right.length - 1].used).toBe(false);
+    expect(right).toHaveLength(2);
+    expect(right.map((slot) => slot.id)).toEqual(["right-0", "right-1"]);
   });
 
   it("接続を減らすとハンドルが減る", () => {
@@ -105,7 +98,7 @@ describe("deriveNodeHandles（接続状況からのハンドル導出）", () =>
     ];
     expect(
       slotsOf(deriveNodeHandles(nodes, twoEdges), "n1", "right"),
-    ).toHaveLength(3);
+    ).toHaveLength(2);
 
     // e2削除
     const right = slotsOf(
@@ -114,8 +107,7 @@ describe("deriveNodeHandles（接続状況からのハンドル導出）", () =>
       "right",
     );
 
-    expect(right).toHaveLength(2); // 3 → 2（使用済み1 + 空き）
-    expect(right.filter((s) => !s.used)).toHaveLength(1); // 空き
+    expect(right).toHaveLength(1);
   });
 });
 
@@ -179,7 +171,7 @@ describe("assignHandlesByPosition（ノード位置よる接続辺決定）", ()
 });
 
 describe("複数ルートとハンドルの統合", () => {
-  it("同一ポイント間に2ルートあると両端ノードに使用済み2＋空きのハンドルができる", () => {
+  it("同一ポイント間に2ルートあると両端ノードに端点用ハンドルが2つできる", () => {
     const nodes = [node("n1", 0, 0), node("n2", 300, 0)];
     const assigned = assignHandlesByPosition(nodes, [
       edge("e1", "n1", "n2"),
@@ -190,9 +182,31 @@ describe("複数ルートとハンドルの統合", () => {
     const n1Right = slotsOf(derived, "n1", "right");
     const n2Left = slotsOf(derived, "n2", "left");
 
-    expect(n1Right.filter((s) => s.used)).toHaveLength(2);
-    expect(n1Right.filter((s) => !s.used)).toHaveLength(1);
-    expect(n2Left.filter((s) => s.used)).toHaveLength(2);
-    expect(n2Left.filter((s) => !s.used)).toHaveLength(1);
+    expect(n1Right).toHaveLength(2);
+    expect(n2Left).toHaveLength(2);
+  });
+});
+
+describe("addVirtualHandle（接続ドラッグ中の仮想端点）", () => {
+  it("開始ノードの開始辺だけに仮想端点を追加し、既存端点を再配置する", () => {
+    const nodes = [node("n1", 0, 0), node("n2", 300, 0)];
+    const assigned = assignHandlesByPosition(nodes, [
+      edge("e1", "n1", "n2"),
+      edge("e2", "n1", "n2"),
+    ]);
+    const derived = deriveNodeHandles(nodes, assigned);
+
+    const withVirtual = addVirtualHandle(derived, "n1", "right");
+    const n1Right = slotsOf(withVirtual, "n1", "right");
+    const n2Left = slotsOf(withVirtual, "n2", "left");
+
+    expect(n1Right).toHaveLength(3);
+    expect(n1Right.map((slot) => slot.total)).toEqual([3, 3, 3]);
+    expect(n1Right[2]).toMatchObject({
+      id: "virtual-right",
+      index: 2,
+      virtual: true,
+    });
+    expect(n2Left.map((slot) => slot.total)).toEqual([2, 2]);
   });
 });
