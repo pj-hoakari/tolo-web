@@ -107,4 +107,25 @@ describe("GraphEdgeContextMenu", () => {
 
     expect(onDelete).toHaveBeenCalledWith("e1");
   });
+
+  it("メニュー名に対象ルートの両端ポイント名を含む", () => {
+    const currentEdge = edge("both");
+
+    render(
+      <GraphEdgeContextMenu
+        edge={currentEdge}
+        nodes={nodes}
+        edges={[currentEdge]}
+        position={{ x: 100, y: 100 }}
+        onSetDirection={vi.fn()}
+        onReverse={vi.fn()}
+        onDelete={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("menu", { name: "ルート「始点 → 終点」の操作" }),
+    ).toBeTruthy();
+  });
 });

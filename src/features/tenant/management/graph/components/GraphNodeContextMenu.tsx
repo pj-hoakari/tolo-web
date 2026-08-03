@@ -1,8 +1,10 @@
 import { Route, Trash2 } from "lucide-react";
+import { Text } from "react-aria-components";
 import {
   Menu,
   MenuHeader,
   MenuItem,
+  MenuSection,
   MenuSeparator,
 } from "@/components/ui/menu";
 import { getNodeTypeDef } from "../nodeTypes";
@@ -25,7 +27,7 @@ export type GraphNodeContextMenuProps = {
   onClose: () => void;
 };
 
-/** ノードタイプを切り替える右クリックメニュー。 */
+/** ポイントの右クリックメニュー（ルート追加・タイプ変更・削除）。 */
 export function GraphNodeContextMenu({
   node,
   nodes,
@@ -49,7 +51,7 @@ export function GraphNodeContextMenu({
       className="min-w-48"
       onClose={onClose}
     >
-      <Menu aria-label="ポイントのタイプを変更">
+      <Menu aria-label={`ポイント「${node.data.label}」の操作`}>
         <MenuItem
           id="add-edge"
           textValue="このポイントからルートを追加"
@@ -62,28 +64,40 @@ export function GraphNodeContextMenu({
           このポイントからルートを追加
         </MenuItem>
         <MenuSeparator />
-        <MenuHeader className="px-2 text-xs">タイプを変更</MenuHeader>
-        {options.map((option) => {
-          const def = getNodeTypeDef(option.type);
-          return (
-            <MenuItem
-              id={option.type}
-              key={option.type}
-              textValue={def.label}
-              isDisabled={!option.assignable}
-              onAction={() => {
-                if (option.type !== node.data.nodeType) {
-                  onSetType(node.id, option.type);
-                }
-                onClose();
-              }}
-            >
-              <NodeTypeIcon type={option.type} />
-              {def.label}
-              {option.type === node.data.nodeType ? "（現在）" : null}
-            </MenuItem>
-          );
-        })}
+        {/* 選択中のタイプをラジオ選択として支援技術へ伝える */}
+        <MenuSection selectionMode="single" selectedKeys={[node.data.nodeType]}>
+          <MenuHeader className="px-2 text-xs">タイプを変更</MenuHeader>
+          {options.map((option) => {
+            const def = getNodeTypeDef(option.type);
+            return (
+              <MenuItem
+                id={option.type}
+                key={option.type}
+                textValue={def.label}
+                isDisabled={!option.assignable}
+                onAction={() => {
+                  if (option.type !== node.data.nodeType) {
+                    onSetType(node.id, option.type);
+                  }
+                  onClose();
+                }}
+              >
+                <NodeTypeIcon type={option.type} />
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <Text slot="label">{def.label}</Text>
+                  {option.disabledReason ? (
+                    <Text
+                      slot="description"
+                      className="text-muted-foreground text-xs"
+                    >
+                      {option.disabledReason}
+                    </Text>
+                  ) : null}
+                </div>
+              </MenuItem>
+            );
+          })}
+        </MenuSection>
         <MenuSeparator />
         <MenuItem
           id="delete"

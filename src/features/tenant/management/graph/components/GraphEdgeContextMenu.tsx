@@ -1,4 +1,5 @@
 import { ArrowLeftRight, ArrowRight, Repeat2, Trash2 } from "lucide-react";
+import { Text } from "react-aria-components";
 import { Menu, MenuItem, MenuSeparator } from "@/components/ui/menu";
 import type { EdgeDirection, GraphEdgeType, GraphNodeType } from "../type";
 import {
@@ -42,7 +43,7 @@ export function GraphEdgeContextMenu({
       className="min-w-56"
       onClose={onClose}
     >
-      <Menu aria-label="ルートの方向を変更">
+      <Menu aria-label={`ルート「${sourceLabel} → ${targetLabel}」の操作`}>
         {direction === "both" ? (
           <MenuItem
             id="oneway"
@@ -54,7 +55,14 @@ export function GraphEdgeContextMenu({
             }}
           >
             <ArrowRight aria-hidden className="size-4 shrink-0" />
-            片側通行にする（{sourceLabel} → {targetLabel}）
+            <MenuItemLabel
+              label={`片側通行にする（${sourceLabel} → ${targetLabel}）`}
+              reason={
+                directionState.onewayDisabled
+                  ? directionState.directionReason
+                  : null
+              }
+            />
           </MenuItem>
         ) : (
           <>
@@ -68,7 +76,14 @@ export function GraphEdgeContextMenu({
               }}
             >
               <ArrowLeftRight aria-hidden className="size-4 shrink-0" />
-              両方向通行にする
+              <MenuItemLabel
+                label="両方向通行にする"
+                reason={
+                  directionState.bothDisabled
+                    ? directionState.directionReason
+                    : null
+                }
+              />
             </MenuItem>
             <MenuItem
               id="reverse"
@@ -80,7 +95,14 @@ export function GraphEdgeContextMenu({
               }}
             >
               <Repeat2 aria-hidden className="size-4 shrink-0" />
-              向きを反転（{targetLabel} → {sourceLabel}）
+              <MenuItemLabel
+                label={`向きを反転（${targetLabel} → ${sourceLabel}）`}
+                reason={
+                  directionState.reverseDisabled
+                    ? directionState.reverseReason
+                    : null
+                }
+              />
             </MenuItem>
           </>
         )}
@@ -99,5 +121,25 @@ export function GraphEdgeContextMenu({
         </MenuItem>
       </Menu>
     </ContextMenuPopover>
+  );
+}
+
+/** 項目のラベルと、無効時の理由（あれば）をまとめて表示する。 */
+function MenuItemLabel({
+  label,
+  reason,
+}: {
+  label: string;
+  reason: string | null;
+}) {
+  return (
+    <div className="flex min-w-0 flex-col gap-0.5">
+      <Text slot="label">{label}</Text>
+      {reason ? (
+        <Text slot="description" className="text-muted-foreground text-xs">
+          {reason}
+        </Text>
+      ) : null}
+    </div>
   );
 }

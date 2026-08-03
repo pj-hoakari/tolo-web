@@ -21,6 +21,7 @@ describe("GraphCanvasContextMenu", () => {
       />,
     );
 
+    expect(screen.getByRole("menu", { name: "キャンバスの操作" })).toBeTruthy();
     fireEvent.click(screen.getByRole("menuitem", { name: "ポイントを追加" }));
 
     expect(onAddNode).toHaveBeenCalledWith(

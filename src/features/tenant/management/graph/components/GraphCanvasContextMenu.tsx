@@ -35,7 +35,7 @@ export function GraphCanvasContextMenu({
       className="min-w-40"
       onClose={onClose}
     >
-      <Menu aria-label="グラフ操作">
+      <Menu aria-label="キャンバスの操作">
         {isEdgeCreationActive ? (
           <MenuItem
             id="end-edge-creation"
