@@ -5,10 +5,10 @@ import { type NodeProps, ReactFlowProvider } from "@xyflow/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { GraphNodeType } from "../type";
 import {
-  GraphNode,
   GraphNodeEasyConnectContext,
   GraphNodeLabelEditingContext,
-} from "./GraphNode";
+} from "./canvasContexts";
+import { GraphNode } from "./GraphNode";
 
 const nodeProps = {
   id: "n1",

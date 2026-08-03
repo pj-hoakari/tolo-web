@@ -1,53 +1,25 @@
 "use client";
 
 import {
-  Handle,
   type NodeProps,
-  Position,
   useConnection,
   useUpdateNodeInternals,
 } from "@xyflow/react";
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { Button } from "@/components/ui/button";
-import { Input, TextField } from "@/components/ui/textfield";
+import { useContext, useEffect, useMemo } from "react";
 import { getNodeTypeDef } from "../nodeTypes";
-import type { GraphNodeType, HandleSide, HandleSlot } from "../type";
-import { makeHandleId } from "../utils/handles";
+import type { GraphNodeType } from "../type";
+import { makeHandleId, SIDES } from "../utils/handles";
+import {
+  GraphNodeEasyConnectContext,
+  GraphNodeLabelEditingContext,
+} from "./canvasContexts";
+import { InlineNodeLabel } from "./InlineNodeLabel";
 import { NodeTypeIcon } from "./NodeTypeIcon";
-
-const positionMap: Record<HandleSide, Position> = {
-  top: Position.Top,
-  right: Position.Right,
-  bottom: Position.Bottom,
-  left: Position.Left,
-};
-
-const SIDES: HandleSide[] = ["top", "right", "bottom", "left"];
-
-/** 編集キャンバスからノード内ラベル編集を受け取るためのコールバック。 */
-export const GraphNodeLabelEditingContext = createContext<
-  ((id: string, label: string) => void) | undefined
->(undefined);
-
-/** ノード全体を接続領域として扱うルート追加モード。 */
-export type GraphNodeEasyConnectMode =
-  | { kind: "global" }
-  | {
-      kind: "from-node";
-      sourceNodeId: string;
-      /** 接続ドラッグを自動開始する際の起点（スクリーン座標） */
-      origin: { x: number; y: number };
-    };
-
-export const GraphNodeEasyConnectContext =
-  createContext<GraphNodeEasyConnectMode | null>(null);
+import {
+  BorderConnectionHandle,
+  EasyConnectHandle,
+  HandlePort,
+} from "./nodeHandles";
 
 export function GraphNode({
   id,
@@ -135,87 +107,6 @@ export function GraphNode({
   );
 }
 
-function InlineNodeLabel({
-  id,
-  label,
-  onUpdate,
-}: {
-  id: string;
-  label: string;
-  onUpdate: ((id: string, label: string) => void) | undefined;
-}) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [draftLabel, setDraftLabel] = useState(label);
-  const isFinishing = useRef(false);
-
-  useEffect(() => {
-    if (!isEditing) setDraftLabel(label);
-  }, [isEditing, label]);
-
-  const startEditing = () => {
-    isFinishing.current = false;
-    setDraftLabel(label);
-    setIsEditing(true);
-  };
-
-  const finishEditing = (commit: boolean) => {
-    if (isFinishing.current) return;
-    isFinishing.current = true;
-    if (commit && draftLabel !== label) onUpdate?.(id, draftLabel);
-    setIsEditing(false);
-  };
-
-  if (!onUpdate) {
-    return (
-      <div className="text-left font-semibold text-foreground text-sm">
-        {label}
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative self-start">
-      <Button
-        aria-label={`「${label}」のラベルを編集`}
-        variant="ghost"
-        isDisabled={isEditing}
-        className="nodrag nowheel h-auto min-h-0 w-fit max-w-full whitespace-normal rounded-sm px-0 py-0 text-left font-semibold text-foreground text-sm"
-        onPointerDown={(event) => event.stopPropagation()}
-        onPress={startEditing}
-      >
-        {label}
-      </Button>
-      {isEditing ? (
-        <TextField
-          value={draftLabel}
-          onChange={setDraftLabel}
-          className="absolute top-1/2 left-1/2 z-10 w-56 -translate-x-1/2 -translate-y-1/2"
-        >
-          <Input
-            aria-label="ポイントのラベル"
-            autoFocus
-            className="nodrag nowheel h-8 w-full border-none bg-popover px-2 text-left font-semibold text-sm"
-            onBlur={() => finishEditing(true)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                event.stopPropagation();
-                finishEditing(true);
-              }
-              if (event.key === "Escape") {
-                event.preventDefault();
-                event.stopPropagation();
-                finishEditing(false);
-              }
-            }}
-            onPointerDown={(event) => event.stopPropagation()}
-          />
-        </TextField>
-      ) : null}
-    </div>
-  );
-}
-
 /** 外形は全ノード共通。操作中だけ輪郭を表示する。 */
 function NodeFrame({
   selected,
@@ -253,78 +144,5 @@ function NodeTypeBadge({
         {label}
       </span>
     </div>
-  );
-}
-
-function HandlePort({
-  side,
-  index,
-  layoutSlot,
-  fallbackTotal,
-}: {
-  side: HandleSide;
-  index: number;
-  layoutSlot?: HandleSlot;
-  fallbackTotal: number;
-}) {
-  const slot = layoutSlot ?? {
-    side,
-    // 未使用の内部アンカーは、次に追加される端点と同じ位置に置く。
-    index: Math.min(index, fallbackTotal - 1),
-    total: fallbackTotal,
-  };
-  const horizontal = side === "top" || side === "bottom";
-  const percentage = ((slot.index + 1) / (slot.total + 1)) * 100;
-  const style = horizontal
-    ? { left: `${percentage}%` }
-    : { top: `${percentage}%` };
-
-  // エッジの端点は安定した ID で登録し、配置だけを接続状況に応じて変える。
-  return (
-    <Handle
-      type="source"
-      position={positionMap[side]}
-      id={makeHandleId(side, index)}
-      style={style}
-      className="rounded-none! border-0! bg-transparent!"
-    />
-  );
-}
-
-/** 新規接続用。空きスロットを確保せず、各辺全体を接続領域にする。 */
-function BorderConnectionHandle({ side }: { side: HandleSide }) {
-  const horizontal = side === "top" || side === "bottom";
-  const style = horizontal
-    ? { width: "100%", height: 12 }
-    : { width: 12, height: "100%" };
-
-  return (
-    <Handle
-      type="source"
-      position={positionMap[side]}
-      id={`connect-${side}`}
-      style={style}
-      className="rounded-none! border-0! bg-transparent!"
-    />
-  );
-}
-
-/** ルート追加モード中だけノード全体を覆う接続領域。 */
-function EasyConnectHandle({ canStart }: { canStart: boolean }) {
-  return (
-    <Handle
-      type="source"
-      position={Position.Top}
-      id="easy-connect"
-      isConnectableStart={canStart}
-      style={{
-        width: "100%",
-        height: "100%",
-        top: 0,
-        left: 0,
-        transform: "none",
-      }}
-      className="pointer-events-auto! z-20! rounded-lg! border-0! bg-transparent! opacity-0!"
-    />
   );
 }

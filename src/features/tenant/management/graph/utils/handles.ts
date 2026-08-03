@@ -6,7 +6,22 @@ import type {
   NodeHandles,
 } from "../type";
 
-const SIDES: HandleSide[] = ["top", "right", "bottom", "left"];
+/** ノードの4辺の一覧。描画・走査の順序もこの並びに揃える。 */
+export const SIDES: HandleSide[] = ["top", "right", "bottom", "left"];
+
+/** 各辺全体を新規接続の開始領域にするハンドル（BorderConnectionHandle）の ID */
+export function connectHandleId(side: HandleSide): string {
+  return `connect-${side}`;
+}
+
+/** connectHandleId で作った ID から辺を取り出す。該当しない ID は null。 */
+export function parseConnectHandleId(
+  id: string | null | undefined,
+): HandleSide | null {
+  if (!id?.startsWith("connect-")) return null;
+  const side = id.slice("connect-".length) as HandleSide;
+  return SIDES.includes(side) ? side : null;
+}
 
 export function parseHandleId(
   id: string | null | undefined,

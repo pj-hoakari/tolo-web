@@ -1,14 +1,10 @@
-import { useRef } from "react";
-import {
-  Menu,
-  MenuItem,
-  MenuPopover,
-  MenuSeparator,
-} from "@/components/ui/menu";
+import { Menu, MenuItem, MenuSeparator } from "@/components/ui/menu";
 import type { EdgeDirection, GraphEdgeType, GraphNodeType } from "../type";
+import {
+  ContextMenuPopover,
+  type ContextMenuPosition,
+} from "./ContextMenuPopover";
 import { resolveEdgeDirectionState } from "./properties/edgeDirectionState";
-
-type ContextMenuPosition = { x: number; y: number };
 
 export type GraphEdgeContextMenuProps = {
   edge: GraphEdgeType;
@@ -32,7 +28,6 @@ export function GraphEdgeContextMenu({
   onDelete,
   onClose,
 }: GraphEdgeContextMenuProps) {
-  const anchorRef = useRef<HTMLSpanElement>(null);
   const direction = edge.data?.direction ?? "both";
   const directionState = resolveEdgeDirectionState(edge, nodes, edges);
   const sourceLabel =
@@ -41,73 +36,59 @@ export function GraphEdgeContextMenu({
     nodes.find((node) => node.id === edge.target)?.data.label ?? edge.target;
 
   return (
-    <>
-      {/* React Aria Popover の位置決め専用アンカー */}
-      <span
-        ref={anchorRef}
-        aria-hidden="true"
-        className="pointer-events-none fixed size-px"
-        style={{ left: position.x, top: position.y }}
-      />
-      <MenuPopover
-        isOpen
-        onOpenChange={(isOpen) => {
-          if (!isOpen) onClose();
-        }}
-        triggerRef={anchorRef}
-        placement="bottom start"
-        offset={0}
-        className="min-w-56"
-      >
-        <Menu aria-label="ルートの方向を変更">
-          {direction === "both" ? (
-            <MenuItem
-              id="oneway"
-              isDisabled={directionState.onewayDisabled}
-              onAction={() => {
-                onSetDirection(edge.id, "oneway");
-                onClose();
-              }}
-            >
-              片側通行にする（{sourceLabel} → {targetLabel}）
-            </MenuItem>
-          ) : (
-            <>
-              <MenuItem
-                id="both"
-                isDisabled={directionState.bothDisabled}
-                onAction={() => {
-                  onSetDirection(edge.id, "both");
-                  onClose();
-                }}
-              >
-                両方向通行にする
-              </MenuItem>
-              <MenuItem
-                id="reverse"
-                isDisabled={directionState.reverseDisabled}
-                onAction={() => {
-                  onReverse(edge.id);
-                  onClose();
-                }}
-              >
-                向きを反転（{targetLabel} → {sourceLabel}）
-              </MenuItem>
-            </>
-          )}
-          <MenuSeparator />
+    <ContextMenuPopover
+      position={position}
+      className="min-w-56"
+      onClose={onClose}
+    >
+      <Menu aria-label="ルートの方向を変更">
+        {direction === "both" ? (
           <MenuItem
-            id="delete"
-            className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+            id="oneway"
+            isDisabled={directionState.onewayDisabled}
             onAction={() => {
-              onDelete(edge.id);
+              onSetDirection(edge.id, "oneway");
               onClose();
             }}
           >
-            このルートを削除
+            片側通行にする（{sourceLabel} → {targetLabel}）
           </MenuItem>
-        </Menu>
-      </MenuPopover>
-    </>
+        ) : (
+          <>
+            <MenuItem
+              id="both"
+              isDisabled={directionState.bothDisabled}
+              onAction={() => {
+                onSetDirection(edge.id, "both");
+                onClose();
+              }}
+            >
+              両方向通行にする
+            </MenuItem>
+            <MenuItem
+              id="reverse"
+              isDisabled={directionState.reverseDisabled}
+              onAction={() => {
+                onReverse(edge.id);
+                onClose();
+              }}
+            >
+              向きを反転（{targetLabel} → {sourceLabel}）
+            </MenuItem>
+          </>
+        )}
+        <MenuSeparator />
+        <MenuItem
+          id="delete"
+          className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+          onAction={() => {
+            onDelete(edge.id);
+            onClose();
+          }}
+        >
+          このルートを削除
+        </MenuItem>
+      </Menu>
+    </ContextMenuPopover>
   );
 }

@@ -1,17 +1,17 @@
-import { useRef } from "react";
 import {
   Menu,
   MenuHeader,
   MenuItem,
-  MenuPopover,
   MenuSeparator,
 } from "@/components/ui/menu";
 import { getNodeTypeDef } from "../nodeTypes";
 import type { GraphEdgeType, GraphNodeType, NodeType } from "../type";
+import {
+  ContextMenuPopover,
+  type ContextMenuPosition,
+} from "./ContextMenuPopover";
 import { NodeTypeIcon } from "./NodeTypeIcon";
 import { buildNodeTypeOptions } from "./properties/nodeTypeOptions";
-
-type ContextMenuPosition = { x: number; y: number };
 
 export type GraphNodeContextMenuProps = {
   node: GraphNodeType;
@@ -35,7 +35,6 @@ export function GraphNodeContextMenu({
   onDelete,
   onClose,
 }: GraphNodeContextMenuProps) {
-  const anchorRef = useRef<HTMLSpanElement>(null);
   const options = buildNodeTypeOptions(
     node.id,
     node.data.nodeType,
@@ -44,70 +43,56 @@ export function GraphNodeContextMenu({
   );
 
   return (
-    <>
-      {/* React Aria Popover の位置決め専用アンカー */}
-      <span
-        ref={anchorRef}
-        aria-hidden="true"
-        className="pointer-events-none fixed size-px"
-        style={{ left: position.x, top: position.y }}
-      />
-      <MenuPopover
-        isOpen
-        onOpenChange={(isOpen) => {
-          if (!isOpen) onClose();
-        }}
-        triggerRef={anchorRef}
-        placement="bottom start"
-        offset={0}
-        className="min-w-48"
-      >
-        <Menu aria-label="ポイントのタイプを変更">
-          <MenuItem
-            id="add-edge"
-            onAction={() => {
-              onStartEdgeCreation(node.id);
-              onClose();
-            }}
-          >
-            このポイントからルートを追加
-          </MenuItem>
-          <MenuSeparator />
-          <MenuHeader className="px-2 text-xs">タイプを変更</MenuHeader>
-          {options.map((option) => {
-            const def = getNodeTypeDef(option.type);
-            return (
-              <MenuItem
-                id={option.type}
-                key={option.type}
-                textValue={def.label}
-                isDisabled={!option.assignable}
-                onAction={() => {
-                  if (option.type !== node.data.nodeType) {
-                    onSetType(node.id, option.type);
-                  }
-                  onClose();
-                }}
-              >
-                <NodeTypeIcon type={option.type} />
-                {def.label}
-                {option.type === node.data.nodeType ? "（現在）" : null}
-              </MenuItem>
-            );
-          })}
-          <MenuSeparator />
-          <MenuItem
-            id="delete"
-            className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-            onAction={() => {
-              onDelete(node.id);
-              onClose();
-            }}
-          >
-            このポイントを削除
-          </MenuItem>
-        </Menu>
-      </MenuPopover>
-    </>
+    <ContextMenuPopover
+      position={position}
+      className="min-w-48"
+      onClose={onClose}
+    >
+      <Menu aria-label="ポイントのタイプを変更">
+        <MenuItem
+          id="add-edge"
+          onAction={() => {
+            onStartEdgeCreation(node.id);
+            onClose();
+          }}
+        >
+          このポイントからルートを追加
+        </MenuItem>
+        <MenuSeparator />
+        <MenuHeader className="px-2 text-xs">タイプを変更</MenuHeader>
+        {options.map((option) => {
+          const def = getNodeTypeDef(option.type);
+          return (
+            <MenuItem
+              id={option.type}
+              key={option.type}
+              textValue={def.label}
+              isDisabled={!option.assignable}
+              onAction={() => {
+                if (option.type !== node.data.nodeType) {
+                  onSetType(node.id, option.type);
+                }
+                onClose();
+              }}
+            >
+              <NodeTypeIcon type={option.type} />
+              {def.label}
+              {option.type === node.data.nodeType ? "（現在）" : null}
+            </MenuItem>
+          );
+        })}
+        <MenuSeparator />
+        <MenuItem
+          id="delete"
+          className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+          onAction={() => {
+            onDelete(node.id);
+            onClose();
+          }}
+        >
+          このポイントを削除
+        </MenuItem>
+      </Menu>
+    </ContextMenuPopover>
   );
 }

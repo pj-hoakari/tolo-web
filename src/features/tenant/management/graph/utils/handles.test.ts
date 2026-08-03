@@ -3,12 +3,13 @@ import type { GraphEdgeType, GraphNodeType, HandleSide } from "../type";
 import {
   addVirtualHandle,
   assignHandlesByPosition,
+  connectHandleId,
   deriveNodeHandles,
   makeHandleId,
+  parseConnectHandleId,
   parseHandleId,
+  SIDES,
 } from "./handles";
-
-const SIDES: HandleSide[] = ["top", "right", "bottom", "left"];
 
 function node(id: string, x: number, y: number): GraphNodeType {
   return {
@@ -208,5 +209,21 @@ describe("addVirtualHandle（接続ドラッグ中の仮想端点）", () => {
       virtual: true,
     });
     expect(n2Left.map((slot) => slot.total)).toEqual([2, 2]);
+  });
+});
+
+describe("connectHandleId / parseConnectHandleId（辺全体の接続ハンドル ID）", () => {
+  it("生成した ID から辺を取り出せる", () => {
+    for (const side of SIDES) {
+      expect(parseConnectHandleId(connectHandleId(side))).toBe(side);
+    }
+  });
+
+  it("接続ハンドル以外の ID は null を返す", () => {
+    expect(parseConnectHandleId(makeHandleId("top", 0))).toBeNull();
+    expect(parseConnectHandleId("easy-connect")).toBeNull();
+    expect(parseConnectHandleId("connect-diagonal")).toBeNull();
+    expect(parseConnectHandleId(null)).toBeNull();
+    expect(parseConnectHandleId(undefined)).toBeNull();
   });
 });
