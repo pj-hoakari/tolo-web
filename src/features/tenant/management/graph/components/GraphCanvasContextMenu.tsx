@@ -1,4 +1,5 @@
 import type { XYPosition } from "@xyflow/react";
+import { MapPinPlus, Route, X } from "lucide-react";
 import { Menu, MenuItem } from "@/components/ui/menu";
 import type { NodeType } from "../type";
 import {
@@ -38,31 +39,37 @@ export function GraphCanvasContextMenu({
         {isEdgeCreationActive ? (
           <MenuItem
             id="end-edge-creation"
+            textValue="ルート追加を終了"
             onAction={() => {
               onEndEdgeCreation();
               onClose();
             }}
           >
+            <X aria-hidden className="size-4 shrink-0" />
             ルート追加を終了
           </MenuItem>
         ) : (
           <>
             <MenuItem
               id="add-node"
+              textValue="ポイントを追加"
               onAction={() => {
                 onAddNode(nodePosition, nodeType);
                 onClose();
               }}
             >
+              <MapPinPlus aria-hidden className="size-4 shrink-0" />
               ポイントを追加
             </MenuItem>
             <MenuItem
               id="add-edge"
+              textValue="ルートを追加"
               onAction={() => {
                 onStartEdgeCreation();
                 onClose();
               }}
             >
+              <Route aria-hidden className="size-4 shrink-0" />
               ルートを追加
             </MenuItem>
           </>

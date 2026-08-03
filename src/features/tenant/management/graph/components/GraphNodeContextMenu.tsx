@@ -1,3 +1,4 @@
+import { Route, Trash2 } from "lucide-react";
 import {
   Menu,
   MenuHeader,
@@ -51,11 +52,13 @@ export function GraphNodeContextMenu({
       <Menu aria-label="ポイントのタイプを変更">
         <MenuItem
           id="add-edge"
+          textValue="このポイントからルートを追加"
           onAction={() => {
             onStartEdgeCreation(node.id);
             onClose();
           }}
         >
+          <Route aria-hidden className="size-4 shrink-0" />
           このポイントからルートを追加
         </MenuItem>
         <MenuSeparator />
@@ -84,12 +87,14 @@ export function GraphNodeContextMenu({
         <MenuSeparator />
         <MenuItem
           id="delete"
+          textValue="このポイントを削除"
           className="text-destructive focus:bg-destructive/10 focus:text-destructive"
           onAction={() => {
             onDelete(node.id);
             onClose();
           }}
         >
+          <Trash2 aria-hidden className="size-4 shrink-0" />
           このポイントを削除
         </MenuItem>
       </Menu>

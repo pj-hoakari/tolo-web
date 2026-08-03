@@ -1,3 +1,4 @@
+import { ArrowLeftRight, ArrowRight, Repeat2, Trash2 } from "lucide-react";
 import { Menu, MenuItem, MenuSeparator } from "@/components/ui/menu";
 import type { EdgeDirection, GraphEdgeType, GraphNodeType } from "../type";
 import {
@@ -45,34 +46,40 @@ export function GraphEdgeContextMenu({
         {direction === "both" ? (
           <MenuItem
             id="oneway"
+            textValue={`片側通行にする（${sourceLabel} → ${targetLabel}）`}
             isDisabled={directionState.onewayDisabled}
             onAction={() => {
               onSetDirection(edge.id, "oneway");
               onClose();
             }}
           >
+            <ArrowRight aria-hidden className="size-4 shrink-0" />
             片側通行にする（{sourceLabel} → {targetLabel}）
           </MenuItem>
         ) : (
           <>
             <MenuItem
               id="both"
+              textValue="両方向通行にする"
               isDisabled={directionState.bothDisabled}
               onAction={() => {
                 onSetDirection(edge.id, "both");
                 onClose();
               }}
             >
+              <ArrowLeftRight aria-hidden className="size-4 shrink-0" />
               両方向通行にする
             </MenuItem>
             <MenuItem
               id="reverse"
+              textValue={`向きを反転（${targetLabel} → ${sourceLabel}）`}
               isDisabled={directionState.reverseDisabled}
               onAction={() => {
                 onReverse(edge.id);
                 onClose();
               }}
             >
+              <Repeat2 aria-hidden className="size-4 shrink-0" />
               向きを反転（{targetLabel} → {sourceLabel}）
             </MenuItem>
           </>
@@ -80,12 +87,14 @@ export function GraphEdgeContextMenu({
         <MenuSeparator />
         <MenuItem
           id="delete"
+          textValue="このルートを削除"
           className="text-destructive focus:bg-destructive/10 focus:text-destructive"
           onAction={() => {
             onDelete(edge.id);
             onClose();
           }}
         >
+          <Trash2 aria-hidden className="size-4 shrink-0" />
           このルートを削除
         </MenuItem>
       </Menu>
