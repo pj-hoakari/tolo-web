@@ -1,5 +1,8 @@
 {
   "HomePage": {
     "title": "こんにちは、世界！"
+  },
+  "LocaleSelect": {
+    "label": "言語を切り替え"
   }
 }

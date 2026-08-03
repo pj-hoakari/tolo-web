@@ -1,14 +1,19 @@
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { getRequestConfig } from "next-intl/server";
-import { resolveLocaleFromAcceptLanguage } from "./locale";
+import { LOCALE_COOKIE_NAME } from "./cookie";
+import { isLocale, resolveLocaleFromAcceptLanguage } from "./locale";
 
 export default getRequestConfig(async () => {
-  // ブラウザの言語設定（Accept-Language）を既定のロケールとして採用する。
-  // ユーザーによる明示的な言語選択は後続ステップで上書きする想定。
-  const requestHeaders = await headers();
-  const locale = resolveLocaleFromAcceptLanguage(
-    requestHeaders.get("accept-language"),
-  );
+  // ユーザーが明示的に選んだロケールを最優先し、無ければブラウザの言語設定にフォールバックする。
+  const cookieStore = await cookies();
+  const selectedLocale = cookieStore.get(LOCALE_COOKIE_NAME)?.value;
+
+  const locale =
+    selectedLocale && isLocale(selectedLocale)
+      ? selectedLocale
+      : resolveLocaleFromAcceptLanguage(
+          (await headers()).get("accept-language"),
+        );
 
   return {
     locale,

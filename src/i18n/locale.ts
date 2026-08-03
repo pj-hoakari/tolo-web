@@ -14,6 +14,20 @@ export type Locale = (typeof locales)[number];
 /** どのロケールにも一致しなかった場合に使うロケール */
 export const defaultLocale: Locale = "ja";
 
+/**
+ * 言語セレクタに表示する名称。
+ * 探している言語を見つけやすいよう、UI のロケールに関わらず各言語の自称表記で固定する。
+ */
+export const localeLabels: Record<Locale, string> = {
+  ja: "日本語",
+  en: "English",
+  ko: "한국어",
+  "zh-Hans": "简体中文",
+  "zh-Hant": "繁體中文",
+  es: "Español",
+  ne: "नेपाली",
+};
+
 const localeByLowerCase = new Map<string, Locale>(
   locales.map((locale) => [locale.toLowerCase(), locale]),
 );
