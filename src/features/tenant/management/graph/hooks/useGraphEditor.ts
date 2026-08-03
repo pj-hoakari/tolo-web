@@ -11,6 +11,7 @@ import { DEFAULT_NODE_TYPE, resolveConnectionDirection } from "../nodeTypes";
 import { PLACEHOLDER_GRAPH } from "../placeholderGraph";
 import { toGraphData } from "../serialize";
 import type {
+  EdgeDirection,
   GraphData,
   GraphEdgeType,
   GraphNodeType,
@@ -124,13 +125,37 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     [source, appendEdge, selectEdge],
   );
 
-  const addNode = useCallback(
-    (nodeType: NodeType = DEFAULT_NODE_TYPE) => {
+  const setEdgeDirection = useCallback(
+    (id: string, direction: EdgeDirection) => {
+      updateEdgeData(id, { direction });
+    },
+    [updateEdgeData],
+  );
+
+  const setNodeType = useCallback(
+    (id: string, nodeType: NodeType) => {
+      updateNodeData(id, { nodeType });
+    },
+    [updateNodeData],
+  );
+
+  const setNodeLabel = useCallback(
+    (id: string, label: string) => {
+      updateNodeData(id, { label });
+    },
+    [updateNodeData],
+  );
+
+  const addNodeAtPosition = useCallback(
+    (
+      position: { x: number; y: number },
+      nodeType: NodeType = DEFAULT_NODE_TYPE,
+    ) => {
       const node = createNode({
         id: newId("n"),
         label: `ポイント ${source.nodes.length + 1}`,
         nodeType,
-        position: randomPosition(),
+        position,
       });
       appendNode(node);
       selectNode(node.id);
@@ -138,13 +163,35 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     [source.nodes.length, appendNode, selectNode],
   );
 
+  const addNode = useCallback(
+    (nodeType: NodeType = DEFAULT_NODE_TYPE) => {
+      addNodeAtPosition(randomPosition(), nodeType);
+    },
+    [addNodeAtPosition],
+  );
+
+  const deleteNode = useCallback(
+    (id: string) => {
+      // ノードに接続しているルートも一緒に削除される。
+      removeNode(id);
+      clearSelection();
+    },
+    [removeNode, clearSelection],
+  );
+
+  const deleteEdge = useCallback(
+    (id: string) => {
+      removeEdge(id);
+      clearSelection();
+    },
+    [removeEdge, clearSelection],
+  );
+
   const deleteSelection = useCallback(() => {
     if (!selection) return;
-    // ノードは接続しているルートも一緒に削除される
-    if (selection.type === "node") removeNode(selection.id);
-    else removeEdge(selection.id);
-    clearSelection();
-  }, [selection, removeNode, removeEdge, clearSelection]);
+    if (selection.type === "node") deleteNode(selection.id);
+    else deleteEdge(selection.id);
+  }, [selection, deleteNode, deleteEdge]);
 
   const getGraphData = useCallback(
     () => toGraphData(source.nodes, source.edges),
@@ -161,7 +208,17 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
       onSelectNode: selectNode,
       onSelectEdge: selectEdge,
       onClearSelection: clearSelection,
-      editing: { onConnect, isValidConnection },
+      editing: {
+        onConnect,
+        isValidConnection,
+        onSetEdgeDirection: setEdgeDirection,
+        onReverseEdge: reverseEdge,
+        onSetNodeType: setNodeType,
+        onSetNodeLabel: setNodeLabel,
+        onAddNodeAtPosition: addNodeAtPosition,
+        onDeleteNode: deleteNode,
+        onDeleteEdge: deleteEdge,
+      },
     },
     toolbar: { onAddNode: addNode },
     properties: {

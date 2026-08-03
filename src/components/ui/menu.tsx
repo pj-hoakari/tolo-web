@@ -10,6 +10,7 @@ import {
   MenuItem as AriaMenuItem,
   type MenuItemProps as AriaMenuItemProps,
   type MenuProps as AriaMenuProps,
+  MenuSection as AriaMenuSection,
   MenuTrigger as AriaMenuTrigger,
   type MenuTriggerProps as AriaMenuTriggerProps,
   Separator as AriaSeparator,
@@ -22,14 +23,16 @@ import {
 import { cn } from "@/lib/utils";
 
 import { Button, type buttonVariants } from "./button";
-import { ListBoxCollection, ListBoxSection } from "./list-box";
+import { ListBoxCollection } from "./list-box";
 import { SelectPopover } from "./select";
 
 const MenuTrigger = AriaMenuTrigger;
 
 const MenuSubTrigger = AriaSubmenuTrigger;
 
-const MenuSection = ListBoxSection;
+// Menu 専用の Section。ListBoxSection と異なりセクション単位の選択
+// （selectionMode / selectedKeys）に対応し、内包する Header と自動で関連付く。
+const MenuSection = AriaMenuSection;
 
 const MenuCollection = ListBoxCollection;
 

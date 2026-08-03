@@ -1,39 +1,46 @@
 "use client";
 
 import {
-  Handle,
   type NodeProps,
-  Position,
+  useConnection,
   useUpdateNodeInternals,
 } from "@xyflow/react";
-import { type CSSProperties, useEffect, useMemo } from "react";
+import { useContext, useEffect, useMemo } from "react";
 import { getNodeTypeDef } from "../nodeTypes";
-import type { GraphNodeType, HandleSide, HandleSlot } from "../type";
+import type { GraphNodeType } from "../type";
+import { makeHandleId, SIDES } from "../utils/handles";
+import {
+  GraphNodeEasyConnectContext,
+  GraphNodeLabelEditingContext,
+} from "./canvasContexts";
+import { InlineNodeLabel } from "./InlineNodeLabel";
 import { NodeTypeIcon } from "./NodeTypeIcon";
-
-const positionMap: Record<HandleSide, Position> = {
-  top: Position.Top,
-  right: Position.Right,
-  bottom: Position.Bottom,
-  left: Position.Left,
-};
-
-const SIDES: HandleSide[] = ["top", "right", "bottom", "left"];
+import {
+  BorderConnectionHandle,
+  EasyConnectHandle,
+  HandlePort,
+} from "./nodeHandles";
 
 export function GraphNode({
   id,
   data,
   selected,
+  dragging,
   isConnectable,
 }: NodeProps<GraphNodeType>) {
   const handles = data.handles;
   const typeDef = getNodeTypeDef(data.nodeType);
-  const shape = typeDef.shape;
-  const shapeStyle: CSSProperties =
-    shape.kind === "clip"
-      ? { clipPath: shape.clipPath }
-      : { borderRadius: shape.borderRadius };
   const updateNodeInternals = useUpdateNodeInternals();
+  const onUpdateLabel = useContext(GraphNodeLabelEditingContext);
+  const easyConnectMode = useContext(GraphNodeEasyConnectContext);
+  const easyConnectActive = easyConnectMode !== null;
+  const canStartEasyConnect =
+    easyConnectMode?.kind !== "from-node" ||
+    easyConnectMode.sourceNodeId === id;
+  const connection = useConnection<GraphNodeType>();
+  const isConnecting =
+    connection.inProgress &&
+    (connection.fromNode?.id === id || connection.toNode?.id === id);
 
   // ハンドル構成（id・index・total）が変化したら React Flow の内部キャッシュを更新し、
   // エッジ端点の座標を再計算させる。
@@ -44,76 +51,98 @@ export function GraphNode({
     ).join("|");
   }, [handles]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: handleSignature をトリガー依存として扱う
+  // 接続可能な領域は BorderConnectionHandle が担うため、ここに空きスロットという
+  // UI 上の概念はない。一方で React Flow は edge.sourceHandle / targetHandle が
+  // 評価される時点で同じ ID の Handle が登録済みであることを求める。
+  //
+  // 辺の追加・移動・仮想端点の追加では、派生した端点 ID の反映より先に Edge が
+  // 再計算されることがある。ノードの接続数 + 1 件分を各辺に常時登録しておくことで、
+  // 次の端点 ID も含めてこの短い同期ずれを吸収する。これらは不可視の内部アンカーで、
+  // 新規接続できる場所や表示上のスロットを増やすものではない。
+  const endpointHandleCount =
+    1 +
+    SIDES.reduce(
+      (count, side) =>
+        count + (handles?.[side].filter((slot) => !slot.virtual).length ?? 0),
+      0,
+    );
+
+  // ハンドル構成または全体接続領域が変化したら、React Flow の内部キャッシュを更新する。
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handleSignature と easyConnectMode は DOM 上のハンドル構成を表すトリガーとして扱う
   useEffect(() => {
     updateNodeInternals(id);
-  }, [id, handleSignature, updateNodeInternals]);
+  }, [easyConnectMode, handleSignature, id, updateNodeInternals]);
 
   return (
-    <div className="group relative min-w-40 drop-shadow-md">
-      {/* 選択時のハロー */}
-      {selected ? (
-        <div className="absolute inset-0.75 bg-primary/20" style={shapeStyle} />
-      ) : null}
-      {/* 枠線レイヤ */}
-      <div
-        className={[
-          "absolute inset-0 transition-colors",
-          selected
-            ? "bg-primary"
-            : "bg-muted-foreground group-hover:bg-muted-foreground/40",
-        ].join(" ")}
-        style={shapeStyle}
+    <div className="group relative flex w-fit min-w-40 justify-center">
+      <NodeFrame
+        selected={selected}
+        dragging={dragging}
+        isConnecting={isConnecting}
       />
-      {/* 塗りレイヤ */}
-      <div className="absolute inset-[1.5px] bg-card" style={shapeStyle} />
+      <NodeTypeBadge type={data.nodeType} label={typeDef.label} />
       {/* 内容 */}
-      <div
-        className={[
-          "relative flex min-h-14 flex-col justify-center px-3 py-2",
-          shape.contentClassName ?? "",
-        ].join(" ")}
-      >
-        <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
-          <NodeTypeIcon type={data.nodeType} />
-          {typeDef.label}
-        </div>
-        <div className="text-center font-semibold text-foreground text-sm">
-          {data.label}
-        </div>
+      <div className="relative min-w-0 px-4 py-5">
+        <InlineNodeLabel id={id} label={data.label} onUpdate={onUpdateLabel} />
       </div>
 
-      {handles
-        ? SIDES.flatMap((side) =>
-            handles[side]
-              // 接続できないキャンバス（表示専用）では空きスロットを出さない。
-              // 使用中のスロットはエッジ端点の座標計算に必要なため常に描画する。
-              .filter((slot) => isConnectable || slot.used)
-              .map((slot) => <HandlePort key={slot.id} slot={slot} />),
-          )
+      {SIDES.flatMap((side) =>
+        Array.from({ length: endpointHandleCount }, (_, index) => (
+          <HandlePort
+            key={makeHandleId(side, index)}
+            side={side}
+            index={index}
+            layoutSlot={handles?.[side].find((slot) => slot.index === index)}
+            fallbackTotal={(handles?.[side].length ?? 0) + 1}
+          />
+        )),
+      )}
+      {isConnectable
+        ? SIDES.map((side) => <BorderConnectionHandle key={side} side={side} />)
         : null}
+      {easyConnectActive && isConnectable ? (
+        <EasyConnectHandle canStart={canStartEasyConnect} />
+      ) : null}
     </div>
   );
 }
 
-function HandlePort({ slot }: { slot: HandleSlot }) {
-  const percentage = ((slot.index + 1) / (slot.total + 1)) * 100;
-  const style =
-    slot.side === "top" || slot.side === "bottom"
-      ? { left: `${percentage}%` }
-      : { top: `${percentage}%` };
-
-  const cls = slot.used
-    ? "!h-2.5 !w-2.5 !rounded-full !border-2 !border-card !bg-muted-foreground"
-    : "!h-2.5 !w-2.5 !rounded-full !border !border-muted-foreground !bg-secondary hover:!bg-primary/10";
+/** 外形は全ノード共通。操作中だけ輪郭を表示する。 */
+function NodeFrame({
+  selected,
+  dragging,
+  isConnecting,
+}: {
+  selected: boolean;
+  dragging: boolean;
+  isConnecting: boolean;
+}) {
+  const borderClass =
+    selected || dragging || isConnecting
+      ? "border-primary"
+      : "border-border group-hover:border-muted-foreground group-focus-within:border-primary";
 
   return (
-    <Handle
-      type="source"
-      position={positionMap[slot.side]}
-      id={slot.id}
-      style={style}
-      className={cls}
+    <div
+      className={`graph-node-frame pointer-events-none absolute inset-0 rounded-lg border-2 bg-card shadow-sm transition-colors ${borderClass}`}
     />
+  );
+}
+
+/** タイプを示すアイコンと名前を、ノード左上のピル型バッジとして表示する。 */
+function NodeTypeBadge({
+  type,
+  label,
+}: {
+  type: GraphNodeType["data"]["nodeType"];
+  label: string;
+}) {
+  return (
+    <div className="graph-node-type-badge pointer-events-none absolute -top-1 -left-1 z-10 flex items-center gap-1 rounded-full border border-border bg-card px-2 py-1">
+      <NodeTypeIcon type={type} className="size-4" />
+      <span className="font-medium text-[10px] text-muted-foreground">
+        {label}
+      </span>
+    </div>
   );
 }
