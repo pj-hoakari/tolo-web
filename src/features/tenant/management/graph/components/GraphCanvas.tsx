@@ -20,6 +20,7 @@ import {
   ReactFlow,
   useNodesInitialized,
   useReactFlow,
+  useStoreApi,
   useViewport,
 } from "@xyflow/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -43,6 +44,7 @@ import { GraphEdgeContextMenu } from "./GraphEdgeContextMenu";
 import {
   GraphNode,
   GraphNodeEasyConnectContext,
+  type GraphNodeEasyConnectMode,
   GraphNodeLabelEditingContext,
 } from "./GraphNode";
 import { GraphNodeContextMenu } from "./GraphNodeContextMenu";
@@ -238,6 +240,8 @@ export function GraphCanvas({
   const editable = editing !== undefined;
   const viewport = useViewport();
   const { screenToFlowPosition } = useReactFlow<GraphNodeType, GraphEdgeType>();
+  const storeApi = useStoreApi<GraphNodeType, GraphEdgeType>();
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const nativeConnectionHandled = useRef(false);
   const [contextMenu, setContextMenu] = useState<
     | { kind: "edge"; elementId: string; x: number; y: number }
@@ -253,7 +257,9 @@ export function GraphCanvas({
   const [virtualHandle, setVirtualHandle] = useState<VirtualHandle | null>(
     null,
   );
-  const [easyConnectActive, setEasyConnectActive] = useState(false);
+  const [easyConnectMode, setEasyConnectMode] =
+    useState<GraphNodeEasyConnectMode | null>(null);
+  const easyConnectActive = easyConnectMode !== null;
   const displayNodes = useMemo(
     () =>
       virtualHandle
@@ -261,6 +267,11 @@ export function GraphCanvas({
         : nodes,
     [nodes, virtualHandle],
   );
+  const endEasyConnect = useCallback(() => {
+    setEasyConnectMode(null);
+    // 進行中の接続ドラッグが残っていた場合も、接続線ごと破棄する。
+    storeApi.getState().cancelConnection();
+  }, [storeApi]);
   const handleConnectStart = useCallback<OnConnectStart>((_, params) => {
     nativeConnectionHandled.current = false;
     const side = params.handleId?.replace("connect-", "") as HandleSide;
@@ -272,22 +283,55 @@ export function GraphCanvas({
       // React Flow がハンドル上へのドロップを先に確定した場合は、
       // onConnectEnd のフォールバックで重ねて追加しない。
       nativeConnectionHandled.current = true;
+      // モード終了後に片付け切れていないドラッグから届く easy-connect 由来の
+      // 接続は反映しない。
+      if (
+        !easyConnectActive &&
+        (connection.sourceHandle === "easy-connect" ||
+          connection.targetHandle === "easy-connect")
+      ) {
+        return;
+      }
       editing?.onConnect(connection);
+      if (easyConnectMode?.kind === "from-node") endEasyConnect();
     },
-    [editing],
+    [easyConnectActive, easyConnectMode, editing, endEasyConnect],
   );
   const handleConnectEnd = useCallback<OnConnectEnd>(
-    (_, connectionState) => {
+    (event, connectionState) => {
       setVirtualHandle(null);
-      const wasEasyConnect = easyConnectActive;
       const wasHandledNatively = nativeConnectionHandled.current;
       nativeConnectionHandled.current = false;
       if (wasHandledNatively) {
         return;
       }
-      if (wasEasyConnect) {
+      // 始点固定モードで終点を確定できなかったとき: 接続できないノードの
+      // 近くでのリリースならドラッグを自動再開して選び直せるようにし、
+      // 何もない場所でのリリースならモードごと終了する。
+      if (easyConnectMode?.kind === "from-node") {
+        const nearNode =
+          connectionState.pointer !== null &&
+          findConnectionPreview(
+            toFlowPosition(connectionState.pointer, viewport),
+            nodes,
+            easyConnectMode.sourceNodeId,
+          ) !== null;
+        if (nearNode && "clientX" in event) {
+          setEasyConnectMode({
+            kind: "from-node",
+            sourceNodeId: easyConnectMode.sourceNodeId,
+            origin: { x: event.clientX, y: event.clientY },
+          });
+        } else {
+          endEasyConnect();
+        }
         return;
       }
+      if (
+        easyConnectActive ||
+        connectionState.fromHandle?.id === "easy-connect"
+      )
+        return;
       if (!editing || !connectionState.fromNode || !connectionState.pointer)
         return;
 
@@ -310,7 +354,14 @@ export function GraphCanvas({
         editing.onConnect(connection);
       }
     },
-    [easyConnectActive, editing, nodes, viewport],
+    [
+      easyConnectActive,
+      easyConnectMode,
+      editing,
+      endEasyConnect,
+      nodes,
+      viewport,
+    ],
   );
   const connectionLineComponent = useCallback(
     (props: ConnectionLineComponentProps<GraphNodeType>) =>
@@ -326,11 +377,65 @@ export function GraphCanvas({
     [easyConnectActive, editing, nodes, viewport, virtualHandle],
   );
   const startEasyConnect = useCallback(() => {
-    setEasyConnectActive(true);
+    setEasyConnectMode({ kind: "global" });
   }, []);
-  const endEasyConnect = useCallback(() => {
-    setEasyConnectActive(false);
-  }, []);
+  const startEasyConnectFromNode = useCallback(
+    (sourceNodeId: string) => {
+      setEasyConnectMode({
+        kind: "from-node",
+        sourceNodeId,
+        // コンテキストメニューを開いた位置（＝始点ノード上）からドラッグを始める。
+        origin: contextMenu
+          ? { x: contextMenu.x, y: contextMenu.y }
+          : { x: 0, y: 0 },
+      });
+    },
+    [contextMenu],
+  );
+  // 始点固定モードでは、始点ノードからの接続ドラッグを自動で開始する。
+  // これによりユーザーは終点のノードをクリックするだけでルートを作成できる。
+  useEffect(() => {
+    if (easyConnectMode?.kind !== "from-node") return;
+
+    const { sourceNodeId, origin } = easyConnectMode;
+    let rafId = 0;
+    let attempts = 0;
+    const startConnectionDrag = () => {
+      const node = storeApi.getState().nodeLookup.get(sourceNodeId);
+      const handleRegistered = node?.internals.handleBounds?.source?.some(
+        (handle) => handle.id === "easy-connect",
+      );
+      const handleElement = wrapperRef.current?.querySelector<HTMLElement>(
+        `.react-flow__handle[data-handleid="easy-connect"][data-nodeid="${CSS.escape(sourceNodeId)}"]`,
+      );
+      if (!handleRegistered || !handleElement) {
+        // updateNodeInternals は rAF 遅延のため、ハンドル登録を待って再試行する。
+        if (attempts < 10) {
+          attempts += 1;
+          rafId = requestAnimationFrame(startConnectionDrag);
+        }
+        return;
+      }
+      handleElement.dispatchEvent(
+        new MouseEvent("mousedown", {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: origin.x,
+          clientY: origin.y,
+        }),
+      );
+      // ドラッグ閾値を越えさせて、マウスを動かす前から接続線を表示する。
+      document.dispatchEvent(
+        new MouseEvent("mousemove", {
+          clientX: origin.x + 2,
+          clientY: origin.y + 2,
+        }),
+      );
+    };
+    rafId = requestAnimationFrame(startConnectionDrag);
+    return () => cancelAnimationFrame(rafId);
+  }, [easyConnectMode, storeApi]);
   const handlePaneClick = useCallback(() => {
     endEasyConnect();
     onClearSelection();
@@ -339,11 +444,11 @@ export function GraphCanvas({
     if (!easyConnectActive) return;
 
     const cancelEasyConnect = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setEasyConnectActive(false);
+      if (event.key === "Escape") endEasyConnect();
     };
     window.addEventListener("keydown", cancelEasyConnect);
     return () => window.removeEventListener("keydown", cancelEasyConnect);
-  }, [easyConnectActive]);
+  }, [easyConnectActive, endEasyConnect]);
   const handleEdgeContextMenu = useCallback(
     (event: React.MouseEvent, edge: GraphEdgeType) => {
       event.preventDefault();
@@ -402,7 +507,7 @@ export function GraphCanvas({
     contextMenu?.kind === "canvas" ? contextMenu : undefined;
 
   return (
-    <div className="relative min-h-0 flex-1 bg-secondary">
+    <div ref={wrapperRef} className="relative min-h-0 flex-1 bg-secondary">
       <GraphEdgeMarkers />
       {canvasContextMenu && editing ? (
         <GraphCanvasContextMenu
@@ -435,11 +540,12 @@ export function GraphCanvas({
           edges={edges}
           position={contextMenu}
           onSetType={editing.onSetNodeType}
+          onStartEdgeCreation={startEasyConnectFromNode}
           onDelete={editing.onDeleteNode}
           onClose={() => setContextMenu(null)}
         />
       ) : null}
-      <GraphNodeEasyConnectContext.Provider value={easyConnectActive}>
+      <GraphNodeEasyConnectContext.Provider value={easyConnectMode}>
         <GraphNodeLabelEditingContext.Provider value={editing?.onSetNodeLabel}>
           <ReactFlow
             nodes={displayNodes}
@@ -478,7 +584,9 @@ export function GraphCanvas({
               <Panel position="top-center">
                 <div className="flex items-center rounded-md border border-primary bg-card px-3 py-2 text-foreground text-sm shadow-sm">
                   <div>
-                    ルートを追加: ポイントから別のポイントへドラッグ
+                    {easyConnectMode?.kind === "from-node"
+                      ? "ルートを追加: 終点にするポイントをクリック"
+                      : "ルートを追加: ポイントから別のポイントへドラッグ"}
                     <span className="ml-2 text-muted-foreground text-xs">
                       Esc でキャンセル
                     </span>

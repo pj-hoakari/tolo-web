@@ -23,6 +23,7 @@ describe("GraphNodeContextMenu", () => {
         edges={[]}
         position={{ x: 100, y: 100 }}
         onSetType={onSetType}
+        onStartEdgeCreation={vi.fn()}
         onDelete={vi.fn()}
         onClose={onClose}
       />,
@@ -45,6 +46,7 @@ describe("GraphNodeContextMenu", () => {
         edges={[]}
         position={{ x: 100, y: 100 }}
         onSetType={vi.fn()}
+        onStartEdgeCreation={vi.fn()}
         onDelete={onDelete}
         onClose={vi.fn()}
       />,
@@ -57,5 +59,30 @@ describe("GraphNodeContextMenu", () => {
     fireEvent.click(deleteItem);
 
     expect(onDelete).toHaveBeenCalledWith("n1");
+  });
+
+  it("このポイントを始点にルート追加モードを開始できる", () => {
+    const onStartEdgeCreation = vi.fn();
+    const onClose = vi.fn();
+
+    render(
+      <GraphNodeContextMenu
+        node={node}
+        nodes={[node]}
+        edges={[]}
+        position={{ x: 100, y: 100 }}
+        onSetType={vi.fn()}
+        onStartEdgeCreation={onStartEdgeCreation}
+        onDelete={vi.fn()}
+        onClose={onClose}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("menuitem", { name: "このポイントからルートを追加" }),
+    );
+
+    expect(onStartEdgeCreation).toHaveBeenCalledWith("n1");
+    expect(onClose).toHaveBeenCalled();
   });
 });

@@ -36,8 +36,18 @@ export const GraphNodeLabelEditingContext = createContext<
   ((id: string, label: string) => void) | undefined
 >(undefined);
 
-/** グローバルなルート追加モードでは、ノード全体を接続領域として扱う。 */
-export const GraphNodeEasyConnectContext = createContext(false);
+/** ノード全体を接続領域として扱うルート追加モード。 */
+export type GraphNodeEasyConnectMode =
+  | { kind: "global" }
+  | {
+      kind: "from-node";
+      sourceNodeId: string;
+      /** 接続ドラッグを自動開始する際の起点（スクリーン座標） */
+      origin: { x: number; y: number };
+    };
+
+export const GraphNodeEasyConnectContext =
+  createContext<GraphNodeEasyConnectMode | null>(null);
 
 export function GraphNode({
   id,
@@ -50,7 +60,11 @@ export function GraphNode({
   const typeDef = getNodeTypeDef(data.nodeType);
   const updateNodeInternals = useUpdateNodeInternals();
   const onUpdateLabel = useContext(GraphNodeLabelEditingContext);
-  const easyConnectActive = useContext(GraphNodeEasyConnectContext);
+  const easyConnectMode = useContext(GraphNodeEasyConnectContext);
+  const easyConnectActive = easyConnectMode !== null;
+  const canStartEasyConnect =
+    easyConnectMode?.kind !== "from-node" ||
+    easyConnectMode.sourceNodeId === id;
   const connection = useConnection<GraphNodeType>();
   const isConnecting =
     connection.inProgress &&
@@ -82,10 +96,10 @@ export function GraphNode({
     );
 
   // ハンドル構成または全体接続領域が変化したら、React Flow の内部キャッシュを更新する。
-  // biome-ignore lint/correctness/useExhaustiveDependencies: handleSignature と easyConnectActive は DOM 上のハンドル構成を表すトリガーとして扱う
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handleSignature と easyConnectMode は DOM 上のハンドル構成を表すトリガーとして扱う
   useEffect(() => {
     updateNodeInternals(id);
-  }, [easyConnectActive, handleSignature, id, updateNodeInternals]);
+  }, [easyConnectMode, handleSignature, id, updateNodeInternals]);
 
   return (
     <div className="group relative flex w-fit min-w-40 justify-center">
@@ -114,7 +128,9 @@ export function GraphNode({
       {isConnectable
         ? SIDES.map((side) => <BorderConnectionHandle key={side} side={side} />)
         : null}
-      {easyConnectActive && isConnectable ? <EasyConnectHandle /> : null}
+      {easyConnectActive && isConnectable ? (
+        <EasyConnectHandle canStart={canStartEasyConnect} />
+      ) : null}
     </div>
   );
 }
@@ -294,12 +310,13 @@ function BorderConnectionHandle({ side }: { side: HandleSide }) {
 }
 
 /** ルート追加モード中だけノード全体を覆う接続領域。 */
-function EasyConnectHandle() {
+function EasyConnectHandle({ canStart }: { canStart: boolean }) {
   return (
     <Handle
       type="source"
       position={Position.Top}
       id="easy-connect"
+      isConnectableStart={canStart}
       style={{
         width: "100%",
         height: "100%",

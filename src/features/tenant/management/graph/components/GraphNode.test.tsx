@@ -90,7 +90,7 @@ describe("GraphNode", () => {
   it("ルート追加モード中はノード全体を接続領域にする", () => {
     const { container } = render(
       <ReactFlowProvider>
-        <GraphNodeEasyConnectContext.Provider value>
+        <GraphNodeEasyConnectContext.Provider value={{ kind: "global" }}>
           <GraphNode {...nodeProps} isConnectable />
         </GraphNodeEasyConnectContext.Provider>
       </ReactFlowProvider>,
@@ -100,5 +100,47 @@ describe("GraphNode", () => {
     expect(handle).not.toBeNull();
     expect(handle?.classList.contains("z-20!")).toBe(true);
     expect(handle?.classList.contains("pointer-events-auto!")).toBe(true);
+  });
+
+  it("始点固定のルート追加モードでは指定したノードだけ接続を開始できる", () => {
+    const { container, rerender } = render(
+      <ReactFlowProvider>
+        <GraphNodeEasyConnectContext.Provider
+          value={{
+            kind: "from-node",
+            sourceNodeId: "n1",
+            origin: { x: 0, y: 0 },
+          }}
+        >
+          <GraphNode {...nodeProps} isConnectable />
+        </GraphNodeEasyConnectContext.Provider>
+      </ReactFlowProvider>,
+    );
+
+    expect(
+      container
+        .querySelector('[data-handleid="easy-connect"]')
+        ?.classList.contains("connectablestart"),
+    ).toBe(true);
+
+    rerender(
+      <ReactFlowProvider>
+        <GraphNodeEasyConnectContext.Provider
+          value={{
+            kind: "from-node",
+            sourceNodeId: "n1",
+            origin: { x: 0, y: 0 },
+          }}
+        >
+          <GraphNode {...nodeProps} id="n2" isConnectable />
+        </GraphNodeEasyConnectContext.Provider>
+      </ReactFlowProvider>,
+    );
+
+    expect(
+      container
+        .querySelector('[data-handleid="easy-connect"]')
+        ?.classList.contains("connectablestart"),
+    ).toBe(false);
   });
 });

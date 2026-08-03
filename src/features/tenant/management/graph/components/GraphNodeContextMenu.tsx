@@ -19,6 +19,7 @@ export type GraphNodeContextMenuProps = {
   edges: GraphEdgeType[];
   position: ContextMenuPosition;
   onSetType: (id: string, type: NodeType) => void;
+  onStartEdgeCreation: (sourceNodeId: string) => void;
   onDelete: (id: string) => void;
   onClose: () => void;
 };
@@ -30,6 +31,7 @@ export function GraphNodeContextMenu({
   edges,
   position,
   onSetType,
+  onStartEdgeCreation,
   onDelete,
   onClose,
 }: GraphNodeContextMenuProps) {
@@ -61,6 +63,16 @@ export function GraphNodeContextMenu({
         className="min-w-48"
       >
         <Menu aria-label="ポイントのタイプを変更">
+          <MenuItem
+            id="add-edge"
+            onAction={() => {
+              onStartEdgeCreation(node.id);
+              onClose();
+            }}
+          >
+            このポイントからルートを追加
+          </MenuItem>
+          <MenuSeparator />
           <MenuHeader className="px-2 text-xs">タイプを変更</MenuHeader>
           {options.map((option) => {
             const def = getNodeTypeDef(option.type);
