@@ -2,10 +2,26 @@ import type {
   GraphEdgeType,
   GraphNodeType,
   HandleSide,
+  HandleSlot,
   NodeHandles,
 } from "../type";
 
-const SIDES: HandleSide[] = ["top", "right", "bottom", "left"];
+/** ノードの4辺の一覧。描画・走査の順序もこの並びに揃える。 */
+export const SIDES: HandleSide[] = ["top", "right", "bottom", "left"];
+
+/** 各辺全体を新規接続の開始領域にするハンドル（BorderConnectionHandle）の ID */
+export function connectHandleId(side: HandleSide): string {
+  return `connect-${side}`;
+}
+
+/** connectHandleId で作った ID から辺を取り出す。該当しない ID は null。 */
+export function parseConnectHandleId(
+  id: string | null | undefined,
+): HandleSide | null {
+  if (!id?.startsWith("connect-")) return null;
+  const side = id.slice("connect-".length) as HandleSide;
+  return SIDES.includes(side) ? side : null;
+}
 
 export function parseHandleId(
   id: string | null | undefined,
@@ -53,15 +69,15 @@ export function deriveNodeHandles(
     const used = usedByNode.get(n.id);
     const handles: NodeHandles = { top: [], right: [], bottom: [], left: [] };
     for (const side of SIDES) {
-      const usedSet = used?.[side] ?? new Set<number>();
-      const maxUsed = usedSet.size > 0 ? Math.max(...usedSet) : -1;
-      const total = maxUsed + 2; // 既使用 + 空き1
-      for (let i = 0; i < total; i++) {
+      const edgeIndexes = [...(used?.[side] ?? new Set<number>())].sort(
+        (a, b) => a - b,
+      );
+      const total = edgeIndexes.length;
+      for (const [index, edgeIndex] of edgeIndexes.entries()) {
         handles[side].push({
-          id: makeHandleId(side, i),
+          id: makeHandleId(side, edgeIndex),
           side,
-          index: i,
-          used: usedSet.has(i),
+          index,
           total,
         });
       }
@@ -70,6 +86,37 @@ export function deriveNodeHandles(
       ...n,
       data: { ...n.data, handles },
     };
+  });
+}
+
+/**
+ * 接続ドラッグ中の開始ノードにだけ仮想端点を1つ追加する。
+ * 同じ辺の既存端点も total を更新するため、実際にエッジが1本増えた場合と
+ * 同じ間隔で再配置される。
+ */
+export function addVirtualHandle(
+  nodes: GraphNodeType[],
+  nodeId: string,
+  side: HandleSide,
+): GraphNodeType[] {
+  return nodes.map((node) => {
+    if (node.id !== nodeId || !node.data.handles) return node;
+
+    const existing = node.data.handles[side];
+    const total = existing.length + 1;
+    const virtual: HandleSlot = {
+      id: `virtual-${side}`,
+      side,
+      index: existing.length,
+      total,
+      virtual: true,
+    };
+    const handles: NodeHandles = {
+      ...node.data.handles,
+      [side]: [...existing.map((handle) => ({ ...handle, total })), virtual],
+    };
+
+    return { ...node, data: { ...node.data, handles } };
   });
 }
 
@@ -128,6 +175,18 @@ function sidesForEdge(
   return { sourceSide: horizontalSource, targetSide: verticalTarget };
 }
 
+/**
+ * 接続完了後に割り当てる、両端ノードの接続辺を返す。
+ * エッジ作成中のプレビューもこの結果を使うことで、ポインタがノード上を
+ * 移動しても確定後と同じ向きに表示できる。
+ */
+export function getConnectionSides(
+  source: GraphNodeType,
+  target: GraphNodeType,
+): { sourceSide: HandleSide; targetSide: HandleSide } {
+  return sidesForEdge(nodeCenter(source), nodeCenter(target));
+}
+
 type Attach = {
   edgeId: string;
   role: "source" | "target";
@@ -145,8 +204,7 @@ export function assignHandlesByPosition(
   nodes: GraphNodeType[],
   edges: GraphEdgeType[],
 ): GraphEdgeType[] {
-  const centerById = new Map<string, Vec2>();
-  for (const n of nodes) centerById.set(n.id, nodeCenter(n));
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
 
   const sideByEdge = new Map<
     string,
@@ -163,22 +221,24 @@ export function assignHandlesByPosition(
   };
 
   for (const e of edges) {
-    const s = centerById.get(e.source);
-    const t = centerById.get(e.target);
+    const s = nodeById.get(e.source);
+    const t = nodeById.get(e.target);
     if (!s || !t) continue;
-    const sides = sidesForEdge(s, t);
+    const sides = getConnectionSides(s, t);
+    const sourceCenter = nodeCenter(s);
+    const targetCenter = nodeCenter(t);
     sideByEdge.set(e.id, sides);
     addAttach(e.source, {
       edgeId: e.id,
       role: "source",
       side: sides.sourceSide,
-      other: t,
+      other: targetCenter,
     });
     addAttach(e.target, {
       edgeId: e.id,
       role: "target",
       side: sides.targetSide,
-      other: s,
+      other: sourceCenter,
     });
   }
 

@@ -3,14 +3,15 @@ import type { Edge, Node } from "@xyflow/react";
 /** ノードの4辺。各辺に複数のハンドル（接続点）を配置 */
 export type HandleSide = "top" | "right" | "bottom" | "left";
 
-/** 1つのハンドル（エッジの接続点）を表すレンダリング用スロット */
+/** 接続済みエッジの端点を表す、描画時だけ使うハンドル */
 export type HandleSlot = {
   id: string;
   side: HandleSide;
   index: number;
-  used: boolean;
-  /** 同じ辺上のスロット総数（座標計算に使用） */
+  /** 同じ辺上の端点総数（座標計算に使用） */
   total: number;
+  /** 接続ドラッグ中だけ描画する仮想的な端点 */
+  virtual?: boolean;
 };
 
 export type NodeHandles = Record<HandleSide, HandleSlot[]>;
@@ -42,7 +43,7 @@ export type GraphNodeData = {
    */
   observationPointIds?: string[];
   /**
-   * エッジ接続状況から派生的に注入されるレンダリング情報
+   * 接続済みエッジの端点から派生的に注入されるレンダリング情報
    */
   handles?: NodeHandles;
   /**
