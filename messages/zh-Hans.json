@@ -225,5 +225,93 @@
       "inactiveHint": "（选择后启动时生效）",
       "hide": "隐藏"
     }
+  },
+  "Guest": {
+    "pageSubtitle": "访客页面",
+    "waitingNumber": {
+      "title": "当前等待人数",
+      "unit": "人"
+    },
+    "callingNumber": {
+      "title": "当前叫号",
+      "unit": "号"
+    },
+    "estimatedWaitTime": {
+      "title": "预计等待时间",
+      "prefix": "约",
+      "unit": "分钟"
+    },
+    "queue": {
+      "title": "排队方式",
+      "shape": "形状",
+      "direction": "前进方向",
+      "entrance": "入口",
+      "entranceMarker": "入口",
+      "current": "当前",
+      "max": "最多",
+      "people": "人",
+      "shapes": {
+        "zigzag": "之字形",
+        "straight": "直线",
+        "l-shape": "L形",
+        "spiral": "螺旋"
+      },
+      "entrances": {
+        "top": "上",
+        "bottom": "下",
+        "left": "左",
+        "right": "右"
+      }
+    },
+    "staffMessage": {
+      "title": "工作人员通知",
+      "ariaOpen": "工作人员通知",
+      "ariaClose": "关闭通知",
+      "empty": "暂无通知",
+      "samples": {
+        "msg-2": {
+          "body": "东门附近非常拥挤。赶时间的来宾建议使用西门。",
+          "staffName": "山田太郎",
+          "staffRole": "会场工作人员"
+        },
+        "msg-1": {
+          "body": "演出开始时间已从 15:00 改为 15:30，敬请谅解。",
+          "staffName": "佐藤花子",
+          "staffRole": "运营负责人"
+        }
+      }
+    },
+    "guideMap": {
+      "title": "导览图",
+      "hint": "选择目的地以显示路线",
+      "currentLocation": "当前位置",
+      "destinations": {
+        "hall": "大厅",
+        "goods": "商品区",
+        "cafe": "咖啡厅",
+        "exit": "出口"
+      },
+      "destinationsLabel": "目的地",
+      "expand": "放大地图",
+      "collapse": "缩小地图"
+    },
+    "floor": {
+      "title": "当前楼层",
+      "placeholderName": "1层"
+    },
+    "congestion": {
+      "title": "拥挤状况",
+      "levels": {
+        "low": "低",
+        "mid": "中",
+        "high": "高"
+      },
+      "areas": {
+        "entrance": "入场口",
+        "hall": "大厅",
+        "cafe": "咖啡厅",
+        "goods": "商品区"
+      }
+    }
   }
 }

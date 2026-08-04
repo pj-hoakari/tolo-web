@@ -225,5 +225,93 @@
       "inactiveHint": " (applied on the next start)",
       "hide": "Hide"
     }
+  },
+  "Guest": {
+    "pageSubtitle": "Guest Page",
+    "waitingNumber": {
+      "title": "People waiting",
+      "unit": "people"
+    },
+    "callingNumber": {
+      "title": "Now calling",
+      "unit": ""
+    },
+    "estimatedWaitTime": {
+      "title": "Estimated wait",
+      "prefix": "approx.",
+      "unit": "min"
+    },
+    "queue": {
+      "title": "Queue layout",
+      "shape": "Shape",
+      "direction": "Direction",
+      "entrance": "Entrance",
+      "entranceMarker": "Entry",
+      "current": "Now",
+      "max": "Max",
+      "people": "ppl",
+      "shapes": {
+        "zigzag": "Zigzag",
+        "straight": "Straight",
+        "l-shape": "L-shape",
+        "spiral": "Spiral"
+      },
+      "entrances": {
+        "top": "Top",
+        "bottom": "Bottom",
+        "left": "Left",
+        "right": "Right"
+      }
+    },
+    "staffMessage": {
+      "title": "Staff notices",
+      "ariaOpen": "Staff notices",
+      "ariaClose": "Close notices",
+      "empty": "No notices at the moment",
+      "samples": {
+        "msg-2": {
+          "body": "The east gate area is very crowded. If you're in a hurry, we recommend using the west gate.",
+          "staffName": "Taro Yamada",
+          "staffRole": "Venue staff"
+        },
+        "msg-1": {
+          "body": "The start time has changed from 15:00 to 15:30. Thank you for your understanding.",
+          "staffName": "Hanako Sato",
+          "staffRole": "Event manager"
+        }
+      }
+    },
+    "guideMap": {
+      "title": "Guide map",
+      "hint": "Select a destination to see the route",
+      "currentLocation": "You are here",
+      "destinations": {
+        "hall": "Hall",
+        "goods": "Merch",
+        "cafe": "Café",
+        "exit": "Exit"
+      },
+      "destinationsLabel": "Destinations",
+      "expand": "Enlarge the map",
+      "collapse": "Shrink the map"
+    },
+    "floor": {
+      "title": "Current floor",
+      "placeholderName": "1F"
+    },
+    "congestion": {
+      "title": "Congestion",
+      "levels": {
+        "low": "Low",
+        "mid": "Medium",
+        "high": "High"
+      },
+      "areas": {
+        "entrance": "Entrance gate",
+        "hall": "Hall",
+        "cafe": "Café",
+        "goods": "Merch"
+      }
+    }
   }
 }

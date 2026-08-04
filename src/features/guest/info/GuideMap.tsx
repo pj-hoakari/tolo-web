@@ -1,8 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { useLanguage } from "../i18n/LanguageProvider";
-import { messages } from "../i18n/messages";
 import { GuideMapView } from "./GuideMapView";
 import {
   buildGuideMapSource,
@@ -32,18 +31,15 @@ const ROUTE_FLOW = resolveRouteFlow(snapshot);
 function GuideMap(_props: GuestInfoComponentProps) {
   // TODO: _props.tenantId / _props.eventId でマップ JSON と現在地を API から取得する。
   //       いまはリポジトリ同梱の JSON を読み込んで表示している。
-  const { lang } = useLanguage();
-  const g = messages[lang].guideMap;
+  const t = useTranslations("Guest.guideMap");
 
   // 部屋・経由地点を JSON から組み立てる（名称は i18n があれば優先）
   const source = useMemo(
     () =>
-      buildGuideMapSource(
-        snapshot,
-        FLOOR_ID,
-        (id, fallback) => g.destinations[id] ?? fallback,
+      buildGuideMapSource(snapshot, FLOOR_ID, (id, fallback) =>
+        t.has(`destinations.${id}`) ? t(`destinations.${id}`) : fallback,
       ),
-    [g],
+    [t],
   );
 
   // 作成ツールで指定した道をそのまま表示する
@@ -68,8 +64,12 @@ function GuideMap(_props: GuestInfoComponentProps) {
       waypoints={source.waypoints}
       start={MARKERS.start}
       route={route}
-      title={g.title}
-      currentLocationLabel={g.currentLocation}
+      title={t("title")}
+      hint={t("hint")}
+      currentLocationLabel={t("currentLocation")}
+      destinationsLabel={t("destinationsLabel")}
+      expandLabel={t("expand")}
+      collapseLabel={t("collapse")}
       routeFlowClassName={ROUTE_FLOW.className}
       routeFlowDuration={ROUTE_FLOW.duration}
     />

@@ -1,10 +1,8 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { LocaleSelect } from "@/components/locale-select";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useLanguage } from "@/features/guest/i18n/LanguageProvider";
-import { LanguageSwitcher } from "@/features/guest/i18n/LanguageSwitcher";
-import { messages } from "@/features/guest/i18n/messages";
 import { StaffMessageBell } from "@/features/guest/info/StaffMessageBell";
 
 export type GuestHeaderProps = {
@@ -18,21 +16,19 @@ export function GuestHeader({
   tenantId,
   eventId,
 }: GuestHeaderProps) {
-  const { lang } = useLanguage();
-  const t = messages[lang];
+  const t = useTranslations("Guest");
 
   return (
     <header className="border-primary/12 border-b bg-secondary">
       <div className="mx-auto flex w-full max-w-md items-start justify-between px-4 py-4">
         <div>
           <p className="font-medium text-primary/55 text-xs tracking-wide">
-            {t.pageSubtitle}
+            {t("pageSubtitle")}
           </p>
           <h1 className="font-bold text-primary text-xl">{tenantName}</h1>
         </div>
         <div className="flex items-center gap-2">
           <StaffMessageBell tenantId={tenantId} eventId={eventId} />
-          <LanguageSwitcher />
           <LocaleSelect className="bg-secondary" />
           <ThemeToggle className="bg-secondary" />
         </div>

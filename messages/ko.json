@@ -225,5 +225,93 @@
       "inactiveHint": "(선택 후 시작 시 반영)",
       "hide": "숨기기"
     }
+  },
+  "Guest": {
+    "pageSubtitle": "게스트 페이지",
+    "waitingNumber": {
+      "title": "현재 대기 인원",
+      "unit": "명"
+    },
+    "callingNumber": {
+      "title": "현재 호출 번호",
+      "unit": "번"
+    },
+    "estimatedWaitTime": {
+      "title": "예상 대기 시간",
+      "prefix": "약",
+      "unit": "분"
+    },
+    "queue": {
+      "title": "줄 서는 방법",
+      "shape": "형태",
+      "direction": "진행 방향",
+      "entrance": "입구",
+      "entranceMarker": "입구",
+      "current": "현재",
+      "max": "최대",
+      "people": "명",
+      "shapes": {
+        "zigzag": "지그재그",
+        "straight": "직선",
+        "l-shape": "ㄱ자",
+        "spiral": "나선"
+      },
+      "entrances": {
+        "top": "위",
+        "bottom": "아래",
+        "left": "왼쪽",
+        "right": "오른쪽"
+      }
+    },
+    "staffMessage": {
+      "title": "스태프 공지",
+      "ariaOpen": "스태프 공지",
+      "ariaClose": "공지 닫기",
+      "empty": "현재 공지가 없습니다",
+      "samples": {
+        "msg-2": {
+          "body": "동문 부근이 매우 혼잡합니다. 시간이 촉박하신 분은 서문 이용을 권장합니다.",
+          "staffName": "야마다 타로",
+          "staffRole": "행사장 스태프"
+        },
+        "msg-1": {
+          "body": "개연 시각이 15:00에서 15:30으로 변경되었습니다. 양해 부탁드립니다.",
+          "staffName": "사토 하나코",
+          "staffRole": "운영 책임자"
+        }
+      }
+    },
+    "guideMap": {
+      "title": "안내 지도",
+      "hint": "목적지를 선택하면 경로가 표시됩니다",
+      "currentLocation": "현재 위치",
+      "destinations": {
+        "hall": "홀",
+        "goods": "굿즈 매장",
+        "cafe": "카페",
+        "exit": "출구"
+      },
+      "destinationsLabel": "목적지",
+      "expand": "지도 확대",
+      "collapse": "지도 축소"
+    },
+    "floor": {
+      "title": "현재 층",
+      "placeholderName": "1층"
+    },
+    "congestion": {
+      "title": "혼잡 상황",
+      "levels": {
+        "low": "낮음",
+        "mid": "보통",
+        "high": "높음"
+      },
+      "areas": {
+        "entrance": "입장 게이트",
+        "hall": "홀",
+        "cafe": "카페",
+        "goods": "굿즈 매장"
+      }
+    }
   }
 }

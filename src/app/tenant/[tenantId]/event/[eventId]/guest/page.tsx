@@ -1,5 +1,4 @@
 import "@/features/guest/guest-theme.css";
-import { LanguageProvider } from "@/features/guest/i18n/LanguageProvider";
 import CallingNumber from "@/features/guest/info/CallingNumber";
 import Congestion from "@/features/guest/info/Congestion";
 import EstimatedWaitTime from "@/features/guest/info/EstimatedWaitTime";
@@ -34,21 +33,19 @@ export default async function TenantGuest({
   ];
 
   return (
-    <LanguageProvider>
-      <div className="guest-theme guest-glow min-h-full">
-        <GuestHeader
-          tenantName={tenantName}
+    <div className="guest-theme guest-glow min-h-full">
+      <GuestHeader
+        tenantName={tenantName}
+        tenantId={tenantId}
+        eventId={eventId}
+      />
+      <main className="mx-auto w-full max-w-md px-4 py-6">
+        <GuestInfoContainer
           tenantId={tenantId}
           eventId={eventId}
+          components={infoComponents}
         />
-        <main className="mx-auto w-full max-w-md px-4 py-6">
-          <GuestInfoContainer
-            tenantId={tenantId}
-            eventId={eventId}
-            components={infoComponents}
-          />
-        </main>
-      </div>
-    </LanguageProvider>
+      </main>
+    </div>
   );
 }

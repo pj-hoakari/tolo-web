@@ -225,5 +225,93 @@
       "inactiveHint": "（選択後に起動で反映）",
       "hide": "非表示"
     }
+  },
+  "Guest": {
+    "pageSubtitle": "ゲストページ",
+    "waitingNumber": {
+      "title": "現在の待ち人数",
+      "unit": "人"
+    },
+    "callingNumber": {
+      "title": "現在の呼び出し番号",
+      "unit": "番"
+    },
+    "estimatedWaitTime": {
+      "title": "推定待ち時間",
+      "prefix": "約",
+      "unit": "分"
+    },
+    "queue": {
+      "title": "行列の並び方",
+      "shape": "形状",
+      "direction": "進行方向",
+      "entrance": "入口",
+      "entranceMarker": "入口",
+      "current": "現在",
+      "max": "最大",
+      "people": "人",
+      "shapes": {
+        "zigzag": "ジグザグ",
+        "straight": "直線",
+        "l-shape": "L字",
+        "spiral": "らせん"
+      },
+      "entrances": {
+        "top": "上",
+        "bottom": "下",
+        "left": "左",
+        "right": "右"
+      }
+    },
+    "staffMessage": {
+      "title": "スタッフからのお知らせ",
+      "ariaOpen": "スタッフからのお知らせ",
+      "ariaClose": "お知らせを閉じる",
+      "empty": "現在お知らせはありません",
+      "samples": {
+        "msg-2": {
+          "body": "東ゲート付近が大変混雑しています。お急ぎの方は西ゲートのご利用をおすすめします。",
+          "staffName": "山田 太郎",
+          "staffRole": "会場スタッフ"
+        },
+        "msg-1": {
+          "body": "開演時刻が 15:00 から 15:30 に変更となりました。ご了承ください。",
+          "staffName": "佐藤 花子",
+          "staffRole": "運営責任者"
+        }
+      }
+    },
+    "guideMap": {
+      "title": "案内マップ",
+      "hint": "目的地を選択すると経路が表示されます",
+      "currentLocation": "現在地",
+      "destinations": {
+        "hall": "ホール",
+        "goods": "グッズ売り場",
+        "cafe": "カフェ",
+        "exit": "出口"
+      },
+      "destinationsLabel": "目的地",
+      "expand": "地図を拡大",
+      "collapse": "地図を縮小"
+    },
+    "floor": {
+      "title": "現在のフロア",
+      "placeholderName": "1F"
+    },
+    "congestion": {
+      "title": "混雑状況",
+      "levels": {
+        "low": "低",
+        "mid": "中",
+        "high": "高"
+      },
+      "areas": {
+        "entrance": "入場ゲート",
+        "hall": "ホール",
+        "cafe": "カフェ",
+        "goods": "グッズ売り場"
+      }
+    }
   }
 }

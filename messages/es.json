@@ -225,5 +225,93 @@
       "inactiveHint": " (se aplica al iniciar)",
       "hide": "Ocultar"
     }
+  },
+  "Guest": {
+    "pageSubtitle": "Página del visitante",
+    "waitingNumber": {
+      "title": "Personas en espera",
+      "unit": "personas"
+    },
+    "callingNumber": {
+      "title": "Llamando ahora",
+      "unit": ""
+    },
+    "estimatedWaitTime": {
+      "title": "Espera estimada",
+      "prefix": "aprox.",
+      "unit": "min"
+    },
+    "queue": {
+      "title": "Cómo se forma la fila",
+      "shape": "Forma",
+      "direction": "Sentido",
+      "entrance": "Entrada",
+      "entranceMarker": "Entrada",
+      "current": "Ahora",
+      "max": "Máx.",
+      "people": "pers.",
+      "shapes": {
+        "zigzag": "Zigzag",
+        "straight": "Recta",
+        "l-shape": "En L",
+        "spiral": "En espiral"
+      },
+      "entrances": {
+        "top": "Arriba",
+        "bottom": "Abajo",
+        "left": "Izquierda",
+        "right": "Derecha"
+      }
+    },
+    "staffMessage": {
+      "title": "Avisos del personal",
+      "ariaOpen": "Avisos del personal",
+      "ariaClose": "Cerrar los avisos",
+      "empty": "No hay avisos por ahora",
+      "samples": {
+        "msg-2": {
+          "body": "La zona de la puerta este está muy concurrida. Si tienes prisa, te recomendamos usar la puerta oeste.",
+          "staffName": "Taro Yamada",
+          "staffRole": "Personal del recinto"
+        },
+        "msg-1": {
+          "body": "La hora de inicio ha cambiado de las 15:00 a las 15:30. Gracias por tu comprensión.",
+          "staffName": "Hanako Sato",
+          "staffRole": "Responsable del evento"
+        }
+      }
+    },
+    "guideMap": {
+      "title": "Mapa de orientación",
+      "hint": "Selecciona un destino para ver la ruta",
+      "currentLocation": "Estás aquí",
+      "destinations": {
+        "hall": "Sala",
+        "goods": "Tienda",
+        "cafe": "Cafetería",
+        "exit": "Salida"
+      },
+      "destinationsLabel": "Destinos",
+      "expand": "Ampliar el mapa",
+      "collapse": "Reducir el mapa"
+    },
+    "floor": {
+      "title": "Planta actual",
+      "placeholderName": "Planta 1"
+    },
+    "congestion": {
+      "title": "Nivel de afluencia",
+      "levels": {
+        "low": "Baja",
+        "mid": "Media",
+        "high": "Alta"
+      },
+      "areas": {
+        "entrance": "Puerta de entrada",
+        "hall": "Sala",
+        "cafe": "Cafetería",
+        "goods": "Tienda"
+      }
+    }
   }
 }

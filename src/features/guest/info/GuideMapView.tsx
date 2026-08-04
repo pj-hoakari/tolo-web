@@ -67,6 +67,12 @@ export type GuideMapViewProps = {
   title?: string;
   hint?: string;
   currentLocationLabel?: string;
+  /** 目的地選択グループの aria-label */
+  destinationsLabel?: string;
+  /** 拡大ボタンの aria-label */
+  expandLabel?: string;
+  /** 縮小ボタンの aria-label */
+  collapseLabel?: string;
   /** 経路を流れる破線にするクラス（例: "route-flow route-flow-normal"） */
   routeFlowClassName?: string;
   /** 流れる速さ（animation-duration。例: "1.1s"） */
@@ -86,6 +92,9 @@ export function GuideMapView({
   title = "案内マップ",
   hint = "目的地を選択すると経路が表示されます",
   currentLocationLabel = "現在地",
+  destinationsLabel = "目的地",
+  expandLabel = "地図を拡大",
+  collapseLabel = "地図を縮小",
   routeFlowClassName,
   routeFlowDuration,
 }: GuideMapViewProps) {
@@ -140,7 +149,7 @@ export function GuideMapView({
             const next = [...keys][0];
             if (next != null) onSelectDestination?.(String(next));
           }}
-          aria-label="目的地"
+          aria-label={destinationsLabel}
           className="mb-4 flex-wrap justify-start gap-2"
         >
           {destinations.map((destination) => (
@@ -161,7 +170,7 @@ export function GuideMapView({
         <Button
           size="icon"
           variant="secondary"
-          aria-label={expanded ? "地図を縮小" : "地図を拡大"}
+          aria-label={expanded ? collapseLabel : expandLabel}
           onPress={() => setExpanded((current) => !current)}
           className="absolute top-2 right-2 z-10 size-8 rounded-full border border-primary/15 bg-secondary/85 text-primary/70 shadow-sm backdrop-blur-sm hover:bg-secondary hover:text-primary"
         >
