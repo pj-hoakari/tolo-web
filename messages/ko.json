@@ -4,5 +4,11 @@
   },
   "LocaleSelect": {
     "label": "언어 변경"
+  },
+  "Theme": {
+    "label": "테마 변경",
+    "light": "라이트",
+    "dark": "다크",
+    "system": "시스템"
   }
 }

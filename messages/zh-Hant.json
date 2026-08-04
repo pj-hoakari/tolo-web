@@ -4,5 +4,11 @@
   },
   "LocaleSelect": {
     "label": "切換語言"
+  },
+  "Theme": {
+    "label": "切換主題",
+    "light": "淺色",
+    "dark": "深色",
+    "system": "跟隨系統"
   }
 }

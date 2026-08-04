@@ -4,5 +4,11 @@
   },
   "LocaleSelect": {
     "label": "Cambiar idioma"
+  },
+  "Theme": {
+    "label": "Cambiar tema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema"
   }
 }
