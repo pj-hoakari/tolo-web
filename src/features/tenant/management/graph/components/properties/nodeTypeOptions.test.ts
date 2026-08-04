@@ -1,16 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { NODE_TYPE_DEFS, type ValidationResult } from "../../nodeTypes";
+import {
+  NODE_TYPE_DEFS,
+  type NoticeMessageKey,
+  type ValidationResult,
+} from "../../nodeTypes";
 import type { GraphEdgeType, GraphNodeType, NodeType } from "../../type";
 import { buildNodeTypeOptions, deriveNodeTypeOption } from "./nodeTypeOptions";
 
 const OK: ValidationResult = { ok: true };
+// 制約が定義されていないため実在するキーは1つだけ。
+// 理由の出し分けを検証したいので、テスト内では任意の文字列をキーとして扱う。
 const NG = (messageKey: string): ValidationResult => ({
   ok: false,
-  messageKey,
+  messageKey: messageKey as NoticeMessageKey,
 });
 
 /** 理由のキーをそのまま表示文言として扱う（アサーションを読みやすくするため） */
-const asIs = (messageKey: string) => messageKey;
+const asIs = (messageKey: NoticeMessageKey): string => messageKey;
 
 describe("deriveNodeTypeOption: タイプ選択肢の選択可否", () => {
   it("制約を満たすタイプは選択でき、理由も出さない", () => {

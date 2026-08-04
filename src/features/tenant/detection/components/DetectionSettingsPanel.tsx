@@ -1,3 +1,4 @@
+import type { Messages } from "next-intl";
 import { useTranslations } from "next-intl";
 import { memo } from "react";
 import type {
@@ -9,7 +10,10 @@ import { DetectionLineActions } from "./DetectionLineActions";
 import { DetectionPresetGroup } from "./DetectionPresetGroup";
 
 /** プリセットの表示名は Detection.presets の下のキーで解決する */
-type PresetDef = { labelKey: string; value: number };
+type PresetDef = {
+  labelKey: keyof Messages["Detection"]["presets"];
+  value: number;
+};
 
 const CONFIDENCE_PRESETS: PresetDef[] = [
   { labelKey: "wide", value: 0.1 },

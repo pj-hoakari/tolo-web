@@ -1,5 +1,6 @@
 "use client";
 
+import type { Messages } from "next-intl";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { StaffMessageBellView } from "./StaffMessageBellView";
@@ -10,9 +11,12 @@ export type StaffMessageBellProps = {
   eventId: string;
 };
 
+/** 本文・氏名・役職を解決できるお知らせ id */
+type SampleId = keyof Messages["Guest"]["staffMessage"]["samples"];
+
 /** 本文・氏名・役職は Guest.staffMessage.samples から id をキーに解決する（本来は API レスポンス） */
 type RawStaffMessage = {
-  id: string;
+  id: SampleId;
   deliveredAt: string;
 };
 

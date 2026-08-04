@@ -1,5 +1,6 @@
 "use client";
 
+import type { Messages } from "next-intl";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { GuideMapView } from "./GuideMapView";
@@ -12,6 +13,10 @@ import {
 import guideMapData from "./guideMapData.json";
 import type { GuideMapSnapshot } from "./guideMapSchema";
 import { defineGuestInfoComponent, type GuestInfoComponentProps } from "./type";
+
+/** マップ JSON の id を Guest.guideMap.destinations のキーとして扱うための型 */
+type DestinationKey =
+  `destinations.${keyof Messages["Guest"]["guideMap"]["destinations"] & string}`;
 
 /** マップ作成ツール（guide-map-poc）から書き出した JSON */
 const snapshot = guideMapData as GuideMapSnapshot;
@@ -36,9 +41,11 @@ function GuideMap(_props: GuestInfoComponentProps) {
   // 部屋・経由地点を JSON から組み立てる（名称は i18n があれば優先）
   const source = useMemo(
     () =>
-      buildGuideMapSource(snapshot, FLOOR_ID, (id, fallback) =>
-        t.has(`destinations.${id}`) ? t(`destinations.${id}`) : fallback,
-      ),
+      buildGuideMapSource(snapshot, FLOOR_ID, (id, fallback) => {
+        // JSON 側の id は任意の文字列なので、メッセージに定義があるときだけ上書きする
+        const key = `destinations.${id}` as DestinationKey;
+        return t.has(key) ? t(key) : fallback;
+      }),
     [t],
   );
 

@@ -1,5 +1,6 @@
 "use client";
 
+import type { Messages } from "next-intl";
 import { useTranslations } from "next-intl";
 import {
   type CongestionArea,
@@ -8,9 +9,12 @@ import {
 } from "./CongestionView";
 import { defineGuestInfoComponent, type GuestInfoComponentProps } from "./type";
 
+/** 名称を解決できるエリア id */
+type AreaId = keyof Messages["Guest"]["congestion"]["areas"];
+
 /** 混雑レベルだけを持つ生のエリア（本来は API レスポンス。名称は Guest.congestion.areas から解決する） */
 type RawArea = {
-  id: string;
+  id: AreaId;
   level: CongestionLevel;
 };
 

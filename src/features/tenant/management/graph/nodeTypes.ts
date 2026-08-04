@@ -1,3 +1,4 @@
+import type { Messages } from "next-intl";
 import type {
   EdgeDirection,
   GraphEdgeType,
@@ -9,11 +10,14 @@ import type {
 
 export type NodeRole = "in" | "out";
 
+/** `Graph.notices` 配下のメッセージキー */
+export type NoticeMessageKey = keyof Messages["Graph"]["notices"];
+
 /**
- * `Graph.notices` 配下のメッセージキーを表示用の文言に変換する関数。
- * 検証・通知はロケールを知らないので、描画側から渡してもらう。
+ * 通知キーを表示用の文言に変換する関数。
+ * 検証・通知はロケールを知らないので、描画側から `useTranslations("Graph.notices")` を渡してもらう。
  */
-export type NoticeTranslator = (messageKey: string) => string;
+export type NoticeTranslator = (messageKey: NoticeMessageKey) => string;
 
 /**
  * タイプ制約の検証に渡すコンテキスト
@@ -28,7 +32,7 @@ export type NodeValidationContext = {
 };
 
 export type NodeTypeConstraint = {
-  messageKey: string;
+  messageKey: NoticeMessageKey;
   validate: (ctx: NodeValidationContext) => boolean;
 };
 
@@ -38,7 +42,7 @@ export type NodeTypeConstraint = {
  */
 export type NodeTypeNotice = {
   level: NoticeLevel;
-  messageKey: string;
+  messageKey: NoticeMessageKey;
   /** この通知を出す条件 */
   match: (ctx: NodeValidationContext) => boolean;
 };
@@ -126,7 +130,9 @@ export function nodeRoles(
   return roles;
 }
 
-export type ValidationResult = { ok: true } | { ok: false; messageKey: string };
+export type ValidationResult =
+  | { ok: true }
+  | { ok: false; messageKey: NoticeMessageKey };
 
 const VALID: ValidationResult = { ok: true };
 
