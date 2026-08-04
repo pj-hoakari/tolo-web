@@ -58,13 +58,25 @@ export type CrowdDetectionOptions = {
   countingLines: CrowdCountingLine[];
 };
 
+/**
+ * 検出モデルの取得に失敗したことを表すエラー。
+ * 文言はロケールを知る呼び出し側（`useDetectCrowd`）で組み立てる。
+ */
+export class DetectionModelLoadError extends Error {
+  constructor(
+    readonly status: number,
+    readonly path: string,
+  ) {
+    super(`Failed to load the detection model (${status}: ${path})`);
+    this.name = "DetectionModelLoadError";
+  }
+}
+
 async function fetchModel(): Promise<ArrayBuffer> {
   const response = await fetch(MODEL_PATH);
 
   if (!response.ok) {
-    throw new Error(
-      `検出モデルの読み込みに失敗しました (${response.status}: ${MODEL_PATH})`,
-    );
+    throw new DetectionModelLoadError(response.status, MODEL_PATH);
   }
 
   return response.arrayBuffer();

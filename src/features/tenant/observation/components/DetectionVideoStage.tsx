@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { memo, type RefObject, useEffect } from "react";
 import { useCountingLineEditor } from "@/features/tenant/detection/hooks/useCountingLineEditor";
 import type {
@@ -34,6 +35,7 @@ function DetectionVideoStageComponent({
     settingsStore,
     viewStateStore,
   });
+  const t = useTranslations("Observation.controls");
 
   useEffect(() => {
     const video = videoRef.current;
@@ -78,7 +80,7 @@ function DetectionVideoStageComponent({
       />
       {status === "loading" && (
         <div className="absolute inset-0 flex items-center justify-center rounded bg-black/40 text-white">
-          起動中…
+          {t("loading")}
         </div>
       )}
     </div>

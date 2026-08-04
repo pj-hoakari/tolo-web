@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { LocaleSelect } from "@/components/locale-select";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CrowdDetection } from "@/features/tenant/observation/components/CrowdDetection";
@@ -10,12 +11,13 @@ export default async function TenantObservation({
   params: Promise<{ tenantId: string; eventId: string }>;
 }) {
   const { tenantId, eventId } = await params;
+  const t = await getTranslations("Observation");
 
   return (
     <ScreenWakeProvider>
       <div className="flex flex-col">
         <header className="mb-4 flex w-full items-center justify-between px-10 py-5">
-          <h2 className="font-bold text-2xl">{tenantId} 観測ページ</h2>
+          <h2 className="font-bold text-2xl">{t("title", { tenantId })}</h2>
           <div className="flex items-center gap-2">
             <LocaleSelect />
             <ThemeToggle />

@@ -166,5 +166,64 @@
       "reset": "ラインを初期位置に戻す",
       "count": "ライン {index}: forward {forward} / backward {backward}"
     }
+  },
+  "Observation": {
+    "title": "{tenantId} 観測ページ",
+    "controls": {
+      "start": "カメラを起動",
+      "stop": "停止",
+      "loading": "起動中…"
+    },
+    "status": {
+      "detection": "検出状態: {status}",
+      "trackedCount": "追跡中人数: {count}人",
+      "fps": "FPS: {fps}",
+      "idle": "停止中",
+      "loading": "起動中",
+      "detecting": "検出中",
+      "error": "エラー"
+    },
+    "screenWake": {
+      "unsupported": "このブラウザは画面の常時点灯（Screen Wake Lock）に対応していません。端末側の自動消灯設定をご確認ください。",
+      "label": "画面の常時点灯",
+      "toggle": "画面の常時点灯: {state}",
+      "on": "ON",
+      "off": "OFF",
+      "enabledHint": "観測中は画面が自動で消灯しません",
+      "disabledHint": "観測中に画面が消灯し、観測が中断される可能性があります。タップして ON にしてください",
+      "enableError": "画面の常時点灯を有効化できませんでした"
+    },
+    "lock": {
+      "lockButton": "画面ロック",
+      "setupTitle": "解除コードを設定",
+      "lockedTitle": "画面ロック中",
+      "setupDescription": "観測ページの操作を保護する解除コードを設定してください。",
+      "lockedDescription": "操作を再開するには解除コードを入力してください。",
+      "codeLabel": "解除コード",
+      "codeConfirmationLabel": "解除コード（確認）",
+      "submitSetup": "設定して解除",
+      "submitUnlock": "ロック解除",
+      "tooShort": "解除コードは{min}文字以上で入力してください",
+      "mismatch": "確認用の解除コードが一致しません",
+      "notConfigured": "解除コードを設定してください",
+      "incorrect": "解除コードが正しくありません",
+      "failed": "解除コードの処理に失敗しました"
+    },
+    "errors": {
+      "videoSource": "映像ソースの取得に失敗しました",
+      "detection": "人検出処理に失敗しました",
+      "modelLoad": "検出モデルの読み込みに失敗しました（{status}: {path}）"
+    },
+    "devSource": {
+      "title": "映像ソース",
+      "selectFile": "映像ファイルを選択",
+      "loop": "ループ再生",
+      "backToCamera": "カメラに戻す",
+      "current": "現在: {source}",
+      "camera": "カメラ",
+      "activeHint": "（切替は停止後）",
+      "inactiveHint": "（選択後に起動で反映）",
+      "hide": "非表示"
+    }
   }
 }

@@ -166,5 +166,64 @@
       "reset": "Restablecer las líneas",
       "count": "Línea {index}: forward {forward} / backward {backward}"
     }
+  },
+  "Observation": {
+    "title": "{tenantId} Observación",
+    "controls": {
+      "start": "Iniciar cámara",
+      "stop": "Detener",
+      "loading": "Iniciando…"
+    },
+    "status": {
+      "detection": "Estado de detección: {status}",
+      "trackedCount": "Personas rastreadas: {count}",
+      "fps": "FPS: {fps}",
+      "idle": "Detenido",
+      "loading": "Iniciando",
+      "detecting": "Detectando",
+      "error": "Error"
+    },
+    "screenWake": {
+      "unsupported": "Este navegador no admite mantener la pantalla encendida (Screen Wake Lock). Revisa los ajustes de bloqueo automático del dispositivo.",
+      "label": "Mantener la pantalla encendida",
+      "toggle": "Mantener la pantalla encendida: {state}",
+      "on": "ON",
+      "off": "OFF",
+      "enabledHint": "La pantalla no se apagará durante la observación",
+      "disabledHint": "La pantalla puede apagarse durante la observación e interrumpirla. Toca para activarlo",
+      "enableError": "No se pudo mantener la pantalla encendida"
+    },
+    "lock": {
+      "lockButton": "Bloquear pantalla",
+      "setupTitle": "Define un código de desbloqueo",
+      "lockedTitle": "Pantalla bloqueada",
+      "setupDescription": "Define un código de desbloqueo para proteger los controles de esta página de observación.",
+      "lockedDescription": "Introduce el código de desbloqueo para reanudar la operación.",
+      "codeLabel": "Código de desbloqueo",
+      "codeConfirmationLabel": "Código de desbloqueo (confirmación)",
+      "submitSetup": "Definir y desbloquear",
+      "submitUnlock": "Desbloquear",
+      "tooShort": "El código de desbloqueo debe tener al menos {min} caracteres",
+      "mismatch": "El código de confirmación no coincide",
+      "notConfigured": "Define primero un código de desbloqueo",
+      "incorrect": "El código de desbloqueo no es correcto",
+      "failed": "No se pudo procesar el código de desbloqueo"
+    },
+    "errors": {
+      "videoSource": "No se pudo obtener la fuente de vídeo",
+      "detection": "Falló la detección de personas",
+      "modelLoad": "No se pudo cargar el modelo de detección ({status}: {path})"
+    },
+    "devSource": {
+      "title": "Fuente de vídeo",
+      "selectFile": "Elegir un archivo de vídeo",
+      "loop": "Reproducción en bucle",
+      "backToCamera": "Volver a la cámara",
+      "current": "Actual: {source}",
+      "camera": "Cámara",
+      "activeHint": " (cambia tras detener)",
+      "inactiveHint": " (se aplica al iniciar)",
+      "hide": "Ocultar"
+    }
   }
 }

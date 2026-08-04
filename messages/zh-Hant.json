@@ -166,5 +166,64 @@
       "reset": "重設線位置",
       "count": "線 {index}：forward {forward} / backward {backward}"
     }
+  },
+  "Observation": {
+    "title": "{tenantId} 觀測頁面",
+    "controls": {
+      "start": "啟動攝影機",
+      "stop": "停止",
+      "loading": "啟動中…"
+    },
+    "status": {
+      "detection": "偵測狀態：{status}",
+      "trackedCount": "追蹤人數：{count}人",
+      "fps": "FPS：{fps}",
+      "idle": "已停止",
+      "loading": "啟動中",
+      "detecting": "偵測中",
+      "error": "錯誤"
+    },
+    "screenWake": {
+      "unsupported": "此瀏覽器不支援螢幕常亮（Screen Wake Lock）。請檢查裝置的自動熄屏設定。",
+      "label": "螢幕常亮",
+      "toggle": "螢幕常亮：{state}",
+      "on": "ON",
+      "off": "OFF",
+      "enabledHint": "觀測期間螢幕不會自動熄滅",
+      "disabledHint": "觀測期間螢幕可能熄滅並中斷觀測。請點擊切換為 ON",
+      "enableError": "無法啟用螢幕常亮"
+    },
+    "lock": {
+      "lockButton": "鎖定螢幕",
+      "setupTitle": "設定解鎖碼",
+      "lockedTitle": "螢幕已鎖定",
+      "setupDescription": "請設定用於保護觀測頁面操作的解鎖碼。",
+      "lockedDescription": "請輸入解鎖碼以恢復操作。",
+      "codeLabel": "解鎖碼",
+      "codeConfirmationLabel": "解鎖碼（確認）",
+      "submitSetup": "設定並解鎖",
+      "submitUnlock": "解鎖",
+      "tooShort": "解鎖碼至少需要 {min} 個字元",
+      "mismatch": "確認用的解鎖碼不一致",
+      "notConfigured": "請先設定解鎖碼",
+      "incorrect": "解鎖碼不正確",
+      "failed": "處理解鎖碼失敗"
+    },
+    "errors": {
+      "videoSource": "取得視訊來源失敗",
+      "detection": "人體偵測處理失敗",
+      "modelLoad": "載入偵測模型失敗（{status}: {path}）"
+    },
+    "devSource": {
+      "title": "視訊來源",
+      "selectFile": "選擇影片檔案",
+      "loop": "循環播放",
+      "backToCamera": "切回攝影機",
+      "current": "目前：{source}",
+      "camera": "攝影機",
+      "activeHint": "（停止後才能切換）",
+      "inactiveHint": "（選擇後啟動時生效）",
+      "hide": "隱藏"
+    }
   }
 }

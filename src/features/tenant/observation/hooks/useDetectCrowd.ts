@@ -1,7 +1,9 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  DetectionModelLoadError,
   initializeCrowdDetector,
   resetCrowdTracking,
 } from "../utils/detectCrowd";
@@ -24,6 +26,18 @@ export function useDetectCrowd(
   );
   const [status, setStatus] = useState<DetectCrowdStatus>("idle");
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations("Observation.errors");
+
+  /** 起動時の失敗を、モデル読み込み失敗だけ専用の文言にして伝える */
+  const describeStartError = useCallback(
+    (cause: unknown): string => {
+      if (cause instanceof DetectionModelLoadError) {
+        return t("modelLoad", { status: cause.status, path: cause.path });
+      }
+      return cause instanceof Error ? cause.message : t("videoSource");
+    },
+    [t],
+  );
 
   const releaseSource = useCallback(() => {
     sourceRef.current?.close();
@@ -69,11 +83,9 @@ export function useDetectCrowd(
       sourceRef.current = null;
       setVideoSource(null);
       setStatus("error");
-      setError(
-        e instanceof Error ? e.message : "映像ソースの取得に失敗しました",
-      );
+      setError(describeStartError(e));
     }
-  }, [createSource]);
+  }, [createSource, describeStartError]);
 
   const stop = useCallback(() => {
     operationIdRef.current += 1;
@@ -90,11 +102,9 @@ export function useDetectCrowd(
       releaseSource();
       setVideoSource(null);
       setStatus("error");
-      setError(
-        cause instanceof Error ? cause.message : "人検出処理に失敗しました",
-      );
+      setError(cause instanceof Error ? cause.message : t("detection"));
     },
-    [releaseSource],
+    [releaseSource, t],
   );
 
   useEffect(() => {

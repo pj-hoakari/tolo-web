@@ -1,17 +1,18 @@
 "use client";
 
 import { MonitorCheck, MonitorOff } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Toggle } from "@/components/ui/toggle";
 import { useScreenWake } from "./ScreenWakeProvider";
 
 export function ScreenWakeControl() {
   const { isSupported, enabled, error, enable, disable } = useScreenWake();
+  const t = useTranslations("Observation.screenWake");
 
   if (!isSupported) {
     return (
       <p className="text-center text-muted-foreground text-sm" role="note">
-        このブラウザは画面の常時点灯（Screen Wake
-        Lock）に対応していません。端末側の自動消灯設定をご確認ください。
+        {t("unsupported")}
       </p>
     );
   }
@@ -32,7 +33,7 @@ export function ScreenWakeControl() {
         size="lg"
         isSelected={enabled}
         onChange={handleChange}
-        aria-label="画面の常時点灯"
+        aria-label={t("label")}
         className="border-2 selected:border-primary selected:bg-primary px-6 font-semibold selected:text-primary-foreground text-base shadow-sm"
       >
         {enabled ? (
@@ -40,7 +41,7 @@ export function ScreenWakeControl() {
         ) : (
           <MonitorOff className="mr-2 size-5" aria-hidden="true" />
         )}
-        画面の常時点灯: {enabled ? "ON" : "OFF"}
+        {t("toggle", { state: enabled ? t("on") : t("off") })}
       </Toggle>
       <p
         className={
@@ -49,9 +50,7 @@ export function ScreenWakeControl() {
             : "font-medium text-destructive text-sm"
         }
       >
-        {enabled
-          ? "観測中は画面が自動で消灯しません"
-          : "観測中に画面が消灯し、観測が中断される可能性があります。タップして ON にしてください"}
+        {enabled ? t("enabledHint") : t("disabledHint")}
       </p>
       {error !== null && (
         <p className="text-destructive text-xs" role="alert">

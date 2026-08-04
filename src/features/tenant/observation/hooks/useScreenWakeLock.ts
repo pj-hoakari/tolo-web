@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export type UseScreenWakeLockResult = {
@@ -27,6 +28,7 @@ export function useScreenWakeLock(): UseScreenWakeLockResult {
   const [enabled, setEnabled] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations("Observation.screenWake");
 
   // 対応判定はクライアントでのみ
   useEffect(() => {
@@ -57,13 +59,9 @@ export function useScreenWakeLock(): UseScreenWakeLockResult {
       });
     } catch (e) {
       setIsActive(false);
-      setError(
-        e instanceof Error
-          ? e.message
-          : "画面の常時点灯を有効化できませんでした",
-      );
+      setError(e instanceof Error ? e.message : t("enableError"));
     }
-  }, []);
+  }, [t]);
 
   const enable = useCallback(async () => {
     enabledRef.current = true;

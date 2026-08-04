@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { memo, useState } from "react";
 import { FileTrigger } from "react-aria-components";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ function DevVideoSourcePanelComponent({
   const [file, setFile] = useState<File | null>(null);
   const [loop, setLoop] = useState(true);
   const [hidden, setHidden] = useState(false);
+  const t = useTranslations("Observation.devSource");
 
   if (hidden) {
     return null;
@@ -63,7 +65,7 @@ function DevVideoSourcePanelComponent({
     <section className="fixed right-4 bottom-4 z-50 flex w-72 flex-col gap-2 rounded border border-gray-300 border-dashed p-3 text-sm">
       <Disclosure defaultExpanded className="min-w-0">
         <DisclosureHeader className="py-0 font-bold text-xs">
-          映像ソース
+          {t("title")}
         </DisclosureHeader>
 
         <DisclosurePanel className="flex flex-col gap-2 pt-2 pb-0">
@@ -78,7 +80,7 @@ function DevVideoSourcePanelComponent({
               isDisabled={isActive}
               className="self-start"
             >
-              映像ファイルを選択
+              {t("selectFile")}
             </Button>
           </FileTrigger>
 
@@ -87,7 +89,7 @@ function DevVideoSourcePanelComponent({
             isDisabled={isActive}
             onChange={handleLoopChange}
           >
-            ループ再生
+            {t("loop")}
           </Checkbox>
 
           <div>
@@ -99,13 +101,15 @@ function DevVideoSourcePanelComponent({
               isDisabled={isActive || mode === "camera"}
               className="h-auto p-0"
             >
-              カメラに戻す
+              {t("backToCamera")}
             </Button>
           </div>
 
           <p className="break-all text-xs">
-            現在: {mode === "file" && file ? file.name : "カメラ"}
-            {isActive ? "（切替は停止後）" : "（選択後に起動で反映）"}
+            {t("current", {
+              source: mode === "file" && file ? file.name : t("camera"),
+            })}
+            {isActive ? t("activeHint") : t("inactiveHint")}
           </p>
 
           <Button
@@ -115,7 +119,7 @@ function DevVideoSourcePanelComponent({
             onPress={() => setHidden(true)}
             className="h-auto self-start p-0 text-xs"
           >
-            非表示
+            {t("hide")}
           </Button>
         </DisclosurePanel>
       </Disclosure>

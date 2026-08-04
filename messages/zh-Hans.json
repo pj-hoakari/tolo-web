@@ -166,5 +166,64 @@
       "reset": "重置线位置",
       "count": "线 {index}：forward {forward} / backward {backward}"
     }
+  },
+  "Observation": {
+    "title": "{tenantId} 观测页面",
+    "controls": {
+      "start": "启动摄像头",
+      "stop": "停止",
+      "loading": "启动中…"
+    },
+    "status": {
+      "detection": "检测状态：{status}",
+      "trackedCount": "跟踪人数：{count}人",
+      "fps": "FPS：{fps}",
+      "idle": "已停止",
+      "loading": "启动中",
+      "detecting": "检测中",
+      "error": "错误"
+    },
+    "screenWake": {
+      "unsupported": "此浏览器不支持屏幕常亮（Screen Wake Lock）。请检查设备的自动息屏设置。",
+      "label": "屏幕常亮",
+      "toggle": "屏幕常亮：{state}",
+      "on": "ON",
+      "off": "OFF",
+      "enabledHint": "观测期间屏幕不会自动熄灭",
+      "disabledHint": "观测期间屏幕可能熄灭并中断观测。请点击切换为 ON",
+      "enableError": "无法启用屏幕常亮"
+    },
+    "lock": {
+      "lockButton": "锁定屏幕",
+      "setupTitle": "设置解锁码",
+      "lockedTitle": "屏幕已锁定",
+      "setupDescription": "请设置用于保护观测页面操作的解锁码。",
+      "lockedDescription": "请输入解锁码以恢复操作。",
+      "codeLabel": "解锁码",
+      "codeConfirmationLabel": "解锁码（确认）",
+      "submitSetup": "设置并解锁",
+      "submitUnlock": "解锁",
+      "tooShort": "解锁码至少需要 {min} 个字符",
+      "mismatch": "确认用的解锁码不一致",
+      "notConfigured": "请先设置解锁码",
+      "incorrect": "解锁码不正确",
+      "failed": "处理解锁码失败"
+    },
+    "errors": {
+      "videoSource": "获取视频源失败",
+      "detection": "人体检测处理失败",
+      "modelLoad": "加载检测模型失败（{status}: {path}）"
+    },
+    "devSource": {
+      "title": "视频源",
+      "selectFile": "选择视频文件",
+      "loop": "循环播放",
+      "backToCamera": "切回摄像头",
+      "current": "当前：{source}",
+      "camera": "摄像头",
+      "activeHint": "（停止后才能切换）",
+      "inactiveHint": "（选择后启动时生效）",
+      "hide": "隐藏"
+    }
   }
 }

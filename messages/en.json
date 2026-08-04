@@ -166,5 +166,64 @@
       "reset": "Reset line positions",
       "count": "Line {index}: forward {forward} / backward {backward}"
     }
+  },
+  "Observation": {
+    "title": "{tenantId} Observation",
+    "controls": {
+      "start": "Start camera",
+      "stop": "Stop",
+      "loading": "Starting…"
+    },
+    "status": {
+      "detection": "Detection status: {status}",
+      "trackedCount": "Tracked people: {count}",
+      "fps": "FPS: {fps}",
+      "idle": "Stopped",
+      "loading": "Starting",
+      "detecting": "Detecting",
+      "error": "Error"
+    },
+    "screenWake": {
+      "unsupported": "This browser does not support keeping the screen awake (Screen Wake Lock). Check your device's auto-lock settings.",
+      "label": "Keep the screen awake",
+      "toggle": "Keep the screen awake: {state}",
+      "on": "ON",
+      "off": "OFF",
+      "enabledHint": "The screen will not turn off during observation",
+      "disabledHint": "The screen may turn off during observation and interrupt it. Tap to switch this ON",
+      "enableError": "Could not keep the screen awake"
+    },
+    "lock": {
+      "lockButton": "Lock screen",
+      "setupTitle": "Set an unlock code",
+      "lockedTitle": "Screen locked",
+      "setupDescription": "Set an unlock code to protect the controls on this observation page.",
+      "lockedDescription": "Enter the unlock code to resume operation.",
+      "codeLabel": "Unlock code",
+      "codeConfirmationLabel": "Unlock code (confirmation)",
+      "submitSetup": "Set and unlock",
+      "submitUnlock": "Unlock",
+      "tooShort": "The unlock code must be at least {min} characters",
+      "mismatch": "The confirmation code does not match",
+      "notConfigured": "Set an unlock code first",
+      "incorrect": "The unlock code is incorrect",
+      "failed": "Could not process the unlock code"
+    },
+    "errors": {
+      "videoSource": "Failed to obtain the video source",
+      "detection": "Person detection failed",
+      "modelLoad": "Failed to load the detection model ({status}: {path})"
+    },
+    "devSource": {
+      "title": "Video source",
+      "selectFile": "Choose a video file",
+      "loop": "Loop playback",
+      "backToCamera": "Back to the camera",
+      "current": "Current: {source}",
+      "camera": "Camera",
+      "activeHint": " (switch after stopping)",
+      "inactiveHint": " (applied on the next start)",
+      "hide": "Hide"
+    }
   }
 }
