@@ -248,6 +248,9 @@ export function ObservationSoftLock({
                   }
                   autoFocus
                 />
+                {/* FieldError は TextField のコンテキスト内でしか描画されないため、
+                    解除コード入力に関するエラーはこのフィールドにまとめて出す */}
+                <FieldError>{error}</FieldError>
               </TextField>
 
               {needsSetup && (
@@ -261,8 +264,6 @@ export function ObservationSoftLock({
                   <Input type="password" autoComplete="new-password" />
                 </TextField>
               )}
-
-              {error && <FieldError>{error}</FieldError>}
 
               <Button
                 type="button"
