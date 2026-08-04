@@ -1,4 +1,5 @@
 import { Route, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Text } from "react-aria-components";
 import {
   Menu,
@@ -7,7 +8,6 @@ import {
   MenuSection,
   MenuSeparator,
 } from "@/components/ui/menu";
-import { getNodeTypeDef } from "../nodeTypes";
 import type { GraphEdgeType, GraphNodeType, NodeType } from "../type";
 import {
   ContextMenuPopover,
@@ -38,11 +38,16 @@ export function GraphNodeContextMenu({
   onDelete,
   onClose,
 }: GraphNodeContextMenuProps) {
+  const t = useTranslations("Graph.contextMenu");
+  const tType = useTranslations("Graph.nodeType");
+  const tNotice = useTranslations("Graph.notices");
+
   const options = buildNodeTypeOptions(
     node.id,
     node.data.nodeType,
     nodes,
     edges,
+    tNotice,
   );
 
   return (
@@ -51,29 +56,29 @@ export function GraphNodeContextMenu({
       className="min-w-48"
       onClose={onClose}
     >
-      <Menu aria-label={`ポイント「${node.data.label}」の操作`}>
+      <Menu aria-label={t("nodeLabel", { label: node.data.label })}>
         <MenuItem
           id="add-edge"
-          textValue="このポイントからルートを追加"
+          textValue={t("addEdgeFromNode")}
           onAction={() => {
             onStartEdgeCreation(node.id);
             onClose();
           }}
         >
           <Route aria-hidden className="size-4 shrink-0" />
-          このポイントからルートを追加
+          {t("addEdgeFromNode")}
         </MenuItem>
         <MenuSeparator />
         {/* 選択中のタイプをラジオ選択として支援技術へ伝える */}
         <MenuSection selectionMode="single" selectedKeys={[node.data.nodeType]}>
-          <MenuHeader className="px-2 text-xs">タイプを変更</MenuHeader>
+          <MenuHeader className="px-2 text-xs">{t("changeType")}</MenuHeader>
           {options.map((option) => {
-            const def = getNodeTypeDef(option.type);
+            const typeLabel = tType(option.type);
             return (
               <MenuItem
                 id={option.type}
                 key={option.type}
-                textValue={def.label}
+                textValue={typeLabel}
                 isDisabled={!option.assignable}
                 onAction={() => {
                   if (option.type !== node.data.nodeType) {
@@ -84,7 +89,7 @@ export function GraphNodeContextMenu({
               >
                 <NodeTypeIcon type={option.type} />
                 <div className="flex min-w-0 flex-col gap-0.5">
-                  <Text slot="label">{def.label}</Text>
+                  <Text slot="label">{typeLabel}</Text>
                   {option.disabledReason ? (
                     <Text
                       slot="description"
@@ -101,7 +106,7 @@ export function GraphNodeContextMenu({
         <MenuSeparator />
         <MenuItem
           id="delete"
-          textValue="このポイントを削除"
+          textValue={t("deleteNode")}
           className="text-destructive focus:bg-destructive/10 focus:text-destructive"
           onAction={() => {
             onDelete(node.id);
@@ -109,7 +114,7 @@ export function GraphNodeContextMenu({
           }}
         >
           <Trash2 aria-hidden className="size-4 shrink-0" />
-          このポイントを削除
+          {t("deleteNode")}
         </MenuItem>
       </Menu>
     </ContextMenuPopover>

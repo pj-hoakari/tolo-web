@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 import type { ObservationPointsSource } from "@/features/tenant/management/graph/components/observation";
-import { deriveNodeNotices } from "@/features/tenant/management/graph/nodeTypes";
+import {
+  deriveNodeNotices,
+  type NoticeTranslator,
+} from "@/features/tenant/management/graph/nodeTypes";
 import { PLACEHOLDER_GRAPH } from "@/features/tenant/management/graph/placeholderGraph";
 import type {
   GraphEdgeType,
@@ -10,6 +13,12 @@ import type { AliveEdge } from "@/features/tenant/webrtc/type";
 
 export const GRAPH_NODES = PLACEHOLDER_GRAPH.nodes;
 export const GRAPH_EDGES = PLACEHOLDER_GRAPH.edges;
+
+/**
+ * 選択肢・方向状態を Story のモジュールスコープで組み立てるための翻訳関数。
+ * フィクスチャでは制約違反が起きず理由が表示されないので、キーをそのまま返す。
+ */
+export const passThroughNotice: NoticeTranslator = (messageKey) => messageKey;
 
 /** プレースホルダグラフからノードを取り出す（存在しない ID は Story の記述ミス） */
 export function graphNode(id: string): GraphNodeType {

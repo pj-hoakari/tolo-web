@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
 import type { EdgeDirection } from "../../type";
 import { PropertyNotice } from "./PropertyNotice";
@@ -19,9 +20,13 @@ export function EdgeDirectionField({
   reason = null,
   onChange,
 }: EdgeDirectionFieldProps) {
+  const t = useTranslations("Graph.properties");
+
   return (
     <div>
-      <p className="mb-1 font-medium text-[11px] text-muted-foreground">方向</p>
+      <p className="mb-1 font-medium text-[11px] text-muted-foreground">
+        {t("direction")}
+      </p>
       <ToggleButtonGroup
         selectionMode="single"
         disallowEmptySelection
@@ -37,14 +42,14 @@ export function EdgeDirectionField({
           isDisabled={bothDisabled}
           className="h-auto flex-1 rounded-sm selected:bg-background px-2 py-1 font-medium selected:text-foreground text-xs selected:shadow-sm"
         >
-          両通行可 ⇌
+          {t("both")}
         </Toggle>
         <Toggle
           id="oneway"
           isDisabled={onewayDisabled}
           className="h-auto flex-1 rounded-sm selected:bg-background px-2 py-1 font-medium selected:text-foreground text-xs selected:shadow-sm"
         >
-          片方向 →
+          {t("oneway")}
         </Toggle>
       </ToggleButtonGroup>
       {reason ? (

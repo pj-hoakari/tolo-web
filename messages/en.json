@@ -17,7 +17,9 @@
     "tabs": {
       "graph": "Venue graph",
       "edges": "Connected edges"
-    }
+    },
+    "graphEditTitle": "{tenantId} Venue graph editor",
+    "backLink": "Back to management"
   },
   "Graph": {
     "viewer": {
@@ -50,6 +52,58 @@
       "online": "Connected",
       "offline": "Offline",
       "usedByOther": "In use by another point / route"
+    },
+    "nodeTypeDescription": {
+      "GOAL": "e.g. an exhibition booth",
+      "GOAL_TRANSIT_MIXED": "e.g. a wall exhibit (both a destination and a passage)",
+      "TRANSIT_ONLY": "e.g. a corridor junction",
+      "BOUNDARY": "e.g. a venue entrance or exit"
+    },
+    "notices": {
+      "dualDirection": "Serves as both an entry and an exit"
+    },
+    "editor": {
+      "title": "Venue editor",
+      "addNode": "Add {type}",
+      "save": "Save",
+      "newNodeLabel": "Point {index}"
+    },
+    "easyConnect": {
+      "fromNode": "Add route: click the point to use as the end",
+      "fromCanvas": "Add route: drag from one point to another",
+      "cancelHint": "Press Esc to cancel",
+      "end": "Finish adding routes"
+    },
+    "contextMenu": {
+      "canvasLabel": "Canvas actions",
+      "endEdgeCreation": "Finish adding routes",
+      "addNode": "Add point",
+      "addEdge": "Add route",
+      "nodeLabel": "Actions for point “{label}”",
+      "addEdgeFromNode": "Add a route from this point",
+      "changeType": "Change type",
+      "deleteNode": "Delete this point",
+      "edgeLabel": "Actions for route “{source} → {target}”",
+      "setOneway": "Make one-way ({source} → {target})",
+      "setBoth": "Make two-way",
+      "reverse": "Reverse direction ({target} → {source})",
+      "deleteEdge": "Delete this route"
+    },
+    "properties": {
+      "title": "Properties",
+      "empty": "Select a point or a route.",
+      "deleteNode": "Delete this point",
+      "deleteEdge": "Delete this route",
+      "label": "Label",
+      "type": "Type",
+      "direction": "Direction",
+      "both": "Two-way ⇌",
+      "oneway": "One-way →",
+      "reverse": "Reverse direction (start ↔ end)"
+    },
+    "node": {
+      "editLabel": "Edit the label of “{label}”",
+      "labelField": "Point label"
     }
   },
   "Webrtc": {

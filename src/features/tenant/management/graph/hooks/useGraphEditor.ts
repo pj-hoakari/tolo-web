@@ -1,6 +1,7 @@
 "use client";
 
 import type { Connection, EdgeChange, NodeChange } from "@xyflow/react";
+import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 import type {
   GraphCanvasEditing,
@@ -52,6 +53,8 @@ function randomPosition() {
  * ここでは「ノードを消したら選択も解除する」といった連携だけを担う。
  */
 export function useGraphEditor(initial?: GraphData): GraphEditorApi {
+  const t = useTranslations("Graph.editor");
+
   const {
     nodes,
     edges,
@@ -153,14 +156,14 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     ) => {
       const node = createNode({
         id: newId("n"),
-        label: `ポイント ${source.nodes.length + 1}`,
+        label: t("newNodeLabel", { index: source.nodes.length + 1 }),
         nodeType,
         position,
       });
       appendNode(node);
       selectNode(node.id);
     },
-    [source.nodes.length, appendNode, selectNode],
+    [source.nodes.length, appendNode, selectNode, t],
   );
 
   const addNode = useCallback(

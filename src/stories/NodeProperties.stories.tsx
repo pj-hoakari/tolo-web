@@ -13,6 +13,7 @@ import {
   GRAPH_NODES,
   graphNode,
   PanelFrame,
+  passThroughNotice,
 } from "./_helpers/propertiesFixtures";
 
 const boothTypeOptions = buildNodeTypeOptions(
@@ -20,6 +21,7 @@ const boothTypeOptions = buildNodeTypeOptions(
   "GOAL",
   GRAPH_NODES,
   GRAPH_EDGES,
+  passThroughNotice,
 );
 
 const meta = {
@@ -58,6 +60,7 @@ export const Boundary: Story = {
       "BOUNDARY",
       GRAPH_NODES,
       GRAPH_EDGES,
+      passThroughNotice,
     ),
   },
 };
@@ -71,6 +74,7 @@ export const WithNotice: Story = {
       "BOUNDARY",
       DUAL_BOUNDARY_NODES,
       DUAL_BOUNDARY_EDGES,
+      passThroughNotice,
     ),
   },
 };

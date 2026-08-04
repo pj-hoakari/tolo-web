@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { PropertyNotice } from "./PropertyNotice";
 
@@ -14,6 +15,8 @@ export function EdgeReverseButton({
   reason = null,
   onPress,
 }: EdgeReverseButtonProps) {
+  const t = useTranslations("Graph.properties");
+
   return (
     <div className="space-y-1">
       <Button
@@ -23,7 +26,7 @@ export function EdgeReverseButton({
         isDisabled={isDisabled}
         className="w-full"
       >
-        向きを反転（始点↔終点）
+        {t("reverse")}
       </Button>
       {reason ? <PropertyNotice message={reason} /> : null}
     </div>

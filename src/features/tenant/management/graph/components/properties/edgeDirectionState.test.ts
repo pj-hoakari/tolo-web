@@ -7,11 +7,17 @@ import {
 } from "./edgeDirectionState";
 
 const OK: ValidationResult = { ok: true };
-const NG = (message: string): ValidationResult => ({ ok: false, message });
+const NG = (messageKey: string): ValidationResult => ({
+  ok: false,
+  messageKey,
+});
+
+/** 理由のキーをそのまま表示文言として扱う（アサーションを読みやすくするため） */
+const asIs = (messageKey: string) => messageKey;
 
 describe("deriveEdgeDirectionState: 方向トグルの操作可否", () => {
   it("すべての検証を通れば両方の方向が選択でき、理由も出さない", () => {
-    const state = deriveEdgeDirectionState("both", OK, OK, OK);
+    const state = deriveEdgeDirectionState("both", OK, OK, OK, asIs);
 
     expect(state.bothDisabled).toBe(false);
     expect(state.onewayDisabled).toBe(false);
@@ -19,14 +25,26 @@ describe("deriveEdgeDirectionState: 方向トグルの操作可否", () => {
   });
 
   it("選択中の方向は制約違反でも選択解除されないよう有効のまま", () => {
-    const state = deriveEdgeDirectionState("both", NG("両通行は不可"), OK, OK);
+    const state = deriveEdgeDirectionState(
+      "both",
+      NG("両通行は不可"),
+      OK,
+      OK,
+      asIs,
+    );
 
     expect(state.bothDisabled).toBe(false);
     expect(state.directionReason).toBe("両通行は不可");
   });
 
   it("選択していない方向が制約違反なら無効化して理由を出す", () => {
-    const state = deriveEdgeDirectionState("both", OK, NG("片方向は不可"), OK);
+    const state = deriveEdgeDirectionState(
+      "both",
+      OK,
+      NG("片方向は不可"),
+      OK,
+      asIs,
+    );
 
     expect(state.onewayDisabled).toBe(true);
     expect(state.directionReason).toBe("片方向は不可");
@@ -38,6 +56,7 @@ describe("deriveEdgeDirectionState: 方向トグルの操作可否", () => {
       NG("両通行は不可"),
       NG("片方向は不可"),
       OK,
+      asIs,
     );
 
     expect(state.bothDisabled).toBe(true);
@@ -48,21 +67,33 @@ describe("deriveEdgeDirectionState: 方向トグルの操作可否", () => {
 
 describe("deriveEdgeDirectionState: 反転操作の可否", () => {
   it("両通行のルートは向きの概念が無いため反転できず、理由も出さない", () => {
-    const state = deriveEdgeDirectionState("both", OK, OK, NG("反転は不可"));
+    const state = deriveEdgeDirectionState(
+      "both",
+      OK,
+      OK,
+      NG("反転は不可"),
+      asIs,
+    );
 
     expect(state.reverseDisabled).toBe(true);
     expect(state.reverseReason).toBeNull();
   });
 
   it("片方向で反転が制約違反なら無効化して理由を出す", () => {
-    const state = deriveEdgeDirectionState("oneway", OK, OK, NG("反転は不可"));
+    const state = deriveEdgeDirectionState(
+      "oneway",
+      OK,
+      OK,
+      NG("反転は不可"),
+      asIs,
+    );
 
     expect(state.reverseDisabled).toBe(true);
     expect(state.reverseReason).toBe("反転は不可");
   });
 
   it("片方向で反転できるなら有効", () => {
-    const state = deriveEdgeDirectionState("oneway", OK, OK, OK);
+    const state = deriveEdgeDirectionState("oneway", OK, OK, OK, asIs);
 
     expect(state.reverseDisabled).toBe(false);
     expect(state.reverseReason).toBeNull();
@@ -90,7 +121,7 @@ describe("resolveEdgeDirectionState: グラフ状態からの解決", () => {
       data: { direction: "oneway" },
     };
 
-    expect(resolveEdgeDirectionState(edge, nodes, [edge]).direction).toBe(
+    expect(resolveEdgeDirectionState(edge, nodes, [edge], asIs).direction).toBe(
       "oneway",
     );
   });
@@ -103,7 +134,7 @@ describe("resolveEdgeDirectionState: グラフ状態からの解決", () => {
       type: "graph",
     } as GraphEdgeType;
 
-    expect(resolveEdgeDirectionState(edge, nodes, [edge]).direction).toBe(
+    expect(resolveEdgeDirectionState(edge, nodes, [edge], asIs).direction).toBe(
       "both",
     );
   });

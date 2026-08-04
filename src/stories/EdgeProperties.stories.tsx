@@ -10,10 +10,16 @@ import {
   GRAPH_NODES,
   graphEdge,
   PanelFrame,
+  passThroughNotice,
 } from "./_helpers/propertiesFixtures";
 
 function directionStateOf(edgeId: string) {
-  return resolveEdgeDirectionState(graphEdge(edgeId), GRAPH_NODES, GRAPH_EDGES);
+  return resolveEdgeDirectionState(
+    graphEdge(edgeId),
+    GRAPH_NODES,
+    GRAPH_EDGES,
+    passThroughNotice,
+  );
 }
 
 const meta = {

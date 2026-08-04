@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { IntlTestProvider } from "@/test/IntlTestProvider";
 import type { GraphNodeType } from "../type";
 import { GraphNodeContextMenu } from "./GraphNodeContextMenu";
 
@@ -11,12 +13,16 @@ const node: GraphNodeType = {
   data: { label: "ポイント 1", nodeType: "GOAL" },
 };
 
+/** メッセージを解決できるよう next-intl のプロバイダ配下で描画する */
+const renderWithIntl = (ui: ReactElement) =>
+  render(ui, { wrapper: IntlTestProvider });
+
 describe("GraphNodeContextMenu", () => {
   it("ノードタイプを変更できる", () => {
     const onSetType = vi.fn();
     const onClose = vi.fn();
 
-    render(
+    renderWithIntl(
       <GraphNodeContextMenu
         node={node}
         nodes={[node]}
@@ -37,7 +43,7 @@ describe("GraphNodeContextMenu", () => {
   });
 
   it("メニュー名に対象ポイント名を含み、現在のタイプをラジオ選択として伝える", () => {
-    render(
+    renderWithIntl(
       <GraphNodeContextMenu
         node={node}
         nodes={[node]}
@@ -73,7 +79,7 @@ describe("GraphNodeContextMenu", () => {
   it("destructive 色のメニューからノードを削除できる", () => {
     const onDelete = vi.fn();
 
-    render(
+    renderWithIntl(
       <GraphNodeContextMenu
         node={node}
         nodes={[node]}
@@ -99,7 +105,7 @@ describe("GraphNodeContextMenu", () => {
     const onStartEdgeCreation = vi.fn();
     const onClose = vi.fn();
 
-    render(
+    renderWithIntl(
       <GraphNodeContextMenu
         node={node}
         nodes={[node]}

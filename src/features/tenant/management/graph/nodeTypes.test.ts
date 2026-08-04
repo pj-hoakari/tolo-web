@@ -37,7 +37,7 @@ describe("collectNodeNotices: 入退出点の強調", () => {
     const notices = collectNodeNotices("b", nodes, edges);
     expect(notices).toHaveLength(1);
     expect(notices[0].level).toBe("info");
-    expect(notices[0].message).toContain("入退出");
+    expect(notices[0].messageKey).toBe("dualDirection");
   });
 
   it("片方向ルートのみ（出力のみ）の入退出点は通知が付かない", () => {

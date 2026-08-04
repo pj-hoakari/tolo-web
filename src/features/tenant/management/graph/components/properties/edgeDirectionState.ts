@@ -1,4 +1,5 @@
 import {
+  type NoticeTranslator,
   type ValidationResult,
   validateEdgeDirection,
   validateReverseEdge,
@@ -26,20 +27,23 @@ export function deriveEdgeDirectionState(
   bothResult: ValidationResult,
   onewayResult: ValidationResult,
   reverseResult: ValidationResult,
+  translateNotice: NoticeTranslator,
 ): EdgeDirectionState {
   return {
     direction,
     bothDisabled: direction !== "both" && !bothResult.ok,
     onewayDisabled: direction !== "oneway" && !onewayResult.ok,
     directionReason: !bothResult.ok
-      ? bothResult.message
+      ? translateNotice(bothResult.messageKey)
       : !onewayResult.ok
-        ? onewayResult.message
+        ? translateNotice(onewayResult.messageKey)
         : null,
     // 両通行のルートは向きの概念が無いため反転できない
     reverseDisabled: direction === "both" || !reverseResult.ok,
     reverseReason:
-      direction !== "both" && !reverseResult.ok ? reverseResult.message : null,
+      direction !== "both" && !reverseResult.ok
+        ? translateNotice(reverseResult.messageKey)
+        : null,
   };
 }
 
@@ -48,11 +52,13 @@ export function resolveEdgeDirectionState(
   edge: GraphEdgeType,
   nodes: GraphNodeType[],
   edges: GraphEdgeType[],
+  translateNotice: NoticeTranslator,
 ): EdgeDirectionState {
   return deriveEdgeDirectionState(
     edge.data?.direction ?? "both",
     validateEdgeDirection(edge, "both", nodes, edges),
     validateEdgeDirection(edge, "oneway", nodes, edges),
     validateReverseEdge(edge, nodes, edges),
+    translateNotice,
   );
 }

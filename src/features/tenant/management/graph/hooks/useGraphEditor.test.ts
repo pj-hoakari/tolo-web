@@ -2,6 +2,7 @@
 import { act, renderHook } from "@testing-library/react";
 import type { Connection } from "@xyflow/react";
 import { describe, expect, it } from "vitest";
+import { IntlTestProvider } from "@/test/IntlTestProvider";
 import type {
   GraphData,
   GraphEdgeType,
@@ -41,7 +42,9 @@ describe("useGraphEditor: 同一ポイント間の複数ルート", () => {
       nodes: [node("n1", 0, 0), node("n2", 300, 0)],
       edges: [],
     };
-    const { result } = renderHook(() => useGraphEditor(initial));
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
 
     expect(result.current.canvas.edges.length).toBe(0);
 
@@ -73,14 +76,18 @@ describe("useGraphEditor: 接続数によるエッジ端点の増減", () => {
   });
 
   it("接続が無いときは各辺にエッジ端点用ハンドルを作らない", () => {
-    const { result } = renderHook(() => useGraphEditor(initial()));
+    const { result } = renderHook(() => useGraphEditor(initial()), {
+      wrapper: IntlTestProvider,
+    });
     for (const side of SIDES) {
       expect(slotsOf(result.current.canvas.nodes, "n1", side)).toEqual([]);
     }
   });
 
   it("接続を追加すると端点が増え、削除すると減る", () => {
-    const { result } = renderHook(() => useGraphEditor(initial()));
+    const { result } = renderHook(() => useGraphEditor(initial()), {
+      wrapper: IntlTestProvider,
+    });
 
     act(() => {
       result.current.canvas.editing.onConnect(connection("n1", "n2"));
@@ -110,7 +117,9 @@ describe("useGraphEditor: エッジ方向のコンテキスト操作", () => {
       nodes: [node("n1", 0, 0), node("n2", 300, 0)],
       edges: [edge("e1", "n1", "n2")],
     };
-    const { result } = renderHook(() => useGraphEditor(initial));
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
 
     act(() => {
       result.current.canvas.editing.onSetEdgeDirection("e1", "oneway");
@@ -133,7 +142,9 @@ describe("useGraphEditor: ノードタイプのコンテキスト操作", () => 
       nodes: [node("n1", 0, 0)],
       edges: [],
     };
-    const { result } = renderHook(() => useGraphEditor(initial));
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
 
     act(() => {
       result.current.canvas.editing.onSetNodeType("n1", "TRANSIT_ONLY");
@@ -149,7 +160,9 @@ describe("useGraphEditor: ノード内ラベル編集", () => {
       nodes: [node("n1", 0, 0)],
       edges: [],
     };
-    const { result } = renderHook(() => useGraphEditor(initial));
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
 
     act(() => {
       result.current.canvas.editing.onSetNodeLabel("n1", "エントランス");
@@ -162,7 +175,9 @@ describe("useGraphEditor: ノード内ラベル編集", () => {
 describe("useGraphEditor: グローバルコンテキスト操作", () => {
   it("指定した位置にノードを追加できる", () => {
     const initial: GraphData = { nodes: [], edges: [] };
-    const { result } = renderHook(() => useGraphEditor(initial));
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
 
     act(() => {
       result.current.canvas.editing.onAddNodeAtPosition({ x: 420, y: 180 });
@@ -182,7 +197,9 @@ describe("useGraphEditor: コンテキストメニューからの削除", () => 
   });
 
   it("エッジを削除できる", () => {
-    const { result } = renderHook(() => useGraphEditor(initial()));
+    const { result } = renderHook(() => useGraphEditor(initial()), {
+      wrapper: IntlTestProvider,
+    });
 
     act(() => {
       result.current.canvas.editing.onDeleteEdge("e1");
@@ -192,7 +209,9 @@ describe("useGraphEditor: コンテキストメニューからの削除", () => 
   });
 
   it("ノードを削除すると接続エッジも削除する", () => {
-    const { result } = renderHook(() => useGraphEditor(initial()));
+    const { result } = renderHook(() => useGraphEditor(initial()), {
+      wrapper: IntlTestProvider,
+    });
 
     act(() => {
       result.current.canvas.editing.onDeleteNode("n1");
@@ -209,7 +228,9 @@ describe("useGraphEditor: ポイント移動によるハンドル接続位置の
       nodes: [node("n1", 0, 0), node("n2", 300, 0)],
       edges: [edge("e1", "n1", "n2")],
     };
-    const { result } = renderHook(() => useGraphEditor(initial));
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
 
     // 水平配置 → 右左で接続
     const before = result.current.canvas.edges.find((e) => e.id === "e1");
@@ -256,7 +277,9 @@ describe("useGraphEditor: 観測点の紐づけとグラフの整合", () => {
   });
 
   it("ポイントを削除すると、本体と接続ルートの紐づけがグラフから消える", () => {
-    const { result } = renderHook(() => useGraphEditor(linkedGraph()));
+    const { result } = renderHook(() => useGraphEditor(linkedGraph()), {
+      wrapper: IntlTestProvider,
+    });
 
     act(() => {
       result.current.canvas.onSelectNode("n1");
@@ -270,7 +293,9 @@ describe("useGraphEditor: 観測点の紐づけとグラフの整合", () => {
   });
 
   it("紐づけを張り替えるとグラフ側の紐づけも入れ替わる", () => {
-    const { result } = renderHook(() => useGraphEditor(linkedGraph()));
+    const { result } = renderHook(() => useGraphEditor(linkedGraph()), {
+      wrapper: IntlTestProvider,
+    });
 
     act(() => {
       result.current.properties.onUpdateNode("n1", {

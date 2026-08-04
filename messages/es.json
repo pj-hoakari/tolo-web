@@ -17,7 +17,9 @@
     "tabs": {
       "graph": "Gráfico del recinto",
       "edges": "Edges conectados"
-    }
+    },
+    "graphEditTitle": "{tenantId} Editor del gráfico del recinto",
+    "backLink": "Volver a administración"
   },
   "Graph": {
     "viewer": {
@@ -50,6 +52,58 @@
       "online": "Conectado",
       "offline": "Sin conexión",
       "usedByOther": "En uso por otro punto u otra ruta"
+    },
+    "nodeTypeDescription": {
+      "GOAL": "p. ej., un estand",
+      "GOAL_TRANSIT_MIXED": "p. ej., una exposición mural (destino y a la vez paso)",
+      "TRANSIT_ONLY": "p. ej., una bifurcación del pasillo",
+      "BOUNDARY": "p. ej., una entrada o salida del recinto"
+    },
+    "notices": {
+      "dualDirection": "Funciona a la vez como entrada y como salida"
+    },
+    "editor": {
+      "title": "Editor del recinto",
+      "addNode": "Añadir {type}",
+      "save": "Guardar",
+      "newNodeLabel": "Punto {index}"
+    },
+    "easyConnect": {
+      "fromNode": "Añadir ruta: haz clic en el punto final",
+      "fromCanvas": "Añadir ruta: arrastra de un punto a otro",
+      "cancelHint": "Pulsa Esc para cancelar",
+      "end": "Terminar de añadir rutas"
+    },
+    "contextMenu": {
+      "canvasLabel": "Acciones del lienzo",
+      "endEdgeCreation": "Terminar de añadir rutas",
+      "addNode": "Añadir punto",
+      "addEdge": "Añadir ruta",
+      "nodeLabel": "Acciones del punto «{label}»",
+      "addEdgeFromNode": "Añadir una ruta desde este punto",
+      "changeType": "Cambiar el tipo",
+      "deleteNode": "Eliminar este punto",
+      "edgeLabel": "Acciones de la ruta «{source} → {target}»",
+      "setOneway": "Convertir en unidireccional ({source} → {target})",
+      "setBoth": "Convertir en bidireccional",
+      "reverse": "Invertir el sentido ({target} → {source})",
+      "deleteEdge": "Eliminar esta ruta"
+    },
+    "properties": {
+      "title": "Propiedades",
+      "empty": "Selecciona un punto o una ruta.",
+      "deleteNode": "Eliminar este punto",
+      "deleteEdge": "Eliminar esta ruta",
+      "label": "Etiqueta",
+      "type": "Tipo",
+      "direction": "Sentido",
+      "both": "Bidireccional ⇌",
+      "oneway": "Unidireccional →",
+      "reverse": "Invertir el sentido (inicio ↔ fin)"
+    },
+    "node": {
+      "editLabel": "Editar la etiqueta de «{label}»",
+      "labelField": "Etiqueta del punto"
     }
   },
   "Webrtc": {

@@ -17,7 +17,9 @@
     "tabs": {
       "graph": "행사장 그래프",
       "edges": "연결된 엣지"
-    }
+    },
+    "graphEditTitle": "{tenantId} 행사장 그래프 편집",
+    "backLink": "관리 페이지로 돌아가기"
   },
   "Graph": {
     "viewer": {
@@ -50,6 +52,58 @@
       "online": "연결됨",
       "offline": "오프라인",
       "usedByOther": "다른 지점 / 경로에서 사용 중"
+    },
+    "nodeTypeDescription": {
+      "GOAL": "예: 전시 부스",
+      "GOAL_TRANSIT_MIXED": "예: 벽면 전시(목적지도 통과도 될 수 있음)",
+      "TRANSIT_ONLY": "예: 통로 분기",
+      "BOUNDARY": "예: 행사장 출입구"
+    },
+    "notices": {
+      "dualDirection": "출입(입력·출력) 양쪽을 담당하고 있습니다"
+    },
+    "editor": {
+      "title": "행사장 편집기",
+      "addNode": "{type} 추가",
+      "save": "저장",
+      "newNodeLabel": "지점 {index}"
+    },
+    "easyConnect": {
+      "fromNode": "경로 추가: 끝점으로 사용할 지점을 클릭하세요",
+      "fromCanvas": "경로 추가: 지점에서 다른 지점으로 드래그하세요",
+      "cancelHint": "Esc 로 취소",
+      "end": "경로 추가 종료"
+    },
+    "contextMenu": {
+      "canvasLabel": "캔버스 작업",
+      "endEdgeCreation": "경로 추가 종료",
+      "addNode": "지점 추가",
+      "addEdge": "경로 추가",
+      "nodeLabel": "지점 「{label}」 작업",
+      "addEdgeFromNode": "이 지점에서 경로 추가",
+      "changeType": "유형 변경",
+      "deleteNode": "이 지점 삭제",
+      "edgeLabel": "경로 「{source} → {target}」 작업",
+      "setOneway": "일방통행으로 변경 ({source} → {target})",
+      "setBoth": "양방향 통행으로 변경",
+      "reverse": "방향 반전 ({target} → {source})",
+      "deleteEdge": "이 경로 삭제"
+    },
+    "properties": {
+      "title": "속성",
+      "empty": "지점 또는 경로를 선택하세요.",
+      "deleteNode": "이 지점 삭제",
+      "deleteEdge": "이 경로 삭제",
+      "label": "라벨",
+      "type": "유형",
+      "direction": "방향",
+      "both": "양방향 ⇌",
+      "oneway": "일방향 →",
+      "reverse": "방향 반전 (시작 ↔ 끝)"
+    },
+    "node": {
+      "editLabel": "「{label}」의 라벨 편집",
+      "labelField": "지점 라벨"
     }
   },
   "Webrtc": {

@@ -17,7 +17,9 @@
     "tabs": {
       "graph": "会场图",
       "edges": "连接的边缘设备"
-    }
+    },
+    "graphEditTitle": "{tenantId} 会场图编辑",
+    "backLink": "返回管理页面"
   },
   "Graph": {
     "viewer": {
@@ -50,6 +52,58 @@
       "online": "已连接",
       "offline": "离线",
       "usedByOther": "已被其他节点 / 路径使用"
+    },
+    "nodeTypeDescription": {
+      "GOAL": "例：展位",
+      "GOAL_TRANSIT_MIXED": "例：墙面展示（既是目的地也可通行）",
+      "TRANSIT_ONLY": "例：通道分叉",
+      "BOUNDARY": "例：会场出入口"
+    },
+    "notices": {
+      "dualDirection": "同时承担进入和离开（输入·输出）"
+    },
+    "editor": {
+      "title": "会场编辑器",
+      "addNode": "添加{type}",
+      "save": "保存",
+      "newNodeLabel": "节点 {index}"
+    },
+    "easyConnect": {
+      "fromNode": "添加路径：点击作为终点的节点",
+      "fromCanvas": "添加路径：从一个节点拖动到另一个节点",
+      "cancelHint": "按 Esc 取消",
+      "end": "结束添加路径"
+    },
+    "contextMenu": {
+      "canvasLabel": "画布操作",
+      "endEdgeCreation": "结束添加路径",
+      "addNode": "添加节点",
+      "addEdge": "添加路径",
+      "nodeLabel": "节点“{label}”的操作",
+      "addEdgeFromNode": "从此节点添加路径",
+      "changeType": "更改类型",
+      "deleteNode": "删除此节点",
+      "edgeLabel": "路径“{source} → {target}”的操作",
+      "setOneway": "改为单向通行（{source} → {target}）",
+      "setBoth": "改为双向通行",
+      "reverse": "反转方向（{target} → {source}）",
+      "deleteEdge": "删除此路径"
+    },
+    "properties": {
+      "title": "属性",
+      "empty": "请选择节点或路径。",
+      "deleteNode": "删除此节点",
+      "deleteEdge": "删除此路径",
+      "label": "标签",
+      "type": "类型",
+      "direction": "方向",
+      "both": "双向 ⇌",
+      "oneway": "单向 →",
+      "reverse": "反转方向（起点 ↔ 终点）"
+    },
+    "node": {
+      "editLabel": "编辑“{label}”的标签",
+      "labelField": "节点标签"
     }
   },
   "Webrtc": {

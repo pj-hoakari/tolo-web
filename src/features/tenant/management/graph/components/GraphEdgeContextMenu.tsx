@@ -1,4 +1,5 @@
 import { ArrowLeftRight, ArrowRight, Repeat2, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Text } from "react-aria-components";
 import { Menu, MenuItem, MenuSeparator } from "@/components/ui/menu";
 import type { EdgeDirection, GraphEdgeType, GraphNodeType } from "../type";
@@ -30,12 +31,16 @@ export function GraphEdgeContextMenu({
   onDelete,
   onClose,
 }: GraphEdgeContextMenuProps) {
+  const t = useTranslations("Graph.contextMenu");
+  const tNotice = useTranslations("Graph.notices");
+
   const direction = edge.data?.direction ?? "both";
-  const directionState = resolveEdgeDirectionState(edge, nodes, edges);
+  const directionState = resolveEdgeDirectionState(edge, nodes, edges, tNotice);
   const sourceLabel =
     nodes.find((node) => node.id === edge.source)?.data.label ?? edge.source;
   const targetLabel =
     nodes.find((node) => node.id === edge.target)?.data.label ?? edge.target;
+  const endpoints = { source: sourceLabel, target: targetLabel };
 
   return (
     <ContextMenuPopover
@@ -43,11 +48,11 @@ export function GraphEdgeContextMenu({
       className="min-w-56"
       onClose={onClose}
     >
-      <Menu aria-label={`ルート「${sourceLabel} → ${targetLabel}」の操作`}>
+      <Menu aria-label={t("edgeLabel", endpoints)}>
         {direction === "both" ? (
           <MenuItem
             id="oneway"
-            textValue={`片側通行にする（${sourceLabel} → ${targetLabel}）`}
+            textValue={t("setOneway", endpoints)}
             isDisabled={directionState.onewayDisabled}
             onAction={() => {
               onSetDirection(edge.id, "oneway");
@@ -56,7 +61,7 @@ export function GraphEdgeContextMenu({
           >
             <ArrowRight aria-hidden className="size-4 shrink-0" />
             <MenuItemLabel
-              label={`片側通行にする（${sourceLabel} → ${targetLabel}）`}
+              label={t("setOneway", endpoints)}
               reason={
                 directionState.onewayDisabled
                   ? directionState.directionReason
@@ -68,7 +73,7 @@ export function GraphEdgeContextMenu({
           <>
             <MenuItem
               id="both"
-              textValue="両方向通行にする"
+              textValue={t("setBoth")}
               isDisabled={directionState.bothDisabled}
               onAction={() => {
                 onSetDirection(edge.id, "both");
@@ -77,7 +82,7 @@ export function GraphEdgeContextMenu({
             >
               <ArrowLeftRight aria-hidden className="size-4 shrink-0" />
               <MenuItemLabel
-                label="両方向通行にする"
+                label={t("setBoth")}
                 reason={
                   directionState.bothDisabled
                     ? directionState.directionReason
@@ -87,7 +92,7 @@ export function GraphEdgeContextMenu({
             </MenuItem>
             <MenuItem
               id="reverse"
-              textValue={`向きを反転（${targetLabel} → ${sourceLabel}）`}
+              textValue={t("reverse", endpoints)}
               isDisabled={directionState.reverseDisabled}
               onAction={() => {
                 onReverse(edge.id);
@@ -96,7 +101,7 @@ export function GraphEdgeContextMenu({
             >
               <Repeat2 aria-hidden className="size-4 shrink-0" />
               <MenuItemLabel
-                label={`向きを反転（${targetLabel} → ${sourceLabel}）`}
+                label={t("reverse", endpoints)}
                 reason={
                   directionState.reverseDisabled
                     ? directionState.reverseReason
@@ -109,7 +114,7 @@ export function GraphEdgeContextMenu({
         <MenuSeparator />
         <MenuItem
           id="delete"
-          textValue="このルートを削除"
+          textValue={t("deleteEdge")}
           className="text-destructive focus:bg-destructive/10 focus:text-destructive"
           onAction={() => {
             onDelete(edge.id);
@@ -117,7 +122,7 @@ export function GraphEdgeContextMenu({
           }}
         >
           <Trash2 aria-hidden className="size-4 shrink-0" />
-          このルートを削除
+          {t("deleteEdge")}
         </MenuItem>
       </Menu>
     </ContextMenuPopover>

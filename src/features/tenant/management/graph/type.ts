@@ -31,7 +31,8 @@ export type NoticeLevel = "info" | "warning";
  */
 export type GraphNotice = {
   level: NoticeLevel;
-  message: string;
+  /** `Graph.notices` 配下のメッセージキー。表示する箇所で翻訳する */
+  messageKey: string;
 };
 
 export type GraphNodeData = {
