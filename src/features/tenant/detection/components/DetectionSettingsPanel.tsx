@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { memo } from "react";
 import type {
   DetectionSettingsStore,
@@ -5,27 +6,27 @@ import type {
 } from "../stores/detectionStore";
 import { DetectionAdvancedSettings } from "./DetectionAdvancedSettings";
 import { DetectionLineActions } from "./DetectionLineActions";
-import {
-  DetectionPresetGroup,
-  type NumberSettingPreset,
-} from "./DetectionPresetGroup";
+import { DetectionPresetGroup } from "./DetectionPresetGroup";
 
-const CONFIDENCE_PRESETS: NumberSettingPreset[] = [
-  { label: "広め", value: 0.1 },
-  { label: "標準", value: 0.15 },
-  { label: "厳しめ", value: 0.3 },
+/** プリセットの表示名は Detection.presets の下のキーで解決する */
+type PresetDef = { labelKey: string; value: number };
+
+const CONFIDENCE_PRESETS: PresetDef[] = [
+  { labelKey: "wide", value: 0.1 },
+  { labelKey: "standard", value: 0.15 },
+  { labelKey: "strict", value: 0.3 },
 ];
 
-const TRACKING_PRESETS: NumberSettingPreset[] = [
-  { label: "安定", value: 0.6 },
-  { label: "標準", value: 0.8 },
-  { label: "追従優先", value: 0.95 },
+const TRACKING_PRESETS: PresetDef[] = [
+  { labelKey: "stable", value: 0.6 },
+  { labelKey: "standard", value: 0.8 },
+  { labelKey: "responsive", value: 0.95 },
 ];
 
-const DETECTION_INTERVAL_PRESETS: NumberSettingPreset[] = [
-  { label: "高頻度", value: 50 },
-  { label: "標準", value: 100 },
-  { label: "省負荷", value: 250 },
+const DETECTION_INTERVAL_PRESETS: PresetDef[] = [
+  { labelKey: "frequent", value: 50 },
+  { labelKey: "standard", value: 100 },
+  { labelKey: "light", value: 250 },
 ];
 
 const formatThreshold = (value: number) => value.toFixed(2);
@@ -43,33 +44,41 @@ function DetectionSettingsPanelComponent({
   settingsStore,
   viewStateStore,
 }: DetectionSettingsPanelProps) {
+  const t = useTranslations("Detection");
+
+  const translatePresets = (presets: PresetDef[]) =>
+    presets.map(({ labelKey, value }) => ({
+      label: t(`presets.${labelKey}`),
+      value,
+    }));
+
   return (
     <section className="grid w-full max-w-3xl gap-4 rounded border border-gray-200 p-4 sm:grid-cols-2">
       <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2">
-        <h3 className="font-bold">検出設定</h3>
+        <h3 className="font-bold">{t("title")}</h3>
         <DetectionLineActions
           settingsStore={settingsStore}
           viewStateStore={viewStateStore}
         />
       </div>
       <DetectionPresetGroup
-        title="検出感度"
+        title={t("fields.confidence")}
         settingKey="confidenceThreshold"
-        presets={CONFIDENCE_PRESETS}
+        presets={translatePresets(CONFIDENCE_PRESETS)}
         formatValue={formatThreshold}
         settingsStore={settingsStore}
       />
       <DetectionPresetGroup
-        title="追跡のつながりやすさ"
+        title={t("fields.tracking")}
         settingKey="trackingDistanceThreshold"
-        presets={TRACKING_PRESETS}
+        presets={translatePresets(TRACKING_PRESETS)}
         formatValue={formatThreshold}
         settingsStore={settingsStore}
       />
       <DetectionPresetGroup
-        title="検出頻度"
+        title={t("fields.frequency")}
         settingKey="detectionInterval"
-        presets={DETECTION_INTERVAL_PRESETS}
+        presets={translatePresets(DETECTION_INTERVAL_PRESETS)}
         formatValue={formatMilliseconds}
         settingsStore={settingsStore}
       />

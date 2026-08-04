@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Checkbox, CheckboxGroup } from "@/components/ui/checkbox";
 import type { AliveEdgesStatus } from "@/features/tenant/webrtc/hooks/useAliveEdges";
@@ -39,12 +40,15 @@ export function ObservationPointPicker({
 }: ObservationPointPickerProps) {
   const rows = buildObservationPointRows(linkedIds, available);
   const loading = status === "loading";
+  const t = useTranslations("Graph.observationPoints");
 
   return (
     <div>
       <div className="mb-1 flex items-center justify-between">
         <p className="font-medium text-[11px] text-muted-foreground">
-          観測点{linkedIds.length > 0 ? `（${linkedIds.length}）` : ""}
+          {linkedIds.length > 0
+            ? t("titleWithCount", { count: linkedIds.length })
+            : t("title")}
         </p>
         {onRefresh ? (
           <Button
@@ -53,22 +57,20 @@ export function ObservationPointPicker({
             isDisabled={loading}
             className="h-auto px-1 py-0 text-[10px]"
           >
-            更新
+            {t("refresh")}
           </Button>
         ) : null}
       </div>
 
       {status === "error" ? (
-        <p className="text-[10px] text-destructive">
-          観測点の取得に失敗しました
-        </p>
+        <p className="text-[10px] text-destructive">{t("error")}</p>
       ) : rows.length === 0 ? (
         <p className="text-[10px] text-muted-foreground">
-          {loading ? "読み込み中…" : "接続中の観測点がありません"}
+          {loading ? t("loading") : t("empty")}
         </p>
       ) : (
         <CheckboxGroup
-          aria-label="観測点"
+          aria-label={t("title")}
           value={linkedIds}
           onChange={onChange}
           className="space-y-1"
@@ -88,7 +90,7 @@ export function ObservationPointPicker({
                   <span className="flex items-center gap-1">
                     <span
                       aria-hidden
-                      title={row.online ? "接続中" : "オフライン"}
+                      title={row.online ? t("online") : t("offline")}
                       className={cn(
                         "inline-block h-1.5 w-1.5 shrink-0 rounded-full",
                         row.online
@@ -102,11 +104,11 @@ export function ObservationPointPicker({
                   </span>
                   {disabled ? (
                     <span className="block text-[9px] text-amber-600 dark:text-amber-400">
-                      他のポイント / ルートで使用中
+                      {t("usedByOther")}
                     </span>
                   ) : !row.online ? (
                     <span className="block text-[9px] text-muted-foreground">
-                      オフライン
+                      {t("offline")}
                     </span>
                   ) : null}
                 </span>

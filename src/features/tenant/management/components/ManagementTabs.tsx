@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Tab, TabList, TabPanel, Tabs } from "@/components/ui/tabs";
 import { ConnectedEdges } from "@/features/tenant/webrtc/components/ConnectedEdges";
 import { type GraphData, GraphViewer } from "../graph";
@@ -13,24 +14,23 @@ type Props = {
   initialGraph?: GraphData;
 };
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: "graph", label: "会場グラフ" },
-  { id: "edges", label: "接続エッジ" },
-];
+const TAB_IDS: TabId[] = ["graph", "edges"];
 
 export function ManagementTabs({ tenantId, eventId, initialGraph }: Props) {
+  const t = useTranslations("Management");
+
   return (
     <Tabs
       defaultSelectedKey="graph"
       className="flex min-h-0 w-full flex-1 flex-col"
     >
       <TabList
-        aria-label="管理ビュー切り替え"
+        aria-label={t("tabsLabel")}
         className="mx-10 mt-2 flex-none self-start"
       >
-        {TABS.map((t) => (
-          <Tab key={t.id} id={t.id}>
-            {t.label}
+        {TAB_IDS.map((id) => (
+          <Tab key={id} id={id}>
+            {t(`tabs.${id}`)}
           </Tab>
         ))}
       </TabList>

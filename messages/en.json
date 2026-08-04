@@ -10,5 +10,107 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System"
+  },
+  "Management": {
+    "title": "{tenantId} Management",
+    "tabsLabel": "Switch management view",
+    "tabs": {
+      "graph": "Venue graph",
+      "edges": "Connected edges"
+    }
+  },
+  "Graph": {
+    "viewer": {
+      "title": "Venue graph",
+      "edit": "Edit graph",
+      "save": "Save"
+    },
+    "nodeType": {
+      "GOAL": "Destination",
+      "GOAL_TRANSIT_MIXED": "Destination / Transit",
+      "TRANSIT_ONLY": "Transit only",
+      "BOUNDARY": "Entry / Exit"
+    },
+    "selectionKind": {
+      "node": "Point",
+      "edge": "Route"
+    },
+    "observationLink": {
+      "title": "Observation point links",
+      "empty": "Select a point or a route to link observation points.",
+      "editHint": "Points and routes can be added, removed and retyped on the edit page."
+    },
+    "observationPoints": {
+      "title": "Observation points",
+      "titleWithCount": "Observation points ({count})",
+      "refresh": "Refresh",
+      "error": "Failed to load observation points",
+      "loading": "Loading…",
+      "empty": "No observation points are connected",
+      "online": "Connected",
+      "offline": "Offline",
+      "usedByOther": "In use by another point / route"
+    }
+  },
+  "Webrtc": {
+    "connectionStatus": {
+      "idle": "Not connected",
+      "connecting": "Requesting connection…",
+      "negotiating": "Negotiating…",
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "error": "Connection failed"
+    },
+    "aliveEdges": {
+      "title": "Connected edges ({count})",
+      "refresh": "Refresh",
+      "loading": "Loading…",
+      "empty": "No edges are connected",
+      "lastSeen": "Last seen: {time}",
+      "unknownTime": "Unknown",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "loadError": "Failed to load the edge list"
+    },
+    "receiver": {
+      "stoppedTitle": "Observation stopped",
+      "stoppedDescription": "The source camera was stopped",
+      "connecting": "Connecting…",
+      "status": "Status: {status}",
+      "connectError": "Failed to connect"
+    },
+    "broadcast": {
+      "active": "Broadcasting",
+      "inactive": "Stopped"
+    }
+  },
+  "Detection": {
+    "title": "Detection settings",
+    "fields": {
+      "confidence": "Detection sensitivity",
+      "tracking": "Tracking persistence",
+      "frequency": "Detection frequency",
+      "interval": "Detection interval (ms)"
+    },
+    "presets": {
+      "wide": "Wide",
+      "standard": "Standard",
+      "strict": "Strict",
+      "stable": "Stable",
+      "responsive": "Responsive",
+      "frequent": "Frequent",
+      "light": "Light load"
+    },
+    "advanced": {
+      "open": "Advanced settings",
+      "close": "Close advanced settings"
+    },
+    "lines": {
+      "create": "Add line",
+      "edit": "Edit mode",
+      "deleteSelected": "Delete selected line",
+      "reset": "Reset line positions",
+      "count": "Line {index}: forward {forward} / backward {backward}"
+    }
   }
 }

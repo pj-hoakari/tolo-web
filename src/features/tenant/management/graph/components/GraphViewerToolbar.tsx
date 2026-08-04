@@ -1,4 +1,5 @@
 import { Pencil } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
 
@@ -13,21 +14,23 @@ export function GraphViewerToolbar({
   editHref,
   onSave,
 }: GraphViewerToolbarProps) {
+  const t = useTranslations("Graph.viewer");
+
   return (
     <div className="flex items-center justify-between gap-3 border-border border-b bg-card px-4 py-2">
       <p className="shrink-0 font-semibold text-foreground text-sm">
-        会場グラフ
+        {t("title")}
       </p>
       <div className="flex flex-wrap items-center justify-end gap-2">
         {editHref ? (
           <Link href={editHref} variant="outline" size="sm" className="gap-1.5">
             <Pencil aria-hidden className="size-3.5" />
-            グラフを編集
+            {t("edit")}
           </Link>
         ) : null}
         <div className="ml-1 border-border border-l pl-2">
           <Button size="sm" onPress={onSave}>
-            保存
+            {t("save")}
           </Button>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { memo } from "react";
 
 export type BroadcastIndicatorProps = {
@@ -9,6 +10,8 @@ function BroadcastIndicatorComponent({
   active,
   edgeId,
 }: BroadcastIndicatorProps) {
+  const t = useTranslations("Webrtc.broadcast");
+
   return (
     <div className="flex w-full max-w-3xl flex-col gap-1 text-gray-600 text-sm">
       <div className="flex items-center gap-2">
@@ -18,7 +21,7 @@ function BroadcastIndicatorComponent({
             active ? "bg-red-500" : "bg-gray-300"
           }`}
         />
-        <span>{active ? "配信中" : "停止中"}</span>
+        <span>{active ? t("active") : t("inactive")}</span>
       </div>
       {edgeId && <span className="break-all text-xs">edge ID: {edgeId}</span>}
     </div>

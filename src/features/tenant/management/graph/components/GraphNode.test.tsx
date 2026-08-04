@@ -3,6 +3,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { type NodeProps, ReactFlowProvider } from "@xyflow/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { IntlTestProvider } from "@/test/IntlTestProvider";
 import type { GraphNodeType } from "../type";
 import {
   GraphNodeEasyConnectContext,
@@ -24,11 +25,13 @@ describe("GraphNode", () => {
     const onUpdate = vi.fn();
 
     const { container } = render(
-      <ReactFlowProvider>
-        <GraphNodeLabelEditingContext.Provider value={onUpdate}>
-          <GraphNode {...nodeProps} />
-        </GraphNodeLabelEditingContext.Provider>
-      </ReactFlowProvider>,
+      <IntlTestProvider>
+        <ReactFlowProvider>
+          <GraphNodeLabelEditingContext.Provider value={onUpdate}>
+            <GraphNode {...nodeProps} />
+          </GraphNodeLabelEditingContext.Provider>
+        </ReactFlowProvider>
+      </IntlTestProvider>,
     );
 
     const labelButton = screen.getByRole("button", {
@@ -70,11 +73,13 @@ describe("GraphNode", () => {
     const onUpdate = vi.fn();
 
     render(
-      <ReactFlowProvider>
-        <GraphNodeLabelEditingContext.Provider value={onUpdate}>
-          <GraphNode {...nodeProps} />
-        </GraphNodeLabelEditingContext.Provider>
-      </ReactFlowProvider>,
+      <IntlTestProvider>
+        <ReactFlowProvider>
+          <GraphNodeLabelEditingContext.Provider value={onUpdate}>
+            <GraphNode {...nodeProps} />
+          </GraphNodeLabelEditingContext.Provider>
+        </ReactFlowProvider>
+      </IntlTestProvider>,
     );
 
     fireEvent.click(
@@ -89,11 +94,13 @@ describe("GraphNode", () => {
 
   it("ルート追加モード中はノード全体を接続領域にする", () => {
     const { container } = render(
-      <ReactFlowProvider>
-        <GraphNodeEasyConnectContext.Provider value={{ kind: "global" }}>
-          <GraphNode {...nodeProps} isConnectable />
-        </GraphNodeEasyConnectContext.Provider>
-      </ReactFlowProvider>,
+      <IntlTestProvider>
+        <ReactFlowProvider>
+          <GraphNodeEasyConnectContext.Provider value={{ kind: "global" }}>
+            <GraphNode {...nodeProps} isConnectable />
+          </GraphNodeEasyConnectContext.Provider>
+        </ReactFlowProvider>
+      </IntlTestProvider>,
     );
 
     const handle = container.querySelector('[data-handleid="easy-connect"]');
@@ -104,17 +111,19 @@ describe("GraphNode", () => {
 
   it("始点固定のルート追加モードでは指定したノードだけ接続を開始できる", () => {
     const { container, rerender } = render(
-      <ReactFlowProvider>
-        <GraphNodeEasyConnectContext.Provider
-          value={{
-            kind: "from-node",
-            sourceNodeId: "n1",
-            origin: { x: 0, y: 0 },
-          }}
-        >
-          <GraphNode {...nodeProps} isConnectable />
-        </GraphNodeEasyConnectContext.Provider>
-      </ReactFlowProvider>,
+      <IntlTestProvider>
+        <ReactFlowProvider>
+          <GraphNodeEasyConnectContext.Provider
+            value={{
+              kind: "from-node",
+              sourceNodeId: "n1",
+              origin: { x: 0, y: 0 },
+            }}
+          >
+            <GraphNode {...nodeProps} isConnectable />
+          </GraphNodeEasyConnectContext.Provider>
+        </ReactFlowProvider>
+      </IntlTestProvider>,
     );
 
     expect(
@@ -124,17 +133,19 @@ describe("GraphNode", () => {
     ).toBe(true);
 
     rerender(
-      <ReactFlowProvider>
-        <GraphNodeEasyConnectContext.Provider
-          value={{
-            kind: "from-node",
-            sourceNodeId: "n1",
-            origin: { x: 0, y: 0 },
-          }}
-        >
-          <GraphNode {...nodeProps} id="n2" isConnectable />
-        </GraphNodeEasyConnectContext.Provider>
-      </ReactFlowProvider>,
+      <IntlTestProvider>
+        <ReactFlowProvider>
+          <GraphNodeEasyConnectContext.Provider
+            value={{
+              kind: "from-node",
+              sourceNodeId: "n1",
+              origin: { x: 0, y: 0 },
+            }}
+          >
+            <GraphNode {...nodeProps} id="n2" isConnectable />
+          </GraphNodeEasyConnectContext.Provider>
+        </ReactFlowProvider>
+      </IntlTestProvider>,
     );
 
     expect(

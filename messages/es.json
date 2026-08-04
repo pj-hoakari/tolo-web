@@ -10,5 +10,107 @@
     "light": "Claro",
     "dark": "Oscuro",
     "system": "Sistema"
+  },
+  "Management": {
+    "title": "{tenantId} Administración",
+    "tabsLabel": "Cambiar vista de administración",
+    "tabs": {
+      "graph": "Gráfico del recinto",
+      "edges": "Edges conectados"
+    }
+  },
+  "Graph": {
+    "viewer": {
+      "title": "Gráfico del recinto",
+      "edit": "Editar gráfico",
+      "save": "Guardar"
+    },
+    "nodeType": {
+      "GOAL": "Destino",
+      "GOAL_TRANSIT_MIXED": "Destino / Tránsito",
+      "TRANSIT_ONLY": "Solo tránsito",
+      "BOUNDARY": "Entrada / Salida"
+    },
+    "selectionKind": {
+      "node": "Punto",
+      "edge": "Ruta"
+    },
+    "observationLink": {
+      "title": "Vinculación de puntos de observación",
+      "empty": "Selecciona un punto o una ruta para vincular puntos de observación.",
+      "editHint": "Los puntos y las rutas se añaden, se eliminan y cambian de tipo en la página de edición."
+    },
+    "observationPoints": {
+      "title": "Puntos de observación",
+      "titleWithCount": "Puntos de observación ({count})",
+      "refresh": "Actualizar",
+      "error": "No se pudieron cargar los puntos de observación",
+      "loading": "Cargando…",
+      "empty": "No hay puntos de observación conectados",
+      "online": "Conectado",
+      "offline": "Sin conexión",
+      "usedByOther": "En uso por otro punto u otra ruta"
+    }
+  },
+  "Webrtc": {
+    "connectionStatus": {
+      "idle": "Sin conexión",
+      "connecting": "Solicitando conexión…",
+      "negotiating": "Negociando…",
+      "connected": "Conectado",
+      "disconnected": "Desconectado",
+      "error": "Error de conexión"
+    },
+    "aliveEdges": {
+      "title": "Edges conectados ({count})",
+      "refresh": "Actualizar",
+      "loading": "Cargando…",
+      "empty": "No hay edges conectados",
+      "lastSeen": "Última respuesta: {time}",
+      "unknownTime": "Desconocida",
+      "connect": "Conectar",
+      "disconnect": "Desconectar",
+      "loadError": "No se pudo cargar la lista de edges"
+    },
+    "receiver": {
+      "stoppedTitle": "La observación se detuvo",
+      "stoppedDescription": "La cámara de origen se detuvo",
+      "connecting": "Conectando…",
+      "status": "Estado: {status}",
+      "connectError": "No se pudo conectar"
+    },
+    "broadcast": {
+      "active": "Transmitiendo",
+      "inactive": "Detenido"
+    }
+  },
+  "Detection": {
+    "title": "Ajustes de detección",
+    "fields": {
+      "confidence": "Sensibilidad de detección",
+      "tracking": "Continuidad del seguimiento",
+      "frequency": "Frecuencia de detección",
+      "interval": "Intervalo de detección (ms)"
+    },
+    "presets": {
+      "wide": "Amplia",
+      "standard": "Estándar",
+      "strict": "Estricta",
+      "stable": "Estable",
+      "responsive": "Reactivo",
+      "frequent": "Frecuente",
+      "light": "Bajo consumo"
+    },
+    "advanced": {
+      "open": "Ajustes avanzados",
+      "close": "Cerrar ajustes avanzados"
+    },
+    "lines": {
+      "create": "Crear línea",
+      "edit": "Modo de edición",
+      "deleteSelected": "Eliminar la línea seleccionada",
+      "reset": "Restablecer las líneas",
+      "count": "Línea {index}: forward {forward} / backward {backward}"
+    }
   }
 }

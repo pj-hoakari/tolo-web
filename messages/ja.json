@@ -10,5 +10,107 @@
     "light": "ライト",
     "dark": "ダーク",
     "system": "システム"
+  },
+  "Management": {
+    "title": "{tenantId} 管理ページ",
+    "tabsLabel": "管理ビュー切り替え",
+    "tabs": {
+      "graph": "会場グラフ",
+      "edges": "接続エッジ"
+    }
+  },
+  "Graph": {
+    "viewer": {
+      "title": "会場グラフ",
+      "edit": "グラフを編集",
+      "save": "保存"
+    },
+    "nodeType": {
+      "GOAL": "目的地",
+      "GOAL_TRANSIT_MIXED": "目的地 / 通過",
+      "TRANSIT_ONLY": "通過のみ",
+      "BOUNDARY": "入退出点"
+    },
+    "selectionKind": {
+      "node": "ポイント",
+      "edge": "ルート"
+    },
+    "observationLink": {
+      "title": "観測点の紐づけ",
+      "empty": "観測点を紐づけるポイントまたはルートを選択してください。",
+      "editHint": "ポイント / ルートの追加・削除やタイプの変更は編集ページで行います。"
+    },
+    "observationPoints": {
+      "title": "観測点",
+      "titleWithCount": "観測点（{count}）",
+      "refresh": "更新",
+      "error": "観測点の取得に失敗しました",
+      "loading": "読み込み中…",
+      "empty": "接続中の観測点がありません",
+      "online": "接続中",
+      "offline": "オフライン",
+      "usedByOther": "他のポイント / ルートで使用中"
+    }
+  },
+  "Webrtc": {
+    "connectionStatus": {
+      "idle": "未接続",
+      "connecting": "接続要求中…",
+      "negotiating": "ネゴシエーション中…",
+      "connected": "接続済み",
+      "disconnected": "切断",
+      "error": "接続失敗"
+    },
+    "aliveEdges": {
+      "title": "接続中のエッジ（{count}）",
+      "refresh": "更新",
+      "loading": "読み込み中…",
+      "empty": "接続中のエッジがありません",
+      "lastSeen": "最終応答: {time}",
+      "unknownTime": "不明",
+      "connect": "接続",
+      "disconnect": "切断",
+      "loadError": "エッジ一覧の取得に失敗しました"
+    },
+    "receiver": {
+      "stoppedTitle": "観測が停止しました",
+      "stoppedDescription": "配信元のカメラが停止されました",
+      "connecting": "接続中…",
+      "status": "状態: {status}",
+      "connectError": "接続に失敗しました"
+    },
+    "broadcast": {
+      "active": "配信中",
+      "inactive": "停止中"
+    }
+  },
+  "Detection": {
+    "title": "検出設定",
+    "fields": {
+      "confidence": "検出感度",
+      "tracking": "追跡のつながりやすさ",
+      "frequency": "検出頻度",
+      "interval": "検出間隔 ms"
+    },
+    "presets": {
+      "wide": "広め",
+      "standard": "標準",
+      "strict": "厳しめ",
+      "stable": "安定",
+      "responsive": "追従優先",
+      "frequent": "高頻度",
+      "light": "省負荷"
+    },
+    "advanced": {
+      "open": "詳細調整",
+      "close": "詳細調整を閉じる"
+    },
+    "lines": {
+      "create": "ライン生成",
+      "edit": "編集モード",
+      "deleteSelected": "選択ラインを削除",
+      "reset": "ラインを初期位置に戻す",
+      "count": "ライン {index}: forward {forward} / backward {backward}"
+    }
   }
 }

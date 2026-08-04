@@ -10,5 +10,107 @@
     "light": "淺色",
     "dark": "深色",
     "system": "跟隨系統"
+  },
+  "Management": {
+    "title": "{tenantId} 管理頁面",
+    "tabsLabel": "切換管理檢視",
+    "tabs": {
+      "graph": "會場圖",
+      "edges": "連線的邊緣裝置"
+    }
+  },
+  "Graph": {
+    "viewer": {
+      "title": "會場圖",
+      "edit": "編輯圖",
+      "save": "儲存"
+    },
+    "nodeType": {
+      "GOAL": "目的地",
+      "GOAL_TRANSIT_MIXED": "目的地 / 通行",
+      "TRANSIT_ONLY": "僅通行",
+      "BOUNDARY": "出入口"
+    },
+    "selectionKind": {
+      "node": "節點",
+      "edge": "路徑"
+    },
+    "observationLink": {
+      "title": "觀測點關聯",
+      "empty": "請選擇要關聯觀測點的節點或路徑。",
+      "editHint": "節點 / 路徑的新增、刪除與類型變更請在編輯頁面進行。"
+    },
+    "observationPoints": {
+      "title": "觀測點",
+      "titleWithCount": "觀測點（{count}）",
+      "refresh": "重新整理",
+      "error": "取得觀測點失敗",
+      "loading": "載入中…",
+      "empty": "沒有已連線的觀測點",
+      "online": "已連線",
+      "offline": "離線",
+      "usedByOther": "已被其他節點 / 路徑使用"
+    }
+  },
+  "Webrtc": {
+    "connectionStatus": {
+      "idle": "未連線",
+      "connecting": "正在要求連線…",
+      "negotiating": "正在協商…",
+      "connected": "已連線",
+      "disconnected": "已中斷",
+      "error": "連線失敗"
+    },
+    "aliveEdges": {
+      "title": "已連線的邊緣裝置（{count}）",
+      "refresh": "重新整理",
+      "loading": "載入中…",
+      "empty": "沒有已連線的邊緣裝置",
+      "lastSeen": "最後回應：{time}",
+      "unknownTime": "未知",
+      "connect": "連線",
+      "disconnect": "中斷",
+      "loadError": "取得邊緣裝置清單失敗"
+    },
+    "receiver": {
+      "stoppedTitle": "觀測已停止",
+      "stoppedDescription": "來源攝影機已停止",
+      "connecting": "連線中…",
+      "status": "狀態：{status}",
+      "connectError": "連線失敗"
+    },
+    "broadcast": {
+      "active": "推流中",
+      "inactive": "已停止"
+    }
+  },
+  "Detection": {
+    "title": "偵測設定",
+    "fields": {
+      "confidence": "偵測靈敏度",
+      "tracking": "追蹤連續性",
+      "frequency": "偵測頻率",
+      "interval": "偵測間隔 ms"
+    },
+    "presets": {
+      "wide": "寬鬆",
+      "standard": "標準",
+      "strict": "嚴格",
+      "stable": "穩定",
+      "responsive": "跟隨優先",
+      "frequent": "高頻",
+      "light": "低負載"
+    },
+    "advanced": {
+      "open": "進階設定",
+      "close": "關閉進階設定"
+    },
+    "lines": {
+      "create": "產生線",
+      "edit": "編輯模式",
+      "deleteSelected": "刪除選取的線",
+      "reset": "重設線位置",
+      "count": "線 {index}：forward {forward} / backward {backward}"
+    }
   }
 }

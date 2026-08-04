@@ -5,8 +5,8 @@ import {
   useConnection,
   useUpdateNodeInternals,
 } from "@xyflow/react";
+import { useTranslations } from "next-intl";
 import { useContext, useEffect, useMemo } from "react";
-import { getNodeTypeDef } from "../nodeTypes";
 import type { GraphNodeType } from "../type";
 import { makeHandleId, SIDES } from "../utils/handles";
 import {
@@ -29,7 +29,7 @@ export function GraphNode({
   isConnectable,
 }: NodeProps<GraphNodeType>) {
   const handles = data.handles;
-  const typeDef = getNodeTypeDef(data.nodeType);
+  const t = useTranslations("Graph.nodeType");
   const updateNodeInternals = useUpdateNodeInternals();
   const onUpdateLabel = useContext(GraphNodeLabelEditingContext);
   const easyConnectMode = useContext(GraphNodeEasyConnectContext);
@@ -80,7 +80,7 @@ export function GraphNode({
         dragging={dragging}
         isConnecting={isConnecting}
       />
-      <NodeTypeBadge type={data.nodeType} label={typeDef.label} />
+      <NodeTypeBadge type={data.nodeType} label={t(data.nodeType)} />
       {/* 内容 */}
       <div className="relative min-w-0 px-4 py-5">
         <InlineNodeLabel id={id} label={data.label} onUpdate={onUpdateLabel} />

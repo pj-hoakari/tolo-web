@@ -1,6 +1,7 @@
 "use client";
 
 import type { DocumentReference } from "firebase/firestore";
+import { useTranslations } from "next-intl";
 import {
   type RefObject,
   useCallback,
@@ -61,6 +62,7 @@ export function useVideoReceiver(): VideoReceiverController {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [connectedEdgeId, setConnectedEdgeId] = useState<string | null>(null);
   const [settingsSynced, setSettingsSynced] = useState(false);
+  const t = useTranslations("Webrtc.receiver");
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const unsubscribeRef = useRef<(() => void) | null>(null);
@@ -195,11 +197,17 @@ export function useVideoReceiver(): VideoReceiverController {
       };
 
       run().catch((e) => {
-        setError(e instanceof Error ? e.message : "接続に失敗しました");
+        setError(e instanceof Error ? e.message : t("connectError"));
         setStatus("error");
       });
     },
-    [disconnect, watchConnection, handleDetectionMessage, handleControlMessage],
+    [
+      disconnect,
+      watchConnection,
+      handleDetectionMessage,
+      handleControlMessage,
+      t,
+    ],
   );
 
   useEffect(() => disconnect, [disconnect]);

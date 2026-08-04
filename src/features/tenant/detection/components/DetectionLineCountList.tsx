@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { memo, useCallback, useEffect } from "react";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
@@ -40,6 +41,7 @@ function DetectionLineCountButtonComponent({
 
   const count = useStore(resultStore, selectCount);
   const isSelected = useStore(viewStateStore, selectIsSelected);
+  const t = useTranslations("Detection.lines");
 
   return (
     <Button
@@ -48,7 +50,11 @@ function DetectionLineCountButtonComponent({
       size="sm"
       onPress={() => selectLine(viewStateStore, lineId)}
     >
-      ライン {index + 1}: forward {count.forward} / backward {count.backward}
+      {t("count", {
+        index: index + 1,
+        forward: count.forward,
+        backward: count.backward,
+      })}
     </Button>
   );
 }

@@ -10,5 +10,107 @@
     "light": "浅色",
     "dark": "深色",
     "system": "跟随系统"
+  },
+  "Management": {
+    "title": "{tenantId} 管理页面",
+    "tabsLabel": "切换管理视图",
+    "tabs": {
+      "graph": "会场图",
+      "edges": "连接的边缘设备"
+    }
+  },
+  "Graph": {
+    "viewer": {
+      "title": "会场图",
+      "edit": "编辑图",
+      "save": "保存"
+    },
+    "nodeType": {
+      "GOAL": "目的地",
+      "GOAL_TRANSIT_MIXED": "目的地 / 通行",
+      "TRANSIT_ONLY": "仅通行",
+      "BOUNDARY": "出入口"
+    },
+    "selectionKind": {
+      "node": "节点",
+      "edge": "路径"
+    },
+    "observationLink": {
+      "title": "观测点关联",
+      "empty": "请选择要关联观测点的节点或路径。",
+      "editHint": "节点 / 路径的增删和类型修改请在编辑页面进行。"
+    },
+    "observationPoints": {
+      "title": "观测点",
+      "titleWithCount": "观测点（{count}）",
+      "refresh": "刷新",
+      "error": "获取观测点失败",
+      "loading": "加载中…",
+      "empty": "没有已连接的观测点",
+      "online": "已连接",
+      "offline": "离线",
+      "usedByOther": "已被其他节点 / 路径使用"
+    }
+  },
+  "Webrtc": {
+    "connectionStatus": {
+      "idle": "未连接",
+      "connecting": "正在请求连接…",
+      "negotiating": "正在协商…",
+      "connected": "已连接",
+      "disconnected": "已断开",
+      "error": "连接失败"
+    },
+    "aliveEdges": {
+      "title": "已连接的边缘设备（{count}）",
+      "refresh": "刷新",
+      "loading": "加载中…",
+      "empty": "没有已连接的边缘设备",
+      "lastSeen": "最后响应：{time}",
+      "unknownTime": "未知",
+      "connect": "连接",
+      "disconnect": "断开",
+      "loadError": "获取边缘设备列表失败"
+    },
+    "receiver": {
+      "stoppedTitle": "观测已停止",
+      "stoppedDescription": "源摄像头已停止",
+      "connecting": "连接中…",
+      "status": "状态：{status}",
+      "connectError": "连接失败"
+    },
+    "broadcast": {
+      "active": "推流中",
+      "inactive": "已停止"
+    }
+  },
+  "Detection": {
+    "title": "检测设置",
+    "fields": {
+      "confidence": "检测灵敏度",
+      "tracking": "跟踪连续性",
+      "frequency": "检测频率",
+      "interval": "检测间隔 ms"
+    },
+    "presets": {
+      "wide": "宽松",
+      "standard": "标准",
+      "strict": "严格",
+      "stable": "稳定",
+      "responsive": "跟随优先",
+      "frequent": "高频",
+      "light": "低负载"
+    },
+    "advanced": {
+      "open": "高级设置",
+      "close": "关闭高级设置"
+    },
+    "lines": {
+      "create": "生成线",
+      "edit": "编辑模式",
+      "deleteSelected": "删除选中的线",
+      "reset": "重置线位置",
+      "count": "线 {index}：forward {forward} / backward {backward}"
+    }
   }
 }
