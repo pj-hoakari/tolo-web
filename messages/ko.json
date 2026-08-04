@@ -1,0 +1,317 @@
+{
+  "HomePage": {
+    "title": "안녕하세요, 세계!"
+  },
+  "LocaleSelect": {
+    "label": "언어 변경"
+  },
+  "Theme": {
+    "label": "테마 변경",
+    "light": "라이트",
+    "dark": "다크",
+    "system": "시스템"
+  },
+  "Management": {
+    "title": "{tenantId} 관리 페이지",
+    "tabsLabel": "관리 화면 전환",
+    "tabs": {
+      "graph": "행사장 그래프",
+      "edges": "연결된 엣지"
+    },
+    "graphEditTitle": "{tenantId} 행사장 그래프 편집",
+    "backLink": "관리 페이지로 돌아가기"
+  },
+  "Graph": {
+    "viewer": {
+      "title": "행사장 그래프",
+      "edit": "그래프 편집",
+      "save": "저장"
+    },
+    "nodeType": {
+      "GOAL": "목적지",
+      "GOAL_TRANSIT_MIXED": "목적지 / 통과",
+      "TRANSIT_ONLY": "통과 전용",
+      "BOUNDARY": "출입 지점"
+    },
+    "selectionKind": {
+      "node": "지점",
+      "edge": "경로"
+    },
+    "observationLink": {
+      "title": "관측점 연결",
+      "empty": "관측점을 연결할 지점 또는 경로를 선택하세요.",
+      "editHint": "지점 / 경로의 추가·삭제와 유형 변경은 편집 페이지에서 할 수 있습니다."
+    },
+    "observationPoints": {
+      "title": "관측점",
+      "titleWithCount": "관측점 ({count})",
+      "refresh": "새로고침",
+      "error": "관측점을 불러오지 못했습니다",
+      "loading": "불러오는 중…",
+      "empty": "연결된 관측점이 없습니다",
+      "online": "연결됨",
+      "offline": "오프라인",
+      "usedByOther": "다른 지점 / 경로에서 사용 중"
+    },
+    "nodeTypeDescription": {
+      "GOAL": "예: 전시 부스",
+      "GOAL_TRANSIT_MIXED": "예: 벽면 전시(목적지도 통과도 될 수 있음)",
+      "TRANSIT_ONLY": "예: 통로 분기",
+      "BOUNDARY": "예: 행사장 출입구"
+    },
+    "notices": {
+      "dualDirection": "출입(입력·출력) 양쪽을 담당하고 있습니다"
+    },
+    "editor": {
+      "title": "행사장 편집기",
+      "addNode": "{type} 추가",
+      "save": "저장",
+      "newNodeLabel": "지점 {index}"
+    },
+    "easyConnect": {
+      "fromNode": "경로 추가: 끝점으로 사용할 지점을 클릭하세요",
+      "fromCanvas": "경로 추가: 지점에서 다른 지점으로 드래그하세요",
+      "cancelHint": "Esc 로 취소",
+      "end": "경로 추가 종료"
+    },
+    "contextMenu": {
+      "canvasLabel": "캔버스 작업",
+      "endEdgeCreation": "경로 추가 종료",
+      "addNode": "지점 추가",
+      "addEdge": "경로 추가",
+      "nodeLabel": "지점 「{label}」 작업",
+      "addEdgeFromNode": "이 지점에서 경로 추가",
+      "changeType": "유형 변경",
+      "deleteNode": "이 지점 삭제",
+      "edgeLabel": "경로 「{source} → {target}」 작업",
+      "setOneway": "일방통행으로 변경 ({source} → {target})",
+      "setBoth": "양방향 통행으로 변경",
+      "reverse": "방향 반전 ({target} → {source})",
+      "deleteEdge": "이 경로 삭제"
+    },
+    "properties": {
+      "title": "속성",
+      "empty": "지점 또는 경로를 선택하세요.",
+      "deleteNode": "이 지점 삭제",
+      "deleteEdge": "이 경로 삭제",
+      "label": "라벨",
+      "type": "유형",
+      "direction": "방향",
+      "both": "양방향 ⇌",
+      "oneway": "일방향 →",
+      "reverse": "방향 반전 (시작 ↔ 끝)"
+    },
+    "node": {
+      "editLabel": "「{label}」의 라벨 편집",
+      "labelField": "지점 라벨"
+    }
+  },
+  "Webrtc": {
+    "connectionStatus": {
+      "idle": "연결 안 됨",
+      "connecting": "연결 요청 중…",
+      "negotiating": "협상 중…",
+      "connected": "연결됨",
+      "disconnected": "연결 끊김",
+      "error": "연결 실패"
+    },
+    "aliveEdges": {
+      "title": "연결된 엣지 ({count})",
+      "refresh": "새로고침",
+      "loading": "불러오는 중…",
+      "empty": "연결된 엣지가 없습니다",
+      "lastSeen": "마지막 응답: {time}",
+      "unknownTime": "알 수 없음",
+      "connect": "연결",
+      "disconnect": "연결 끊기",
+      "loadError": "엣지 목록을 불러오지 못했습니다"
+    },
+    "receiver": {
+      "stoppedTitle": "관측이 중지되었습니다",
+      "stoppedDescription": "송출 측 카메라가 중지되었습니다",
+      "connecting": "연결 중…",
+      "status": "상태: {status}",
+      "connectError": "연결에 실패했습니다"
+    },
+    "broadcast": {
+      "active": "송출 중",
+      "inactive": "중지됨"
+    }
+  },
+  "Detection": {
+    "title": "검출 설정",
+    "fields": {
+      "confidence": "검출 민감도",
+      "tracking": "추적 연결성",
+      "frequency": "검출 빈도",
+      "interval": "검출 간격 ms"
+    },
+    "presets": {
+      "wide": "넓게",
+      "standard": "표준",
+      "strict": "엄격하게",
+      "stable": "안정",
+      "responsive": "추종 우선",
+      "frequent": "고빈도",
+      "light": "저부하"
+    },
+    "advanced": {
+      "open": "고급 설정",
+      "close": "고급 설정 닫기"
+    },
+    "lines": {
+      "create": "라인 생성",
+      "edit": "편집 모드",
+      "deleteSelected": "선택한 라인 삭제",
+      "reset": "라인 위치 초기화",
+      "count": "라인 {index}: forward {forward} / backward {backward}"
+    }
+  },
+  "Observation": {
+    "title": "{tenantId} 관측 페이지",
+    "controls": {
+      "start": "카메라 시작",
+      "stop": "중지",
+      "loading": "시작 중…"
+    },
+    "status": {
+      "detection": "검출 상태: {status}",
+      "trackedCount": "추적 중 인원: {count}명",
+      "fps": "FPS: {fps}",
+      "idle": "중지됨",
+      "loading": "시작 중",
+      "detecting": "검출 중",
+      "error": "오류"
+    },
+    "screenWake": {
+      "unsupported": "이 브라우저는 화면 항상 켜기(Screen Wake Lock)를 지원하지 않습니다. 기기의 자동 꺼짐 설정을 확인하세요.",
+      "label": "화면 항상 켜기",
+      "toggle": "화면 항상 켜기: {state}",
+      "on": "ON",
+      "off": "OFF",
+      "enabledHint": "관측 중에는 화면이 자동으로 꺼지지 않습니다",
+      "disabledHint": "관측 중에 화면이 꺼져 관측이 중단될 수 있습니다. 눌러서 ON으로 바꾸세요",
+      "enableError": "화면 항상 켜기를 활성화하지 못했습니다"
+    },
+    "lock": {
+      "lockButton": "화면 잠금",
+      "setupTitle": "해제 코드 설정",
+      "lockedTitle": "화면 잠김",
+      "setupDescription": "관측 페이지의 조작을 보호할 해제 코드를 설정하세요.",
+      "lockedDescription": "조작을 재개하려면 해제 코드를 입력하세요.",
+      "codeLabel": "해제 코드",
+      "codeConfirmationLabel": "해제 코드(확인)",
+      "submitSetup": "설정하고 해제",
+      "submitUnlock": "잠금 해제",
+      "tooShort": "해제 코드는 {min}자 이상이어야 합니다",
+      "mismatch": "확인용 해제 코드가 일치하지 않습니다",
+      "notConfigured": "해제 코드를 먼저 설정하세요",
+      "incorrect": "해제 코드가 올바르지 않습니다",
+      "failed": "해제 코드를 처리하지 못했습니다"
+    },
+    "errors": {
+      "videoSource": "영상 소스를 가져오지 못했습니다",
+      "detection": "사람 검출 처리에 실패했습니다",
+      "modelLoad": "검출 모델을 불러오지 못했습니다（{status}: {path}）"
+    },
+    "devSource": {
+      "title": "영상 소스",
+      "selectFile": "영상 파일 선택",
+      "loop": "반복 재생",
+      "backToCamera": "카메라로 되돌리기",
+      "current": "현재: {source}",
+      "camera": "카메라",
+      "activeHint": "(중지 후 전환)",
+      "inactiveHint": "(선택 후 시작 시 반영)",
+      "hide": "숨기기"
+    }
+  },
+  "Guest": {
+    "pageSubtitle": "게스트 페이지",
+    "waitingNumber": {
+      "title": "현재 대기 인원",
+      "unit": "명"
+    },
+    "callingNumber": {
+      "title": "현재 호출 번호",
+      "unit": "번"
+    },
+    "estimatedWaitTime": {
+      "title": "예상 대기 시간",
+      "prefix": "약",
+      "unit": "분"
+    },
+    "queue": {
+      "title": "줄 서는 방법",
+      "shape": "형태",
+      "direction": "진행 방향",
+      "entrance": "입구",
+      "entranceMarker": "입구",
+      "current": "현재",
+      "max": "최대",
+      "people": "명",
+      "shapes": {
+        "zigzag": "지그재그",
+        "straight": "직선",
+        "l-shape": "ㄱ자",
+        "spiral": "나선"
+      },
+      "entrances": {
+        "top": "위",
+        "bottom": "아래",
+        "left": "왼쪽",
+        "right": "오른쪽"
+      }
+    },
+    "staffMessage": {
+      "title": "스태프 공지",
+      "ariaOpen": "스태프 공지",
+      "ariaClose": "공지 닫기",
+      "empty": "현재 공지가 없습니다",
+      "samples": {
+        "msg-2": {
+          "body": "동문 부근이 매우 혼잡합니다. 시간이 촉박하신 분은 서문 이용을 권장합니다.",
+          "staffName": "야마다 타로",
+          "staffRole": "행사장 스태프"
+        },
+        "msg-1": {
+          "body": "개연 시각이 15:00에서 15:30으로 변경되었습니다. 양해 부탁드립니다.",
+          "staffName": "사토 하나코",
+          "staffRole": "운영 책임자"
+        }
+      }
+    },
+    "guideMap": {
+      "title": "안내 지도",
+      "hint": "목적지를 선택하면 경로가 표시됩니다",
+      "currentLocation": "현재 위치",
+      "destinations": {
+        "hall": "홀",
+        "goods": "굿즈 매장",
+        "cafe": "카페",
+        "exit": "출구"
+      },
+      "destinationsLabel": "목적지",
+      "expand": "지도 확대",
+      "collapse": "지도 축소"
+    },
+    "floor": {
+      "title": "현재 층",
+      "placeholderName": "1층"
+    },
+    "congestion": {
+      "title": "혼잡 상황",
+      "levels": {
+        "low": "낮음",
+        "mid": "보통",
+        "high": "높음"
+      },
+      "areas": {
+        "entrance": "입장 게이트",
+        "hall": "홀",
+        "cafe": "카페",
+        "goods": "굿즈 매장"
+      }
+    }
+  }
+}

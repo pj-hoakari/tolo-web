@@ -1,0 +1,317 @@
+{
+  "HomePage": {
+    "title": "你好，世界！"
+  },
+  "LocaleSelect": {
+    "label": "切换语言"
+  },
+  "Theme": {
+    "label": "切换主题",
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统"
+  },
+  "Management": {
+    "title": "{tenantId} 管理页面",
+    "tabsLabel": "切换管理视图",
+    "tabs": {
+      "graph": "会场图",
+      "edges": "连接的边缘设备"
+    },
+    "graphEditTitle": "{tenantId} 会场图编辑",
+    "backLink": "返回管理页面"
+  },
+  "Graph": {
+    "viewer": {
+      "title": "会场图",
+      "edit": "编辑图",
+      "save": "保存"
+    },
+    "nodeType": {
+      "GOAL": "目的地",
+      "GOAL_TRANSIT_MIXED": "目的地 / 通行",
+      "TRANSIT_ONLY": "仅通行",
+      "BOUNDARY": "出入口"
+    },
+    "selectionKind": {
+      "node": "节点",
+      "edge": "路径"
+    },
+    "observationLink": {
+      "title": "观测点关联",
+      "empty": "请选择要关联观测点的节点或路径。",
+      "editHint": "节点 / 路径的增删和类型修改请在编辑页面进行。"
+    },
+    "observationPoints": {
+      "title": "观测点",
+      "titleWithCount": "观测点（{count}）",
+      "refresh": "刷新",
+      "error": "获取观测点失败",
+      "loading": "加载中…",
+      "empty": "没有已连接的观测点",
+      "online": "已连接",
+      "offline": "离线",
+      "usedByOther": "已被其他节点 / 路径使用"
+    },
+    "nodeTypeDescription": {
+      "GOAL": "例：展位",
+      "GOAL_TRANSIT_MIXED": "例：墙面展示（既是目的地也可通行）",
+      "TRANSIT_ONLY": "例：通道分叉",
+      "BOUNDARY": "例：会场出入口"
+    },
+    "notices": {
+      "dualDirection": "同时承担进入和离开（输入·输出）"
+    },
+    "editor": {
+      "title": "会场编辑器",
+      "addNode": "添加{type}",
+      "save": "保存",
+      "newNodeLabel": "节点 {index}"
+    },
+    "easyConnect": {
+      "fromNode": "添加路径：点击作为终点的节点",
+      "fromCanvas": "添加路径：从一个节点拖动到另一个节点",
+      "cancelHint": "按 Esc 取消",
+      "end": "结束添加路径"
+    },
+    "contextMenu": {
+      "canvasLabel": "画布操作",
+      "endEdgeCreation": "结束添加路径",
+      "addNode": "添加节点",
+      "addEdge": "添加路径",
+      "nodeLabel": "节点“{label}”的操作",
+      "addEdgeFromNode": "从此节点添加路径",
+      "changeType": "更改类型",
+      "deleteNode": "删除此节点",
+      "edgeLabel": "路径“{source} → {target}”的操作",
+      "setOneway": "改为单向通行（{source} → {target}）",
+      "setBoth": "改为双向通行",
+      "reverse": "反转方向（{target} → {source}）",
+      "deleteEdge": "删除此路径"
+    },
+    "properties": {
+      "title": "属性",
+      "empty": "请选择节点或路径。",
+      "deleteNode": "删除此节点",
+      "deleteEdge": "删除此路径",
+      "label": "标签",
+      "type": "类型",
+      "direction": "方向",
+      "both": "双向 ⇌",
+      "oneway": "单向 →",
+      "reverse": "反转方向（起点 ↔ 终点）"
+    },
+    "node": {
+      "editLabel": "编辑“{label}”的标签",
+      "labelField": "节点标签"
+    }
+  },
+  "Webrtc": {
+    "connectionStatus": {
+      "idle": "未连接",
+      "connecting": "正在请求连接…",
+      "negotiating": "正在协商…",
+      "connected": "已连接",
+      "disconnected": "已断开",
+      "error": "连接失败"
+    },
+    "aliveEdges": {
+      "title": "已连接的边缘设备（{count}）",
+      "refresh": "刷新",
+      "loading": "加载中…",
+      "empty": "没有已连接的边缘设备",
+      "lastSeen": "最后响应：{time}",
+      "unknownTime": "未知",
+      "connect": "连接",
+      "disconnect": "断开",
+      "loadError": "获取边缘设备列表失败"
+    },
+    "receiver": {
+      "stoppedTitle": "观测已停止",
+      "stoppedDescription": "源摄像头已停止",
+      "connecting": "连接中…",
+      "status": "状态：{status}",
+      "connectError": "连接失败"
+    },
+    "broadcast": {
+      "active": "推流中",
+      "inactive": "已停止"
+    }
+  },
+  "Detection": {
+    "title": "检测设置",
+    "fields": {
+      "confidence": "检测灵敏度",
+      "tracking": "跟踪连续性",
+      "frequency": "检测频率",
+      "interval": "检测间隔 ms"
+    },
+    "presets": {
+      "wide": "宽松",
+      "standard": "标准",
+      "strict": "严格",
+      "stable": "稳定",
+      "responsive": "跟随优先",
+      "frequent": "高频",
+      "light": "低负载"
+    },
+    "advanced": {
+      "open": "高级设置",
+      "close": "关闭高级设置"
+    },
+    "lines": {
+      "create": "生成线",
+      "edit": "编辑模式",
+      "deleteSelected": "删除选中的线",
+      "reset": "重置线位置",
+      "count": "线 {index}：forward {forward} / backward {backward}"
+    }
+  },
+  "Observation": {
+    "title": "{tenantId} 观测页面",
+    "controls": {
+      "start": "启动摄像头",
+      "stop": "停止",
+      "loading": "启动中…"
+    },
+    "status": {
+      "detection": "检测状态：{status}",
+      "trackedCount": "跟踪人数：{count}人",
+      "fps": "FPS：{fps}",
+      "idle": "已停止",
+      "loading": "启动中",
+      "detecting": "检测中",
+      "error": "错误"
+    },
+    "screenWake": {
+      "unsupported": "此浏览器不支持屏幕常亮（Screen Wake Lock）。请检查设备的自动息屏设置。",
+      "label": "屏幕常亮",
+      "toggle": "屏幕常亮：{state}",
+      "on": "ON",
+      "off": "OFF",
+      "enabledHint": "观测期间屏幕不会自动熄灭",
+      "disabledHint": "观测期间屏幕可能熄灭并中断观测。请点击切换为 ON",
+      "enableError": "无法启用屏幕常亮"
+    },
+    "lock": {
+      "lockButton": "锁定屏幕",
+      "setupTitle": "设置解锁码",
+      "lockedTitle": "屏幕已锁定",
+      "setupDescription": "请设置用于保护观测页面操作的解锁码。",
+      "lockedDescription": "请输入解锁码以恢复操作。",
+      "codeLabel": "解锁码",
+      "codeConfirmationLabel": "解锁码（确认）",
+      "submitSetup": "设置并解锁",
+      "submitUnlock": "解锁",
+      "tooShort": "解锁码至少需要 {min} 个字符",
+      "mismatch": "确认用的解锁码不一致",
+      "notConfigured": "请先设置解锁码",
+      "incorrect": "解锁码不正确",
+      "failed": "处理解锁码失败"
+    },
+    "errors": {
+      "videoSource": "获取视频源失败",
+      "detection": "人体检测处理失败",
+      "modelLoad": "加载检测模型失败（{status}: {path}）"
+    },
+    "devSource": {
+      "title": "视频源",
+      "selectFile": "选择视频文件",
+      "loop": "循环播放",
+      "backToCamera": "切回摄像头",
+      "current": "当前：{source}",
+      "camera": "摄像头",
+      "activeHint": "（停止后才能切换）",
+      "inactiveHint": "（选择后启动时生效）",
+      "hide": "隐藏"
+    }
+  },
+  "Guest": {
+    "pageSubtitle": "访客页面",
+    "waitingNumber": {
+      "title": "当前等待人数",
+      "unit": "人"
+    },
+    "callingNumber": {
+      "title": "当前叫号",
+      "unit": "号"
+    },
+    "estimatedWaitTime": {
+      "title": "预计等待时间",
+      "prefix": "约",
+      "unit": "分钟"
+    },
+    "queue": {
+      "title": "排队方式",
+      "shape": "形状",
+      "direction": "前进方向",
+      "entrance": "入口",
+      "entranceMarker": "入口",
+      "current": "当前",
+      "max": "最多",
+      "people": "人",
+      "shapes": {
+        "zigzag": "之字形",
+        "straight": "直线",
+        "l-shape": "L形",
+        "spiral": "螺旋"
+      },
+      "entrances": {
+        "top": "上",
+        "bottom": "下",
+        "left": "左",
+        "right": "右"
+      }
+    },
+    "staffMessage": {
+      "title": "工作人员通知",
+      "ariaOpen": "工作人员通知",
+      "ariaClose": "关闭通知",
+      "empty": "暂无通知",
+      "samples": {
+        "msg-2": {
+          "body": "东门附近非常拥挤。赶时间的来宾建议使用西门。",
+          "staffName": "山田太郎",
+          "staffRole": "会场工作人员"
+        },
+        "msg-1": {
+          "body": "演出开始时间已从 15:00 改为 15:30，敬请谅解。",
+          "staffName": "佐藤花子",
+          "staffRole": "运营负责人"
+        }
+      }
+    },
+    "guideMap": {
+      "title": "导览图",
+      "hint": "选择目的地以显示路线",
+      "currentLocation": "当前位置",
+      "destinations": {
+        "hall": "大厅",
+        "goods": "商品区",
+        "cafe": "咖啡厅",
+        "exit": "出口"
+      },
+      "destinationsLabel": "目的地",
+      "expand": "放大地图",
+      "collapse": "缩小地图"
+    },
+    "floor": {
+      "title": "当前楼层",
+      "placeholderName": "1层"
+    },
+    "congestion": {
+      "title": "拥挤状况",
+      "levels": {
+        "low": "低",
+        "mid": "中",
+        "high": "高"
+      },
+      "areas": {
+        "entrance": "入场口",
+        "hall": "大厅",
+        "cafe": "咖啡厅",
+        "goods": "商品区"
+      }
+    }
+  }
+}

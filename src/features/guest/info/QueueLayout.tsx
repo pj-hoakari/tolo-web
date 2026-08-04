@@ -1,7 +1,6 @@
 "use client";
 
-import { useLanguage } from "../i18n/LanguageProvider";
-import { messages } from "../i18n/messages";
+import { useTranslations } from "next-intl";
 import {
   type QueueEntrance,
   QueueLayoutView,
@@ -16,8 +15,7 @@ function QueueLayout(_props: GuestInfoComponentProps) {
   const shape: QueueShape = "zigzag";
   const entrance: QueueEntrance = "bottom";
 
-  const { lang } = useLanguage();
-  const q = messages[lang].queue;
+  const t = useTranslations("Guest.queue");
 
   return (
     <QueueLayoutView
@@ -28,16 +26,16 @@ function QueueLayout(_props: GuestInfoComponentProps) {
       entrance={entrance}
       currentCount={5}
       labels={{
-        title: q.title,
-        shape: q.shape,
-        direction: q.direction,
-        entrance: q.entrance,
-        entranceMarker: q.entranceMarker,
-        current: q.current,
-        max: q.max,
-        people: q.people,
-        shapeName: q.shapes[shape],
-        entranceName: q.entrances[entrance],
+        title: t("title"),
+        shape: t("shape"),
+        direction: t("direction"),
+        entrance: t("entrance"),
+        entranceMarker: t("entranceMarker"),
+        current: t("current"),
+        max: t("max"),
+        people: t("people"),
+        shapeName: t(`shapes.${shape}`),
+        entranceName: t(`entrances.${entrance}`),
       }}
     />
   );

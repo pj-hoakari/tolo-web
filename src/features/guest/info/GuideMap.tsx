@@ -1,8 +1,8 @@
 "use client";
 
+import type { Messages } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { useLanguage } from "../i18n/LanguageProvider";
-import { messages } from "../i18n/messages";
 import { GuideMapView } from "./GuideMapView";
 import {
   buildGuideMapSource,
@@ -13,6 +13,10 @@ import {
 import guideMapData from "./guideMapData.json";
 import type { GuideMapSnapshot } from "./guideMapSchema";
 import { defineGuestInfoComponent, type GuestInfoComponentProps } from "./type";
+
+/** マップ JSON の id を Guest.guideMap.destinations のキーとして扱うための型 */
+type DestinationKey =
+  `destinations.${keyof Messages["Guest"]["guideMap"]["destinations"] & string}`;
 
 /** マップ作成ツール（guide-map-poc）から書き出した JSON */
 const snapshot = guideMapData as GuideMapSnapshot;
@@ -32,18 +36,17 @@ const ROUTE_FLOW = resolveRouteFlow(snapshot);
 function GuideMap(_props: GuestInfoComponentProps) {
   // TODO: _props.tenantId / _props.eventId でマップ JSON と現在地を API から取得する。
   //       いまはリポジトリ同梱の JSON を読み込んで表示している。
-  const { lang } = useLanguage();
-  const g = messages[lang].guideMap;
+  const t = useTranslations("Guest.guideMap");
 
   // 部屋・経由地点を JSON から組み立てる（名称は i18n があれば優先）
   const source = useMemo(
     () =>
-      buildGuideMapSource(
-        snapshot,
-        FLOOR_ID,
-        (id, fallback) => g.destinations[id] ?? fallback,
-      ),
-    [g],
+      buildGuideMapSource(snapshot, FLOOR_ID, (id, fallback) => {
+        // JSON 側の id は任意の文字列なので、メッセージに定義があるときだけ上書きする
+        const key = `destinations.${id}` as DestinationKey;
+        return t.has(key) ? t(key) : fallback;
+      }),
+    [t],
   );
 
   // 作成ツールで指定した道をそのまま表示する
@@ -68,8 +71,12 @@ function GuideMap(_props: GuestInfoComponentProps) {
       waypoints={source.waypoints}
       start={MARKERS.start}
       route={route}
-      title={g.title}
-      currentLocationLabel={g.currentLocation}
+      title={t("title")}
+      hint={t("hint")}
+      currentLocationLabel={t("currentLocation")}
+      destinationsLabel={t("destinationsLabel")}
+      expandLabel={t("expand")}
+      collapseLabel={t("collapse")}
       routeFlowClassName={ROUTE_FLOW.className}
       routeFlowDuration={ROUTE_FLOW.duration}
     />

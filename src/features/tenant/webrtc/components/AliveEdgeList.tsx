@@ -1,9 +1,7 @@
+import { useLocale, useTranslations } from "next-intl";
 import type { AliveEdgesStatus } from "../hooks/useAliveEdges";
 import type { AliveEdge, ConnectionStatus } from "../type";
-import {
-  CONNECTION_STATUS_LABEL,
-  isActiveConnection,
-} from "../utils/connectionStatus";
+import { isActiveConnection } from "../utils/connectionStatus";
 
 export type AliveEdgeListProps = {
   edges: AliveEdge[];
@@ -16,13 +14,6 @@ export type AliveEdgeListProps = {
   onDisconnect: () => void;
 };
 
-function formatLastSeen(lastSeenAt: Date | null): string {
-  if (!lastSeenAt) {
-    return "不明";
-  }
-  return lastSeenAt.toLocaleTimeString("ja-JP");
-}
-
 export function AliveEdgeList({
   edges,
   status,
@@ -34,25 +25,31 @@ export function AliveEdgeList({
   onDisconnect,
 }: AliveEdgeListProps) {
   const loading = status === "loading";
+  const locale = useLocale();
+  const t = useTranslations("Webrtc.aliveEdges");
+  const tStatus = useTranslations("Webrtc.connectionStatus");
+
+  const formatLastSeen = (lastSeenAt: Date | null): string =>
+    lastSeenAt ? lastSeenAt.toLocaleTimeString(locale) : t("unknownTime");
 
   return (
     <div className="flex w-full max-w-3xl flex-col gap-2">
       <div className="flex items-center justify-between">
-        <h3 className="font-bold">接続中のエッジ（{edges.length}）</h3>
+        <h3 className="font-bold">{t("title", { count: edges.length })}</h3>
         <button
           type="button"
           onClick={onRefresh}
           disabled={loading}
           className="rounded bg-gray-200 px-3 py-1 text-sm disabled:opacity-50"
         >
-          更新
+          {t("refresh")}
         </button>
       </div>
       {status === "error" && error ? (
         <p className="text-red-600 text-sm">{error}</p>
       ) : edges.length === 0 ? (
         <p className="text-gray-500 text-sm">
-          {loading ? "読み込み中…" : "接続中のエッジがありません"}
+          {loading ? t("loading") : t("empty")}
         </p>
       ) : (
         <ul className="flex flex-col gap-2">
@@ -69,13 +66,13 @@ export function AliveEdgeList({
                 <div className="flex flex-col">
                   <span className="break-all text-sm">{edge.id}</span>
                   <span className="text-gray-500 text-xs">
-                    最終応答: {formatLastSeen(edge.lastSeenAt)}
+                    {t("lastSeen", { time: formatLastSeen(edge.lastSeenAt) })}
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {isActive && (
                     <span className="text-gray-500 text-xs">
-                      {CONNECTION_STATUS_LABEL[receiveStatus]}
+                      {tStatus(receiveStatus)}
                     </span>
                   )}
                   {!isActive && (
@@ -84,7 +81,7 @@ export function AliveEdgeList({
                       onClick={() => onConnect(edge.id)}
                       className="rounded bg-blue-600 px-3 py-1 text-sm text-white"
                     >
-                      接続
+                      {t("connect")}
                     </button>
                   )}
                   {canDisconnect && (
@@ -93,7 +90,7 @@ export function AliveEdgeList({
                       onClick={onDisconnect}
                       className="rounded bg-gray-600 px-3 py-1 text-sm text-white"
                     >
-                      切断
+                      {t("disconnect")}
                     </button>
                   )}
                 </div>

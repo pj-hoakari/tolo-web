@@ -1,0 +1,317 @@
+{
+  "HomePage": {
+    "title": "¡Hola, mundo!"
+  },
+  "LocaleSelect": {
+    "label": "Cambiar idioma"
+  },
+  "Theme": {
+    "label": "Cambiar tema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema"
+  },
+  "Management": {
+    "title": "{tenantId} Administración",
+    "tabsLabel": "Cambiar vista de administración",
+    "tabs": {
+      "graph": "Gráfico del recinto",
+      "edges": "Edges conectados"
+    },
+    "graphEditTitle": "{tenantId} Editor del gráfico del recinto",
+    "backLink": "Volver a administración"
+  },
+  "Graph": {
+    "viewer": {
+      "title": "Gráfico del recinto",
+      "edit": "Editar gráfico",
+      "save": "Guardar"
+    },
+    "nodeType": {
+      "GOAL": "Destino",
+      "GOAL_TRANSIT_MIXED": "Destino / Tránsito",
+      "TRANSIT_ONLY": "Solo tránsito",
+      "BOUNDARY": "Entrada / Salida"
+    },
+    "selectionKind": {
+      "node": "Punto",
+      "edge": "Ruta"
+    },
+    "observationLink": {
+      "title": "Vinculación de puntos de observación",
+      "empty": "Selecciona un punto o una ruta para vincular puntos de observación.",
+      "editHint": "Los puntos y las rutas se añaden, se eliminan y cambian de tipo en la página de edición."
+    },
+    "observationPoints": {
+      "title": "Puntos de observación",
+      "titleWithCount": "Puntos de observación ({count})",
+      "refresh": "Actualizar",
+      "error": "No se pudieron cargar los puntos de observación",
+      "loading": "Cargando…",
+      "empty": "No hay puntos de observación conectados",
+      "online": "Conectado",
+      "offline": "Sin conexión",
+      "usedByOther": "En uso por otro punto u otra ruta"
+    },
+    "nodeTypeDescription": {
+      "GOAL": "p. ej., un estand",
+      "GOAL_TRANSIT_MIXED": "p. ej., una exposición mural (destino y a la vez paso)",
+      "TRANSIT_ONLY": "p. ej., una bifurcación del pasillo",
+      "BOUNDARY": "p. ej., una entrada o salida del recinto"
+    },
+    "notices": {
+      "dualDirection": "Funciona a la vez como entrada y como salida"
+    },
+    "editor": {
+      "title": "Editor del recinto",
+      "addNode": "Añadir {type}",
+      "save": "Guardar",
+      "newNodeLabel": "Punto {index}"
+    },
+    "easyConnect": {
+      "fromNode": "Añadir ruta: haz clic en el punto final",
+      "fromCanvas": "Añadir ruta: arrastra de un punto a otro",
+      "cancelHint": "Pulsa Esc para cancelar",
+      "end": "Terminar de añadir rutas"
+    },
+    "contextMenu": {
+      "canvasLabel": "Acciones del lienzo",
+      "endEdgeCreation": "Terminar de añadir rutas",
+      "addNode": "Añadir punto",
+      "addEdge": "Añadir ruta",
+      "nodeLabel": "Acciones del punto «{label}»",
+      "addEdgeFromNode": "Añadir una ruta desde este punto",
+      "changeType": "Cambiar el tipo",
+      "deleteNode": "Eliminar este punto",
+      "edgeLabel": "Acciones de la ruta «{source} → {target}»",
+      "setOneway": "Convertir en unidireccional ({source} → {target})",
+      "setBoth": "Convertir en bidireccional",
+      "reverse": "Invertir el sentido ({target} → {source})",
+      "deleteEdge": "Eliminar esta ruta"
+    },
+    "properties": {
+      "title": "Propiedades",
+      "empty": "Selecciona un punto o una ruta.",
+      "deleteNode": "Eliminar este punto",
+      "deleteEdge": "Eliminar esta ruta",
+      "label": "Etiqueta",
+      "type": "Tipo",
+      "direction": "Sentido",
+      "both": "Bidireccional ⇌",
+      "oneway": "Unidireccional →",
+      "reverse": "Invertir el sentido (inicio ↔ fin)"
+    },
+    "node": {
+      "editLabel": "Editar la etiqueta de «{label}»",
+      "labelField": "Etiqueta del punto"
+    }
+  },
+  "Webrtc": {
+    "connectionStatus": {
+      "idle": "Sin conexión",
+      "connecting": "Solicitando conexión…",
+      "negotiating": "Negociando…",
+      "connected": "Conectado",
+      "disconnected": "Desconectado",
+      "error": "Error de conexión"
+    },
+    "aliveEdges": {
+      "title": "Edges conectados ({count})",
+      "refresh": "Actualizar",
+      "loading": "Cargando…",
+      "empty": "No hay edges conectados",
+      "lastSeen": "Última respuesta: {time}",
+      "unknownTime": "Desconocida",
+      "connect": "Conectar",
+      "disconnect": "Desconectar",
+      "loadError": "No se pudo cargar la lista de edges"
+    },
+    "receiver": {
+      "stoppedTitle": "La observación se detuvo",
+      "stoppedDescription": "La cámara de origen se detuvo",
+      "connecting": "Conectando…",
+      "status": "Estado: {status}",
+      "connectError": "No se pudo conectar"
+    },
+    "broadcast": {
+      "active": "Transmitiendo",
+      "inactive": "Detenido"
+    }
+  },
+  "Detection": {
+    "title": "Ajustes de detección",
+    "fields": {
+      "confidence": "Sensibilidad de detección",
+      "tracking": "Continuidad del seguimiento",
+      "frequency": "Frecuencia de detección",
+      "interval": "Intervalo de detección (ms)"
+    },
+    "presets": {
+      "wide": "Amplia",
+      "standard": "Estándar",
+      "strict": "Estricta",
+      "stable": "Estable",
+      "responsive": "Reactivo",
+      "frequent": "Frecuente",
+      "light": "Bajo consumo"
+    },
+    "advanced": {
+      "open": "Ajustes avanzados",
+      "close": "Cerrar ajustes avanzados"
+    },
+    "lines": {
+      "create": "Crear línea",
+      "edit": "Modo de edición",
+      "deleteSelected": "Eliminar la línea seleccionada",
+      "reset": "Restablecer las líneas",
+      "count": "Línea {index}: forward {forward} / backward {backward}"
+    }
+  },
+  "Observation": {
+    "title": "{tenantId} Observación",
+    "controls": {
+      "start": "Iniciar cámara",
+      "stop": "Detener",
+      "loading": "Iniciando…"
+    },
+    "status": {
+      "detection": "Estado de detección: {status}",
+      "trackedCount": "Personas rastreadas: {count}",
+      "fps": "FPS: {fps}",
+      "idle": "Detenido",
+      "loading": "Iniciando",
+      "detecting": "Detectando",
+      "error": "Error"
+    },
+    "screenWake": {
+      "unsupported": "Este navegador no admite mantener la pantalla encendida (Screen Wake Lock). Revisa los ajustes de bloqueo automático del dispositivo.",
+      "label": "Mantener la pantalla encendida",
+      "toggle": "Mantener la pantalla encendida: {state}",
+      "on": "ON",
+      "off": "OFF",
+      "enabledHint": "La pantalla no se apagará durante la observación",
+      "disabledHint": "La pantalla puede apagarse durante la observación e interrumpirla. Toca para activarlo",
+      "enableError": "No se pudo mantener la pantalla encendida"
+    },
+    "lock": {
+      "lockButton": "Bloquear pantalla",
+      "setupTitle": "Define un código de desbloqueo",
+      "lockedTitle": "Pantalla bloqueada",
+      "setupDescription": "Define un código de desbloqueo para proteger los controles de esta página de observación.",
+      "lockedDescription": "Introduce el código de desbloqueo para reanudar la operación.",
+      "codeLabel": "Código de desbloqueo",
+      "codeConfirmationLabel": "Código de desbloqueo (confirmación)",
+      "submitSetup": "Definir y desbloquear",
+      "submitUnlock": "Desbloquear",
+      "tooShort": "El código de desbloqueo debe tener al menos {min} caracteres",
+      "mismatch": "El código de confirmación no coincide",
+      "notConfigured": "Define primero un código de desbloqueo",
+      "incorrect": "El código de desbloqueo no es correcto",
+      "failed": "No se pudo procesar el código de desbloqueo"
+    },
+    "errors": {
+      "videoSource": "No se pudo obtener la fuente de vídeo",
+      "detection": "Falló la detección de personas",
+      "modelLoad": "No se pudo cargar el modelo de detección ({status}: {path})"
+    },
+    "devSource": {
+      "title": "Fuente de vídeo",
+      "selectFile": "Elegir un archivo de vídeo",
+      "loop": "Reproducción en bucle",
+      "backToCamera": "Volver a la cámara",
+      "current": "Actual: {source}",
+      "camera": "Cámara",
+      "activeHint": " (cambia tras detener)",
+      "inactiveHint": " (se aplica al iniciar)",
+      "hide": "Ocultar"
+    }
+  },
+  "Guest": {
+    "pageSubtitle": "Página del visitante",
+    "waitingNumber": {
+      "title": "Personas en espera",
+      "unit": "personas"
+    },
+    "callingNumber": {
+      "title": "Llamando ahora",
+      "unit": ""
+    },
+    "estimatedWaitTime": {
+      "title": "Espera estimada",
+      "prefix": "aprox.",
+      "unit": "min"
+    },
+    "queue": {
+      "title": "Cómo se forma la fila",
+      "shape": "Forma",
+      "direction": "Sentido",
+      "entrance": "Entrada",
+      "entranceMarker": "Entrada",
+      "current": "Ahora",
+      "max": "Máx.",
+      "people": "pers.",
+      "shapes": {
+        "zigzag": "Zigzag",
+        "straight": "Recta",
+        "l-shape": "En L",
+        "spiral": "En espiral"
+      },
+      "entrances": {
+        "top": "Arriba",
+        "bottom": "Abajo",
+        "left": "Izquierda",
+        "right": "Derecha"
+      }
+    },
+    "staffMessage": {
+      "title": "Avisos del personal",
+      "ariaOpen": "Avisos del personal",
+      "ariaClose": "Cerrar los avisos",
+      "empty": "No hay avisos por ahora",
+      "samples": {
+        "msg-2": {
+          "body": "La zona de la puerta este está muy concurrida. Si tienes prisa, te recomendamos usar la puerta oeste.",
+          "staffName": "Taro Yamada",
+          "staffRole": "Personal del recinto"
+        },
+        "msg-1": {
+          "body": "La hora de inicio ha cambiado de las 15:00 a las 15:30. Gracias por tu comprensión.",
+          "staffName": "Hanako Sato",
+          "staffRole": "Responsable del evento"
+        }
+      }
+    },
+    "guideMap": {
+      "title": "Mapa de orientación",
+      "hint": "Selecciona un destino para ver la ruta",
+      "currentLocation": "Estás aquí",
+      "destinations": {
+        "hall": "Sala",
+        "goods": "Tienda",
+        "cafe": "Cafetería",
+        "exit": "Salida"
+      },
+      "destinationsLabel": "Destinos",
+      "expand": "Ampliar el mapa",
+      "collapse": "Reducir el mapa"
+    },
+    "floor": {
+      "title": "Planta actual",
+      "placeholderName": "Planta 1"
+    },
+    "congestion": {
+      "title": "Nivel de afluencia",
+      "levels": {
+        "low": "Baja",
+        "mid": "Media",
+        "high": "Alta"
+      },
+      "areas": {
+        "entrance": "Puerta de entrada",
+        "hall": "Sala",
+        "cafe": "Cafetería",
+        "goods": "Tienda"
+      }
+    }
+  }
+}

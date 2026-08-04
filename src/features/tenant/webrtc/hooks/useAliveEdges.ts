@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { orpc } from "@/lib/orpc";
 import type { AliveEdge } from "../type";
@@ -23,6 +24,7 @@ export function useAliveEdges(params: {
   const [edges, setEdges] = useState<AliveEdge[]>([]);
   const [status, setStatus] = useState<AliveEdgesStatus>("idle");
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations("Webrtc.aliveEdges");
 
   const refresh = useCallback(async () => {
     setStatus((prev) => (prev === "ready" ? prev : "loading"));
@@ -40,11 +42,9 @@ export function useAliveEdges(params: {
       setStatus("ready");
     } catch (e) {
       setStatus("error");
-      setError(
-        e instanceof Error ? e.message : "エッジ一覧の取得に失敗しました",
-      );
+      setError(e instanceof Error ? e.message : t("loadError"));
     }
-  }, [tenantId, eventId]);
+  }, [tenantId, eventId, t]);
 
   useEffect(() => {
     void refresh();

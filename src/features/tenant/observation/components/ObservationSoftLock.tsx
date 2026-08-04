@@ -1,6 +1,7 @@
 "use client";
 
 import { LockKeyhole, ShieldCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   type FormEvent,
   type ReactNode,
@@ -108,6 +109,7 @@ export function ObservationSoftLock({
   const [unlockCodeConfirmation, setUnlockCodeConfirmation] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const t = useTranslations("Observation.lock");
 
   useEffect(() => {
     setCredential(readStoredCredential(storageKey));
@@ -134,9 +136,7 @@ export function ObservationSoftLock({
     setError(null);
 
     if (normalizedCode.length < MIN_UNLOCK_CODE_LENGTH) {
-      setError(
-        `解除コードは${MIN_UNLOCK_CODE_LENGTH}文字以上で入力してください`,
-      );
+      setError(t("tooShort", { min: MIN_UNLOCK_CODE_LENGTH }));
       return;
     }
 
@@ -144,7 +144,7 @@ export function ObservationSoftLock({
     try {
       if (needsSetup) {
         if (normalizedCode !== unlockCodeConfirmation.trim()) {
-          setError("確認用の解除コードが一致しません");
+          setError(t("mismatch"));
           return;
         }
 
@@ -163,20 +163,20 @@ export function ObservationSoftLock({
       }
 
       if (!credential) {
-        setError("解除コードを設定してください");
+        setError(t("notConfigured"));
         return;
       }
 
       const matched = await verifyUnlockCode(normalizedCode, credential);
       if (!matched) {
-        setError("解除コードが正しくありません");
+        setError(t("incorrect"));
         return;
       }
 
       setLocked(false);
       setUnlockCode("");
     } catch {
-      setError("解除コードの処理に失敗しました");
+      setError(t("failed"));
     } finally {
       setBusy(false);
     }
@@ -198,7 +198,7 @@ export function ObservationSoftLock({
             onPress={handleLock}
           >
             <LockKeyhole className="mr-2 size-4" />
-            画面ロック
+            {t("lockButton")}
           </Button>
         </div>
       )}
@@ -225,12 +225,10 @@ export function ObservationSoftLock({
               </div>
               <div>
                 <h2 className="font-bold text-lg">
-                  {needsSetup ? "解除コードを設定" : "画面ロック中"}
+                  {needsSetup ? t("setupTitle") : t("lockedTitle")}
                 </h2>
                 <p className="text-muted-foreground text-sm">
-                  {needsSetup
-                    ? "観測ページの操作を保護する解除コードを設定してください。"
-                    : "操作を再開するには解除コードを入力してください。"}
+                  {needsSetup ? t("setupDescription") : t("lockedDescription")}
                 </p>
               </div>
             </div>
@@ -242,7 +240,7 @@ export function ObservationSoftLock({
                 onChange={setUnlockCode}
                 isInvalid={error !== null}
               >
-                <Label>解除コード</Label>
+                <Label>{t("codeLabel")}</Label>
                 <Input
                   type="password"
                   autoComplete={
@@ -259,7 +257,7 @@ export function ObservationSoftLock({
                   onChange={setUnlockCodeConfirmation}
                   isInvalid={error !== null}
                 >
-                  <Label>解除コード（確認）</Label>
+                  <Label>{t("codeConfirmationLabel")}</Label>
                   <Input type="password" autoComplete="new-password" />
                 </TextField>
               )}
@@ -271,7 +269,7 @@ export function ObservationSoftLock({
                 onPress={() => void unlock()}
                 isDisabled={busy || !loaded}
               >
-                {needsSetup ? "設定して解除" : "ロック解除"}
+                {needsSetup ? t("submitSetup") : t("submitUnlock")}
               </Button>
             </div>
           </form>

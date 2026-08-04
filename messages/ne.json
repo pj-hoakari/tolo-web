@@ -1,0 +1,317 @@
+{
+  "HomePage": {
+    "title": "नमस्ते, विश्व!"
+  },
+  "LocaleSelect": {
+    "label": "भाषा परिवर्तन गर्नुहोस्"
+  },
+  "Theme": {
+    "label": "थिम परिवर्तन गर्नुहोस्",
+    "light": "उज्यालो",
+    "dark": "अँध्यारो",
+    "system": "प्रणाली"
+  },
+  "Management": {
+    "title": "{tenantId} व्यवस्थापन पृष्ठ",
+    "tabsLabel": "व्यवस्थापन दृश्य बदल्नुहोस्",
+    "tabs": {
+      "graph": "स्थल ग्राफ",
+      "edges": "जोडिएका एजहरू"
+    },
+    "graphEditTitle": "{tenantId} स्थल ग्राफ सम्पादन",
+    "backLink": "व्यवस्थापन पृष्ठमा फर्कनुहोस्"
+  },
+  "Graph": {
+    "viewer": {
+      "title": "स्थल ग्राफ",
+      "edit": "ग्राफ सम्पादन गर्नुहोस्",
+      "save": "सुरक्षित गर्नुहोस्"
+    },
+    "nodeType": {
+      "GOAL": "गन्तव्य",
+      "GOAL_TRANSIT_MIXED": "गन्तव्य / आवागमन",
+      "TRANSIT_ONLY": "आवागमन मात्र",
+      "BOUNDARY": "प्रवेश / निकास"
+    },
+    "selectionKind": {
+      "node": "बिन्दु",
+      "edge": "मार्ग"
+    },
+    "observationLink": {
+      "title": "अवलोकन बिन्दु जडान",
+      "empty": "अवलोकन बिन्दु जोड्न बिन्दु वा मार्ग छान्नुहोस्।",
+      "editHint": "बिन्दु / मार्ग थप्ने, हटाउने र प्रकार परिवर्तन गर्ने काम सम्पादन पृष्ठमा गरिन्छ।"
+    },
+    "observationPoints": {
+      "title": "अवलोकन बिन्दु",
+      "titleWithCount": "अवलोकन बिन्दु ({count})",
+      "refresh": "अद्यावधिक गर्नुहोस्",
+      "error": "अवलोकन बिन्दु लोड गर्न सकिएन",
+      "loading": "लोड हुँदै…",
+      "empty": "कुनै अवलोकन बिन्दु जोडिएको छैन",
+      "online": "जोडिएको",
+      "offline": "अफलाइन",
+      "usedByOther": "अर्को बिन्दु / मार्गमा प्रयोगमा छ"
+    },
+    "nodeTypeDescription": {
+      "GOAL": "उदाहरण: प्रदर्शनी स्टल",
+      "GOAL_TRANSIT_MIXED": "उदाहरण: भित्ते प्रदर्शनी (गन्तव्य र आवागमन दुवै)",
+      "TRANSIT_ONLY": "उदाहरण: बाटोको दोबाटो",
+      "BOUNDARY": "उदाहरण: स्थलको प्रवेश वा निकास"
+    },
+    "notices": {
+      "dualDirection": "प्रवेश र निकास (इनपुट·आउटपुट) दुवैको भूमिका छ"
+    },
+    "editor": {
+      "title": "स्थल सम्पादक",
+      "addNode": "{type} थप्नुहोस्",
+      "save": "सुरक्षित गर्नुहोस्",
+      "newNodeLabel": "बिन्दु {index}"
+    },
+    "easyConnect": {
+      "fromNode": "मार्ग थप्नुहोस्: अन्तिम बिन्दु क्लिक गर्नुहोस्",
+      "fromCanvas": "मार्ग थप्नुहोस्: एउटा बिन्दुबाट अर्को बिन्दुसम्म तान्नुहोस्",
+      "cancelHint": "रद्द गर्न Esc थिच्नुहोस्",
+      "end": "मार्ग थप्ने काम सिध्याउनुहोस्"
+    },
+    "contextMenu": {
+      "canvasLabel": "क्यानभास कार्यहरू",
+      "endEdgeCreation": "मार्ग थप्ने काम सिध्याउनुहोस्",
+      "addNode": "बिन्दु थप्नुहोस्",
+      "addEdge": "मार्ग थप्नुहोस्",
+      "nodeLabel": "बिन्दु «{label}» का कार्यहरू",
+      "addEdgeFromNode": "यो बिन्दुबाट मार्ग थप्नुहोस्",
+      "changeType": "प्रकार परिवर्तन गर्नुहोस्",
+      "deleteNode": "यो बिन्दु मेट्नुहोस्",
+      "edgeLabel": "मार्ग «{source} → {target}» का कार्यहरू",
+      "setOneway": "एकतर्फी बनाउनुहोस् ({source} → {target})",
+      "setBoth": "दुईतर्फी बनाउनुहोस्",
+      "reverse": "दिशा उल्टाउनुहोस् ({target} → {source})",
+      "deleteEdge": "यो मार्ग मेट्नुहोस्"
+    },
+    "properties": {
+      "title": "गुणहरू",
+      "empty": "बिन्दु वा मार्ग छान्नुहोस्।",
+      "deleteNode": "यो बिन्दु मेट्नुहोस्",
+      "deleteEdge": "यो मार्ग मेट्नुहोस्",
+      "label": "लेबल",
+      "type": "प्रकार",
+      "direction": "दिशा",
+      "both": "दुईतर्फी ⇌",
+      "oneway": "एकतर्फी →",
+      "reverse": "दिशा उल्टाउनुहोस् (सुरु ↔ अन्त्य)"
+    },
+    "node": {
+      "editLabel": "«{label}» को लेबल सम्पादन गर्नुहोस्",
+      "labelField": "बिन्दुको लेबल"
+    }
+  },
+  "Webrtc": {
+    "connectionStatus": {
+      "idle": "जोडिएको छैन",
+      "connecting": "जडान अनुरोध गर्दै…",
+      "negotiating": "वार्ता गर्दै…",
+      "connected": "जोडिएको",
+      "disconnected": "विच्छेद भयो",
+      "error": "जडान असफल"
+    },
+    "aliveEdges": {
+      "title": "जोडिएका एजहरू ({count})",
+      "refresh": "अद्यावधिक गर्नुहोस्",
+      "loading": "लोड हुँदै…",
+      "empty": "कुनै एज जोडिएको छैन",
+      "lastSeen": "अन्तिम प्रतिक्रिया: {time}",
+      "unknownTime": "अज्ञात",
+      "connect": "जोड्नुहोस्",
+      "disconnect": "विच्छेद गर्नुहोस्",
+      "loadError": "एज सूची लोड गर्न सकिएन"
+    },
+    "receiver": {
+      "stoppedTitle": "अवलोकन रोकियो",
+      "stoppedDescription": "स्रोत क्यामेरा रोकिएको छ",
+      "connecting": "जोड्दै…",
+      "status": "स्थिति: {status}",
+      "connectError": "जडान गर्न सकिएन"
+    },
+    "broadcast": {
+      "active": "प्रसारण हुँदै",
+      "inactive": "रोकिएको"
+    }
+  },
+  "Detection": {
+    "title": "पहिचान सेटिङ",
+    "fields": {
+      "confidence": "पहिचान संवेदनशीलता",
+      "tracking": "ट्र्याकिङ निरन्तरता",
+      "frequency": "पहिचान आवृत्ति",
+      "interval": "पहिचान अन्तराल ms"
+    },
+    "presets": {
+      "wide": "फराकिलो",
+      "standard": "मानक",
+      "strict": "कडा",
+      "stable": "स्थिर",
+      "responsive": "प्रतिक्रियाशील",
+      "frequent": "उच्च आवृत्ति",
+      "light": "कम भार"
+    },
+    "advanced": {
+      "open": "उन्नत सेटिङ",
+      "close": "उन्नत सेटिङ बन्द गर्नुहोस्"
+    },
+    "lines": {
+      "create": "लाइन सिर्जना",
+      "edit": "सम्पादन मोड",
+      "deleteSelected": "छानिएको लाइन मेट्नुहोस्",
+      "reset": "लाइन रिसेट गर्नुहोस्",
+      "count": "लाइन {index}: forward {forward} / backward {backward}"
+    }
+  },
+  "Observation": {
+    "title": "{tenantId} अवलोकन पृष्ठ",
+    "controls": {
+      "start": "क्यामेरा सुरु गर्नुहोस्",
+      "stop": "रोक्नुहोस्",
+      "loading": "सुरु हुँदै…"
+    },
+    "status": {
+      "detection": "पहिचान स्थिति: {status}",
+      "trackedCount": "ट्र्याक भइरहेका मानिस: {count}",
+      "fps": "FPS: {fps}",
+      "idle": "रोकिएको",
+      "loading": "सुरु हुँदै",
+      "detecting": "पहिचान हुँदै",
+      "error": "त्रुटि"
+    },
+    "screenWake": {
+      "unsupported": "यो ब्राउजरले स्क्रिन सधैँ बल्ने सुविधा (Screen Wake Lock) समर्थन गर्दैन। यन्त्रको स्वतः बन्द हुने सेटिङ जाँच्नुहोस्।",
+      "label": "स्क्रिन सधैँ बाल्ने",
+      "toggle": "स्क्रिन सधैँ बाल्ने: {state}",
+      "on": "ON",
+      "off": "OFF",
+      "enabledHint": "अवलोकनका बेला स्क्रिन आफैँ निभ्दैन",
+      "disabledHint": "अवलोकनका बेला स्क्रिन निभेर अवलोकन रोकिन सक्छ। ON गर्न ट्याप गर्नुहोस्",
+      "enableError": "स्क्रिन सधैँ बाल्ने सुविधा सक्रिय गर्न सकिएन"
+    },
+    "lock": {
+      "lockButton": "स्क्रिन लक",
+      "setupTitle": "अनलक कोड सेट गर्नुहोस्",
+      "lockedTitle": "स्क्रिन लक छ",
+      "setupDescription": "अवलोकन पृष्ठको सञ्चालन जोगाउन अनलक कोड सेट गर्नुहोस्।",
+      "lockedDescription": "सञ्चालन पुनः सुरु गर्न अनलक कोड प्रविष्ट गर्नुहोस्।",
+      "codeLabel": "अनलक कोड",
+      "codeConfirmationLabel": "अनलक कोड (पुष्टि)",
+      "submitSetup": "सेट गरेर अनलक गर्नुहोस्",
+      "submitUnlock": "अनलक गर्नुहोस्",
+      "tooShort": "अनलक कोड कम्तीमा {min} अक्षरको हुनुपर्छ",
+      "mismatch": "पुष्टिका लागि दिइएको अनलक कोड मिलेन",
+      "notConfigured": "पहिले अनलक कोड सेट गर्नुहोस्",
+      "incorrect": "अनलक कोड सही छैन",
+      "failed": "अनलक कोड प्रशोधन गर्न सकिएन"
+    },
+    "errors": {
+      "videoSource": "भिडियो स्रोत प्राप्त गर्न सकिएन",
+      "detection": "मानिस पहिचान प्रक्रिया असफल भयो",
+      "modelLoad": "पहिचान मोडेल लोड गर्न सकिएन ({status}: {path})"
+    },
+    "devSource": {
+      "title": "भिडियो स्रोत",
+      "selectFile": "भिडियो फाइल छान्नुहोस्",
+      "loop": "लूप प्ले",
+      "backToCamera": "क्यामेरामा फर्कनुहोस्",
+      "current": "हाल: {source}",
+      "camera": "क्यामेरा",
+      "activeHint": "(रोकेपछि मात्र बदलिन्छ)",
+      "inactiveHint": "(छानेपछि सुरु गर्दा लागू हुन्छ)",
+      "hide": "लुकाउनुहोस्"
+    }
+  },
+  "Guest": {
+    "pageSubtitle": "पाहुना पृष्ठ",
+    "waitingNumber": {
+      "title": "हालको प्रतीक्षा संख्या",
+      "unit": "जना"
+    },
+    "callingNumber": {
+      "title": "हालको बोलाइएको नम्बर",
+      "unit": "नम्बर"
+    },
+    "estimatedWaitTime": {
+      "title": "अनुमानित प्रतीक्षा समय",
+      "prefix": "लगभग",
+      "unit": "मिनेट"
+    },
+    "queue": {
+      "title": "लाइन बस्ने तरिका",
+      "shape": "आकार",
+      "direction": "जाने दिशा",
+      "entrance": "प्रवेश",
+      "entranceMarker": "प्रवेश",
+      "current": "हाल",
+      "max": "अधिकतम",
+      "people": "जना",
+      "shapes": {
+        "zigzag": "जिगज्याग",
+        "straight": "सीधा",
+        "l-shape": "L आकार",
+        "spiral": "घुमाउरो"
+      },
+      "entrances": {
+        "top": "माथि",
+        "bottom": "तल",
+        "left": "बायाँ",
+        "right": "दायाँ"
+      }
+    },
+    "staffMessage": {
+      "title": "कर्मचारीको सूचना",
+      "ariaOpen": "कर्मचारीको सूचना",
+      "ariaClose": "सूचना बन्द गर्नुहोस्",
+      "empty": "अहिले कुनै सूचना छैन",
+      "samples": {
+        "msg-2": {
+          "body": "पूर्वी गेट वरिपरि निकै भीड छ। हतार भएकाहरूलाई पश्चिमी गेट प्रयोग गर्न सुझाव दिन्छौँ।",
+          "staffName": "तारो यामादा",
+          "staffRole": "स्थल कर्मचारी"
+        },
+        "msg-1": {
+          "body": "सुरु हुने समय 15:00 बाट 15:30 मा परिवर्तन भएको छ। सहयोगको लागि धन्यवाद।",
+          "staffName": "हानाको सातो",
+          "staffRole": "कार्यक्रम प्रबन्धक"
+        }
+      }
+    },
+    "guideMap": {
+      "title": "मार्गदर्शन नक्सा",
+      "hint": "गन्तव्य छान्नुभयो भने बाटो देखिन्छ",
+      "currentLocation": "तपाईं यहाँ हुनुहुन्छ",
+      "destinations": {
+        "hall": "हल",
+        "goods": "सामान पसल",
+        "cafe": "क्याफे",
+        "exit": "निकास"
+      },
+      "destinationsLabel": "गन्तव्यहरू",
+      "expand": "नक्सा ठूलो पार्नुहोस्",
+      "collapse": "नक्सा सानो पार्नुहोस्"
+    },
+    "floor": {
+      "title": "हालको तल्ला",
+      "placeholderName": "१ तल्ला"
+    },
+    "congestion": {
+      "title": "भीडको अवस्था",
+      "levels": {
+        "low": "कम",
+        "mid": "मध्यम",
+        "high": "धेरै"
+      },
+      "areas": {
+        "entrance": "प्रवेश गेट",
+        "hall": "हल",
+        "cafe": "क्याफे",
+        "goods": "सामान पसल"
+      }
+    }
+  }
+}

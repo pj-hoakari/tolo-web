@@ -1,5 +1,5 @@
+import { useTranslations } from "next-intl";
 import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
-import { getNodeTypeDef } from "../../nodeTypes";
 import type { GraphNotice, NodeType } from "../../type";
 import { NodeTypeIcon } from "../NodeTypeIcon";
 import type { NodeTypeOption } from "./nodeTypeOptions";
@@ -21,10 +21,15 @@ export function NodeTypeSelector({
   notices,
   onChange,
 }: NodeTypeSelectorProps) {
+  const t = useTranslations("Graph.properties");
+  const tType = useTranslations("Graph.nodeType");
+  const tDescription = useTranslations("Graph.nodeTypeDescription");
+  const tNotice = useTranslations("Graph.notices");
+
   return (
     <div>
       <p className="mb-1 font-medium text-[11px] text-muted-foreground">
-        タイプ
+        {t("type")}
       </p>
       <ToggleButtonGroup
         selectionMode="single"
@@ -37,7 +42,6 @@ export function NodeTypeSelector({
         className="flex-col items-stretch gap-1"
       >
         {options.map((option) => {
-          const def = getNodeTypeDef(option.type);
           const selected = option.type === value;
           return (
             <div key={option.type} className="space-y-0.5">
@@ -48,11 +52,11 @@ export function NodeTypeSelector({
                 className="h-auto w-full flex-col items-start gap-0.5 selected:border-primary selected:bg-accent px-2 py-1.5 text-left"
               >
                 <span className="flex items-center gap-1.5 font-medium text-foreground text-xs">
-                  <NodeTypeIcon type={def.type} />
-                  {def.label}
+                  <NodeTypeIcon type={option.type} />
+                  {tType(option.type)}
                 </span>
                 <span className="text-[10px] text-muted-foreground">
-                  {def.description}
+                  {tDescription(option.type)}
                 </span>
               </Toggle>
               {option.disabledReason ? (
@@ -62,9 +66,9 @@ export function NodeTypeSelector({
                 ? notices?.map((notice) => (
                     <PropertyNotice
                       className="mt-2"
-                      key={notice.message}
+                      key={notice.messageKey}
                       level={notice.level}
-                      message={notice.message}
+                      message={tNotice(notice.messageKey)}
                     />
                   ))
                 : null}

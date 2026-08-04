@@ -95,9 +95,7 @@ export const WithDisabledOptions: Story = {
 export const WithNotices: Story = {
   args: {
     value: "BOUNDARY",
-    notices: [
-      { level: "info", message: "入退出（入力・出力）の両方を担っています" },
-    ],
+    notices: [{ level: "info", messageKey: "dualDirection" }],
   },
 };
 

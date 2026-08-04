@@ -1,4 +1,5 @@
 import type { Edge, Node } from "@xyflow/react";
+import type { NoticeMessageKey } from "./nodeTypes";
 
 /** ノードの4辺。各辺に複数のハンドル（接続点）を配置 */
 export type HandleSide = "top" | "right" | "bottom" | "left";
@@ -31,7 +32,8 @@ export type NoticeLevel = "info" | "warning";
  */
 export type GraphNotice = {
   level: NoticeLevel;
-  message: string;
+  /** `Graph.notices` 配下のメッセージキー。表示する箇所で翻訳する */
+  messageKey: NoticeMessageKey;
 };
 
 export type GraphNodeData = {

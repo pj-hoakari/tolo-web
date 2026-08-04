@@ -1,4 +1,5 @@
 import { MousePointer2, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { memo } from "react";
 import { useStore } from "zustand";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ function LineCreationModeToggleComponent({
   viewStateStore,
 }: Pick<LineActionsProps, "viewStateStore">) {
   const lineCreationMode = useStore(viewStateStore, selectLineCreationMode);
+  const t = useTranslations("Detection.lines");
 
   return (
     <Button
@@ -36,7 +38,7 @@ function LineCreationModeToggleComponent({
       ) : (
         <Plus className="mr-2 size-4" />
       )}
-      {lineCreationMode ? "編集モード" : "ライン生成"}
+      {lineCreationMode ? t("edit") : t("create")}
     </Button>
   );
 }
@@ -48,6 +50,7 @@ function DeleteSelectedLineButtonComponent({
   viewStateStore,
 }: LineActionsProps) {
   const countingLineCount = useStore(settingsStore, selectCountingLineCount);
+  const t = useTranslations("Detection.lines");
 
   const deleteSelectedLine = () => {
     const { countingLines } = settingsStore.getState();
@@ -72,7 +75,7 @@ function DeleteSelectedLineButtonComponent({
       isDisabled={countingLineCount <= 1}
     >
       <Trash2 className="mr-2 size-4" />
-      選択ラインを削除
+      {t("deleteSelected")}
     </Button>
   );
 }
@@ -83,6 +86,8 @@ function ResetCountingLinesButtonComponent({
   settingsStore,
   viewStateStore,
 }: LineActionsProps) {
+  const t = useTranslations("Detection.lines");
+
   const resetCountingLines = () => {
     selectLine(viewStateStore, DEFAULT_COUNTING_LINES[0].id);
     applyCountingLines(settingsStore, DEFAULT_COUNTING_LINES);
@@ -96,7 +101,7 @@ function ResetCountingLinesButtonComponent({
       onPress={resetCountingLines}
     >
       <RotateCcw className="mr-2 size-4" />
-      ラインを初期位置に戻す
+      {t("reset")}
     </Button>
   );
 }

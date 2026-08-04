@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { NODE_TYPE_DEFS } from "../nodeTypes";
 import type { NodeType } from "../type";
@@ -13,10 +14,13 @@ export function GraphEditorToolbar({
   onAddNode,
   onSave,
 }: GraphEditorToolbarProps) {
+  const t = useTranslations("Graph.editor");
+  const tType = useTranslations("Graph.nodeType");
+
   return (
     <div className="flex items-center justify-between gap-3 border-border border-b bg-card px-4 py-2">
       <p className="shrink-0 font-semibold text-foreground text-sm">
-        会場エディタ
+        {t("title")}
       </p>
       <div className="flex flex-wrap items-center justify-end gap-2">
         {NODE_TYPE_DEFS.map((def) => (
@@ -25,17 +29,17 @@ export function GraphEditorToolbar({
             variant="outline"
             size="sm"
             onPress={() => onAddNode(def.type)}
-            aria-label={`${def.label}を追加`}
+            aria-label={t("addNode", { type: tType(def.type) })}
             className="gap-1.5"
           >
             <span className="text-muted-foreground">+</span>
             <NodeTypeIcon type={def.type} />
-            {def.label}
+            {tType(def.type)}
           </Button>
         ))}
         <div className="ml-1 border-border border-l pl-2">
           <Button size="sm" onPress={onSave}>
-            保存
+            {t("save")}
           </Button>
         </div>
       </div>

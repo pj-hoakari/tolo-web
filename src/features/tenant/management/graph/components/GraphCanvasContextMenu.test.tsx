@@ -1,14 +1,20 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { IntlTestProvider } from "@/test/IntlTestProvider";
 import { GraphCanvasContextMenu } from "./GraphCanvasContextMenu";
+
+/** メッセージを解決できるよう next-intl のプロバイダ配下で描画する */
+const renderWithIntl = (ui: ReactElement) =>
+  render(ui, { wrapper: IntlTestProvider });
 
 describe("GraphCanvasContextMenu", () => {
   it("クリック位置にポイントを追加する", () => {
     const onAddNode = vi.fn();
     const onClose = vi.fn();
 
-    render(
+    renderWithIntl(
       <GraphCanvasContextMenu
         position={{ x: 100, y: 100 }}
         nodePosition={{ x: 420, y: 180 }}
@@ -35,7 +41,7 @@ describe("GraphCanvasContextMenu", () => {
     const onStartEdgeCreation = vi.fn();
     const onClose = vi.fn();
 
-    render(
+    renderWithIntl(
       <GraphCanvasContextMenu
         position={{ x: 100, y: 100 }}
         nodePosition={{ x: 420, y: 180 }}
@@ -58,7 +64,7 @@ describe("GraphCanvasContextMenu", () => {
     const onEndEdgeCreation = vi.fn();
     const onClose = vi.fn();
 
-    render(
+    renderWithIntl(
       <GraphCanvasContextMenu
         position={{ x: 100, y: 100 }}
         nodePosition={{ x: 420, y: 180 }}

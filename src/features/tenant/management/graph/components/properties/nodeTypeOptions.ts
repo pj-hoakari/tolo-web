@@ -1,5 +1,6 @@
 import {
   NODE_TYPE_DEFS,
+  type NoticeTranslator,
   type ValidationResult,
   validateAssignType,
 } from "../../nodeTypes";
@@ -22,12 +23,14 @@ export function deriveNodeTypeOption(
   type: NodeType,
   selected: boolean,
   result: ValidationResult,
+  translateNotice: NoticeTranslator,
 ): NodeTypeOption {
   const assignable = selected || result.ok;
   return {
     type,
     assignable,
-    disabledReason: assignable ? null : result.message,
+    disabledReason:
+      assignable || result.ok ? null : translateNotice(result.messageKey),
   };
 }
 
@@ -37,12 +40,14 @@ export function buildNodeTypeOptions(
   currentType: NodeType,
   nodes: GraphNodeType[],
   edges: GraphEdgeType[],
+  translateNotice: NoticeTranslator,
 ): NodeTypeOption[] {
   return NODE_TYPE_DEFS.map((def) =>
     deriveNodeTypeOption(
       def.type,
       def.type === currentType,
       validateAssignType(def.type, nodeId, nodes, edges),
+      translateNotice,
     ),
   );
 }

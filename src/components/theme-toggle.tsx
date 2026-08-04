@@ -1,16 +1,13 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import type { Selection } from "react-aria-components";
 import { Button } from "@/components/ui/button";
 import { Menu, MenuItem, MenuPopover, MenuTrigger } from "@/components/ui/menu";
 
-const THEME_OPTIONS = [
-  { id: "light", label: "ライト" },
-  { id: "dark", label: "ダーク" },
-  { id: "system", label: "システム" },
-] as const;
+const THEME_IDS = ["light", "dark", "system"] as const;
 
 type ThemeToggleProps = {
   className?: string;
@@ -18,6 +15,7 @@ type ThemeToggleProps = {
 
 export function ThemeToggle({ className }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme();
+  const t = useTranslations("Theme");
 
   const handleSelectionChange = (keys: Selection) => {
     if (keys === "all") {
@@ -34,7 +32,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       <Button
         variant="outline"
         size="icon"
-        aria-label="テーマを切り替え"
+        aria-label={t("label")}
         className={className}
       >
         <Sun className="size-5 dark:hidden" aria-hidden />
@@ -47,9 +45,9 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
           selectedKeys={theme ? [theme] : []}
           onSelectionChange={handleSelectionChange}
         >
-          {THEME_OPTIONS.map(({ id, label }) => (
+          {THEME_IDS.map((id) => (
             <MenuItem key={id} id={id}>
-              {label}
+              {t(id)}
             </MenuItem>
           ))}
         </Menu>

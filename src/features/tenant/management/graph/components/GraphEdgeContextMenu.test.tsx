@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { IntlTestProvider } from "@/test/IntlTestProvider";
 import type { GraphEdgeType, GraphNodeType } from "../type";
 import { GraphEdgeContextMenu } from "./GraphEdgeContextMenu";
 
@@ -29,13 +31,17 @@ function edge(direction: "both" | "oneway"): GraphEdgeType {
   };
 }
 
+/** メッセージを解決できるよう next-intl のプロバイダ配下で描画する */
+const renderWithIntl = (ui: ReactElement) =>
+  render(ui, { wrapper: IntlTestProvider });
+
 describe("GraphEdgeContextMenu", () => {
   it("両方向通行のエッジを片側通行に切り替える", () => {
     const onSetDirection = vi.fn();
     const onClose = vi.fn();
     const currentEdge = edge("both");
 
-    render(
+    renderWithIntl(
       <GraphEdgeContextMenu
         edge={currentEdge}
         nodes={nodes}
@@ -62,7 +68,7 @@ describe("GraphEdgeContextMenu", () => {
     const onReverse = vi.fn();
     const currentEdge = edge("oneway");
 
-    render(
+    renderWithIntl(
       <GraphEdgeContextMenu
         edge={currentEdge}
         nodes={nodes}
@@ -86,7 +92,7 @@ describe("GraphEdgeContextMenu", () => {
     const onDelete = vi.fn();
     const currentEdge = edge("both");
 
-    render(
+    renderWithIntl(
       <GraphEdgeContextMenu
         edge={currentEdge}
         nodes={nodes}
@@ -111,7 +117,7 @@ describe("GraphEdgeContextMenu", () => {
   it("メニュー名に対象ルートの両端ポイント名を含む", () => {
     const currentEdge = edge("both");
 
-    render(
+    renderWithIntl(
       <GraphEdgeContextMenu
         edge={currentEdge}
         nodes={nodes}

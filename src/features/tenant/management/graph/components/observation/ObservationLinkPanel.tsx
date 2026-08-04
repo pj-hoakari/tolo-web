@@ -1,4 +1,4 @@
-import { getNodeTypeDef } from "../../nodeTypes";
+import { useTranslations } from "next-intl";
 import type { GraphData, GraphEdgeType, GraphNodeType } from "../../type";
 import { NodeTypeIcon } from "../NodeTypeIcon";
 import { EdgeEndpoints } from "../properties/EdgeEndpoints";
@@ -33,10 +33,12 @@ export function ObservationLinkPanel({
   onLinkEdge,
 }: ObservationLinkPanelProps) {
   const { nodes } = graph;
+  const t = useTranslations("Graph.observationLink");
+
   return (
     <aside className="flex w-72 shrink-0 flex-col border-border border-l bg-card">
       <div className="border-border border-b px-4 py-2">
-        <p className="font-semibold text-foreground text-sm">観測点の紐づけ</p>
+        <p className="font-semibold text-foreground text-sm">{t("title")}</p>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {selectedNode ? (
@@ -70,15 +72,11 @@ export function ObservationLinkPanel({
             />
           </div>
         ) : (
-          <p className="text-muted-foreground text-xs">
-            観測点を紐づけるポイントまたはルートを選択してください。
-          </p>
+          <p className="text-muted-foreground text-xs">{t("empty")}</p>
         )}
       </div>
       <div className="border-border border-t px-4 py-3">
-        <p className="text-[10px] text-muted-foreground">
-          ポイント / ルートの追加・削除やタイプの変更は編集ページで行います。
-        </p>
+        <p className="text-[10px] text-muted-foreground">{t("editHint")}</p>
       </div>
     </aside>
   );
@@ -86,12 +84,14 @@ export function ObservationLinkPanel({
 
 /** 選択中のポイントの種別とラベルを示す読み取り専用のサマリ */
 function NodeSummary({ node }: { node: GraphNodeType }) {
-  const def = getNodeTypeDef(node.data.nodeType);
+  const nodeType = node.data.nodeType;
+  const t = useTranslations("Graph.nodeType");
+
   return (
     <div className="rounded-md bg-muted p-2">
       <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
-        <NodeTypeIcon type={def.type} />
-        {def.label}
+        <NodeTypeIcon type={nodeType} />
+        {t(nodeType)}
       </p>
       <p className="font-medium text-foreground text-xs">{node.data.label}</p>
     </div>

@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { memo, useCallback, useState } from "react";
 import { useStore } from "zustand";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,7 @@ function DetectionAdvancedSettingsComponent({
   settingsStore,
 }: DetectionAdvancedSettingsProps) {
   const [open, setOpen] = useState(false);
+  const t = useTranslations("Detection");
 
   return (
     <>
@@ -77,13 +79,13 @@ function DetectionAdvancedSettingsComponent({
           size="sm"
           onPress={() => setOpen((current) => !current)}
         >
-          {open ? "詳細調整を閉じる" : "詳細調整"}
+          {open ? t("advanced.close") : t("advanced.open")}
         </Button>
       </div>
       {open && (
         <div className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
           <DetectionNumberField
-            label="検出感度"
+            label={t("fields.confidence")}
             settingKey="confidenceThreshold"
             min={0.05}
             max={1}
@@ -91,7 +93,7 @@ function DetectionAdvancedSettingsComponent({
             settingsStore={settingsStore}
           />
           <DetectionNumberField
-            label="追跡のつながりやすさ"
+            label={t("fields.tracking")}
             settingKey="trackingDistanceThreshold"
             min={0.1}
             max={1}
@@ -99,7 +101,7 @@ function DetectionAdvancedSettingsComponent({
             settingsStore={settingsStore}
           />
           <DetectionNumberField
-            label="検出間隔 ms"
+            label={t("fields.interval")}
             settingKey="detectionInterval"
             min={0}
             max={1000}

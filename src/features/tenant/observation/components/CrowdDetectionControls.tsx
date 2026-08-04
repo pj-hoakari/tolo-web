@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import type { DetectCrowdStatus } from "../hooks/useDetectCrowd";
@@ -14,11 +15,12 @@ function CrowdDetectionControlsComponent({
   onStop,
 }: CrowdDetectionControlsProps) {
   const isActive = status === "loading" || status === "detecting";
+  const t = useTranslations("Observation.controls");
 
   return (
     <div className="flex gap-2">
       <Button type="button" onPress={onStart} isDisabled={isActive}>
-        カメラを起動
+        {t("start")}
       </Button>
       <Button
         type="button"
@@ -26,7 +28,7 @@ function CrowdDetectionControlsComponent({
         onPress={onStop}
         isDisabled={!isActive}
       >
-        停止
+        {t("stop")}
       </Button>
     </div>
   );

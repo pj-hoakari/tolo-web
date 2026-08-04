@@ -1,0 +1,317 @@
+{
+  "HomePage": {
+    "title": "Hello world!"
+  },
+  "LocaleSelect": {
+    "label": "Change language"
+  },
+  "Theme": {
+    "label": "Change theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "Management": {
+    "title": "{tenantId} Management",
+    "tabsLabel": "Switch management view",
+    "tabs": {
+      "graph": "Venue graph",
+      "edges": "Connected edges"
+    },
+    "graphEditTitle": "{tenantId} Venue graph editor",
+    "backLink": "Back to management"
+  },
+  "Graph": {
+    "viewer": {
+      "title": "Venue graph",
+      "edit": "Edit graph",
+      "save": "Save"
+    },
+    "nodeType": {
+      "GOAL": "Destination",
+      "GOAL_TRANSIT_MIXED": "Destination / Transit",
+      "TRANSIT_ONLY": "Transit only",
+      "BOUNDARY": "Entry / Exit"
+    },
+    "selectionKind": {
+      "node": "Point",
+      "edge": "Route"
+    },
+    "observationLink": {
+      "title": "Observation point links",
+      "empty": "Select a point or a route to link observation points.",
+      "editHint": "Points and routes can be added, removed and retyped on the edit page."
+    },
+    "observationPoints": {
+      "title": "Observation points",
+      "titleWithCount": "Observation points ({count})",
+      "refresh": "Refresh",
+      "error": "Failed to load observation points",
+      "loading": "Loading…",
+      "empty": "No observation points are connected",
+      "online": "Connected",
+      "offline": "Offline",
+      "usedByOther": "In use by another point / route"
+    },
+    "nodeTypeDescription": {
+      "GOAL": "e.g. an exhibition booth",
+      "GOAL_TRANSIT_MIXED": "e.g. a wall exhibit (both a destination and a passage)",
+      "TRANSIT_ONLY": "e.g. a corridor junction",
+      "BOUNDARY": "e.g. a venue entrance or exit"
+    },
+    "notices": {
+      "dualDirection": "Serves as both an entry and an exit"
+    },
+    "editor": {
+      "title": "Venue editor",
+      "addNode": "Add {type}",
+      "save": "Save",
+      "newNodeLabel": "Point {index}"
+    },
+    "easyConnect": {
+      "fromNode": "Add route: click the point to use as the end",
+      "fromCanvas": "Add route: drag from one point to another",
+      "cancelHint": "Press Esc to cancel",
+      "end": "Finish adding routes"
+    },
+    "contextMenu": {
+      "canvasLabel": "Canvas actions",
+      "endEdgeCreation": "Finish adding routes",
+      "addNode": "Add point",
+      "addEdge": "Add route",
+      "nodeLabel": "Actions for point “{label}”",
+      "addEdgeFromNode": "Add a route from this point",
+      "changeType": "Change type",
+      "deleteNode": "Delete this point",
+      "edgeLabel": "Actions for route “{source} → {target}”",
+      "setOneway": "Make one-way ({source} → {target})",
+      "setBoth": "Make two-way",
+      "reverse": "Reverse direction ({target} → {source})",
+      "deleteEdge": "Delete this route"
+    },
+    "properties": {
+      "title": "Properties",
+      "empty": "Select a point or a route.",
+      "deleteNode": "Delete this point",
+      "deleteEdge": "Delete this route",
+      "label": "Label",
+      "type": "Type",
+      "direction": "Direction",
+      "both": "Two-way ⇌",
+      "oneway": "One-way →",
+      "reverse": "Reverse direction (start ↔ end)"
+    },
+    "node": {
+      "editLabel": "Edit the label of “{label}”",
+      "labelField": "Point label"
+    }
+  },
+  "Webrtc": {
+    "connectionStatus": {
+      "idle": "Not connected",
+      "connecting": "Requesting connection…",
+      "negotiating": "Negotiating…",
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "error": "Connection failed"
+    },
+    "aliveEdges": {
+      "title": "Connected edges ({count})",
+      "refresh": "Refresh",
+      "loading": "Loading…",
+      "empty": "No edges are connected",
+      "lastSeen": "Last seen: {time}",
+      "unknownTime": "Unknown",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "loadError": "Failed to load the edge list"
+    },
+    "receiver": {
+      "stoppedTitle": "Observation stopped",
+      "stoppedDescription": "The source camera was stopped",
+      "connecting": "Connecting…",
+      "status": "Status: {status}",
+      "connectError": "Failed to connect"
+    },
+    "broadcast": {
+      "active": "Broadcasting",
+      "inactive": "Stopped"
+    }
+  },
+  "Detection": {
+    "title": "Detection settings",
+    "fields": {
+      "confidence": "Detection sensitivity",
+      "tracking": "Tracking persistence",
+      "frequency": "Detection frequency",
+      "interval": "Detection interval (ms)"
+    },
+    "presets": {
+      "wide": "Wide",
+      "standard": "Standard",
+      "strict": "Strict",
+      "stable": "Stable",
+      "responsive": "Responsive",
+      "frequent": "Frequent",
+      "light": "Light load"
+    },
+    "advanced": {
+      "open": "Advanced settings",
+      "close": "Close advanced settings"
+    },
+    "lines": {
+      "create": "Add line",
+      "edit": "Edit mode",
+      "deleteSelected": "Delete selected line",
+      "reset": "Reset line positions",
+      "count": "Line {index}: forward {forward} / backward {backward}"
+    }
+  },
+  "Observation": {
+    "title": "{tenantId} Observation",
+    "controls": {
+      "start": "Start camera",
+      "stop": "Stop",
+      "loading": "Starting…"
+    },
+    "status": {
+      "detection": "Detection status: {status}",
+      "trackedCount": "Tracked people: {count}",
+      "fps": "FPS: {fps}",
+      "idle": "Stopped",
+      "loading": "Starting",
+      "detecting": "Detecting",
+      "error": "Error"
+    },
+    "screenWake": {
+      "unsupported": "This browser does not support keeping the screen awake (Screen Wake Lock). Check your device's auto-lock settings.",
+      "label": "Keep the screen awake",
+      "toggle": "Keep the screen awake: {state}",
+      "on": "ON",
+      "off": "OFF",
+      "enabledHint": "The screen will not turn off during observation",
+      "disabledHint": "The screen may turn off during observation and interrupt it. Tap to switch this ON",
+      "enableError": "Could not keep the screen awake"
+    },
+    "lock": {
+      "lockButton": "Lock screen",
+      "setupTitle": "Set an unlock code",
+      "lockedTitle": "Screen locked",
+      "setupDescription": "Set an unlock code to protect the controls on this observation page.",
+      "lockedDescription": "Enter the unlock code to resume operation.",
+      "codeLabel": "Unlock code",
+      "codeConfirmationLabel": "Unlock code (confirmation)",
+      "submitSetup": "Set and unlock",
+      "submitUnlock": "Unlock",
+      "tooShort": "The unlock code must be at least {min} characters",
+      "mismatch": "The confirmation code does not match",
+      "notConfigured": "Set an unlock code first",
+      "incorrect": "The unlock code is incorrect",
+      "failed": "Could not process the unlock code"
+    },
+    "errors": {
+      "videoSource": "Failed to obtain the video source",
+      "detection": "Person detection failed",
+      "modelLoad": "Failed to load the detection model ({status}: {path})"
+    },
+    "devSource": {
+      "title": "Video source",
+      "selectFile": "Choose a video file",
+      "loop": "Loop playback",
+      "backToCamera": "Back to the camera",
+      "current": "Current: {source}",
+      "camera": "Camera",
+      "activeHint": " (switch after stopping)",
+      "inactiveHint": " (applied on the next start)",
+      "hide": "Hide"
+    }
+  },
+  "Guest": {
+    "pageSubtitle": "Guest Page",
+    "waitingNumber": {
+      "title": "People waiting",
+      "unit": "people"
+    },
+    "callingNumber": {
+      "title": "Now calling",
+      "unit": ""
+    },
+    "estimatedWaitTime": {
+      "title": "Estimated wait",
+      "prefix": "approx.",
+      "unit": "min"
+    },
+    "queue": {
+      "title": "Queue layout",
+      "shape": "Shape",
+      "direction": "Direction",
+      "entrance": "Entrance",
+      "entranceMarker": "Entry",
+      "current": "Now",
+      "max": "Max",
+      "people": "ppl",
+      "shapes": {
+        "zigzag": "Zigzag",
+        "straight": "Straight",
+        "l-shape": "L-shape",
+        "spiral": "Spiral"
+      },
+      "entrances": {
+        "top": "Top",
+        "bottom": "Bottom",
+        "left": "Left",
+        "right": "Right"
+      }
+    },
+    "staffMessage": {
+      "title": "Staff notices",
+      "ariaOpen": "Staff notices",
+      "ariaClose": "Close notices",
+      "empty": "No notices at the moment",
+      "samples": {
+        "msg-2": {
+          "body": "The east gate area is very crowded. If you're in a hurry, we recommend using the west gate.",
+          "staffName": "Taro Yamada",
+          "staffRole": "Venue staff"
+        },
+        "msg-1": {
+          "body": "The start time has changed from 15:00 to 15:30. Thank you for your understanding.",
+          "staffName": "Hanako Sato",
+          "staffRole": "Event manager"
+        }
+      }
+    },
+    "guideMap": {
+      "title": "Guide map",
+      "hint": "Select a destination to see the route",
+      "currentLocation": "You are here",
+      "destinations": {
+        "hall": "Hall",
+        "goods": "Merch",
+        "cafe": "Café",
+        "exit": "Exit"
+      },
+      "destinationsLabel": "Destinations",
+      "expand": "Enlarge the map",
+      "collapse": "Shrink the map"
+    },
+    "floor": {
+      "title": "Current floor",
+      "placeholderName": "1F"
+    },
+    "congestion": {
+      "title": "Congestion",
+      "levels": {
+        "low": "Low",
+        "mid": "Medium",
+        "high": "High"
+      },
+      "areas": {
+        "entrance": "Entrance gate",
+        "hall": "Hall",
+        "cafe": "Café",
+        "goods": "Merch"
+      }
+    }
+  }
+}

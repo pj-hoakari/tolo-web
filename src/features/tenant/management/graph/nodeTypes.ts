@@ -1,3 +1,4 @@
+import type { Messages } from "next-intl";
 import type {
   EdgeDirection,
   GraphEdgeType,
@@ -8,6 +9,15 @@ import type {
 } from "./type";
 
 export type NodeRole = "in" | "out";
+
+/** `Graph.notices` 配下のメッセージキー */
+export type NoticeMessageKey = keyof Messages["Graph"]["notices"];
+
+/**
+ * 通知キーを表示用の文言に変換する関数。
+ * 検証・通知はロケールを知らないので、描画側から `useTranslations("Graph.notices")` を渡してもらう。
+ */
+export type NoticeTranslator = (messageKey: NoticeMessageKey) => string;
 
 /**
  * タイプ制約の検証に渡すコンテキスト
@@ -22,7 +32,7 @@ export type NodeValidationContext = {
 };
 
 export type NodeTypeConstraint = {
-  message: string;
+  messageKey: NoticeMessageKey;
   validate: (ctx: NodeValidationContext) => boolean;
 };
 
@@ -32,7 +42,7 @@ export type NodeTypeConstraint = {
  */
 export type NodeTypeNotice = {
   level: NoticeLevel;
-  message: string;
+  messageKey: NoticeMessageKey;
   /** この通知を出す条件 */
   match: (ctx: NodeValidationContext) => boolean;
 };
@@ -41,10 +51,12 @@ export type NodeIcon =
   | { kind: "circle"; r: number }
   | { kind: "polygon"; points: string };
 
+/**
+ * ノードタイプの定義。表示名と説明は `Graph.nodeType` / `Graph.nodeTypeDescription`
+ * の `type` をキーにしたメッセージで解決する。
+ */
 export type NodeTypeDef = {
   type: NodeType;
-  label: string;
-  description: string;
   color: string;
   icon: NodeIcon;
   constraints?: NodeTypeConstraint[];
@@ -54,39 +66,31 @@ export type NodeTypeDef = {
 /** 入力(in)と出力(out)の両方を担っている入退出点を強調する通知 */
 const dualDirectionNotice: NodeTypeNotice = {
   level: "info",
-  message: "入退出（入力・出力）の両方を担っています",
+  messageKey: "dualDirection",
   match: (ctx) => ctx.roles.has("in") && ctx.roles.has("out"),
 };
 
 export const NODE_TYPE_DEFS: NodeTypeDef[] = [
   {
     type: "GOAL",
-    label: "目的地",
-    description: "例: 展示ブース",
     color: "#0ea5e9",
     // 四角形（正方形）
     icon: { kind: "polygon", points: "12,12 88,12 88,88 12,88" },
   },
   {
     type: "GOAL_TRANSIT_MIXED",
-    label: "目的地 / 通過",
-    description: "例: 壁展示（目的地にも通過にもなりうる）",
     color: "#22c55e",
     // 円形
     icon: { kind: "circle", r: 44 },
   },
   {
     type: "TRANSIT_ONLY",
-    label: "通過のみ",
-    description: "例: 通路の分岐",
     color: "#a1a1aa",
     // ひし形
     icon: { kind: "polygon", points: "50,6 94,50 50,94 6,50" },
   },
   {
     type: "BOUNDARY",
-    label: "入退出点",
-    description: "例: 会場の入口・出口",
     color: "#f59e0b",
     // 三角形（▷）
     icon: { kind: "polygon", points: "16,8 92,50 16,92" },
@@ -126,7 +130,9 @@ export function nodeRoles(
   return roles;
 }
 
-export type ValidationResult = { ok: true } | { ok: false; message: string };
+export type ValidationResult =
+  | { ok: true }
+  | { ok: false; messageKey: NoticeMessageKey };
 
 const VALID: ValidationResult = { ok: true };
 
@@ -138,7 +144,7 @@ export function validateNodeType(
   const def = getNodeTypeDef(type);
   for (const constraint of def.constraints ?? []) {
     if (!constraint.validate(ctx)) {
-      return { ok: false, message: constraint.message };
+      return { ok: false, messageKey: constraint.messageKey };
     }
   }
   return VALID;
@@ -153,7 +159,7 @@ export function collectNodeTypeNotices(
   const notices: GraphNotice[] = [];
   for (const notice of def.notices ?? []) {
     if (notice.match(ctx)) {
-      notices.push({ level: notice.level, message: notice.message });
+      notices.push({ level: notice.level, messageKey: notice.messageKey });
     }
   }
   return notices;

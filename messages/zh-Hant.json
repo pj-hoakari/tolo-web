@@ -1,0 +1,317 @@
+{
+  "HomePage": {
+    "title": "你好，世界！"
+  },
+  "LocaleSelect": {
+    "label": "切換語言"
+  },
+  "Theme": {
+    "label": "切換主題",
+    "light": "淺色",
+    "dark": "深色",
+    "system": "跟隨系統"
+  },
+  "Management": {
+    "title": "{tenantId} 管理頁面",
+    "tabsLabel": "切換管理檢視",
+    "tabs": {
+      "graph": "會場圖",
+      "edges": "連線的邊緣裝置"
+    },
+    "graphEditTitle": "{tenantId} 會場圖編輯",
+    "backLink": "返回管理頁面"
+  },
+  "Graph": {
+    "viewer": {
+      "title": "會場圖",
+      "edit": "編輯圖",
+      "save": "儲存"
+    },
+    "nodeType": {
+      "GOAL": "目的地",
+      "GOAL_TRANSIT_MIXED": "目的地 / 通行",
+      "TRANSIT_ONLY": "僅通行",
+      "BOUNDARY": "出入口"
+    },
+    "selectionKind": {
+      "node": "節點",
+      "edge": "路徑"
+    },
+    "observationLink": {
+      "title": "觀測點關聯",
+      "empty": "請選擇要關聯觀測點的節點或路徑。",
+      "editHint": "節點 / 路徑的新增、刪除與類型變更請在編輯頁面進行。"
+    },
+    "observationPoints": {
+      "title": "觀測點",
+      "titleWithCount": "觀測點（{count}）",
+      "refresh": "重新整理",
+      "error": "取得觀測點失敗",
+      "loading": "載入中…",
+      "empty": "沒有已連線的觀測點",
+      "online": "已連線",
+      "offline": "離線",
+      "usedByOther": "已被其他節點 / 路徑使用"
+    },
+    "nodeTypeDescription": {
+      "GOAL": "例：攤位",
+      "GOAL_TRANSIT_MIXED": "例：牆面展示（既是目的地也可通行）",
+      "TRANSIT_ONLY": "例：通道分岔",
+      "BOUNDARY": "例：會場出入口"
+    },
+    "notices": {
+      "dualDirection": "同時承擔進入與離開（輸入·輸出）"
+    },
+    "editor": {
+      "title": "會場編輯器",
+      "addNode": "新增{type}",
+      "save": "儲存",
+      "newNodeLabel": "節點 {index}"
+    },
+    "easyConnect": {
+      "fromNode": "新增路徑：點擊作為終點的節點",
+      "fromCanvas": "新增路徑：從一個節點拖曳到另一個節點",
+      "cancelHint": "按 Esc 取消",
+      "end": "結束新增路徑"
+    },
+    "contextMenu": {
+      "canvasLabel": "畫布操作",
+      "endEdgeCreation": "結束新增路徑",
+      "addNode": "新增節點",
+      "addEdge": "新增路徑",
+      "nodeLabel": "節點「{label}」的操作",
+      "addEdgeFromNode": "從此節點新增路徑",
+      "changeType": "變更類型",
+      "deleteNode": "刪除此節點",
+      "edgeLabel": "路徑「{source} → {target}」的操作",
+      "setOneway": "改為單向通行（{source} → {target}）",
+      "setBoth": "改為雙向通行",
+      "reverse": "反轉方向（{target} → {source}）",
+      "deleteEdge": "刪除此路徑"
+    },
+    "properties": {
+      "title": "屬性",
+      "empty": "請選擇節點或路徑。",
+      "deleteNode": "刪除此節點",
+      "deleteEdge": "刪除此路徑",
+      "label": "標籤",
+      "type": "類型",
+      "direction": "方向",
+      "both": "雙向 ⇌",
+      "oneway": "單向 →",
+      "reverse": "反轉方向（起點 ↔ 終點）"
+    },
+    "node": {
+      "editLabel": "編輯「{label}」的標籤",
+      "labelField": "節點標籤"
+    }
+  },
+  "Webrtc": {
+    "connectionStatus": {
+      "idle": "未連線",
+      "connecting": "正在要求連線…",
+      "negotiating": "正在協商…",
+      "connected": "已連線",
+      "disconnected": "已中斷",
+      "error": "連線失敗"
+    },
+    "aliveEdges": {
+      "title": "已連線的邊緣裝置（{count}）",
+      "refresh": "重新整理",
+      "loading": "載入中…",
+      "empty": "沒有已連線的邊緣裝置",
+      "lastSeen": "最後回應：{time}",
+      "unknownTime": "未知",
+      "connect": "連線",
+      "disconnect": "中斷",
+      "loadError": "取得邊緣裝置清單失敗"
+    },
+    "receiver": {
+      "stoppedTitle": "觀測已停止",
+      "stoppedDescription": "來源攝影機已停止",
+      "connecting": "連線中…",
+      "status": "狀態：{status}",
+      "connectError": "連線失敗"
+    },
+    "broadcast": {
+      "active": "推流中",
+      "inactive": "已停止"
+    }
+  },
+  "Detection": {
+    "title": "偵測設定",
+    "fields": {
+      "confidence": "偵測靈敏度",
+      "tracking": "追蹤連續性",
+      "frequency": "偵測頻率",
+      "interval": "偵測間隔 ms"
+    },
+    "presets": {
+      "wide": "寬鬆",
+      "standard": "標準",
+      "strict": "嚴格",
+      "stable": "穩定",
+      "responsive": "跟隨優先",
+      "frequent": "高頻",
+      "light": "低負載"
+    },
+    "advanced": {
+      "open": "進階設定",
+      "close": "關閉進階設定"
+    },
+    "lines": {
+      "create": "產生線",
+      "edit": "編輯模式",
+      "deleteSelected": "刪除選取的線",
+      "reset": "重設線位置",
+      "count": "線 {index}：forward {forward} / backward {backward}"
+    }
+  },
+  "Observation": {
+    "title": "{tenantId} 觀測頁面",
+    "controls": {
+      "start": "啟動攝影機",
+      "stop": "停止",
+      "loading": "啟動中…"
+    },
+    "status": {
+      "detection": "偵測狀態：{status}",
+      "trackedCount": "追蹤人數：{count}人",
+      "fps": "FPS：{fps}",
+      "idle": "已停止",
+      "loading": "啟動中",
+      "detecting": "偵測中",
+      "error": "錯誤"
+    },
+    "screenWake": {
+      "unsupported": "此瀏覽器不支援螢幕常亮（Screen Wake Lock）。請檢查裝置的自動熄屏設定。",
+      "label": "螢幕常亮",
+      "toggle": "螢幕常亮：{state}",
+      "on": "ON",
+      "off": "OFF",
+      "enabledHint": "觀測期間螢幕不會自動熄滅",
+      "disabledHint": "觀測期間螢幕可能熄滅並中斷觀測。請點擊切換為 ON",
+      "enableError": "無法啟用螢幕常亮"
+    },
+    "lock": {
+      "lockButton": "鎖定螢幕",
+      "setupTitle": "設定解鎖碼",
+      "lockedTitle": "螢幕已鎖定",
+      "setupDescription": "請設定用於保護觀測頁面操作的解鎖碼。",
+      "lockedDescription": "請輸入解鎖碼以恢復操作。",
+      "codeLabel": "解鎖碼",
+      "codeConfirmationLabel": "解鎖碼（確認）",
+      "submitSetup": "設定並解鎖",
+      "submitUnlock": "解鎖",
+      "tooShort": "解鎖碼至少需要 {min} 個字元",
+      "mismatch": "確認用的解鎖碼不一致",
+      "notConfigured": "請先設定解鎖碼",
+      "incorrect": "解鎖碼不正確",
+      "failed": "處理解鎖碼失敗"
+    },
+    "errors": {
+      "videoSource": "取得視訊來源失敗",
+      "detection": "人體偵測處理失敗",
+      "modelLoad": "載入偵測模型失敗（{status}: {path}）"
+    },
+    "devSource": {
+      "title": "視訊來源",
+      "selectFile": "選擇影片檔案",
+      "loop": "循環播放",
+      "backToCamera": "切回攝影機",
+      "current": "目前：{source}",
+      "camera": "攝影機",
+      "activeHint": "（停止後才能切換）",
+      "inactiveHint": "（選擇後啟動時生效）",
+      "hide": "隱藏"
+    }
+  },
+  "Guest": {
+    "pageSubtitle": "訪客頁面",
+    "waitingNumber": {
+      "title": "目前等候人數",
+      "unit": "人"
+    },
+    "callingNumber": {
+      "title": "目前叫號",
+      "unit": "號"
+    },
+    "estimatedWaitTime": {
+      "title": "預計等候時間",
+      "prefix": "約",
+      "unit": "分鐘"
+    },
+    "queue": {
+      "title": "排隊方式",
+      "shape": "形狀",
+      "direction": "前進方向",
+      "entrance": "入口",
+      "entranceMarker": "入口",
+      "current": "目前",
+      "max": "最多",
+      "people": "人",
+      "shapes": {
+        "zigzag": "之字形",
+        "straight": "直線",
+        "l-shape": "L形",
+        "spiral": "螺旋"
+      },
+      "entrances": {
+        "top": "上",
+        "bottom": "下",
+        "left": "左",
+        "right": "右"
+      }
+    },
+    "staffMessage": {
+      "title": "工作人員通知",
+      "ariaOpen": "工作人員通知",
+      "ariaClose": "關閉通知",
+      "empty": "目前沒有通知",
+      "samples": {
+        "msg-2": {
+          "body": "東門附近非常擁擠。趕時間的來賓建議使用西門。",
+          "staffName": "山田太郎",
+          "staffRole": "會場工作人員"
+        },
+        "msg-1": {
+          "body": "演出開始時間已從 15:00 改為 15:30，敬請見諒。",
+          "staffName": "佐藤花子",
+          "staffRole": "營運負責人"
+        }
+      }
+    },
+    "guideMap": {
+      "title": "導覽圖",
+      "hint": "選擇目的地即可顯示路線",
+      "currentLocation": "目前位置",
+      "destinations": {
+        "hall": "大廳",
+        "goods": "商品區",
+        "cafe": "咖啡廳",
+        "exit": "出口"
+      },
+      "destinationsLabel": "目的地",
+      "expand": "放大地圖",
+      "collapse": "縮小地圖"
+    },
+    "floor": {
+      "title": "目前樓層",
+      "placeholderName": "1樓"
+    },
+    "congestion": {
+      "title": "擁擠狀況",
+      "levels": {
+        "low": "低",
+        "mid": "中",
+        "high": "高"
+      },
+      "areas": {
+        "entrance": "入場閘口",
+        "hall": "大廳",
+        "cafe": "咖啡廳",
+        "goods": "商品區"
+      }
+    }
+  }
+}
