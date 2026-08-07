@@ -27,8 +27,8 @@ importers:
         specifier: 0.1.0-rc
         version: 0.1.0-rc(@connectrpc/connect@2.1.2(@bufbuild/protobuf@2.13.0))
       '@pj-hoakari/web-crowd-detection-utils':
-        specifier: ^0.6.0
-        version: 0.6.1
+        specifier: ^0.7.0
+        version: 0.7.0
       '@xyflow/react':
         specifier: ^12.11.0
         version: 12.11.2(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -1618,8 +1618,8 @@ packages:
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
-  '@pj-hoakari/web-crowd-detection-utils@0.6.1':
-    resolution: {integrity: sha512-2mAx+5XQJCsCz/Eon2pPicPuEoXf58Fso9RUWaycyeEcD0Gxy2h9Ir2mCWPsR8zN2qFZoNHv/3xytYEEg3VPQg==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/web-crowd-detection-utils/0.6.1/818b91e990cd57189635786ba63b5e6b5638737f}
+  '@pj-hoakari/web-crowd-detection-utils@0.7.0':
+    resolution: {integrity: sha512-GFkKQCQww2Pbr3KxWq5PyHDjTk4FgRga9lqFhnSTFrqSS6vZ5Ud6mJEu8FUNngHD0z7Vx634C7kWMcsujwpeiA==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/web-crowd-detection-utils/0.7.0/88873aafa42810d24e50c409a8e98f35cf4ef2af}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -6689,7 +6689,7 @@ snapshots:
       '@bufbuild/protobuf': 2.13.0
       '@connectrpc/connect': 2.1.2(@bufbuild/protobuf@2.13.0)
 
-  '@pj-hoakari/web-crowd-detection-utils@0.6.1':
+  '@pj-hoakari/web-crowd-detection-utils@0.7.0':
     dependencies:
       onnxruntime-web: 1.27.0
 
