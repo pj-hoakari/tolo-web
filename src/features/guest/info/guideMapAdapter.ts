@@ -218,3 +218,54 @@ export function buildRoute(
     GRID_SIZE,
   );
 }
+
+/**
+ * 検索などで選んだ部屋（roomId）への経路とゴールマーカーを返す。
+ * 現在地から、その部屋まで経路探索する（部屋自身は障害物から除外）。
+ */
+export function buildRouteToRoom(
+  snapshot: GuideMapSnapshot,
+  floorId: string,
+  start: MapPoint,
+  roomId: string,
+  width: number,
+  height: number,
+): { points: MapPoint[]; end: MapPoint | null } {
+  const visible = snapshot.items.filter((item) => onFloor(item, floorId));
+  const dest = visible.find((item) => item.id === roomId);
+  if (!dest) return { points: [], end: null };
+  const center = centerOf(dest);
+  const end = { x: center.x, y: center.y - dest.h * MARKER_OFFSET_RATIO };
+  const obstacles = visible
+    .filter((item) => item.id !== dest.id)
+    .map((item) => ({ x: item.x, y: item.y, w: item.w, h: item.h }));
+  const points = computeRoute(obstacles, start, end, width, height, GRID_SIZE);
+  return { points, end };
+}
+
+/** マップ上の座標を実距離に換算する係数（px → m）。会場規模の目安値 */
+const PX_PER_METER = 20;
+/** 徒歩速度の目安（m/分） */
+const WALK_M_PER_MIN = 70;
+
+/** 折れ線の長さ（px） */
+export function pathLengthPx(points: MapPoint[]): number {
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    total += Math.hypot(
+      points[i].x - points[i - 1].x,
+      points[i].y - points[i - 1].y,
+    );
+  }
+  return total;
+}
+
+/** 経路から距離(m)と徒歩の目安(分)を求める */
+export function estimateWalk(points: MapPoint[]): {
+  meters: number;
+  minutes: number;
+} {
+  const meters = Math.round(pathLengthPx(points) / PX_PER_METER);
+  const minutes = Math.max(1, Math.round(meters / WALK_M_PER_MIN));
+  return { meters, minutes };
+}

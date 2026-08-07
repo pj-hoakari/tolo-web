@@ -293,7 +293,14 @@
       },
       "destinationsLabel": "गन्तव्यहरू",
       "expand": "नक्सा ठूलो पार्नुहोस्",
-      "collapse": "नक्सा सानो पार्नुहोस्"
+      "collapse": "नक्सा सानो पार्नुहोस्",
+      "search": "गन्तव्य खोज्नुहोस्",
+      "noResults": "नतिजा छैन",
+      "reset": "रिसेट",
+      "distanceUnit": "m",
+      "walkPrefix": "पैदल ~",
+      "minuteUnit": "मिनेट",
+      "estimate": "अनुमानित"
     },
     "floor": {
       "title": "हालको तल्ला",

@@ -293,7 +293,14 @@
       },
       "destinationsLabel": "目的地",
       "expand": "放大地圖",
-      "collapse": "縮小地圖"
+      "collapse": "縮小地圖",
+      "search": "搜尋目的地",
+      "noResults": "無結果",
+      "reset": "重設",
+      "distanceUnit": "公尺",
+      "walkPrefix": "步行約",
+      "minuteUnit": "分鐘",
+      "estimate": "參考"
     },
     "floor": {
       "title": "目前樓層",
