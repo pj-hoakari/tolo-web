@@ -77,8 +77,11 @@ export const Editing: Story = {
       onSetNodeType: fn(),
       onSetNodeLabel: fn(),
       onAddNodeAtPosition: fn(),
+      onAddGroupAtPosition: fn(),
       onDeleteNode: fn(),
       onDeleteEdge: fn(),
+      onNodeDragStop: fn(),
+      onGroupResizeEnd: fn(),
     },
   },
 };

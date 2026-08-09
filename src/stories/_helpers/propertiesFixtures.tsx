@@ -9,6 +9,7 @@ import type {
   GraphEdgeType,
   GraphNodeType,
 } from "@/features/tenant/management/graph/type";
+import { isPointNode } from "@/features/tenant/management/graph/type";
 import type { AliveEdge } from "@/features/tenant/webrtc/type";
 
 export const GRAPH_NODES = PLACEHOLDER_GRAPH.nodes;
@@ -23,7 +24,8 @@ export const passThroughNotice: NoticeTranslator = (messageKey) => messageKey;
 /** プレースホルダグラフからノードを取り出す（存在しない ID は Story の記述ミス） */
 export function graphNode(id: string): GraphNodeType {
   const found = GRAPH_NODES.find((n) => n.id === id);
-  if (!found) throw new Error(`ノードが見つかりません: ${id}`);
+  if (!found || !isPointNode(found))
+    throw new Error(`ポイントが見つかりません: ${id}`);
   return found;
 }
 
@@ -84,7 +86,8 @@ export const DUAL_BOUNDARY_EDGES: GraphEdgeType[] = [
 export function dualBoundaryNode(): GraphNodeType {
   const derived = deriveNodeNotices(DUAL_BOUNDARY_NODES, DUAL_BOUNDARY_EDGES);
   const found = derived.find((n) => n.id === "gate");
-  if (!found) throw new Error("入退出点が見つかりません");
+  if (!found || !isPointNode(found))
+    throw new Error("入退出点が見つかりません");
   return found;
 }
 
