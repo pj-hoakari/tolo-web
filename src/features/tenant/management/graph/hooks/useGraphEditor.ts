@@ -73,6 +73,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     removeNode,
     removeGroup,
     reparentByDrop,
+    setGroupMinSize,
     removeEdge,
     updateNodeData,
     updateEdgeData,
@@ -245,6 +246,13 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     [reparentByDrop],
   );
 
+  const onGroupResizeEnd = useCallback(
+    (id: string, size: { width: number; height: number }) => {
+      setGroupMinSize(id, size);
+    },
+    [setGroupMinSize],
+  );
+
   const getGraphData = useCallback(
     () => toGraphData(source.nodes, source.edges),
     [source],
@@ -272,6 +280,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
         onDeleteNode: deleteNode,
         onDeleteEdge: deleteEdge,
         onNodeDragStop,
+        onGroupResizeEnd,
       },
     },
     toolbar: { onAddNode: addNode, onAddGroup: addGroup },

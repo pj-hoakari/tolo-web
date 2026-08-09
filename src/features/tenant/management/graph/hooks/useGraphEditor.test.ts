@@ -11,6 +11,7 @@ import type {
   HandleSide,
 } from "../type";
 import { isPointNode } from "../type";
+import { absolutePositionOf } from "../utils/groups";
 import { parseHandleId } from "../utils/handles";
 import { collectObservationPointIds } from "../utils/observationPoints";
 import { useGraphEditor } from "./useGraphEditor";
@@ -339,10 +340,15 @@ describe("useGraphEditor: グループ（論理グルーピング）", () => {
       result.current.canvas.editing.onAddNodeAtPosition({ x: 200, y: 200 });
     });
 
-    const added = result.current.canvas.nodes.find((n) => isPointNode(n));
+    const nodes = result.current.canvas.nodes;
+    const added = nodes.find((n) => isPointNode(n));
     expect(added?.parentId).toBe("g1");
-    // 見た目の位置を変えないよう親相対に変換される
-    expect(added?.position).toEqual({ x: 100, y: 100 });
+    // 親相対に変換され、グループの自動フィット後も絶対位置は変わらない
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    expect(added && absolutePositionOf(added, byId)).toEqual({
+      x: 200,
+      y: 200,
+    });
   });
 
   it("グループを削除しても中のポイントは残り、トップレベルへ戻る", () => {

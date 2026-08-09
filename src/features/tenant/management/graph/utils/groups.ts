@@ -9,6 +9,14 @@ export const GROUP_DEFAULT_HEIGHT = 320;
 export const GROUP_MIN_WIDTH = 200;
 export const GROUP_MIN_HEIGHT = 120;
 
+/**
+ * 子へのフィット時に確保する余白。
+ * 上辺はラベル行の分を大きめに取り、ドロップ先としての空き地も兼ねる。
+ */
+export const GROUP_FIT_PADDING_X = 48;
+export const GROUP_FIT_PADDING_TOP = 56;
+export const GROUP_FIT_PADDING_BOTTOM = 48;
+
 /** 寸法未計測時に用いる想定サイズ */
 function sizeOf(node: GraphCanvasNode): { width: number; height: number } {
   const fallback = isGroupNode(node)
@@ -167,6 +175,107 @@ export function reparentNode(
     position: { x: abs.x - base.x, y: abs.y - base.y },
   };
   return sortByNesting(nodes.map((n) => (n.id === id ? updated : n)));
+}
+
+/**
+ * 1 つのグループを直下の子のバウンディングボックスへフィットさせる。
+ * 子の絶対位置を変えないよう、グループの移動分だけ子の相対座標を逆補正する。
+ */
+function fitGroup(
+  nodes: GraphCanvasNode[],
+  groupId: string,
+): GraphCanvasNode[] {
+  const group = nodes.find((n) => n.id === groupId);
+  if (!group || !isGroupNode(group)) return nodes;
+
+  const minWidth = Math.max(group.data.minWidth ?? 0, GROUP_MIN_WIDTH);
+  const minHeight = Math.max(group.data.minHeight ?? 0, GROUP_MIN_HEIGHT);
+  const children = nodes.filter((n) => n.parentId === groupId);
+
+  // 空のグループはドロップ先として使えるよう既定サイズを保つ
+  if (children.length === 0) {
+    const width = Math.max(group.data.minWidth ?? 0, GROUP_DEFAULT_WIDTH);
+    const height = Math.max(group.data.minHeight ?? 0, GROUP_DEFAULT_HEIGHT);
+    if (width === group.width && height === group.height) return nodes;
+    return nodes.map((n) => (n.id === groupId ? { ...n, width, height } : n));
+  }
+
+  // 子のバウンディングボックス（グループ相対座標）
+  let minX = Number.POSITIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
+  let maxX = Number.NEGATIVE_INFINITY;
+  let maxY = Number.NEGATIVE_INFINITY;
+  for (const child of children) {
+    const size = sizeOf(child);
+    minX = Math.min(minX, child.position.x);
+    minY = Math.min(minY, child.position.y);
+    maxX = Math.max(maxX, child.position.x + size.width);
+    maxY = Math.max(maxY, child.position.y + size.height);
+  }
+
+  const width = Math.max(maxX - minX + GROUP_FIT_PADDING_X * 2, minWidth);
+  const height = Math.max(
+    maxY - minY + GROUP_FIT_PADDING_TOP + GROUP_FIT_PADDING_BOTTOM,
+    minHeight,
+  );
+  // コンテンツを (PADDING_X, PADDING_TOP) に揃えるためのグループ原点の移動量
+  const dx = minX - GROUP_FIT_PADDING_X;
+  const dy = minY - GROUP_FIT_PADDING_TOP;
+
+  if (dx === 0 && dy === 0 && width === group.width && height === group.height)
+    return nodes;
+
+  return nodes.map((n) => {
+    if (n.id === groupId) {
+      return {
+        ...n,
+        position: { x: n.position.x + dx, y: n.position.y + dy },
+        width,
+        height,
+      };
+    }
+    if (n.parentId === groupId) {
+      return {
+        ...n,
+        position: { x: n.position.x - dx, y: n.position.y - dy },
+      };
+    }
+    return n;
+  });
+}
+
+/**
+ * すべてのグループを直下の子に合わせて拡縮する。
+ * ネストは内側（深い方）から順にフィットさせ、外側は内側の
+ * 確定後の矩形を含めて計算する。子の絶対位置は変わらない。
+ * `data.minWidth` / `data.minHeight`（手動リサイズ値）は下限として働く。
+ */
+export function fitGroupsToChildren(
+  nodes: GraphCanvasNode[],
+): GraphCanvasNode[] {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const depthOf = (node: GraphCanvasNode): number => {
+    let depth = 0;
+    const visited = new Set([node.id]);
+    let parentId = node.parentId;
+    while (parentId && !visited.has(parentId)) {
+      const parent = byId.get(parentId);
+      if (!parent) break;
+      visited.add(parent.id);
+      depth += 1;
+      parentId = parent.parentId;
+    }
+    return depth;
+  };
+  const groupIds = nodes
+    .filter(isGroupNode)
+    .map((g) => ({ id: g.id, depth: depthOf(g) }))
+    .sort((a, b) => b.depth - a.depth)
+    .map((g) => g.id);
+
+  let next = nodes;
+  for (const id of groupIds) next = fitGroup(next, id);
+  return next;
 }
 
 /**

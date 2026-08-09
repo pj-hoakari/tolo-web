@@ -4,6 +4,12 @@ import {
   absolutePositionOf,
   descendantIdsOf,
   dissolveGroups,
+  fitGroupsToChildren,
+  GROUP_DEFAULT_HEIGHT,
+  GROUP_DEFAULT_WIDTH,
+  GROUP_FIT_PADDING_BOTTOM,
+  GROUP_FIT_PADDING_TOP,
+  GROUP_FIT_PADDING_X,
   reparentNode,
   resolveParentGroup,
   sortByNesting,
@@ -169,5 +175,88 @@ describe("dissolveGroups: グループ解除", () => {
       point("other", 0, 0),
     ];
     expect(descendantIdsOf(nodes, "outer")).toEqual(new Set(["inner", "p"]));
+  });
+});
+
+describe("fitGroupsToChildren: 子に合わせた拡縮", () => {
+  // ポイントの寸法未計測時のフォールバックは 160x56（sizeOf と同じ想定）
+  const POINT_W = 160;
+  const POINT_H = 56;
+
+  it("子のバウンディングボックス + 余白にフィットし、子の絶対位置は変えない", () => {
+    const nodes = [
+      group("g", 0, 0, 1000, 800),
+      point("p1", 200, 300, "g"),
+      point("p2", 500, 400, "g"),
+    ];
+    const result = fitGroupsToChildren(nodes);
+    const g = result.find((n) => n.id === "g");
+    const p1 = result.find((n) => n.id === "p1");
+
+    // 幅 = 子の広がり + 左右余白
+    expect(g?.width).toBe(500 + POINT_W - 200 + GROUP_FIT_PADDING_X * 2);
+    expect(g?.height).toBe(
+      400 + POINT_H - 300 + GROUP_FIT_PADDING_TOP + GROUP_FIT_PADDING_BOTTOM,
+    );
+    // グループ原点が子の左上 - 余白へ移動する
+    expect(g?.position).toEqual({
+      x: 200 - GROUP_FIT_PADDING_X,
+      y: 300 - GROUP_FIT_PADDING_TOP,
+    });
+    // 子は相対座標が逆補正され、絶対位置が変わらない
+    expect(p1?.position).toEqual({
+      x: GROUP_FIT_PADDING_X,
+      y: GROUP_FIT_PADDING_TOP,
+    });
+    const byId = new Map(result.map((n) => [n.id, n]));
+    expect(p1 && absolutePositionOf(p1, byId)).toEqual({ x: 200, y: 300 });
+  });
+
+  it("手動の最小サイズ（data.minWidth / minHeight）が下限として働く", () => {
+    const g = group("g", 0, 0, 100, 100);
+    const nodes = [
+      { ...g, data: { ...g.data, minWidth: 900, minHeight: 700 } },
+      point("p1", 100, 100, "g"),
+    ];
+    const result = fitGroupsToChildren(nodes);
+    const fitted = result.find((n) => n.id === "g");
+    expect(fitted?.width).toBe(900);
+    expect(fitted?.height).toBe(700);
+  });
+
+  it("空のグループは既定サイズを保つ", () => {
+    const nodes = [group("g", 10, 20, 999, 999)];
+    const result = fitGroupsToChildren(nodes);
+    expect(result[0].width).toBe(GROUP_DEFAULT_WIDTH);
+    expect(result[0].height).toBe(GROUP_DEFAULT_HEIGHT);
+    expect(result[0].position).toEqual({ x: 10, y: 20 });
+  });
+
+  it("ネストは内側からフィットし、外側は内側の矩形を含む", () => {
+    const nodes = [
+      group("outer", 0, 0, 2000, 2000),
+      group("inner", 300, 300, 1000, 1000, "outer"),
+      point("p1", 100, 100, "inner"),
+    ];
+    const result = fitGroupsToChildren(nodes);
+    const inner = result.find((n) => n.id === "inner");
+    const outer = result.find((n) => n.id === "outer");
+
+    // inner は p1 + 余白（下限 GROUP_MIN 未満なら下限）
+    expect(inner?.width).toBe(POINT_W + GROUP_FIT_PADDING_X * 2);
+    // outer は inner の確定後サイズ + 余白
+    expect(outer?.width).toBe((inner?.width ?? 0) + GROUP_FIT_PADDING_X * 2);
+    // p1 の絶対位置は不変（元: 0+300+100 = 400）
+    const byId = new Map(result.map((n) => [n.id, n]));
+    const p1 = result.find((n) => n.id === "p1");
+    expect(p1 && absolutePositionOf(p1, byId)).toEqual({ x: 400, y: 400 });
+  });
+
+  it("フィット済みなら配列をそのまま返す", () => {
+    const once = fitGroupsToChildren([
+      group("g", 0, 0, 1000, 800),
+      point("p1", 200, 300, "g"),
+    ]);
+    expect(fitGroupsToChildren(once)).toBe(once);
   });
 });

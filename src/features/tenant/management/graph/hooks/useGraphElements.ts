@@ -15,7 +15,7 @@ import type {
   GraphEdgeType,
   GraphNodeData,
 } from "../type";
-import { isGroupNode } from "../type";
+import { isGroupNode, isPointNode } from "../type";
 import {
   patchEdgeData,
   patchNodeData,
@@ -26,6 +26,7 @@ import {
 } from "../utils/graphMutations";
 import {
   dissolveGroups,
+  fitGroupsToChildren,
   reparentNode,
   resolveParentGroup,
   sortByNesting,
@@ -66,7 +67,24 @@ export function useGraphElements(initial: GraphData) {
       });
       const prepared =
         removedGroupIds.length > 0 ? dissolveGroups(nds, removedGroupIds) : nds;
-      return applyNodeChanges(changes, prepared);
+      const applied = applyNodeChanges(changes, prepared);
+
+      // グループの拡縮は確定イベントでのみ行う:
+      // - 削除（子が減った）
+      // - ポイントの寸法確定（初回計測・ラベル変更による幅の変化）
+      // ドラッグ中の position 変化では動かさない（座標系が揺れるため）。
+      // グループ自身の寸法変化（NodeResizer のリサイズ中）でも動かさず、
+      // リサイズ確定は setGroupMinSize が担う。
+      const shouldFit = changes.some(
+        (change) =>
+          change.type === "remove" ||
+          (change.type === "dimensions" &&
+            (() => {
+              const node = applied.find((n) => n.id === change.id);
+              return node !== undefined && isPointNode(node);
+            })()),
+      );
+      return shouldFit ? fitGroupsToChildren(applied) : applied;
     });
   }, []);
 
@@ -78,10 +96,8 @@ export function useGraphElements(initial: GraphData) {
   const appendNode = useCallback((node: GraphCanvasNode) => {
     setNodes((nds) => {
       const appended = sortByNesting([...nds, node]);
-      return reparentNode(
-        appended,
-        node.id,
-        resolveParentGroup(node.id, appended),
+      return fitGroupsToChildren(
+        reparentNode(appended, node.id, resolveParentGroup(node.id, appended)),
       );
     });
   }, []);
@@ -94,13 +110,13 @@ export function useGraphElements(initial: GraphData) {
 
   /** ノードと、そのノードに接続しているルートをまとめて削除 */
   const removeNode = useCallback((id: string) => {
-    setNodes((nds) => withoutNode(nds, id));
+    setNodes((nds) => fitGroupsToChildren(withoutNode(nds, id)));
     setEdges((eds) => withoutEdgesOf(eds, id));
   }, []);
 
   /** グループコンテナを取り除く（中身は残し、親へ付け替える） */
   const removeGroup = useCallback((id: string) => {
-    setNodes((nds) => dissolveGroups(nds, [id]));
+    setNodes((nds) => fitGroupsToChildren(dissolveGroups(nds, [id])));
   }, []);
 
   /** ドラッグ終了したノードを、その位置を含むグループへ所属させ直す */
@@ -110,9 +126,35 @@ export function useGraphElements(initial: GraphData) {
       for (const id of ids) {
         next = reparentNode(next, id, resolveParentGroup(id, next));
       }
-      return next;
+      return fitGroupsToChildren(next);
     });
   }, []);
+
+  /**
+   * グループの手動リサイズを確定する。指定サイズを最小サイズ
+   * （フィットの下限）として保存し、実サイズは子へのフィットで決め直す。
+   */
+  const setGroupMinSize = useCallback(
+    (id: string, size: { width: number; height: number }) => {
+      setNodes((nds) =>
+        fitGroupsToChildren(
+          nds.map((n) =>
+            n.id === id && isGroupNode(n)
+              ? {
+                  ...n,
+                  data: {
+                    ...n.data,
+                    minWidth: Math.round(size.width),
+                    minHeight: Math.round(size.height),
+                  },
+                }
+              : n,
+          ),
+        ),
+      );
+    },
+    [],
+  );
 
   const removeEdge = useCallback((id: string) => {
     setEdges((eds) => withoutEdge(eds, id));
@@ -148,6 +190,7 @@ export function useGraphElements(initial: GraphData) {
     removeNode,
     removeGroup,
     reparentByDrop,
+    setGroupMinSize,
     removeEdge,
     updateNodeData,
     updateEdgeData,

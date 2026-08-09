@@ -30,7 +30,16 @@ export function toGraphData(
           height: Math.round(
             n.height ?? n.measured?.height ?? GROUP_DEFAULT_HEIGHT,
           ),
-          data: { label: n.data.label },
+          data: {
+            label: n.data.label,
+            // 手動リサイズの下限はフィット計算の入力なので保存する
+            ...(n.data.minWidth !== undefined
+              ? { minWidth: n.data.minWidth }
+              : {}),
+            ...(n.data.minHeight !== undefined
+              ? { minHeight: n.data.minHeight }
+              : {}),
+          },
         };
       }
       return {

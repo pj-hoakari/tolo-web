@@ -81,6 +81,12 @@ export type GraphEdgeType = Edge<GraphEdgeData, "graph">;
  */
 export type GroupNodeData = {
   label: string;
+  /**
+   * 手動リサイズで指定した最小サイズ。
+   * 実際の width / height は「子ノードへのフィット」とこの値の大きい方になる。
+   */
+  minWidth?: number;
+  minHeight?: number;
 };
 
 export type GroupNodeType = Node<GroupNodeData, "graphGroup">;

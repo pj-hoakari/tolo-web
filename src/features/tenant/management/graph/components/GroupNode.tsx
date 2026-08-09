@@ -4,7 +4,10 @@ import { type NodeProps, NodeResizer } from "@xyflow/react";
 import { useContext } from "react";
 import type { GroupNodeType } from "../type";
 import { GROUP_MIN_HEIGHT, GROUP_MIN_WIDTH } from "../utils/groups";
-import { GraphNodeLabelEditingContext } from "./canvasContexts";
+import {
+  GraphNodeLabelEditingContext,
+  GroupResizeCommitContext,
+} from "./canvasContexts";
 import { InlineNodeLabel } from "./InlineNodeLabel";
 
 /**
@@ -14,6 +17,7 @@ import { InlineNodeLabel } from "./InlineNodeLabel";
  */
 export function GroupNode({ id, data, selected }: NodeProps<GroupNodeType>) {
   const onUpdateLabel = useContext(GraphNodeLabelEditingContext);
+  const onResizeCommit = useContext(GroupResizeCommitContext);
   const editable = onUpdateLabel !== undefined;
 
   return (
@@ -29,6 +33,12 @@ export function GroupNode({ id, data, selected }: NodeProps<GroupNodeType>) {
           isVisible={selected}
           minWidth={GROUP_MIN_WIDTH}
           minHeight={GROUP_MIN_HEIGHT}
+          onResizeEnd={(_, params) =>
+            onResizeCommit?.(id, {
+              width: params.width,
+              height: params.height,
+            })
+          }
         />
       ) : null}
       <div className="absolute top-0 left-0 z-10 max-w-full px-3 py-1.5">
