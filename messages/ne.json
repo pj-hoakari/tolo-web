@@ -301,7 +301,11 @@
       },
       "destinationsLabel": "गन्तव्यहरू",
       "expand": "नक्सा ठूलो पार्नुहोस्",
-      "collapse": "नक्सा सानो पार्नुहोस्"
+      "collapse": "नक्सा सानो पार्नुहोस्",
+      "distanceUnit": "m",
+      "walkPrefix": "पैदल ~",
+      "minuteUnit": "मिनेट",
+      "estimate": "अनुमानित"
     },
     "floor": {
       "title": "हालको तल्ला",

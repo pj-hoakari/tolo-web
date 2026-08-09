@@ -77,6 +77,8 @@ export type GuideMapViewProps = {
   routeFlowClassName?: string;
   /** 流れる速さ（animation-duration。例: "1.1s"） */
   routeFlowDuration?: string;
+  /** 距離・所要時間の目安ラベル（例: 「40m · 徒歩約1分（目安）」） */
+  distanceLabel?: string;
 };
 
 export function GuideMapView({
@@ -97,6 +99,7 @@ export function GuideMapView({
   collapseLabel = "地図を縮小",
   routeFlowClassName,
   routeFlowDuration,
+  distanceLabel,
 }: GuideMapViewProps) {
   // 右上の＋ボタンで拡大表示に切り替える（拡大中は横スクロールで全体を見る）
   const [expanded, setExpanded] = useState(false);
@@ -166,6 +169,12 @@ export function GuideMapView({
       )}
 
       <div className="relative">
+        {/* 距離・所要時間の目安 */}
+        {distanceLabel && route.length > 1 && (
+          <div className="absolute top-2 left-2 z-10 rounded-full border border-primary/12 bg-secondary/90 px-2.5 py-1 font-medium text-primary/80 text-xs shadow-sm backdrop-blur-sm">
+            {distanceLabel}
+          </div>
+        )}
         {/* 右上の拡大／縮小ボタン */}
         <Button
           size="icon"

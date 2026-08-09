@@ -7,6 +7,7 @@ import { GuideMapView } from "./GuideMapView";
 import {
   buildGuideMapSource,
   buildRoute,
+  estimateWalk,
   resolveMarkers,
   resolveRouteFlow,
 } from "./guideMapAdapter";
@@ -63,6 +64,13 @@ function GuideMap(_props: GuestInfoComponentProps) {
     [source.width, source.height],
   );
 
+  // 距離・所要時間の目安ラベル
+  const { meters, minutes } = estimateWalk(route);
+  const distanceLabel =
+    route.length > 1
+      ? `${meters}${t("distanceUnit")} · ${t("walkPrefix")}${minutes}${t("minuteUnit")} (${t("estimate")})`
+      : undefined;
+
   return (
     <GuideMapView
       width={source.width}
@@ -79,6 +87,7 @@ function GuideMap(_props: GuestInfoComponentProps) {
       collapseLabel={t("collapse")}
       routeFlowClassName={ROUTE_FLOW.className}
       routeFlowDuration={ROUTE_FLOW.duration}
+      distanceLabel={distanceLabel}
     />
   );
 }

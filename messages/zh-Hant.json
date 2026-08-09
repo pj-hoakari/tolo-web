@@ -301,7 +301,11 @@
       },
       "destinationsLabel": "目的地",
       "expand": "放大地圖",
-      "collapse": "縮小地圖"
+      "collapse": "縮小地圖",
+      "distanceUnit": "公尺",
+      "walkPrefix": "步行約",
+      "minuteUnit": "分鐘",
+      "estimate": "參考"
     },
     "floor": {
       "title": "目前樓層",

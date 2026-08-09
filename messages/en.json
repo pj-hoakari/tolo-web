@@ -301,7 +301,11 @@
       },
       "destinationsLabel": "Destinations",
       "expand": "Enlarge the map",
-      "collapse": "Shrink the map"
+      "collapse": "Shrink the map",
+      "distanceUnit": "m",
+      "walkPrefix": "~",
+      "minuteUnit": "min",
+      "estimate": "est."
     },
     "floor": {
       "title": "Current floor",

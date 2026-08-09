@@ -301,7 +301,11 @@
       },
       "destinationsLabel": "Destinos",
       "expand": "Ampliar el mapa",
-      "collapse": "Reducir el mapa"
+      "collapse": "Reducir el mapa",
+      "distanceUnit": "m",
+      "walkPrefix": "~",
+      "minuteUnit": "min",
+      "estimate": "aprox."
     },
     "floor": {
       "title": "Planta actual",

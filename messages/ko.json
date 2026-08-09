@@ -301,7 +301,11 @@
       },
       "destinationsLabel": "목적지",
       "expand": "지도 확대",
-      "collapse": "지도 축소"
+      "collapse": "지도 축소",
+      "distanceUnit": "m",
+      "walkPrefix": "도보 약 ",
+      "minuteUnit": "분",
+      "estimate": "예상"
     },
     "floor": {
       "title": "현재 층",
