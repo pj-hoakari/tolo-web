@@ -72,16 +72,16 @@ const dualDirectionNotice: NodeTypeNotice = {
 
 export const NODE_TYPE_DEFS: NodeTypeDef[] = [
   {
-    type: "GOAL",
-    color: "#0ea5e9",
-    // 四角形（正方形）
-    icon: { kind: "polygon", points: "12,12 88,12 88,88 12,88" },
-  },
-  {
     type: "GOAL_TRANSIT_MIXED",
     color: "#22c55e",
     // 円形
     icon: { kind: "circle", r: 44 },
+  },
+  {
+    type: "GOAL",
+    color: "#0ea5e9",
+    // 四角形（正方形）
+    icon: { kind: "polygon", points: "12,12 88,12 88,88 12,88" },
   },
   {
     type: "TRANSIT_ONLY",
@@ -98,7 +98,9 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
   },
 ];
 
-export const DEFAULT_NODE_TYPE: NodeType = "GOAL";
+// 種別は最適化エンジンへのヒントであり厳密な分類ではない。
+// 実世界では純粋な終端(GOAL)か判断しづらいため、既定は GOAL_TRANSIT_MIXED とする。
+export const DEFAULT_NODE_TYPE: NodeType = "GOAL_TRANSIT_MIXED";
 
 const DEFS_BY_TYPE = new Map(NODE_TYPE_DEFS.map((d) => [d.type, d]));
 

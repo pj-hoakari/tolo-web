@@ -185,7 +185,7 @@ describe("useGraphEditor: グローバルコンテキスト操作", () => {
 
     expect(result.current.canvas.nodes[0]).toMatchObject({
       position: { x: 420, y: 180 },
-      data: { label: "ポイント 1", nodeType: "GOAL" },
+      data: { label: "ポイント 1", nodeType: "GOAL_TRANSIT_MIXED" },
     });
   });
 });
