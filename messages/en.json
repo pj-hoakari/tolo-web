@@ -35,7 +35,8 @@
     },
     "selectionKind": {
       "node": "Point",
-      "edge": "Route"
+      "edge": "Route",
+      "group": "Group"
     },
     "observationLink": {
       "title": "Observation point links",
@@ -66,7 +67,9 @@
       "title": "Venue editor",
       "addNode": "Add {type}",
       "save": "Save",
-      "newNodeLabel": "Point {index}"
+      "newNodeLabel": "Point {index}",
+      "addGroup": "Add group",
+      "newGroupLabel": "Group {index}"
     },
     "easyConnect": {
       "fromNode": "Add route: click the point to use as the end",
@@ -87,7 +90,10 @@
       "setOneway": "Make one-way ({source} → {target})",
       "setBoth": "Make two-way",
       "reverse": "Reverse direction ({target} → {source})",
-      "deleteEdge": "Delete this route"
+      "deleteEdge": "Delete this route",
+      "addGroup": "Add group",
+      "groupLabel": "Actions for group “{label}”",
+      "dissolveGroup": "Ungroup (keep contents)"
     },
     "properties": {
       "title": "Properties",
@@ -99,7 +105,9 @@
       "direction": "Direction",
       "both": "Two-way ⇌",
       "oneway": "One-way →",
-      "reverse": "Reverse direction (start ↔ end)"
+      "reverse": "Reverse direction (start ↔ end)",
+      "dissolveGroup": "Ungroup",
+      "groupHint": "A logical grouping for management, such as a floor or a building. Drag points in or out to change membership. Ungrouping keeps the points inside."
     },
     "node": {
       "editLabel": "Edit the label of “{label}”",

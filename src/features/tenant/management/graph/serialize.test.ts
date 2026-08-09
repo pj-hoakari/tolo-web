@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { toGraphData } from "./serialize";
-import type { GraphEdgeType, GraphNodeType } from "./type";
+import type { GraphCanvasNode, GraphEdgeType, GraphNodeType } from "./type";
+import { isPointNode } from "./type";
+
+/** ポイントの data を取り出す（グループには存在しないフィールドの検証用） */
+function pointDataOf(node: GraphCanvasNode | undefined) {
+  return node && isPointNode(node) ? node.data : undefined;
+}
 
 describe("toGraphData", () => {
   it("描画用の派生情報を除いた送信用データを作る", () => {
@@ -39,7 +45,7 @@ describe("toGraphData", () => {
       position: { x: 10, y: 21 },
       data: { label: "A", nodeType: "GOAL" },
     });
-    expect(result.nodes[0].data.handles).toBeUndefined();
+    expect(pointDataOf(result.nodes[0])?.handles).toBeUndefined();
 
     // sourceHandle / targetHandle は除外
     expect(result.edges[0]).toEqual({
@@ -85,7 +91,7 @@ describe("toGraphData", () => {
 
     const result = toGraphData(nodes, edges);
 
-    expect(result.nodes[0].data.observationPointIds).toEqual([
+    expect(pointDataOf(result.nodes[0])?.observationPointIds).toEqual([
       "edge-1",
       "edge-2",
     ]);
@@ -102,6 +108,43 @@ describe("toGraphData", () => {
       },
     ];
     const result = toGraphData(nodes, []);
-    expect(result.nodes[0].data.observationPointIds).toBeUndefined();
+    expect(pointDataOf(result.nodes[0])?.observationPointIds).toBeUndefined();
+  });
+
+  it("グループは parentId・サイズ・ラベルを保持して送信用データに含める", () => {
+    const nodes: GraphCanvasNode[] = [
+      {
+        id: "g1",
+        type: "graphGroup",
+        position: { x: 10.4, y: 20.6 },
+        width: 480.4,
+        height: 320.6,
+        data: { label: "1F" },
+      },
+      {
+        id: "n1",
+        type: "graph",
+        parentId: "g1",
+        position: { x: 40, y: 60 },
+        data: { label: "A", nodeType: "GOAL" },
+      },
+    ];
+
+    const result = toGraphData(nodes, []);
+
+    expect(result.nodes[0]).toEqual({
+      id: "g1",
+      type: "graphGroup",
+      position: { x: 10, y: 21 },
+      width: 480,
+      height: 321,
+      data: { label: "1F" },
+    });
+    expect(result.nodes[1]).toMatchObject({
+      id: "n1",
+      type: "graph",
+      parentId: "g1",
+      position: { x: 40, y: 60 },
+    });
   });
 });

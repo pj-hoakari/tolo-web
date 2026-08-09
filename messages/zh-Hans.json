@@ -35,7 +35,8 @@
     },
     "selectionKind": {
       "node": "节点",
-      "edge": "路径"
+      "edge": "路径",
+      "group": "分组"
     },
     "observationLink": {
       "title": "观测点关联",
@@ -66,7 +67,9 @@
       "title": "会场编辑器",
       "addNode": "添加{type}",
       "save": "保存",
-      "newNodeLabel": "节点 {index}"
+      "newNodeLabel": "节点 {index}",
+      "addGroup": "添加分组",
+      "newGroupLabel": "分组 {index}"
     },
     "easyConnect": {
       "fromNode": "添加路径：点击作为终点的节点",
@@ -87,7 +90,10 @@
       "setOneway": "改为单向通行（{source} → {target}）",
       "setBoth": "改为双向通行",
       "reverse": "反转方向（{target} → {source}）",
-      "deleteEdge": "删除此路径"
+      "deleteEdge": "删除此路径",
+      "addGroup": "添加分组",
+      "groupLabel": "分组“{label}”的操作",
+      "dissolveGroup": "取消分组（保留内容）"
     },
     "properties": {
       "title": "属性",
@@ -99,7 +105,9 @@
       "direction": "方向",
       "both": "双向 ⇌",
       "oneway": "单向 →",
-      "reverse": "反转方向（起点 ↔ 终点）"
+      "reverse": "反转方向（起点 ↔ 终点）",
+      "dissolveGroup": "取消分组",
+      "groupHint": "用于管理的逻辑分组，例如楼层或建筑。拖动点即可移入或移出。取消分组后其中的点会保留。"
     },
     "node": {
       "editLabel": "编辑“{label}”的标签",

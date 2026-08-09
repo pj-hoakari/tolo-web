@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import type { GraphData, GraphEdgeType, GraphNodeType } from "../type";
+import type {
+  GraphCanvasNode,
+  GraphData,
+  GraphEdgeType,
+  GraphNodeType,
+} from "../type";
+import { isPointNode } from "../type";
 import { collectObservationPointIds } from "../utils/observationPoints";
 import { useGraphViewer } from "./useGraphViewer";
 
@@ -25,6 +31,11 @@ function initialGraph(): GraphData {
   };
 }
 
+/** ポイントの data を取り出す（グループには存在しないフィールドの検証用） */
+function pointDataOf(node: GraphCanvasNode | undefined) {
+  return node && isPointNode(node) ? node.data : undefined;
+}
+
 describe("useGraphViewer: 観測点の紐づけ", () => {
   it("ポイントに紐づけた観測点が保存用データに含まれる", () => {
     const { result } = renderHook(() => useGraphViewer(initialGraph()));
@@ -35,7 +46,7 @@ describe("useGraphViewer: 観測点の紐づけ", () => {
 
     const data = result.current.getGraphData();
     expect(
-      data.nodes.find((n) => n.id === "n1")?.data.observationPointIds,
+      pointDataOf(data.nodes.find((n) => n.id === "n1"))?.observationPointIds,
     ).toEqual(["cam-a"]);
   });
 
@@ -80,8 +91,9 @@ describe("useGraphViewer: 観測点の紐づけ", () => {
 
     // 空配列は保存用データに載せない
     expect(
-      result.current.getGraphData().nodes.find((n) => n.id === "n1")?.data
-        .observationPointIds,
+      pointDataOf(
+        result.current.getGraphData().nodes.find((n) => n.id === "n1"),
+      )?.observationPointIds,
     ).toBeUndefined();
   });
 });

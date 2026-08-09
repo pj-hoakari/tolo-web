@@ -4,7 +4,7 @@ import {
   validateEdgeDirection,
   validateReverseEdge,
 } from "../../nodeTypes";
-import type { EdgeDirection, GraphEdgeType, GraphNodeType } from "../../type";
+import type { EdgeDirection, GraphCanvasNode, GraphEdgeType } from "../../type";
 
 /** 方向トグルと反転ボタンの操作可否・理由をまとめた表示用の状態 */
 export type EdgeDirectionState = {
@@ -50,7 +50,7 @@ export function deriveEdgeDirectionState(
 /** 現在のグラフ状態から、エッジの方向操作の可否を解決する */
 export function resolveEdgeDirectionState(
   edge: GraphEdgeType,
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   edges: GraphEdgeType[],
   translateNotice: NoticeTranslator,
 ): EdgeDirectionState {

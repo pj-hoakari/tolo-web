@@ -35,7 +35,8 @@
     },
     "selectionKind": {
       "node": "節點",
-      "edge": "路徑"
+      "edge": "路徑",
+      "group": "群組"
     },
     "observationLink": {
       "title": "觀測點關聯",
@@ -66,7 +67,9 @@
       "title": "會場編輯器",
       "addNode": "新增{type}",
       "save": "儲存",
-      "newNodeLabel": "節點 {index}"
+      "newNodeLabel": "節點 {index}",
+      "addGroup": "新增群組",
+      "newGroupLabel": "群組 {index}"
     },
     "easyConnect": {
       "fromNode": "新增路徑：點擊作為終點的節點",
@@ -87,7 +90,10 @@
       "setOneway": "改為單向通行（{source} → {target}）",
       "setBoth": "改為雙向通行",
       "reverse": "反轉方向（{target} → {source}）",
-      "deleteEdge": "刪除此路徑"
+      "deleteEdge": "刪除此路徑",
+      "addGroup": "新增群組",
+      "groupLabel": "群組「{label}」的操作",
+      "dissolveGroup": "取消群組（保留內容）"
     },
     "properties": {
       "title": "屬性",
@@ -99,7 +105,9 @@
       "direction": "方向",
       "both": "雙向 ⇌",
       "oneway": "單向 →",
-      "reverse": "反轉方向（起點 ↔ 終點）"
+      "reverse": "反轉方向（起點 ↔ 終點）",
+      "dissolveGroup": "取消群組",
+      "groupHint": "用於管理的邏輯群組，例如樓層或建築。拖曳點即可移入或移出。取消群組後其中的點會保留。"
     },
     "node": {
       "editLabel": "編輯「{label}」的標籤",

@@ -74,7 +74,29 @@ export type GraphEdgeData = {
 export type GraphNodeType = Node<GraphNodeData, "graph">;
 export type GraphEdgeType = Edge<GraphEdgeData, "graph">;
 
+/**
+ * 論理グルーピング（階・建物など）のコンテナノード。
+ * UI 上の管理単位であり、エンジンへ渡すポイントではない。
+ * ルートの端点にはならず、ネスト（グループ内グループ）できる。
+ */
+export type GroupNodeData = {
+  label: string;
+};
+
+export type GroupNodeType = Node<GroupNodeData, "graphGroup">;
+
+/** キャンバスに置ける要素 = ポイント ∪ グループコンテナ */
+export type GraphCanvasNode = GraphNodeType | GroupNodeType;
+
+export function isGroupNode(node: GraphCanvasNode): node is GroupNodeType {
+  return node.type === "graphGroup";
+}
+
+export function isPointNode(node: GraphCanvasNode): node is GraphNodeType {
+  return node.type !== "graphGroup";
+}
+
 export type GraphData = {
-  nodes: GraphNodeType[];
+  nodes: GraphCanvasNode[];
   edges: GraphEdgeType[];
 };

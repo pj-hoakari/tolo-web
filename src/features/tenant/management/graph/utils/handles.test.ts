@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { GraphEdgeType, GraphNodeType, HandleSide } from "../type";
+import type {
+  GraphCanvasNode,
+  GraphEdgeType,
+  GraphNodeType,
+  HandleSide,
+} from "../type";
+import { isPointNode } from "../type";
 import {
   addVirtualHandle,
   assignHandlesByPosition,
@@ -36,8 +42,10 @@ function edge(
   };
 }
 
-function slotsOf(nodes: GraphNodeType[], nodeId: string, side: HandleSide) {
-  return nodes.find((n) => n.id === nodeId)?.data.handles?.[side] ?? [];
+function slotsOf(nodes: GraphCanvasNode[], nodeId: string, side: HandleSide) {
+  const found = nodes.find((n) => n.id === nodeId);
+  if (!found || !isPointNode(found)) return [];
+  return found.data.handles?.[side] ?? [];
 }
 
 describe("deriveNodeHandles（接続状況からのハンドル導出）", () => {

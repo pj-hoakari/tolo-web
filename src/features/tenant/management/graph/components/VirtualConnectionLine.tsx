@@ -5,7 +5,7 @@ import {
   type ConnectionLineComponentProps,
   getBezierPath,
 } from "@xyflow/react";
-import type { GraphEdgeType, GraphNodeType, HandleSide } from "../type";
+import type { GraphCanvasNode, GraphEdgeType, HandleSide } from "../type";
 import {
   findConnectionPreview,
   toFlowPosition,
@@ -37,9 +37,9 @@ export function VirtualConnectionLine({
   toX,
   toY,
   connectionLineStyle,
-}: ConnectionLineComponentProps<GraphNodeType> & {
+}: ConnectionLineComponentProps<GraphCanvasNode> & {
   virtualHandle: VirtualHandle | null;
-  nodes: GraphNodeType[];
+  nodes: GraphCanvasNode[];
   viewport: { x: number; y: number; zoom: number };
   isValidConnection: (connection: Connection | GraphEdgeType) => boolean;
 }) {
@@ -58,8 +58,11 @@ export function VirtualConnectionLine({
     : null;
   const virtualPreview =
     preview && connection && isValidConnection(connection) ? preview : null;
+  // 接続の始点になるのはポイントのみ（グループは handles を持たない）
+  const fromHandles =
+    "handles" in fromNode.data ? fromNode.data.handles : undefined;
   const virtualSlot = virtualHandle
-    ? fromNode.data.handles?.[virtualHandle.side].find((slot) => slot.virtual)
+    ? fromHandles?.[virtualHandle.side].find((slot) => slot.virtual)
     : undefined;
   const shouldUseVirtualSlot =
     virtualHandle !== null &&
@@ -100,7 +103,7 @@ export function VirtualConnectionLine({
 }
 
 function virtualSlotPosition(
-  node: ConnectionLineComponentProps<GraphNodeType>["fromNode"],
+  node: ConnectionLineComponentProps<GraphCanvasNode>["fromNode"],
   slot: { side: HandleSide; index: number; total: number },
 ) {
   const width = node.measured.width ?? node.width ?? 0;

@@ -1,5 +1,7 @@
 import type { Viewport, XYPosition } from "@xyflow/react";
-import type { GraphNodeType, HandleSide } from "../type";
+import type { GraphCanvasNode, GraphNodeType, HandleSide } from "../type";
+import { isPointNode } from "../type";
+import { withAbsolutePositions } from "./groups";
 import { getConnectionSides } from "./handles";
 
 /** React Flow の既定接続半径（20px）の約2倍。 */
@@ -32,16 +34,19 @@ export function toFlowPosition(
  */
 export function findConnectionPreview(
   point: XYPosition,
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   sourceId: string,
   radius = CONNECTION_PREVIEW_RADIUS,
 ): ConnectionPreview | null {
-  const source = nodes.find((node) => node.id === sourceId);
+  // グループはルートの端点にならないので候補から外し、
+  // グループ内ノードの親相対 position は絶対座標へ直して距離を測る
+  const pointNodes = withAbsolutePositions(nodes).filter(isPointNode);
+  const source = pointNodes.find((node) => node.id === sourceId);
   if (!source) return null;
 
   let target: GraphNodeType | undefined;
   let closestDistance = Number.POSITIVE_INFINITY;
-  for (const node of nodes) {
+  for (const node of pointNodes) {
     if (node.id === sourceId) continue;
 
     const distance = distanceToNode(point, node);

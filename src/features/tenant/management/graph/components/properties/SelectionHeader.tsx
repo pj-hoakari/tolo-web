@@ -2,11 +2,13 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 /** プロパティパネルで編集対象になっている要素の種別 */
-export type SelectionKind = "node" | "edge";
+export type SelectionKind = "node" | "edge" | "group";
 
 const KIND_BADGE: Record<SelectionKind, string> = {
   node: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300",
   edge: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  group:
+    "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300",
 };
 
 export type SelectionHeaderProps = {

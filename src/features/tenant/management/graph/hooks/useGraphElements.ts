@@ -9,12 +9,13 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { deriveNodeNotices } from "../nodeTypes";
 import type {
+  GraphCanvasNode,
   GraphData,
   GraphEdgeData,
   GraphEdgeType,
   GraphNodeData,
-  GraphNodeType,
 } from "../type";
+import { isGroupNode } from "../type";
 import {
   patchEdgeData,
   patchNodeData,
@@ -23,6 +24,12 @@ import {
   withoutEdgesOf,
   withoutNode,
 } from "../utils/graphMutations";
+import {
+  dissolveGroups,
+  reparentNode,
+  resolveParentGroup,
+  sortByNesting,
+} from "../utils/groups";
 import { assignHandlesByPosition, deriveNodeHandles } from "../utils/handles";
 
 /**
@@ -30,7 +37,7 @@ import { assignHandlesByPosition, deriveNodeHandles } from "../utils/handles";
  * 選択状態や観測点の使用状況には関与せず、要素の出し入れだけを担う。
  */
 export function useGraphElements(initial: GraphData) {
-  const [nodes, setNodes] = useState<GraphNodeType[]>(initial.nodes);
+  const [nodes, setNodes] = useState<GraphCanvasNode[]>(initial.nodes);
   const [edges, setEdges] = useState<GraphEdgeType[]>(initial.edges);
 
   // ノード位置から各エッジの接続辺(上下左右)を決定
@@ -48,16 +55,35 @@ export function useGraphElements(initial: GraphData) {
   /** 派生情報を含まない、編集中のグラフそのもの */
   const source = useMemo<GraphData>(() => ({ nodes, edges }), [nodes, edges]);
 
-  const changeNodes = useCallback((changes: NodeChange<GraphNodeType>[]) => {
-    setNodes((nds) => applyNodeChanges(changes, nds));
+  const changeNodes = useCallback((changes: NodeChange<GraphCanvasNode>[]) => {
+    setNodes((nds) => {
+      // Delete キーなど React Flow 経由でグループが削除されるときも、
+      // 中身は消さず親へ付け替えてからコンテナを取り除く
+      const removedGroupIds = changes.flatMap((change) => {
+        if (change.type !== "remove") return [];
+        const node = nds.find((n) => n.id === change.id);
+        return node && isGroupNode(node) ? [change.id] : [];
+      });
+      const prepared =
+        removedGroupIds.length > 0 ? dissolveGroups(nds, removedGroupIds) : nds;
+      return applyNodeChanges(changes, prepared);
+    });
   }, []);
 
   const changeEdges = useCallback((changes: EdgeChange<GraphEdgeType>[]) => {
     setEdges((eds) => applyEdgeChanges(changes, eds));
   }, []);
 
-  const appendNode = useCallback((node: GraphNodeType) => {
-    setNodes((nds) => [...nds, node]);
+  /** 追加位置がグループの内側なら、そのグループへ自動で所属させる */
+  const appendNode = useCallback((node: GraphCanvasNode) => {
+    setNodes((nds) => {
+      const appended = sortByNesting([...nds, node]);
+      return reparentNode(
+        appended,
+        node.id,
+        resolveParentGroup(node.id, appended),
+      );
+    });
   }, []);
 
   const appendEdge = useCallback((edge: GraphEdgeType) => {
@@ -70,6 +96,22 @@ export function useGraphElements(initial: GraphData) {
   const removeNode = useCallback((id: string) => {
     setNodes((nds) => withoutNode(nds, id));
     setEdges((eds) => withoutEdgesOf(eds, id));
+  }, []);
+
+  /** グループコンテナを取り除く（中身は残し、親へ付け替える） */
+  const removeGroup = useCallback((id: string) => {
+    setNodes((nds) => dissolveGroups(nds, [id]));
+  }, []);
+
+  /** ドラッグ終了したノードを、その位置を含むグループへ所属させ直す */
+  const reparentByDrop = useCallback((ids: string[]) => {
+    setNodes((nds) => {
+      let next = nds;
+      for (const id of ids) {
+        next = reparentNode(next, id, resolveParentGroup(id, next));
+      }
+      return next;
+    });
   }, []);
 
   const removeEdge = useCallback((id: string) => {
@@ -104,6 +146,8 @@ export function useGraphElements(initial: GraphData) {
     appendNode,
     appendEdge,
     removeNode,
+    removeGroup,
+    reparentByDrop,
     removeEdge,
     updateNodeData,
     updateEdgeData,

@@ -1,19 +1,21 @@
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type {
+  GraphCanvasNode,
   GraphData,
   GraphEdgeData,
   GraphEdgeType,
   GraphNodeData,
-  GraphNodeType,
 } from "../../type";
+import { isGroupNode } from "../../type";
 import { EdgeProperties } from "./EdgeProperties";
 import { resolveEdgeDirectionState } from "./edgeDirectionState";
+import { GroupProperties } from "./GroupProperties";
 import { NodeProperties } from "./NodeProperties";
 import { buildNodeTypeOptions } from "./nodeTypeOptions";
 
 export type PropertiesPanelProps = {
-  selectedNode: GraphNodeType | undefined;
+  selectedNode: GraphCanvasNode | undefined;
   selectedEdge: GraphEdgeType | undefined;
   /** 制約の検証と端点ラベルの解決に使うグラフ全体 */
   graph: GraphData;
@@ -44,7 +46,12 @@ export function PropertiesPanel({
         <p className="font-semibold text-foreground text-sm">{t("title")}</p>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        {selectedNode ? (
+        {selectedNode && isGroupNode(selectedNode) ? (
+          <GroupProperties
+            group={selectedNode}
+            onChange={(patch) => onUpdateNode(selectedNode.id, patch)}
+          />
+        ) : selectedNode ? (
           <NodeProperties
             node={selectedNode}
             typeOptions={buildNodeTypeOptions(
@@ -88,7 +95,11 @@ export function PropertiesPanel({
             onPress={onDelete}
             className="w-full"
           >
-            {selectedNode ? t("deleteNode") : t("deleteEdge")}
+            {selectedNode
+              ? isGroupNode(selectedNode)
+                ? t("dissolveGroup")
+                : t("deleteNode")
+              : t("deleteEdge")}
           </Button>
         </div>
       ) : null}

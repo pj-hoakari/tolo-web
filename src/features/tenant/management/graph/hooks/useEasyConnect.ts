@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import type { GraphEdgeType, GraphNodeType } from "../type";
+import type { GraphCanvasNode, GraphEdgeType } from "../type";
 import {
   EASY_CONNECT_HANDLE_ID,
   type EasyConnectMode,
@@ -34,7 +34,7 @@ export type EasyConnectApi = {
 export function useEasyConnect(
   wrapperRef: RefObject<HTMLDivElement | null>,
 ): EasyConnectApi {
-  const storeApi = useStoreApi<GraphNodeType, GraphEdgeType>();
+  const storeApi = useStoreApi<GraphCanvasNode, GraphEdgeType>();
   const [mode, setMode] = useState<EasyConnectMode | null>(null);
   const active = mode !== null;
 

@@ -13,12 +13,18 @@ import { PLACEHOLDER_GRAPH } from "../placeholderGraph";
 import { toGraphData } from "../serialize";
 import type {
   EdgeDirection,
+  GraphCanvasNode,
   GraphData,
   GraphEdgeType,
-  GraphNodeType,
   NodeType,
 } from "../type";
-import { createEdge, createNode, removedIds } from "../utils/graphMutations";
+import { isGroupNode, isPointNode } from "../type";
+import {
+  createEdge,
+  createGroup,
+  createNode,
+  removedIds,
+} from "../utils/graphMutations";
 import { newId } from "../utils/idGen";
 import { useGraphElements } from "./useGraphElements";
 import { useGraphSelection } from "./useGraphSelection";
@@ -26,6 +32,7 @@ import { useGraphSelection } from "./useGraphSelection";
 /** ツールバーに渡す props（保存の実処理は呼び出し側が持つ） */
 export type GraphToolbarBindings = {
   onAddNode: (nodeType: NodeType) => void;
+  onAddGroup: () => void;
 };
 
 /** プロパティパネルに渡す props のうち、編集状態から決まるもの */
@@ -64,6 +71,8 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     appendNode,
     appendEdge,
     removeNode,
+    removeGroup,
+    reparentByDrop,
     removeEdge,
     updateNodeData,
     updateEdgeData,
@@ -74,7 +83,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     useGraphSelection();
 
   const onNodesChange = useCallback(
-    (changes: NodeChange<GraphNodeType>[]) => {
+    (changes: NodeChange<GraphCanvasNode>[]) => {
       changeNodes(changes);
       for (const id of removedIds(changes)) clearIfSelected("node", id);
     },
@@ -95,6 +104,11 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
       const tgt = connection.target;
       if (!src || !tgt) return false;
       if (src === tgt) return false; // 自己ループは不可
+      // グループコンテナはルートの端点にならない
+      const srcNode = source.nodes.find((n) => n.id === src);
+      const tgtNode = source.nodes.find((n) => n.id === tgt);
+      if (!srcNode || !tgtNode) return false;
+      if (isGroupNode(srcNode) || isGroupNode(tgtNode)) return false;
       // ノードタイプの制約
       // 既定 "both" が不可でも有効な方向があれば接続可とする
       return (
@@ -108,6 +122,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
   const onConnect = useCallback(
     (connection: Connection) => {
       if (!connection.source || !connection.target) return;
+      if (!isValidConnection(connection)) return;
 
       const direction =
         resolveConnectionDirection(
@@ -125,7 +140,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
       appendEdge(edge);
       selectEdge(edge.id);
     },
-    [source, appendEdge, selectEdge],
+    [source, appendEdge, selectEdge, isValidConnection],
   );
 
   const setEdgeDirection = useCallback(
@@ -156,14 +171,16 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     ) => {
       const node = createNode({
         id: newId("n"),
-        label: t("newNodeLabel", { index: source.nodes.length + 1 }),
+        label: t("newNodeLabel", {
+          index: source.nodes.filter(isPointNode).length + 1,
+        }),
         nodeType,
         position,
       });
       appendNode(node);
       selectNode(node.id);
     },
-    [source.nodes.length, appendNode, selectNode, t],
+    [source.nodes, appendNode, selectNode, t],
   );
 
   const addNode = useCallback(
@@ -173,13 +190,38 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     [addNodeAtPosition],
   );
 
+  const addGroupAtPosition = useCallback(
+    (position: { x: number; y: number }) => {
+      const group = createGroup({
+        id: newId("g"),
+        label: t("newGroupLabel", {
+          index: source.nodes.filter(isGroupNode).length + 1,
+        }),
+        position,
+      });
+      appendNode(group);
+      selectNode(group.id);
+    },
+    [source.nodes, appendNode, selectNode, t],
+  );
+
+  const addGroup = useCallback(() => {
+    addGroupAtPosition(randomPosition());
+  }, [addGroupAtPosition]);
+
   const deleteNode = useCallback(
     (id: string) => {
-      // ノードに接続しているルートも一緒に削除される。
-      removeNode(id);
+      const node = source.nodes.find((n) => n.id === id);
+      if (node && isGroupNode(node)) {
+        // グループは「解除」: コンテナだけを取り除き、中身は残す
+        removeGroup(id);
+      } else {
+        // ノードに接続しているルートも一緒に削除される。
+        removeNode(id);
+      }
       clearSelection();
     },
-    [removeNode, clearSelection],
+    [source.nodes, removeNode, removeGroup, clearSelection],
   );
 
   const deleteEdge = useCallback(
@@ -195,6 +237,13 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     if (selection.type === "node") deleteNode(selection.id);
     else deleteEdge(selection.id);
   }, [selection, deleteNode, deleteEdge]);
+
+  const onNodeDragStop = useCallback(
+    (ids: string[]) => {
+      reparentByDrop(ids);
+    },
+    [reparentByDrop],
+  );
 
   const getGraphData = useCallback(
     () => toGraphData(source.nodes, source.edges),
@@ -219,11 +268,13 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
         onSetNodeType: setNodeType,
         onSetNodeLabel: setNodeLabel,
         onAddNodeAtPosition: addNodeAtPosition,
+        onAddGroupAtPosition: addGroupAtPosition,
         onDeleteNode: deleteNode,
         onDeleteEdge: deleteEdge,
+        onNodeDragStop,
       },
     },
-    toolbar: { onAddNode: addNode },
+    toolbar: { onAddNode: addNode, onAddGroup: addGroup },
     properties: {
       selectedNode:
         selection?.type === "node"

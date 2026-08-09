@@ -2,7 +2,7 @@ import { ArrowLeftRight, ArrowRight, Repeat2, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Text } from "react-aria-components";
 import { Menu, MenuItem, MenuSeparator } from "@/components/ui/menu";
-import type { EdgeDirection, GraphEdgeType, GraphNodeType } from "../type";
+import type { EdgeDirection, GraphCanvasNode, GraphEdgeType } from "../type";
 import {
   ContextMenuPopover,
   type ContextMenuPosition,
@@ -11,7 +11,7 @@ import { resolveEdgeDirectionState } from "./properties/edgeDirectionState";
 
 export type GraphEdgeContextMenuProps = {
   edge: GraphEdgeType;
-  nodes: GraphNodeType[];
+  nodes: GraphCanvasNode[];
   edges: GraphEdgeType[];
   position: ContextMenuPosition;
   onSetDirection: (id: string, direction: EdgeDirection) => void;
