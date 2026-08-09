@@ -21,7 +21,8 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useCanvasContextMenu } from "../hooks/useCanvasContextMenu";
 import { useEasyConnect } from "../hooks/useEasyConnect";
 import { DEFAULT_NODE_TYPE, getNodeTypeDef } from "../nodeTypes";
-import type { GraphEdgeType, GraphNodeType, NodeType } from "../type";
+import type { GraphCanvasNode, GraphEdgeType, NodeType } from "../type";
+import { isGroupNode, isPointNode } from "../type";
 import {
   CONNECTION_PREVIEW_RADIUS,
   findConnectionPreview,
@@ -36,21 +37,27 @@ import { addVirtualHandle, parseConnectHandleId } from "../utils/handles";
 import {
   GraphNodeEasyConnectContext,
   GraphNodeLabelEditingContext,
+  GroupResizeCommitContext,
 } from "./canvasContexts";
 import { EasyConnectPanel } from "./EasyConnectPanel";
 import { GraphCanvasContextMenu } from "./GraphCanvasContextMenu";
 import { GraphEdge, GraphEdgeMarkers } from "./GraphEdge";
 import { GraphEdgeContextMenu } from "./GraphEdgeContextMenu";
+import { GraphGroupContextMenu } from "./GraphGroupContextMenu";
 import { GraphNode } from "./GraphNode";
 import { GraphNodeContextMenu } from "./GraphNodeContextMenu";
+import { GroupNode } from "./GroupNode";
 import { InitialFitView } from "./InitialFitView";
 import {
   VirtualConnectionLine,
   type VirtualHandle,
 } from "./VirtualConnectionLine";
 
-const nodeTypes: NodeTypes = { graph: GraphNode };
+const nodeTypes: NodeTypes = { graph: GraphNode, graphGroup: GroupNode };
 const edgeTypes: EdgeTypes = { graph: GraphEdge };
+
+/** MiniMap でのグループコンテナの塗り色 */
+const GROUP_MINIMAP_COLOR = "#d4d4d8";
 
 // React Flow の既定値（50%）だと、広い会場グラフを fitView しても
 // 下限で止まり、端のノードが画面外に残る。
@@ -63,21 +70,29 @@ export type GraphCanvasEditing = {
   isValidConnection: (connection: Connection | GraphEdgeType) => boolean;
   onSetEdgeDirection: (id: string, direction: "both" | "oneway") => void;
   onReverseEdge: (id: string) => void;
-  onSetNodeType: (id: string, type: GraphNodeType["data"]["nodeType"]) => void;
+  onSetNodeType: (id: string, type: NodeType) => void;
   onSetNodeLabel: (id: string, label: string) => void;
   onAddNodeAtPosition: (
     position: { x: number; y: number },
     nodeType?: NodeType,
   ) => void;
+  onAddGroupAtPosition: (position: { x: number; y: number }) => void;
   onDeleteNode: (id: string) => void;
   onDeleteEdge: (id: string) => void;
+  /** ドラッグ終了時に、位置に応じた所属グループの付け替えを行う */
+  onNodeDragStop: (ids: string[]) => void;
+  /** グループの手動リサイズ確定（最小サイズとして保存し、フィットし直す） */
+  onGroupResizeEnd: (
+    id: string,
+    size: { width: number; height: number },
+  ) => void;
 };
 
 export type GraphCanvasProps = {
-  nodes: GraphNodeType[];
+  nodes: GraphCanvasNode[];
   edges: GraphEdgeType[];
   /** 寸法計測・選択状態の反映に必要なため、表示専用でも受け取る */
-  onNodesChange: (changes: NodeChange<GraphNodeType>[]) => void;
+  onNodesChange: (changes: NodeChange<GraphCanvasNode>[]) => void;
   onEdgesChange: (changes: EdgeChange<GraphEdgeType>[]) => void;
   onSelectNode: (id: string) => void;
   onSelectEdge: (id: string) => void;
@@ -210,7 +225,7 @@ export function GraphCanvas({
   );
 
   const connectionLineComponent = useCallback(
-    (props: ConnectionLineComponentProps<GraphNodeType>) =>
+    (props: ConnectionLineComponentProps<GraphCanvasNode>) =>
       (virtualHandle || easyConnect.active) && editing ? (
         <VirtualConnectionLine
           {...props}
@@ -248,6 +263,7 @@ export function GraphCanvas({
           nodePosition={contextMenu.canvasMenu.nodePosition}
           nodeType="GOAL_TRANSIT_MIXED"
           onAddNode={editing.onAddNodeAtPosition}
+          onAddGroup={editing.onAddGroupAtPosition}
           isEdgeCreationActive={easyConnect.active}
           onStartEdgeCreation={easyConnect.startGlobal}
           onEndEdgeCreation={easyConnect.end}
@@ -267,76 +283,104 @@ export function GraphCanvas({
         />
       ) : null}
       {contextMenu.menuNode && editing && contextMenu.menu ? (
-        <GraphNodeContextMenu
-          node={contextMenu.menuNode}
-          nodes={nodes}
-          edges={edges}
-          position={contextMenu.menu}
-          onSetType={editing.onSetNodeType}
-          onStartEdgeCreation={startEasyConnectFromNode}
-          onDelete={editing.onDeleteNode}
-          onClose={contextMenu.close}
-        />
+        isGroupNode(contextMenu.menuNode) ? (
+          <GraphGroupContextMenu
+            group={contextMenu.menuNode}
+            position={contextMenu.menu}
+            onDissolve={editing.onDeleteNode}
+            onClose={contextMenu.close}
+          />
+        ) : (
+          <GraphNodeContextMenu
+            node={contextMenu.menuNode}
+            nodes={nodes}
+            edges={edges}
+            position={contextMenu.menu}
+            onSetType={editing.onSetNodeType}
+            onStartEdgeCreation={startEasyConnectFromNode}
+            onDelete={editing.onDeleteNode}
+            onClose={contextMenu.close}
+          />
+        )
       ) : null}
       <GraphNodeEasyConnectContext.Provider value={easyConnect.mode}>
-        <GraphNodeLabelEditingContext.Provider value={editing?.onSetNodeLabel}>
-          <ReactFlow
-            nodes={displayNodes}
-            edges={edges}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={editable ? handleConnect : undefined}
-            onConnectStart={editable ? handleConnectStart : undefined}
-            onConnectEnd={editable ? handleConnectEnd : undefined}
-            connectionLineComponent={
-              virtualHandle || easyConnect.active
-                ? connectionLineComponent
-                : undefined
-            }
-            isValidConnection={editing?.isValidConnection}
-            // 表示専用のときは選択だけを許し、構造を変える操作は塞ぐ
-            nodesDraggable={editable && !easyConnect.active}
-            nodesConnectable={editable}
-            deleteKeyCode={editable ? ["Delete", "Backspace"] : null}
-            onNodeClick={(_, n) => onSelectNode(n.id)}
-            onNodeContextMenu={editable ? contextMenu.openNodeMenu : undefined}
-            onEdgeClick={(_, e) => onSelectEdge(e.id)}
-            onEdgeContextMenu={editable ? contextMenu.openEdgeMenu : undefined}
-            onPaneClick={handlePaneClick}
-            onPaneContextMenu={editable ? contextMenu.openPaneMenu : undefined}
-            connectionMode={ConnectionMode.Loose}
-            connectionRadius={CONNECTION_PREVIEW_RADIUS}
-            minZoom={MIN_ZOOM}
-            fitView
-            fitViewOptions={FIT_VIEW_OPTIONS}
+        <GroupResizeCommitContext.Provider value={editing?.onGroupResizeEnd}>
+          <GraphNodeLabelEditingContext.Provider
+            value={editing?.onSetNodeLabel}
           >
-            <InitialFitView
-              hasNodes={nodes.length > 0}
-              options={FIT_VIEW_OPTIONS}
-            />
-            {easyConnect.active ? (
-              <EasyConnectPanel
-                fromNode={easyConnect.mode?.kind === "from-node"}
-                onEnd={easyConnect.end}
-              />
-            ) : null}
-            <Background gap={20} size={1} />
-            <Controls
-              position="bottom-right"
-              showInteractive={editable}
-              fitViewOptions={FIT_VIEW_OPTIONS}
-            />
-            <MiniMap
-              pannable
-              zoomable
-              nodeColor={(n: GraphNodeType) =>
-                getNodeTypeDef(n.data?.nodeType ?? DEFAULT_NODE_TYPE).color
+            <ReactFlow
+              nodes={displayNodes}
+              edges={edges}
+              nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={editable ? handleConnect : undefined}
+              onConnectStart={editable ? handleConnectStart : undefined}
+              onConnectEnd={editable ? handleConnectEnd : undefined}
+              onNodeDragStop={
+                editable
+                  ? (_, __, draggedNodes) =>
+                      editing?.onNodeDragStop(draggedNodes.map((n) => n.id))
+                  : undefined
               }
-            />
-          </ReactFlow>
-        </GraphNodeLabelEditingContext.Provider>
+              connectionLineComponent={
+                virtualHandle || easyConnect.active
+                  ? connectionLineComponent
+                  : undefined
+              }
+              isValidConnection={editing?.isValidConnection}
+              // 表示専用のときは選択だけを許し、構造を変える操作は塞ぐ
+              nodesDraggable={editable && !easyConnect.active}
+              nodesConnectable={editable}
+              deleteKeyCode={editable ? ["Delete", "Backspace"] : null}
+              onNodeClick={(_, n) => onSelectNode(n.id)}
+              onNodeContextMenu={
+                editable ? contextMenu.openNodeMenu : undefined
+              }
+              onEdgeClick={(_, e) => onSelectEdge(e.id)}
+              onEdgeContextMenu={
+                editable ? contextMenu.openEdgeMenu : undefined
+              }
+              onPaneClick={handlePaneClick}
+              onPaneContextMenu={
+                editable ? contextMenu.openPaneMenu : undefined
+              }
+              connectionMode={ConnectionMode.Loose}
+              connectionRadius={CONNECTION_PREVIEW_RADIUS}
+              minZoom={MIN_ZOOM}
+              fitView
+              fitViewOptions={FIT_VIEW_OPTIONS}
+            >
+              <InitialFitView
+                hasNodes={nodes.length > 0}
+                options={FIT_VIEW_OPTIONS}
+              />
+              {easyConnect.active ? (
+                <EasyConnectPanel
+                  fromNode={easyConnect.mode?.kind === "from-node"}
+                  onEnd={easyConnect.end}
+                />
+              ) : null}
+              <Background gap={20} size={1} />
+              <Controls
+                position="bottom-right"
+                showInteractive={editable}
+                fitViewOptions={FIT_VIEW_OPTIONS}
+              />
+              <MiniMap
+                pannable
+                zoomable
+                nodeColor={(n: GraphCanvasNode) =>
+                  isPointNode(n)
+                    ? getNodeTypeDef(n.data?.nodeType ?? DEFAULT_NODE_TYPE)
+                        .color
+                    : GROUP_MINIMAP_COLOR
+                }
+              />
+            </ReactFlow>
+          </GraphNodeLabelEditingContext.Provider>
+        </GroupResizeCommitContext.Provider>
       </GraphNodeEasyConnectContext.Provider>
     </div>
   );

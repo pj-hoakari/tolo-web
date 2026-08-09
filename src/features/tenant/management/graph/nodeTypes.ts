@@ -1,12 +1,13 @@
 import type { Messages } from "next-intl";
 import type {
   EdgeDirection,
+  GraphCanvasNode,
   GraphEdgeType,
-  GraphNodeType,
   GraphNotice,
   NodeType,
   NoticeLevel,
 } from "./type";
+import { isPointNode } from "./type";
 
 export type NodeRole = "in" | "out";
 
@@ -25,8 +26,8 @@ export type NoticeTranslator = (messageKey: NoticeMessageKey) => string;
 export type NodeValidationContext = {
   nodeId: string;
   roles: ReadonlySet<NodeRole>;
-  /** グラフ全体のノード */
-  nodes: GraphNodeType[];
+  /** グラフ全体のノード（グループコンテナを含む） */
+  nodes: GraphCanvasNode[];
   /** 検証対象のエッジ集合 */
   edges: GraphEdgeType[];
 };
@@ -169,7 +170,7 @@ export function collectNodeTypeNotices(
 
 function contextFor(
   nodeId: string,
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   edges: GraphEdgeType[],
 ): NodeValidationContext {
   return { nodeId, roles: nodeRoles(nodeId, edges), nodes, edges };
@@ -178,12 +179,12 @@ function contextFor(
 /** 指定エッジ集合の下で、対象ノード群が各自の現タイプの制約を満たすか */
 function validateEndpoints(
   nodeIds: Iterable<string>,
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   edges: GraphEdgeType[],
 ): ValidationResult {
   for (const nodeId of new Set(nodeIds)) {
     const node = nodes.find((n) => n.id === nodeId);
-    if (node) {
+    if (node && isPointNode(node)) {
       const result = validateNodeType(
         node.data.nodeType,
         contextFor(nodeId, nodes, edges),
@@ -200,7 +201,7 @@ function validateEndpoints(
 export function validateAssignType(
   type: NodeType,
   nodeId: string,
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   edges: GraphEdgeType[],
 ): ValidationResult {
   return validateNodeType(type, contextFor(nodeId, nodes, edges));
@@ -209,11 +210,11 @@ export function validateAssignType(
 /** 指定ノードの現タイプ・接続状況で該当する通知を収集 */
 export function collectNodeNotices(
   nodeId: string,
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   edges: GraphEdgeType[],
 ): GraphNotice[] {
   const node = nodes.find((n) => n.id === nodeId);
-  if (!node) return [];
+  if (!node || !isPointNode(node)) return [];
   return collectNodeTypeNotices(
     node.data.nodeType,
     contextFor(nodeId, nodes, edges),
@@ -225,10 +226,11 @@ export function collectNodeNotices(
  * （handles と同様の派生情報。永続化時には除外される）
  */
 export function deriveNodeNotices(
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   edges: GraphEdgeType[],
-): GraphNodeType[] {
+): GraphCanvasNode[] {
   return nodes.map((n) => {
+    if (!isPointNode(n)) return n;
     const notices = collectNodeNotices(n.id, nodes, edges);
     if (notices.length === 0) return n;
     return { ...n, data: { ...n.data, notices } };
@@ -242,7 +244,7 @@ export function deriveNodeNotices(
 export function resolveConnectionDirection(
   source: string,
   target: string,
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   edges: GraphEdgeType[],
 ): EdgeDirection | null {
   const candidates: EdgeDirection[] = ["both", "oneway"];
@@ -265,7 +267,7 @@ export function resolveConnectionDirection(
 export function validateEdgeDirection(
   edge: GraphEdgeType,
   direction: EdgeDirection,
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   edges: GraphEdgeType[],
 ): ValidationResult {
   const next = edges.map((e) =>
@@ -279,7 +281,7 @@ export function validateEdgeDirection(
 /** エッジの向きを反転しても、両端の現タイプ制約を満たすか */
 export function validateReverseEdge(
   edge: GraphEdgeType,
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   edges: GraphEdgeType[],
 ): ValidationResult {
   const reversed = edges.map((e) =>

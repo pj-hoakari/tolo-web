@@ -1,5 +1,5 @@
 import type { Connection, Viewport, XYPosition } from "@xyflow/react";
-import type { GraphNodeType } from "../type";
+import type { GraphCanvasNode } from "../type";
 import { findConnectionPreview, toFlowPosition } from "./connectionPreview";
 
 /**
@@ -51,7 +51,7 @@ export function planFromNodeRelease(params: {
   /** リリース時のスクリーン座標。取得できない（タッチ等）場合は null */
   releasePoint: XYPosition | null;
   viewport: Viewport;
-  nodes: GraphNodeType[];
+  nodes: GraphCanvasNode[];
   sourceNodeId: string;
 }): FromNodeReleasePlan {
   const { pointer, releasePoint, viewport, nodes, sourceNodeId } = params;

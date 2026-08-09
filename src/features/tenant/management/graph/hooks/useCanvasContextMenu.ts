@@ -1,6 +1,6 @@
 import { useReactFlow, type XYPosition } from "@xyflow/react";
 import { useCallback, useMemo, useState } from "react";
-import type { GraphEdgeType, GraphNodeType } from "../type";
+import type { GraphCanvasNode, GraphEdgeType } from "../type";
 
 export type CanvasContextMenuState =
   | { kind: "edge"; elementId: string; x: number; y: number }
@@ -10,12 +10,12 @@ export type CanvasContextMenuState =
 export type CanvasContextMenuApi = {
   menu: CanvasContextMenuState | null;
   /** ノードメニューの対象。ノードメニューが開いていないときは undefined */
-  menuNode: GraphNodeType | undefined;
+  menuNode: GraphCanvasNode | undefined;
   /** エッジメニューの対象。エッジメニューが開いていないときは undefined */
   menuEdge: GraphEdgeType | undefined;
   /** 背景メニューの状態。開いていないときは undefined */
   canvasMenu: Extract<CanvasContextMenuState, { kind: "canvas" }> | undefined;
-  openNodeMenu: (event: React.MouseEvent, node: GraphNodeType) => void;
+  openNodeMenu: (event: React.MouseEvent, node: GraphCanvasNode) => void;
   openEdgeMenu: (event: React.MouseEvent, edge: GraphEdgeType) => void;
   openPaneMenu: (event: MouseEvent | React.MouseEvent) => void;
   close: () => void;
@@ -33,19 +33,22 @@ export function useCanvasContextMenu({
   onSelectEdge,
   onClearSelection,
 }: {
-  nodes: GraphNodeType[];
+  nodes: GraphCanvasNode[];
   edges: GraphEdgeType[];
   onSelectNode: (id: string) => void;
   onSelectEdge: (id: string) => void;
   onClearSelection: () => void;
 }): CanvasContextMenuApi {
-  const { screenToFlowPosition } = useReactFlow<GraphNodeType, GraphEdgeType>();
+  const { screenToFlowPosition } = useReactFlow<
+    GraphCanvasNode,
+    GraphEdgeType
+  >();
   const [menu, setMenu] = useState<CanvasContextMenuState | null>(null);
 
   const close = useCallback(() => setMenu(null), []);
 
   const openNodeMenu = useCallback(
-    (event: React.MouseEvent, node: GraphNodeType) => {
+    (event: React.MouseEvent, node: GraphCanvasNode) => {
       event.preventDefault();
       event.stopPropagation();
       onSelectNode(node.id);

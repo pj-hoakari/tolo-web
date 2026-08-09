@@ -11,3 +11,11 @@ export const GraphNodeLabelEditingContext = createContext<
 /** ルート追加モードの状態を各ノードへ伝えるコンテキスト。 */
 export const GraphNodeEasyConnectContext =
   createContext<EasyConnectMode | null>(null);
+
+/**
+ * グループの手動リサイズ確定（NodeResizer の onResizeEnd）を
+ * 編集キャンバスへ伝えるコールバック。表示専用では undefined。
+ */
+export const GroupResizeCommitContext = createContext<
+  ((id: string, size: { width: number; height: number }) => void) | undefined
+>(undefined);

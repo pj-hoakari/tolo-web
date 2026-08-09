@@ -11,6 +11,7 @@ const meta = {
   tags: ["autodocs"],
   args: {
     onAddNode: () => {},
+    onAddGroup: () => {},
     onSave: () => {},
   },
 } satisfies Meta<typeof GraphEditorToolbar>;

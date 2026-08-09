@@ -1,5 +1,5 @@
 import type { XYPosition } from "@xyflow/react";
-import { MapPinPlus, Route, X } from "lucide-react";
+import { MapPinPlus, Route, SquareDashed, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Menu, MenuItem } from "@/components/ui/menu";
 import type { NodeType } from "../type";
@@ -13,6 +13,7 @@ export type GraphCanvasContextMenuProps = {
   nodePosition: XYPosition;
   nodeType: NodeType;
   onAddNode: (position: XYPosition, nodeType: NodeType) => void;
+  onAddGroup: (position: XYPosition) => void;
   isEdgeCreationActive: boolean;
   onStartEdgeCreation: () => void;
   onEndEdgeCreation: () => void;
@@ -25,6 +26,7 @@ export function GraphCanvasContextMenu({
   nodePosition,
   nodeType,
   onAddNode,
+  onAddGroup,
   isEdgeCreationActive,
   onStartEdgeCreation,
   onEndEdgeCreation,
@@ -63,6 +65,17 @@ export function GraphCanvasContextMenu({
             >
               <MapPinPlus aria-hidden className="size-4 shrink-0" />
               {t("addNode")}
+            </MenuItem>
+            <MenuItem
+              id="add-group"
+              textValue={t("addGroup")}
+              onAction={() => {
+                onAddGroup(nodePosition);
+                onClose();
+              }}
+            >
+              <SquareDashed aria-hidden className="size-4 shrink-0" />
+              {t("addGroup")}
             </MenuItem>
             <MenuItem
               id="add-edge"

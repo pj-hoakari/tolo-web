@@ -1,10 +1,13 @@
 import type {
+  GraphCanvasNode,
   GraphEdgeType,
   GraphNodeType,
   HandleSide,
   HandleSlot,
   NodeHandles,
 } from "../type";
+import { isPointNode } from "../type";
+import { withAbsolutePositions } from "./groups";
 
 /** ノードの4辺の一覧。描画・走査の順序もこの並びに揃える。 */
 export const SIDES: HandleSide[] = ["top", "right", "bottom", "left"];
@@ -41,9 +44,9 @@ export function makeHandleId(side: HandleSide, index: number): string {
 }
 
 export function deriveNodeHandles(
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   edges: GraphEdgeType[],
-): GraphNodeType[] {
+): GraphCanvasNode[] {
   const usedByNode = new Map<string, Record<HandleSide, Set<number>>>();
   for (const n of nodes) {
     usedByNode.set(n.id, {
@@ -66,6 +69,8 @@ export function deriveNodeHandles(
   }
 
   return nodes.map((n) => {
+    // グループコンテナはルートの端点にならないためハンドルを持たない
+    if (!isPointNode(n)) return n;
     const used = usedByNode.get(n.id);
     const handles: NodeHandles = { top: [], right: [], bottom: [], left: [] };
     for (const side of SIDES) {
@@ -95,12 +100,13 @@ export function deriveNodeHandles(
  * 同じ間隔で再配置される。
  */
 export function addVirtualHandle(
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   nodeId: string,
   side: HandleSide,
-): GraphNodeType[] {
+): GraphCanvasNode[] {
   return nodes.map((node) => {
-    if (node.id !== nodeId || !node.data.handles) return node;
+    if (node.id !== nodeId || !isPointNode(node) || !node.data.handles)
+      return node;
 
     const existing = node.data.handles[side];
     const total = existing.length + 1;
@@ -201,10 +207,16 @@ type Attach = {
  * sourceHandle / targetHandle を再計算したエッジ配列を返す
  */
 export function assignHandlesByPosition(
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   edges: GraphEdgeType[],
 ): GraphEdgeType[] {
-  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  // グループ内のノードは position が親相対のため、絶対座標へ直してから
+  // ノード間の位置関係（接続辺・並び順）を計算する
+  const nodeById = new Map(
+    withAbsolutePositions(nodes)
+      .filter(isPointNode)
+      .map((node) => [node.id, node]),
+  );
 
   const sideByEdge = new Map<
     string,

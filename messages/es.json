@@ -35,7 +35,8 @@
     },
     "selectionKind": {
       "node": "Punto",
-      "edge": "Ruta"
+      "edge": "Ruta",
+      "group": "Grupo"
     },
     "observationLink": {
       "title": "Vinculación de puntos de observación",
@@ -66,7 +67,9 @@
       "title": "Editor del recinto",
       "addNode": "Añadir {type}",
       "save": "Guardar",
-      "newNodeLabel": "Punto {index}"
+      "newNodeLabel": "Punto {index}",
+      "addGroup": "Añadir grupo",
+      "newGroupLabel": "Grupo {index}"
     },
     "easyConnect": {
       "fromNode": "Añadir ruta: haz clic en el punto final",
@@ -87,7 +90,10 @@
       "setOneway": "Convertir en unidireccional ({source} → {target})",
       "setBoth": "Convertir en bidireccional",
       "reverse": "Invertir el sentido ({target} → {source})",
-      "deleteEdge": "Eliminar esta ruta"
+      "deleteEdge": "Eliminar esta ruta",
+      "addGroup": "Añadir grupo",
+      "groupLabel": "Acciones del grupo «{label}»",
+      "dissolveGroup": "Desagrupar (mantener contenido)"
     },
     "properties": {
       "title": "Propiedades",
@@ -99,7 +105,9 @@
       "direction": "Sentido",
       "both": "Bidireccional ⇌",
       "oneway": "Unidireccional →",
-      "reverse": "Invertir el sentido (inicio ↔ fin)"
+      "reverse": "Invertir el sentido (inicio ↔ fin)",
+      "dissolveGroup": "Desagrupar",
+      "groupHint": "Una agrupación lógica para la gestión, como una planta o un edificio. Arrastra los puntos para meterlos o sacarlos. Al desagrupar, los puntos se conservan."
     },
     "node": {
       "editLabel": "Editar la etiqueta de «{label}»",

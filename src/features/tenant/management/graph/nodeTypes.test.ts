@@ -6,10 +6,12 @@ import {
 } from "./nodeTypes";
 import type {
   EdgeDirection,
+  GraphCanvasNode,
   GraphEdgeType,
   GraphNodeType,
   NodeType,
 } from "./type";
+import { isPointNode } from "./type";
 
 function node(id: string, nodeType: NodeType): GraphNodeType {
   return {
@@ -27,6 +29,11 @@ function edge(
   direction: EdgeDirection,
 ): GraphEdgeType {
   return { id, source, target, type: "graph", data: { direction } };
+}
+
+/** ポイントの data を取り出す（グループには存在しないフィールドの検証用） */
+function pointDataOf(node: GraphCanvasNode | undefined) {
+  return node && isPointNode(node) ? node.data : undefined;
 }
 
 describe("collectNodeNotices: 入退出点の強調", () => {
@@ -79,8 +86,8 @@ describe("deriveNodeNotices: 派生情報の注入", () => {
     const boundary = derived.find((n) => n.id === "b");
     const transit = derived.find((n) => n.id === "h");
 
-    expect(boundary?.data.notices).toHaveLength(1);
-    expect(transit?.data.notices).toBeUndefined();
+    expect(pointDataOf(boundary)?.notices).toHaveLength(1);
+    expect(pointDataOf(transit)?.notices).toBeUndefined();
   });
 });
 

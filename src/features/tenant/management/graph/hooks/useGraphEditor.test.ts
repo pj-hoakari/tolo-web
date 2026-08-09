@@ -4,11 +4,14 @@ import type { Connection } from "@xyflow/react";
 import { describe, expect, it } from "vitest";
 import { IntlTestProvider } from "@/test/IntlTestProvider";
 import type {
+  GraphCanvasNode,
   GraphData,
   GraphEdgeType,
   GraphNodeType,
   HandleSide,
 } from "../type";
+import { isPointNode } from "../type";
+import { absolutePositionOf } from "../utils/groups";
 import { parseHandleId } from "../utils/handles";
 import { collectObservationPointIds } from "../utils/observationPoints";
 import { useGraphEditor } from "./useGraphEditor";
@@ -32,8 +35,10 @@ function connection(source: string, target: string): Connection {
   return { source, target, sourceHandle: null, targetHandle: null };
 }
 
-function slotsOf(nodes: GraphNodeType[], nodeId: string, side: HandleSide) {
-  return nodes.find((n) => n.id === nodeId)?.data.handles?.[side] ?? [];
+function slotsOf(nodes: GraphCanvasNode[], nodeId: string, side: HandleSide) {
+  const found = nodes.find((n) => n.id === nodeId);
+  if (!found || !isPointNode(found)) return [];
+  return found.data.handles?.[side] ?? [];
 }
 
 describe("useGraphEditor: 同一ポイント間の複数ルート", () => {
@@ -150,7 +155,8 @@ describe("useGraphEditor: ノードタイプのコンテキスト操作", () => 
       result.current.canvas.editing.onSetNodeType("n1", "TRANSIT_ONLY");
     });
 
-    expect(result.current.canvas.nodes[0].data.nodeType).toBe("TRANSIT_ONLY");
+    const first = result.current.canvas.nodes[0];
+    expect(isPointNode(first) && first.data.nodeType).toBe("TRANSIT_ONLY");
   });
 });
 
@@ -307,5 +313,151 @@ describe("useGraphEditor: 観測点の紐づけとグラフの整合", () => {
     expect(collectObservationPointIds(nodes, edges)).toEqual(
       new Set(["cam-2", "cam-e1"]),
     );
+  });
+});
+
+describe("useGraphEditor: グループ（論理グルーピング）", () => {
+  it("グループ内の位置に追加したポイントはグループに属する", () => {
+    const initial: GraphData = {
+      nodes: [
+        {
+          id: "g1",
+          type: "graphGroup",
+          position: { x: 100, y: 100 },
+          width: 400,
+          height: 300,
+          data: { label: "1F" },
+        },
+      ],
+      edges: [],
+    };
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+
+    act(() => {
+      // グループの内側（絶対座標）
+      result.current.canvas.editing.onAddNodeAtPosition({ x: 200, y: 200 });
+    });
+
+    const nodes = result.current.canvas.nodes;
+    const added = nodes.find((n) => isPointNode(n));
+    expect(added?.parentId).toBe("g1");
+    // 親相対に変換され、グループの自動フィット後も絶対位置は変わらない
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    expect(added && absolutePositionOf(added, byId)).toEqual({
+      x: 200,
+      y: 200,
+    });
+  });
+
+  it("グループを削除しても中のポイントは残り、トップレベルへ戻る", () => {
+    const initial: GraphData = {
+      nodes: [
+        {
+          id: "g1",
+          type: "graphGroup",
+          position: { x: 100, y: 100 },
+          width: 400,
+          height: 300,
+          data: { label: "1F" },
+        },
+        {
+          id: "n1",
+          type: "graph",
+          parentId: "g1",
+          position: { x: 50, y: 60 },
+          data: { label: "ポイント", nodeType: "GOAL_TRANSIT_MIXED" },
+        },
+      ],
+      edges: [],
+    };
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+
+    act(() => {
+      result.current.canvas.editing.onDeleteNode("g1");
+    });
+
+    const nodes = result.current.canvas.nodes;
+    expect(nodes.map((n) => n.id)).toEqual(["n1"]);
+    expect(nodes[0].parentId).toBeUndefined();
+    expect(nodes[0].position).toEqual({ x: 150, y: 160 });
+  });
+
+  it("ドラッグ終了時にグループの外へ出すと所属が解除される", () => {
+    const initial: GraphData = {
+      nodes: [
+        {
+          id: "g1",
+          type: "graphGroup",
+          position: { x: 100, y: 100 },
+          width: 400,
+          height: 300,
+          data: { label: "1F" },
+        },
+        {
+          id: "n1",
+          type: "graph",
+          parentId: "g1",
+          position: { x: 50, y: 60 },
+          data: { label: "ポイント", nodeType: "GOAL_TRANSIT_MIXED" },
+        },
+      ],
+      edges: [],
+    };
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+
+    // グループ範囲外（相対座標で大きく右下）へ移動してからドロップ
+    act(() => {
+      result.current.canvas.onNodesChange([
+        {
+          id: "n1",
+          type: "position",
+          position: { x: 700, y: 700 },
+          dragging: false,
+        },
+      ]);
+    });
+    act(() => {
+      result.current.canvas.editing.onNodeDragStop(["n1"]);
+    });
+
+    const moved = result.current.canvas.nodes.find((n) => n.id === "n1");
+    expect(moved?.parentId).toBeUndefined();
+    // 絶対座標 = 旧親(100,100) + 相対(700,700)
+    expect(moved?.position).toEqual({ x: 800, y: 800 });
+  });
+
+  it("グループはルートの端点にできない", () => {
+    const initial: GraphData = {
+      nodes: [
+        {
+          id: "g1",
+          type: "graphGroup",
+          position: { x: 500, y: 500 },
+          width: 200,
+          height: 200,
+          data: { label: "1F" },
+        },
+        node("n1", 0, 0),
+      ],
+      edges: [],
+    };
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+
+    expect(
+      result.current.canvas.editing.isValidConnection(connection("n1", "g1")),
+    ).toBe(false);
+
+    act(() => {
+      result.current.canvas.editing.onConnect(connection("n1", "g1"));
+    });
+    expect(result.current.canvas.edges).toHaveLength(0);
   });
 });

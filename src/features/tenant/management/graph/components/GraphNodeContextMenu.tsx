@@ -8,7 +8,12 @@ import {
   MenuSection,
   MenuSeparator,
 } from "@/components/ui/menu";
-import type { GraphEdgeType, GraphNodeType, NodeType } from "../type";
+import type {
+  GraphCanvasNode,
+  GraphEdgeType,
+  GraphNodeType,
+  NodeType,
+} from "../type";
 import {
   ContextMenuPopover,
   type ContextMenuPosition,
@@ -18,7 +23,7 @@ import { buildNodeTypeOptions } from "./properties/nodeTypeOptions";
 
 export type GraphNodeContextMenuProps = {
   node: GraphNodeType;
-  nodes: GraphNodeType[];
+  nodes: GraphCanvasNode[];
   edges: GraphEdgeType[];
   position: ContextMenuPosition;
   onSetType: (id: string, type: NodeType) => void;

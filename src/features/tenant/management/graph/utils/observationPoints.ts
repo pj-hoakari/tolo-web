@@ -1,4 +1,5 @@
-import type { GraphEdgeType, GraphNodeType } from "../type";
+import type { GraphCanvasNode, GraphEdgeType } from "../type";
+import { isPointNode } from "../type";
 
 /**
  * ノード/ルートに紐づけ済みの観測点 ID をすべて集めた集合。
@@ -6,11 +7,12 @@ import type { GraphEdgeType, GraphNodeType } from "../type";
  * 使用状況を別途状態として持たない。
  */
 export function collectObservationPointIds(
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   edges: GraphEdgeType[],
 ): Set<string> {
   const ids = new Set<string>();
   for (const n of nodes) {
+    if (!isPointNode(n)) continue;
     for (const id of n.data.observationPointIds ?? []) ids.add(id);
   }
   for (const e of edges) {

@@ -4,7 +4,7 @@ import {
   type ValidationResult,
   validateAssignType,
 } from "../../nodeTypes";
-import type { GraphEdgeType, GraphNodeType, NodeType } from "../../type";
+import type { GraphCanvasNode, GraphEdgeType, NodeType } from "../../type";
 
 /** ノードタイプ選択肢1件分の選択可否 */
 export type NodeTypeOption = {
@@ -38,7 +38,7 @@ export function deriveNodeTypeOption(
 export function buildNodeTypeOptions(
   nodeId: string,
   currentType: NodeType,
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   edges: GraphEdgeType[],
   translateNotice: NoticeTranslator,
 ): NodeTypeOption[] {

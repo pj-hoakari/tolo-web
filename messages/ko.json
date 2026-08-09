@@ -35,7 +35,8 @@
     },
     "selectionKind": {
       "node": "지점",
-      "edge": "경로"
+      "edge": "경로",
+      "group": "그룹"
     },
     "observationLink": {
       "title": "관측점 연결",
@@ -66,7 +67,9 @@
       "title": "행사장 편집기",
       "addNode": "{type} 추가",
       "save": "저장",
-      "newNodeLabel": "지점 {index}"
+      "newNodeLabel": "지점 {index}",
+      "addGroup": "그룹 추가",
+      "newGroupLabel": "그룹 {index}"
     },
     "easyConnect": {
       "fromNode": "경로 추가: 끝점으로 사용할 지점을 클릭하세요",
@@ -87,7 +90,10 @@
       "setOneway": "일방통행으로 변경 ({source} → {target})",
       "setBoth": "양방향 통행으로 변경",
       "reverse": "방향 반전 ({target} → {source})",
-      "deleteEdge": "이 경로 삭제"
+      "deleteEdge": "이 경로 삭제",
+      "addGroup": "그룹 추가",
+      "groupLabel": "그룹 “{label}” 작업",
+      "dissolveGroup": "그룹 해제(내용 유지)"
     },
     "properties": {
       "title": "속성",
@@ -99,7 +105,9 @@
       "direction": "방향",
       "both": "양방향 ⇌",
       "oneway": "일방향 →",
-      "reverse": "방향 반전 (시작 ↔ 끝)"
+      "reverse": "방향 반전 (시작 ↔ 끝)",
+      "dissolveGroup": "그룹 해제",
+      "groupHint": "층이나 건물 같은 관리용 묶음입니다. 포인트를 드래그하여 넣거나 뺄 수 있습니다. 해제해도 안의 포인트는 남습니다."
     },
     "node": {
       "editLabel": "「{label}」의 라벨 편집",

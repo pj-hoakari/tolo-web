@@ -1,19 +1,23 @@
 import type { EdgeChange, NodeChange } from "@xyflow/react";
 import type {
   EdgeDirection,
+  GraphCanvasNode,
   GraphEdgeData,
   GraphEdgeType,
   GraphNodeData,
   GraphNodeType,
+  GroupNodeType,
   NodeType,
 } from "../type";
+import { isPointNode } from "../type";
+import { GROUP_DEFAULT_HEIGHT, GROUP_DEFAULT_WIDTH } from "./groups";
 
 /** data を持たないエッジに補う既定の通行方向 */
 const DEFAULT_DIRECTION: EdgeDirection = "both";
 
 /** 変更セットのうち削除されたものの ID を集める */
 export function removedIds(
-  changes: (NodeChange<GraphNodeType> | EdgeChange<GraphEdgeType>)[],
+  changes: (NodeChange<GraphCanvasNode> | EdgeChange<GraphEdgeType>)[],
 ): string[] {
   return changes.flatMap((change) =>
     change.type === "remove" ? [change.id] : [],
@@ -34,6 +38,23 @@ export function createNode(params: {
   };
 }
 
+export function createGroup(params: {
+  id: string;
+  label: string;
+  position: { x: number; y: number };
+  width?: number;
+  height?: number;
+}): GroupNodeType {
+  return {
+    id: params.id,
+    type: "graphGroup",
+    position: params.position,
+    width: params.width ?? GROUP_DEFAULT_WIDTH,
+    height: params.height ?? GROUP_DEFAULT_HEIGHT,
+    data: { label: params.label },
+  };
+}
+
 export function createEdge(params: {
   id: string;
   source: string;
@@ -51,15 +72,22 @@ export function createEdge(params: {
   };
 }
 
-/** 指定ノードの data を部分更新した新しい配列を返す */
+/**
+ * 指定ノードの data を部分更新した新しい配列を返す。
+ * グループコンテナにはポイント固有のフィールドがないため、ラベルのみ反映する。
+ */
 export function patchNodeData(
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   id: string,
   patch: Partial<GraphNodeData>,
-): GraphNodeType[] {
-  return nodes.map((n) =>
-    n.id === id ? { ...n, data: { ...n.data, ...patch } } : n,
-  );
+): GraphCanvasNode[] {
+  return nodes.map((n) => {
+    if (n.id !== id) return n;
+    if (isPointNode(n)) return { ...n, data: { ...n.data, ...patch } };
+    return patch.label !== undefined
+      ? { ...n, data: { ...n.data, label: patch.label } }
+      : n;
+  });
 }
 
 /** 指定エッジの data を部分更新した新しい配列を返す */
@@ -89,9 +117,9 @@ export function reverseEdgeById(
 }
 
 export function withoutNode(
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   id: string,
-): GraphNodeType[] {
+): GraphCanvasNode[] {
   return nodes.filter((n) => n.id !== id);
 }
 

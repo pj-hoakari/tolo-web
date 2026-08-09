@@ -1,4 +1,6 @@
-import type { GraphData, GraphEdgeType, GraphNodeType } from "./type";
+import type { GraphCanvasNode, GraphData, GraphEdgeType } from "./type";
+import { isGroupNode } from "./type";
+import { GROUP_DEFAULT_HEIGHT, GROUP_DEFAULT_WIDTH } from "./utils/groups";
 
 /**
  * 描画用の派生情報
@@ -6,25 +8,55 @@ import type { GraphData, GraphEdgeType, GraphNodeType } from "./type";
  * を除き、永続化・API 送信に使うグラフデータへ変換
  */
 export function toGraphData(
-  nodes: GraphNodeType[],
+  nodes: GraphCanvasNode[],
   edges: GraphEdgeType[],
 ): GraphData {
   return {
-    nodes: nodes.map((n) => ({
-      id: n.id,
-      type: "graph",
-      position: {
+    nodes: nodes.map((n) => {
+      const position = {
         x: Math.round(n.position.x),
         y: Math.round(n.position.y),
-      },
-      data: {
-        label: n.data.label,
-        nodeType: n.data.nodeType,
-        ...(n.data.observationPointIds && n.data.observationPointIds.length > 0
-          ? { observationPointIds: n.data.observationPointIds }
-          : {}),
-      },
-    })),
+      };
+      const parent = n.parentId ? { parentId: n.parentId } : {};
+      if (isGroupNode(n)) {
+        return {
+          id: n.id,
+          type: "graphGroup" as const,
+          position,
+          ...parent,
+          width: Math.round(
+            n.width ?? n.measured?.width ?? GROUP_DEFAULT_WIDTH,
+          ),
+          height: Math.round(
+            n.height ?? n.measured?.height ?? GROUP_DEFAULT_HEIGHT,
+          ),
+          data: {
+            label: n.data.label,
+            // 手動リサイズの下限はフィット計算の入力なので保存する
+            ...(n.data.minWidth !== undefined
+              ? { minWidth: n.data.minWidth }
+              : {}),
+            ...(n.data.minHeight !== undefined
+              ? { minHeight: n.data.minHeight }
+              : {}),
+          },
+        };
+      }
+      return {
+        id: n.id,
+        type: "graph" as const,
+        position,
+        ...parent,
+        data: {
+          label: n.data.label,
+          nodeType: n.data.nodeType,
+          ...(n.data.observationPointIds &&
+          n.data.observationPointIds.length > 0
+            ? { observationPointIds: n.data.observationPointIds }
+            : {}),
+        },
+      };
+    }),
     edges: edges.map((e) => ({
       id: e.id,
       source: e.source,

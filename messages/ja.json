@@ -35,7 +35,8 @@
     },
     "selectionKind": {
       "node": "ポイント",
-      "edge": "ルート"
+      "edge": "ルート",
+      "group": "グループ"
     },
     "observationLink": {
       "title": "観測点の紐づけ",
@@ -66,7 +67,9 @@
       "title": "会場エディタ",
       "addNode": "{type}を追加",
       "save": "保存",
-      "newNodeLabel": "ポイント {index}"
+      "newNodeLabel": "ポイント {index}",
+      "addGroup": "グループを追加",
+      "newGroupLabel": "グループ {index}"
     },
     "easyConnect": {
       "fromNode": "ルートを追加: 終点にするポイントをクリック",
@@ -87,7 +90,10 @@
       "setOneway": "片側通行にする（{source} → {target}）",
       "setBoth": "両方向通行にする",
       "reverse": "向きを反転（{target} → {source}）",
-      "deleteEdge": "このルートを削除"
+      "deleteEdge": "このルートを削除",
+      "addGroup": "グループを追加",
+      "groupLabel": "グループ「{label}」の操作",
+      "dissolveGroup": "グループを解除（中身は残す）"
     },
     "properties": {
       "title": "プロパティ",
@@ -99,7 +105,9 @@
       "direction": "方向",
       "both": "両通行可 ⇌",
       "oneway": "片方向 →",
-      "reverse": "向きを反転（始点↔終点）"
+      "reverse": "向きを反転（始点↔終点）",
+      "dissolveGroup": "グループを解除",
+      "groupHint": "階や建物などの管理用のくくりです。ポイントをドラッグして出し入れできます。解除しても中のポイントは残ります。"
     },
     "node": {
       "editLabel": "「{label}」のラベルを編集",

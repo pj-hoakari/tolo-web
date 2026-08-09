@@ -6,7 +6,7 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 import { useEffect, useRef } from "react";
-import type { GraphEdgeType, GraphNodeType } from "../type";
+import type { GraphCanvasNode, GraphEdgeType } from "../type";
 
 /** ノードの実寸法が確定してから、初回だけグラフ全体を表示する。 */
 export function InitialFitView({
@@ -14,11 +14,11 @@ export function InitialFitView({
   options,
 }: {
   hasNodes: boolean;
-  options: FitViewOptions<GraphNodeType>;
+  options: FitViewOptions<GraphCanvasNode>;
 }) {
   const nodesInitialized = useNodesInitialized();
   const { fitView, viewportInitialized } = useReactFlow<
-    GraphNodeType,
+    GraphCanvasNode,
     GraphEdgeType
   >();
   const hasFitted = useRef(false);

@@ -6,6 +6,7 @@ import type { ObservationLinkPanelProps } from "../components/observation";
 import { PLACEHOLDER_GRAPH } from "../placeholderGraph";
 import { toGraphData } from "../serialize";
 import type { GraphData } from "../type";
+import { isPointNode } from "../type";
 import { useGraphElements } from "./useGraphElements";
 import { useGraphSelection } from "./useGraphSelection";
 
@@ -76,9 +77,10 @@ export function useGraphViewer(initial?: GraphData): GraphViewerApi {
       onClearSelection: clearSelection,
     },
     links: {
+      // 観測点を紐づけられるのはポイントのみ（グループは対象外）
       selectedNode:
         selection?.type === "node"
-          ? nodes.find((n) => n.id === selection.id)
+          ? nodes.filter(isPointNode).find((n) => n.id === selection.id)
           : undefined,
       selectedEdge:
         selection?.type === "edge"
