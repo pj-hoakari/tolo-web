@@ -301,7 +301,10 @@
       },
       "destinationsLabel": "Destinations",
       "expand": "Enlarge the map",
-      "collapse": "Shrink the map"
+      "collapse": "Shrink the map",
+      "search": "Search destination",
+      "noResults": "No results",
+      "reset": "Reset"
     },
     "floor": {
       "title": "Current floor",

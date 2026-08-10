@@ -301,7 +301,10 @@
       },
       "destinationsLabel": "Destinos",
       "expand": "Ampliar el mapa",
-      "collapse": "Reducir el mapa"
+      "collapse": "Reducir el mapa",
+      "search": "Buscar destino",
+      "noResults": "Sin resultados",
+      "reset": "Restablecer"
     },
     "floor": {
       "title": "Planta actual",
