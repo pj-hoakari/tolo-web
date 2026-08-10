@@ -464,9 +464,9 @@ describe("useGraphEditor: グループ（論理グルーピング）", () => {
 
 describe("useGraphEditor: 自動整列", () => {
   it("ツールバーの onAutoAlign で接続順に沿ってノードが整列される", () => {
-    // 接続順（n1 → n2 → n3）とばらばらの位置に置く
+    // 全体としては左→右の配置だが、縦位置はばらばらに置く
     const initial: GraphData = {
-      nodes: [node("n1", 200, 300), node("n2", 0, 0), node("n3", 100, 150)],
+      nodes: [node("n1", 0, 300), node("n2", 300, 0), node("n3", 600, 150)],
       edges: [edge("e1", "n1", "n2"), edge("e2", "n2", "n3")],
     };
     const { result } = renderHook(() => useGraphEditor(initial), {
