@@ -13,8 +13,8 @@ export function MswBootstrap({ children }: { children: ReactNode }) {
     }
     let active = true;
     void (async () => {
-      const { worker } = await import("@/mocks/browser");
-      await worker.start({ onUnhandledRequest: "bypass" });
+      const { startWorker } = await import("@/mocks/browser");
+      await startWorker();
       if (active) {
         setReady(true);
       }
