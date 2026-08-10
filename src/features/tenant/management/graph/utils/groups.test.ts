@@ -105,6 +105,12 @@ describe("resolveParentGroup: ドロップ位置からの所属解決", () => {
     expect(resolveParentGroup("p", nodes)).toBe("g1f");
   });
 
+  it("ポイントの position（=中心）で判定し、端がはみ出していても属する", () => {
+    // g1f の絶対範囲は x:0-800, y:300-700。中心 (790,690) は内側
+    const nodes = [...floors, point("p", 790, 690)];
+    expect(resolveParentGroup("p", nodes)).toBe("g1f");
+  });
+
   it("ネストしているときは最も内側（最小面積）のグループを選ぶ", () => {
     // g_inner の絶対範囲は x:400-700, y:320-520
     const nodes = [...floors, point("p", 450, 350)];
@@ -193,20 +199,20 @@ describe("fitGroupsToChildren: 子に合わせた拡縮", () => {
     const g = result.find((n) => n.id === "g");
     const p1 = result.find((n) => n.id === "p1");
 
-    // 幅 = 子の広がり + 左右余白
+    // 幅 = 子の広がり + 左右余白（ポイントの position は中心なので端は ±半サイズ）
     expect(g?.width).toBe(500 + POINT_W - 200 + GROUP_FIT_PADDING_X * 2);
     expect(g?.height).toBe(
       400 + POINT_H - 300 + GROUP_FIT_PADDING_TOP + GROUP_FIT_PADDING_BOTTOM,
     );
-    // グループ原点が子の左上 - 余白へ移動する
+    // グループ原点が子の左上（中心 - 半サイズ） - 余白へ移動する
     expect(g?.position).toEqual({
-      x: 200 - GROUP_FIT_PADDING_X,
-      y: 300 - GROUP_FIT_PADDING_TOP,
+      x: 200 - POINT_W / 2 - GROUP_FIT_PADDING_X,
+      y: 300 - POINT_H / 2 - GROUP_FIT_PADDING_TOP,
     });
     // 子は相対座標が逆補正され、絶対位置が変わらない
     expect(p1?.position).toEqual({
-      x: GROUP_FIT_PADDING_X,
-      y: GROUP_FIT_PADDING_TOP,
+      x: GROUP_FIT_PADDING_X + POINT_W / 2,
+      y: GROUP_FIT_PADDING_TOP + POINT_H / 2,
     });
     const byId = new Map(result.map((n) => [n.id, n]));
     expect(p1 && absolutePositionOf(p1, byId)).toEqual({ x: 200, y: 300 });

@@ -6,7 +6,7 @@ import type {
   HandleSlot,
   NodeHandles,
 } from "../type";
-import { isPointNode } from "../type";
+import { isPointNode, POINT_NODE_ORIGIN } from "../type";
 import { withAbsolutePositions } from "./groups";
 
 /** ノードの4辺の一覧。描画・走査の順序もこの並びに揃える。 */
@@ -89,6 +89,8 @@ export function deriveNodeHandles(
     }
     return {
       ...n,
+      // ポイントの position はノード中心（描画用アンカーもここで注入する）
+      origin: POINT_NODE_ORIGIN,
       data: { ...n.data, handles },
     };
   });
@@ -136,19 +138,11 @@ export function addVirtualHandle(
 export const HORIZONTAL_MAX_ANGLE = 30;
 export const VERTICAL_MIN_ANGLE = 40;
 
-/** 寸法未計測時に用いるノードの想定サイズ */
-const FALLBACK_NODE_WIDTH = 160;
-const FALLBACK_NODE_HEIGHT = 56;
-
 type Vec2 = { x: number; y: number };
 
+/** ポイントの position は中心アンカー（POINT_NODE_ORIGIN）なので、そのまま中心座標 */
 function nodeCenter(node: GraphNodeType): Vec2 {
-  const width = node.measured?.width ?? node.width ?? FALLBACK_NODE_WIDTH;
-  const height = node.measured?.height ?? node.height ?? FALLBACK_NODE_HEIGHT;
-  return {
-    x: node.position.x + width / 2,
-    y: node.position.y + height / 2,
-  };
+  return node.position;
 }
 
 /**
