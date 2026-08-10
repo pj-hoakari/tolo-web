@@ -62,7 +62,7 @@ const GROUP_MINIMAP_COLOR = "#d4d4d8";
 // React Flow の既定値（50%）だと、広い会場グラフを fitView しても
 // 下限で止まり、端のノードが画面外に残る。
 const MIN_ZOOM = 0.01;
-const FIT_VIEW_OPTIONS = { padding: 0.2, minZoom: MIN_ZOOM };
+export const FIT_VIEW_OPTIONS = { padding: 0.2, minZoom: MIN_ZOOM };
 
 /** グラフ構造そのものを編集するためのハンドラ一式 */
 export type GraphCanvasEditing = {

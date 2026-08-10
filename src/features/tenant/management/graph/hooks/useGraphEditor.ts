@@ -33,6 +33,7 @@ import { useGraphSelection } from "./useGraphSelection";
 export type GraphToolbarBindings = {
   onAddNode: (nodeType: NodeType) => void;
   onAddGroup: () => void;
+  onAutoAlign: () => void;
 };
 
 /** プロパティパネルに渡す props のうち、編集状態から決まるもの */
@@ -74,6 +75,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     removeGroup,
     reparentByDrop,
     setGroupMinSize,
+    autoAlign,
     removeEdge,
     updateNodeData,
     updateEdgeData,
@@ -283,7 +285,11 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
         onGroupResizeEnd,
       },
     },
-    toolbar: { onAddNode: addNode, onAddGroup: addGroup },
+    toolbar: {
+      onAddNode: addNode,
+      onAddGroup: addGroup,
+      onAutoAlign: autoAlign,
+    },
     properties: {
       selectedNode:
         selection?.type === "node"
