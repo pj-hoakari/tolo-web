@@ -571,10 +571,65 @@ function median(values: number[]): number {
 }
 
 /**
+ * 1 次元の並びを、並び順と最小間隔を保ったまま各メンバーの希望位置へ
+ * できるだけ近づけて配置する。重なるメンバーは塊として希望位置の平均へ
+ * まとめるため、共通の接続先を希望するメンバーはその中心を挟んで
+ * 対称に並ぶ。
+ */
+function placeLine(
+  ids: string[],
+  sizeOfId: (id: string) => number,
+  desiredOf: (id: string) => number,
+  gap: number,
+): Map<string, number> {
+  type Cluster = { ids: string[]; offsets: number[]; base: number };
+  const separation = (a: string, b: string) =>
+    (sizeOfId(a) + sizeOfId(b)) / 2 + gap;
+  const optimalBase = (cluster: Pick<Cluster, "ids" | "offsets">): number =>
+    average(cluster.ids.map((id, i) => desiredOf(id) - cluster.offsets[i]));
+
+  const clusters: Cluster[] = [];
+  for (const id of ids) {
+    let cluster: Cluster = { ids: [id], offsets: [0], base: desiredOf(id) };
+    while (clusters.length > 0) {
+      const prev = clusters[clusters.length - 1];
+      const prevLastId = prev.ids[prev.ids.length - 1];
+      const prevLastCenter = prev.base + prev.offsets[prev.offsets.length - 1];
+      if (
+        cluster.base >=
+        prevLastCenter + separation(prevLastId, cluster.ids[0])
+      ) {
+        break;
+      }
+      // 前の塊と重なるので統合し、希望位置の平均へ置き直してさらに遡って確認
+      clusters.pop();
+      const shift =
+        prev.offsets[prev.offsets.length - 1] +
+        separation(prevLastId, cluster.ids[0]);
+      const merged = {
+        ids: [...prev.ids, ...cluster.ids],
+        offsets: [...prev.offsets, ...cluster.offsets.map((o) => o + shift)],
+      };
+      cluster = { ...merged, base: optimalBase(merged) };
+    }
+    clusters.push(cluster);
+  }
+
+  const result = new Map<string, number>();
+  for (const cluster of clusters) {
+    for (let i = 0; i < cluster.ids.length; i += 1) {
+      result.set(cluster.ids[i], cluster.base + cluster.offsets[i]);
+    }
+  }
+  return result;
+}
+
+/**
  * コンテナ内容のレイアウトを内側から順に確定する。
- * 列はフロー軸に沿って送り、列内はクロス軸方向に詰んだあと「またぐルートの
- * 両端の位置差の中央値」だけ列全体をずらして相手側と揃える。
- * 境界バンドは内容の外側（相手側に面した辺）へ主軸方向に並べる。
+ * 列はフロー軸に沿って送り、列内の各メンバーは「配置済みの接続相手
+ * （共通ノード）の端点位置」を希望位置としてクロス軸方向に揃える。
+ * 境界バンドは内容の外側（相手側に面した辺）で、同じく接続相手の
+ * 主軸位置を基準に並べる。
  */
 function finalizeContainer(
   container: ContainerId,
@@ -635,6 +690,18 @@ function finalizeContainer(
       : GROUP_FIT_PADDING_X + local.x - size.width / 2;
   };
 
+  /** 確定済みメンバー内にあるルート端点の、メンバー中心からの主軸オフセット */
+  const endpointOffsetMain = (memberId: string, endpointId: string): number => {
+    if (memberId === endpointId) return 0;
+    const finalized = finalizedGroups.get(memberId);
+    const size = memberSizes.get(memberId);
+    const local = finalized?.pointCenters.get(endpointId);
+    if (!size || local === undefined) return 0;
+    return axis === "x"
+      ? GROUP_FIT_PADDING_X + local.x - size.width / 2
+      : GROUP_FIT_PADDING_TOP + local.y - size.height / 2;
+  };
+
   // 成分ごとに列とバンドを配置し、成分はクロス軸方向へ積む
   let componentCrossTop = 0;
   let contentMainMax = 0;
@@ -656,8 +723,9 @@ function finalizeContainer(
         stackCross += crossSize + MEMBER_GAP;
       }
 
-      // 配置済み側と結ぶルートの両端の位置差から、列全体のずらし量を決める
-      const deltas: number[] = [];
+      // 各メンバーの希望位置 = 配置済みの接続相手（共通ノード）の端点位置。
+      // 複数の相手がいればその中央値へ寄せる
+      const desiredValues = new Map<string, number[]>();
       const columnSet = new Set(column);
       for (const { from, to, sourceId, targetId } of plan.internal) {
         const orientations: [string, string, string, string][] = [
@@ -674,27 +742,44 @@ function finalizeContainer(
           const placedCenter = placed.get(placedMember);
           if (!placedCenter) continue;
           const targetCross =
-            placedCenter.cross + endpointOffsetCross(placedMember, placedPoint);
-          const currentCross =
-            (stacked.get(movingMember) ?? 0) +
+            placedCenter.cross +
+            endpointOffsetCross(placedMember, placedPoint) -
             endpointOffsetCross(movingMember, movingPoint);
-          deltas.push(targetCross - currentCross);
+          const list = desiredValues.get(movingMember);
+          if (list) list.push(targetCross);
+          else desiredValues.set(movingMember, [targetCross]);
         }
       }
-      let shift = 0;
-      if (deltas.length > 0) {
-        shift = median(deltas);
-      } else if (placed.size > 0) {
-        // 揃える相手がいない列は、配置済みメンバーのクロス軸中心へ合わせる
-        const placedCrosses = [...placed.values()].map((p) => p.cross);
-        shift = average(placedCrosses) - average([...stacked.values()]);
+      const desired = new Map<string, number>();
+      for (const [id, values] of desiredValues) desired.set(id, median(values));
+
+      let centers: Map<string, number>;
+      if (desired.size === 0) {
+        // 揃える相手がいない列は、詰んだ形のまま配置済みのクロス軸中心へ合わせる
+        let shift = 0;
+        if (placed.size > 0) {
+          const placedCrosses = [...placed.values()].map((p) => p.cross);
+          shift = average(placedCrosses) - average([...stacked.values()]);
+        }
+        centers = new Map(
+          column.map((id) => [id, (stacked.get(id) ?? 0) + shift]),
+        );
+      } else {
+        // 揃える相手がいないメンバーは、いるメンバーと同じ量だけずらした位置を希望する
+        const shifts = column
+          .filter((id) => desired.has(id))
+          .map((id) => (desired.get(id) ?? 0) - (stacked.get(id) ?? 0));
+        const defaultShift = median(shifts);
+        centers = placeLine(
+          column,
+          crossSizeOf,
+          (id) => desired.get(id) ?? (stacked.get(id) ?? 0) + defaultShift,
+          MEMBER_GAP,
+        );
       }
 
       for (const id of column) {
-        placed.set(id, {
-          main: centerMain,
-          cross: (stacked.get(id) ?? 0) + shift,
-        });
+        placed.set(id, { main: centerMain, cross: centers.get(id) ?? 0 });
       }
       columnStart += columnMain + LAYER_GAP;
     }
@@ -730,21 +815,55 @@ function finalizeContainer(
       contentCrossMax = 0;
     }
 
-    // 境界バンド: 内容の外側に、主軸方向へ（ユーザーの並び順で）広げて置く
+    // 境界バンド: 内容の外側（相手側に面した辺）に主軸方向へ並べる。
+    // 各メンバーは接続相手（共通ノード）の主軸位置を希望し、同じ相手を
+    // 希望するメンバーはその中心を挟んで対称に置かれる
     const placeBand = (ids: string[], side: -1 | 1) => {
       if (ids.length === 0) return;
-      const totalMain =
-        ids.reduce((sum, id) => sum + mainSizeOf(id), 0) +
-        MEMBER_GAP * (ids.length - 1);
-      let cursor = (contentMainMin + contentMainMaxLocal) / 2 - totalMain / 2;
+      const bandSet = new Set(ids);
+      const desiredValues = new Map<string, number[]>();
+      for (const { from, to, sourceId, targetId } of plan.internal) {
+        const orientations: [string, string, string, string][] = [
+          [from, sourceId, to, targetId],
+          [to, targetId, from, sourceId],
+        ];
+        for (const [
+          movingMember,
+          movingPoint,
+          placedMember,
+          placedPoint,
+        ] of orientations) {
+          if (!bandSet.has(movingMember)) continue;
+          const placedCenter = placed.get(placedMember);
+          if (!placedCenter) continue;
+          const targetMain =
+            placedCenter.main +
+            endpointOffsetMain(placedMember, placedPoint) -
+            endpointOffsetMain(movingMember, movingPoint);
+          const list = desiredValues.get(movingMember);
+          if (list) list.push(targetMain);
+          else desiredValues.set(movingMember, [targetMain]);
+        }
+      }
+      const fallbackMain = (contentMainMin + contentMainMaxLocal) / 2;
+      const centers = placeLine(
+        ids,
+        mainSizeOf,
+        (id) => {
+          const values = desiredValues.get(id);
+          return values ? median(values) : fallbackMain;
+        },
+        MEMBER_GAP,
+      );
       for (const id of ids) {
-        const centerMain = cursor + mainSizeOf(id) / 2;
         const centerCross =
           side < 0
             ? contentCrossMin - MEMBER_GAP - crossSizeOf(id) / 2
             : contentCrossMax + MEMBER_GAP + crossSizeOf(id) / 2;
-        placed.set(id, { main: centerMain, cross: centerCross });
-        cursor += mainSizeOf(id) + MEMBER_GAP;
+        placed.set(id, {
+          main: centers.get(id) ?? fallbackMain,
+          cross: centerCross,
+        });
       }
     };
     placeBand(bandStart, -1);

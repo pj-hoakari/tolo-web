@@ -296,6 +296,20 @@ describe("autoAlignGraph: プレースホルダグラフ（1F / 2F）", () => {
     );
   });
 
+  it("同じノードから伸びる端点は、そのノードの中心を挟んで対称に並ぶ", () => {
+    // 1F 階段・エレベーターは、共通の接続元エントランスホールを挟んで左右対称
+    const junction = centerOf(aligned, "ph_junction");
+    const stairs1f = centerOf(aligned, "ph_stairs1f");
+    const elevator1f = centerOf(aligned, "ph_elevator1f");
+    expect((stairs1f.x + elevator1f.x) / 2).toBeCloseTo(junction.x);
+
+    // 対となる 2F 側も、共通の接続先 2F ホールを挟んで対称
+    const hall = centerOf(aligned, "ph_hall2f");
+    const stairs2f = centerOf(aligned, "ph_stairs2f");
+    const elevator2f = centerOf(aligned, "ph_elevator2f");
+    expect((stairs2f.x + elevator2f.x) / 2).toBeCloseTo(hall.x);
+  });
+
   it("階段どうし・エレベーターどうしの横位置が揃い、2 本のルートは離れている", () => {
     expect(centerOf(aligned, "ph_stairs1f").x).toBe(
       centerOf(aligned, "ph_stairs2f").x,
