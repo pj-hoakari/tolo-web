@@ -12,6 +12,7 @@ const meta = {
   args: {
     onAddNode: () => {},
     onAddGroup: () => {},
+    onAutoAlign: () => {},
     onSave: () => {},
   },
 } satisfies Meta<typeof GraphEditorToolbar>;
