@@ -20,3 +20,13 @@ Before substantial work:
   - 例外: プラグインに変種が無い属性（例: `inert`）は `data-[inert]:` のまま使う。
 - **未追加のコンポーネントが必要なときはフィードバックする**: 使いたい React Aria Component が `src/components/ui` に未追加の場合、その場で素の実装に逃げず、「追加が必要なこと」と「使用したい React Aria Component 名」をリストアップして報告する。
 - **`src/components/ui` への追加方法**: 共通コンポーネントは JollyUI を shadcn/ui 経由で追加してセットアップしている。ただし**この追加操作（shadcn/ui CLI の実行など）は確認なしに行ってはならない**。必ずユーザーの承認を得てから実行する。
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
