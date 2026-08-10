@@ -94,10 +94,13 @@ function distanceToNode(point: XYPosition, node: GraphNodeType): number {
 }
 
 function nodeBounds(node: GraphNodeType) {
+  const width = node.measured?.width ?? node.width ?? 160;
+  const height = node.measured?.height ?? node.height ?? 56;
+  // ポイントの position は中心アンカー（POINT_NODE_ORIGIN）
   return {
-    x: node.position.x,
-    y: node.position.y,
-    width: node.measured?.width ?? node.width ?? 160,
-    height: node.measured?.height ?? node.height ?? 56,
+    x: node.position.x - width / 2,
+    y: node.position.y - height / 2,
+    width,
+    height,
   };
 }

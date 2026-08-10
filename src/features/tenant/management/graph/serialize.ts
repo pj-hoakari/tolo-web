@@ -6,6 +6,8 @@ import { GROUP_DEFAULT_HEIGHT, GROUP_DEFAULT_WIDTH } from "./utils/groups";
  * 描画用の派生情報
  * （ノードの handles、エッジの自動採番されたsourceHandle / targetHandle 等）
  * を除き、永続化・API 送信に使うグラフデータへ変換
+ * ポイントの position はノード中心の座標（POINT_NODE_ORIGIN）、
+ * グループの position は左上の座標。
  */
 export function toGraphData(
   nodes: GraphCanvasNode[],

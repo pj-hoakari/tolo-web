@@ -1,5 +1,13 @@
-import type { Edge, Node } from "@xyflow/react";
+import type { Edge, Node, NodeOrigin } from "@xyflow/react";
 import type { NoticeMessageKey } from "./nodeTypes";
+
+/**
+ * ポイントノードのアンカー（origin）。position はノードの中心を指す。
+ * 会場内の地点を表すポイントは、座標=ノード中央として扱う。
+ * 描画時には deriveNodeHandles がポイントへ注入する。
+ * グループコンテナは React Flow 既定の左上アンカーのまま。
+ */
+export const POINT_NODE_ORIGIN: NodeOrigin = [0.5, 0.5];
 
 /** ノードの4辺。各辺に複数のハンドル（接続点）を配置 */
 export type HandleSide = "top" | "right" | "bottom" | "left";

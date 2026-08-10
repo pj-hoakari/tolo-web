@@ -1,5 +1,10 @@
 import type { XYPosition } from "@xyflow/react";
-import { type GraphCanvasNode, type GroupNodeType, isGroupNode } from "../type";
+import {
+  type GraphCanvasNode,
+  type GroupNodeType,
+  isGroupNode,
+  isPointNode,
+} from "../type";
 
 /** 新規グループの初期サイズ */
 export const GROUP_DEFAULT_WIDTH = 480;
@@ -130,7 +135,10 @@ export function resolveParentGroup(
 
   const abs = absolutePositionOf(node, byId);
   const size = sizeOf(node);
-  const center = { x: abs.x + size.width / 2, y: abs.y + size.height / 2 };
+  // ポイントの position は中心そのもの。グループは左上アンカーなので中心へ換算する
+  const center = isPointNode(node)
+    ? abs
+    : { x: abs.x + size.width / 2, y: abs.y + size.height / 2 };
 
   let best: GroupNodeType | undefined;
   let bestArea = Number.POSITIVE_INFINITY;
@@ -207,10 +215,17 @@ function fitGroup(
   let maxY = Number.NEGATIVE_INFINITY;
   for (const child of children) {
     const size = sizeOf(child);
-    minX = Math.min(minX, child.position.x);
-    minY = Math.min(minY, child.position.y);
-    maxX = Math.max(maxX, child.position.x + size.width);
-    maxY = Math.max(maxY, child.position.y + size.height);
+    // ポイントの position は中心アンカーのため、左上へ換算してから範囲を取る
+    const left = isPointNode(child)
+      ? child.position.x - size.width / 2
+      : child.position.x;
+    const top = isPointNode(child)
+      ? child.position.y - size.height / 2
+      : child.position.y;
+    minX = Math.min(minX, left);
+    minY = Math.min(minY, top);
+    maxX = Math.max(maxX, left + size.width);
+    maxY = Math.max(maxY, top + size.height);
   }
 
   const width = Math.max(maxX - minX + GROUP_FIT_PADDING_X * 2, minWidth);
