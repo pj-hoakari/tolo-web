@@ -271,6 +271,57 @@ describe("autoAlignGraph: グループをまたぐルート（縦並び）", () 
   });
 });
 
+describe("autoAlignGraph: ユーザーの並べ替えの尊重", () => {
+  /** ブースA と 壁展示 の位置を入れ替えたノード配列 */
+  const withSwappedBoothAndWall = (nodes: GraphCanvasNode[]) => {
+    const booth = nodes.find((n) => n.id === "ph_booth");
+    const wall = nodes.find((n) => n.id === "ph_wall");
+    if (!booth || !wall) throw new Error("node not found");
+    return nodes.map((n) => {
+      if (n.id === "ph_booth") return { ...n, position: { ...wall.position } };
+      if (n.id === "ph_wall") return { ...n, position: { ...booth.position } };
+      return n;
+    });
+  };
+
+  it("同じ列のポイントの上下を入れ替えてから整列すると、入れ替え後の順序が保たれる", () => {
+    const nodes = withSwappedBoothAndWall(PLACEHOLDER_GRAPH.nodes);
+    const aligned = autoAlignGraph(nodes, PLACEHOLDER_GRAPH.edges);
+    expect(centerOf(aligned, "ph_wall").y).toBeLessThan(
+      centerOf(aligned, "ph_booth").y,
+    );
+  });
+
+  it("整列 → 入れ替え → 再整列でも、入れ替え後の順序が保たれる", () => {
+    const once = autoAlignGraph(
+      PLACEHOLDER_GRAPH.nodes,
+      PLACEHOLDER_GRAPH.edges,
+    );
+    const aligned = autoAlignGraph(
+      withSwappedBoothAndWall(once),
+      PLACEHOLDER_GRAPH.edges,
+    );
+    expect(centerOf(aligned, "ph_wall").y).toBeLessThan(
+      centerOf(aligned, "ph_booth").y,
+    );
+  });
+
+  it("境界バンドのポイントの左右を入れ替えてから整列すると、入れ替え後の順序が保たれる", () => {
+    // 1F の階段とエレベーターを左右入れ替え（対の 2F 側はそのまま）
+    const nodes = PLACEHOLDER_GRAPH.nodes.map((n) => {
+      if (n.id === "ph_stairs1f") return { ...n, position: { x: 540, y: 70 } };
+      if (n.id === "ph_elevator1f") {
+        return { ...n, position: { x: 260, y: 70 } };
+      }
+      return n;
+    });
+    const aligned = autoAlignGraph(nodes, PLACEHOLDER_GRAPH.edges);
+    expect(centerOf(aligned, "ph_elevator1f").x).toBeLessThan(
+      centerOf(aligned, "ph_stairs1f").x,
+    );
+  });
+});
+
 describe("autoAlignGraph: プレースホルダグラフ（1F / 2F）", () => {
   const aligned = autoAlignGraph(
     PLACEHOLDER_GRAPH.nodes,

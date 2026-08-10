@@ -402,8 +402,8 @@ function planContainer(
     }
   }
 
-  // 列内順序: 現在のクロス軸位置を初期値に、接続相手（コンテナ外の相手を
-  // 含む）の平均位置へ寄せる緩和計算で「近くへ繋がるものが近くに並ぶ」順を得る
+  // 接続相手（コンテナ外の相手を含む）の平均位置へ寄せる緩和計算。
+  // ユーザーが同じ位置に重ねて置いたメンバーの順序決めにだけ使う補助値
   const neighborIds = new Map<string, string[]>(
     memberIds.map((id) => [id, []]),
   );
@@ -473,10 +473,12 @@ function planContainer(
     const used = [...new Set(effectiveLayer.values())].sort((a, b) => a - b);
     const rankOf = new Map(used.map((value, i) => [value, i]));
     const columns: string[][] = used.map(() => []);
+    // 列内の並び順はユーザーの現在の並び（クロス軸位置）を最優先し、
+    // 同じ位置に重なっているときだけ接続相手の平均位置で決める
     const sortedIds = [...columnMemberIds].sort(
       (a, b) =>
-        (relaxedCross.get(a) ?? 0) - (relaxedCross.get(b) ?? 0) ||
         (seedCross.get(a) ?? 0) - (seedCross.get(b) ?? 0) ||
+        (relaxedCross.get(a) ?? 0) - (relaxedCross.get(b) ?? 0) ||
         (orderIndex.get(a) ?? 0) - (orderIndex.get(b) ?? 0),
     );
     for (const id of sortedIds) {
