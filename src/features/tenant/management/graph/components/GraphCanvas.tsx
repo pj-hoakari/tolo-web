@@ -72,11 +72,16 @@ export type GraphCanvasEditing = {
   onReverseEdge: (id: string) => void;
   onSetNodeType: (id: string, type: NodeType) => void;
   onSetNodeLabel: (id: string, label: string) => void;
+  /** parentId を渡すと、位置に関わらずそのグループの中へ追加する */
   onAddNodeAtPosition: (
     position: { x: number; y: number },
     nodeType?: NodeType,
+    parentId?: string,
   ) => void;
-  onAddGroupAtPosition: (position: { x: number; y: number }) => void;
+  onAddGroupAtPosition: (
+    position: { x: number; y: number },
+    parentId?: string,
+  ) => void;
   onDeleteNode: (id: string) => void;
   onDeleteEdge: (id: string) => void;
   /** ドラッグ終了時に、位置に応じた所属グループの付け替えを行う */
@@ -282,11 +287,18 @@ export function GraphCanvas({
           onClose={contextMenu.close}
         />
       ) : null}
-      {contextMenu.menuNode && editing && contextMenu.menu ? (
+      {contextMenu.menuNode && editing && contextMenu.nodeMenu ? (
         isGroupNode(contextMenu.menuNode) ? (
           <GraphGroupContextMenu
             group={contextMenu.menuNode}
-            position={contextMenu.menu}
+            position={contextMenu.nodeMenu}
+            nodePosition={contextMenu.nodeMenu.nodePosition}
+            nodeType="GOAL_TRANSIT_MIXED"
+            onAddNode={editing.onAddNodeAtPosition}
+            onAddGroup={editing.onAddGroupAtPosition}
+            isEdgeCreationActive={easyConnect.active}
+            onStartEdgeCreation={easyConnect.startGlobal}
+            onEndEdgeCreation={easyConnect.end}
             onDissolve={editing.onDeleteNode}
             onClose={contextMenu.close}
           />
@@ -295,7 +307,7 @@ export function GraphCanvas({
             node={contextMenu.menuNode}
             nodes={nodes}
             edges={edges}
-            position={contextMenu.menu}
+            position={contextMenu.nodeMenu}
             onSetType={editing.onSetNodeType}
             onStartEdgeCreation={startEasyConnectFromNode}
             onDelete={editing.onDeleteNode}

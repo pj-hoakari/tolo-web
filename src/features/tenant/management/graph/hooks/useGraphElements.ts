@@ -93,12 +93,20 @@ export function useGraphElements(initial: GraphData) {
     setEdges((eds) => applyEdgeChanges(changes, eds));
   }, []);
 
-  /** 追加位置がグループの内側なら、そのグループへ自動で所属させる */
-  const appendNode = useCallback((node: GraphCanvasNode) => {
+  /**
+   * ノードを追加する。position は絶対座標として扱う。
+   * 追加位置がグループの内側なら、そのグループへ自動で所属させる。
+   * parentId を渡した場合は位置に関わらずそのグループへ所属させる。
+   */
+  const appendNode = useCallback((node: GraphCanvasNode, parentId?: string) => {
     setNodes((nds) => {
       const appended = sortByNesting([...nds, node]);
       return fitGroupsToChildren(
-        reparentNode(appended, node.id, resolveParentGroup(node.id, appended)),
+        reparentNode(
+          appended,
+          node.id,
+          parentId ?? resolveParentGroup(node.id, appended),
+        ),
       );
     });
   }, []);

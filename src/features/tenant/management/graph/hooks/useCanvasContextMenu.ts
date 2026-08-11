@@ -4,7 +4,13 @@ import type { GraphCanvasNode, GraphEdgeType } from "../type";
 
 export type CanvasContextMenuState =
   | { kind: "edge"; elementId: string; x: number; y: number }
-  | { kind: "node"; elementId: string; x: number; y: number }
+  | {
+      kind: "node";
+      elementId: string;
+      x: number;
+      y: number;
+      nodePosition: XYPosition;
+    }
   | { kind: "canvas"; x: number; y: number; nodePosition: XYPosition };
 
 export type CanvasContextMenuApi = {
@@ -13,6 +19,8 @@ export type CanvasContextMenuApi = {
   menuNode: GraphCanvasNode | undefined;
   /** エッジメニューの対象。エッジメニューが開いていないときは undefined */
   menuEdge: GraphEdgeType | undefined;
+  /** ノードメニューの状態。開いていないときは undefined */
+  nodeMenu: Extract<CanvasContextMenuState, { kind: "node" }> | undefined;
   /** 背景メニューの状態。開いていないときは undefined */
   canvasMenu: Extract<CanvasContextMenuState, { kind: "canvas" }> | undefined;
   openNodeMenu: (event: React.MouseEvent, node: GraphCanvasNode) => void;
@@ -57,9 +65,15 @@ export function useCanvasContextMenu({
         elementId: node.id,
         x: event.clientX,
         y: event.clientY,
+        // グループ上での右クリックからも要素を追加できるよう、
+        // クリック位置をフロー座標として持たせておく。
+        nodePosition: screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        }),
       });
     },
-    [onSelectNode],
+    [onSelectNode, screenToFlowPosition],
   );
 
   const openEdgeMenu = useCallback(
@@ -105,6 +119,7 @@ export function useCanvasContextMenu({
         menu?.kind === "edge"
           ? edges.find((edge) => edge.id === menu.elementId)
           : undefined,
+      nodeMenu: menu?.kind === "node" ? menu : undefined,
       canvasMenu: menu?.kind === "canvas" ? menu : undefined,
       openNodeMenu,
       openEdgeMenu,

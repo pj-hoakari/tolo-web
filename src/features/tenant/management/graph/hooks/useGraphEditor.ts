@@ -171,6 +171,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     (
       position: { x: number; y: number },
       nodeType: NodeType = DEFAULT_NODE_TYPE,
+      parentId?: string,
     ) => {
       const node = createNode({
         id: newId("n"),
@@ -180,7 +181,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
         nodeType,
         position,
       });
-      appendNode(node);
+      appendNode(node, parentId);
       selectNode(node.id);
     },
     [source.nodes, appendNode, selectNode, t],
@@ -194,7 +195,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
   );
 
   const addGroupAtPosition = useCallback(
-    (position: { x: number; y: number }) => {
+    (position: { x: number; y: number }, parentId?: string) => {
       const group = createGroup({
         id: newId("g"),
         label: t("newGroupLabel", {
@@ -202,7 +203,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
         }),
         position,
       });
-      appendNode(group);
+      appendNode(group, parentId);
       selectNode(group.id);
     },
     [source.nodes, appendNode, selectNode, t],
