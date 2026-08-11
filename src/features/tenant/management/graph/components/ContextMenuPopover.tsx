@@ -1,7 +1,21 @@
-import { useRef } from "react";
+import { createContext, useContext, useRef } from "react";
 import { MenuPopover } from "@/components/ui/menu";
 
 export type ContextMenuPosition = { x: number; y: number };
+
+/** メニュー項目が操作後に自身のメニューを閉じるための close コールバック */
+const ContextMenuCloseContext = createContext<(() => void) | null>(null);
+
+/** ContextMenuPopover 配下でメニューを閉じる関数を取得する */
+export function useContextMenuClose(): () => void {
+  const close = useContext(ContextMenuCloseContext);
+  if (!close) {
+    throw new Error(
+      "useContextMenuClose は ContextMenuPopover の配下でのみ使用できる",
+    );
+  }
+  return close;
+}
 
 /**
  * 右クリック位置に開くポップオーバーの共通部分。
@@ -40,7 +54,9 @@ export function ContextMenuPopover({
         offset={0}
         className={className}
       >
-        {children}
+        <ContextMenuCloseContext.Provider value={onClose}>
+          {children}
+        </ContextMenuCloseContext.Provider>
       </MenuPopover>
     </>
   );

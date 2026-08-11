@@ -266,7 +266,7 @@ export function GraphCanvas({
         <GraphCanvasContextMenu
           position={contextMenu.canvasMenu}
           nodePosition={contextMenu.canvasMenu.nodePosition}
-          nodeType="GOAL_TRANSIT_MIXED"
+          nodeType={DEFAULT_NODE_TYPE}
           onAddNode={editing.onAddNodeAtPosition}
           onAddGroup={editing.onAddGroupAtPosition}
           isEdgeCreationActive={easyConnect.active}
@@ -293,7 +293,7 @@ export function GraphCanvas({
             group={contextMenu.menuNode}
             position={contextMenu.nodeMenu}
             nodePosition={contextMenu.nodeMenu.nodePosition}
-            nodeType="GOAL_TRANSIT_MIXED"
+            nodeType={DEFAULT_NODE_TYPE}
             onAddNode={editing.onAddNodeAtPosition}
             onAddGroup={editing.onAddGroupAtPosition}
             isEdgeCreationActive={easyConnect.active}
