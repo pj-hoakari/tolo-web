@@ -35,9 +35,18 @@ import {
  * - 絶対座標を親相対へ戻し、グループを子へフィットさせて確定する。
  */
 
-/** 列（レイヤー）間の、フロー軸方向の間隔 */
+/**
+ * 列（レイヤー）間に必ず確保する、フロー軸方向の最低マージン
+ * （ノードの箱の端から隣の列の箱の端まで）
+ */
 const LAYER_GAP = 120;
-/** 列内・境界バンド内のメンバー間隔 */
+/**
+ * 同一列内で積むノード間・境界バンドと内容の間に必ず確保する、
+ * クロス軸方向の最低マージン（箱の端どうし）。
+ * 間をルートが通るため、フロー軸方向の余裕に近い広さをとる
+ */
+const CROSS_GAP = 96;
+/** 境界バンド内で並ぶメンバー間の、フロー軸方向の間隔 */
 const MEMBER_GAP = 48;
 /** 連結成分（ルートで繋がっていない塊）間の間隔 */
 const COMPONENT_GAP = 96;
@@ -870,7 +879,7 @@ function finalizeContainer(
       for (const id of entryIds) {
         const crossSize = entryCrossSize(id);
         stacked.set(id, stackCross + crossSize / 2);
-        stackCross += crossSize + MEMBER_GAP;
+        stackCross += crossSize + CROSS_GAP;
       }
 
       // 各メンバーの希望位置 = 配置済みの接続相手（共通ノード）の端点位置。
@@ -966,7 +975,7 @@ function finalizeContainer(
           entryIds,
           entryCrossSize,
           (id) => desired.get(id) ?? (stacked.get(id) ?? 0) + defaultShift,
-          MEMBER_GAP,
+          CROSS_GAP,
         );
       }
 
@@ -1086,8 +1095,8 @@ function finalizeContainer(
       for (const id of ids) {
         const centerCross =
           side < 0
-            ? contentCrossMin - MEMBER_GAP - crossSizeOf(id) / 2
-            : contentCrossMax + MEMBER_GAP + crossSizeOf(id) / 2;
+            ? contentCrossMin - CROSS_GAP - crossSizeOf(id) / 2
+            : contentCrossMax + CROSS_GAP + crossSizeOf(id) / 2;
         placed.set(id, {
           main: centers.get(id) ?? fallbackMain,
           cross: centerCross,
