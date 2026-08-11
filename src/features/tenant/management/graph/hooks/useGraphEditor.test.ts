@@ -351,6 +351,72 @@ describe("useGraphEditor: グループ（論理グルーピング）", () => {
     });
   });
 
+  it("グループを指定して追加したポイントは、位置に関わらずそのグループに属する", () => {
+    const initial: GraphData = {
+      nodes: [
+        {
+          id: "g1",
+          type: "graphGroup",
+          position: { x: 100, y: 100 },
+          width: 400,
+          height: 300,
+          data: { label: "1F" },
+        },
+      ],
+      edges: [],
+    };
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+
+    act(() => {
+      result.current.canvas.editing.onAddNodeAtPosition(
+        { x: 200, y: 200 },
+        "GOAL",
+        "g1",
+      );
+    });
+
+    const added = result.current.canvas.nodes.find(isPointNode);
+    expect(added?.parentId).toBe("g1");
+  });
+
+  it("グループを指定して追加したグループはネストする", () => {
+    const initial: GraphData = {
+      nodes: [
+        {
+          id: "g1",
+          type: "graphGroup",
+          position: { x: 100, y: 100 },
+          width: 400,
+          height: 300,
+          data: { label: "1F" },
+        },
+      ],
+      edges: [],
+    };
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+
+    act(() => {
+      result.current.canvas.editing.onAddGroupAtPosition(
+        { x: 200, y: 200 },
+        "g1",
+      );
+    });
+
+    const nodes = result.current.canvas.nodes;
+    const added = nodes.find((n) => n.id !== "g1");
+    expect(added?.parentId).toBe("g1");
+    // 親相対へ変換され、絶対位置はクリック位置のまま
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    expect(added && absolutePositionOf(added, byId)).toEqual({
+      x: 200,
+      y: 200,
+    });
+  });
+
   it("グループを削除しても中のポイントは残り、トップレベルへ戻る", () => {
     const initial: GraphData = {
       nodes: [

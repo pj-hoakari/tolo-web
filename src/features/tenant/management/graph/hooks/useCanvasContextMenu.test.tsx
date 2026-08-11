@@ -70,7 +70,7 @@ describe("useCanvasContextMenu", () => {
     act(() => result.current.openNodeMenu(mouseEvent(10, 20), node));
 
     expect(onSelectNode).toHaveBeenCalledWith("n1");
-    expect(result.current.menu).toEqual({
+    expect(result.current.menu).toMatchObject({
       kind: "node",
       elementId: "n1",
       x: 10,
@@ -78,6 +78,15 @@ describe("useCanvasContextMenu", () => {
     });
     expect(result.current.menuNode).toBe(node);
     expect(result.current.menuEdge).toBeUndefined();
+  });
+
+  it("ノードメニューはグループ内への追加位置を持つ", () => {
+    const { result } = renderMenu();
+
+    act(() => result.current.openNodeMenu(mouseEvent(10, 20), node));
+
+    expect(result.current.nodeMenu).toMatchObject({ kind: "node", x: 10 });
+    expect(result.current.nodeMenu?.nodePosition).toBeDefined();
   });
 
   it("エッジメニューを開くと対象を選択し、対象エッジを解決する", () => {
