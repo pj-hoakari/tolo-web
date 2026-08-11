@@ -271,6 +271,74 @@ describe("autoAlignGraph: グループをまたぐルート（縦並び）", () 
   });
 });
 
+describe("autoAlignGraph: 層をまたぐルートのオフセット", () => {
+  it("A→B→C と A→C があるとき、B と C は A の中心を挟んで上下に分かれる", () => {
+    const nodes = [point("a", 0, 0), point("b", 300, 0), point("c", 600, 0)];
+    const edges = [
+      edge("e1", "a", "b"),
+      edge("e2", "b", "c"),
+      edge("e3", "a", "c"),
+    ];
+
+    const aligned = autoAlignGraph(nodes, edges);
+
+    const a = centerOf(aligned, "a");
+    const b = centerOf(aligned, "b");
+    const c = centerOf(aligned, "c");
+    // 主軸方向は既存どおり: A → B → C の順
+    expect(a.x).toBeLessThan(b.x);
+    expect(b.x).toBeLessThan(c.x);
+    // 直通ルート A→C が B と重ならないよう、B と C は A を挟んで上下に分かれる
+    expect(b.y).toBeLessThan(a.y);
+    expect(c.y).toBeGreaterThan(a.y);
+  });
+
+  it("複数列を飛び越すルートでも、途中の列のノードがルートの通り道を空ける", () => {
+    const nodes = [
+      point("a", 0, 0),
+      point("b", 300, 0),
+      point("c", 600, 0),
+      point("d", 900, 0),
+    ];
+    const edges = [
+      edge("e1", "a", "b"),
+      edge("e2", "b", "c"),
+      edge("e3", "c", "d"),
+      edge("e4", "a", "d"),
+    ];
+
+    const aligned = autoAlignGraph(nodes, edges);
+
+    const a = centerOf(aligned, "a");
+    const b = centerOf(aligned, "b");
+    const c = centerOf(aligned, "c");
+    const d = centerOf(aligned, "d");
+    // 中間ノード B・C は直通ルートの通り道（A→D の側）から離れて同じ側に揃う
+    expect(b.y).toBeLessThan(a.y);
+    expect(c.y).toBeLessThan(a.y);
+    expect(d.y).toBeGreaterThan(a.y);
+  });
+
+  it("直通ルートの通り道は、ユーザーが端点を置いた側に確保される", () => {
+    // ユーザーが C を B より上へ置いている場合、A→C の通り道は上側になる
+    const nodes = [
+      point("a", 0, 200),
+      point("b", 300, 300),
+      point("c", 600, 0),
+    ];
+    const edges = [
+      edge("e1", "a", "b"),
+      edge("e2", "b", "c"),
+      edge("e3", "a", "c"),
+    ];
+
+    const aligned = autoAlignGraph(nodes, edges);
+
+    expect(centerOf(aligned, "c").y).toBeLessThan(centerOf(aligned, "a").y);
+    expect(centerOf(aligned, "b").y).toBeGreaterThan(centerOf(aligned, "a").y);
+  });
+});
+
 describe("autoAlignGraph: ユーザーの並べ替えの尊重", () => {
   /** ブースA と 壁展示 の位置を入れ替えたノード配列 */
   const withSwappedBoothAndWall = (nodes: GraphCanvasNode[]) => {

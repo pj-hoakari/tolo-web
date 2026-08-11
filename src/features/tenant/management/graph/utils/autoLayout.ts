@@ -630,6 +630,8 @@ function placeLine(
  * コンテナ内容のレイアウトを内側から順に確定する。
  * 列はフロー軸に沿って送り、列内の各メンバーは「配置済みの接続相手
  * （共通ノード）の端点位置」を希望位置としてクロス軸方向に揃える。
+ * 列を飛び越すルートには中間の列に空きレーンを確保し、飛び越される側の
+ * ノードとルートがクロス軸方向に分かれるようにする。
  * 境界バンドは内容の外側（相手側に面した辺）で、同じく接続相手の
  * 主軸位置を基準に並べる。
  */
@@ -638,13 +640,20 @@ function finalizeContainer(
   index: GraphIndex,
   plans: Map<ContainerId, ContainerPlan>,
   finalizedGroups: Map<string, FinalizedContent>,
+  currentCenters: Map<string, XYPosition>,
 ): FinalizedContent {
   const members = index.childrenOf.get(container) ?? [];
   for (const member of members) {
     if (isGroupNode(member)) {
       finalizedGroups.set(
         member.id,
-        finalizeContainer(member.id, index, plans, finalizedGroups),
+        finalizeContainer(
+          member.id,
+          index,
+          plans,
+          finalizedGroups,
+          currentCenters,
+        ),
       );
     }
   }
@@ -676,6 +685,10 @@ function finalizeContainer(
   };
   const toPoint = (main: number, cross: number): XYPosition =>
     axis === "x" ? { x: main, y: cross } : { x: cross, y: main };
+  const crossOfCurrent = (id: string): number => {
+    const center = currentCenters.get(id);
+    return center ? (axis === "x" ? center.y : center.x) : 0;
+  };
 
   /** 確定済みメンバー内にあるルート端点の、メンバー中心からのクロス軸オフセット */
   const endpointOffsetCross = (
@@ -711,25 +724,121 @@ function finalizeContainer(
     /** 成分ローカルの {main, cross} 中心 */
     const placed = new Map<string, { main: number; cross: number }>();
 
+    // 列を飛び越すルート（両端の列が隣接しない）には、中間の各列に
+    // 幅 0 の「レーン」を確保し、飛び越される側のノードをクロス軸方向へ
+    // 押しのけてルートの通り道を空ける
+    type Lane = {
+      key: string;
+      /** ひとつ手前の列の同じルートのレーン（連鎖して直線状に揃える） */
+      prevKey?: string;
+      /** 手前側の端点（レーンの揃え先） */
+      startMember: string;
+      startPoint: string;
+      /** 挿し込み位置の手掛かり: 両端点の現在位置の中間 */
+      seed: number;
+    };
+    const columnMemberSet = new Set(columns.flat());
+    const lanesByColumn = new Map<number, Lane[]>();
+    /** 飛び越すルートの終端メンバーと、その直前のレーン */
+    const longEdgeByIndex = new Map<
+      number,
+      { endMember: string; lastKey: string }
+    >();
+    for (const [edgeIndex, edge] of plan.internal.entries()) {
+      const columnFrom = plan.columnOf.get(edge.from);
+      const columnTo = plan.columnOf.get(edge.to);
+      if (columnFrom === undefined || columnTo === undefined) continue;
+      if (!columnMemberSet.has(edge.from) || !columnMemberSet.has(edge.to)) {
+        continue;
+      }
+      if (Math.abs(columnTo - columnFrom) < 2) continue;
+      const ascending = columnFrom < columnTo;
+      const low = Math.min(columnFrom, columnTo);
+      const high = Math.max(columnFrom, columnTo);
+      const seed =
+        (crossOfCurrent(edge.sourceId) + crossOfCurrent(edge.targetId)) / 2;
+      let prevKey: string | undefined;
+      let lastKey = "";
+      for (let column = low + 1; column < high; column += 1) {
+        lastKey = ` lane:${edgeIndex}:${column}`;
+        const lane: Lane = {
+          key: lastKey,
+          prevKey,
+          startMember: ascending ? edge.from : edge.to,
+          startPoint: ascending ? edge.sourceId : edge.targetId,
+          seed,
+        };
+        const list = lanesByColumn.get(column);
+        if (list) list.push(lane);
+        else lanesByColumn.set(column, [lane]);
+        prevKey = lastKey;
+      }
+      longEdgeByIndex.set(edgeIndex, {
+        endMember: ascending ? edge.to : edge.from,
+        lastKey,
+      });
+    }
+    /** レーンの確定位置（クロス軸） */
+    const laneCrosses = new Map<string, number>();
+
     let columnStart = 0;
-    for (const column of columns) {
+    for (const [columnIndex, column] of columns.entries()) {
       const columnMain = Math.max(...column.map((id) => mainSizeOf(id)));
       const centerMain = columnStart + columnMain / 2;
+
+      // 実メンバーの並びは保ったまま、レーンを現在位置の近い位置へ挿し込む
+      const lanes = [...(lanesByColumn.get(columnIndex) ?? [])].sort(
+        (a, b) => a.seed - b.seed || (a.key < b.key ? -1 : 1),
+      );
+      const laneByKey = new Map(lanes.map((lane) => [lane.key, lane]));
+      const entryIds: string[] = [];
+      let laneCursor = 0;
+      for (const id of column) {
+        const memberSeed = crossOfCurrent(id);
+        while (
+          laneCursor < lanes.length &&
+          lanes[laneCursor].seed < memberSeed
+        ) {
+          entryIds.push(lanes[laneCursor].key);
+          laneCursor += 1;
+        }
+        entryIds.push(id);
+      }
+      for (; laneCursor < lanes.length; laneCursor += 1) {
+        entryIds.push(lanes[laneCursor].key);
+      }
+      const entryCrossSize = (id: string): number =>
+        laneByKey.has(id) ? 0 : crossSizeOf(id);
 
       // まず手前から順に詰む
       let stackCross = 0;
       const stacked = new Map<string, number>();
-      for (const id of column) {
-        const crossSize = crossSizeOf(id);
+      for (const id of entryIds) {
+        const crossSize = entryCrossSize(id);
         stacked.set(id, stackCross + crossSize / 2);
         stackCross += crossSize + MEMBER_GAP;
       }
 
       // 各メンバーの希望位置 = 配置済みの接続相手（共通ノード）の端点位置。
-      // 複数の相手がいればその中央値へ寄せる
+      // 複数の相手がいればその中央値へ寄せる。
+      // 飛び越すルートの終端は、直接相手ではなく隣の列のレーンへ揃える
       const desiredValues = new Map<string, number[]>();
+      const laneDesiredValues = new Map<string, number[]>();
+      const pushValue = (
+        map: Map<string, number[]>,
+        id: string,
+        value: number,
+      ) => {
+        const list = map.get(id);
+        if (list) list.push(value);
+        else map.set(id, [value]);
+      };
       const columnSet = new Set(column);
-      for (const { from, to, sourceId, targetId } of plan.internal) {
+      for (const [
+        edgeIndex,
+        { from, to, sourceId, targetId },
+      ] of plan.internal.entries()) {
+        const longEdge = longEdgeByIndex.get(edgeIndex);
         const orientations: [string, string, string, string][] = [
           [from, sourceId, to, targetId],
           [to, targetId, from, sourceId],
@@ -741,19 +850,46 @@ function finalizeContainer(
           placedPoint,
         ] of orientations) {
           if (!columnSet.has(movingMember)) continue;
+          if (longEdge) {
+            if (movingMember !== longEdge.endMember) continue;
+            const laneCross = laneCrosses.get(longEdge.lastKey);
+            if (laneCross === undefined) continue;
+            pushValue(
+              laneDesiredValues,
+              movingMember,
+              laneCross - endpointOffsetCross(movingMember, movingPoint),
+            );
+            continue;
+          }
           const placedCenter = placed.get(placedMember);
           if (!placedCenter) continue;
           const targetCross =
             placedCenter.cross +
             endpointOffsetCross(placedMember, placedPoint) -
             endpointOffsetCross(movingMember, movingPoint);
-          const list = desiredValues.get(movingMember);
-          if (list) list.push(targetCross);
-          else desiredValues.set(movingMember, [targetCross]);
+          pushValue(desiredValues, movingMember, targetCross);
         }
       }
       const desired = new Map<string, number>();
       for (const [id, values] of desiredValues) desired.set(id, median(values));
+      // 飛び越すルートを直線に保つため、レーンへの揃えを優先する
+      for (const [id, values] of laneDesiredValues) {
+        desired.set(id, median(values));
+      }
+      for (const lane of lanes) {
+        const target =
+          lane.prevKey !== undefined
+            ? laneCrosses.get(lane.prevKey)
+            : (() => {
+                const placedCenter = placed.get(lane.startMember);
+                if (!placedCenter) return undefined;
+                return (
+                  placedCenter.cross +
+                  endpointOffsetCross(lane.startMember, lane.startPoint)
+                );
+              })();
+        if (target !== undefined) desired.set(lane.key, target);
+      }
 
       let centers: Map<string, number>;
       if (desired.size === 0) {
@@ -764,24 +900,26 @@ function finalizeContainer(
           shift = average(placedCrosses) - average([...stacked.values()]);
         }
         centers = new Map(
-          column.map((id) => [id, (stacked.get(id) ?? 0) + shift]),
+          entryIds.map((id) => [id, (stacked.get(id) ?? 0) + shift]),
         );
       } else {
         // 揃える相手がいないメンバーは、いるメンバーと同じ量だけずらした位置を希望する
-        const shifts = column
+        const shifts = entryIds
           .filter((id) => desired.has(id))
           .map((id) => (desired.get(id) ?? 0) - (stacked.get(id) ?? 0));
         const defaultShift = median(shifts);
         centers = placeLine(
-          column,
-          crossSizeOf,
+          entryIds,
+          entryCrossSize,
           (id) => desired.get(id) ?? (stacked.get(id) ?? 0) + defaultShift,
           MEMBER_GAP,
         );
       }
 
-      for (const id of column) {
-        placed.set(id, { main: centerMain, cross: centers.get(id) ?? 0 });
+      for (const id of entryIds) {
+        const cross = centers.get(id) ?? 0;
+        if (laneByKey.has(id)) laneCrosses.set(id, cross);
+        else placed.set(id, { main: centerMain, cross });
       }
       columnStart += columnMain + LAYER_GAP;
     }
@@ -951,7 +1089,13 @@ export function autoAlignGraph(
 
   const plans = planContainers(index, edges, currentCenters);
   const finalizedGroups = new Map<string, FinalizedContent>();
-  const root = finalizeContainer(undefined, index, plans, finalizedGroups);
+  const root = finalizeContainer(
+    undefined,
+    index,
+    plans,
+    finalizedGroups,
+    currentCenters,
+  );
 
   // 全体の左上を整列前のバウンディングボックスに合わせ、画面の大移動を避ける
   let originX = Number.POSITIVE_INFINITY;
