@@ -1,19 +1,24 @@
 import type { XYPosition } from "@xyflow/react";
-import { MapPinPlus, Route, SquareDashed, Ungroup, X } from "lucide-react";
+import { Ungroup } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Menu, MenuItem, MenuSeparator } from "@/components/ui/menu";
+import { Menu, MenuSeparator } from "@/components/ui/menu";
 import type { GroupNodeType, NodeType } from "../type";
+import { ContextMenuItem } from "./ContextMenuItem";
 import {
   ContextMenuPopover,
   type ContextMenuPosition,
 } from "./ContextMenuPopover";
+import {
+  GraphCreationMenuItems,
+  type GraphCreationMenuItemsProps,
+} from "./GraphCreationMenuItems";
 
-export type GraphGroupContextMenuProps = {
+export type GraphGroupContextMenuProps = Omit<
+  GraphCreationMenuItemsProps,
+  "onAddNode" | "onAddGroup"
+> & {
   group: GroupNodeType;
   position: ContextMenuPosition;
-  /** 追加する要素を置くフロー座標（右クリック位置） */
-  nodePosition: XYPosition;
-  nodeType: NodeType;
   /** グループ内へポイントを追加する */
   onAddNode: (
     position: XYPosition,
@@ -22,9 +27,6 @@ export type GraphGroupContextMenuProps = {
   ) => void;
   /** グループ内へネストしたグループを追加する */
   onAddGroup: (position: XYPosition, parentId: string) => void;
-  isEdgeCreationActive: boolean;
-  onStartEdgeCreation: () => void;
-  onEndEdgeCreation: () => void;
   /** グループを解除する（中身のノードは残す） */
   onDissolve: (id: string) => void;
   onClose: () => void;
@@ -38,15 +40,11 @@ export type GraphGroupContextMenuProps = {
 export function GraphGroupContextMenu({
   group,
   position,
-  nodePosition,
-  nodeType,
   onAddNode,
   onAddGroup,
-  isEdgeCreationActive,
-  onStartEdgeCreation,
-  onEndEdgeCreation,
   onDissolve,
   onClose,
+  ...creationProps
 }: GraphGroupContextMenuProps) {
   const t = useTranslations("Graph.contextMenu");
 
@@ -57,68 +55,22 @@ export function GraphGroupContextMenu({
       onClose={onClose}
     >
       <Menu aria-label={t("groupLabel", { label: group.data.label })}>
-        {isEdgeCreationActive ? (
-          <MenuItem
-            id="end-edge-creation"
-            textValue={t("endEdgeCreation")}
-            onAction={() => {
-              onEndEdgeCreation();
-              onClose();
-            }}
-          >
-            <X aria-hidden className="size-4 shrink-0" />
-            {t("endEdgeCreation")}
-          </MenuItem>
-        ) : (
-          <>
-            <MenuItem
-              id="add-node"
-              textValue={t("addNode")}
-              onAction={() => {
-                onAddNode(nodePosition, nodeType, group.id);
-                onClose();
-              }}
-            >
-              <MapPinPlus aria-hidden className="size-4 shrink-0" />
-              {t("addNode")}
-            </MenuItem>
-            <MenuItem
-              id="add-group"
-              textValue={t("addGroup")}
-              onAction={() => {
-                onAddGroup(nodePosition, group.id);
-                onClose();
-              }}
-            >
-              <SquareDashed aria-hidden className="size-4 shrink-0" />
-              {t("addGroup")}
-            </MenuItem>
-            <MenuItem
-              id="add-edge"
-              textValue={t("addEdge")}
-              onAction={() => {
-                onStartEdgeCreation();
-                onClose();
-              }}
-            >
-              <Route aria-hidden className="size-4 shrink-0" />
-              {t("addEdge")}
-            </MenuItem>
-          </>
-        )}
+        <GraphCreationMenuItems
+          {...creationProps}
+          // 追加操作はこのグループを親にする
+          onAddNode={(nodePosition, nodeType) =>
+            onAddNode(nodePosition, nodeType, group.id)
+          }
+          onAddGroup={(nodePosition) => onAddGroup(nodePosition, group.id)}
+        />
         <MenuSeparator />
-        <MenuItem
+        <ContextMenuItem
           id="dissolve"
-          textValue={t("dissolveGroup")}
-          className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-          onAction={() => {
-            onDissolve(group.id);
-            onClose();
-          }}
-        >
-          <Ungroup aria-hidden className="size-4 shrink-0" />
-          {t("dissolveGroup")}
-        </MenuItem>
+          icon={Ungroup}
+          label={t("dissolveGroup")}
+          variant="destructive"
+          onAction={() => onDissolve(group.id)}
+        />
       </Menu>
     </ContextMenuPopover>
   );
