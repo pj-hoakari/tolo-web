@@ -69,7 +69,8 @@
       "save": "保存",
       "newNodeLabel": "节点 {index}",
       "addGroup": "添加分组",
-      "newGroupLabel": "分组 {index}"
+      "newGroupLabel": "分组 {index}",
+      "autoAlign": "自动排列"
     },
     "easyConnect": {
       "fromNode": "添加路径：点击作为终点的节点",

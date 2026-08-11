@@ -23,7 +23,10 @@ export const GROUP_FIT_PADDING_TOP = 56;
 export const GROUP_FIT_PADDING_BOTTOM = 48;
 
 /** 寸法未計測時に用いる想定サイズ */
-function sizeOf(node: GraphCanvasNode): { width: number; height: number } {
+export function sizeOf(node: GraphCanvasNode): {
+  width: number;
+  height: number;
+} {
   const fallback = isGroupNode(node)
     ? { width: GROUP_DEFAULT_WIDTH, height: GROUP_DEFAULT_HEIGHT }
     : { width: 160, height: 56 };

@@ -1,4 +1,4 @@
-import { SquareDashed } from "lucide-react";
+import { Network, SquareDashed } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { NODE_TYPE_DEFS } from "../nodeTypes";
@@ -8,13 +8,15 @@ import { NodeTypeIcon } from "./NodeTypeIcon";
 export type GraphEditorToolbarProps = {
   onAddNode: (type: NodeType) => void;
   onAddGroup: () => void;
+  onAutoAlign: () => void;
   onSave: () => void;
 };
 
-/** グラフ構造を編集するときのツールバー（ポイント・グループ追加・保存） */
+/** グラフ構造を編集するときのツールバー（ポイント・グループ追加・自動整列・保存） */
 export function GraphEditorToolbar({
   onAddNode,
   onAddGroup,
+  onAutoAlign,
   onSave,
 }: GraphEditorToolbarProps) {
   const t = useTranslations("Graph.editor");
@@ -50,7 +52,16 @@ export function GraphEditorToolbar({
           <SquareDashed aria-hidden className="size-4 shrink-0" />
           {t("addGroup")}
         </Button>
-        <div className="ml-1 border-border border-l pl-2">
+        <div className="ml-1 flex items-center gap-2 border-border border-l pl-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onPress={onAutoAlign}
+            className="gap-1.5"
+          >
+            <Network aria-hidden className="size-4 shrink-0" />
+            {t("autoAlign")}
+          </Button>
           <Button size="sm" onPress={onSave}>
             {t("save")}
           </Button>

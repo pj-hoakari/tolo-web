@@ -69,7 +69,8 @@
       "save": "儲存",
       "newNodeLabel": "節點 {index}",
       "addGroup": "新增群組",
-      "newGroupLabel": "群組 {index}"
+      "newGroupLabel": "群組 {index}",
+      "autoAlign": "自動排列"
     },
     "easyConnect": {
       "fromNode": "新增路徑：點擊作為終點的節點",

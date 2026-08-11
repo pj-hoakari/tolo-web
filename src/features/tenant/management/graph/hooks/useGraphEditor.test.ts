@@ -461,3 +461,34 @@ describe("useGraphEditor: グループ（論理グルーピング）", () => {
     expect(result.current.canvas.edges).toHaveLength(0);
   });
 });
+
+describe("useGraphEditor: 自動整列", () => {
+  it("ツールバーの onAutoAlign で接続順に沿ってノードが整列される", () => {
+    // 全体としては左→右の配置だが、縦位置はばらばらに置く
+    const initial: GraphData = {
+      nodes: [node("n1", 0, 300), node("n2", 300, 0), node("n3", 600, 150)],
+      edges: [edge("e1", "n1", "n2"), edge("e2", "n2", "n3")],
+    };
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+
+    act(() => {
+      result.current.toolbar.onAutoAlign();
+    });
+
+    const positions = new Map(
+      result.current.graph.nodes.map((n) => [n.id, n.position]),
+    );
+    const n1 = positions.get("n1");
+    const n2 = positions.get("n2");
+    const n3 = positions.get("n3");
+    if (!n1 || !n2 || !n3) throw new Error("node not found");
+
+    // 接続順に左から右へ並び、縦位置が揃う
+    expect(n1.x).toBeLessThan(n2.x);
+    expect(n2.x).toBeLessThan(n3.x);
+    expect(n1.y).toBe(n2.y);
+    expect(n2.y).toBe(n3.y);
+  });
+});

@@ -69,7 +69,8 @@
       "save": "सुरक्षित गर्नुहोस्",
       "newNodeLabel": "बिन्दु {index}",
       "addGroup": "समूह थप्नुहोस्",
-      "newGroupLabel": "समूह {index}"
+      "newGroupLabel": "समूह {index}",
+      "autoAlign": "स्वतः मिलाउनुहोस्"
     },
     "easyConnect": {
       "fromNode": "मार्ग थप्नुहोस्: अन्तिम बिन्दु क्लिक गर्नुहोस्",

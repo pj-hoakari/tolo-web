@@ -16,6 +16,7 @@ import type {
   GraphNodeData,
 } from "../type";
 import { isGroupNode, isPointNode } from "../type";
+import { autoAlignGraph } from "../utils/autoLayout";
 import {
   patchEdgeData,
   patchNodeData,
@@ -156,6 +157,11 @@ export function useGraphElements(initial: GraphData) {
     [],
   );
 
+  /** グラフ全体を接続状況に基づいて自動整列する */
+  const autoAlign = useCallback(() => {
+    setNodes((nds) => autoAlignGraph(nds, edges));
+  }, [edges]);
+
   const removeEdge = useCallback((id: string) => {
     setEdges((eds) => withoutEdge(eds, id));
   }, []);
@@ -191,6 +197,7 @@ export function useGraphElements(initial: GraphData) {
     removeGroup,
     reparentByDrop,
     setGroupMinSize,
+    autoAlign,
     removeEdge,
     updateNodeData,
     updateEdgeData,
