@@ -41,6 +41,11 @@ const LAYER_GAP = 120;
 const MEMBER_GAP = 48;
 /** 連結成分（ルートで繋がっていない塊）間の間隔 */
 const COMPONENT_GAP = 96;
+/**
+ * ノードの間をルートが通り抜けるときに、通常の間隔へ上乗せして確保する
+ * 通り道の幅。レーンの占有幅と、またぎオフセットの余白に使う
+ */
+const ROUTE_CLEARANCE = 48;
 /** 列内順序を接続相手の平均位置へ寄せる緩和計算の反復回数 */
 const ORDERING_SWEEPS = 3;
 
@@ -247,6 +252,49 @@ function assignLayers(
   return layerOf;
 }
 
+/**
+ * 「同じ相手に接続される同じ層のメンバー」同士を繋ぐルート（兄弟ルート）の
+ * 添字を返す。端点の 2 メンバーが「共通の流入元」と「共通の流出先」の両方を
+ * （互いを除いて）持つ場合、層をまたぐ流れではなく同一層内の連絡とみなす。
+ * （例: α→A→β と α→B→β があるときの A→B。α と β を共有している）
+ */
+function findSiblingEdgeIndexes(internal: LiftedEdge[]): Set<number> {
+  const incoming = new Map<string, Set<string>>();
+  const outgoing = new Map<string, Set<string>>();
+  const add = (map: Map<string, Set<string>>, key: string, value: string) => {
+    const set = map.get(key);
+    if (set) set.add(value);
+    else map.set(key, new Set([value]));
+  };
+  for (const { from, to } of internal) {
+    add(outgoing, from, to);
+    add(incoming, to, from);
+  }
+  const sharesOther = (
+    a: Set<string> | undefined,
+    b: Set<string> | undefined,
+    exclude1: string,
+    exclude2: string,
+  ): boolean => {
+    if (!a || !b) return false;
+    for (const id of a) {
+      if (id === exclude1 || id === exclude2) continue;
+      if (b.has(id)) return true;
+    }
+    return false;
+  };
+  const result = new Set<number>();
+  for (const [index, { from, to }] of internal.entries()) {
+    if (
+      sharesOther(incoming.get(from), incoming.get(to), from, to) &&
+      sharesOther(outgoing.get(from), outgoing.get(to), from, to)
+    ) {
+      result.add(index);
+    }
+  }
+  return result;
+}
+
 /** 内側ルートの隣接で繋がった連結成分（元の配列順を保つ） */
 function connectedComponents(
   memberIds: string[],
@@ -348,6 +396,10 @@ function planContainer(
 ): ContainerPlan {
   const memberIds = members.map((n) => n.id);
   const { internal, external } = liftEdges(container, edges, index);
+  // 同一層内の連絡とみなす兄弟ルートは、層の割り当てと
+  // フロー方向の判定から除外する（同じ列に留める）
+  const siblingEdges = findSiblingEdgeIndexes(internal);
+  const flowEdges = internal.filter((_, i) => !siblingEdges.has(i));
 
   // フロー軸と向き: 現在の配置でルートがどちらへ流れているかを、
   // 両端の変位の合計で多数決する（ユーザーの配置の尊重）
@@ -355,7 +407,7 @@ function planContainer(
   let verticalSpan = 0;
   let signedX = 0;
   let signedY = 0;
-  for (const { from, to } of internal) {
+  for (const { from, to } of flowEdges) {
     const a = currentCenters.get(from);
     const b = currentCenters.get(to);
     if (!a || !b) continue;
@@ -376,7 +428,7 @@ function planContainer(
     return center ? (axis === "x" ? center.y : center.x) : 0;
   };
 
-  const layerOf = assignLayers(memberIds, internal);
+  const layerOf = assignLayers(memberIds, flowEdges);
 
   // 外へ出るルートを持つメンバーの行き先:
   // 相手がフロー軸方向なら端の列へ、直交方向なら境界バンドへ
@@ -807,8 +859,10 @@ function finalizeContainer(
       for (; laneCursor < lanes.length; laneCursor += 1) {
         entryIds.push(lanes[laneCursor].key);
       }
+      // レーンには占有幅を持たせ、ルートを挟むノード同士の間隔を
+      // 通常より広めにとる
       const entryCrossSize = (id: string): number =>
-        laneByKey.has(id) ? 0 : crossSizeOf(id);
+        laneByKey.has(id) ? ROUTE_CLEARANCE : crossSizeOf(id);
 
       // まず手前から順に詰む
       let stackCross = 0;
@@ -916,10 +970,44 @@ function finalizeContainer(
         );
       }
 
+      // 同じ列の中で他のメンバーを飛び越えて繋がるルート（兄弟ルート）は、
+      // 飛び越されるメンバーと遠い側の端点を主軸方向の左右へ離して
+      // 通り道を空ける。隣どうしを繋ぐだけのルートはずらさない
+      const stackIndexOf = new Map(column.map((id, i) => [id, i]));
+      const skippedMembers = new Set<string>();
+      const farEndpoints = new Set<string>();
+      let intraOffset = 0;
+      for (const { from, to } of plan.internal) {
+        const fromIndex = stackIndexOf.get(from);
+        const toIndex = stackIndexOf.get(to);
+        if (fromIndex === undefined || toIndex === undefined) continue;
+        if (Math.abs(toIndex - fromIndex) < 2) continue;
+        const low = Math.min(fromIndex, toIndex);
+        const high = Math.max(fromIndex, toIndex);
+        let widestSkipped = 0;
+        for (let i = low + 1; i < high; i += 1) {
+          skippedMembers.add(column[i]);
+          widestSkipped = Math.max(widestSkipped, mainSizeOf(column[i]));
+        }
+        farEndpoints.add(column[high]);
+        // ルートの線（端点間の直線）が、飛び越されるメンバーの箱から
+        // 通常より広めの余白をとって離れるだけのずらし量を確保する
+        const span = high - low;
+        const required =
+          ((widestSkipped / 2 + ROUTE_CLEARANCE) * span) / (span + 1);
+        intraOffset = Math.max(intraOffset, required);
+      }
+      intraOffset = Math.min(intraOffset, LAYER_GAP - MEMBER_GAP / 2);
+      const mainOffsetOf = (id: string): number => {
+        if (skippedMembers.has(id)) return -intraOffset;
+        if (farEndpoints.has(id)) return intraOffset;
+        return 0;
+      };
+
       for (const id of entryIds) {
         const cross = centers.get(id) ?? 0;
         if (laneByKey.has(id)) laneCrosses.set(id, cross);
-        else placed.set(id, { main: centerMain, cross });
+        else placed.set(id, { main: centerMain + mainOffsetOf(id), cross });
       }
       columnStart += columnMain + LAYER_GAP;
     }

@@ -339,6 +339,70 @@ describe("autoAlignGraph: 層をまたぐルートのオフセット", () => {
   });
 });
 
+describe("autoAlignGraph: 同じ層のノード同士のルート", () => {
+  // α→A→β / α→B→β / α→C→β の並列構造（A・B・C は同じ層）
+  const parallelGraph = (extraEdges: GraphEdgeType[]) => ({
+    nodes: [
+      point("alpha", 0, 150),
+      point("a", 300, 0),
+      point("b", 300, 150),
+      point("c", 300, 300),
+      point("beta", 600, 150),
+    ],
+    edges: [
+      edge("e1", "alpha", "a"),
+      edge("e2", "alpha", "b"),
+      edge("e3", "alpha", "c"),
+      edge("e4", "a", "beta"),
+      edge("e5", "b", "beta"),
+      edge("e6", "c", "beta"),
+      ...extraEdges,
+    ],
+  });
+
+  it("同じ相手に接続されるノード同士のルートでは層が分かれない", () => {
+    // A→B と B→C（隣どうしの連絡）があっても A・B・C は同じ列のまま
+    const { nodes, edges } = parallelGraph([
+      edge("e7", "a", "b"),
+      edge("e8", "b", "c"),
+    ]);
+
+    const aligned = autoAlignGraph(nodes, edges);
+
+    const a = centerOf(aligned, "a");
+    const b = centerOf(aligned, "b");
+    const c = centerOf(aligned, "c");
+    // 隣どうしを繋ぐだけなのでオフセットもなし（横位置が揃う）
+    expect(a.x).toBe(b.x);
+    expect(b.x).toBe(c.x);
+    expect(a.y).toBeLessThan(b.y);
+    expect(b.y).toBeLessThan(c.y);
+    // 前後の層は左右に分かれたまま
+    expect(centerOf(aligned, "alpha").x).toBeLessThan(a.x);
+    expect(centerOf(aligned, "beta").x).toBeGreaterThan(a.x);
+  });
+
+  it("同じ層でノードをまたぐルートがあると、またがれる側と遠い端点が左右へ離れる", () => {
+    // A→B と A→C: A→C は間の B をまたぐ
+    const { nodes, edges } = parallelGraph([
+      edge("e7", "a", "b"),
+      edge("e8", "a", "c"),
+    ]);
+
+    const aligned = autoAlignGraph(nodes, edges);
+
+    const a = centerOf(aligned, "a");
+    const b = centerOf(aligned, "b");
+    const c = centerOf(aligned, "c");
+    // B（またがれる側）と C（遠い端点）が A を挟んで左右に分かれる
+    expect(b.x).toBeLessThan(a.x);
+    expect(c.x).toBeGreaterThan(a.x);
+    // 縦の並び順はそのまま
+    expect(a.y).toBeLessThan(b.y);
+    expect(b.y).toBeLessThan(c.y);
+  });
+});
+
 describe("autoAlignGraph: ユーザーの並べ替えの尊重", () => {
   /** ブースA と 壁展示 の位置を入れ替えたノード配列 */
   const withSwappedBoothAndWall = (nodes: GraphCanvasNode[]) => {
