@@ -62,7 +62,7 @@ const GROUP_MINIMAP_COLOR = "#d4d4d8";
 // React Flow の既定値（50%）だと、広い会場グラフを fitView しても
 // 下限で止まり、端のノードが画面外に残る。
 const MIN_ZOOM = 0.01;
-const FIT_VIEW_OPTIONS = { padding: 0.2, minZoom: MIN_ZOOM };
+export const FIT_VIEW_OPTIONS = { padding: 0.2, minZoom: MIN_ZOOM };
 
 /** グラフ構造そのものを編集するためのハンドラ一式 */
 export type GraphCanvasEditing = {
@@ -72,11 +72,16 @@ export type GraphCanvasEditing = {
   onReverseEdge: (id: string) => void;
   onSetNodeType: (id: string, type: NodeType) => void;
   onSetNodeLabel: (id: string, label: string) => void;
+  /** parentId を渡すと、位置に関わらずそのグループの中へ追加する */
   onAddNodeAtPosition: (
     position: { x: number; y: number },
     nodeType?: NodeType,
+    parentId?: string,
   ) => void;
-  onAddGroupAtPosition: (position: { x: number; y: number }) => void;
+  onAddGroupAtPosition: (
+    position: { x: number; y: number },
+    parentId?: string,
+  ) => void;
   onDeleteNode: (id: string) => void;
   onDeleteEdge: (id: string) => void;
   /** ドラッグ終了時に、位置に応じた所属グループの付け替えを行う */
@@ -261,7 +266,7 @@ export function GraphCanvas({
         <GraphCanvasContextMenu
           position={contextMenu.canvasMenu}
           nodePosition={contextMenu.canvasMenu.nodePosition}
-          nodeType="GOAL_TRANSIT_MIXED"
+          nodeType={DEFAULT_NODE_TYPE}
           onAddNode={editing.onAddNodeAtPosition}
           onAddGroup={editing.onAddGroupAtPosition}
           isEdgeCreationActive={easyConnect.active}
@@ -282,11 +287,18 @@ export function GraphCanvas({
           onClose={contextMenu.close}
         />
       ) : null}
-      {contextMenu.menuNode && editing && contextMenu.menu ? (
+      {contextMenu.menuNode && editing && contextMenu.nodeMenu ? (
         isGroupNode(contextMenu.menuNode) ? (
           <GraphGroupContextMenu
             group={contextMenu.menuNode}
-            position={contextMenu.menu}
+            position={contextMenu.nodeMenu}
+            nodePosition={contextMenu.nodeMenu.nodePosition}
+            nodeType={DEFAULT_NODE_TYPE}
+            onAddNode={editing.onAddNodeAtPosition}
+            onAddGroup={editing.onAddGroupAtPosition}
+            isEdgeCreationActive={easyConnect.active}
+            onStartEdgeCreation={easyConnect.startGlobal}
+            onEndEdgeCreation={easyConnect.end}
             onDissolve={editing.onDeleteNode}
             onClose={contextMenu.close}
           />
@@ -295,7 +307,7 @@ export function GraphCanvas({
             node={contextMenu.menuNode}
             nodes={nodes}
             edges={edges}
-            position={contextMenu.menu}
+            position={contextMenu.nodeMenu}
             onSetType={editing.onSetNodeType}
             onStartEdgeCreation={startEasyConnectFromNode}
             onDelete={editing.onDeleteNode}

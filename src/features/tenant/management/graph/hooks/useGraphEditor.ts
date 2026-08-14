@@ -33,6 +33,7 @@ import { useGraphSelection } from "./useGraphSelection";
 export type GraphToolbarBindings = {
   onAddNode: (nodeType: NodeType) => void;
   onAddGroup: () => void;
+  onAutoAlign: () => void;
 };
 
 /** プロパティパネルに渡す props のうち、編集状態から決まるもの */
@@ -74,6 +75,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     removeGroup,
     reparentByDrop,
     setGroupMinSize,
+    autoAlign,
     removeEdge,
     updateNodeData,
     updateEdgeData,
@@ -169,6 +171,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     (
       position: { x: number; y: number },
       nodeType: NodeType = DEFAULT_NODE_TYPE,
+      parentId?: string,
     ) => {
       const node = createNode({
         id: newId("n"),
@@ -178,7 +181,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
         nodeType,
         position,
       });
-      appendNode(node);
+      appendNode(node, parentId);
       selectNode(node.id);
     },
     [source.nodes, appendNode, selectNode, t],
@@ -192,7 +195,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
   );
 
   const addGroupAtPosition = useCallback(
-    (position: { x: number; y: number }) => {
+    (position: { x: number; y: number }, parentId?: string) => {
       const group = createGroup({
         id: newId("g"),
         label: t("newGroupLabel", {
@@ -200,7 +203,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
         }),
         position,
       });
-      appendNode(group);
+      appendNode(group, parentId);
       selectNode(group.id);
     },
     [source.nodes, appendNode, selectNode, t],
@@ -283,7 +286,11 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
         onGroupResizeEnd,
       },
     },
-    toolbar: { onAddNode: addNode, onAddGroup: addGroup },
+    toolbar: {
+      onAddNode: addNode,
+      onAddGroup: addGroup,
+      onAutoAlign: autoAlign,
+    },
     properties: {
       selectedNode:
         selection?.type === "node"

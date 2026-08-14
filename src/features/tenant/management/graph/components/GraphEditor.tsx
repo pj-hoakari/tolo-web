@@ -1,10 +1,10 @@
 "use client";
 
-import { ReactFlowProvider } from "@xyflow/react";
+import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
 import { type Ref, useImperativeHandle } from "react";
 import { useGraphEditor } from "../hooks/useGraphEditor";
 import type { GraphData } from "../type";
-import { GraphCanvas } from "./GraphCanvas";
+import { FIT_VIEW_OPTIONS, GraphCanvas } from "./GraphCanvas";
 import { GraphEditorToolbar } from "./GraphEditorToolbar";
 import { PropertiesPanel } from "./properties";
 
@@ -32,9 +32,22 @@ function GraphEditorInner({
     console.log(data);
   };
 
+  const { fitView } = useReactFlow();
+  const handleAutoAlign = () => {
+    toolbar.onAutoAlign();
+    // 整列後の位置がキャンバスへ反映されてから、全体をビューに収める
+    requestAnimationFrame(() => {
+      void fitView({ ...FIT_VIEW_OPTIONS, duration: 300 });
+    });
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <GraphEditorToolbar {...toolbar} onSave={handleSave} />
+      <GraphEditorToolbar
+        {...toolbar}
+        onAutoAlign={handleAutoAlign}
+        onSave={handleSave}
+      />
       <div className="flex min-h-0 flex-1">
         <GraphCanvas {...canvas} />
         <PropertiesPanel {...properties} graph={graph} />

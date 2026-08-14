@@ -69,7 +69,8 @@
       "save": "저장",
       "newNodeLabel": "지점 {index}",
       "addGroup": "그룹 추가",
-      "newGroupLabel": "그룹 {index}"
+      "newGroupLabel": "그룹 {index}",
+      "autoAlign": "자동 정렬"
     },
     "easyConnect": {
       "fromNode": "경로 추가: 끝점으로 사용할 지점을 클릭하세요",

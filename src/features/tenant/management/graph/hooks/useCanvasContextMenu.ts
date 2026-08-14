@@ -4,7 +4,13 @@ import type { GraphCanvasNode, GraphEdgeType } from "../type";
 
 export type CanvasContextMenuState =
   | { kind: "edge"; elementId: string; x: number; y: number }
-  | { kind: "node"; elementId: string; x: number; y: number }
+  | {
+      kind: "node";
+      elementId: string;
+      x: number;
+      y: number;
+      nodePosition: XYPosition;
+    }
   | { kind: "canvas"; x: number; y: number; nodePosition: XYPosition };
 
 export type CanvasContextMenuApi = {
@@ -13,6 +19,8 @@ export type CanvasContextMenuApi = {
   menuNode: GraphCanvasNode | undefined;
   /** エッジメニューの対象。エッジメニューが開いていないときは undefined */
   menuEdge: GraphEdgeType | undefined;
+  /** ノードメニューの状態。開いていないときは undefined */
+  nodeMenu: Extract<CanvasContextMenuState, { kind: "node" }> | undefined;
   /** 背景メニューの状態。開いていないときは undefined */
   canvasMenu: Extract<CanvasContextMenuState, { kind: "canvas" }> | undefined;
   openNodeMenu: (event: React.MouseEvent, node: GraphCanvasNode) => void;
@@ -47,19 +55,28 @@ export function useCanvasContextMenu({
 
   const close = useCallback(() => setMenu(null), []);
 
+  /**
+   * クリック位置を、メニュー表示用のスクリーン座標と
+   * 要素追加用のフロー座標のペアに変換する。
+   */
+  const toMenuPlacement = useCallback(
+    (event: MouseEvent | React.MouseEvent) => {
+      const point = { x: event.clientX, y: event.clientY };
+      return { ...point, nodePosition: screenToFlowPosition(point) };
+    },
+    [screenToFlowPosition],
+  );
+
   const openNodeMenu = useCallback(
     (event: React.MouseEvent, node: GraphCanvasNode) => {
       event.preventDefault();
       event.stopPropagation();
       onSelectNode(node.id);
-      setMenu({
-        kind: "node",
-        elementId: node.id,
-        x: event.clientX,
-        y: event.clientY,
-      });
+      // グループ上での右クリックからも要素を追加できるよう、
+      // クリック位置のフロー座標も持たせておく。
+      setMenu({ kind: "node", elementId: node.id, ...toMenuPlacement(event) });
     },
-    [onSelectNode],
+    [onSelectNode, toMenuPlacement],
   );
 
   const openEdgeMenu = useCallback(
@@ -81,17 +98,9 @@ export function useCanvasContextMenu({
     (event: MouseEvent | React.MouseEvent) => {
       event.preventDefault();
       onClearSelection();
-      setMenu({
-        kind: "canvas",
-        x: event.clientX,
-        y: event.clientY,
-        nodePosition: screenToFlowPosition({
-          x: event.clientX,
-          y: event.clientY,
-        }),
-      });
+      setMenu({ kind: "canvas", ...toMenuPlacement(event) });
     },
-    [onClearSelection, screenToFlowPosition],
+    [onClearSelection, toMenuPlacement],
   );
 
   return useMemo(
@@ -105,6 +114,7 @@ export function useCanvasContextMenu({
         menu?.kind === "edge"
           ? edges.find((edge) => edge.id === menu.elementId)
           : undefined,
+      nodeMenu: menu?.kind === "node" ? menu : undefined,
       canvasMenu: menu?.kind === "canvas" ? menu : undefined,
       openNodeMenu,
       openEdgeMenu,

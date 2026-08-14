@@ -1,8 +1,8 @@
 import { ArrowLeftRight, ArrowRight, Repeat2, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Text } from "react-aria-components";
-import { Menu, MenuItem, MenuSeparator } from "@/components/ui/menu";
+import { Menu, MenuSeparator } from "@/components/ui/menu";
 import type { EdgeDirection, GraphCanvasNode, GraphEdgeType } from "../type";
+import { ContextMenuItem } from "./ContextMenuItem";
 import {
   ContextMenuPopover,
   type ContextMenuPosition,
@@ -36,11 +36,12 @@ export function GraphEdgeContextMenu({
 
   const direction = edge.data?.direction ?? "both";
   const directionState = resolveEdgeDirectionState(edge, nodes, edges, tNotice);
-  const sourceLabel =
-    nodes.find((node) => node.id === edge.source)?.data.label ?? edge.source;
-  const targetLabel =
-    nodes.find((node) => node.id === edge.target)?.data.label ?? edge.target;
-  const endpoints = { source: sourceLabel, target: targetLabel };
+  const labelOf = (id: string) =>
+    nodes.find((node) => node.id === id)?.data.label ?? id;
+  const endpoints = {
+    source: labelOf(edge.source),
+    target: labelOf(edge.target),
+  };
 
   return (
     <ContextMenuPopover
@@ -50,101 +51,55 @@ export function GraphEdgeContextMenu({
     >
       <Menu aria-label={t("edgeLabel", endpoints)}>
         {direction === "both" ? (
-          <MenuItem
+          <ContextMenuItem
             id="oneway"
-            textValue={t("setOneway", endpoints)}
+            icon={ArrowRight}
+            label={t("setOneway", endpoints)}
+            description={
+              directionState.onewayDisabled
+                ? directionState.directionReason
+                : null
+            }
             isDisabled={directionState.onewayDisabled}
-            onAction={() => {
-              onSetDirection(edge.id, "oneway");
-              onClose();
-            }}
-          >
-            <ArrowRight aria-hidden className="size-4 shrink-0" />
-            <MenuItemLabel
-              label={t("setOneway", endpoints)}
-              reason={
-                directionState.onewayDisabled
+            onAction={() => onSetDirection(edge.id, "oneway")}
+          />
+        ) : (
+          <>
+            <ContextMenuItem
+              id="both"
+              icon={ArrowLeftRight}
+              label={t("setBoth")}
+              description={
+                directionState.bothDisabled
                   ? directionState.directionReason
                   : null
               }
-            />
-          </MenuItem>
-        ) : (
-          <>
-            <MenuItem
-              id="both"
-              textValue={t("setBoth")}
               isDisabled={directionState.bothDisabled}
-              onAction={() => {
-                onSetDirection(edge.id, "both");
-                onClose();
-              }}
-            >
-              <ArrowLeftRight aria-hidden className="size-4 shrink-0" />
-              <MenuItemLabel
-                label={t("setBoth")}
-                reason={
-                  directionState.bothDisabled
-                    ? directionState.directionReason
-                    : null
-                }
-              />
-            </MenuItem>
-            <MenuItem
+              onAction={() => onSetDirection(edge.id, "both")}
+            />
+            <ContextMenuItem
               id="reverse"
-              textValue={t("reverse", endpoints)}
+              icon={Repeat2}
+              label={t("reverse", endpoints)}
+              description={
+                directionState.reverseDisabled
+                  ? directionState.reverseReason
+                  : null
+              }
               isDisabled={directionState.reverseDisabled}
-              onAction={() => {
-                onReverse(edge.id);
-                onClose();
-              }}
-            >
-              <Repeat2 aria-hidden className="size-4 shrink-0" />
-              <MenuItemLabel
-                label={t("reverse", endpoints)}
-                reason={
-                  directionState.reverseDisabled
-                    ? directionState.reverseReason
-                    : null
-                }
-              />
-            </MenuItem>
+              onAction={() => onReverse(edge.id)}
+            />
           </>
         )}
         <MenuSeparator />
-        <MenuItem
+        <ContextMenuItem
           id="delete"
-          textValue={t("deleteEdge")}
-          className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-          onAction={() => {
-            onDelete(edge.id);
-            onClose();
-          }}
-        >
-          <Trash2 aria-hidden className="size-4 shrink-0" />
-          {t("deleteEdge")}
-        </MenuItem>
+          icon={Trash2}
+          label={t("deleteEdge")}
+          variant="destructive"
+          onAction={() => onDelete(edge.id)}
+        />
       </Menu>
     </ContextMenuPopover>
-  );
-}
-
-/** 項目のラベルと、無効時の理由（あれば）をまとめて表示する。 */
-function MenuItemLabel({
-  label,
-  reason,
-}: {
-  label: string;
-  reason: string | null;
-}) {
-  return (
-    <div className="flex min-w-0 flex-col gap-0.5">
-      <Text slot="label">{label}</Text>
-      {reason ? (
-        <Text slot="description" className="text-muted-foreground text-xs">
-          {reason}
-        </Text>
-      ) : null}
-    </div>
   );
 }

@@ -1,10 +1,8 @@
 import { Route, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Text } from "react-aria-components";
 import {
   Menu,
   MenuHeader,
-  MenuItem,
   MenuSection,
   MenuSeparator,
 } from "@/components/ui/menu";
@@ -14,6 +12,7 @@ import type {
   GraphNodeType,
   NodeType,
 } from "../type";
+import { ContextMenuItem } from "./ContextMenuItem";
 import {
   ContextMenuPopover,
   type ContextMenuPosition,
@@ -62,65 +61,40 @@ export function GraphNodeContextMenu({
       onClose={onClose}
     >
       <Menu aria-label={t("nodeLabel", { label: node.data.label })}>
-        <MenuItem
+        <ContextMenuItem
           id="add-edge"
-          textValue={t("addEdgeFromNode")}
-          onAction={() => {
-            onStartEdgeCreation(node.id);
-            onClose();
-          }}
-        >
-          <Route aria-hidden className="size-4 shrink-0" />
-          {t("addEdgeFromNode")}
-        </MenuItem>
+          icon={Route}
+          label={t("addEdgeFromNode")}
+          onAction={() => onStartEdgeCreation(node.id)}
+        />
         <MenuSeparator />
         {/* 選択中のタイプをラジオ選択として支援技術へ伝える */}
         <MenuSection selectionMode="single" selectedKeys={[node.data.nodeType]}>
           <MenuHeader className="px-2 text-xs">{t("changeType")}</MenuHeader>
-          {options.map((option) => {
-            const typeLabel = tType(option.type);
-            return (
-              <MenuItem
-                id={option.type}
-                key={option.type}
-                textValue={typeLabel}
-                isDisabled={!option.assignable}
-                onAction={() => {
-                  if (option.type !== node.data.nodeType) {
-                    onSetType(node.id, option.type);
-                  }
-                  onClose();
-                }}
-              >
-                <NodeTypeIcon type={option.type} />
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <Text slot="label">{typeLabel}</Text>
-                  {option.disabledReason ? (
-                    <Text
-                      slot="description"
-                      className="text-muted-foreground text-xs"
-                    >
-                      {option.disabledReason}
-                    </Text>
-                  ) : null}
-                </div>
-              </MenuItem>
-            );
-          })}
+          {options.map((option) => (
+            <ContextMenuItem
+              id={option.type}
+              key={option.type}
+              icon={<NodeTypeIcon type={option.type} />}
+              label={tType(option.type)}
+              description={option.disabledReason}
+              isDisabled={!option.assignable}
+              onAction={() => {
+                if (option.type !== node.data.nodeType) {
+                  onSetType(node.id, option.type);
+                }
+              }}
+            />
+          ))}
         </MenuSection>
         <MenuSeparator />
-        <MenuItem
+        <ContextMenuItem
           id="delete"
-          textValue={t("deleteNode")}
-          className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-          onAction={() => {
-            onDelete(node.id);
-            onClose();
-          }}
-        >
-          <Trash2 aria-hidden className="size-4 shrink-0" />
-          {t("deleteNode")}
-        </MenuItem>
+          icon={Trash2}
+          label={t("deleteNode")}
+          variant="destructive"
+          onAction={() => onDelete(node.id)}
+        />
       </Menu>
     </ContextMenuPopover>
   );

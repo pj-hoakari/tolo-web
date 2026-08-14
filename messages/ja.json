@@ -69,7 +69,8 @@
       "save": "保存",
       "newNodeLabel": "ポイント {index}",
       "addGroup": "グループを追加",
-      "newGroupLabel": "グループ {index}"
+      "newGroupLabel": "グループ {index}",
+      "autoAlign": "自動整列"
     },
     "easyConnect": {
       "fromNode": "ルートを追加: 終点にするポイントをクリック",

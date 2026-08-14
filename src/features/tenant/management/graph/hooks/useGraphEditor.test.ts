@@ -351,6 +351,72 @@ describe("useGraphEditor: グループ（論理グルーピング）", () => {
     });
   });
 
+  it("グループを指定して追加したポイントは、位置に関わらずそのグループに属する", () => {
+    const initial: GraphData = {
+      nodes: [
+        {
+          id: "g1",
+          type: "graphGroup",
+          position: { x: 100, y: 100 },
+          width: 400,
+          height: 300,
+          data: { label: "1F" },
+        },
+      ],
+      edges: [],
+    };
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+
+    act(() => {
+      result.current.canvas.editing.onAddNodeAtPosition(
+        { x: 200, y: 200 },
+        "GOAL",
+        "g1",
+      );
+    });
+
+    const added = result.current.canvas.nodes.find(isPointNode);
+    expect(added?.parentId).toBe("g1");
+  });
+
+  it("グループを指定して追加したグループはネストする", () => {
+    const initial: GraphData = {
+      nodes: [
+        {
+          id: "g1",
+          type: "graphGroup",
+          position: { x: 100, y: 100 },
+          width: 400,
+          height: 300,
+          data: { label: "1F" },
+        },
+      ],
+      edges: [],
+    };
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+
+    act(() => {
+      result.current.canvas.editing.onAddGroupAtPosition(
+        { x: 200, y: 200 },
+        "g1",
+      );
+    });
+
+    const nodes = result.current.canvas.nodes;
+    const added = nodes.find((n) => n.id !== "g1");
+    expect(added?.parentId).toBe("g1");
+    // 親相対へ変換され、絶対位置はクリック位置のまま
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    expect(added && absolutePositionOf(added, byId)).toEqual({
+      x: 200,
+      y: 200,
+    });
+  });
+
   it("グループを削除しても中のポイントは残り、トップレベルへ戻る", () => {
     const initial: GraphData = {
       nodes: [
@@ -459,5 +525,36 @@ describe("useGraphEditor: グループ（論理グルーピング）", () => {
       result.current.canvas.editing.onConnect(connection("n1", "g1"));
     });
     expect(result.current.canvas.edges).toHaveLength(0);
+  });
+});
+
+describe("useGraphEditor: 自動整列", () => {
+  it("ツールバーの onAutoAlign で接続順に沿ってノードが整列される", () => {
+    // 全体としては左→右の配置だが、縦位置はばらばらに置く
+    const initial: GraphData = {
+      nodes: [node("n1", 0, 300), node("n2", 300, 0), node("n3", 600, 150)],
+      edges: [edge("e1", "n1", "n2"), edge("e2", "n2", "n3")],
+    };
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+
+    act(() => {
+      result.current.toolbar.onAutoAlign();
+    });
+
+    const positions = new Map(
+      result.current.graph.nodes.map((n) => [n.id, n.position]),
+    );
+    const n1 = positions.get("n1");
+    const n2 = positions.get("n2");
+    const n3 = positions.get("n3");
+    if (!n1 || !n2 || !n3) throw new Error("node not found");
+
+    // 接続順に左から右へ並び、縦位置が揃う
+    expect(n1.x).toBeLessThan(n2.x);
+    expect(n2.x).toBeLessThan(n3.x);
+    expect(n1.y).toBe(n2.y);
+    expect(n2.y).toBe(n3.y);
   });
 });

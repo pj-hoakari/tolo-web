@@ -69,7 +69,8 @@
       "save": "Guardar",
       "newNodeLabel": "Punto {index}",
       "addGroup": "Añadir grupo",
-      "newGroupLabel": "Grupo {index}"
+      "newGroupLabel": "Grupo {index}",
+      "autoAlign": "Ordenar automáticamente"
     },
     "easyConnect": {
       "fromNode": "Añadir ruta: haz clic en el punto final",
