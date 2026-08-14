@@ -218,3 +218,27 @@ export function buildRoute(
     GRID_SIZE,
   );
 }
+
+/**
+ * 検索などで選んだ部屋（roomId）への経路とゴールマーカーを返す。
+ * 現在地から、その部屋まで経路探索する（部屋自身は障害物から除外）。
+ */
+export function buildRouteToRoom(
+  snapshot: GuideMapSnapshot,
+  floorId: string,
+  start: MapPoint,
+  roomId: string,
+  width: number,
+  height: number,
+): { points: MapPoint[]; end: MapPoint | null } {
+  const visible = snapshot.items.filter((item) => onFloor(item, floorId));
+  const dest = visible.find((item) => item.id === roomId);
+  if (!dest) return { points: [], end: null };
+  const center = centerOf(dest);
+  const end = { x: center.x, y: center.y - dest.h * MARKER_OFFSET_RATIO };
+  const obstacles = visible
+    .filter((item) => item.id !== dest.id)
+    .map((item) => ({ x: item.x, y: item.y, w: item.w, h: item.h }));
+  const points = computeRoute(obstacles, start, end, width, height, GRID_SIZE);
+  return { points, end };
+}

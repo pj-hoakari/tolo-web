@@ -2,6 +2,7 @@
 
 import { Minus, Plus } from "lucide-react";
 import {
+  type ReactNode,
   type PointerEvent as ReactPointerEvent,
   useRef,
   useState,
@@ -77,6 +78,12 @@ export type GuideMapViewProps = {
   routeFlowClassName?: string;
   /** 流れる速さ（animation-duration。例: "1.1s"） */
   routeFlowDuration?: string;
+  /** 検索一致などで強調する部屋 ID。指定時は非該当を薄くする */
+  highlightIds?: string[];
+  /** 選択中の目的地（部屋）ID。脈動リングで強調する */
+  activeRoomId?: string | null;
+  /** 地図の上に差し込む要素（検索欄など） */
+  toolbar?: ReactNode;
 };
 
 export function GuideMapView({
@@ -97,6 +104,9 @@ export function GuideMapView({
   collapseLabel = "地図を縮小",
   routeFlowClassName,
   routeFlowDuration,
+  highlightIds,
+  activeRoomId = null,
+  toolbar,
 }: GuideMapViewProps) {
   // 右上の＋ボタンで拡大表示に切り替える（拡大中は横スクロールで全体を見る）
   const [expanded, setExpanded] = useState(false);
@@ -165,6 +175,8 @@ export function GuideMapView({
         </ToggleButtonGroup>
       )}
 
+      {toolbar}
+
       <div className="relative">
         {/* 右上の拡大／縮小ボタン */}
         <Button
@@ -207,6 +219,11 @@ export function GuideMapView({
             {rooms.map((room) => {
               const cx = room.x + room.width / 2;
               const cy = room.y + room.height / 2;
+              // 検索中は非該当を薄く、該当を強調。選択中は脈動リング。
+              const searching = highlightIds && highlightIds.length > 0;
+              const matched = !searching || highlightIds?.includes(room.id);
+              const active = activeRoomId === room.id;
+              const emphasized = active || (searching && matched);
               return (
                 <g
                   key={room.id}
@@ -215,7 +232,24 @@ export function GuideMapView({
                       ? `rotate(${room.rotation} ${cx} ${cy})`
                       : undefined
                   }
+                  className={cn(!matched && "opacity-30")}
                 >
+                  {active && (
+                    <rect
+                      x={room.x - 3}
+                      y={room.y - 3}
+                      width={room.width + 6}
+                      height={room.height + 6}
+                      rx={
+                        room.shape === "circle"
+                          ? Math.min(room.width, room.height) / 2 + 3
+                          : 6
+                      }
+                      fill="none"
+                      strokeWidth={2.5}
+                      className="animate-pulse stroke-accent"
+                    />
+                  )}
                   <rect
                     x={room.x}
                     y={room.y}
@@ -226,10 +260,10 @@ export function GuideMapView({
                         ? Math.min(room.width, room.height) / 2
                         : 4
                     }
-                    strokeWidth={1.5}
+                    strokeWidth={emphasized ? 2.5 : 1.5}
                     className={cn(
                       room.fill ?? ROOM_FILL[room.id] ?? "fill-secondary",
-                      "stroke-primary/25",
+                      emphasized ? "stroke-accent" : "stroke-primary/25",
                     )}
                   />
                   <text
