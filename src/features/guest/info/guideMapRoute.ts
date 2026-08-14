@@ -176,6 +176,67 @@ function simplify(
 
 const clampCell = (v: number, max: number) => Math.min(max - 1, Math.max(0, v));
 
+/** 連続する共線・重複点をまとめて折れ線を整える */
+function simplifyPoints(pts: GuideMapPoint[]): GuideMapPoint[] {
+  const out: GuideMapPoint[] = [];
+  for (const p of pts) {
+    const last = out.at(-1);
+    if (last && last.x === p.x && last.y === p.y) continue;
+    if (out.length >= 2) {
+      const a = out[out.length - 2];
+      const b = out[out.length - 1];
+      const collinear =
+        (a.y === b.y && b.y === p.y) || (a.x === b.x && b.x === p.x);
+      if (collinear) {
+        out[out.length - 1] = p;
+        continue;
+      }
+    }
+    out.push(p);
+  }
+  return out;
+}
+
+/**
+ * 端点（マーカー）を格子経路へ直角（L字）で接続する。
+ * grid 経路の端セル中心を捨て、marker → 直角コーナー → 次の点、と繋ぐ。
+ */
+function attachStart(
+  marker: GuideMapPoint,
+  pts: GuideMapPoint[],
+): GuideMapPoint[] {
+  if (pts.length < 2) return [marker];
+  const p0 = pts[0];
+  const p1 = pts[1];
+  // すでに縦横どちらかで揃っていればコーナー不要
+  if (marker.x === p1.x || marker.y === p1.y) {
+    return [marker, ...pts.slice(1)];
+  }
+  const horizontal = p0.y === p1.y;
+  const corner = horizontal
+    ? { x: marker.x, y: p1.y }
+    : { x: p1.x, y: marker.y };
+  return [marker, corner, ...pts.slice(1)];
+}
+
+function attachEnd(
+  marker: GuideMapPoint,
+  pts: GuideMapPoint[],
+): GuideMapPoint[] {
+  if (pts.length < 2) return [marker];
+  const n = pts.length;
+  const prev = pts[n - 2];
+  const last = pts[n - 1];
+  if (marker.x === prev.x || marker.y === prev.y) {
+    return [...pts.slice(0, -1), marker];
+  }
+  const horizontal = prev.y === last.y;
+  const corner = horizontal
+    ? { x: marker.x, y: prev.y }
+    : { x: prev.x, y: marker.y };
+  return [...pts.slice(0, -1), corner, marker];
+}
+
 /**
  * start → end の経路を求める。obstacles に重なるセルは通らない。
  * 端点は指定座標そのものへ寄せて、現在地・目的地のマーカーと線が繋がるようにする。
@@ -206,9 +267,10 @@ export function computeRoute(
   const cells = findPath(blocked, cols, rows, sIdx, eIdx);
   if (!cells) return [];
 
-  const points = simplify(cells, cols, grid);
-  if (points.length < 2) return [];
-  points[0] = start;
-  points[points.length - 1] = end;
-  return points;
+  const gridPoints = simplify(cells, cols, grid);
+  if (gridPoints.length < 2) return [];
+  // 端点は L 字（直角）でマーカーへ接続し、斜め線が出ないようにする
+  let points = attachStart(start, gridPoints);
+  points = attachEnd(end, points);
+  return simplifyPoints(points);
 }
