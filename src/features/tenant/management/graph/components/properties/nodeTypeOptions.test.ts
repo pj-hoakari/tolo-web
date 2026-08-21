@@ -59,7 +59,7 @@ function node(id: string, nodeType: NodeType): GraphNodeType {
     id,
     type: "graph",
     position: { x: 0, y: 0 },
-    data: { label: id, nodeType },
+    data: { labels: { ja: id }, nodeType },
   };
 }
 

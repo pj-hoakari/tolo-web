@@ -10,9 +10,11 @@ import type {
   GraphNodeType,
 } from "@/features/tenant/management/graph/type";
 import { isPointNode } from "@/features/tenant/management/graph/type";
+import { deriveNodeLabels } from "@/features/tenant/management/graph/utils/labels";
 import type { AliveEdge } from "@/features/tenant/webrtc/type";
 
-export const GRAPH_NODES = PLACEHOLDER_GRAPH.nodes;
+// 表示言語で解決したラベル（data.label）を注入した描画用の形にそろえる
+export const GRAPH_NODES = deriveNodeLabels(PLACEHOLDER_GRAPH.nodes, "ja");
 export const GRAPH_EDGES = PLACEHOLDER_GRAPH.edges;
 
 /**
@@ -62,13 +64,22 @@ export const DUAL_BOUNDARY_NODES: GraphNodeType[] = [
     id: "gate",
     type: "graph",
     position: { x: 0, y: 0 },
-    data: { label: "入退出口", nodeType: "BOUNDARY" },
+    // label は表示言語で解決済みの描画用フィールド（deriveNodeLabels が注入する形）
+    data: {
+      labels: { ja: "入退出口" },
+      label: "入退出口",
+      nodeType: "BOUNDARY",
+    },
   },
   {
     id: "hall",
     type: "graph",
     position: { x: 300, y: 0 },
-    data: { label: "ホール", nodeType: "TRANSIT_ONLY" },
+    data: {
+      labels: { ja: "ホール" },
+      label: "ホール",
+      nodeType: "TRANSIT_ONLY",
+    },
   },
 ];
 

@@ -14,7 +14,7 @@ function node(id: string, x: number, y: number): GraphNodeType {
     type: "graph",
     position: { x, y },
     // 寸法未計測時のフォールバック（160x56）で判定される
-    data: { label: id, nodeType: "GOAL" },
+    data: { labels: { ja: id }, nodeType: "GOAL" },
   };
 }
 

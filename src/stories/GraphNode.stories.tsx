@@ -18,7 +18,8 @@ function SingleNode({ nodeType, label, selected }: SingleNodeArgs) {
     id: "node-1",
     type: "graph",
     position: { x: 0, y: 0 },
-    data: { label, nodeType },
+    // label は表示言語で解決済みの描画用フィールド（deriveNodeLabels が注入する形）
+    data: { labels: { ja: label }, label, nodeType },
     selected,
   };
   return <StoryGraphCanvas nodes={[node]} edges={[]} height={240} />;

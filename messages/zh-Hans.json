@@ -63,6 +63,10 @@
     "notices": {
       "dualDirection": "同时承担进入和离开（输入·输出）"
     },
+    "labelLanguage": {
+      "label": "标签语言",
+      "labeledPointCount": "{count}/{total}"
+    },
     "editor": {
       "title": "会场编辑器",
       "addNode": "添加{type}",
@@ -102,6 +106,7 @@
       "deleteNode": "删除此节点",
       "deleteEdge": "删除此路径",
       "label": "标签",
+      "labelWithLanguage": "标签（{language}）",
       "type": "类型",
       "direction": "方向",
       "both": "双向 ⇌",
@@ -112,7 +117,8 @@
     },
     "node": {
       "editLabel": "编辑“{label}”的标签",
-      "labelField": "节点标签"
+      "labelField": "节点标签",
+      "labelFieldWithLanguage": "节点标签（{language}）"
     }
   },
   "Webrtc": {

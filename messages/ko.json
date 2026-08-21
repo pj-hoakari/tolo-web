@@ -63,6 +63,10 @@
     "notices": {
       "dualDirection": "출입(입력·출력) 양쪽을 담당하고 있습니다"
     },
+    "labelLanguage": {
+      "label": "라벨 언어",
+      "labeledPointCount": "{count}/{total}"
+    },
     "editor": {
       "title": "행사장 편집기",
       "addNode": "{type} 추가",
@@ -102,6 +106,7 @@
       "deleteNode": "이 지점 삭제",
       "deleteEdge": "이 경로 삭제",
       "label": "라벨",
+      "labelWithLanguage": "라벨({language})",
       "type": "유형",
       "direction": "방향",
       "both": "양방향 ⇌",
@@ -112,7 +117,8 @@
     },
     "node": {
       "editLabel": "「{label}」의 라벨 편집",
-      "labelField": "지점 라벨"
+      "labelField": "지점 라벨",
+      "labelFieldWithLanguage": "지점 라벨({language})"
     }
   },
   "Webrtc": {

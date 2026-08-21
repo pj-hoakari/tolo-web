@@ -63,6 +63,10 @@
     "notices": {
       "dualDirection": "Funciona a la vez como entrada y como salida"
     },
+    "labelLanguage": {
+      "label": "Idioma de las etiquetas",
+      "labeledPointCount": "{count}/{total}"
+    },
     "editor": {
       "title": "Editor del recinto",
       "addNode": "Añadir {type}",
@@ -102,6 +106,7 @@
       "deleteNode": "Eliminar este punto",
       "deleteEdge": "Eliminar esta ruta",
       "label": "Etiqueta",
+      "labelWithLanguage": "Etiqueta ({language})",
       "type": "Tipo",
       "direction": "Sentido",
       "both": "Bidireccional ⇌",
@@ -112,7 +117,8 @@
     },
     "node": {
       "editLabel": "Editar la etiqueta de «{label}»",
-      "labelField": "Etiqueta del punto"
+      "labelField": "Etiqueta del punto",
+      "labelFieldWithLanguage": "Etiqueta del punto ({language})"
     }
   },
   "Webrtc": {

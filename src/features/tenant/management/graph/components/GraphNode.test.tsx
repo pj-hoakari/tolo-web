@@ -13,10 +13,11 @@ import { GraphNode } from "./GraphNode";
 
 const nodeProps = {
   id: "n1",
-  data: { label: "ポイント 1", nodeType: "GOAL" },
+  // label は表示言語で解決済みの描画用フィールド（deriveNodeLabels が注入する形）
+  data: { labels: { ja: "ポイント 1" }, label: "ポイント 1", nodeType: "GOAL" },
   selected: false,
   isConnectable: false,
-} as NodeProps<GraphNodeType>;
+} as unknown as NodeProps<GraphNodeType>;
 
 afterEach(cleanup);
 
@@ -27,7 +28,9 @@ describe("GraphNode", () => {
     const { container } = render(
       <IntlTestProvider>
         <ReactFlowProvider>
-          <GraphNodeLabelEditingContext.Provider value={onUpdate}>
+          <GraphNodeLabelEditingContext.Provider
+            value={{ locale: "ja", onUpdate }}
+          >
             <GraphNode {...nodeProps} />
           </GraphNodeLabelEditingContext.Provider>
         </ReactFlowProvider>
@@ -57,7 +60,9 @@ describe("GraphNode", () => {
     );
     fireEvent.click(labelButton);
 
-    const input = screen.getByRole("textbox", { name: "ポイントのラベル" });
+    const input = screen.getByRole("textbox", {
+      name: "ポイントのラベル（日本語）",
+    });
     expect(document.activeElement).toBe(input);
     const popup = input.closest(".absolute");
     expect(popup).not.toBeNull();
@@ -75,7 +80,9 @@ describe("GraphNode", () => {
     render(
       <IntlTestProvider>
         <ReactFlowProvider>
-          <GraphNodeLabelEditingContext.Provider value={onUpdate}>
+          <GraphNodeLabelEditingContext.Provider
+            value={{ locale: "ja", onUpdate }}
+          >
             <GraphNode {...nodeProps} />
           </GraphNodeLabelEditingContext.Provider>
         </ReactFlowProvider>
@@ -85,7 +92,9 @@ describe("GraphNode", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "「ポイント 1」のラベルを編集" }),
     );
-    const input = screen.getByRole("textbox", { name: "ポイントのラベル" });
+    const input = screen.getByRole("textbox", {
+      name: "ポイントのラベル（日本語）",
+    });
     fireEvent.change(input, { target: { value: "取り消す名前" } });
     fireEvent.keyDown(input, { key: "Escape" });
 

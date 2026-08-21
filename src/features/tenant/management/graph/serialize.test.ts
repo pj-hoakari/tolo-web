@@ -16,7 +16,7 @@ describe("toGraphData", () => {
         type: "graph",
         position: { x: 10.4, y: 20.6 },
         data: {
-          label: "A",
+          labels: { ja: "A" },
           nodeType: "GOAL",
           // 描画用の派生情報（送信対象外）
           handles: { top: [], right: [], bottom: [], left: [] },
@@ -43,7 +43,7 @@ describe("toGraphData", () => {
       id: "n1",
       type: "graph",
       position: { x: 10, y: 21 },
-      data: { label: "A", nodeType: "GOAL" },
+      data: { labels: { ja: "A" }, nodeType: "GOAL" },
     });
     expect(pointDataOf(result.nodes[0])?.handles).toBeUndefined();
 
@@ -56,6 +56,21 @@ describe("toGraphData", () => {
       data: { direction: "oneway" },
     });
     expect(result.edges[0].sourceHandle).toBeUndefined();
+  });
+
+  it("空文字の言語ラベルは保存対象から除く", () => {
+    const nodes: GraphNodeType[] = [
+      {
+        id: "n1",
+        type: "graph",
+        position: { x: 0, y: 0 },
+        data: { labels: { ja: "A", en: "" }, nodeType: "GOAL" },
+      },
+    ];
+
+    const result = toGraphData(nodes, []);
+
+    expect(pointDataOf(result.nodes[0])?.labels).toEqual({ ja: "A" });
   });
 
   it("direction 未指定のエッジは both を補う", () => {
@@ -73,7 +88,7 @@ describe("toGraphData", () => {
         type: "graph",
         position: { x: 0, y: 0 },
         data: {
-          label: "A",
+          labels: { ja: "A" },
           nodeType: "GOAL",
           observationPointIds: ["edge-1", "edge-2"],
         },
@@ -104,7 +119,11 @@ describe("toGraphData", () => {
         id: "n1",
         type: "graph",
         position: { x: 0, y: 0 },
-        data: { label: "A", nodeType: "GOAL", observationPointIds: [] },
+        data: {
+          labels: { ja: "A" },
+          nodeType: "GOAL",
+          observationPointIds: [],
+        },
       },
     ];
     const result = toGraphData(nodes, []);
@@ -126,7 +145,7 @@ describe("toGraphData", () => {
         type: "graph",
         parentId: "g1",
         position: { x: 40, y: 60 },
-        data: { label: "A", nodeType: "GOAL" },
+        data: { labels: { ja: "A" }, nodeType: "GOAL" },
       },
     ];
 

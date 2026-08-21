@@ -3,21 +3,29 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { NODE_TYPE_DEFS } from "../nodeTypes";
 import type { NodeType } from "../type";
+import { type LabelLocaleBindings, LabelLocaleMenu } from "./LabelLocaleMenu";
 import { NodeTypeIcon } from "./NodeTypeIcon";
 
-export type GraphEditorToolbarProps = {
+export type GraphEditorToolbarProps = LabelLocaleBindings & {
   onAddNode: (type: NodeType) => void;
   onAddGroup: () => void;
   onAutoAlign: () => void;
   onSave: () => void;
 };
 
-/** グラフ構造を編集するときのツールバー（ポイント・グループ追加・自動整列・保存） */
+/**
+ * グラフ構造を編集するときのツールバー
+ * （ポイント・グループ追加・ラベル言語・自動整列・保存）
+ */
 export function GraphEditorToolbar({
   onAddNode,
   onAddGroup,
   onAutoAlign,
   onSave,
+  labelLocale,
+  onChangeLabelLocale,
+  labelCounts,
+  pointCount,
 }: GraphEditorToolbarProps) {
   const t = useTranslations("Graph.editor");
   const tType = useTranslations("Graph.nodeType");
@@ -53,6 +61,12 @@ export function GraphEditorToolbar({
           {t("addGroup")}
         </Button>
         <div className="ml-1 flex items-center gap-2 border-border border-l pl-2">
+          <LabelLocaleMenu
+            labelLocale={labelLocale}
+            onChangeLabelLocale={onChangeLabelLocale}
+            labelCounts={labelCounts}
+            pointCount={pointCount}
+          />
           <Button
             variant="outline"
             size="sm"

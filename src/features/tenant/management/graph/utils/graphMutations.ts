@@ -7,6 +7,7 @@ import type {
   GraphNodeData,
   GraphNodeType,
   GroupNodeType,
+  LocalizedLabel,
   NodeType,
 } from "../type";
 import { isPointNode } from "../type";
@@ -26,7 +27,7 @@ export function removedIds(
 
 export function createNode(params: {
   id: string;
-  label: string;
+  labels: LocalizedLabel;
   nodeType: NodeType;
   position: { x: number; y: number };
 }): GraphNodeType {
@@ -34,7 +35,7 @@ export function createNode(params: {
     id: params.id,
     type: "graph",
     position: params.position,
-    data: { label: params.label, nodeType: params.nodeType },
+    data: { labels: params.labels, nodeType: params.nodeType },
   };
 }
 
@@ -87,6 +88,27 @@ export function patchNodeData(
     return patch.label !== undefined
       ? { ...n, data: { ...n.data, label: patch.label } }
       : n;
+  });
+}
+
+/**
+ * 指定ノードのラベルを更新した新しい配列を返す。
+ * ポイントは指定言語のラベルを更新し、空文字はその言語のラベル削除として扱う。
+ * グループのラベルは言語を持たないため、単一ラベルをそのまま更新する。
+ */
+export function patchNodeLabel(
+  nodes: GraphCanvasNode[],
+  id: string,
+  locale: string,
+  label: string,
+): GraphCanvasNode[] {
+  return nodes.map((n) => {
+    if (n.id !== id) return n;
+    if (!isPointNode(n)) return { ...n, data: { ...n.data, label } };
+    const labels = { ...n.data.labels };
+    if (label === "") delete labels[locale];
+    else labels[locale] = label;
+    return { ...n, data: { ...n.data, labels } };
   });
 }
 

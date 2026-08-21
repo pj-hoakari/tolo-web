@@ -23,7 +23,7 @@ function node(id: string, x: number, y: number): GraphNodeType {
     id,
     type: "graph",
     position: { x, y },
-    data: { label: id, nodeType: "GOAL" },
+    data: { labels: { ja: id }, nodeType: "GOAL" },
   };
 }
 
@@ -178,6 +178,78 @@ describe("useGraphEditor: ノード内ラベル編集", () => {
   });
 });
 
+describe("useGraphEditor: ラベルの多言語編集", () => {
+  it("編集言語を切り替えると、その言語のラベルで表示・編集される", () => {
+    const initial: GraphData = {
+      nodes: [
+        {
+          ...node("n1", 0, 0),
+          data: { labels: { ja: "入口", en: "Entrance" }, nodeType: "GOAL" },
+        },
+      ],
+      edges: [],
+    };
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+
+    // 既定の編集言語は UI の表示言語（テストでは ja）
+    expect(result.current.toolbar.labelLocale).toBe("ja");
+    expect(result.current.canvas.nodes[0].data.label).toBe("入口");
+    expect(result.current.toolbar.labelCounts).toEqual({ ja: 1, en: 1 });
+
+    act(() => {
+      result.current.toolbar.onChangeLabelLocale("en");
+    });
+    expect(result.current.canvas.nodes[0].data.label).toBe("Entrance");
+
+    // 編集は選択中の言語のラベルにだけ反映される
+    act(() => {
+      result.current.canvas.editing.onSetNodeLabel("n1", "Gate");
+    });
+    const first = result.current.getGraphData().nodes[0];
+    expect(isPointNode(first) && first.data.labels).toEqual({
+      ja: "入口",
+      en: "Gate",
+    });
+  });
+
+  it("選択中の言語にラベルが無いポイントは他言語へフォールバック表示する", () => {
+    const initial: GraphData = { nodes: [node("n1", 0, 0)], edges: [] };
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+
+    act(() => {
+      result.current.toolbar.onChangeLabelLocale("en");
+    });
+
+    const first = result.current.canvas.nodes[0];
+    expect(first.data.label).toBe("n1");
+    expect(isPointNode(first) && first.data.labelIsFallback).toBe(true);
+  });
+
+  it("新しいポイントの初期ラベルは編集中の言語にだけ設定される", () => {
+    const { result } = renderHook(
+      () => useGraphEditor({ nodes: [], edges: [] }),
+      { wrapper: IntlTestProvider },
+    );
+
+    act(() => {
+      result.current.toolbar.onChangeLabelLocale("en");
+    });
+    act(() => {
+      result.current.canvas.editing.onAddNodeAtPosition({ x: 0, y: 0 });
+    });
+
+    const first = result.current.getGraphData().nodes[0];
+    // メッセージはテスト用 Provider（ja）のまま、キーは編集中の言語になる
+    expect(isPointNode(first) && first.data.labels).toEqual({
+      en: "ポイント 1",
+    });
+  });
+});
+
 describe("useGraphEditor: グローバルコンテキスト操作", () => {
   it("指定した位置にノードを追加できる", () => {
     const initial: GraphData = { nodes: [], edges: [] };
@@ -267,7 +339,7 @@ describe("useGraphEditor: 観測点の紐づけとグラフの整合", () => {
       {
         ...node("n1", 0, 0),
         data: {
-          label: "n1",
+          labels: { ja: "n1" },
           nodeType: "GOAL",
           observationPointIds: ["cam-1"],
         },
@@ -433,7 +505,7 @@ describe("useGraphEditor: グループ（論理グルーピング）", () => {
           type: "graph",
           parentId: "g1",
           position: { x: 50, y: 60 },
-          data: { label: "ポイント", nodeType: "GOAL_TRANSIT_MIXED" },
+          data: { labels: { ja: "ポイント" }, nodeType: "GOAL_TRANSIT_MIXED" },
         },
       ],
       edges: [],
@@ -468,7 +540,7 @@ describe("useGraphEditor: グループ（論理グルーピング）", () => {
           type: "graph",
           parentId: "g1",
           position: { x: 50, y: 60 },
-          data: { label: "ポイント", nodeType: "GOAL_TRANSIT_MIXED" },
+          data: { labels: { ja: "ポイント" }, nodeType: "GOAL_TRANSIT_MIXED" },
         },
       ],
       edges: [],

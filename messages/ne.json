@@ -63,6 +63,10 @@
     "notices": {
       "dualDirection": "प्रवेश र निकास (इनपुट·आउटपुट) दुवैको भूमिका छ"
     },
+    "labelLanguage": {
+      "label": "लेबल भाषा",
+      "labeledPointCount": "{count}/{total}"
+    },
     "editor": {
       "title": "स्थल सम्पादक",
       "addNode": "{type} थप्नुहोस्",
@@ -102,6 +106,7 @@
       "deleteNode": "यो बिन्दु मेट्नुहोस्",
       "deleteEdge": "यो मार्ग मेट्नुहोस्",
       "label": "लेबल",
+      "labelWithLanguage": "लेबल ({language})",
       "type": "प्रकार",
       "direction": "दिशा",
       "both": "दुईतर्फी ⇌",
@@ -112,7 +117,8 @@
     },
     "node": {
       "editLabel": "«{label}» को लेबल सम्पादन गर्नुहोस्",
-      "labelField": "बिन्दुको लेबल"
+      "labelField": "बिन्दुको लेबल",
+      "labelFieldWithLanguage": "बिन्दुको लेबल ({language})"
     }
   },
   "Webrtc": {

@@ -44,8 +44,25 @@ export type GraphNotice = {
   messageKey: NoticeMessageKey;
 };
 
+/**
+ * 言語コード（ロケール）をキーにしたポイントラベルの対訳。
+ * 各言語は並列に扱い、どの言語をいくつ設定するかは任意（特別扱いする言語はない）。
+ * キーはアプリの対応ロケールを想定するが、保存済みデータとの互換のため文字列で扱う。
+ */
+export type LocalizedLabel = Record<string, string>;
+
 export type GraphNodeData = {
-  label: string;
+  /** 言語ごとのラベル。永続化・API 送信の対象 */
+  labels: LocalizedLabel;
+  /**
+   * 表示言語で解決されたラベル。描画時に deriveNodeLabels が注入する
+   */
+  label?: string;
+  /**
+   * label が表示言語のラベルではなく他言語からのフォールバックであることを示す。
+   * 描画時に deriveNodeLabels が注入する
+   */
+  labelIsFallback?: boolean;
   nodeType: NodeType;
   /**
    * 紐づけた観測点（接続エッジ）の ID 一覧。

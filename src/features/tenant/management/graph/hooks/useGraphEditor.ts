@@ -2,11 +2,12 @@
 
 import type { Connection, EdgeChange, NodeChange } from "@xyflow/react";
 import { useTranslations } from "next-intl";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import type {
   GraphCanvasEditing,
   GraphCanvasProps,
 } from "../components/GraphCanvas";
+import type { LabelLocaleBindings } from "../components/LabelLocaleMenu";
 import type { PropertiesPanelProps } from "../components/properties";
 import { DEFAULT_NODE_TYPE, resolveConnectionDirection } from "../nodeTypes";
 import { PLACEHOLDER_GRAPH } from "../placeholderGraph";
@@ -26,11 +27,13 @@ import {
   removedIds,
 } from "../utils/graphMutations";
 import { newId } from "../utils/idGen";
+import { countLabeledPoints } from "../utils/labels";
 import { useGraphElements } from "./useGraphElements";
 import { useGraphSelection } from "./useGraphSelection";
+import { useLabelLocale } from "./useLabelLocale";
 
 /** ツールバーに渡す props（保存の実処理は呼び出し側が持つ） */
-export type GraphToolbarBindings = {
+export type GraphToolbarBindings = LabelLocaleBindings & {
   onAddNode: (nodeType: NodeType) => void;
   onAddGroup: () => void;
   onAutoAlign: () => void;
@@ -63,6 +66,8 @@ function randomPosition() {
 export function useGraphEditor(initial?: GraphData): GraphEditorApi {
   const t = useTranslations("Graph.editor");
 
+  const [labelLocale, setLabelLocale] = useLabelLocale();
+
   const {
     nodes,
     edges,
@@ -78,9 +83,10 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     autoAlign,
     removeEdge,
     updateNodeData,
+    updateNodeLabel,
     updateEdgeData,
     reverseEdge,
-  } = useGraphElements(initial ?? PLACEHOLDER_GRAPH);
+  } = useGraphElements(initial ?? PLACEHOLDER_GRAPH, labelLocale);
 
   const { selection, selectNode, selectEdge, clearSelection, clearIfSelected } =
     useGraphSelection();
@@ -160,11 +166,12 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     [updateNodeData],
   );
 
+  /** 編集言語のポイントラベル（グループは単一ラベル）を更新する */
   const setNodeLabel = useCallback(
     (id: string, label: string) => {
-      updateNodeData(id, { label });
+      updateNodeLabel(id, labelLocale, label);
     },
-    [updateNodeData],
+    [updateNodeLabel, labelLocale],
   );
 
   const addNodeAtPosition = useCallback(
@@ -173,18 +180,21 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
       nodeType: NodeType = DEFAULT_NODE_TYPE,
       parentId?: string,
     ) => {
+      // 初期ラベルは編集中の言語にだけ設定する
       const node = createNode({
         id: newId("n"),
-        label: t("newNodeLabel", {
-          index: source.nodes.filter(isPointNode).length + 1,
-        }),
+        labels: {
+          [labelLocale]: t("newNodeLabel", {
+            index: source.nodes.filter(isPointNode).length + 1,
+          }),
+        },
         nodeType,
         position,
       });
       appendNode(node, parentId);
       selectNode(node.id);
     },
-    [source.nodes, appendNode, selectNode, t],
+    [source.nodes, appendNode, selectNode, t, labelLocale],
   );
 
   const addNode = useCallback(
@@ -261,6 +271,11 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     [source],
   );
 
+  const labelCounts = useMemo(
+    () => countLabeledPoints(source.nodes),
+    [source.nodes],
+  );
+
   return {
     graph: { nodes, edges },
     canvas: {
@@ -277,6 +292,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
         onSetEdgeDirection: setEdgeDirection,
         onReverseEdge: reverseEdge,
         onSetNodeType: setNodeType,
+        labelLocale,
         onSetNodeLabel: setNodeLabel,
         onAddNodeAtPosition: addNodeAtPosition,
         onAddGroupAtPosition: addGroupAtPosition,
@@ -290,6 +306,10 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
       onAddNode: addNode,
       onAddGroup: addGroup,
       onAutoAlign: autoAlign,
+      labelLocale,
+      onChangeLabelLocale: setLabelLocale,
+      labelCounts,
+      pointCount: source.nodes.filter(isPointNode).length,
     },
     properties: {
       selectedNode:
@@ -300,7 +320,9 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
         selection?.type === "edge"
           ? edges.find((e) => e.id === selection.id)
           : undefined,
+      labelLocale,
       onUpdateNode: updateNodeData,
+      onSetNodeLabel: setNodeLabel,
       onUpdateEdge: updateEdgeData,
       onReverseEdge: reverseEdge,
       onDelete: deleteSelection,

@@ -11,13 +11,17 @@ import {
   assignHandlesByPosition,
   deriveNodeHandles,
 } from "@/features/tenant/management/graph/utils/handles";
+import { deriveNodeLabels } from "@/features/tenant/management/graph/utils/labels";
 
 const derivedEdges = assignHandlesByPosition(
   PLACEHOLDER_GRAPH.nodes,
   PLACEHOLDER_GRAPH.edges,
 );
 const derivedNodes = deriveNodeNotices(
-  deriveNodeHandles(PLACEHOLDER_GRAPH.nodes, derivedEdges),
+  deriveNodeHandles(
+    deriveNodeLabels(PLACEHOLDER_GRAPH.nodes, "ja"),
+    derivedEdges,
+  ),
   derivedEdges,
 );
 
@@ -75,6 +79,7 @@ export const Editing: Story = {
       onSetEdgeDirection: fn(),
       onReverseEdge: fn(),
       onSetNodeType: fn(),
+      labelLocale: "ja",
       onSetNodeLabel: fn(),
       onAddNodeAtPosition: fn(),
       onAddGroupAtPosition: fn(),

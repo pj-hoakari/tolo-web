@@ -32,7 +32,7 @@ function point(
     type: "graph",
     position: { x, y },
     ...(parentId ? { parentId } : {}),
-    data: { label: id, nodeType: "GOAL_TRANSIT_MIXED" },
+    data: { labels: { ja: id }, nodeType: "GOAL_TRANSIT_MIXED" },
   };
 }
 

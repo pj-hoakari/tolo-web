@@ -2,17 +2,22 @@ import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
+import { type LabelLocaleBindings, LabelLocaleMenu } from "./LabelLocaleMenu";
 
-export type GraphViewerToolbarProps = {
+export type GraphViewerToolbarProps = LabelLocaleBindings & {
   /** 編集ページのパス。未指定なら編集への導線を出さない */
   editHref?: string;
   onSave: () => void;
 };
 
-/** 表示専用ビューのツールバー（編集ページへの導線・紐づけの保存） */
+/** 表示専用ビューのツールバー（ラベル言語・編集ページへの導線・紐づけの保存） */
 export function GraphViewerToolbar({
   editHref,
   onSave,
+  labelLocale,
+  onChangeLabelLocale,
+  labelCounts,
+  pointCount,
 }: GraphViewerToolbarProps) {
   const t = useTranslations("Graph.viewer");
 
@@ -22,6 +27,12 @@ export function GraphViewerToolbar({
         {t("title")}
       </p>
       <div className="flex flex-wrap items-center justify-end gap-2">
+        <LabelLocaleMenu
+          labelLocale={labelLocale}
+          onChangeLabelLocale={onChangeLabelLocale}
+          labelCounts={labelCounts}
+          pointCount={pointCount}
+        />
         {editHref ? (
           <Link href={editHref} variant="outline" size="sm" className="gap-1.5">
             <Pencil aria-hidden className="size-3.5" />

@@ -1,14 +1,17 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import type { GraphCanvasProps } from "../components/GraphCanvas";
+import type { LabelLocaleBindings } from "../components/LabelLocaleMenu";
 import type { ObservationLinkPanelProps } from "../components/observation";
 import { PLACEHOLDER_GRAPH } from "../placeholderGraph";
 import { toGraphData } from "../serialize";
 import type { GraphData } from "../type";
 import { isPointNode } from "../type";
+import { countLabeledPoints } from "../utils/labels";
 import { useGraphElements } from "./useGraphElements";
 import { useGraphSelection } from "./useGraphSelection";
+import { useLabelLocale } from "./useLabelLocale";
 
 /** 紐づけパネルに渡す props のうち、表示状態から決まるもの */
 export type ObservationLinkBindings = Omit<
@@ -21,6 +24,8 @@ export type GraphViewerApi = {
   graph: GraphData;
   /** 表示専用（editing を持たない）キャンバスの props */
   canvas: GraphCanvasProps;
+  /** ツールバーのラベル言語メニューに渡す props */
+  toolbar: LabelLocaleBindings;
   links: ObservationLinkBindings;
   /** 送信・永続化用のグラフデータを取り出す */
   getGraphData: () => GraphData;
@@ -32,6 +37,9 @@ export type GraphViewerApi = {
  * 付随情報である観測点の紐づけだけを書き換える。
  */
 export function useGraphViewer(initial?: GraphData): GraphViewerApi {
+  // ポイントラベルの表示言語。既定は UI の表示言語で、独立して切り替えられる
+  const [labelLocale, setLabelLocale] = useLabelLocale();
+
   const {
     nodes,
     edges,
@@ -40,7 +48,7 @@ export function useGraphViewer(initial?: GraphData): GraphViewerApi {
     changeEdges,
     updateNodeData,
     updateEdgeData,
-  } = useGraphElements(initial ?? PLACEHOLDER_GRAPH);
+  } = useGraphElements(initial ?? PLACEHOLDER_GRAPH, labelLocale);
 
   const { selection, selectNode, selectEdge, clearSelection } =
     useGraphSelection();
@@ -64,8 +72,19 @@ export function useGraphViewer(initial?: GraphData): GraphViewerApi {
     [source],
   );
 
+  const labelCounts = useMemo(
+    () => countLabeledPoints(source.nodes),
+    [source.nodes],
+  );
+
   return {
     graph: { nodes, edges },
+    toolbar: {
+      labelLocale,
+      onChangeLabelLocale: setLabelLocale,
+      labelCounts,
+      pointCount: source.nodes.filter(isPointNode).length,
+    },
     canvas: {
       nodes,
       edges,

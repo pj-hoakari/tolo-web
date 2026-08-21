@@ -20,6 +20,7 @@ import { autoAlignGraph } from "../utils/autoLayout";
 import {
   patchEdgeData,
   patchNodeData,
+  patchNodeLabel,
   reverseEdgeById,
   withoutEdge,
   withoutEdgesOf,
@@ -33,12 +34,14 @@ import {
   sortByNesting,
 } from "../utils/groups";
 import { assignHandlesByPosition, deriveNodeHandles } from "../utils/handles";
+import { deriveNodeLabels } from "../utils/labels";
 
 /**
  * ノード/ルートの実体と、その描画用の派生情報を扱うフック。
  * 選択状態や観測点の使用状況には関与せず、要素の出し入れだけを担う。
+ * labelLocale はポイントラベルの表示言語（描画用ラベルの解決に使う）。
  */
-export function useGraphElements(initial: GraphData) {
+export function useGraphElements(initial: GraphData, labelLocale: string) {
   const [nodes, setNodes] = useState<GraphCanvasNode[]>(initial.nodes);
   const [edges, setEdges] = useState<GraphEdgeType[]>(initial.edges);
 
@@ -50,8 +53,11 @@ export function useGraphElements(initial: GraphData) {
   );
   const derivedNodes = useMemo(
     () =>
-      deriveNodeNotices(deriveNodeHandles(nodes, derivedEdges), derivedEdges),
-    [nodes, derivedEdges],
+      deriveNodeNotices(
+        deriveNodeHandles(deriveNodeLabels(nodes, labelLocale), derivedEdges),
+        derivedEdges,
+      ),
+    [nodes, derivedEdges, labelLocale],
   );
 
   /** 派生情報を含まない、編集中のグラフそのもの */
@@ -181,6 +187,14 @@ export function useGraphElements(initial: GraphData) {
     [],
   );
 
+  /** 指定言語のポイントラベル（グループは単一ラベル）を更新する */
+  const updateNodeLabel = useCallback(
+    (id: string, locale: string, label: string) => {
+      setNodes((nds) => patchNodeLabel(nds, id, locale, label));
+    },
+    [],
+  );
+
   const updateEdgeData = useCallback(
     (id: string, patch: Partial<GraphEdgeData>) => {
       setEdges((eds) => patchEdgeData(eds, id, patch));
@@ -208,6 +222,7 @@ export function useGraphElements(initial: GraphData) {
     autoAlign,
     removeEdge,
     updateNodeData,
+    updateNodeLabel,
     updateEdgeData,
     reverseEdge,
   };

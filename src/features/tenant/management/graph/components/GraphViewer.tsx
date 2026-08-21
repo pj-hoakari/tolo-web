@@ -28,7 +28,8 @@ function GraphViewerInner({
   editHref,
   handleRef,
 }: GraphViewerProps & { handleRef?: Ref<GraphViewerHandle> }) {
-  const { graph, canvas, links, getGraphData } = useGraphViewer(initialGraph);
+  const { graph, canvas, toolbar, links, getGraphData } =
+    useGraphViewer(initialGraph);
 
   const observationPoints = useObservationPointSource({
     tenantId,
@@ -47,7 +48,11 @@ function GraphViewerInner({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <GraphViewerToolbar editHref={editHref} onSave={handleSave} />
+      <GraphViewerToolbar
+        {...toolbar}
+        editHref={editHref}
+        onSave={handleSave}
+      />
       <div className="flex min-h-0 flex-1">
         {/* editing を渡さない＝表示専用（移動・接続・削除ができない）キャンバス */}
         <GraphCanvas {...canvas} />

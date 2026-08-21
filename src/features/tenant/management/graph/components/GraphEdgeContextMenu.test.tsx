@@ -11,13 +11,13 @@ const nodes: GraphNodeType[] = [
     id: "n1",
     type: "graph",
     position: { x: 0, y: 0 },
-    data: { label: "始点", nodeType: "GOAL" },
+    data: { labels: { ja: "始点" }, label: "始点", nodeType: "GOAL" },
   },
   {
     id: "n2",
     type: "graph",
     position: { x: 300, y: 0 },
-    data: { label: "終点", nodeType: "GOAL" },
+    data: { labels: { ja: "終点" }, label: "終点", nodeType: "GOAL" },
   },
 ];
 

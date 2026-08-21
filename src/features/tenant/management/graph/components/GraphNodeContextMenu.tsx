@@ -60,7 +60,7 @@ export function GraphNodeContextMenu({
       className="min-w-48"
       onClose={onClose}
     >
-      <Menu aria-label={t("nodeLabel", { label: node.data.label })}>
+      <Menu aria-label={t("nodeLabel", { label: node.data.label ?? node.id })}>
         <ContextMenuItem
           id="add-edge"
           icon={Route}

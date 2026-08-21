@@ -1,6 +1,7 @@
 import type { GraphCanvasNode, GraphData, GraphEdgeType } from "./type";
 import { isGroupNode } from "./type";
 import { GROUP_DEFAULT_HEIGHT, GROUP_DEFAULT_WIDTH } from "./utils/groups";
+import { compactLabels } from "./utils/labels";
 
 /**
  * 描画用の派生情報
@@ -50,7 +51,7 @@ export function toGraphData(
         position,
         ...parent,
         data: {
-          label: n.data.label,
+          labels: compactLabels(n.data.labels),
           nodeType: n.data.nodeType,
           ...(n.data.observationPointIds &&
           n.data.observationPointIds.length > 0
