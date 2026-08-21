@@ -7,6 +7,7 @@ import {
 } from "@xyflow/react";
 import { useTranslations } from "next-intl";
 import { useContext, useEffect, useMemo } from "react";
+import { localeLabels } from "@/i18n/locale";
 import type { GraphNodeType } from "../type";
 import { makeHandleId, SIDES } from "../utils/handles";
 import {
@@ -31,7 +32,7 @@ export function GraphNode({
   const handles = data.handles;
   const t = useTranslations("Graph.nodeType");
   const updateNodeInternals = useUpdateNodeInternals();
-  const onUpdateLabel = useContext(GraphNodeLabelEditingContext);
+  const labelEditing = useContext(GraphNodeLabelEditingContext);
   const easyConnectMode = useContext(GraphNodeEasyConnectContext);
   const easyConnectActive = easyConnectMode !== null;
   const canStartEasyConnect =
@@ -83,7 +84,18 @@ export function GraphNode({
       <NodeTypeBadge type={data.nodeType} label={t(data.nodeType)} />
       {/* 内容 */}
       <div className="relative min-w-0 px-4 py-5">
-        <InlineNodeLabel id={id} label={data.label} onUpdate={onUpdateLabel} />
+        <InlineNodeLabel
+          id={id}
+          label={data.label ?? ""}
+          isFallback={data.labelIsFallback ?? false}
+          editValue={
+            labelEditing ? (data.labels[labelEditing.locale] ?? "") : undefined
+          }
+          languageName={
+            labelEditing ? localeLabels[labelEditing.locale] : undefined
+          }
+          onUpdate={labelEditing?.onUpdate}
+        />
       </div>
 
       {SIDES.flatMap((side) =>

@@ -53,6 +53,7 @@ export const NodeWithObservationPoints: Story = {
     selectedNode: {
       ...graphNode("ph_booth"),
       data: {
+        labels: { ja: "ブースA" },
         label: "ブースA",
         nodeType: "GOAL",
         observationPointIds: ["demo_event_cam-booth-a", "demo_event_cam-old"],

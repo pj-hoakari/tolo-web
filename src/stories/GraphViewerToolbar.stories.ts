@@ -15,6 +15,10 @@ const meta = {
   args: {
     editHref: graphEditPath(SAMPLE_EVENT_ID),
     onSave: fn(),
+    labelLocale: "ja",
+    onChangeLabelLocale: fn(),
+    labelCounts: { ja: 11, en: 11 },
+    pointCount: 11,
   },
 } satisfies Meta<typeof GraphViewerToolbar>;
 

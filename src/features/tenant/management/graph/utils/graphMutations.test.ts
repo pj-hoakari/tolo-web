@@ -1,11 +1,17 @@
 import type { NodeChange } from "@xyflow/react";
 import { describe, expect, it } from "vitest";
-import type { GraphEdgeType, GraphNodeType, NodeType } from "../type";
+import type {
+  GraphEdgeType,
+  GraphNodeType,
+  GroupNodeType,
+  NodeType,
+} from "../type";
 import {
   createEdge,
   createNode,
   patchEdgeData,
   patchNodeData,
+  patchNodeLabel,
   removedIds,
   reverseEdgeById,
   withoutEdge,
@@ -18,7 +24,7 @@ function node(id: string, nodeType: NodeType = "GOAL"): GraphNodeType {
     id,
     type: "graph",
     position: { x: 0, y: 0 },
-    data: { label: id, nodeType },
+    data: { labels: { ja: id }, nodeType },
   };
 }
 
@@ -45,10 +51,10 @@ describe("removedIds", () => {
 });
 
 describe("createNode / createEdge", () => {
-  it("ノードは graph タイプで指定の位置・ラベルを持つ", () => {
+  it("ノードは graph タイプで指定の位置・言語別ラベルを持つ", () => {
     const created = createNode({
       id: "n1",
-      label: "ポイント 1",
+      labels: { ja: "ポイント 1" },
       nodeType: "BOUNDARY",
       position: { x: 10, y: 20 },
     });
@@ -57,7 +63,7 @@ describe("createNode / createEdge", () => {
       id: "n1",
       type: "graph",
       position: { x: 10, y: 20 },
-      data: { label: "ポイント 1", nodeType: "BOUNDARY" },
+      data: { labels: { ja: "ポイント 1" }, nodeType: "BOUNDARY" },
     });
   });
 
@@ -79,18 +85,62 @@ describe("patchNodeData", () => {
   it("対象ノードの data だけを部分更新する", () => {
     const nodes = [node("n1"), node("n2")];
 
-    const next = patchNodeData(nodes, "n1", { label: "変更後" });
+    const next = patchNodeData(nodes, "n1", { nodeType: "BOUNDARY" });
 
-    expect(next[0].data).toEqual({ label: "変更後", nodeType: "GOAL" });
+    expect(next[0].data).toEqual({
+      labels: { ja: "n1" },
+      nodeType: "BOUNDARY",
+    });
     expect(next[1]).toBe(nodes[1]);
   });
 
   it("元の配列を書き換えない", () => {
     const nodes = [node("n1")];
 
-    patchNodeData(nodes, "n1", { label: "変更後" });
+    patchNodeData(nodes, "n1", { nodeType: "BOUNDARY" });
 
-    expect(nodes[0].data.label).toBe("n1");
+    expect(nodes[0].data.nodeType).toBe("GOAL");
+  });
+});
+
+describe("patchNodeLabel", () => {
+  it("ポイントは指定言語のラベルだけを更新する", () => {
+    const nodes = [node("n1"), node("n2")];
+
+    const next = patchNodeLabel(nodes, "n1", "en", "Point 1");
+
+    expect(next[0].data).toEqual({
+      labels: { ja: "n1", en: "Point 1" },
+      nodeType: "GOAL",
+    });
+    expect(next[1]).toBe(nodes[1]);
+  });
+
+  it("空文字はその言語のラベル削除として扱う", () => {
+    const next = patchNodeLabel([node("n1")], "n1", "ja", "");
+
+    expect(next[0].data).toEqual({ labels: {}, nodeType: "GOAL" });
+  });
+
+  it("グループは言語を持たない単一ラベルをそのまま更新する", () => {
+    const group: GroupNodeType = {
+      id: "g1",
+      type: "graphGroup",
+      position: { x: 0, y: 0 },
+      data: { label: "1F" },
+    };
+
+    const next = patchNodeLabel([group], "g1", "en", "Floor 1");
+
+    expect(next[0].data).toEqual({ label: "Floor 1" });
+  });
+
+  it("元の配列を書き換えない", () => {
+    const nodes = [node("n1")];
+
+    patchNodeLabel(nodes, "n1", "ja", "変更後");
+
+    expect(nodes[0].data.labels).toEqual({ ja: "n1" });
   });
 });
 

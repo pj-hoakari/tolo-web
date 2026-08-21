@@ -7,7 +7,7 @@ function node(id: string, observationPointIds?: string[]): GraphNodeType {
     id,
     type: "graph",
     position: { x: 0, y: 0 },
-    data: { label: id, nodeType: "GOAL", observationPointIds },
+    data: { labels: { ja: id }, nodeType: "GOAL", observationPointIds },
   };
 }
 

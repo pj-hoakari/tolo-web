@@ -18,13 +18,21 @@ const nodes: GraphNodeType[] = [
     id: "a",
     type: "graph",
     position: { x: 0, y: 60 },
-    data: { label: "ポイントA", nodeType: "TRANSIT_ONLY" },
+    data: {
+      labels: { ja: "ポイントA" },
+      label: "ポイントA",
+      nodeType: "TRANSIT_ONLY",
+    },
   },
   {
     id: "b",
     type: "graph",
     position: { x: 320, y: 60 },
-    data: { label: "ポイントB", nodeType: "TRANSIT_ONLY" },
+    data: {
+      labels: { ja: "ポイントB" },
+      label: "ポイントB",
+      nodeType: "TRANSIT_ONLY",
+    },
   },
 ];
 

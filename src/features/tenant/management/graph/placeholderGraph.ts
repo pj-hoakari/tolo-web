@@ -8,6 +8,7 @@ import type { GraphData } from "./type";
  * 仕様の原則（容量・方向制約・所要時間はルートの属性）に合わせた形。
  * グループ内のノードの position は親グループ相対。
  * ポイントの position はノード中心（グループは左上）を指す。
+ * ポイントラベルは多言語設定の例として ja / en を持たせている。
  * React Flow の制約により、親グループは子ノードより先に並べる。
  */
 export const PLACEHOLDER_GRAPH: GraphData = {
@@ -34,28 +35,40 @@ export const PLACEHOLDER_GRAPH: GraphData = {
       type: "graph",
       parentId: "ph_floor2",
       position: { x: 260, y: 200 },
-      data: { label: "2F 階段", nodeType: "TRANSIT_ONLY" },
+      data: {
+        labels: { ja: "2F 階段", en: "2F Stairs" },
+        nodeType: "TRANSIT_ONLY",
+      },
     },
     {
       id: "ph_hall2f",
       type: "graph",
       parentId: "ph_floor2",
       position: { x: 380, y: 50 },
-      data: { label: "2F ホール", nodeType: "TRANSIT_ONLY" },
+      data: {
+        labels: { ja: "2F ホール", en: "2F Hall" },
+        nodeType: "TRANSIT_ONLY",
+      },
     },
     {
       id: "ph_elevator2f",
       type: "graph",
       parentId: "ph_floor2",
       position: { x: 540, y: 200 },
-      data: { label: "2F エレベーター", nodeType: "TRANSIT_ONLY" },
+      data: {
+        labels: { ja: "2F エレベーター", en: "2F Elevator" },
+        nodeType: "TRANSIT_ONLY",
+      },
     },
     {
       id: "ph_gallery2f",
       type: "graph",
       parentId: "ph_floor2",
       position: { x: 740, y: 50 },
-      data: { label: "展示室B", nodeType: "GOAL_TRANSIT_MIXED" },
+      data: {
+        labels: { ja: "展示室B", en: "Gallery B" },
+        nodeType: "GOAL_TRANSIT_MIXED",
+      },
     },
     // --- 1F ---
     {
@@ -63,49 +76,61 @@ export const PLACEHOLDER_GRAPH: GraphData = {
       type: "graph",
       parentId: "ph_floor1",
       position: { x: 260, y: 70 },
-      data: { label: "1F 階段", nodeType: "TRANSIT_ONLY" },
+      data: {
+        labels: { ja: "1F 階段", en: "1F Stairs" },
+        nodeType: "TRANSIT_ONLY",
+      },
     },
     {
       id: "ph_elevator1f",
       type: "graph",
       parentId: "ph_floor1",
       position: { x: 540, y: 70 },
-      data: { label: "1F エレベーター", nodeType: "TRANSIT_ONLY" },
+      data: {
+        labels: { ja: "1F エレベーター", en: "1F Elevator" },
+        nodeType: "TRANSIT_ONLY",
+      },
     },
     {
       id: "ph_entrance",
       type: "graph",
       parentId: "ph_floor1",
       position: { x: 120, y: 240 },
-      data: { label: "入口", nodeType: "BOUNDARY" },
+      data: { labels: { ja: "入口", en: "Entrance" }, nodeType: "BOUNDARY" },
     },
     {
       id: "ph_junction",
       type: "graph",
       parentId: "ph_floor1",
       position: { x: 380, y: 240 },
-      data: { label: "エントランスホール", nodeType: "TRANSIT_ONLY" },
+      data: {
+        labels: { ja: "エントランスホール", en: "Entrance Hall" },
+        nodeType: "TRANSIT_ONLY",
+      },
     },
     {
       id: "ph_booth",
       type: "graph",
       parentId: "ph_floor1",
       position: { x: 700, y: 140 },
-      data: { label: "ブースA", nodeType: "GOAL" },
+      data: { labels: { ja: "ブースA", en: "Booth A" }, nodeType: "GOAL" },
     },
     {
       id: "ph_wall",
       type: "graph",
       parentId: "ph_floor1",
       position: { x: 700, y: 360 },
-      data: { label: "壁展示", nodeType: "GOAL_TRANSIT_MIXED" },
+      data: {
+        labels: { ja: "壁展示", en: "Wall Exhibit" },
+        nodeType: "GOAL_TRANSIT_MIXED",
+      },
     },
     {
       id: "ph_exit",
       type: "graph",
       parentId: "ph_floor1",
       position: { x: 960, y: 240 },
-      data: { label: "出口", nodeType: "BOUNDARY" },
+      data: { labels: { ja: "出口", en: "Exit" }, nodeType: "BOUNDARY" },
     },
   ],
   edges: [

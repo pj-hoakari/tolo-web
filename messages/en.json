@@ -63,6 +63,10 @@
     "notices": {
       "dualDirection": "Serves as both an entry and an exit"
     },
+    "labelLanguage": {
+      "label": "Label language",
+      "labeledPointCount": "{count}/{total}"
+    },
     "editor": {
       "title": "Venue editor",
       "addNode": "Add {type}",
@@ -102,6 +106,7 @@
       "deleteNode": "Delete this point",
       "deleteEdge": "Delete this route",
       "label": "Label",
+      "labelWithLanguage": "Label ({language})",
       "type": "Type",
       "direction": "Direction",
       "both": "Two-way ⇌",
@@ -112,7 +117,8 @@
     },
     "node": {
       "editLabel": "Edit the label of “{label}”",
-      "labelField": "Point label"
+      "labelField": "Point label",
+      "labelFieldWithLanguage": "Point label ({language})"
     }
   },
   "Webrtc": {

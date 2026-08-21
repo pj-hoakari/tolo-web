@@ -10,7 +10,7 @@ const node: GraphNodeType = {
   id: "n1",
   type: "graph",
   position: { x: 0, y: 0 },
-  data: { label: "ポイント 1", nodeType: "GOAL" },
+  data: { labels: { ja: "ポイント 1" }, label: "ポイント 1", nodeType: "GOAL" },
 };
 
 /** メッセージを解決できるよう next-intl のプロバイダ配下で描画する */

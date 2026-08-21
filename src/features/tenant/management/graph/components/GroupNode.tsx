@@ -16,7 +16,8 @@ import { InlineNodeLabel } from "./InlineNodeLabel";
  * ルートの端点にはならないため、接続ハンドルを持たない。
  */
 export function GroupNode({ id, data, selected }: NodeProps<GroupNodeType>) {
-  const onUpdateLabel = useContext(GraphNodeLabelEditingContext);
+  // グループのラベルは言語を持たないため、編集コールバックだけを使う
+  const onUpdateLabel = useContext(GraphNodeLabelEditingContext)?.onUpdate;
   const onResizeCommit = useContext(GroupResizeCommitContext);
   const editable = onUpdateLabel !== undefined;
 

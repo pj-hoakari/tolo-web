@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import type { Locale } from "@/i18n/locale";
 import type {
   GraphCanvasNode,
   GraphData,
@@ -19,7 +20,11 @@ export type PropertiesPanelProps = {
   selectedEdge: GraphEdgeType | undefined;
   /** 制約の検証と端点ラベルの解決に使うグラフ全体 */
   graph: GraphData;
+  /** ポイントラベルの編集言語 */
+  labelLocale: Locale;
   onUpdateNode: (id: string, patch: Partial<GraphNodeData>) => void;
+  /** 編集言語のポイントラベルを更新する */
+  onSetNodeLabel: (id: string, label: string) => void;
   onUpdateEdge: (id: string, patch: Partial<GraphEdgeData>) => void;
   onReverseEdge: (id: string) => void;
   onDelete: () => void;
@@ -30,7 +35,9 @@ export function PropertiesPanel({
   selectedNode,
   selectedEdge,
   graph,
+  labelLocale,
   onUpdateNode,
+  onSetNodeLabel,
   onUpdateEdge,
   onReverseEdge,
   onDelete,
@@ -61,7 +68,9 @@ export function PropertiesPanel({
               edges,
               tNotice,
             )}
+            labelLocale={labelLocale}
             onChange={(patch) => onUpdateNode(selectedNode.id, patch)}
+            onChangeLabel={(label) => onSetNodeLabel(selectedNode.id, label)}
           />
         ) : selectedEdge ? (
           <EdgeProperties

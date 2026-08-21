@@ -1,11 +1,18 @@
 "use client";
 
 import { createContext } from "react";
+import type { Locale } from "@/i18n/locale";
 import type { EasyConnectMode } from "../utils/easyConnect";
 
-/** 編集キャンバスからノード内ラベル編集を受け取るためのコールバック。 */
+/** 編集キャンバスからノード内ラベル編集を受け取るための情報。 */
+export type GraphNodeLabelEditing = {
+  /** ラベルの編集言語（ポイントのみ。グループのラベルは言語を持たない） */
+  locale: Locale;
+  onUpdate: (id: string, label: string) => void;
+};
+
 export const GraphNodeLabelEditingContext = createContext<
-  ((id: string, label: string) => void) | undefined
+  GraphNodeLabelEditing | undefined
 >(undefined);
 
 /** ルート追加モードの状態を各ノードへ伝えるコンテキスト。 */

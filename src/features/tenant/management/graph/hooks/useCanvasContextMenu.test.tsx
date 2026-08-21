@@ -10,7 +10,7 @@ const node: GraphNodeType = {
   id: "n1",
   type: "graph",
   position: { x: 0, y: 0 },
-  data: { label: "ポイント 1", nodeType: "GOAL" },
+  data: { labels: { ja: "ポイント 1" }, nodeType: "GOAL" },
 };
 
 const edge: GraphEdgeType = {

@@ -63,6 +63,10 @@
     "notices": {
       "dualDirection": "同時承擔進入與離開（輸入·輸出）"
     },
+    "labelLanguage": {
+      "label": "標籤語言",
+      "labeledPointCount": "{count}/{total}"
+    },
     "editor": {
       "title": "會場編輯器",
       "addNode": "新增{type}",
@@ -102,6 +106,7 @@
       "deleteNode": "刪除此節點",
       "deleteEdge": "刪除此路徑",
       "label": "標籤",
+      "labelWithLanguage": "標籤（{language}）",
       "type": "類型",
       "direction": "方向",
       "both": "雙向 ⇌",
@@ -112,7 +117,8 @@
     },
     "node": {
       "editLabel": "編輯「{label}」的標籤",
-      "labelField": "節點標籤"
+      "labelField": "節點標籤",
+      "labelFieldWithLanguage": "節點標籤（{language}）"
     }
   },
   "Webrtc": {

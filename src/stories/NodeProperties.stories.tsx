@@ -41,7 +41,9 @@ const meta = {
   args: {
     node: graphNode("ph_booth"),
     typeOptions: boothTypeOptions,
+    labelLocale: "ja",
     onChange: fn(),
+    onChangeLabel: fn(),
   },
 } satisfies Meta<typeof NodeProperties>;
 

@@ -22,7 +22,7 @@ function node(id: string, x: number, y: number): GraphNodeType {
     id,
     type: "graph",
     position: { x, y },
-    data: { label: id, nodeType: "GOAL" },
+    data: { labels: { ja: id }, nodeType: "GOAL" },
   };
 }
 

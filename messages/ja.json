@@ -63,6 +63,10 @@
     "notices": {
       "dualDirection": "入退出（入力・出力）の両方を担っています"
     },
+    "labelLanguage": {
+      "label": "ラベルの言語",
+      "labeledPointCount": "{count}/{total}"
+    },
     "editor": {
       "title": "会場エディタ",
       "addNode": "{type}を追加",
@@ -102,6 +106,7 @@
       "deleteNode": "このポイントを削除",
       "deleteEdge": "このルートを削除",
       "label": "ラベル",
+      "labelWithLanguage": "ラベル（{language}）",
       "type": "タイプ",
       "direction": "方向",
       "both": "両通行可 ⇌",
@@ -112,7 +117,8 @@
     },
     "node": {
       "editLabel": "「{label}」のラベルを編集",
-      "labelField": "ポイントのラベル"
+      "labelField": "ポイントのラベル",
+      "labelFieldWithLanguage": "ポイントのラベル（{language}）"
     }
   },
   "Webrtc": {

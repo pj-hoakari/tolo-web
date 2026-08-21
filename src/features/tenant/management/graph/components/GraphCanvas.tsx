@@ -18,6 +18,7 @@ import {
   useViewport,
 } from "@xyflow/react";
 import { useCallback, useMemo, useRef, useState } from "react";
+import type { Locale } from "@/i18n/locale";
 import { useCanvasContextMenu } from "../hooks/useCanvasContextMenu";
 import { useEasyConnect } from "../hooks/useEasyConnect";
 import { DEFAULT_NODE_TYPE, getNodeTypeDef } from "../nodeTypes";
@@ -71,6 +72,8 @@ export type GraphCanvasEditing = {
   onSetEdgeDirection: (id: string, direction: "both" | "oneway") => void;
   onReverseEdge: (id: string) => void;
   onSetNodeType: (id: string, type: NodeType) => void;
+  /** ポイントラベルの編集言語（onSetNodeLabel の更新対象） */
+  labelLocale: Locale;
   onSetNodeLabel: (id: string, label: string) => void;
   /** parentId を渡すと、位置に関わらずそのグループの中へ追加する */
   onAddNodeAtPosition: (
@@ -259,6 +262,14 @@ export function GraphCanvas({
     onClearSelection();
   }, [easyConnect, onClearSelection]);
 
+  const labelEditing = useMemo(
+    () =>
+      editing
+        ? { locale: editing.labelLocale, onUpdate: editing.onSetNodeLabel }
+        : undefined,
+    [editing],
+  );
+
   return (
     <div ref={wrapperRef} className="relative min-h-0 flex-1 bg-secondary">
       <GraphEdgeMarkers />
@@ -317,9 +328,7 @@ export function GraphCanvas({
       ) : null}
       <GraphNodeEasyConnectContext.Provider value={easyConnect.mode}>
         <GroupResizeCommitContext.Provider value={editing?.onGroupResizeEnd}>
-          <GraphNodeLabelEditingContext.Provider
-            value={editing?.onSetNodeLabel}
-          >
+          <GraphNodeLabelEditingContext.Provider value={labelEditing}>
             <ReactFlow
               nodes={displayNodes}
               edges={edges}
