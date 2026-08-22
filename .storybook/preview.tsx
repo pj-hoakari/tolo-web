@@ -1,6 +1,5 @@
 import { withThemeByClassName } from "@storybook/addon-themes";
 import type { Preview } from "@storybook/nextjs-vite";
-import { mswLoader } from "msw-storybook-addon/csf3";
 import { NextIntlClientProvider } from "next-intl";
 import {
   defaultLocale,
@@ -8,7 +7,6 @@ import {
   localeLabels,
   locales,
 } from "../src/i18n/locale";
-import { handlers } from "../src/mocks/handlers";
 import { storyMessages } from "./messages";
 // TailwindCSS を含むグローバルスタイルを Storybook に読み込む
 import "../src/app/globals.css";
@@ -86,11 +84,6 @@ const preview: Preview = {
       );
     },
   ],
-  loaders: [mswLoader()],
-  // 既定で /rpc をモック
-  beforeEach({ msw }) {
-    msw.use(...handlers);
-  },
 };
 
 export default preview;

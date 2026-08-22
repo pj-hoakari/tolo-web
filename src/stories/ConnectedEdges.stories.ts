@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { ConnectedEdges } from "@/features/tenant/webrtc/components/ConnectedEdges";
 import { SAMPLE_EVENT_ID, SAMPLE_TENANT_ID } from "@/mocks/fixtures/edges";
 import { edgesErrorHandlers, edgesHandlers } from "@/mocks/handlers";
+import { mswBeforeEach } from "@/mocks/storybook";
 
 // connect クリック後の WebRTC はスコープ外
 const meta = {
@@ -12,6 +13,8 @@ const meta = {
     layout: "padded",
   },
   tags: ["autodocs"],
+  // 観測点一覧（/rpc の edges.listAlive）を MSW で返す
+  beforeEach: mswBeforeEach,
   args: {
     tenantId: SAMPLE_TENANT_ID,
     eventId: SAMPLE_EVENT_ID,

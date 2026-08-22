@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { GraphViewer } from "@/features/tenant/management/graph";
 import { graphEditPath } from "@/features/tenant/management/routes";
 import { SAMPLE_EVENT_ID, SAMPLE_TENANT_ID } from "@/mocks/fixtures/edges";
+import { mswBeforeEach } from "@/mocks/storybook";
 
 const meta = {
   title: "Tenant/Management/Graph/GraphViewer",
@@ -10,6 +11,8 @@ const meta = {
     layout: "fullscreen",
   },
   tags: ["autodocs"],
+  // 観測点一覧（/rpc の edges.listAlive）を MSW で返す
+  beforeEach: mswBeforeEach,
   decorators: [
     (Story) => (
       <div style={{ display: "flex", height: 520 }}>
@@ -18,7 +21,6 @@ const meta = {
     ),
   ],
   args: {
-    // 観測点一覧（/rpc の edges.listAlive）は既定の msw handler が返す
     tenantId: SAMPLE_TENANT_ID,
     eventId: SAMPLE_EVENT_ID,
     editHref: graphEditPath(SAMPLE_EVENT_ID),
