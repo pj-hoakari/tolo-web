@@ -46,8 +46,13 @@ export default defineConfig({
           // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
           storybookTest({ configDir: path.join(dirname, ".storybook") }),
         ],
+        optimizeDeps: {
+          include: ["msw-storybook-addon/preview"],
+        },
         test: {
           name: "storybook",
+          // タブごとに tester iframe を 1 つ作り、全 story ファイルで使い回す。
+          isolate: false,
           // unit プロジェクトと同時に走らせない。
           // groupOrder が揃っている（既定は全プロジェクト 0）と、unit のワーカー
           // （既定 maxWorkers = CPU 数 - 1 = 23）と storybook のブラウザ起動が
@@ -63,25 +68,6 @@ export default defineConfig({
             headless: true,
             provider: playwright({}),
             instances: [{ browser: "chromium" }],
-            // タブごとに tester iframe を 1 つ作り、全 story ファイルで使い回す。
-            //
-            // 既定（true）は story ファイルごとに iframe を作り直す。すると
-            // msw-storybook-addon の mswLoader がファイルごとに worker.start() を
-            // 呼び直し、12 タブが共有する 1 つの Service Worker
-            // （/mockServiceWorker.js）に対して client（iframe）が次々に
-            // 入れ替わり続ける。Service Worker はページの fetch を全て
-            // 横取りするので、client の入れ替わりに巻き込まれたモジュールの
-            // import が返らなくなり、テスト全体がハングする
-            // （story ファイルが "(0 test)" のまま止まる。--project storybook
-            // 単独でも実測 8 回に 1 回。この経路にタイムアウトは無い）。
-            // mswLoader を外すとハングは 10/10 で再現しなくなり、iframe を
-            // 使い回す設定にしても同じくハングしなくなる。
-            //
-            // 副次的に setup（preview + Tailwind の読み込み）の回数が
-            // 32 回から 12 回に減り、storybook プロジェクトの実行時間が半減する。
-            //
-            // 注意: story ファイル間で tester のモジュール状態が共有される。
-            isolate: false,
           },
         },
       },
