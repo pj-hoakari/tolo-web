@@ -34,7 +34,7 @@ export function toGraphData(
             n.height ?? n.measured?.height ?? GROUP_DEFAULT_HEIGHT,
           ),
           data: {
-            label: n.data.label,
+            labels: compactLabels(n.data.labels),
             // 手動リサイズの下限はフィット計算の入力なので保存する
             ...(n.data.minWidth !== undefined
               ? { minWidth: n.data.minWidth }

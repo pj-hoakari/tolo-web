@@ -11,7 +11,7 @@ const group: GroupNodeType = {
   position: { x: 100, y: 100 },
   width: 400,
   height: 300,
-  data: { label: "1F" },
+  data: { labels: { ja: "1F" }, label: "1F" },
 };
 
 /** メッセージを解決できるよう next-intl のプロバイダ配下で描画する */

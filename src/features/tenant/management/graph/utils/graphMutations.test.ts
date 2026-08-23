@@ -122,17 +122,30 @@ describe("patchNodeLabel", () => {
     expect(next[0].data).toEqual({ labels: {}, nodeType: "GOAL" });
   });
 
-  it("グループは言語を持たない単一ラベルをそのまま更新する", () => {
+  it("グループも指定言語のラベルだけを更新する", () => {
     const group: GroupNodeType = {
       id: "g1",
       type: "graphGroup",
       position: { x: 0, y: 0 },
-      data: { label: "1F" },
+      data: { labels: { ja: "1F" } },
     };
 
     const next = patchNodeLabel([group], "g1", "en", "Floor 1");
 
-    expect(next[0].data).toEqual({ label: "Floor 1" });
+    expect(next[0].data).toEqual({ labels: { ja: "1F", en: "Floor 1" } });
+  });
+
+  it("グループでも空文字はその言語のラベル削除として扱う", () => {
+    const group: GroupNodeType = {
+      id: "g1",
+      type: "graphGroup",
+      position: { x: 0, y: 0 },
+      data: { labels: { ja: "1F", en: "Floor 1" } },
+    };
+
+    const next = patchNodeLabel([group], "g1", "en", "");
+
+    expect(next[0].data).toEqual({ labels: { ja: "1F" } });
   });
 
   it("元の配列を書き換えない", () => {

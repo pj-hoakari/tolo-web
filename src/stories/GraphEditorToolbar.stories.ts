@@ -16,8 +16,9 @@ const meta = {
     onSave: () => {},
     labelLocale: "ja",
     onChangeLabelLocale: () => {},
-    labelCounts: { ja: 12, en: 3 },
-    pointCount: 12,
+    // ポイント 11 + グループ 2 を想定した設定状況（en は一部のみ設定済みの例）
+    labelCounts: { ja: 13, en: 3 },
+    labelTargetCount: 13,
   },
 } satisfies Meta<typeof GraphEditorToolbar>;
 

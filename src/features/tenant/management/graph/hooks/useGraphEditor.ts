@@ -27,7 +27,7 @@ import {
   removedIds,
 } from "../utils/graphMutations";
 import { newId } from "../utils/idGen";
-import { countLabeledPoints } from "../utils/labels";
+import { countLabeledNodes } from "../utils/labels";
 import { useGraphElements } from "./useGraphElements";
 import { useGraphSelection } from "./useGraphSelection";
 import { useLabelLocale } from "./useLabelLocale";
@@ -166,7 +166,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     [updateNodeData],
   );
 
-  /** 編集言語のポイントラベル（グループは単一ラベル）を更新する */
+  /** 編集言語のラベル（ポイント・グループ共通）を更新する */
   const setNodeLabel = useCallback(
     (id: string, label: string) => {
       updateNodeLabel(id, labelLocale, label);
@@ -206,17 +206,20 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
 
   const addGroupAtPosition = useCallback(
     (position: { x: number; y: number }, parentId?: string) => {
+      // 初期ラベルは編集中の言語にだけ設定する
       const group = createGroup({
         id: newId("g"),
-        label: t("newGroupLabel", {
-          index: source.nodes.filter(isGroupNode).length + 1,
-        }),
+        labels: {
+          [labelLocale]: t("newGroupLabel", {
+            index: source.nodes.filter(isGroupNode).length + 1,
+          }),
+        },
         position,
       });
       appendNode(group, parentId);
       selectNode(group.id);
     },
-    [source.nodes, appendNode, selectNode, t],
+    [source.nodes, appendNode, selectNode, t, labelLocale],
   );
 
   const addGroup = useCallback(() => {
@@ -272,7 +275,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
   );
 
   const labelCounts = useMemo(
-    () => countLabeledPoints(source.nodes),
+    () => countLabeledNodes(source.nodes),
     [source.nodes],
   );
 
@@ -309,7 +312,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
       labelLocale,
       onChangeLabelLocale: setLabelLocale,
       labelCounts,
-      pointCount: source.nodes.filter(isPointNode).length,
+      labelTargetCount: source.nodes.length,
     },
     properties: {
       selectedNode:

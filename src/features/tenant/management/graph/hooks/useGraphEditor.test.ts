@@ -10,7 +10,7 @@ import type {
   GraphNodeType,
   HandleSide,
 } from "../type";
-import { isPointNode } from "../type";
+import { isGroupNode, isPointNode } from "../type";
 import { absolutePositionOf } from "../utils/groups";
 import { parseHandleId } from "../utils/handles";
 import { collectObservationPointIds } from "../utils/observationPoints";
@@ -248,6 +248,47 @@ describe("useGraphEditor: ラベルの多言語編集", () => {
       en: "ポイント 1",
     });
   });
+
+  it("グループのラベルもポイントと同じ編集言語で更新される", () => {
+    const initial: GraphData = {
+      nodes: [
+        {
+          id: "g1",
+          type: "graphGroup",
+          position: { x: 0, y: 0 },
+          width: 400,
+          height: 300,
+          data: { labels: { ja: "1F" } },
+        },
+      ],
+      edges: [],
+    };
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+
+    // グループもラベル設定状況の分母・分子に数える
+    expect(result.current.toolbar.labelCounts).toEqual({ ja: 1 });
+    expect(result.current.toolbar.labelTargetCount).toBe(1);
+
+    act(() => {
+      result.current.toolbar.onChangeLabelLocale("en");
+    });
+    // 英語のラベルが無いので日本語へフォールバック表示する
+    expect(result.current.canvas.nodes[0].data.label).toBe("1F");
+    expect(result.current.canvas.nodes[0].data.labelIsFallback).toBe(true);
+
+    act(() => {
+      result.current.canvas.editing.onSetNodeLabel("g1", "Floor 1");
+    });
+
+    const group = result.current.getGraphData().nodes[0];
+    expect(isGroupNode(group) && group.data.labels).toEqual({
+      ja: "1F",
+      en: "Floor 1",
+    });
+    expect(result.current.canvas.nodes[0].data.label).toBe("Floor 1");
+  });
 });
 
 describe("useGraphEditor: グローバルコンテキスト操作", () => {
@@ -398,7 +439,7 @@ describe("useGraphEditor: グループ（論理グルーピング）", () => {
           position: { x: 100, y: 100 },
           width: 400,
           height: 300,
-          data: { label: "1F" },
+          data: { labels: { ja: "1F" } },
         },
       ],
       edges: [],
@@ -432,7 +473,7 @@ describe("useGraphEditor: グループ（論理グルーピング）", () => {
           position: { x: 100, y: 100 },
           width: 400,
           height: 300,
-          data: { label: "1F" },
+          data: { labels: { ja: "1F" } },
         },
       ],
       edges: [],
@@ -462,7 +503,7 @@ describe("useGraphEditor: グループ（論理グルーピング）", () => {
           position: { x: 100, y: 100 },
           width: 400,
           height: 300,
-          data: { label: "1F" },
+          data: { labels: { ja: "1F" } },
         },
       ],
       edges: [],
@@ -498,7 +539,7 @@ describe("useGraphEditor: グループ（論理グルーピング）", () => {
           position: { x: 100, y: 100 },
           width: 400,
           height: 300,
-          data: { label: "1F" },
+          data: { labels: { ja: "1F" } },
         },
         {
           id: "n1",
@@ -533,7 +574,7 @@ describe("useGraphEditor: グループ（論理グルーピング）", () => {
           position: { x: 100, y: 100 },
           width: 400,
           height: 300,
-          data: { label: "1F" },
+          data: { labels: { ja: "1F" } },
         },
         {
           id: "n1",
@@ -579,7 +620,7 @@ describe("useGraphEditor: グループ（論理グルーピング）", () => {
           position: { x: 500, y: 500 },
           width: 200,
           height: 200,
-          data: { label: "1F" },
+          data: { labels: { ja: "1F" } },
         },
         node("n1", 0, 0),
       ],

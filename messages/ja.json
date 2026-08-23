@@ -105,7 +105,6 @@
       "empty": "ポイントまたはルートを選択してください。",
       "deleteNode": "このポイントを削除",
       "deleteEdge": "このルートを削除",
-      "label": "ラベル",
       "labelWithLanguage": "ラベル（{language}）",
       "type": "タイプ",
       "direction": "方向",
@@ -118,7 +117,9 @@
     "node": {
       "editLabel": "「{label}」のラベルを編集",
       "labelField": "ポイントのラベル",
-      "labelFieldWithLanguage": "ポイントのラベル（{language}）"
+      "labelFieldWithLanguage": "ポイントのラベル（{language}）",
+      "groupLabelField": "グループのラベル",
+      "groupLabelFieldWithLanguage": "グループのラベル（{language}）"
     }
   },
   "Webrtc": {

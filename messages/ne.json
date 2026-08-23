@@ -105,7 +105,6 @@
       "empty": "बिन्दु वा मार्ग छान्नुहोस्।",
       "deleteNode": "यो बिन्दु मेट्नुहोस्",
       "deleteEdge": "यो मार्ग मेट्नुहोस्",
-      "label": "लेबल",
       "labelWithLanguage": "लेबल ({language})",
       "type": "प्रकार",
       "direction": "दिशा",
@@ -118,7 +117,9 @@
     "node": {
       "editLabel": "«{label}» को लेबल सम्पादन गर्नुहोस्",
       "labelField": "बिन्दुको लेबल",
-      "labelFieldWithLanguage": "बिन्दुको लेबल ({language})"
+      "labelFieldWithLanguage": "बिन्दुको लेबल ({language})",
+      "groupLabelField": "समूहको लेबल",
+      "groupLabelFieldWithLanguage": "समूहको लेबल ({language})"
     }
   },
   "Webrtc": {

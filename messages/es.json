@@ -105,7 +105,6 @@
       "empty": "Selecciona un punto o una ruta.",
       "deleteNode": "Eliminar este punto",
       "deleteEdge": "Eliminar esta ruta",
-      "label": "Etiqueta",
       "labelWithLanguage": "Etiqueta ({language})",
       "type": "Tipo",
       "direction": "Sentido",
@@ -118,7 +117,9 @@
     "node": {
       "editLabel": "Editar la etiqueta de «{label}»",
       "labelField": "Etiqueta del punto",
-      "labelFieldWithLanguage": "Etiqueta del punto ({language})"
+      "labelFieldWithLanguage": "Etiqueta del punto ({language})",
+      "groupLabelField": "Etiqueta del grupo",
+      "groupLabelFieldWithLanguage": "Etiqueta del grupo ({language})"
     }
   },
   "Webrtc": {

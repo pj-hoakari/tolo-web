@@ -3,7 +3,7 @@ import type { GraphCanvasNode, GraphNodeType } from "../type";
 import { isPointNode } from "../type";
 import {
   compactLabels,
-  countLabeledPoints,
+  countLabeledNodes,
   deriveNodeLabels,
   resolveLabel,
 } from "./labels";
@@ -14,6 +14,15 @@ function node(id: string, labels: Record<string, string>): GraphNodeType {
     type: "graph",
     position: { x: 0, y: 0 },
     data: { labels, nodeType: "GOAL" },
+  };
+}
+
+function group(id: string, labels: Record<string, string>): GraphCanvasNode {
+  return {
+    id,
+    type: "graphGroup",
+    position: { x: 0, y: 0 },
+    data: { labels },
   };
 }
 
@@ -69,33 +78,30 @@ describe("deriveNodeLabels", () => {
     expect(nodes[0].data.label).toBeUndefined();
   });
 
-  it("グループはそのまま返す", () => {
-    const group: GraphCanvasNode = {
-      id: "g1",
-      type: "graphGroup",
-      position: { x: 0, y: 0 },
-      data: { label: "1F" },
-    };
+  it("グループにも表示言語で解決したラベルを注入する", () => {
+    const nodes: GraphCanvasNode[] = [
+      group("g1", { ja: "1F", en: "Floor 1" }),
+      group("g2", { ja: "2F" }),
+    ];
 
-    expect(deriveNodeLabels([group], "en")[0]).toBe(group);
+    const derived = deriveNodeLabels(nodes, "en");
+
+    expect(derived.map((n) => n.data.label)).toEqual(["Floor 1", "2F"]);
+    expect(derived.map((n) => n.data.labelIsFallback)).toEqual([false, true]);
+    // 元の配列は書き換えない
+    expect(nodes[0].data.label).toBeUndefined();
   });
 });
 
-describe("countLabeledPoints", () => {
-  it("ロケールごとのラベル設定済みポイント数を数える", () => {
-    const group: GraphCanvasNode = {
-      id: "g1",
-      type: "graphGroup",
-      position: { x: 0, y: 0 },
-      data: { label: "1F" },
-    };
+describe("countLabeledNodes", () => {
+  it("ロケールごとのラベル設定済みポイント・グループ数を数える", () => {
     const nodes: GraphCanvasNode[] = [
       node("n1", { ja: "入口", en: "Entrance" }),
       node("n2", { ja: "出口", en: "" }),
-      group,
+      group("g1", { ja: "1F" }),
     ];
 
-    expect(countLabeledPoints(nodes)).toEqual({ ja: 2, en: 1 });
+    expect(countLabeledNodes(nodes)).toEqual({ ja: 3, en: 1 });
   });
 });
 

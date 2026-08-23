@@ -105,7 +105,6 @@
       "empty": "지점 또는 경로를 선택하세요.",
       "deleteNode": "이 지점 삭제",
       "deleteEdge": "이 경로 삭제",
-      "label": "라벨",
       "labelWithLanguage": "라벨({language})",
       "type": "유형",
       "direction": "방향",
@@ -118,7 +117,9 @@
     "node": {
       "editLabel": "「{label}」의 라벨 편집",
       "labelField": "지점 라벨",
-      "labelFieldWithLanguage": "지점 라벨({language})"
+      "labelFieldWithLanguage": "지점 라벨({language})",
+      "groupLabelField": "그룹 라벨",
+      "groupLabelFieldWithLanguage": "그룹 라벨({language})"
     }
   },
   "Webrtc": {

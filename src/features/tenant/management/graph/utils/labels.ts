@@ -27,30 +27,28 @@ export function resolveLabel(
 }
 
 /**
- * 表示言語で解決したラベルを、描画用としてポイントへ注入する。
- * グループのラベルは言語を持たないため、そのまま返す。
+ * 表示言語で解決したラベルを、描画用としてポイント・グループへ注入する。
  */
 export function deriveNodeLabels(
   nodes: GraphCanvasNode[],
   locale: string,
 ): GraphCanvasNode[] {
   return nodes.map((n) => {
-    if (!isPointNode(n)) return n;
     const { text, isFallback } = resolveLabel(n.data.labels, locale);
-    return {
-      ...n,
-      data: { ...n.data, label: text, labelIsFallback: isFallback },
-    };
+    const resolved = { label: text, labelIsFallback: isFallback };
+    // ポイントとグループで data の型が異なるため、分岐して型を保つ
+    return isPointNode(n)
+      ? { ...n, data: { ...n.data, ...resolved } }
+      : { ...n, data: { ...n.data, ...resolved } };
   });
 }
 
-/** ロケールごとの、ラベルが設定済みのポイント数を数える */
-export function countLabeledPoints(
+/** ロケールごとの、ラベルが設定済みの要素（ポイント・グループ）数を数える */
+export function countLabeledNodes(
   nodes: GraphCanvasNode[],
 ): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const node of nodes) {
-    if (!isPointNode(node)) continue;
     for (const [locale, value] of Object.entries(node.data.labels)) {
       if (value) counts[locale] = (counts[locale] ?? 0) + 1;
     }

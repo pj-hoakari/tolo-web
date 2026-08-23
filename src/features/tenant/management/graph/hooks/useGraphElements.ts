@@ -39,7 +39,7 @@ import { deriveNodeLabels } from "../utils/labels";
 /**
  * ノード/ルートの実体と、その描画用の派生情報を扱うフック。
  * 選択状態や観測点の使用状況には関与せず、要素の出し入れだけを担う。
- * labelLocale はポイントラベルの表示言語（描画用ラベルの解決に使う）。
+ * labelLocale はラベルの表示言語（ポイント・グループ共通で、描画用ラベルの解決に使う）。
  */
 export function useGraphElements(initial: GraphData, labelLocale: string) {
   const [nodes, setNodes] = useState<GraphCanvasNode[]>(initial.nodes);
@@ -187,7 +187,7 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
     [],
   );
 
-  /** 指定言語のポイントラベル（グループは単一ラベル）を更新する */
+  /** 指定言語のラベル（ポイント・グループ共通）を更新する */
   const updateNodeLabel = useCallback(
     (id: string, locale: string, label: string) => {
       setNodes((nds) => patchNodeLabel(nds, id, locale, label));

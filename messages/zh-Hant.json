@@ -105,7 +105,6 @@
       "empty": "請選擇節點或路徑。",
       "deleteNode": "刪除此節點",
       "deleteEdge": "刪除此路徑",
-      "label": "標籤",
       "labelWithLanguage": "標籤（{language}）",
       "type": "類型",
       "direction": "方向",
@@ -118,7 +117,9 @@
     "node": {
       "editLabel": "編輯「{label}」的標籤",
       "labelField": "節點標籤",
-      "labelFieldWithLanguage": "節點標籤（{language}）"
+      "labelFieldWithLanguage": "節點標籤（{language}）",
+      "groupLabelField": "群組標籤",
+      "groupLabelFieldWithLanguage": "群組標籤（{language}）"
     }
   },
   "Webrtc": {

@@ -46,7 +46,7 @@ function group(
     width,
     height,
     ...(parentId ? { parentId } : {}),
-    data: { label: id },
+    data: { labels: { ja: id } },
   };
 }
 

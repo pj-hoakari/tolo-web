@@ -8,7 +8,7 @@ import type { GraphData } from "./type";
  * 仕様の原則（容量・方向制約・所要時間はルートの属性）に合わせた形。
  * グループ内のノードの position は親グループ相対。
  * ポイントの position はノード中心（グループは左上）を指す。
- * ポイントラベルは多言語設定の例として ja / en を持たせている。
+ * ポイント・グループのラベルは多言語設定の例として ja / en を持たせている。
  * React Flow の制約により、親グループは子ノードより先に並べる。
  */
 export const PLACEHOLDER_GRAPH: GraphData = {
@@ -19,7 +19,7 @@ export const PLACEHOLDER_GRAPH: GraphData = {
       position: { x: 0, y: 0 },
       width: 880,
       height: 260,
-      data: { label: "2F" },
+      data: { labels: { ja: "2F", en: "2F" } },
     },
     {
       id: "ph_floor1",
@@ -27,7 +27,7 @@ export const PLACEHOLDER_GRAPH: GraphData = {
       position: { x: 0, y: 320 },
       width: 1060,
       height: 460,
-      data: { label: "1F" },
+      data: { labels: { ja: "1F", en: "1F" } },
     },
     // --- 2F ---
     {

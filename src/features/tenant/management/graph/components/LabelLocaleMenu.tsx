@@ -9,25 +9,25 @@ import { isLocale, type Locale, localeLabels, locales } from "@/i18n/locale";
 
 /** ラベル言語メニューに渡す props（エディタ・ビューアのツールバー共通） */
 export type LabelLocaleBindings = {
-  /** ポイントラベルの表示・編集対象の言語 */
+  /** ラベルの表示・編集対象の言語（ポイント・グループで共通） */
   labelLocale: Locale;
   onChangeLabelLocale: (locale: Locale) => void;
-  /** ロケールごとの、ラベルが設定済みのポイント数 */
+  /** ロケールごとの、ラベルが設定済みのポイント・グループ数 */
   labelCounts: Record<string, number>;
-  /** ポイント総数（ラベル設定状況の分母） */
-  pointCount: number;
+  /** ラベルを持つ要素（ポイント・グループ）の総数（設定状況の分母） */
+  labelTargetCount: number;
 };
 
 /**
- * ポイントラベルの表示・編集言語を切り替えるメニュー。
- * 各言語のラベル設定状況（設定済み数 / ポイント総数）を並記する。
+ * ラベル（ポイント・グループ共通）の表示・編集言語を切り替えるメニュー。
+ * 各言語のラベル設定状況（設定済み数 / 要素総数）を並記する。
  * UI の表示言語（LocaleSelect）とは独立して切り替えられる。
  */
 export function LabelLocaleMenu({
   labelLocale,
   onChangeLabelLocale,
   labelCounts,
-  pointCount,
+  labelTargetCount,
 }: LabelLocaleBindings) {
   const t = useTranslations("Graph.labelLanguage");
 
@@ -65,7 +65,7 @@ export function LabelLocaleMenu({
                 <span className="text-muted-foreground text-xs">
                   {t("labeledPointCount", {
                     count: labelCounts[item] ?? 0,
-                    total: pointCount,
+                    total: labelTargetCount,
                   })}
                 </span>
               </span>

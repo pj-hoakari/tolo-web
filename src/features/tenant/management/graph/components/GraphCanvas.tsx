@@ -15,6 +15,7 @@ import {
   type OnConnectEnd,
   type OnConnectStart,
   ReactFlow,
+  useStoreApi,
   useViewport,
 } from "@xyflow/react";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -131,6 +132,7 @@ export function GraphCanvas({
 }: GraphCanvasProps) {
   const editable = editing !== undefined;
   const viewport = useViewport();
+  const store = useStoreApi();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const nativeConnectionHandled = useRef(false);
   const [virtualHandle, setVirtualHandle] = useState<VirtualHandle | null>(
@@ -265,9 +267,18 @@ export function GraphCanvas({
   const labelEditing = useMemo(
     () =>
       editing
-        ? { locale: editing.labelLocale, onUpdate: editing.onSetNodeLabel }
+        ? {
+            locale: editing.labelLocale,
+            onUpdate: editing.onSetNodeLabel,
+            onSelect: (id: string) => {
+              // React Flow 側の選択も同期させ、枠線の強調やリサイザ表示を
+              // ノード本体をクリックしたときと同じ状態にする
+              store.getState().addSelectedNodes([id]);
+              onSelectNode(id);
+            },
+          }
         : undefined,
-    [editing],
+    [editing, onSelectNode, store],
   );
 
   return (
