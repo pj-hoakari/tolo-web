@@ -28,7 +28,7 @@ export default async function TenantGraphEdit({
           <ManagementBackLink eventId={eventId} />
         </div>
         <div className="w-full grow overflow-hidden rounded-lg border border-border bg-background">
-          <GraphEditor />
+          <GraphEditor tenantId={tenantId} eventId={eventId} />
         </div>
       </main>
     </div>

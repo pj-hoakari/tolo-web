@@ -120,6 +120,11 @@
       "labelFieldWithLanguage": "बिन्दुको लेबल ({language})",
       "groupLabelField": "समूहको लेबल",
       "groupLabelFieldWithLanguage": "समूहको लेबल ({language})"
+    },
+    "load": {
+      "loading": "ग्राफ लोड हुँदैछ…",
+      "error": "ग्राफ लोड गर्न सकिएन",
+      "retry": "पुनः प्रयास"
     }
   },
   "Webrtc": {

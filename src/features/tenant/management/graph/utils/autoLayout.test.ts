@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PLACEHOLDER_GRAPH } from "../placeholderGraph";
+import { PLACEHOLDER_GRAPH } from "@/features/graph";
 import type {
   GraphCanvasNode,
   GraphEdgeType,

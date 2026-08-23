@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
+import { PLACEHOLDER_GRAPH } from "@/features/graph";
 import type { ObservationPointsSource } from "@/features/tenant/management/graph/components/observation";
 import {
   deriveNodeNotices,
   type NoticeTranslator,
 } from "@/features/tenant/management/graph/nodeTypes";
-import { PLACEHOLDER_GRAPH } from "@/features/tenant/management/graph/placeholderGraph";
 import type {
   GraphEdgeType,
   GraphNodeType,

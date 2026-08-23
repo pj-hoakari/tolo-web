@@ -120,6 +120,11 @@
       "labelFieldWithLanguage": "节点标签（{language}）",
       "groupLabelField": "分组标签",
       "groupLabelFieldWithLanguage": "分组标签（{language}）"
+    },
+    "load": {
+      "loading": "正在加载图…",
+      "error": "加载图失败",
+      "retry": "重试"
     }
   },
   "Webrtc": {

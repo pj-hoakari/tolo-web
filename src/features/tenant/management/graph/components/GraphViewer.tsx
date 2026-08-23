@@ -2,10 +2,12 @@
 
 import { ReactFlowProvider } from "@xyflow/react";
 import { type Ref, useImperativeHandle } from "react";
+import { type GraphKey, saveGraph, useGraph } from "@/features/graph";
 import { useGraphViewer } from "../hooks/useGraphViewer";
 import { useObservationPointSource } from "../hooks/useObservationPointSource";
 import type { GraphData } from "../type";
 import { GraphCanvas } from "./GraphCanvas";
+import { GraphLoadState } from "./GraphLoadState";
 import { GraphViewerToolbar } from "./GraphViewerToolbar";
 import { ObservationLinkPanel } from "./observation";
 
@@ -13,10 +15,7 @@ export type GraphViewerHandle = {
   getGraphData: () => GraphData;
 };
 
-type GraphViewerProps = {
-  tenantId: string;
-  eventId: string;
-  initialGraph?: GraphData;
+type GraphViewerProps = GraphKey & {
   /** 編集ページのパス。未指定なら編集への導線を出さない */
   editHref?: string;
 };
@@ -27,7 +26,10 @@ function GraphViewerInner({
   initialGraph,
   editHref,
   handleRef,
-}: GraphViewerProps & { handleRef?: Ref<GraphViewerHandle> }) {
+}: GraphViewerProps & {
+  initialGraph: GraphData;
+  handleRef?: Ref<GraphViewerHandle>;
+}) {
   const { graph, canvas, toolbar, links, getGraphData } =
     useGraphViewer(initialGraph);
 
@@ -41,9 +43,7 @@ function GraphViewerInner({
   useImperativeHandle(handleRef, () => ({ getGraphData }), [getGraphData]);
 
   const handleSave = () => {
-    const data = getGraphData();
-    // TODO: API 送信に差し替え
-    console.log(data);
+    void saveGraph({ tenantId, eventId }, getGraphData());
   };
 
   return (
@@ -68,22 +68,26 @@ function GraphViewerInner({
 
 /**
  * 会場グラフの表示専用ビュー。
+ * グラフは `@/features/graph` 経由で取得する（取得元は意識しない）。
  * グラフ構造そのものは編集できず、選択したポイント / ルートへ
  * 観測点を紐づける操作だけを行う（構造の編集は `GraphEditor`）。
  */
 export function GraphViewer({
   tenantId,
   eventId,
-  initialGraph,
   editHref,
   ref,
 }: GraphViewerProps & { ref?: Ref<GraphViewerHandle> }) {
+  const loaded = useGraph({ tenantId, eventId });
+  if (loaded.status !== "ready") {
+    return <GraphLoadState status={loaded.status} onRetry={loaded.refresh} />;
+  }
   return (
     <ReactFlowProvider>
       <GraphViewerInner
         tenantId={tenantId}
         eventId={eventId}
-        initialGraph={initialGraph}
+        initialGraph={loaded.graph}
         editHref={editHref}
         handleRef={ref}
       />

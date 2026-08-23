@@ -1,12 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { ReactFlowProvider } from "@xyflow/react";
 import { fn } from "storybook/test";
-
+import { PLACEHOLDER_GRAPH } from "@/features/graph";
 import { GraphCanvas } from "@/features/tenant/management/graph/components/GraphCanvas";
 import { useGraphEditor } from "@/features/tenant/management/graph/hooks/useGraphEditor";
 import { useGraphViewer } from "@/features/tenant/management/graph/hooks/useGraphViewer";
 import { deriveNodeNotices } from "@/features/tenant/management/graph/nodeTypes";
-import { PLACEHOLDER_GRAPH } from "@/features/tenant/management/graph/placeholderGraph";
 import {
   assignHandlesByPosition,
   deriveNodeHandles,
