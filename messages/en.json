@@ -120,6 +120,11 @@
       "labelFieldWithLanguage": "Point label ({language})",
       "groupLabelField": "Group label",
       "groupLabelFieldWithLanguage": "Group label ({language})"
+    },
+    "load": {
+      "loading": "Loading graph…",
+      "error": "Failed to load the graph",
+      "retry": "Retry"
     }
   },
   "Webrtc": {

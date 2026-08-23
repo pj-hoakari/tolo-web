@@ -120,6 +120,11 @@
       "labelFieldWithLanguage": "節點標籤（{language}）",
       "groupLabelField": "群組標籤",
       "groupLabelFieldWithLanguage": "群組標籤（{language}）"
+    },
+    "load": {
+      "loading": "正在載入圖…",
+      "error": "載入圖失敗",
+      "retry": "重試"
     }
   },
   "Webrtc": {

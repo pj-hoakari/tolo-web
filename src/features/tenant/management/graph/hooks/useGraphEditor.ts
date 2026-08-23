@@ -10,7 +10,6 @@ import type {
 import type { LabelLocaleBindings } from "../components/LabelLocaleMenu";
 import type { PropertiesPanelProps } from "../components/properties";
 import { DEFAULT_NODE_TYPE, resolveConnectionDirection } from "../nodeTypes";
-import { PLACEHOLDER_GRAPH } from "../placeholderGraph";
 import { toGraphData } from "../serialize";
 import type {
   EdgeDirection,
@@ -63,7 +62,7 @@ function randomPosition() {
  * 状態は要素（useGraphElements）と選択（useGraphSelection）が持ち、
  * ここでは「ノードを消したら選択も解除する」といった連携だけを担う。
  */
-export function useGraphEditor(initial?: GraphData): GraphEditorApi {
+export function useGraphEditor(initial: GraphData): GraphEditorApi {
   const t = useTranslations("Graph.editor");
 
   const [labelLocale, setLabelLocale] = useLabelLocale();
@@ -86,7 +85,7 @@ export function useGraphEditor(initial?: GraphData): GraphEditorApi {
     updateNodeLabel,
     updateEdgeData,
     reverseEdge,
-  } = useGraphElements(initial ?? PLACEHOLDER_GRAPH, labelLocale);
+  } = useGraphElements(initial, labelLocale);
 
   const { selection, selectNode, selectEdge, clearSelection, clearIfSelected } =
     useGraphSelection();

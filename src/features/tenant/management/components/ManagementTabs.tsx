@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Tab, TabList, TabPanel, Tabs } from "@/components/ui/tabs";
 import { ConnectedEdges } from "@/features/tenant/webrtc/components/ConnectedEdges";
-import { type GraphData, GraphViewer } from "../graph";
+import { GraphViewer } from "../graph";
 import { graphEditPath } from "../routes";
 
 type TabId = "graph" | "edges";
@@ -11,12 +11,11 @@ type TabId = "graph" | "edges";
 type Props = {
   tenantId: string;
   eventId: string;
-  initialGraph?: GraphData;
 };
 
 const TAB_IDS: TabId[] = ["graph", "edges"];
 
-export function ManagementTabs({ tenantId, eventId, initialGraph }: Props) {
+export function ManagementTabs({ tenantId, eventId }: Props) {
   const t = useTranslations("Management");
 
   return (
@@ -46,7 +45,6 @@ export function ManagementTabs({ tenantId, eventId, initialGraph }: Props) {
             <GraphViewer
               tenantId={tenantId}
               eventId={eventId}
-              initialGraph={initialGraph}
               editHref={graphEditPath(eventId)}
             />
           </div>

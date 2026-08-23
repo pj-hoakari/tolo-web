@@ -4,7 +4,6 @@ import { useCallback, useMemo } from "react";
 import type { GraphCanvasProps } from "../components/GraphCanvas";
 import type { LabelLocaleBindings } from "../components/LabelLocaleMenu";
 import type { ObservationLinkPanelProps } from "../components/observation";
-import { PLACEHOLDER_GRAPH } from "../placeholderGraph";
 import { toGraphData } from "../serialize";
 import type { GraphData } from "../type";
 import { isPointNode } from "../type";
@@ -36,7 +35,7 @@ export type GraphViewerApi = {
  * グラフ構造（ポイント・ルートの増減、タイプ、方向、配置）は変更せず、
  * 付随情報である観測点の紐づけだけを書き換える。
  */
-export function useGraphViewer(initial?: GraphData): GraphViewerApi {
+export function useGraphViewer(initial: GraphData): GraphViewerApi {
   // ポイントラベルの表示言語。既定は UI の表示言語で、独立して切り替えられる
   const [labelLocale, setLabelLocale] = useLabelLocale();
 
@@ -48,7 +47,7 @@ export function useGraphViewer(initial?: GraphData): GraphViewerApi {
     changeEdges,
     updateNodeData,
     updateEdgeData,
-  } = useGraphElements(initial ?? PLACEHOLDER_GRAPH, labelLocale);
+  } = useGraphElements(initial, labelLocale);
 
   const { selection, selectNode, selectEdge, clearSelection } =
     useGraphSelection();

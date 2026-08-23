@@ -120,6 +120,11 @@
       "labelFieldWithLanguage": "Etiqueta del punto ({language})",
       "groupLabelField": "Etiqueta del grupo",
       "groupLabelFieldWithLanguage": "Etiqueta del grupo ({language})"
+    },
+    "load": {
+      "loading": "Cargando el grafo…",
+      "error": "No se pudo cargar el grafo",
+      "retry": "Reintentar"
     }
   },
   "Webrtc": {

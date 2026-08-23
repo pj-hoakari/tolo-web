@@ -2,24 +2,29 @@
 
 import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
 import { type Ref, useImperativeHandle } from "react";
+import { type GraphKey, saveGraph, useGraph } from "@/features/graph";
 import { useGraphEditor } from "../hooks/useGraphEditor";
 import type { GraphData } from "../type";
 import { FIT_VIEW_OPTIONS, GraphCanvas } from "./GraphCanvas";
 import { GraphEditorToolbar } from "./GraphEditorToolbar";
+import { GraphLoadState } from "./GraphLoadState";
 import { PropertiesPanel } from "./properties";
 
 export type GraphEditorHandle = {
   getGraphData: () => GraphData;
 };
 
-type GraphEditorProps = {
-  initialGraph?: GraphData;
-};
+type GraphEditorProps = GraphKey;
 
 function GraphEditorInner({
+  tenantId,
+  eventId,
   initialGraph,
   handleRef,
-}: GraphEditorProps & { handleRef?: Ref<GraphEditorHandle> }) {
+}: GraphEditorProps & {
+  initialGraph: GraphData;
+  handleRef?: Ref<GraphEditorHandle>;
+}) {
   const { graph, canvas, toolbar, properties, getGraphData } =
     useGraphEditor(initialGraph);
 
@@ -27,9 +32,7 @@ function GraphEditorInner({
   useImperativeHandle(handleRef, () => ({ getGraphData }), [getGraphData]);
 
   const handleSave = () => {
-    const data = getGraphData();
-    // TODO: API 送信に差し替え
-    console.log(data);
+    void saveGraph({ tenantId, eventId }, getGraphData());
   };
 
   const { fitView } = useReactFlow();
@@ -58,15 +61,26 @@ function GraphEditorInner({
 
 /**
  * 会場グラフの構造（ポイント・ルート）を編集するエディタ。
+ * グラフは `@/features/graph` 経由で取得する（取得元は意識しない）。
  * 観測点などの付随情報は扱わず、紐づけは `GraphViewer` が担当する。
  */
 export function GraphEditor({
-  initialGraph,
+  tenantId,
+  eventId,
   ref,
 }: GraphEditorProps & { ref?: Ref<GraphEditorHandle> }) {
+  const loaded = useGraph({ tenantId, eventId });
+  if (loaded.status !== "ready") {
+    return <GraphLoadState status={loaded.status} onRetry={loaded.refresh} />;
+  }
   return (
     <ReactFlowProvider>
-      <GraphEditorInner initialGraph={initialGraph} handleRef={ref} />
+      <GraphEditorInner
+        tenantId={tenantId}
+        eventId={eventId}
+        initialGraph={loaded.graph}
+        handleRef={ref}
+      />
     </ReactFlowProvider>
   );
 }
