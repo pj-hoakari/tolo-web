@@ -41,7 +41,7 @@ export function createNode(params: {
 
 export function createGroup(params: {
   id: string;
-  label: string;
+  labels: LocalizedLabel;
   position: { x: number; y: number };
   width?: number;
   height?: number;
@@ -52,7 +52,7 @@ export function createGroup(params: {
     position: params.position,
     width: params.width ?? GROUP_DEFAULT_WIDTH,
     height: params.height ?? GROUP_DEFAULT_HEIGHT,
-    data: { label: params.label },
+    data: { labels: params.labels },
   };
 }
 
@@ -75,7 +75,8 @@ export function createEdge(params: {
 
 /**
  * 指定ノードの data を部分更新した新しい配列を返す。
- * グループコンテナにはポイント固有のフィールドがないため、ラベルのみ反映する。
+ * グループコンテナにはポイント固有のフィールドがなく、
+ * ラベルの更新は patchNodeLabel が担うため、何もしない。
  */
 export function patchNodeData(
   nodes: GraphCanvasNode[],
@@ -85,16 +86,14 @@ export function patchNodeData(
   return nodes.map((n) => {
     if (n.id !== id) return n;
     if (isPointNode(n)) return { ...n, data: { ...n.data, ...patch } };
-    return patch.label !== undefined
-      ? { ...n, data: { ...n.data, label: patch.label } }
-      : n;
+    return n;
   });
 }
 
 /**
  * 指定ノードのラベルを更新した新しい配列を返す。
- * ポイントは指定言語のラベルを更新し、空文字はその言語のラベル削除として扱う。
- * グループのラベルは言語を持たないため、単一ラベルをそのまま更新する。
+ * ポイント・グループとも指定言語のラベルを更新し、
+ * 空文字はその言語のラベル削除として扱う。
  */
 export function patchNodeLabel(
   nodes: GraphCanvasNode[],
@@ -104,11 +103,13 @@ export function patchNodeLabel(
 ): GraphCanvasNode[] {
   return nodes.map((n) => {
     if (n.id !== id) return n;
-    if (!isPointNode(n)) return { ...n, data: { ...n.data, label } };
     const labels = { ...n.data.labels };
     if (label === "") delete labels[locale];
     else labels[locale] = label;
-    return { ...n, data: { ...n.data, labels } };
+    // ポイントとグループで data の型が異なるため、分岐して型を保つ
+    return isPointNode(n)
+      ? { ...n, data: { ...n.data, labels } }
+      : { ...n, data: { ...n.data, labels } };
   });
 }
 

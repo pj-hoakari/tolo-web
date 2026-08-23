@@ -130,7 +130,7 @@ describe("toGraphData", () => {
     expect(pointDataOf(result.nodes[0])?.observationPointIds).toBeUndefined();
   });
 
-  it("グループは parentId・サイズ・ラベルを保持して送信用データに含める", () => {
+  it("グループは parentId・サイズ・多言語ラベル（空文字は除く）を送信用データに含める", () => {
     const nodes: GraphCanvasNode[] = [
       {
         id: "g1",
@@ -138,7 +138,7 @@ describe("toGraphData", () => {
         position: { x: 10.4, y: 20.6 },
         width: 480.4,
         height: 320.6,
-        data: { label: "1F" },
+        data: { labels: { ja: "1F", en: "" } },
       },
       {
         id: "n1",
@@ -157,7 +157,7 @@ describe("toGraphData", () => {
       position: { x: 10, y: 21 },
       width: 480,
       height: 321,
-      data: { label: "1F" },
+      data: { labels: { ja: "1F" } },
     });
     expect(result.nodes[1]).toMatchObject({
       id: "n1",

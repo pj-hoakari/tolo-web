@@ -51,7 +51,7 @@ function group(
     width,
     height,
     ...(parentId ? { parentId } : {}),
-    data: { label: id },
+    data: { labels: { ja: id } },
   };
 }
 
@@ -642,7 +642,7 @@ describe("autoAlignGraph: グループの扱い", () => {
   it("手動リサイズの最小サイズ（minWidth / minHeight）は整列後も保たれる", () => {
     const resized: GroupNodeType = {
       ...group("g1", 0, 0, 700, 400),
-      data: { label: "g1", minWidth: 700, minHeight: 400 },
+      data: { labels: { ja: "g1" }, minWidth: 700, minHeight: 400 },
     };
     const nodes = [resized, point("p1", 100, 100, "g1")];
 

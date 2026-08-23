@@ -40,7 +40,7 @@ describe("useGraphViewer: ラベルの表示言語", () => {
     expect(result.current.toolbar.labelLocale).toBe("ja");
     expect(result.current.canvas.nodes[0].data.label).toBe("入口");
     expect(result.current.toolbar.labelCounts).toEqual({ ja: 1, en: 1 });
-    expect(result.current.toolbar.pointCount).toBe(1);
+    expect(result.current.toolbar.labelTargetCount).toBe(1);
 
     act(() => {
       result.current.toolbar.onChangeLabelLocale("en");

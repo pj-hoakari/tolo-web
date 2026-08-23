@@ -25,7 +25,7 @@ export function GraphEditorToolbar({
   labelLocale,
   onChangeLabelLocale,
   labelCounts,
-  pointCount,
+  labelTargetCount,
 }: GraphEditorToolbarProps) {
   const t = useTranslations("Graph.editor");
   const tType = useTranslations("Graph.nodeType");
@@ -65,7 +65,7 @@ export function GraphEditorToolbar({
             labelLocale={labelLocale}
             onChangeLabelLocale={onChangeLabelLocale}
             labelCounts={labelCounts}
-            pointCount={pointCount}
+            labelTargetCount={labelTargetCount}
           />
           <Button
             variant="outline"

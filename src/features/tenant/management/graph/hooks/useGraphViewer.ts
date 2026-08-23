@@ -8,7 +8,7 @@ import { PLACEHOLDER_GRAPH } from "../placeholderGraph";
 import { toGraphData } from "../serialize";
 import type { GraphData } from "../type";
 import { isPointNode } from "../type";
-import { countLabeledPoints } from "../utils/labels";
+import { countLabeledNodes } from "../utils/labels";
 import { useGraphElements } from "./useGraphElements";
 import { useGraphSelection } from "./useGraphSelection";
 import { useLabelLocale } from "./useLabelLocale";
@@ -73,7 +73,7 @@ export function useGraphViewer(initial?: GraphData): GraphViewerApi {
   );
 
   const labelCounts = useMemo(
-    () => countLabeledPoints(source.nodes),
+    () => countLabeledNodes(source.nodes),
     [source.nodes],
   );
 
@@ -83,7 +83,7 @@ export function useGraphViewer(initial?: GraphData): GraphViewerApi {
       labelLocale,
       onChangeLabelLocale: setLabelLocale,
       labelCounts,
-      pointCount: source.nodes.filter(isPointNode).length,
+      labelTargetCount: source.nodes.length,
     },
     canvas: {
       nodes,

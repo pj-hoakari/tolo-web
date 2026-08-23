@@ -105,7 +105,17 @@ export type GraphEdgeType = Edge<GraphEdgeData, "graph">;
  * ルートの端点にはならず、ネスト（グループ内グループ）できる。
  */
 export type GroupNodeData = {
-  label: string;
+  /** 言語ごとのラベル。ポイントと同様に永続化・API 送信の対象 */
+  labels: LocalizedLabel;
+  /**
+   * 表示言語で解決されたラベル。描画時に deriveNodeLabels が注入する
+   */
+  label?: string;
+  /**
+   * label が表示言語のラベルではなく他言語からのフォールバックであることを示す。
+   * 描画時に deriveNodeLabels が注入する
+   */
+  labelIsFallback?: boolean;
   /**
    * 手動リサイズで指定した最小サイズ。
    * 実際の width / height は「子ノードへのフィット」とこの値の大きい方になる。

@@ -105,7 +105,6 @@
       "empty": "Select a point or a route.",
       "deleteNode": "Delete this point",
       "deleteEdge": "Delete this route",
-      "label": "Label",
       "labelWithLanguage": "Label ({language})",
       "type": "Type",
       "direction": "Direction",
@@ -118,7 +117,9 @@
     "node": {
       "editLabel": "Edit the label of “{label}”",
       "labelField": "Point label",
-      "labelFieldWithLanguage": "Point label ({language})"
+      "labelFieldWithLanguage": "Point label ({language})",
+      "groupLabelField": "Group label",
+      "groupLabelFieldWithLanguage": "Group label ({language})"
     }
   },
   "Webrtc": {

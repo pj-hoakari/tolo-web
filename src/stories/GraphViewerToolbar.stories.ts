@@ -17,8 +17,8 @@ const meta = {
     onSave: fn(),
     labelLocale: "ja",
     onChangeLabelLocale: fn(),
-    labelCounts: { ja: 11, en: 11 },
-    pointCount: 11,
+    labelCounts: { ja: 13, en: 13 },
+    labelTargetCount: 13,
   },
 } satisfies Meta<typeof GraphViewerToolbar>;
 

@@ -54,7 +54,9 @@ export function GraphGroupContextMenu({
       className="min-w-48"
       onClose={onClose}
     >
-      <Menu aria-label={t("groupLabel", { label: group.data.label })}>
+      <Menu
+        aria-label={t("groupLabel", { label: group.data.label ?? group.id })}
+      >
         <GraphCreationMenuItems
           {...creationProps}
           // 追加操作はこのグループを親にする

@@ -17,7 +17,7 @@ export function GraphViewerToolbar({
   labelLocale,
   onChangeLabelLocale,
   labelCounts,
-  pointCount,
+  labelTargetCount,
 }: GraphViewerToolbarProps) {
   const t = useTranslations("Graph.viewer");
 
@@ -31,7 +31,7 @@ export function GraphViewerToolbar({
           labelLocale={labelLocale}
           onChangeLabelLocale={onChangeLabelLocale}
           labelCounts={labelCounts}
-          pointCount={pointCount}
+          labelTargetCount={labelTargetCount}
         />
         {editHref ? (
           <Link href={editHref} variant="outline" size="sm" className="gap-1.5">

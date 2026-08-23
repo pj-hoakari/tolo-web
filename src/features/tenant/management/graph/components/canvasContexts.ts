@@ -6,9 +6,11 @@ import type { EasyConnectMode } from "../utils/easyConnect";
 
 /** 編集キャンバスからノード内ラベル編集を受け取るための情報。 */
 export type GraphNodeLabelEditing = {
-  /** ラベルの編集言語（ポイントのみ。グループのラベルは言語を持たない） */
+  /** ラベルの編集言語（ポイント・グループで共有する） */
   locale: Locale;
   onUpdate: (id: string, label: string) => void;
+  /** ラベルから編集を始めたとき、そのノードを選択状態にするために使う */
+  onSelect: (id: string) => void;
 };
 
 export const GraphNodeLabelEditingContext = createContext<

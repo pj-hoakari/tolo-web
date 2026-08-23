@@ -56,7 +56,8 @@ export function PropertiesPanel({
         {selectedNode && isGroupNode(selectedNode) ? (
           <GroupProperties
             group={selectedNode}
-            onChange={(patch) => onUpdateNode(selectedNode.id, patch)}
+            labelLocale={labelLocale}
+            onChangeLabel={(label) => onSetNodeLabel(selectedNode.id, label)}
           />
         ) : selectedNode ? (
           <NodeProperties

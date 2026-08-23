@@ -29,7 +29,7 @@ describe("GraphNode", () => {
       <IntlTestProvider>
         <ReactFlowProvider>
           <GraphNodeLabelEditingContext.Provider
-            value={{ locale: "ja", onUpdate }}
+            value={{ locale: "ja", onUpdate, onSelect: vi.fn() }}
           >
             <GraphNode {...nodeProps} />
           </GraphNodeLabelEditingContext.Provider>
@@ -81,7 +81,7 @@ describe("GraphNode", () => {
       <IntlTestProvider>
         <ReactFlowProvider>
           <GraphNodeLabelEditingContext.Provider
-            value={{ locale: "ja", onUpdate }}
+            value={{ locale: "ja", onUpdate, onSelect: vi.fn() }}
           >
             <GraphNode {...nodeProps} />
           </GraphNodeLabelEditingContext.Provider>
