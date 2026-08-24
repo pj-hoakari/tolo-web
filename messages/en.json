@@ -319,6 +319,15 @@
       "noResults": "No results",
       "reset": "Reset"
     },
+    "graphGuide": {
+      "title": "Guide map",
+      "hint": "Select a destination to see the route.",
+      "currentLocation": "You are here",
+      "destinationsLabel": "Destination",
+      "loading": "Loading map…",
+      "error": "Couldn't load the map.",
+      "retry": "Reload"
+    },
     "floor": {
       "title": "Current floor",
       "placeholderName": "1F"

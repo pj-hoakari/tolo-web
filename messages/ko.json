@@ -319,6 +319,15 @@
       "noResults": "결과 없음",
       "reset": "초기화"
     },
+    "graphGuide": {
+      "title": "안내 지도",
+      "hint": "목적지를 선택하면 경로가 표시됩니다.",
+      "currentLocation": "현재 위치",
+      "destinationsLabel": "목적지",
+      "loading": "지도를 불러오는 중…",
+      "error": "지도를 불러오지 못했습니다.",
+      "retry": "다시 불러오기"
+    },
     "floor": {
       "title": "현재 층",
       "placeholderName": "1층"

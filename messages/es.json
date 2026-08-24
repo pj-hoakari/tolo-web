@@ -319,6 +319,15 @@
       "noResults": "Sin resultados",
       "reset": "Restablecer"
     },
+    "graphGuide": {
+      "title": "Mapa de guía",
+      "hint": "Selecciona un destino para ver la ruta.",
+      "currentLocation": "Estás aquí",
+      "destinationsLabel": "Destino",
+      "loading": "Cargando mapa…",
+      "error": "No se pudo cargar el mapa.",
+      "retry": "Recargar"
+    },
     "floor": {
       "title": "Planta actual",
       "placeholderName": "Planta 1"
