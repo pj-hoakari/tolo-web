@@ -319,6 +319,15 @@
       "noResults": "无结果",
       "reset": "重置"
     },
+    "graphGuide": {
+      "title": "导览地图",
+      "hint": "选择目的地后显示路线。",
+      "currentLocation": "当前位置",
+      "destinationsLabel": "目的地",
+      "loading": "正在加载地图…",
+      "error": "无法加载地图。",
+      "retry": "重新加载"
+    },
     "floor": {
       "title": "当前楼层",
       "placeholderName": "1层"

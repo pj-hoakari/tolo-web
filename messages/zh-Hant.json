@@ -319,6 +319,15 @@
       "noResults": "無結果",
       "reset": "重設"
     },
+    "graphGuide": {
+      "title": "導覽地圖",
+      "hint": "選擇目的地後顯示路線。",
+      "currentLocation": "目前位置",
+      "destinationsLabel": "目的地",
+      "loading": "正在載入地圖…",
+      "error": "無法載入地圖。",
+      "retry": "重新載入"
+    },
     "floor": {
       "title": "目前樓層",
       "placeholderName": "1樓"

@@ -319,6 +319,15 @@
       "noResults": "नतिजा छैन",
       "reset": "रिसेट"
     },
+    "graphGuide": {
+      "title": "मार्गचित्र",
+      "hint": "गन्तव्य छान्नुहोस्, मार्ग देखिनेछ।",
+      "currentLocation": "तपाईं यहाँ हुनुहुन्छ",
+      "destinationsLabel": "गन्तव्य",
+      "loading": "नक्सा लोड हुँदैछ…",
+      "error": "नक्सा लोड गर्न सकिएन।",
+      "retry": "पुनः लोड गर्नुहोस्"
+    },
     "floor": {
       "title": "हालको तल्ला",
       "placeholderName": "१ तल्ला"
