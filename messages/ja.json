@@ -319,6 +319,15 @@
       "noResults": "見つかりませんでした",
       "reset": "リセット"
     },
+    "graphGuide": {
+      "title": "案内マップ",
+      "hint": "目的地を選択すると経路が表示されます",
+      "currentLocation": "現在地",
+      "destinationsLabel": "目的地",
+      "loading": "地図を読み込み中…",
+      "error": "地図を読み込めませんでした",
+      "retry": "再読み込み"
+    },
     "floor": {
       "title": "現在のフロア",
       "placeholderName": "1F"
