@@ -84,5 +84,5 @@
     "yarn": "⚠use pnpm",
     "node": ">=24.17.0"
   },
-  "packageManager": "pnpm@12.5.0"
+  "packageManager": "pnpm@12.5.1"
 }
