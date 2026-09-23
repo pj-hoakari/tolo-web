@@ -317,7 +317,25 @@
       "collapse": "Reducir el mapa",
       "search": "Buscar destino",
       "noResults": "Sin resultados",
-      "reset": "Restablecer"
+      "reset": "Restablecer",
+      "compass": {
+        "open": "Guía con brújula",
+        "title": "Brújula",
+        "enable": "Usar brújula",
+        "denied": "No se pudo usar la brújula. La flecha se muestra con el norte arriba.",
+        "unsupported": "Este dispositivo no puede dar la orientación. La flecha se muestra con el norte arriba.",
+        "northUpNote": "Mostrando con el norte arriba (sin orientación del dispositivo)",
+        "next": "Siguiente",
+        "back": "Atrás",
+        "finish": "Finalizar",
+        "close": "Cerrar",
+        "start": "Empezar aquí",
+        "arrive": "Llegada",
+        "turnRight": "Gira a la derecha",
+        "turnLeft": "Gira a la izquierda",
+        "straight": "Sigue recto",
+        "stepOf": "{current} / {total}"
+      }
     },
     "floor": {
       "title": "Planta actual",

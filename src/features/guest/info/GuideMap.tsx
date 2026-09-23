@@ -1,11 +1,12 @@
 "use client";
 
-import { Search, X } from "lucide-react";
+import { Compass, Search, X } from "lucide-react";
 import type { Messages } from "next-intl";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, TextField } from "@/components/ui/textfield";
+import { CompassGuide } from "./CompassGuide";
 import { GuideMapView } from "./GuideMapView";
 import {
   buildGuideMapSource,
@@ -45,6 +46,8 @@ function GuideMap(_props: GuestInfoComponentProps) {
   // 目的地検索の入力と、検索/一覧から選んだ目的地
   const [query, setQuery] = useState("");
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  // スマホの方位センサーを使ったコンパス誘導の表示
+  const [showCompass, setShowCompass] = useState(false);
 
   // 部屋・経由地点を JSON から組み立てる（名称は i18n があれば優先）
   const source = useMemo(
@@ -136,6 +139,19 @@ function GuideMap(_props: GuestInfoComponentProps) {
         </TextField>
       </div>
 
+      {route.length >= 2 && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1.5 rounded-full border-primary/12 px-3 text-primary/70 text-sm hover:text-accent"
+          onPress={() => setShowCompass(true)}
+        >
+          <Compass className="size-4" />
+          {t("compass.open")}
+        </Button>
+      )}
+
       {q && (
         <div className="flex flex-wrap gap-1.5">
           {matches.length > 0 ? (
@@ -178,25 +194,34 @@ function GuideMap(_props: GuestInfoComponentProps) {
   );
 
   return (
-    <GuideMapView
-      width={source.width}
-      height={source.height}
-      rooms={source.rooms}
-      waypoints={source.waypoints}
-      start={MARKERS.start}
-      route={route}
-      title={t("title")}
-      hint={t("hint")}
-      currentLocationLabel={t("currentLocation")}
-      destinationsLabel={t("destinationsLabel")}
-      expandLabel={t("expand")}
-      collapseLabel={t("collapse")}
-      routeFlowClassName={ROUTE_FLOW.className}
-      routeFlowDuration={ROUTE_FLOW.duration}
-      highlightIds={q ? highlightIds : undefined}
-      activeRoomId={selectedRoomId}
-      toolbar={toolbar}
-    />
+    <>
+      <GuideMapView
+        width={source.width}
+        height={source.height}
+        rooms={source.rooms}
+        waypoints={source.waypoints}
+        start={MARKERS.start}
+        route={route}
+        title={t("title")}
+        hint={t("hint")}
+        currentLocationLabel={t("currentLocation")}
+        destinationsLabel={t("destinationsLabel")}
+        expandLabel={t("expand")}
+        collapseLabel={t("collapse")}
+        routeFlowClassName={ROUTE_FLOW.className}
+        routeFlowDuration={ROUTE_FLOW.duration}
+        highlightIds={q ? highlightIds : undefined}
+        activeRoomId={selectedRoomId}
+        toolbar={toolbar}
+      />
+      {showCompass && (
+        <CompassGuide
+          route={route}
+          destinationLabel={selectedLabel}
+          onClose={() => setShowCompass(false)}
+        />
+      )}
+    </>
   );
 }
 

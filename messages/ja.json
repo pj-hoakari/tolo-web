@@ -317,7 +317,25 @@
       "collapse": "地図を縮小",
       "search": "目的地を検索",
       "noResults": "見つかりませんでした",
-      "reset": "リセット"
+      "reset": "リセット",
+      "compass": {
+        "open": "コンパスで案内",
+        "title": "コンパス案内",
+        "enable": "方位センサーを使う",
+        "denied": "方位センサーを許可できませんでした。矢印は北を上として表示します。",
+        "unsupported": "この端末では方位を取得できません。矢印は北を上として表示します。",
+        "northUpNote": "※北を上として表示（端末の向きは未反映）",
+        "next": "次へ",
+        "back": "戻る",
+        "finish": "案内を終了",
+        "close": "閉じる",
+        "start": "ここから出発",
+        "arrive": "到着",
+        "turnRight": "右に曲がる",
+        "turnLeft": "左に曲がる",
+        "straight": "そのまま進む",
+        "stepOf": "{current} / {total}"
+      }
     },
     "floor": {
       "title": "現在のフロア",

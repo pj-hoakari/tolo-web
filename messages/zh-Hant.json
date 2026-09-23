@@ -317,7 +317,25 @@
       "collapse": "縮小地圖",
       "search": "搜尋目的地",
       "noResults": "無結果",
-      "reset": "重設"
+      "reset": "重設",
+      "compass": {
+        "open": "指南針導航",
+        "title": "指南針",
+        "enable": "使用指南針",
+        "denied": "無法使用指南針，箭頭以正北朝上顯示。",
+        "unsupported": "此裝置無法取得方向，箭頭以正北朝上顯示。",
+        "northUpNote": "以正北朝上顯示（未套用裝置朝向）",
+        "next": "下一步",
+        "back": "上一步",
+        "finish": "結束導航",
+        "close": "關閉",
+        "start": "從這裡出發",
+        "arrive": "抵達",
+        "turnRight": "向右轉",
+        "turnLeft": "向左轉",
+        "straight": "直行",
+        "stepOf": "{current} / {total}"
+      }
     },
     "floor": {
       "title": "目前樓層",

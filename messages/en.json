@@ -317,7 +317,25 @@
       "collapse": "Shrink the map",
       "search": "Search destination",
       "noResults": "No results",
-      "reset": "Reset"
+      "reset": "Reset",
+      "compass": {
+        "open": "Compass guide",
+        "title": "Compass",
+        "enable": "Use compass",
+        "denied": "Couldn't access the compass. The arrow points as if north is up.",
+        "unsupported": "This device can't provide orientation. The arrow points as if north is up.",
+        "northUpNote": "Showing with north up (device heading not applied)",
+        "next": "Next",
+        "back": "Back",
+        "finish": "Finish",
+        "close": "Close",
+        "start": "Start here",
+        "arrive": "Arrive",
+        "turnRight": "Turn right",
+        "turnLeft": "Turn left",
+        "straight": "Go straight",
+        "stepOf": "{current} / {total}"
+      }
     },
     "floor": {
       "title": "Current floor",
