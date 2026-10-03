@@ -334,7 +334,9 @@
         "turnRight": "向右转",
         "turnLeft": "向左转",
         "straight": "直行",
-        "stepOf": "{current} / {total}"
+        "stepOf": "{current} / {total}",
+        "navTitle": "指南针导航",
+        "navHint": "选择当前位置和目的地即可开始"
       }
     },
     "floor": {

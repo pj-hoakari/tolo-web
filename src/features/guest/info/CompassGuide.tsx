@@ -24,8 +24,6 @@ import type { GuideMapPoint } from "./guideMapSchema";
  *       いまは「マップの上＝北」（north = 0）として計算している。
  */
 
-const NORTH = 0;
-
 /** 3 点 a→b→c から b での曲がる向きを判定（画面座標＝y 下向き） */
 function turnAt(a: GuideMapPoint, b: GuideMapPoint, c: GuideMapPoint) {
   const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
@@ -45,7 +43,7 @@ type StepKind = "start" | "right" | "left" | "straight" | "arrive";
 type Step = { n: number; kind: StepKind; bearing: number | null };
 
 /** ルートの折れ線から、曲がり角ごとのステップを作る（直進の頂点は省く） */
-function buildSteps(route: GuideMapPoint[]): Step[] {
+function buildSteps(route: GuideMapPoint[], north: number): Step[] {
   if (route.length < 2) return [];
   const kept = route.filter((p, i) => {
     if (i === 0 || i === route.length - 1) return true;
@@ -55,7 +53,7 @@ function buildSteps(route: GuideMapPoint[]): Step[] {
   for (let i = 0; i < kept.length; i++) {
     const prev = kept[i - 1];
     const next = kept[i + 1];
-    const bearing = next ? bearingOf(kept[i], next, NORTH) : null;
+    const bearing = next ? bearingOf(kept[i], next, north) : null;
     let kind: StepKind = "straight";
     if (i === 0) kind = "start";
     else if (i === kept.length - 1) kind = "arrive";
@@ -143,16 +141,19 @@ function useHeading() {
 export type CompassGuideProps = {
   route: GuideMapPoint[];
   destinationLabel?: string | null;
+  /** マップの上が指す方位角（0=北・時計回り）。既定は 0（上＝北）。 */
+  north?: number;
   onClose: () => void;
 };
 
 export function CompassGuide({
   route,
   destinationLabel,
+  north = 0,
   onClose,
 }: CompassGuideProps) {
   const t = useTranslations("Guest.guideMap.compass");
-  const steps = useMemo(() => buildSteps(route), [route]);
+  const steps = useMemo(() => buildSteps(route, north), [route, north]);
   const [index, setIndex] = useState(0);
   const { heading, state, start } = useHeading();
 

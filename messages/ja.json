@@ -334,7 +334,9 @@
         "turnRight": "右に曲がる",
         "turnLeft": "左に曲がる",
         "straight": "そのまま進む",
-        "stepOf": "{current} / {total}"
+        "stepOf": "{current} / {total}",
+        "navTitle": "コンパス道案内",
+        "navHint": "現在地と目的地を選ぶと案内できます"
       }
     },
     "floor": {

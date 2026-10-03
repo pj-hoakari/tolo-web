@@ -334,7 +334,9 @@
         "turnRight": "오른쪽으로",
         "turnLeft": "왼쪽으로",
         "straight": "직진",
-        "stepOf": "{current} / {total}"
+        "stepOf": "{current} / {total}",
+        "navTitle": "나침반 길안내",
+        "navHint": "현재 위치와 목적지를 선택하면 안내를 시작합니다"
       }
     },
     "floor": {

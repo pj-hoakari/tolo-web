@@ -334,7 +334,9 @@
         "turnRight": "Turn right",
         "turnLeft": "Turn left",
         "straight": "Go straight",
-        "stepOf": "{current} / {total}"
+        "stepOf": "{current} / {total}",
+        "navTitle": "Compass navigation",
+        "navHint": "Pick your location and destination to start"
       }
     },
     "floor": {

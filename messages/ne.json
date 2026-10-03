@@ -334,7 +334,9 @@
         "turnRight": "दायाँ मोड्नुहोस्",
         "turnLeft": "बायाँ मोड्नुहोस्",
         "straight": "सीधै जानुहोस्",
-        "stepOf": "{current} / {total}"
+        "stepOf": "{current} / {total}",
+        "navTitle": "कम्पास बाटो निर्देश",
+        "navHint": "हालको स्थान र गन्तव्य छान्नुहोस्"
       }
     },
     "floor": {

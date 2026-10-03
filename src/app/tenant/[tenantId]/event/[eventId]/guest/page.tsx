@@ -3,6 +3,7 @@ import CallingNumber from "@/features/guest/info/CallingNumber";
 import Congestion from "@/features/guest/info/Congestion";
 import EstimatedWaitTime from "@/features/guest/info/EstimatedWaitTime";
 import Floor from "@/features/guest/info/Floor";
+import GraphCompassGuide from "@/features/guest/info/GraphCompassGuide";
 import GuideMap from "@/features/guest/info/GuideMap";
 import QueueLayout from "@/features/guest/info/QueueLayout";
 import type { GuestInfoComponent } from "@/features/guest/info/type";
@@ -24,6 +25,7 @@ export default async function TenantGuest({
   // フラットな配列で並び順だけを指定
   const infoComponents: GuestInfoComponent[] = [
     GuideMap,
+    GraphCompassGuide,
     Floor,
     CallingNumber,
     EstimatedWaitTime,

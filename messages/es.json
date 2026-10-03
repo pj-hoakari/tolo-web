@@ -334,7 +334,9 @@
         "turnRight": "Gira a la derecha",
         "turnLeft": "Gira a la izquierda",
         "straight": "Sigue recto",
-        "stepOf": "{current} / {total}"
+        "stepOf": "{current} / {total}",
+        "navTitle": "Navegación con brújula",
+        "navHint": "Elige tu ubicación y destino para empezar"
       }
     },
     "floor": {
