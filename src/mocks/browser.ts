@@ -10,6 +10,6 @@ export const worker = setupWorker(...handlers);
 let startPromise: Promise<unknown> | undefined;
 
 export function startWorker(): Promise<unknown> {
-  startPromise ??= worker.start({ onUnhandledRequest: "bypass" });
+  startPromise ??= worker.start({ onUnhandledFrame: "bypass" });
   return startPromise;
 }
