@@ -336,7 +336,13 @@
         "straight": "直行",
         "stepOf": "{current} / {total}",
         "navTitle": "指南針導航",
-        "navHint": "選擇目前位置與目的地即可開始"
+        "navHint": "選擇目前位置與目的地即可開始",
+        "advanceHint": "沿箭頭方向前進，到轉角後點下一步。",
+        "arrivedNext": "已抵達 · 下一步",
+        "retrySensor": "重試",
+        "distanceTotal": "全程約 {m} 公尺 · 步行約 {min} 分鐘",
+        "distanceNext": "距下一點約 {m} 公尺",
+        "overview": "路線全覽"
       }
     },
     "floor": {

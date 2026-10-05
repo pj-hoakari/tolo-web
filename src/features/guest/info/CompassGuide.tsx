@@ -10,10 +10,10 @@ import {
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import type { GuideMapPoint } from "./guideMapSchema";
+import type { HeadingState } from "./useHeading";
 
 /**
  * コンパス誘導（スマホ向け）。
@@ -40,7 +40,23 @@ function bearingOf(a: GuideMapPoint, b: GuideMapPoint, north: number) {
 }
 
 type StepKind = "start" | "right" | "left" | "straight" | "arrive";
-type Step = { n: number; kind: StepKind; bearing: number | null };
+type Step = {
+  n: number;
+  kind: StepKind;
+  bearing: number | null;
+  /** このステップの地点（曲がり角 or 地点）の座標 */
+  pos: GuideMapPoint;
+};
+
+function distPx(a: GuideMapPoint, b: GuideMapPoint) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+/** メートルを「約◯m」向けに丸める（5m 刻み） */
+function roundM(m: number) {
+  return m >= 100
+    ? Math.round(m / 10) * 10
+    : Math.max(5, Math.round(m / 5) * 5);
+}
 
 /** ルートの折れ線から、曲がり角ごとのステップを作る（直進の頂点は省く） */
 function buildSteps(route: GuideMapPoint[], north: number): Step[] {
@@ -61,88 +77,29 @@ function buildSteps(route: GuideMapPoint[], north: number): Step[] {
       const t = turnAt(prev, kept[i], next);
       kind = t === "right" ? "right" : t === "left" ? "left" : "straight";
     }
-    steps.push({ n: i + 1, kind, bearing });
+    steps.push({ n: i + 1, kind, bearing, pos: kept[i] });
   }
   return steps;
 }
 
-// iOS / Android 差を吸収した方位取得
-type DeviceOrientationEventWithHeading = DeviceOrientationEvent & {
-  webkitCompassHeading?: number;
-};
-type DeviceOrientationEventStatic = typeof DeviceOrientationEvent & {
-  requestPermission?: () => Promise<"granted" | "denied" | "default">;
-};
-
-function useHeading() {
-  const [heading, setHeading] = useState<number | null>(null);
-  const [state, setState] = useState<"idle" | "on" | "denied" | "unsupported">(
-    "idle",
-  );
-  const handlerRef = useRef<((e: DeviceOrientationEvent) => void) | null>(null);
-
-  const stop = useCallback(() => {
-    if (handlerRef.current) {
-      window.removeEventListener(
-        "deviceorientationabsolute",
-        handlerRef.current as EventListener,
-      );
-      window.removeEventListener(
-        "deviceorientation",
-        handlerRef.current as EventListener,
-      );
-      handlerRef.current = null;
-    }
-  }, []);
-
-  const start = useCallback(async () => {
-    const orientation = (
-      typeof window !== "undefined" ? window.DeviceOrientationEvent : undefined
-    ) as DeviceOrientationEventStatic | undefined;
-    if (!orientation) {
-      setState("unsupported");
-      return;
-    }
-    try {
-      if (typeof orientation.requestPermission === "function") {
-        const res = await orientation.requestPermission();
-        if (res !== "granted") {
-          setState("denied");
-          return;
-        }
-      }
-    } catch {
-      setState("unsupported");
-      return;
-    }
-    const handler = (e: DeviceOrientationEvent) => {
-      const ev = e as DeviceOrientationEventWithHeading;
-      let h: number | null = null;
-      if (typeof ev.webkitCompassHeading === "number") {
-        h = ev.webkitCompassHeading;
-      } else if (ev.absolute && typeof ev.alpha === "number") {
-        h = (360 - ev.alpha) % 360;
-      }
-      if (h != null && !Number.isNaN(h)) setHeading(((h % 360) + 360) % 360);
-    };
-    handlerRef.current = handler;
-    window.addEventListener(
-      "deviceorientationabsolute",
-      handler as EventListener,
-    );
-    window.addEventListener("deviceorientation", handler as EventListener);
-    setState("on");
-  }, []);
-
-  useEffect(() => stop, [stop]);
-  return { heading, state, start };
-}
+/** ミニマップ用に見せる地点（中心座標＋大きさ）。位置関係の把握に使う */
+export type CompassMapNode = { x: number; y: number; w: number; h: number };
 
 export type CompassGuideProps = {
   route: GuideMapPoint[];
   destinationLabel?: string | null;
   /** マップの上が指す方位角（0=北・時計回り）。既定は 0（上＝北）。 */
   north?: number;
+  /** 1px あたりのメートル数。0/未指定なら距離は表示しない。 */
+  metersPerPx?: number;
+  /** ミニマップに薄く描く周辺の地点（任意）。 */
+  mapNodes?: CompassMapNode[];
+  /** 端末の方位（0=北・時計回り）。null なら未取得。親の useHeading から渡す */
+  heading: number | null;
+  /** 方位センサーの状態。親の useHeading から渡す */
+  sensorState: HeadingState;
+  /** 方位センサーの再許可（denied/unsupported 時の再試行用）。ユーザー操作で呼ぶ */
+  onEnableSensor: () => void;
   onClose: () => void;
 };
 
@@ -150,18 +107,56 @@ export function CompassGuide({
   route,
   destinationLabel,
   north = 0,
+  metersPerPx = 0,
+  mapNodes,
+  heading,
+  sensorState,
+  onEnableSensor,
   onClose,
 }: CompassGuideProps) {
   const t = useTranslations("Guest.guideMap.compass");
   const steps = useMemo(() => buildSteps(route, north), [route, north]);
   const [index, setIndex] = useState(0);
-  const { heading, state, start } = useHeading();
+
+  // ルート全体の距離・徒歩時間（縮尺があるときだけ）
+  const totalMeters = useMemo(() => {
+    if (metersPerPx <= 0 || route.length < 2) return 0;
+    let px = 0;
+    for (let i = 1; i < route.length; i++) px += distPx(route[i - 1], route[i]);
+    return px * metersPerPx;
+  }, [route, metersPerPx]);
+  const walkMinutes =
+    totalMeters > 0 ? Math.max(1, Math.round(totalMeters / 80)) : 0;
+
+  // ミニマップの表示範囲（ルートの外接矩形＋余白）
+  const view = useMemo(() => {
+    if (route.length < 2) return null;
+    const xs = route.map((p) => p.x);
+    const ys = route.map((p) => p.y);
+    const minX = Math.min(...xs);
+    const minY = Math.min(...ys);
+    const maxX = Math.max(...xs);
+    const maxY = Math.max(...ys);
+    const pad = Math.max(24, (maxX - minX + maxY - minY) * 0.08);
+    const x = minX - pad;
+    const y = minY - pad;
+    const w = maxX - minX + pad * 2;
+    const h = maxY - minY + pad * 2;
+    return { x, y, w, h, dot: Math.max(w, h) / 26 };
+  }, [route]);
 
   const step = steps[index];
   const last = index === steps.length - 1;
   if (!step) return null;
 
-  const live = state === "on" && heading != null && step.bearing != null;
+  const nextMeters =
+    !last && metersPerPx > 0 && steps[index + 1]
+      ? distPx(step.pos, steps[index + 1].pos) * metersPerPx
+      : 0;
+
+  // 矢印は「次の曲がり角（道中の目的地）」の方向を指す。端末の向きに追従する。
+  // 「次へ」を押すたびに基準がその角へ移るので、各区間の方角は正確に保たれる。
+  const live = sensorState === "on" && heading != null && step.bearing != null;
   const arrowDeg =
     step.bearing == null
       ? 0
@@ -202,23 +197,29 @@ export function CompassGuide({
           </Button>
         </div>
 
-        {state !== "on" && (
+        {totalMeters > 0 && (
+          <p className="mb-2 text-primary/60 text-xs">
+            {t("distanceTotal", { m: roundM(totalMeters), min: walkMinutes })}
+          </p>
+        )}
+
+        {sensorState !== "on" && (
           <div className="mb-3 rounded-lg border border-primary/12 p-2 text-sm">
-            {state === "idle" && (
+            {(sensorState === "idle" || sensorState === "denied") && (
               <Button
                 type="button"
                 size="sm"
                 className="w-full"
-                onPress={start}
+                onPress={onEnableSensor}
               >
                 <Compass className="mr-1.5 size-4" />
-                {t("enable")}
+                {sensorState === "denied" ? t("retrySensor") : t("enable")}
               </Button>
             )}
-            {state === "denied" && (
-              <p className="text-primary/60">{t("denied")}</p>
+            {sensorState === "denied" && (
+              <p className="mt-1 text-primary/60">{t("denied")}</p>
             )}
-            {state === "unsupported" && (
+            {sensorState === "unsupported" && (
               <p className="text-primary/60">{t("unsupported")}</p>
             )}
           </div>
@@ -252,12 +253,7 @@ export function CompassGuide({
         </div>
 
         <div className="mt-2 flex items-center gap-3 rounded-xl border border-primary/12 p-3">
-          <span
-            className={cn(
-              "flex size-8 shrink-0 items-center justify-center rounded-full font-semibold text-secondary text-sm",
-              "bg-accent",
-            )}
-          >
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent font-semibold text-secondary text-sm">
             {step.kind === "start" ? (
               <MapPin className="size-4" />
             ) : step.kind === "arrive" ? (
@@ -266,8 +262,79 @@ export function CompassGuide({
               step.n
             )}
           </span>
-          <p className="min-w-0 font-semibold text-base">{stepTitle}</p>
+          <div className="min-w-0">
+            <p className="font-semibold text-base">{stepTitle}</p>
+            {nextMeters > 0 && (
+              <p className="text-primary/70 text-xs">
+                {t("distanceNext", { m: roundM(nextMeters) })}
+              </p>
+            )}
+            {step.kind !== "arrive" && (
+              <p className="text-primary/55 text-xs">{t("advanceHint")}</p>
+            )}
+          </div>
         </div>
+
+        {view && (
+          <div className="mt-3 overflow-hidden rounded-xl border border-primary/12 bg-white">
+            <svg
+              viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
+              className="h-24 w-full"
+              preserveAspectRatio="xMidYMid meet"
+              role="img"
+              aria-label={t("overview")}
+            >
+              {(mapNodes ?? []).map((n) => (
+                <rect
+                  key={`${n.x}-${n.y}-${n.w}-${n.h}`}
+                  x={n.x - n.w / 2}
+                  y={n.y - n.h / 2}
+                  width={n.w}
+                  height={n.h}
+                  rx={Math.min(n.w, n.h) * 0.18}
+                  className="fill-primary/10"
+                />
+              ))}
+              <polyline
+                points={route.map((p) => `${p.x},${p.y}`).join(" ")}
+                fill="none"
+                className="stroke-primary"
+                strokeWidth={3}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
+              />
+              <circle
+                cx={route[0].x}
+                cy={route[0].y}
+                r={view.dot}
+                className="fill-accent stroke-primary"
+                strokeWidth={1.5}
+                vectorEffect="non-scaling-stroke"
+              />
+              <circle
+                cx={route[route.length - 1].x}
+                cy={route[route.length - 1].y}
+                r={view.dot}
+                className="fill-primary"
+              />
+              <circle
+                cx={step.pos.x}
+                cy={step.pos.y}
+                r={view.dot * 1.6}
+                className="fill-none stroke-primary"
+                strokeWidth={2.5}
+                vectorEffect="non-scaling-stroke"
+              />
+              <circle
+                cx={step.pos.x}
+                cy={step.pos.y}
+                r={view.dot * 0.7}
+                className="fill-primary"
+              />
+            </svg>
+          </div>
+        )}
 
         <div className="mt-3 flex items-center justify-between gap-2">
           <Button
@@ -293,7 +360,7 @@ export function CompassGuide({
               size="sm"
               onPress={() => setIndex((v) => Math.min(steps.length - 1, v + 1))}
             >
-              {t("next")}
+              {t("arrivedNext")}
               <ChevronRight className="ml-1 size-4" />
             </Button>
           )}

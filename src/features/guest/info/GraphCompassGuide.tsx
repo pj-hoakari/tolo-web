@@ -16,6 +16,7 @@ import { InfoCard } from "./InfoCard";
 import sampleGraph from "./sampleGraph.json";
 import sampleInfo from "./sampleGraphicalInfo.json";
 import { defineGuestInfoComponent, type GuestInfoComponentProps } from "./type";
+import { useHeading } from "./useHeading";
 
 /**
  * 会場グラフ＋graphical_info を読み込み、現在地と目的地を選んで
@@ -43,12 +44,31 @@ function GraphCompassGuide(_props: GuestInfoComponentProps) {
   );
   const [goalId, setGoalId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  // 方位センサー。開くタップ内で開始する（iOS の許可はジェスチャ必須）
+  const compass = useHeading();
+
+  const openCompass = () => {
+    compass.start();
+    setOpen(true);
+  };
+  const closeCompass = () => {
+    compass.stop();
+    setOpen(false);
+  };
 
   const route = useMemo(
     () => (startId && goalId ? routePoints(model, startId, goalId) : []),
     [model, startId, goalId],
   );
   const goalLabel = model.goals.find((g) => g.id === goalId)?.label ?? null;
+
+  // ミニマップに薄く描く、出発フロアの地点（位置関係の把握用）
+  const mapNodes = useMemo(() => {
+    const floor = model.nodes.find((n) => n.id === startId)?.floor;
+    return model.nodes
+      .filter((n) => n.floor === floor)
+      .map((n) => ({ x: n.x, y: n.y, w: n.w, h: n.h }));
+  }, [model, startId]);
 
   const chip = (selected: boolean) =>
     cn(
@@ -108,7 +128,7 @@ function GraphCompassGuide(_props: GuestInfoComponentProps) {
             type="button"
             size="sm"
             className="w-full gap-1.5"
-            onPress={() => setOpen(true)}
+            onPress={openCompass}
           >
             <Compass className="size-4" />
             {t("compass.open")}
@@ -122,8 +142,13 @@ function GraphCompassGuide(_props: GuestInfoComponentProps) {
         <CompassGuide
           route={route}
           north={model.north}
+          metersPerPx={model.metersPerPx}
+          mapNodes={mapNodes}
           destinationLabel={goalLabel}
-          onClose={() => setOpen(false)}
+          heading={compass.heading}
+          sensorState={compass.state}
+          onEnableSensor={compass.start}
+          onClose={closeCompass}
         />
       )}
     </InfoCard>

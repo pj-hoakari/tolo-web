@@ -1,6 +1,7 @@
 {
   "version": 1,
   "north": 0,
+  "scale": 0.05,
   "points": {},
   "routes": {},
   "extraPoints": [],

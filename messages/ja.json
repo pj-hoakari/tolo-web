@@ -336,7 +336,13 @@
         "straight": "そのまま進む",
         "stepOf": "{current} / {total}",
         "navTitle": "コンパス道案内",
-        "navHint": "現在地と目的地を選ぶと案内できます"
+        "navHint": "現在地と目的地を選ぶと案内できます",
+        "advanceHint": "矢印の方向へ進み、曲がり角に着いたら「次へ」",
+        "arrivedNext": "着いた・次へ",
+        "retrySensor": "もう一度試す",
+        "distanceTotal": "全体 約{m}m・徒歩 約{min}分",
+        "distanceNext": "次まで 約{m}m",
+        "overview": "ルート全体"
       }
     },
     "floor": {

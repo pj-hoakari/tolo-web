@@ -47,6 +47,8 @@ export type GraphData = { nodes: GraphNode[]; edges: GraphEdge[] };
 export type GraphicalInfo = {
   version?: number;
   north?: number;
+  /** 縮尺: 1px あたりのメートル数（距離の目安に使う）。無ければ距離は表示しない */
+  scale?: number;
   points?: Record<
     string,
     { x: number; y: number; w: number; h: number; shape: Shape }
@@ -98,6 +100,8 @@ export type NavModel = {
   edges: NavEdge[];
   /** マップの上が指す方位角（0=北・時計回り）。方角計算の基準。 */
   north: number;
+  /** 1px あたりのメートル数。0 なら距離は出さない。 */
+  metersPerPx: number;
   goals: NavNode[];
   /** 出発点の候補（入口・出口を先頭に、続けてその他） */
   starts: NavNode[];
@@ -184,7 +188,15 @@ export function buildNav(
     ...nodes.filter((n) => n.type === "BOUNDARY"),
     ...nodes.filter((n) => n.type !== "BOUNDARY"),
   ];
-  return { floors, nodes, edges, north: info.north ?? 0, goals, starts };
+  return {
+    floors,
+    nodes,
+    edges,
+    north: info.north ?? 0,
+    metersPerPx: info.scale ?? 0,
+    goals,
+    starts,
+  };
 }
 
 /** start → goal の最短経路（ノード id 列）。both は双方向、oneway は source→target。 */

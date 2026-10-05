@@ -336,7 +336,13 @@
         "straight": "Sigue recto",
         "stepOf": "{current} / {total}",
         "navTitle": "Navegación con brújula",
-        "navHint": "Elige tu ubicación y destino para empezar"
+        "navHint": "Elige tu ubicación y destino para empezar",
+        "advanceHint": "Camina hacia la flecha; pulsa siguiente en la esquina.",
+        "arrivedNext": "Llegué · Siguiente",
+        "retrySensor": "Reintentar",
+        "distanceTotal": "Unos {m} m en total · {min} min a pie",
+        "distanceNext": "Unos {m} m hasta el siguiente",
+        "overview": "Vista de la ruta"
       }
     },
     "floor": {

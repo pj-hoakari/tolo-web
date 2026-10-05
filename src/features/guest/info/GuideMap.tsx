@@ -18,6 +18,7 @@ import {
 import guideMapData from "./guideMapData.json";
 import type { GuideMapSnapshot } from "./guideMapSchema";
 import { defineGuestInfoComponent, type GuestInfoComponentProps } from "./type";
+import { useHeading } from "./useHeading";
 
 /** マップ JSON の id を Guest.guideMap.destinations のキーとして扱うための型 */
 type DestinationKey =
@@ -48,6 +49,17 @@ function GuideMap(_props: GuestInfoComponentProps) {
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   // スマホの方位センサーを使ったコンパス誘導の表示
   const [showCompass, setShowCompass] = useState(false);
+  // 方位センサー。開くボタンのタップ内で開始する（iOS の許可はジェスチャ必須）
+  const compass = useHeading();
+
+  const openCompass = () => {
+    compass.start();
+    setShowCompass(true);
+  };
+  const closeCompass = () => {
+    compass.stop();
+    setShowCompass(false);
+  };
 
   // 部屋・経由地点を JSON から組み立てる（名称は i18n があれば優先）
   const source = useMemo(
@@ -145,7 +157,7 @@ function GuideMap(_props: GuestInfoComponentProps) {
           variant="outline"
           size="sm"
           className="h-8 gap-1.5 rounded-full border-primary/12 px-3 text-primary/70 text-sm hover:text-accent"
-          onPress={() => setShowCompass(true)}
+          onPress={openCompass}
         >
           <Compass className="size-4" />
           {t("compass.open")}
@@ -218,7 +230,10 @@ function GuideMap(_props: GuestInfoComponentProps) {
         <CompassGuide
           route={route}
           destinationLabel={selectedLabel}
-          onClose={() => setShowCompass(false)}
+          heading={compass.heading}
+          sensorState={compass.state}
+          onEnableSensor={compass.start}
+          onClose={closeCompass}
         />
       )}
     </>
