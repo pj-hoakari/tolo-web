@@ -186,7 +186,10 @@
       "reverseForward": "Invertir dirección forward",
       "deleteSelected": "Eliminar la línea seleccionada",
       "reset": "Restablecer las líneas",
-      "count": "Línea {index}: forward {forward} / backward {backward}"
+      "count": "Línea {index}: forward {forward} / backward {backward}",
+      "namedCount": "{name}: forward {forward} / backward {backward}",
+      "nameLabel": "Nombre de la línea seleccionada",
+      "namePlaceholder": "p. ej., entrada del salón A, pasillo norte"
     }
   },
   "Observation": {

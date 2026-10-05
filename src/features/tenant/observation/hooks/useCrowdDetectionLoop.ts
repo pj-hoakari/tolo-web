@@ -11,6 +11,7 @@ import {
 } from "@/features/tenant/detection/stores/detectionStore";
 import {
   type DetectionOverlayFrame,
+  type DetectionOverlayLine,
   drawDetectionOverlay,
   toOverlayCountingLines,
 } from "@/features/tenant/webrtc/utils/detectionOverlay";
@@ -19,7 +20,6 @@ import {
   createBroadcastStream,
 } from "../utils/broadcastStream";
 import {
-  type CrowdCountingLine,
   type CrowdDetectionFrame,
   detectCrowdFrame,
   resetCrowdLineCount,
@@ -39,7 +39,7 @@ function syncCanvasSize(
 
 function toDetectionOverlayFrame(
   frame: CrowdDetectionFrame | null,
-  countingLines: CrowdCountingLine[],
+  countingLines: DetectionOverlayLine[],
   width: number,
   height: number,
 ): DetectionOverlayFrame {

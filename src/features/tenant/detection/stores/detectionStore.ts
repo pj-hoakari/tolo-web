@@ -16,6 +16,7 @@ export type DetectionPoint = {
 
 export type DetectionCountingLineSetting = {
   id: string;
+  name: string;
   p1: DetectionPoint;
   p2: DetectionPoint;
 };
@@ -54,6 +55,7 @@ export const DEFAULT_LINE_ID = "line-1";
 export const DEFAULT_COUNTING_LINES: DetectionCountingLineSetting[] = [
   {
     id: DEFAULT_LINE_ID,
+    name: "",
     p1: { x: 0, y: 0.6 },
     p2: { x: 1, y: 0.6 },
   },
@@ -184,6 +186,7 @@ export function areCountingLinesEqual(
       return (
         other !== undefined &&
         line.id === other.id &&
+        line.name === other.name &&
         line.p1.x === other.p1.x &&
         line.p1.y === other.p1.y &&
         line.p2.x === other.p2.x &&
@@ -233,6 +236,7 @@ export function clampCountingLines(
 ): DetectionCountingLineSetting[] {
   return countingLines.map((line) => ({
     id: line.id,
+    name: line.name,
     p1: { x: clampUnit(line.p1.x), y: clampUnit(line.p1.y) },
     p2: { x: clampUnit(line.p2.x), y: clampUnit(line.p2.y) },
   }));
@@ -391,13 +395,19 @@ function parseCountingLine(
   if (typeof value !== "object" || value === null) {
     return null;
   }
-  const { id, p1, p2 } = value as Partial<DetectionCountingLineSetting>;
+  const { id, name, p1, p2 } = value as Partial<DetectionCountingLineSetting>;
   const parsedP1 = parsePoint(p1);
   const parsedP2 = parsePoint(p2);
-  if (typeof id !== "string" || !parsedP1 || !parsedP2) {
+  if (
+    typeof id !== "string" ||
+    (name !== undefined && typeof name !== "string") ||
+    !parsedP1 ||
+    !parsedP2
+  ) {
     return null;
   }
-  return { id, p1: parsedP1, p2: parsedP2 };
+  // name 導入前の保存設定も引き続き読み込めるよう、欠落時は空名にする。
+  return { id, name: name ?? "", p1: parsedP1, p2: parsedP2 };
 }
 
 export function parseDetectionSettings(

@@ -171,7 +171,7 @@ export function useCountingLineEditor({
         const lineId = createLineId(countingLines);
         const nextLines = [
           ...countingLines,
-          { id: lineId, p1: unitPoint, p2: unitPoint },
+          { id: lineId, name: "", p1: unitPoint, p2: unitPoint },
         ];
         selectLine(viewStateStore, lineId);
         applyCountingLines(settingsStore, nextLines);

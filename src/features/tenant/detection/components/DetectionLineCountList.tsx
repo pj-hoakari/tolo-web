@@ -12,12 +12,13 @@ import {
   type DetectionViewState,
   type DetectionViewStateStore,
   INITIAL_LINE_COUNT,
-  selectCountingLineIds,
+  selectCountingLines,
   selectLine,
 } from "../stores/detectionStore";
 
 type DetectionLineCountButtonProps = {
   lineId: string;
+  lineName: string;
   index: number;
   resultStore: DetectionResultStore;
   viewStateStore: DetectionViewStateStore;
@@ -25,6 +26,7 @@ type DetectionLineCountButtonProps = {
 
 function DetectionLineCountButtonComponent({
   lineId,
+  lineName,
   index,
   resultStore,
   viewStateStore,
@@ -50,7 +52,8 @@ function DetectionLineCountButtonComponent({
       size="sm"
       onPress={() => selectLine(viewStateStore, lineId)}
     >
-      {t("count", {
+      {t(lineName ? "namedCount" : "count", {
+        name: lineName,
         index: index + 1,
         forward: count.forward,
         backward: count.backward,
@@ -76,7 +79,8 @@ function DetectionLineCountListComponent({
   viewStateStore,
 }: DetectionLineCountListProps) {
   // id の配列は毎回組み立て直されるので浅い比較で再レンダリングを抑える
-  const lineIds = useStore(settingsStore, useShallow(selectCountingLineIds));
+  const lines = useStore(settingsStore, useShallow(selectCountingLines));
+  const lineIds = lines.map((line) => line.id);
 
   // 選択中のラインが消えたときの取りこぼしを拾う
   useEffect(() => {
@@ -87,10 +91,11 @@ function DetectionLineCountListComponent({
 
   return (
     <div className="flex w-full max-w-3xl flex-wrap gap-3 text-sm">
-      {lineIds.map((lineId, index) => (
+      {lines.map((line, index) => (
         <DetectionLineCountButton
-          key={lineId}
-          lineId={lineId}
+          key={line.id}
+          lineId={line.id}
+          lineName={line.name}
           index={index}
           resultStore={resultStore}
           viewStateStore={viewStateStore}

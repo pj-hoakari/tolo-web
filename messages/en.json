@@ -186,7 +186,10 @@
       "reverseForward": "Reverse forward direction",
       "deleteSelected": "Delete selected line",
       "reset": "Reset line positions",
-      "count": "Line {index}: forward {forward} / backward {backward}"
+      "count": "Line {index}: forward {forward} / backward {backward}",
+      "namedCount": "{name}: forward {forward} / backward {backward}",
+      "nameLabel": "Selected line name",
+      "namePlaceholder": "e.g. Hall A entrance, north corridor"
     }
   },
   "Observation": {

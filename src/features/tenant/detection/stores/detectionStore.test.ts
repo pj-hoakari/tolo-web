@@ -20,11 +20,13 @@ describe("カウントラインの forward 方向", () => {
     expect(
       normalizeCountingLineDirection({
         id: "line-2",
+        name: "入口",
         p1: { x: 0.8, y: 0.7 },
         p2: { x: 0.2, y: 0.3 },
       }),
     ).toEqual({
       id: "line-2",
+      name: "入口",
       p1: { x: 0.2, y: 0.3 },
       p2: { x: 0.8, y: 0.7 },
     });
@@ -37,10 +39,12 @@ describe("カウントラインの forward 方向", () => {
     expect(
       normalizeCountingLineDirection({
         id: "line-2",
+        name: "",
         ...points,
       }),
     ).toEqual({
       id: "line-2",
+      name: "",
       p1: { x: 0.5, y: 0.8 },
       p2: { x: 0.49, y: 0.2 },
     });
@@ -50,11 +54,13 @@ describe("カウントラインの forward 方向", () => {
     expect(
       reverseCountingLineDirection({
         id: "line-1",
+        name: "出口",
         p1: { x: 0, y: 0.6 },
         p2: { x: 1, y: 0.6 },
       }),
     ).toEqual({
       id: "line-1",
+      name: "出口",
       p1: { x: 1, y: 0.6 },
       p2: { x: 0, y: 0.6 },
     });
@@ -66,11 +72,21 @@ describe("applyCountingLines", () => {
     const { settingsStore } = createDetectionStores();
 
     applyCountingLines(settingsStore, [
-      { id: "line-1", p1: { x: -0.5, y: 0.2 }, p2: { x: 1.5, y: 0.2 } },
+      {
+        id: "line-1",
+        name: "",
+        p1: { x: -0.5, y: 0.2 },
+        p2: { x: 1.5, y: 0.2 },
+      },
     ]);
 
     expect(settingsStore.getState().countingLines).toEqual([
-      { id: "line-1", p1: { x: 0, y: 0.2 }, p2: { x: 1, y: 0.2 } },
+      {
+        id: "line-1",
+        name: "",
+        p1: { x: 0, y: 0.2 },
+        p2: { x: 1, y: 0.2 },
+      },
     ]);
   });
 
@@ -118,7 +134,12 @@ describe("applySettings", () => {
       trackingDistanceThreshold: 0,
       detectionInterval: 5000,
       countingLines: [
-        { id: "line-9", p1: { x: -1, y: 0.5 }, p2: { x: 2, y: 0.5 } },
+        {
+          id: "line-9",
+          name: "通路",
+          p1: { x: -1, y: 0.5 },
+          p2: { x: 2, y: 0.5 },
+        },
       ],
     });
 
@@ -128,7 +149,12 @@ describe("applySettings", () => {
       trackingDistanceThreshold: 0.1,
       detectionInterval: 1000,
       countingLines: [
-        { id: "line-9", p1: { x: 0, y: 0.5 }, p2: { x: 1, y: 0.5 } },
+        {
+          id: "line-9",
+          name: "通路",
+          p1: { x: 0, y: 0.5 },
+          p2: { x: 1, y: 0.5 },
+        },
       ],
     });
   });
@@ -150,12 +176,29 @@ describe("parseDetectionSettings", () => {
     trackingDistanceThreshold: 0.7,
     detectionInterval: 120,
     countingLines: [
-      { id: "line-1", p1: { x: 0, y: 0.6 }, p2: { x: 1, y: 0.6 } },
+      {
+        id: "line-1",
+        name: "ホールA入口",
+        p1: { x: 0, y: 0.6 },
+        p2: { x: 1, y: 0.6 },
+      },
     ],
   };
 
   it("形が合っていれば通す", () => {
     expect(parseDetectionSettings(structuredClone(valid))).toEqual(valid);
+  });
+
+  it("名前導入前のラインは空の名前として通す", () => {
+    const legacy = structuredClone(valid);
+    const [{ name: _name, ...line }] = legacy.countingLines;
+
+    expect(
+      parseDetectionSettings({ ...legacy, countingLines: [line] }),
+    ).toEqual({
+      ...valid,
+      countingLines: [{ ...line, name: "" }],
+    });
   });
 
   it("余計なキーは落とす", () => {
@@ -172,6 +215,10 @@ describe("parseDetectionSettings", () => {
     ["数値でない設定", { ...valid, confidenceThreshold: "0.2" }],
     ["ラインが配列でない", { ...valid, countingLines: {} }],
     ["ラインが空", { ...valid, countingLines: [] }],
+    [
+      "ライン名が文字列でない",
+      { ...valid, countingLines: [{ ...valid.countingLines[0], name: 123 }] },
+    ],
     [
       "座標が欠けたライン",
       { ...valid, countingLines: [{ id: "line-1", p1: { x: 0 }, p2: {} }] },
