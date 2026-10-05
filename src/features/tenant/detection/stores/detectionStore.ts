@@ -238,6 +238,29 @@ export function clampCountingLines(
   }));
 }
 
+/**
+ * 新規ラインの向きを描画操作の開始・終了方向に依存させない。
+ * 横向きは p1→p2 を左→右にして forward を上→下へ、
+ * 縦向きは p1→p2 を下→上にして forward を左→右へ統一する。
+ */
+export function normalizeCountingLineDirection(
+  line: DetectionCountingLineSetting,
+): DetectionCountingLineSetting {
+  const dx = line.p2.x - line.p1.x;
+  const dy = line.p2.y - line.p1.y;
+  const isVertical = Math.abs(dy) > Math.abs(dx);
+  const shouldReverse = isVertical ? dy > 0 : dx < 0;
+
+  return shouldReverse ? { ...line, p1: line.p2, p2: line.p1 } : line;
+}
+
+/** p1→p2 を反転し、forward / backward の意味を入れ替える */
+export function reverseCountingLineDirection(
+  line: DetectionCountingLineSetting,
+): DetectionCountingLineSetting {
+  return { ...line, p1: line.p2, p2: line.p1 };
+}
+
 export function applyCountingLines(
   store: DetectionSettingsStore,
   countingLines: DetectionCountingLineSetting[],

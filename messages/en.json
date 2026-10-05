@@ -183,6 +183,7 @@
     "lines": {
       "create": "Add line",
       "edit": "Edit mode",
+      "reverseForward": "Reverse forward direction",
       "deleteSelected": "Delete selected line",
       "reset": "Reset line positions",
       "count": "Line {index}: forward {forward} / backward {backward}"

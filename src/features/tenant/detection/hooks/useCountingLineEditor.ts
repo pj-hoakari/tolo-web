@@ -5,6 +5,7 @@ import {
   type DetectionPoint,
   type DetectionSettingsStore,
   type DetectionViewStateStore,
+  normalizeCountingLineDirection,
   selectLine,
 } from "../stores/detectionStore";
 
@@ -219,13 +220,13 @@ export function useCountingLineEditor({
           settingsStore,
           dragState.startLines.map((line) =>
             line.id === dragState.lineId
-              ? {
+              ? normalizeCountingLineDirection({
                   ...line,
                   p2: {
                     x: line.p1.x + dx,
                     y: line.p1.y + dy,
                   },
-                }
+                })
               : line,
           ),
         );
@@ -294,6 +295,19 @@ export function useCountingLineEditor({
                 }
               : line,
           ),
+        );
+      }
+
+      if (dragState.kind === "create") {
+        applyCountingLines(
+          settingsStore,
+          settingsStore
+            .getState()
+            .countingLines.map((line) =>
+              line.id === dragState.lineId
+                ? normalizeCountingLineDirection(line)
+                : line,
+            ),
         );
       }
 
