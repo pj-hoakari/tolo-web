@@ -65,15 +65,24 @@ export function drawCountingLine(
   context: CanvasRenderingContext2D,
   countingLine: DetectionOverlayLine,
   width: number,
+  isHighlighted = false,
 ): void {
-  context.lineWidth = Math.max(2, width / 320);
-  context.strokeStyle = "#f59e0b";
-  context.fillStyle = "#f59e0b";
-  context.setLineDash([12, 8]);
+  const lineWidth = Math.max(isHighlighted ? 4 : 3, width / 320);
+  const lineColor = isHighlighted ? "#22d3ee" : "#fbbf24";
+  const strokeVisiblePath = () => {
+    context.lineWidth = lineWidth + 4;
+    context.strokeStyle = "rgba(3, 7, 18, 0.9)";
+    context.stroke();
+    context.lineWidth = lineWidth;
+    context.strokeStyle = lineColor;
+    context.stroke();
+  };
+
+  context.setLineDash(isHighlighted ? [] : [12, 8]);
   context.beginPath();
   context.moveTo(countingLine.p1.x, countingLine.p1.y);
   context.lineTo(countingLine.p2.x, countingLine.p2.y);
-  context.stroke();
+  strokeVisiblePath();
   context.setLineDash([]);
 
   // forward は p1→p2 に対する負側→正側なので、左法線方向の矢印で示す。
@@ -107,7 +116,7 @@ export function drawCountingLine(
       arrowEndX - normalX * arrowHeadLength - tangentX * arrowHeadLength * 0.6,
       arrowEndY - normalY * arrowHeadLength - tangentY * arrowHeadLength * 0.6,
     );
-    context.stroke();
+    strokeVisiblePath();
   }
 
   if (countingLine.name) {
@@ -123,7 +132,7 @@ export function drawCountingLine(
     const labelY = midpointY - labelHeight - 8;
     context.fillStyle = "rgba(17, 24, 39, 0.85)";
     context.fillRect(labelX, labelY, labelWidth, labelHeight);
-    context.fillStyle = "#fbbf24";
+    context.fillStyle = lineColor;
     context.fillText(
       countingLine.name,
       labelX + paddingX,
@@ -131,7 +140,7 @@ export function drawCountingLine(
     );
   }
 
-  const handleRadius = Math.max(6, width / 96);
+  const handleRadius = Math.max(isHighlighted ? 8 : 6, width / 96);
   context.beginPath();
   context.arc(
     countingLine.p1.x,
@@ -147,17 +156,45 @@ export function drawCountingLine(
     0,
     Math.PI * 2,
   );
+  context.fillStyle = "rgba(3, 7, 18, 0.9)";
+  context.fill();
+  context.beginPath();
+  context.arc(
+    countingLine.p1.x,
+    countingLine.p1.y,
+    Math.max(3, handleRadius - 3),
+    0,
+    Math.PI * 2,
+  );
+  context.arc(
+    countingLine.p2.x,
+    countingLine.p2.y,
+    Math.max(3, handleRadius - 3),
+    0,
+    Math.PI * 2,
+  );
+  context.fillStyle = lineColor;
   context.fill();
 }
 
 export function drawDetectionOverlay(
   context: CanvasRenderingContext2D,
   frame: DetectionOverlayFrame,
+  options: { highlightedLineId?: string | null } = {},
 ): void {
   const { width } = frame;
 
+  // 編集対象を最後に描き、交差している他のラインにも埋もれないようにする。
   for (const countingLine of frame.countingLines) {
-    drawCountingLine(context, countingLine, width);
+    if (countingLine.id !== options.highlightedLineId) {
+      drawCountingLine(context, countingLine, width);
+    }
+  }
+  const highlightedLine = frame.countingLines.find(
+    (line) => line.id === options.highlightedLineId,
+  );
+  if (highlightedLine) {
+    drawCountingLine(context, highlightedLine, width, true);
   }
 
   context.font = `${Math.max(16, width / 40)}px sans-serif`;

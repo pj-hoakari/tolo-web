@@ -62,7 +62,7 @@ function SelectedLineNameFieldComponent({
 
 const SelectedLineNameField = memo(SelectedLineNameFieldComponent);
 
-function LineCreationModeToggleComponent({
+function DetectionLineCreationModeToggleComponent({
   viewStateStore,
 }: Pick<LineActionsProps, "viewStateStore">) {
   const lineCreationMode = useStore(viewStateStore, selectLineCreationMode);
@@ -81,7 +81,9 @@ function LineCreationModeToggleComponent({
   );
 }
 
-const LineCreationModeToggle = memo(LineCreationModeToggleComponent);
+export const DetectionLineCreationModeToggle = memo(
+  DetectionLineCreationModeToggleComponent,
+);
 
 function ReverseSelectedLineButtonComponent({
   settingsStore,
@@ -181,7 +183,8 @@ const ResetCountingLinesButton = memo(ResetCountingLinesButtonComponent);
 function DetectionLineActionsComponent({
   settingsStore,
   viewStateStore,
-}: LineActionsProps) {
+  showLineCreationModeToggle = true,
+}: LineActionsProps & { showLineCreationModeToggle?: boolean }) {
   return (
     <div className="flex w-full flex-wrap items-end gap-3">
       <SelectedLineNameField
@@ -189,7 +192,9 @@ function DetectionLineActionsComponent({
         viewStateStore={viewStateStore}
       />
       <div className="flex flex-wrap gap-2">
-        <LineCreationModeToggle viewStateStore={viewStateStore} />
+        {showLineCreationModeToggle && (
+          <DetectionLineCreationModeToggle viewStateStore={viewStateStore} />
+        )}
         <ReverseSelectedLineButton
           settingsStore={settingsStore}
           viewStateStore={viewStateStore}

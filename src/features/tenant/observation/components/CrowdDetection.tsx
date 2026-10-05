@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { DetectionLineCreationModeToggle } from "@/features/tenant/detection/components/DetectionLineActions";
 import { useDetectionStores } from "@/features/tenant/detection/stores/detectionStore";
 import { BroadcastIndicator } from "@/features/tenant/webrtc/components/BroadcastIndicator";
 import { useVideoSender } from "@/features/tenant/webrtc/hooks/useVideoSender";
@@ -56,6 +57,7 @@ export function CrowdDetection({
     overlayCanvasRef,
     status,
     settingsStore,
+    viewStateStore,
     resultStore,
     onBroadcastStreamChange: setBroadcastStream,
     onDetectionFrame: sendDetectionFrame,
@@ -78,6 +80,9 @@ export function CrowdDetection({
   return (
     <div className="flex w-full flex-col items-center gap-4">
       <ObservationLockButton />
+      <div className="flex w-full max-w-3xl justify-end px-4 sm:px-0">
+        <DetectionLineCreationModeToggle viewStateStore={viewStateStore} />
+      </div>
       {DEV_VIDEO_SOURCE_ENABLED && (
         <DevVideoSourcePanel
           status={status}

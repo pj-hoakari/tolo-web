@@ -6,6 +6,7 @@ import {
   createInitialLineCounts,
   type DetectionResultStore,
   type DetectionSettingsStore,
+  type DetectionViewStateStore,
   INITIAL_LINE_COUNT,
   INITIAL_METRICS,
   recordDetectedPeople,
@@ -72,6 +73,7 @@ export type UseCrowdDetectionLoopParams = {
   overlayCanvasRef: RefObject<HTMLCanvasElement | null>;
   status: DetectCrowdStatus;
   settingsStore: DetectionSettingsStore;
+  viewStateStore: DetectionViewStateStore;
   resultStore: DetectionResultStore;
   onBroadcastStreamChange: (stream: MediaStream | null) => void;
   onDetectionFrame: (frame: DetectionOverlayFrame | null) => void;
@@ -93,6 +95,7 @@ export function useCrowdDetectionLoop({
   overlayCanvasRef,
   status,
   settingsStore,
+  viewStateStore,
   resultStore,
   onBroadcastStreamChange,
   onDetectionFrame,
@@ -251,6 +254,9 @@ export function useCrowdDetectionLoop({
                 width,
                 height,
               ),
+              {
+                highlightedLineId: viewStateStore.getState().editingLineId,
+              },
             );
           }
         }
@@ -292,6 +298,7 @@ export function useCrowdDetectionLoop({
     videoRef,
     overlayCanvasRef,
     settingsStore,
+    viewStateStore,
     resultStore,
   ]);
 }

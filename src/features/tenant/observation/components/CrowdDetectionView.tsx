@@ -54,6 +54,7 @@ function CrowdDetectionViewComponent({
       <DetectionSettingsPanel
         settingsStore={settingsStore}
         viewStateStore={viewStateStore}
+        showLineCreationModeToggle={false}
       />
       {status === "error" && error && (
         <p role="alert" className="text-destructive">

@@ -66,6 +66,7 @@ export function VideoReceiverView({
     let rafId = 0;
     let lastDrawnFrame: DetectionOverlayFrame | null = null;
     let lastDrawnLines: DetectionCountingLineSetting[] | null = null;
+    let lastDrawnEditingLineId: string | null | undefined;
 
     const draw = () => {
       const canvas = overlayCanvasRef.current;
@@ -73,13 +74,17 @@ export function VideoReceiverView({
       const countingLines = settingsStore
         ? settingsStore.getState().countingLines
         : null;
+      const editingLineId = viewStateStore?.getState().editingLineId;
 
       if (
         canvas &&
-        (frame !== lastDrawnFrame || countingLines !== lastDrawnLines)
+        (frame !== lastDrawnFrame ||
+          countingLines !== lastDrawnLines ||
+          editingLineId !== lastDrawnEditingLineId)
       ) {
         lastDrawnFrame = frame;
         lastDrawnLines = countingLines;
+        lastDrawnEditingLineId = editingLineId;
         const context = canvas.getContext("2d");
         if (context) {
           if (frame && frame.width > 0 && frame.height > 0) {
@@ -103,6 +108,7 @@ export function VideoReceiverView({
                     ),
                   }
                 : frame,
+              { highlightedLineId: editingLineId },
             );
           } else {
             context.clearRect(0, 0, canvas.width, canvas.height);
@@ -114,7 +120,7 @@ export function VideoReceiverView({
 
     rafId = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(rafId);
-  }, [detectionFrameRef, stopped, settingsStore]);
+  }, [detectionFrameRef, stopped, settingsStore, viewStateStore]);
 
   return (
     <div className="flex w-full flex-col items-center gap-2">
