@@ -288,6 +288,7 @@
     "lines": {
       "defaultName": "ライン {index}",
       "editLine": "{name}を編集",
+      "stopEditingLine": "{name}の編集を終了",
       "create": "ライン生成",
       "listLabel": "ライン一覧",
       "reverseForward": "forward方向を反転",

@@ -288,6 +288,7 @@
     "lines": {
       "defaultName": "Línea {index}",
       "editLine": "Editar {name}",
+      "stopEditingLine": "Dejar de editar {name}",
       "create": "Crear línea",
       "listLabel": "Líneas",
       "reverseForward": "Invertir dirección forward",

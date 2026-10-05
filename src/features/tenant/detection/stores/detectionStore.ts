@@ -48,6 +48,7 @@ export type DetectionResult = {
 /** 検出結果には影響しない画面操作の状態 */
 export type DetectionViewState = {
   selectedLineId: string;
+  editingLineId: string | null;
   lineCreationMode: boolean;
 };
 
@@ -147,6 +148,7 @@ export function createDetectionStores(
     })),
     viewStateStore: createStore<DetectionViewState>()(() => ({
       selectedLineId: settings.countingLines[0]?.id ?? DEFAULT_LINE_ID,
+      editingLineId: settings.countingLines[0]?.id ?? null,
       lineCreationMode: false,
     })),
   };
@@ -237,6 +239,9 @@ export const selectMetrics = (state: DetectionResult) => state.metrics;
 
 export const selectSelectedLineId = (state: DetectionViewState) =>
   state.selectedLineId;
+
+export const selectEditingLineId = (state: DetectionViewState) =>
+  state.editingLineId;
 
 export const selectLineCreationMode = (state: DetectionViewState) =>
   state.lineCreationMode;
@@ -402,15 +407,42 @@ export function selectLine(
   );
 }
 
+export function setEditingLine(
+  store: DetectionViewStateStore,
+  lineId: string | null,
+): void {
+  store.setState((current) => {
+    const selectedLineId = lineId ?? current.selectedLineId;
+    if (
+      current.editingLineId === lineId &&
+      current.selectedLineId === selectedLineId &&
+      !current.lineCreationMode
+    ) {
+      return current;
+    }
+    return {
+      ...current,
+      selectedLineId,
+      editingLineId: lineId,
+      lineCreationMode: false,
+    };
+  }, true);
+}
+
 export function setLineCreationMode(
   store: DetectionViewStateStore,
   lineCreationMode: boolean,
 ): void {
   store.setState(
     (current) =>
-      current.lineCreationMode === lineCreationMode
+      current.lineCreationMode === lineCreationMode &&
+      (!lineCreationMode || current.editingLineId === null)
         ? current
-        : { ...current, lineCreationMode },
+        : {
+            ...current,
+            lineCreationMode,
+            editingLineId: lineCreationMode ? null : current.editingLineId,
+          },
     true,
   );
 }

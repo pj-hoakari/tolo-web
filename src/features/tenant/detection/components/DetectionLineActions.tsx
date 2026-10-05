@@ -9,14 +9,13 @@ import { Toggle } from "@/components/ui/toggle";
 import {
   applyCountingLines,
   DEFAULT_COUNTING_LINES,
-  DEFAULT_LINE_ID,
   type DetectionSettingsStore,
   type DetectionViewStateStore,
   reverseCountingLineDirection,
   selectCountingLineCount,
-  selectLine,
   selectLineCreationMode,
   selectSelectedLineId,
+  setEditingLine,
   setLineCreationMode,
 } from "../stores/detectionStore";
 
@@ -133,7 +132,7 @@ function DeleteSelectedLineButtonComponent({
     const nextLines = countingLines.filter(
       (line) => line.id !== selectedLineId,
     );
-    selectLine(viewStateStore, nextLines[0]?.id ?? DEFAULT_LINE_ID);
+    setEditingLine(viewStateStore, nextLines[0]?.id ?? null);
     applyCountingLines(settingsStore, nextLines);
   };
 
@@ -160,7 +159,7 @@ function ResetCountingLinesButtonComponent({
   const t = useTranslations("Detection.lines");
 
   const resetCountingLines = () => {
-    selectLine(viewStateStore, DEFAULT_COUNTING_LINES[0].id);
+    setEditingLine(viewStateStore, DEFAULT_COUNTING_LINES[0].id);
     applyCountingLines(settingsStore, DEFAULT_COUNTING_LINES);
   };
 

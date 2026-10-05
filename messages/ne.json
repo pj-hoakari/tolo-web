@@ -288,6 +288,7 @@
     "lines": {
       "defaultName": "लाइन {index}",
       "editLine": "{name} सम्पादन गर्नुहोस्",
+      "stopEditingLine": "{name} सम्पादन गर्न रोक्नुहोस्",
       "create": "लाइन सिर्जना",
       "listLabel": "लाइनहरू",
       "reverseForward": "forward दिशा उल्टाउनुहोस्",

@@ -12,6 +12,7 @@ import {
   parseDetectionSettings,
   reverseCountingLineDirection,
   selectLine,
+  setEditingLine,
   setLineCreationMode,
 } from "./detectionStore";
 
@@ -295,6 +296,7 @@ describe("画面操作の状態", () => {
 
     setLineCreationMode(viewStateStore, true);
     expect(viewStateStore.getState().lineCreationMode).toBe(true);
+    expect(viewStateStore.getState().editingLineId).toBeNull();
 
     setLineCreationMode(viewStateStore, true);
     expect(listener).toHaveBeenCalledTimes(1);
@@ -302,5 +304,24 @@ describe("画面操作の状態", () => {
     setLineCreationMode(viewStateStore, false);
     expect(viewStateStore.getState().lineCreationMode).toBe(false);
     expect(listener).toHaveBeenCalledTimes(2);
+  });
+
+  it("編集対象をラインID単位で切り替える", () => {
+    const { viewStateStore } = createDetectionStores();
+
+    setLineCreationMode(viewStateStore, true);
+    setEditingLine(viewStateStore, "line-2");
+    expect(viewStateStore.getState()).toEqual({
+      selectedLineId: "line-2",
+      editingLineId: "line-2",
+      lineCreationMode: false,
+    });
+
+    setEditingLine(viewStateStore, null);
+    expect(viewStateStore.getState()).toEqual({
+      selectedLineId: "line-2",
+      editingLineId: null,
+      lineCreationMode: false,
+    });
   });
 });

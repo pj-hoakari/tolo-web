@@ -288,6 +288,7 @@
     "lines": {
       "defaultName": "라인 {index}",
       "editLine": "{name} 편집",
+      "stopEditingLine": "{name} 편집 종료",
       "create": "라인 생성",
       "listLabel": "라인 목록",
       "reverseForward": "forward 방향 반전",
