@@ -74,6 +74,40 @@ export function drawCountingLine(
   context.stroke();
   context.setLineDash([]);
 
+  // forward は p1→p2 に対する負側→正側なので、左法線方向の矢印で示す。
+  const dx = countingLine.p2.x - countingLine.p1.x;
+  const dy = countingLine.p2.y - countingLine.p1.y;
+  const lineLength = Math.hypot(dx, dy);
+  if (lineLength > 0) {
+    const normalX = -dy / lineLength;
+    const normalY = dx / lineLength;
+    const midpointX = (countingLine.p1.x + countingLine.p2.x) / 2;
+    const midpointY = (countingLine.p1.y + countingLine.p2.y) / 2;
+    const arrowLength = Math.max(24, width / 20);
+    const arrowHeadLength = Math.max(8, width / 80);
+    const arrowStartX = midpointX - (normalX * arrowLength) / 2;
+    const arrowStartY = midpointY - (normalY * arrowLength) / 2;
+    const arrowEndX = midpointX + (normalX * arrowLength) / 2;
+    const arrowEndY = midpointY + (normalY * arrowLength) / 2;
+    const tangentX = -normalY;
+    const tangentY = normalX;
+
+    context.beginPath();
+    context.moveTo(arrowStartX, arrowStartY);
+    context.lineTo(arrowEndX, arrowEndY);
+    context.moveTo(arrowEndX, arrowEndY);
+    context.lineTo(
+      arrowEndX - normalX * arrowHeadLength + tangentX * arrowHeadLength * 0.6,
+      arrowEndY - normalY * arrowHeadLength + tangentY * arrowHeadLength * 0.6,
+    );
+    context.moveTo(arrowEndX, arrowEndY);
+    context.lineTo(
+      arrowEndX - normalX * arrowHeadLength - tangentX * arrowHeadLength * 0.6,
+      arrowEndY - normalY * arrowHeadLength - tangentY * arrowHeadLength * 0.6,
+    );
+    context.stroke();
+  }
+
   const handleRadius = Math.max(6, width / 96);
   context.beginPath();
   context.arc(

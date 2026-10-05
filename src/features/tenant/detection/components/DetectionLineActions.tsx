@@ -1,4 +1,10 @@
-import { MousePointer2, Plus, RotateCcw, Trash2 } from "lucide-react";
+import {
+  ArrowLeftRight,
+  MousePointer2,
+  Plus,
+  RotateCcw,
+  Trash2,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { memo } from "react";
 import { useStore } from "zustand";
@@ -9,6 +15,7 @@ import {
   DEFAULT_LINE_ID,
   type DetectionSettingsStore,
   type DetectionViewStateStore,
+  reverseCountingLineDirection,
   selectCountingLineCount,
   selectLine,
   selectLineCreationMode,
@@ -44,6 +51,38 @@ function LineCreationModeToggleComponent({
 }
 
 const LineCreationModeToggle = memo(LineCreationModeToggleComponent);
+
+function ReverseSelectedLineButtonComponent({
+  settingsStore,
+  viewStateStore,
+}: LineActionsProps) {
+  const t = useTranslations("Detection.lines");
+
+  const reverseSelectedLine = () => {
+    const { selectedLineId } = viewStateStore.getState();
+    const { countingLines } = settingsStore.getState();
+    applyCountingLines(
+      settingsStore,
+      countingLines.map((line) =>
+        line.id === selectedLineId ? reverseCountingLineDirection(line) : line,
+      ),
+    );
+  };
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onPress={reverseSelectedLine}
+    >
+      <ArrowLeftRight className="mr-2 size-4" />
+      {t("reverseForward")}
+    </Button>
+  );
+}
+
+const ReverseSelectedLineButton = memo(ReverseSelectedLineButtonComponent);
 
 function DeleteSelectedLineButtonComponent({
   settingsStore,
@@ -115,6 +154,10 @@ function DetectionLineActionsComponent({
   return (
     <div className="flex flex-wrap gap-2">
       <LineCreationModeToggle viewStateStore={viewStateStore} />
+      <ReverseSelectedLineButton
+        settingsStore={settingsStore}
+        viewStateStore={viewStateStore}
+      />
       <DeleteSelectedLineButton
         settingsStore={settingsStore}
         viewStateStore={viewStateStore}

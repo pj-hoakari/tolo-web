@@ -183,6 +183,7 @@
     "lines": {
       "create": "生成线",
       "edit": "编辑模式",
+      "reverseForward": "反转 forward 方向",
       "deleteSelected": "删除选中的线",
       "reset": "重置线位置",
       "count": "线 {index}：forward {forward} / backward {backward}"

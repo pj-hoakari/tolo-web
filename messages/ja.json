@@ -183,6 +183,7 @@
     "lines": {
       "create": "ライン生成",
       "edit": "編集モード",
+      "reverseForward": "forward方向を反転",
       "deleteSelected": "選択ラインを削除",
       "reset": "ラインを初期位置に戻す",
       "count": "ライン {index}: forward {forward} / backward {backward}"

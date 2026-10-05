@@ -8,10 +8,58 @@ import {
   createDetectionStores,
   type DetectionSettings,
   INITIAL_SETTINGS,
+  normalizeCountingLineDirection,
   parseDetectionSettings,
+  reverseCountingLineDirection,
   selectLine,
   toggleLineCreationMode,
 } from "./detectionStore";
+
+describe("カウントラインの forward 方向", () => {
+  it("横方向の新規ラインを左から右へ統一する", () => {
+    expect(
+      normalizeCountingLineDirection({
+        id: "line-2",
+        p1: { x: 0.8, y: 0.7 },
+        p2: { x: 0.2, y: 0.3 },
+      }),
+    ).toEqual({
+      id: "line-2",
+      p1: { x: 0.2, y: 0.3 },
+      p2: { x: 0.8, y: 0.7 },
+    });
+  });
+
+  it.each([
+    ["上から下", { p1: { x: 0.49, y: 0.2 }, p2: { x: 0.5, y: 0.8 } }],
+    ["下から上", { p1: { x: 0.5, y: 0.8 }, p2: { x: 0.49, y: 0.2 } }],
+  ])("縦方向を%sに描いても forward を左から右へ統一する", (_label, points) => {
+    expect(
+      normalizeCountingLineDirection({
+        id: "line-2",
+        ...points,
+      }),
+    ).toEqual({
+      id: "line-2",
+      p1: { x: 0.5, y: 0.8 },
+      p2: { x: 0.49, y: 0.2 },
+    });
+  });
+
+  it("端点を入れ替えて forward 方向を反転する", () => {
+    expect(
+      reverseCountingLineDirection({
+        id: "line-1",
+        p1: { x: 0, y: 0.6 },
+        p2: { x: 1, y: 0.6 },
+      }),
+    ).toEqual({
+      id: "line-1",
+      p1: { x: 1, y: 0.6 },
+      p2: { x: 0, y: 0.6 },
+    });
+  });
+});
 
 describe("applyCountingLines", () => {
   it("0〜1 の範囲に丸める", () => {
