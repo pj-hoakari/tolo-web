@@ -286,6 +286,7 @@
       "close": "उन्नत सेटिङ बन्द गर्नुहोस्"
     },
     "lines": {
+      "modeLabel": "लाइन मोड",
       "create": "लाइन सिर्जना",
       "listLabel": "लाइनहरू",
       "reverseForward": "forward दिशा उल्टाउनुहोस्",

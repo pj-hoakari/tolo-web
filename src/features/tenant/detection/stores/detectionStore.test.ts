@@ -12,7 +12,7 @@ import {
   parseDetectionSettings,
   reverseCountingLineDirection,
   selectLine,
-  toggleLineCreationMode,
+  setLineCreationMode,
 } from "./detectionStore";
 
 describe("カウントラインの forward 方向", () => {
@@ -288,13 +288,19 @@ describe("画面操作の状態", () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
-  it("ライン生成モードを切り替える", () => {
+  it("ライン操作モードを明示的に設定する", () => {
     const { viewStateStore } = createDetectionStores();
+    const listener = vi.fn();
+    viewStateStore.subscribe(listener);
 
-    toggleLineCreationMode(viewStateStore);
+    setLineCreationMode(viewStateStore, true);
     expect(viewStateStore.getState().lineCreationMode).toBe(true);
 
-    toggleLineCreationMode(viewStateStore);
+    setLineCreationMode(viewStateStore, true);
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    setLineCreationMode(viewStateStore, false);
     expect(viewStateStore.getState().lineCreationMode).toBe(false);
+    expect(listener).toHaveBeenCalledTimes(2);
   });
 });

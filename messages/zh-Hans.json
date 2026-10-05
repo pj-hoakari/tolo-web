@@ -286,6 +286,7 @@
       "close": "关闭高级设置"
     },
     "lines": {
+      "modeLabel": "线操作",
       "create": "生成线",
       "listLabel": "线列表",
       "reverseForward": "反转 forward 方向",

@@ -7,6 +7,7 @@ import {
   type DetectionViewStateStore,
   normalizeCountingLineDirection,
   selectLine,
+  setLineCreationMode,
 } from "../stores/detectionStore";
 
 type LineDragTarget = "p1" | "p2" | "line";
@@ -309,12 +310,16 @@ export function useCountingLineEditor({
                 : line,
             ),
         );
+        // 生成したラインを選択したまま編集へ戻し、すぐ微調整できるようにする。
+        if (viewStateStore) {
+          setLineCreationMode(viewStateStore, false);
+        }
       }
 
       event.currentTarget.releasePointerCapture(event.pointerId);
       dragStateRef.current = null;
     },
-    [canvasRef, getPointerPoint, settingsStore],
+    [canvasRef, getPointerPoint, settingsStore, viewStateStore],
   );
 
   return {

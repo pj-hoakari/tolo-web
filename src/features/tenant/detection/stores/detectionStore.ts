@@ -402,12 +402,15 @@ export function selectLine(
   );
 }
 
-export function toggleLineCreationMode(store: DetectionViewStateStore): void {
+export function setLineCreationMode(
+  store: DetectionViewStateStore,
+  lineCreationMode: boolean,
+): void {
   store.setState(
-    (current) => ({
-      ...current,
-      lineCreationMode: !current.lineCreationMode,
-    }),
+    (current) =>
+      current.lineCreationMode === lineCreationMode
+        ? current
+        : { ...current, lineCreationMode },
     true,
   );
 }

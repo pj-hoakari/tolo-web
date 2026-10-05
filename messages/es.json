@@ -286,6 +286,7 @@
       "close": "Cerrar ajustes avanzados"
     },
     "lines": {
+      "modeLabel": "Modo de línea",
       "create": "Crear línea",
       "listLabel": "Líneas",
       "reverseForward": "Invertir dirección forward",
