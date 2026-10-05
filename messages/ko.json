@@ -286,7 +286,8 @@
       "close": "고급 설정 닫기"
     },
     "lines": {
-      "modeLabel": "라인 작업",
+      "defaultName": "라인 {index}",
+      "editLine": "{name} 편집",
       "create": "라인 생성",
       "listLabel": "라인 목록",
       "reverseForward": "forward 방향 반전",

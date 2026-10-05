@@ -286,7 +286,8 @@
       "close": "Close advanced settings"
     },
     "lines": {
-      "modeLabel": "Line mode",
+      "defaultName": "Line {index}",
+      "editLine": "Edit {name}",
       "create": "Add line",
       "listLabel": "Lines",
       "reverseForward": "Reverse forward direction",

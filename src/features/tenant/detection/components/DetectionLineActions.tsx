@@ -1,11 +1,11 @@
-import { ArrowLeftRight, MousePointer2, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ArrowLeftRight, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { memo, useCallback } from "react";
 import { useStore } from "zustand";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/field";
 import { Input, TextField } from "@/components/ui/textfield";
-import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
+import { Toggle } from "@/components/ui/toggle";
 import {
   applyCountingLines,
   DEFAULT_COUNTING_LINES,
@@ -63,38 +63,26 @@ function SelectedLineNameFieldComponent({
 
 const SelectedLineNameField = memo(SelectedLineNameFieldComponent);
 
-function LineModeSelectorComponent({
+function LineCreationModeToggleComponent({
   viewStateStore,
 }: Pick<LineActionsProps, "viewStateStore">) {
   const lineCreationMode = useStore(viewStateStore, selectLineCreationMode);
   const t = useTranslations("Detection.lines");
 
   return (
-    <div className="grid gap-2">
-      <span className="font-medium text-sm">{t("modeLabel")}</span>
-      <ToggleButtonGroup
-        aria-label={t("modeLabel")}
-        selectionMode="single"
-        disallowEmptySelection
-        selectedKeys={[lineCreationMode ? "create" : "edit"]}
-        onSelectionChange={(keys) =>
-          setLineCreationMode(viewStateStore, keys.has("create"))
-        }
-      >
-        <Toggle id="create" variant="outline" size="sm">
-          <Plus className="mr-2 size-4" />
-          {t("create")}
-        </Toggle>
-        <Toggle id="edit" variant="outline" size="sm">
-          <MousePointer2 className="mr-2 size-4" />
-          {t("edit")}
-        </Toggle>
-      </ToggleButtonGroup>
-    </div>
+    <Toggle
+      variant="outline"
+      size="sm"
+      isSelected={lineCreationMode}
+      onChange={(isSelected) => setLineCreationMode(viewStateStore, isSelected)}
+    >
+      <Plus className="mr-2 size-4" />
+      {t("create")}
+    </Toggle>
   );
 }
 
-const LineModeSelector = memo(LineModeSelectorComponent);
+const LineCreationModeToggle = memo(LineCreationModeToggleComponent);
 
 function ReverseSelectedLineButtonComponent({
   settingsStore,
@@ -202,7 +190,7 @@ function DetectionLineActionsComponent({
         viewStateStore={viewStateStore}
       />
       <div className="flex flex-wrap gap-2">
-        <LineModeSelector viewStateStore={viewStateStore} />
+        <LineCreationModeToggle viewStateStore={viewStateStore} />
         <ReverseSelectedLineButton
           settingsStore={settingsStore}
           viewStateStore={viewStateStore}

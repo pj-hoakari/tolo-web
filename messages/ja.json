@@ -286,7 +286,8 @@
       "close": "詳細調整を閉じる"
     },
     "lines": {
-      "modeLabel": "ライン操作",
+      "defaultName": "ライン {index}",
+      "editLine": "{name}を編集",
       "create": "ライン生成",
       "listLabel": "ライン一覧",
       "reverseForward": "forward方向を反転",

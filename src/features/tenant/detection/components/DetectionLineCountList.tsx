@@ -1,3 +1,4 @@
+import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { memo, useCallback, useEffect } from "react";
 import { useStore } from "zustand";
@@ -13,7 +14,7 @@ import {
   INITIAL_LINE_COUNT,
   selectCountingLines,
   selectLine,
-  selectSelectedLineId,
+  setLineCreationMode,
 } from "../stores/detectionStore";
 
 type DetectionLineCountButtonProps = {
@@ -36,14 +37,22 @@ function DetectionLineCountButtonComponent({
   );
   const count = useStore(resultStore, selectCount);
   const t = useTranslations("Detection.lines");
+  const displayName = lineName || t("defaultName", { index: index + 1 });
+
+  const editLine = () => {
+    selectLine(viewStateStore, lineId);
+    setLineCreationMode(viewStateStore, false);
+  };
 
   return (
     <Toggle
       id={lineId}
       variant="outline"
       size="sm"
-      className="selected:border-primary selected:bg-primary px-3 selected:text-primary-foreground"
+      aria-label={t("editLine", { name: displayName })}
+      onPress={editLine}
     >
+      <Pencil className="mr-2 size-4" />
       {t(lineName ? "namedCount" : "count", {
         name: lineName,
         index: index + 1,
@@ -70,7 +79,7 @@ function DetectionLineCountListComponent({
   resultStore,
   viewStateStore,
 }: DetectionLineCountListProps) {
-  // id の配列は毎回組み立て直されるので浅い比較で再レンダリングを抑える
+  // ライン配列の各要素を浅く比較して不要な再レンダリングを抑える
   const lines = useStore(settingsStore, useShallow(selectCountingLines));
   const lineIds = lines.map((line) => line.id);
   const selectedLineId = useStore(viewStateStore, selectSelectedLineId);
