@@ -186,7 +186,10 @@
       "reverseForward": "forward 방향 반전",
       "deleteSelected": "선택한 라인 삭제",
       "reset": "라인 위치 초기화",
-      "count": "라인 {index}: forward {forward} / backward {backward}"
+      "count": "라인 {index}: forward {forward} / backward {backward}",
+      "namedCount": "{name}: forward {forward} / backward {backward}",
+      "nameLabel": "선택한 라인 이름",
+      "namePlaceholder": "예: A홀 입구, 북쪽 연결 통로"
     }
   },
   "Observation": {

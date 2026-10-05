@@ -186,7 +186,10 @@
       "reverseForward": "forward दिशा उल्टाउनुहोस्",
       "deleteSelected": "छानिएको लाइन मेट्नुहोस्",
       "reset": "लाइन रिसेट गर्नुहोस्",
-      "count": "लाइन {index}: forward {forward} / backward {backward}"
+      "count": "लाइन {index}: forward {forward} / backward {backward}",
+      "namedCount": "{name}: forward {forward} / backward {backward}",
+      "nameLabel": "छानिएको लाइनको नाम",
+      "namePlaceholder": "जस्तै: हल A प्रवेशद्वार, उत्तर करिडोर"
     }
   },
   "Observation": {

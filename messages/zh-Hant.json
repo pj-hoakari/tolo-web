@@ -186,7 +186,10 @@
       "reverseForward": "反轉 forward 方向",
       "deleteSelected": "刪除選取的線",
       "reset": "重設線位置",
-      "count": "線 {index}：forward {forward} / backward {backward}"
+      "count": "線 {index}：forward {forward} / backward {backward}",
+      "namedCount": "{name}：forward {forward} / backward {backward}",
+      "nameLabel": "所選線的名稱",
+      "namePlaceholder": "例如：A廳入口、北側連通走廊"
     }
   },
   "Observation": {

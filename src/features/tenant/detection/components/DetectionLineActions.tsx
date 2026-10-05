@@ -6,9 +6,11 @@ import {
   Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import { useStore } from "zustand";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/field";
+import { Input, TextField } from "@/components/ui/textfield";
 import {
   applyCountingLines,
   DEFAULT_COUNTING_LINES,
@@ -19,6 +21,7 @@ import {
   selectCountingLineCount,
   selectLine,
   selectLineCreationMode,
+  selectSelectedLineId,
   toggleLineCreationMode,
 } from "../stores/detectionStore";
 
@@ -26,6 +29,44 @@ type LineActionsProps = {
   settingsStore: DetectionSettingsStore;
   viewStateStore: DetectionViewStateStore;
 };
+
+function SelectedLineNameFieldComponent({
+  settingsStore,
+  viewStateStore,
+}: LineActionsProps) {
+  const selectedLineId = useStore(viewStateStore, selectSelectedLineId);
+  const selectSelectedLineName = useCallback(
+    (state: ReturnType<DetectionSettingsStore["getState"]>) =>
+      state.countingLines.find((line) => line.id === selectedLineId)?.name ??
+      "",
+    [selectedLineId],
+  );
+  const name = useStore(settingsStore, selectSelectedLineName);
+  const t = useTranslations("Detection.lines");
+
+  const updateName = (nextName: string) => {
+    const { countingLines } = settingsStore.getState();
+    applyCountingLines(
+      settingsStore,
+      countingLines.map((line) =>
+        line.id === selectedLineId ? { ...line, name: nextName } : line,
+      ),
+    );
+  };
+
+  return (
+    <TextField
+      className="flex w-full flex-col gap-2 sm:max-w-xs"
+      value={name}
+      onChange={updateName}
+    >
+      <Label>{t("nameLabel")}</Label>
+      <Input placeholder={t("namePlaceholder")} maxLength={40} />
+    </TextField>
+  );
+}
+
+const SelectedLineNameField = memo(SelectedLineNameFieldComponent);
 
 function LineCreationModeToggleComponent({
   viewStateStore,
@@ -152,20 +193,26 @@ function DetectionLineActionsComponent({
   viewStateStore,
 }: LineActionsProps) {
   return (
-    <div className="flex flex-wrap gap-2">
-      <LineCreationModeToggle viewStateStore={viewStateStore} />
-      <ReverseSelectedLineButton
+    <div className="flex w-full flex-wrap items-end gap-3">
+      <SelectedLineNameField
         settingsStore={settingsStore}
         viewStateStore={viewStateStore}
       />
-      <DeleteSelectedLineButton
-        settingsStore={settingsStore}
-        viewStateStore={viewStateStore}
-      />
-      <ResetCountingLinesButton
-        settingsStore={settingsStore}
-        viewStateStore={viewStateStore}
-      />
+      <div className="flex flex-wrap gap-2">
+        <LineCreationModeToggle viewStateStore={viewStateStore} />
+        <ReverseSelectedLineButton
+          settingsStore={settingsStore}
+          viewStateStore={viewStateStore}
+        />
+        <DeleteSelectedLineButton
+          settingsStore={settingsStore}
+          viewStateStore={viewStateStore}
+        />
+        <ResetCountingLinesButton
+          settingsStore={settingsStore}
+          viewStateStore={viewStateStore}
+        />
+      </div>
     </div>
   );
 }

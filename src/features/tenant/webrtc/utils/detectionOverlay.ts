@@ -20,6 +20,7 @@ export type DetectionOverlayBox = {
 
 export type DetectionOverlayLine = {
   id: string;
+  name: string;
   p1: DetectionOverlayPoint;
   p2: DetectionOverlayPoint;
 };
@@ -48,6 +49,7 @@ export function toOverlayCountingLines(
 ): DetectionOverlayLine[] {
   return countingLines.map((countingLine) => ({
     id: countingLine.id,
+    name: countingLine.name,
     p1: {
       x: clampUnit(countingLine.p1.x) * width,
       y: clampUnit(countingLine.p1.y) * height,
@@ -106,6 +108,27 @@ export function drawCountingLine(
       arrowEndY - normalY * arrowHeadLength - tangentY * arrowHeadLength * 0.6,
     );
     context.stroke();
+  }
+
+  if (countingLine.name) {
+    const midpointX = (countingLine.p1.x + countingLine.p2.x) / 2;
+    const midpointY = (countingLine.p1.y + countingLine.p2.y) / 2;
+    const fontSize = Math.max(14, width / 48);
+    context.font = `600 ${fontSize}px sans-serif`;
+    const paddingX = 6;
+    const labelWidth =
+      context.measureText(countingLine.name).width + paddingX * 2;
+    const labelHeight = fontSize + 8;
+    const labelX = midpointX - labelWidth / 2;
+    const labelY = midpointY - labelHeight - 8;
+    context.fillStyle = "rgba(17, 24, 39, 0.85)";
+    context.fillRect(labelX, labelY, labelWidth, labelHeight);
+    context.fillStyle = "#fbbf24";
+    context.fillText(
+      countingLine.name,
+      labelX + paddingX,
+      labelY + labelHeight - 6,
+    );
   }
 
   const handleRadius = Math.max(6, width / 96);
