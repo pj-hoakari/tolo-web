@@ -129,20 +129,26 @@ export function CompassGuide({
     totalMeters > 0 ? Math.max(1, Math.round(totalMeters / 80)) : 0;
 
   // ミニマップの表示範囲（ルートの外接矩形＋余白）
+  // ミニマップの表示範囲。回転(ヘディングアップ)で角が切れないよう正方形＋余白多め。
   const view = useMemo(() => {
     if (route.length < 2) return null;
     const xs = route.map((p) => p.x);
     const ys = route.map((p) => p.y);
-    const minX = Math.min(...xs);
-    const minY = Math.min(...ys);
-    const maxX = Math.max(...xs);
-    const maxY = Math.max(...ys);
-    const pad = Math.max(24, (maxX - minX + maxY - minY) * 0.08);
-    const x = minX - pad;
-    const y = minY - pad;
-    const w = maxX - minX + pad * 2;
-    const h = maxY - minY + pad * 2;
-    return { x, y, w, h, dot: Math.max(w, h) / 26 };
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    const extent = Math.max(
+      Math.max(...xs) - Math.min(...xs),
+      Math.max(...ys) - Math.min(...ys),
+      1,
+    );
+    const side = extent * 1.5 + 48;
+    return {
+      x: cx - side / 2,
+      y: cy - side / 2,
+      w: side,
+      h: side,
+      dot: side / 30,
+    };
   }, [route]);
 
   const step = steps[index];
@@ -163,6 +169,10 @@ export function CompassGuide({
       : live
         ? step.bearing - (heading ?? 0)
         : step.bearing;
+
+  // ミニマップのヘディングアップ回転。向いている方位が常に上になるよう地図を回す。
+  const mapLive = sensorState === "on" && heading != null;
+  const mapRotation = mapLive ? north - (heading ?? 0) : 0;
 
   const stepTitle =
     step.kind === "start"
@@ -276,10 +286,11 @@ export function CompassGuide({
         </div>
 
         {view && (
-          <div className="mt-3 overflow-hidden rounded-xl border border-primary/12 bg-white">
+          <div className="relative mx-auto mt-3 aspect-square w-44 overflow-hidden rounded-xl border border-primary/12 bg-white">
             <svg
               viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
-              className="h-24 w-full"
+              className="h-full w-full transition-transform duration-200"
+              style={{ transform: `rotate(${mapRotation}deg)` }}
               preserveAspectRatio="xMidYMid meet"
               role="img"
               aria-label={t("overview")}
@@ -333,6 +344,17 @@ export function CompassGuide({
                 className="fill-primary"
               />
             </svg>
+            {mapLive ? (
+              // ヘディングアップ中: 画面の上＝進行方向（向いている方向）
+              <span className="pointer-events-none absolute top-1 left-1/2 -translate-x-1/2 text-primary/70">
+                <ArrowUp className="size-4" />
+              </span>
+            ) : (
+              // 固定表示: 北が上
+              <span className="pointer-events-none absolute top-1 left-1/2 -translate-x-1/2 font-semibold text-[10px] text-primary/50">
+                N
+              </span>
+            )}
           </div>
         )}
 
