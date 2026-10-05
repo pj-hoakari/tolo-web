@@ -4,6 +4,12 @@ import { Compass, MapPin, Navigation } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Disclosure,
+  DisclosureGroup,
+  DisclosureHeader,
+  DisclosurePanel,
+} from "@/components/ui/disclosure";
 import { cn } from "@/lib/utils";
 import { CompassGuide } from "./CompassGuide";
 import {
@@ -81,47 +87,73 @@ function GraphCompassGuide(_props: GuestInfoComponentProps) {
   return (
     <InfoCard title={t("compass.navTitle")}>
       <div className="space-y-3">
-        <div className="space-y-1.5">
-          <p className="flex items-center gap-1 text-primary/55 text-xs">
-            <MapPin className="size-3.5" />
-            {t("currentLocation")}
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {model.starts.map((n) => (
-              <Button
-                key={n.id}
-                type="button"
-                variant="outline"
-                size="sm"
-                className={chip(n.id === startId)}
-                onPress={() => setStartId(n.id)}
-              >
-                {n.label}
-              </Button>
-            ))}
-          </div>
-        </div>
+        <DisclosureGroup
+          defaultExpandedKeys={["start"]}
+          className="rounded-lg border border-primary/12"
+        >
+          <Disclosure
+            id="start"
+            className="border-primary/12 border-b px-3 last:border-b-0"
+          >
+            <DisclosureHeader className="py-2.5 font-medium text-sm">
+              <span className="flex flex-1 items-center justify-between gap-2 pr-2">
+                <span className="flex items-center gap-1.5 text-primary/70">
+                  <MapPin className="size-3.5" />
+                  {t("currentLocation")}
+                </span>
+                <span className="truncate font-normal text-primary/90 text-sm">
+                  {model.starts.find((n) => n.id === startId)?.label ?? "—"}
+                </span>
+              </span>
+            </DisclosureHeader>
+            <DisclosurePanel className="pb-3">
+              <div className="flex flex-wrap gap-1.5">
+                {model.starts.map((n) => (
+                  <Button
+                    key={n.id}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={chip(n.id === startId)}
+                    onPress={() => setStartId(n.id)}
+                  >
+                    {n.label}
+                  </Button>
+                ))}
+              </div>
+            </DisclosurePanel>
+          </Disclosure>
 
-        <div className="space-y-1.5">
-          <p className="flex items-center gap-1 text-primary/55 text-xs">
-            <Navigation className="size-3.5" />
-            {t("destinationsLabel")}
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {model.goals.map((n) => (
-              <Button
-                key={n.id}
-                type="button"
-                variant="outline"
-                size="sm"
-                className={chip(n.id === goalId)}
-                onPress={() => setGoalId(n.id)}
-              >
-                {n.label}
-              </Button>
-            ))}
-          </div>
-        </div>
+          <Disclosure id="goal" className="px-3">
+            <DisclosureHeader className="py-2.5 font-medium text-sm">
+              <span className="flex flex-1 items-center justify-between gap-2 pr-2">
+                <span className="flex items-center gap-1.5 text-primary/70">
+                  <Navigation className="size-3.5" />
+                  {t("destinationsLabel")}
+                </span>
+                <span className="truncate font-normal text-primary/90 text-sm">
+                  {goalLabel ?? "—"}
+                </span>
+              </span>
+            </DisclosureHeader>
+            <DisclosurePanel className="pb-3">
+              <div className="flex flex-wrap gap-1.5">
+                {model.goals.map((n) => (
+                  <Button
+                    key={n.id}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={chip(n.id === goalId)}
+                    onPress={() => setGoalId(n.id)}
+                  >
+                    {n.label}
+                  </Button>
+                ))}
+              </div>
+            </DisclosurePanel>
+          </Disclosure>
+        </DisclosureGroup>
 
         {route.length >= 2 ? (
           <Button
