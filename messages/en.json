@@ -15,15 +15,15 @@
     "title": "{tenantId} Management",
     "tabsLabel": "Switch management view",
     "tabs": {
-      "graph": "Venue graph",
+      "graph": "Route diagram",
       "edges": "Connected edges"
     },
-    "graphEditTitle": "{tenantId} Venue graph editor",
+    "graphEditTitle": "{tenantId} Route diagram editor",
     "backLink": "Back to management"
   },
   "Graph": {
     "viewer": {
-      "title": "Venue graph",
+      "title": "Route diagram",
       "edit": "Edit graph",
       "save": "Save"
     },
@@ -58,7 +58,7 @@
       "GOAL": "e.g. an exhibition booth",
       "GOAL_TRANSIT_MIXED": "e.g. a wall exhibit (both a destination and a passage)",
       "TRANSIT_ONLY": "e.g. a corridor junction",
-      "BOUNDARY": "e.g. a venue entrance or exit"
+      "BOUNDARY": "e.g. an entrance or exit"
     },
     "notices": {
       "dualDirection": "Serves as both an entry and an exit"
@@ -68,7 +68,7 @@
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
-      "title": "Venue editor",
+      "title": "Route diagram editor",
       "addNode": "Add {type}",
       "save": "Save",
       "newNodeLabel": "Point {index}",
