@@ -15,15 +15,15 @@
     "title": "{tenantId} 관리 페이지",
     "tabsLabel": "관리 화면 전환",
     "tabs": {
-      "graph": "행사장 그래프",
+      "graph": "경로도",
       "edges": "연결된 엣지"
     },
-    "graphEditTitle": "{tenantId} 행사장 그래프 편집",
+    "graphEditTitle": "{tenantId} 경로도 편집",
     "backLink": "관리 페이지로 돌아가기"
   },
   "Graph": {
     "viewer": {
-      "title": "행사장 그래프",
+      "title": "경로도",
       "edit": "그래프 편집",
       "save": "저장"
     },
@@ -58,7 +58,7 @@
       "GOAL": "예: 전시 부스",
       "GOAL_TRANSIT_MIXED": "예: 벽면 전시(목적지도 통과도 될 수 있음)",
       "TRANSIT_ONLY": "예: 통로 분기",
-      "BOUNDARY": "예: 행사장 출입구"
+      "BOUNDARY": "예: 출입구"
     },
     "notices": {
       "dualDirection": "출입(입력·출력) 양쪽을 담당하고 있습니다"
@@ -68,7 +68,7 @@
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
-      "title": "행사장 편집기",
+      "title": "경로도 편집기",
       "addNode": "{type} 추가",
       "save": "저장",
       "newNodeLabel": "지점 {index}",

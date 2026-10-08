@@ -15,15 +15,15 @@
     "title": "{tenantId} 管理頁面",
     "tabsLabel": "切換管理檢視",
     "tabs": {
-      "graph": "會場圖",
+      "graph": "路徑圖",
       "edges": "連線的邊緣裝置"
     },
-    "graphEditTitle": "{tenantId} 會場圖編輯",
+    "graphEditTitle": "{tenantId} 路徑圖編輯",
     "backLink": "返回管理頁面"
   },
   "Graph": {
     "viewer": {
-      "title": "會場圖",
+      "title": "路徑圖",
       "edit": "編輯圖",
       "save": "儲存"
     },
@@ -58,7 +58,7 @@
       "GOAL": "例：攤位",
       "GOAL_TRANSIT_MIXED": "例：牆面展示（既是目的地也可通行）",
       "TRANSIT_ONLY": "例：通道分岔",
-      "BOUNDARY": "例：會場出入口"
+      "BOUNDARY": "例：出入口"
     },
     "notices": {
       "dualDirection": "同時承擔進入與離開（輸入·輸出）"
@@ -68,7 +68,7 @@
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
-      "title": "會場編輯器",
+      "title": "路徑圖編輯器",
       "addNode": "新增{type}",
       "save": "儲存",
       "newNodeLabel": "節點 {index}",

@@ -15,15 +15,15 @@
     "title": "{tenantId} 管理页面",
     "tabsLabel": "切换管理视图",
     "tabs": {
-      "graph": "会场图",
+      "graph": "路径图",
       "edges": "连接的边缘设备"
     },
-    "graphEditTitle": "{tenantId} 会场图编辑",
+    "graphEditTitle": "{tenantId} 路径图编辑",
     "backLink": "返回管理页面"
   },
   "Graph": {
     "viewer": {
-      "title": "会场图",
+      "title": "路径图",
       "edit": "编辑图",
       "save": "保存"
     },
@@ -58,7 +58,7 @@
       "GOAL": "例：展位",
       "GOAL_TRANSIT_MIXED": "例：墙面展示（既是目的地也可通行）",
       "TRANSIT_ONLY": "例：通道分叉",
-      "BOUNDARY": "例：会场出入口"
+      "BOUNDARY": "例：出入口"
     },
     "notices": {
       "dualDirection": "同时承担进入和离开（输入·输出）"
@@ -68,7 +68,7 @@
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
-      "title": "会场编辑器",
+      "title": "路径图编辑器",
       "addNode": "添加{type}",
       "save": "保存",
       "newNodeLabel": "节点 {index}",

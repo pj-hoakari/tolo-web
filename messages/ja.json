@@ -15,15 +15,15 @@
     "title": "{tenantId} 管理ページ",
     "tabsLabel": "管理ビュー切り替え",
     "tabs": {
-      "graph": "会場グラフ",
+      "graph": "ルート図",
       "edges": "接続エッジ"
     },
-    "graphEditTitle": "{tenantId} 会場グラフ編集",
+    "graphEditTitle": "{tenantId} ルート図編集",
     "backLink": "管理ページへ戻る"
   },
   "Graph": {
     "viewer": {
-      "title": "会場グラフ",
+      "title": "ルート図",
       "edit": "グラフを編集",
       "save": "保存"
     },
@@ -58,7 +58,7 @@
       "GOAL": "例: 展示ブース",
       "GOAL_TRANSIT_MIXED": "例: 壁展示（目的地にも通過にもなりうる）",
       "TRANSIT_ONLY": "例: 通路の分岐",
-      "BOUNDARY": "例: 会場の入口・出口"
+      "BOUNDARY": "例: 入口・出口"
     },
     "notices": {
       "dualDirection": "入退出（入力・出力）の両方を担っています"
@@ -68,7 +68,7 @@
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
-      "title": "会場エディタ",
+      "title": "ルート図エディタ",
       "addNode": "{type}を追加",
       "save": "保存",
       "newNodeLabel": "ポイント {index}",

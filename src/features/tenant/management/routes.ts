@@ -8,7 +8,7 @@ export function managementPath(eventId: string): string {
   return `/event/${eventId}/management`;
 }
 
-/** 会場グラフの編集ページ */
+/** グラフの編集ページ */
 export function graphEditPath(eventId: string): string {
   return `${managementPath(eventId)}/graph/edit`;
 }

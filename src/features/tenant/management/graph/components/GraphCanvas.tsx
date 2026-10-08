@@ -61,7 +61,7 @@ const edgeTypes: EdgeTypes = { graph: GraphEdge };
 /** MiniMap でのグループコンテナの塗り色 */
 const GROUP_MINIMAP_COLOR = "#d4d4d8";
 
-// React Flow の既定値（50%）だと、広い会場グラフを fitView しても
+// React Flow の既定値（50%）だと、広いグラフを fitView しても
 // 下限で止まり、端のノードが画面外に残る。
 const MIN_ZOOM = 0.01;
 export const FIT_VIEW_OPTIONS = { padding: 0.2, minZoom: MIN_ZOOM };
@@ -114,7 +114,7 @@ export type GraphCanvasProps = {
 };
 
 /**
- * 会場グラフを描画する ReactFlow キャンバス。
+ * グラフを描画する ReactFlow キャンバス。
  * グラフ本体の状態は持たず、描画と入力イベントの受け渡しを担う。
  * ルート追加モードは useEasyConnect、コンテキストメニューは
  * useCanvasContextMenu が状態を持ち、ここでは配線だけを行う。
