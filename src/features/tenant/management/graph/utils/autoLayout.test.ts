@@ -6,8 +6,8 @@ import type {
   GraphNodeType,
   GroupNodeType,
 } from "../type";
-import { isGroupNode } from "../type";
-import { autoAlignGraph } from "./autoLayout";
+import { isExternalNode, isGroupNode } from "../type";
+import { autoAlignGraph as autoAlignGraphWithEdges } from "./autoLayout";
 import {
   COMPONENT_GAP,
   CROSS_GAP,
@@ -57,6 +57,10 @@ function group(
 
 function edge(id: string, source: string, target: string): GraphEdgeType {
   return { id, source, target, type: "graph", data: { direction: "both" } };
+}
+
+function autoAlignGraph(nodes: GraphCanvasNode[], edges: GraphEdgeType[]) {
+  return autoAlignGraphWithEdges(nodes, edges).nodes;
 }
 
 /** ポイントの絶対中心（position = 中心アンカー） */
@@ -737,11 +741,11 @@ describe("autoAlignGraph: 全体の不変条件", () => {
   });
 
   it("整列済みのグラフをもう一度整列しても変わらない（冪等）", () => {
-    const once = autoAlignGraph(
+    const once = autoAlignGraphWithEdges(
       PLACEHOLDER_GRAPH.nodes,
       PLACEHOLDER_GRAPH.edges,
     );
-    expect(autoAlignGraph(once, PLACEHOLDER_GRAPH.edges)).toEqual(once);
+    expect(autoAlignGraphWithEdges(once.nodes, once.edges)).toEqual(once);
   });
 
   it("変わるのは位置とグループのサイズだけで、ID・並び順・データは保たれる", () => {
@@ -816,14 +820,36 @@ describe("autoAlignGraph: 外部ポイント", () => {
     }
   });
 
-  it("外部ポイントは接続先の中央、グラフの下側に置き、再整列しても動かない", () => {
-    const once = autoAlignGraph([...nodes, external], edges);
-    const a = centerOf(once, "a");
-    const c = centerOf(once, "c");
-    const x = centerOf(once, "x");
+  it("入口と出口が離れていれば、それぞれの近くに外部ポイントを置いて付け替え、再整列しても変わらない", () => {
+    const once = autoAlignGraphWithEdges([...nodes, external], edges);
+    const externals = once.nodes.filter(isExternalNode);
+    const exIn = once.edges.find((e) => e.id === "ex1");
+    const exOut = once.edges.find((e) => e.id === "ex2");
 
-    expect(x.x).toBe(Math.round((a.x + c.x) / 2));
-    expect(x.y).toBe(Math.max(a.y, c.y) + NODE_HEIGHT + LAYER_GAP);
-    expect(autoAlignGraph(once, edges)).toEqual(once);
+    expect(externals).toHaveLength(2);
+    expect(exIn?.target).toBe("a");
+    expect(exOut?.source).toBe("c");
+    expect(centerOf(once.nodes, exIn?.source ?? "").x).toBeLessThan(
+      centerOf(once.nodes, "a").x,
+    );
+    expect(centerOf(once.nodes, exOut?.target ?? "").x).toBeGreaterThan(
+      centerOf(once.nodes, "c").x,
+    );
+    expect(autoAlignGraphWithEdges(once.nodes, once.edges)).toEqual(once);
+  });
+
+  it("プレースホルダグラフでは入口側と出口側に 1 つずつ外部ポイントを置く", () => {
+    const { nodes: aligned, edges: rewired } = autoAlignGraphWithEdges(
+      PLACEHOLDER_GRAPH.nodes,
+      PLACEHOLDER_GRAPH.edges,
+    );
+    const externalIds = aligned.filter(isExternalNode).map((n) => n.id);
+    const exIn = rewired.find((e) => e.id === "ph_e_external_in");
+    const exOut = rewired.find((e) => e.id === "ph_e_external_out");
+
+    expect(externalIds).toHaveLength(2);
+    expect(externalIds).toContain(exIn?.source);
+    expect(externalIds).toContain(exOut?.target);
+    expect(exIn?.source).not.toBe(exOut?.target);
   });
 });

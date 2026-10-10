@@ -181,8 +181,10 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
 
   /** グラフ全体を接続状況に基づいて自動整列する */
   const autoAlign = useCallback(() => {
-    setNodes((nds) => autoAlignGraph(nds, edges));
-  }, [edges]);
+    const aligned = autoAlignGraph(nodes, edges);
+    setNodes(aligned.nodes);
+    setEdges(aligned.edges);
+  }, [nodes, edges]);
 
   const removeEdge = useCallback((id: string) => {
     setEdges((eds) => withoutEdge(eds, id));

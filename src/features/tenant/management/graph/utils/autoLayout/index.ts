@@ -1,8 +1,8 @@
 import type { GraphCanvasNode, GraphEdgeType } from "../../type";
-import { isExternalNode, isPointNode } from "../../type";
-import { fitGroupsToChildren, sizeOf, withAbsolutePositions } from "../groups";
+import { isExternalNode } from "../../type";
+import { fitGroupsToChildren } from "../groups";
 import { assembleNodes } from "./assemble";
-import { LAYER_GAP } from "./constants";
+import { placeExternals } from "./externals";
 import { finalizeContainer } from "./finalizing";
 import { buildIndex, currentCentersOf } from "./graphIndex";
 import { planContainers } from "./planning";
@@ -33,57 +33,25 @@ import type { FinalizedContent } from "./types";
 export function autoAlignGraph(
   nodes: GraphCanvasNode[],
   edges: GraphEdgeType[],
-): GraphCanvasNode[] {
-  const external = nodes.find(isExternalNode);
-  if (!external) return alignRoutes(nodes, edges);
+): { nodes: GraphCanvasNode[]; edges: GraphEdgeType[] } {
+  const externals = nodes.filter(isExternalNode);
+  const externalIds = new Set(externals.map((n) => n.id));
+  const touchesExternal = (e: GraphEdgeType) =>
+    externalIds.has(e.source) || externalIds.has(e.target);
 
   const aligned = alignRoutes(
-    nodes.filter((n) => n !== external),
-    edges.filter((e) => e.source !== external.id && e.target !== external.id),
+    nodes.filter((n) => !externalIds.has(n.id)),
+    edges.filter((e) => !touchesExternal(e)),
   );
-  const placed = placeExternal(external, aligned, edges);
-  const alignedById = new Map(aligned.map((n) => [n.id, n]));
-  return nodes.map((n) =>
-    n === external ? placed : (alignedById.get(n.id) ?? n),
-  );
-}
-
-function placeExternal(
-  external: GraphCanvasNode,
-  aligned: GraphCanvasNode[],
-  edges: GraphEdgeType[],
-): GraphCanvasNode {
-  const absolute = withAbsolutePositions(aligned);
-  if (absolute.length === 0) return external;
-
-  const bottom = Math.max(
-    ...absolute.map(
-      (n) =>
-        n.position.y +
-        (isPointNode(n) ? sizeOf(n).height / 2 : sizeOf(n).height),
-    ),
-  );
-  const connectedIds = new Set(
-    edges.flatMap((e) =>
-      e.source === external.id
-        ? [e.target]
-        : e.target === external.id
-          ? [e.source]
-          : [],
-    ),
-  );
-  const connected = absolute.filter((n) => connectedIds.has(n.id));
-  const xs = (
-    connected.length > 0 ? connected : absolute.filter(isPointNode)
-  ).map((n) => n.position.x);
-  const x = xs.length > 0 ? (Math.min(...xs) + Math.max(...xs)) / 2 : 0;
-
+  const placed = placeExternals({
+    aligned,
+    externals,
+    externalEdges: edges.filter(touchesExternal),
+  });
+  const rewired = new Map(placed.externalEdges.map((e) => [e.id, e]));
   return {
-    ...external,
-    position: {
-      x: Math.round(x),
-      y: Math.round(bottom + LAYER_GAP + sizeOf(external).height / 2),
-    },
+    nodes: [...aligned, ...placed.externals],
+    edges: edges.map((e) => rewired.get(e.id) ?? e),
   };
 }
 
