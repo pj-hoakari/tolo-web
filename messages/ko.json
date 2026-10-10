@@ -31,7 +31,7 @@
       "GOAL": "목적지",
       "GOAL_TRANSIT_MIXED": "목적지 / 통과",
       "TRANSIT_ONLY": "통과 전용",
-      "BOUNDARY": "출입 지점"
+      "EXTERNAL": "외부"
     },
     "selectionKind": {
       "node": "지점",
@@ -58,10 +58,11 @@
       "GOAL": "예: 전시 부스",
       "GOAL_TRANSIT_MIXED": "예: 벽면 전시(목적지도 통과도 될 수 있음)",
       "TRANSIT_ONLY": "예: 통로 분기",
-      "BOUNDARY": "예: 출입구"
+      "EXTERNAL": "행사장 밖을 나타내는 가상 지점입니다. 외부와 연결된 지점이 출입 지점이 됩니다."
     },
     "notices": {
-      "dualDirection": "출입(입력·출력) 양쪽을 담당하고 있습니다"
+      "boundary": "출입 지점(외부와 연결됨)",
+      "closed": "폐쇄 모드(출입 지점 없음)"
     },
     "labelLanguage": {
       "label": "라벨 언어",
@@ -86,6 +87,7 @@
       "canvasLabel": "캔버스 작업",
       "endEdgeCreation": "경로 추가 종료",
       "addNode": "지점 추가",
+      "addExternal": "외부 지점 추가",
       "addEdge": "경로 추가",
       "nodeLabel": "지점 「{label}」 작업",
       "addEdgeFromNode": "이 지점에서 경로 추가",

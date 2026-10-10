@@ -12,6 +12,8 @@ import type {
   GraphNodeType,
   NodeType,
 } from "../type";
+import { isExternalNode } from "../type";
+import { isLastExternal } from "../utils/graphMutations";
 import { ContextMenuItem } from "./ContextMenuItem";
 import {
   ContextMenuPopover,
@@ -67,34 +69,47 @@ export function GraphNodeContextMenu({
           label={t("addEdgeFromNode")}
           onAction={() => onStartEdgeCreation(node.id)}
         />
-        <MenuSeparator />
-        {/* 選択中のタイプをラジオ選択として支援技術へ伝える */}
-        <MenuSection selectionMode="single" selectedKeys={[node.data.nodeType]}>
-          <MenuHeader className="px-2 text-xs">{t("changeType")}</MenuHeader>
-          {options.map((option) => (
+        {isExternalNode(node) ? null : (
+          <>
+            <MenuSeparator />
+            {/* 選択中のタイプをラジオ選択として支援技術へ伝える */}
+            <MenuSection
+              selectionMode="single"
+              selectedKeys={[node.data.nodeType]}
+            >
+              <MenuHeader className="px-2 text-xs">
+                {t("changeType")}
+              </MenuHeader>
+              {options.map((option) => (
+                <ContextMenuItem
+                  id={option.type}
+                  key={option.type}
+                  icon={<NodeTypeIcon type={option.type} />}
+                  label={tType(option.type)}
+                  description={option.disabledReason}
+                  isDisabled={!option.assignable}
+                  onAction={() => {
+                    if (option.type !== node.data.nodeType) {
+                      onSetType(node.id, option.type);
+                    }
+                  }}
+                />
+              ))}
+            </MenuSection>
+          </>
+        )}
+        {isLastExternal(node.id, nodes) ? null : (
+          <>
+            <MenuSeparator />
             <ContextMenuItem
-              id={option.type}
-              key={option.type}
-              icon={<NodeTypeIcon type={option.type} />}
-              label={tType(option.type)}
-              description={option.disabledReason}
-              isDisabled={!option.assignable}
-              onAction={() => {
-                if (option.type !== node.data.nodeType) {
-                  onSetType(node.id, option.type);
-                }
-              }}
+              id="delete"
+              icon={Trash2}
+              label={t("deleteNode")}
+              variant="destructive"
+              onAction={() => onDelete(node.id)}
             />
-          ))}
-        </MenuSection>
-        <MenuSeparator />
-        <ContextMenuItem
-          id="delete"
-          icon={Trash2}
-          label={t("deleteNode")}
-          variant="destructive"
-          onAction={() => onDelete(node.id)}
-        />
+          </>
+        )}
       </Menu>
     </ContextMenuPopover>
   );

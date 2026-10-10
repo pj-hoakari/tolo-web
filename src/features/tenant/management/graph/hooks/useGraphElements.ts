@@ -6,6 +6,7 @@ import {
   type EdgeChange,
   type NodeChange,
 } from "@xyflow/react";
+import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 import { deriveNodeNotices } from "../nodeTypes";
 import type {
@@ -18,6 +19,7 @@ import type {
 import { isGroupNode, isPointNode } from "../type";
 import { autoAlignGraph } from "../utils/autoLayout";
 import {
+  ensureExternalNode,
   patchEdgeData,
   patchNodeData,
   patchNodeLabel,
@@ -42,7 +44,10 @@ import { deriveNodeLabels } from "../utils/labels";
  * labelLocale はラベルの表示言語（ポイント・グループ共通で、描画用ラベルの解決に使う）。
  */
 export function useGraphElements(initial: GraphData, labelLocale: string) {
-  const [nodes, setNodes] = useState<GraphCanvasNode[]>(initial.nodes);
+  const tType = useTranslations("Graph.nodeType");
+  const [nodes, setNodes] = useState<GraphCanvasNode[]>(() =>
+    ensureExternalNode(initial.nodes),
+  );
   const [edges, setEdges] = useState<GraphEdgeType[]>(initial.edges);
 
   // ノード位置から各エッジの接続辺(上下左右)を決定
@@ -54,10 +59,13 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
   const derivedNodes = useMemo(
     () =>
       deriveNodeNotices(
-        deriveNodeHandles(deriveNodeLabels(nodes, labelLocale), derivedEdges),
+        deriveNodeHandles(
+          deriveNodeLabels(nodes, labelLocale, tType("EXTERNAL")),
+          derivedEdges,
+        ),
         derivedEdges,
       ),
-    [nodes, derivedEdges, labelLocale],
+    [nodes, derivedEdges, labelLocale, tType],
   );
 
   /** 派生情報を含まない、編集中のグラフそのもの */
@@ -173,8 +181,10 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
 
   /** グラフ全体を接続状況に基づいて自動整列する */
   const autoAlign = useCallback(() => {
-    setNodes((nds) => autoAlignGraph(nds, edges));
-  }, [edges]);
+    const aligned = autoAlignGraph(nodes, edges);
+    setNodes(aligned.nodes);
+    setEdges(aligned.edges);
+  }, [nodes, edges]);
 
   const removeEdge = useCallback((id: string) => {
     setEdges((eds) => withoutEdge(eds, id));

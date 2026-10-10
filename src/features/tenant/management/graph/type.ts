@@ -29,7 +29,7 @@ export type NodeType =
   | "GOAL"
   | "GOAL_TRANSIT_MIXED"
   | "TRANSIT_ONLY"
-  | "BOUNDARY";
+  | "EXTERNAL";
 
 /** 通知（強調表示）の重要度 */
 export type NoticeLevel = "info" | "warning";
@@ -135,6 +135,10 @@ export function isGroupNode(node: GraphCanvasNode): node is GroupNodeType {
 
 export function isPointNode(node: GraphCanvasNode): node is GraphNodeType {
   return node.type !== "graphGroup";
+}
+
+export function isExternalNode(node: GraphCanvasNode): boolean {
+  return isPointNode(node) && node.data.nodeType === "EXTERNAL";
 }
 
 export type GraphData = {

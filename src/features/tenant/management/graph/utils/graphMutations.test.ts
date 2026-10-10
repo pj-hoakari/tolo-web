@@ -9,6 +9,10 @@ import type {
 import {
   createEdge,
   createNode,
+  EXTERNAL_NODE_ID,
+  ensureExternalNode,
+  isLastExternal,
+  keepLastExternal,
   patchEdgeData,
   patchNodeData,
   patchNodeLabel,
@@ -55,7 +59,7 @@ describe("createNode / createEdge", () => {
     const created = createNode({
       id: "n1",
       labels: { ja: "ポイント 1" },
-      nodeType: "BOUNDARY",
+      nodeType: "TRANSIT_ONLY",
       position: { x: 10, y: 20 },
     });
 
@@ -63,7 +67,7 @@ describe("createNode / createEdge", () => {
       id: "n1",
       type: "graph",
       position: { x: 10, y: 20 },
-      data: { labels: { ja: "ポイント 1" }, nodeType: "BOUNDARY" },
+      data: { labels: { ja: "ポイント 1" }, nodeType: "TRANSIT_ONLY" },
     });
   });
 
@@ -85,11 +89,11 @@ describe("patchNodeData", () => {
   it("対象ノードの data だけを部分更新する", () => {
     const nodes = [node("n1"), node("n2")];
 
-    const next = patchNodeData(nodes, "n1", { nodeType: "BOUNDARY" });
+    const next = patchNodeData(nodes, "n1", { nodeType: "TRANSIT_ONLY" });
 
     expect(next[0].data).toEqual({
       labels: { ja: "n1" },
-      nodeType: "BOUNDARY",
+      nodeType: "TRANSIT_ONLY",
     });
     expect(next[1]).toBe(nodes[1]);
   });
@@ -97,7 +101,7 @@ describe("patchNodeData", () => {
   it("元の配列を書き換えない", () => {
     const nodes = [node("n1")];
 
-    patchNodeData(nodes, "n1", { nodeType: "BOUNDARY" });
+    patchNodeData(nodes, "n1", { nodeType: "TRANSIT_ONLY" });
 
     expect(nodes[0].data.nodeType).toBe("GOAL");
   });
@@ -209,5 +213,90 @@ describe("削除", () => {
 
   it("withoutEdge は指定ルートだけを除く", () => {
     expect(withoutEdge(edges, "e1").map((e) => e.id)).toEqual(["e2"]);
+  });
+});
+
+describe("ensureExternalNode", () => {
+  it("外部ポイントが無ければ、ルート要素の左上より外側に 1 つ追加する", () => {
+    const nodes = [
+      { ...node("n1"), position: { x: 100, y: 50 } },
+      { ...node("n2"), position: { x: -40, y: 300 } },
+    ];
+
+    const next = ensureExternalNode(nodes);
+
+    expect(next).toHaveLength(3);
+    expect(next[2]).toMatchObject({
+      id: EXTERNAL_NODE_ID,
+      type: "graph",
+      position: { x: -280, y: 0 },
+      data: { labels: {}, nodeType: "EXTERNAL" },
+    });
+  });
+
+  it("外部ポイントがあれば何も変えない", () => {
+    const external: GraphNodeType = {
+      ...node("x"),
+      data: { labels: {}, nodeType: "EXTERNAL" },
+    };
+
+    const next = ensureExternalNode([node("n1"), external]);
+
+    expect(next).toHaveLength(2);
+    expect(next[1]).toBe(external);
+    expect(next[1]).not.toHaveProperty("deletable");
+  });
+
+  it("新しく追加した外部ポイントは削除可否を保存しない", () => {
+    expect(ensureExternalNode([node("n1")])[1]).not.toHaveProperty("deletable");
+  });
+});
+
+describe("keepLastExternal", () => {
+  const x1 = node("x1", "EXTERNAL");
+  const x2 = node("x2", "EXTERNAL");
+  const n1 = node("n1");
+  const all = [n1, x1, x2];
+
+  it("すべての外部ポイントを消す削除では、先頭の外部ポイントとそのルートを残す", () => {
+    const result = keepLastExternal(
+      {
+        nodes: [x1, x2, n1],
+        edges: [edge("e1", "x1", "n1"), edge("e2", "n1", "x2")],
+      },
+      all,
+    );
+
+    expect(result.nodes.map((n) => n.id)).toEqual(["x2", "n1"]);
+    expect(result.edges.map((e) => e.id)).toEqual(["e2"]);
+  });
+
+  it("外部ポイントが残る削除はそのまま通す", () => {
+    const toDelete = { nodes: [x1], edges: [edge("e1", "x1", "n1")] };
+
+    expect(keepLastExternal(toDelete, all)).toEqual(toDelete);
+  });
+
+  it("外部ポイントを含まない削除はそのまま通す", () => {
+    const toDelete = { nodes: [n1], edges: [edge("e1", "x1", "n1")] };
+
+    expect(keepLastExternal(toDelete, all)).toEqual(toDelete);
+  });
+});
+
+describe("isLastExternal", () => {
+  const x1 = node("x1", "EXTERNAL");
+  const x2 = node("x2", "EXTERNAL");
+
+  it("外部ポイントが 1 つだけならそれが最後の外部ポイント", () => {
+    expect(isLastExternal("x1", [node("n1"), x1])).toBe(true);
+  });
+
+  it("外部ポイントが複数あればどれも最後ではない", () => {
+    expect(isLastExternal("x1", [x1, x2])).toBe(false);
+  });
+
+  it("外部ポイント以外は最後の外部ポイントではない", () => {
+    expect(isLastExternal("n1", [node("n1"), x1])).toBe(false);
   });
 });

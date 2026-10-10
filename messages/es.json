@@ -31,7 +31,7 @@
       "GOAL": "Destino",
       "GOAL_TRANSIT_MIXED": "Destino / Tránsito",
       "TRANSIT_ONLY": "Solo tránsito",
-      "BOUNDARY": "Entrada / Salida"
+      "EXTERNAL": "Exterior"
     },
     "selectionKind": {
       "node": "Punto",
@@ -58,10 +58,11 @@
       "GOAL": "p. ej., un estand",
       "GOAL_TRANSIT_MIXED": "p. ej., una exposición mural (destino y a la vez paso)",
       "TRANSIT_ONLY": "p. ej., una bifurcación del pasillo",
-      "BOUNDARY": "p. ej., una entrada o salida"
+      "EXTERNAL": "Punto virtual que representa el exterior del recinto. Los puntos conectados a él pasan a ser puntos de entrada / salida."
     },
     "notices": {
-      "dualDirection": "Funciona a la vez como entrada y como salida"
+      "boundary": "Punto de entrada / salida (conectado al exterior)",
+      "closed": "Modo cerrado (sin puntos de entrada / salida)"
     },
     "labelLanguage": {
       "label": "Idioma de las etiquetas",
@@ -86,6 +87,7 @@
       "canvasLabel": "Acciones del lienzo",
       "endEdgeCreation": "Terminar de añadir rutas",
       "addNode": "Añadir punto",
+      "addExternal": "Añadir punto exterior",
       "addEdge": "Añadir ruta",
       "nodeLabel": "Acciones del punto «{label}»",
       "addEdgeFromNode": "Añadir una ruta desde este punto",

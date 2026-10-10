@@ -13,6 +13,10 @@ export {
   type EdgeReverseButtonProps,
 } from "./EdgeReverseButton";
 export {
+  ExternalProperties,
+  type ExternalPropertiesProps,
+} from "./ExternalProperties";
+export {
   deriveEdgeDirectionState,
   type EdgeDirectionState,
   resolveEdgeDirectionState,

@@ -10,7 +10,7 @@ import type {
   LocalizedLabel,
   NodeType,
 } from "../type";
-import { isPointNode } from "../type";
+import { isExternalNode, isPointNode } from "../type";
 import { GROUP_DEFAULT_HEIGHT, GROUP_DEFAULT_WIDTH } from "./groups";
 
 /** data を持たないエッジに補う既定の通行方向 */
@@ -36,6 +36,48 @@ export function createNode(params: {
     type: "graph",
     position: params.position,
     data: { labels: params.labels, nodeType: params.nodeType },
+  };
+}
+
+export const EXTERNAL_NODE_ID = "external";
+
+export function ensureExternalNode(
+  nodes: GraphCanvasNode[],
+): GraphCanvasNode[] {
+  if (nodes.some(isExternalNode)) return nodes;
+  const roots = nodes.filter((n) => !n.parentId);
+  const external = createNode({
+    id: EXTERNAL_NODE_ID,
+    labels: {},
+    nodeType: "EXTERNAL",
+    position: {
+      x: Math.min(0, ...roots.map((n) => n.position.x)) - 240,
+      y: Math.min(0, ...roots.map((n) => n.position.y)),
+    },
+  });
+  return [...nodes, external];
+}
+
+export function isLastExternal(
+  nodeId: string,
+  nodes: GraphCanvasNode[],
+): boolean {
+  const externals = nodes.filter(isExternalNode);
+  return externals.length === 1 && externals[0].id === nodeId;
+}
+
+export function keepLastExternal(
+  toDelete: { nodes: GraphCanvasNode[]; edges: GraphEdgeType[] },
+  allNodes: GraphCanvasNode[],
+): { nodes: GraphCanvasNode[]; edges: GraphEdgeType[] } {
+  const deletingIds = new Set(toDelete.nodes.map((n) => n.id));
+  const externals = allNodes.filter(isExternalNode);
+  if (externals.some((n) => !deletingIds.has(n.id))) return toDelete;
+  const kept = externals[0];
+  if (!kept) return toDelete;
+  return {
+    nodes: toDelete.nodes.filter((n) => n.id !== kept.id),
+    edges: withoutEdgesOf(toDelete.edges, kept.id),
   };
 }
 

@@ -31,7 +31,7 @@
       "GOAL": "Destination",
       "GOAL_TRANSIT_MIXED": "Destination / Transit",
       "TRANSIT_ONLY": "Transit only",
-      "BOUNDARY": "Entry / Exit"
+      "EXTERNAL": "Outside"
     },
     "selectionKind": {
       "node": "Point",
@@ -58,10 +58,11 @@
       "GOAL": "e.g. an exhibition booth",
       "GOAL_TRANSIT_MIXED": "e.g. a wall exhibit (both a destination and a passage)",
       "TRANSIT_ONLY": "e.g. a corridor junction",
-      "BOUNDARY": "e.g. an entrance or exit"
+      "EXTERNAL": "A virtual point for outside the venue. Points connected to it become entry / exit points."
     },
     "notices": {
-      "dualDirection": "Serves as both an entry and an exit"
+      "boundary": "Entry / exit point (connected to Outside)",
+      "closed": "Closed mode (no entry / exit points)"
     },
     "labelLanguage": {
       "label": "Label language",
@@ -86,6 +87,7 @@
       "canvasLabel": "Canvas actions",
       "endEdgeCreation": "Finish adding routes",
       "addNode": "Add point",
+      "addExternal": "Add outside point",
       "addEdge": "Add route",
       "nodeLabel": "Actions for point “{label}”",
       "addEdgeFromNode": "Add a route from this point",

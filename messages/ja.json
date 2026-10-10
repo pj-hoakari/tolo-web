@@ -31,7 +31,7 @@
       "GOAL": "目的地",
       "GOAL_TRANSIT_MIXED": "目的地 / 通過",
       "TRANSIT_ONLY": "通過のみ",
-      "BOUNDARY": "入退出点"
+      "EXTERNAL": "外部"
     },
     "selectionKind": {
       "node": "ポイント",
@@ -58,10 +58,11 @@
       "GOAL": "例: 展示ブース",
       "GOAL_TRANSIT_MIXED": "例: 壁展示（目的地にも通過にもなりうる）",
       "TRANSIT_ONLY": "例: 通路の分岐",
-      "BOUNDARY": "例: 入口・出口"
+      "EXTERNAL": "会場の外を表す仮想ポイントです。外部と接続したポイントが入退出点になります。"
     },
     "notices": {
-      "dualDirection": "入退出（入力・出力）の両方を担っています"
+      "boundary": "入退出点（外部と接続）",
+      "closed": "クローズドモード（入退出点なし）"
     },
     "labelLanguage": {
       "label": "ラベルの言語",
@@ -86,6 +87,7 @@
       "canvasLabel": "キャンバスの操作",
       "endEdgeCreation": "ルート追加を終了",
       "addNode": "ポイントを追加",
+      "addExternal": "外部ポイントを追加",
       "addEdge": "ルートを追加",
       "nodeLabel": "ポイント「{label}」の操作",
       "addEdgeFromNode": "このポイントからルートを追加",

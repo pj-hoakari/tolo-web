@@ -12,6 +12,7 @@ import {
   MiniMap,
   type NodeChange,
   type NodeTypes,
+  type OnBeforeDelete,
   type OnConnectEnd,
   type OnConnectStart,
   ReactFlow,
@@ -88,6 +89,7 @@ export type GraphCanvasEditing = {
   ) => void;
   onDeleteNode: (id: string) => void;
   onDeleteEdge: (id: string) => void;
+  onBeforeDelete: OnBeforeDelete<GraphCanvasNode, GraphEdgeType>;
   /** ドラッグ終了時に、位置に応じた所属グループの付け替えを行う */
   onNodeDragStop: (ids: string[]) => void;
   /** グループの手動リサイズ確定（最小サイズとして保存し、フィットし直す） */
@@ -366,6 +368,7 @@ export function GraphCanvas({
               nodesDraggable={editable && !easyConnect.active}
               nodesConnectable={editable}
               deleteKeyCode={editable ? ["Delete", "Backspace"] : null}
+              onBeforeDelete={editing?.onBeforeDelete}
               onNodeClick={(_, n) => onSelectNode(n.id)}
               onNodeContextMenu={
                 editable ? contextMenu.openNodeMenu : undefined
