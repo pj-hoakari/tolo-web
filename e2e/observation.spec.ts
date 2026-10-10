@@ -101,6 +101,28 @@ test.describe("画面ロック", () => {
     ).toHaveCount(1);
   });
 
+  test("ロック中は Tab キーでヘッダーや画面の常時点灯にも移動できない", async ({
+    page,
+  }) => {
+    test.fail();
+    const reached = new Set<string>();
+    for (let i = 0; i < 20; i++) {
+      await page.keyboard.press("Tab");
+      reached.add(
+        await page.evaluate(
+          () =>
+            document.activeElement?.getAttribute("aria-label") ??
+            document.activeElement?.textContent?.trim() ??
+            "",
+        ),
+      );
+    }
+
+    expect(reached).not.toContain("言語を切り替え");
+    expect(reached).not.toContain("テーマを切り替え");
+    expect(reached).not.toContain("画面の常時点灯");
+  });
+
   test("4 文字未満の解除コードを設定しようとすると文字数不足のエラーが表示される", async ({
     page,
   }) => {
