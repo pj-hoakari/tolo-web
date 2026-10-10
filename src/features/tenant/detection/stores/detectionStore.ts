@@ -33,10 +33,16 @@ export type DetectionLineCount = {
   backward: number;
 };
 
+export type DetectedPeopleTally = {
+  frames: number;
+  people: number;
+};
+
 /** 検出ループが毎フレーム更新する結果 */
 export type DetectionResult = {
   lineCounts: Record<string, DetectionLineCount>;
   metrics: DetectionMetrics;
+  detectedPeople: DetectedPeopleTally;
 };
 
 /** 検出結果には影響しない画面操作の状態 */
@@ -64,6 +70,11 @@ export const DEFAULT_COUNTING_LINES: DetectionCountingLineSetting[] = [
 export const INITIAL_METRICS: DetectionMetrics = {
   trackedCount: 0,
   fps: 0,
+};
+
+export const INITIAL_DETECTED_PEOPLE: DetectedPeopleTally = {
+  frames: 0,
+  people: 0,
 };
 
 export const INITIAL_SETTINGS: DetectionSettings = {
@@ -132,6 +143,7 @@ export function createDetectionStores(
     resultStore: createStore<DetectionResult>()(() => ({
       lineCounts: createInitialLineCounts(settings.countingLines),
       metrics: INITIAL_METRICS,
+      detectedPeople: INITIAL_DETECTED_PEOPLE,
     })),
     viewStateStore: createStore<DetectionViewState>()(() => ({
       selectedLineId: settings.countingLines[0]?.id ?? DEFAULT_LINE_ID,
@@ -347,6 +359,32 @@ export function applyMetrics(
       areMetricsEqual(current.metrics, metrics)
         ? current
         : { ...current, metrics },
+    true,
+  );
+}
+
+export function recordDetectedPeople(
+  store: DetectionResultStore,
+  people: number,
+): void {
+  store.setState(
+    (current) => ({
+      ...current,
+      detectedPeople: {
+        frames: current.detectedPeople.frames + 1,
+        people: current.detectedPeople.people + people,
+      },
+    }),
+    true,
+  );
+}
+
+export function resetDetectedPeople(store: DetectionResultStore): void {
+  store.setState(
+    (current) =>
+      current.detectedPeople === INITIAL_DETECTED_PEOPLE
+        ? current
+        : { ...current, detectedPeople: INITIAL_DETECTED_PEOPLE },
     true,
   );
 }
