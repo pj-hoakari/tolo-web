@@ -141,7 +141,7 @@
           "ja": "入口",
           "en": "Entrance"
         },
-        "nodeType": "BOUNDARY"
+        "nodeType": "TRANSIT_ONLY"
       }
     },
     {
@@ -205,7 +205,19 @@
           "ja": "出口",
           "en": "Exit"
         },
-        "nodeType": "BOUNDARY"
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "external",
+      "type": "graph",
+      "position": {
+        "x": 540,
+        "y": 880
+      },
+      "data": {
+        "labels": {},
+        "nodeType": "EXTERNAL"
       }
     }
   ],
@@ -318,6 +330,24 @@
       "type": "graph",
       "data": {
         "direction": "both"
+      }
+    },
+    {
+      "id": "ph_e_external_in",
+      "source": "external",
+      "target": "ph_entrance",
+      "type": "graph",
+      "data": {
+        "direction": "oneway"
+      }
+    },
+    {
+      "id": "ph_e_external_out",
+      "source": "ph_exit",
+      "target": "external",
+      "type": "graph",
+      "data": {
+        "direction": "oneway"
       }
     }
   ]

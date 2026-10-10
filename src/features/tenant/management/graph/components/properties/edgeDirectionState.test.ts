@@ -112,7 +112,7 @@ function node(id: string, nodeType: NodeType): GraphNodeType {
 }
 
 describe("resolveEdgeDirectionState: グラフ状態からの解決", () => {
-  const nodes = [node("a", "BOUNDARY"), node("b", "TRANSIT_ONLY")];
+  const nodes = [node("a", "GOAL"), node("b", "TRANSIT_ONLY")];
 
   it("エッジの方向をそのまま反映する", () => {
     const edge: GraphEdgeType = {

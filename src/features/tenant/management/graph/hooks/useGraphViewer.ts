@@ -6,7 +6,7 @@ import type { LabelLocaleBindings } from "../components/LabelLocaleMenu";
 import type { ObservationLinkPanelProps } from "../components/observation";
 import { toGraphData } from "../serialize";
 import type { GraphData } from "../type";
-import { isPointNode } from "../type";
+import { isExternalNode, isPointNode } from "../type";
 import { countLabeledNodes } from "../utils/labels";
 import { useGraphElements } from "./useGraphElements";
 import { useGraphSelection } from "./useGraphSelection";
@@ -82,7 +82,7 @@ export function useGraphViewer(initial: GraphData): GraphViewerApi {
       labelLocale,
       onChangeLabelLocale: setLabelLocale,
       labelCounts,
-      labelTargetCount: source.nodes.length,
+      labelTargetCount: source.nodes.filter((n) => !isExternalNode(n)).length,
     },
     canvas: {
       nodes,
@@ -98,7 +98,9 @@ export function useGraphViewer(initial: GraphData): GraphViewerApi {
       // 観測点を紐づけられるのはポイントのみ（グループは対象外）
       selectedNode:
         selection?.type === "node"
-          ? nodes.filter(isPointNode).find((n) => n.id === selection.id)
+          ? nodes
+              .filter(isPointNode)
+              .find((n) => n.id === selection.id && !isExternalNode(n))
           : undefined,
       selectedEdge:
         selection?.type === "edge"

@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { isGroupNode } from "@/features/tenant/management/graph/type";
+import {
+  isExternalNode,
+  isGroupNode,
+} from "@/features/tenant/management/graph/type";
 import { fetchGraph } from "./api";
 import { PLACEHOLDER_GRAPH } from "./placeholderGraph";
 
-const NODE_TYPES = ["GOAL", "GOAL_TRANSIT_MIXED", "TRANSIT_ONLY", "BOUNDARY"];
+const NODE_TYPES = ["GOAL", "GOAL_TRANSIT_MIXED", "TRANSIT_ONLY", "EXTERNAL"];
 
 describe("PLACEHOLDER_GRAPH (placeholderGraph.json)", () => {
   it("ノードの type / nodeType / 親子関係が GraphData の制約を満たす", () => {
@@ -11,7 +14,9 @@ describe("PLACEHOLDER_GRAPH (placeholderGraph.json)", () => {
     const seen = new Set<string>();
     for (const n of PLACEHOLDER_GRAPH.nodes) {
       expect(["graph", "graphGroup"]).toContain(n.type);
-      expect(Object.keys(n.data.labels).length).toBeGreaterThan(0);
+      if (!isExternalNode(n)) {
+        expect(Object.keys(n.data.labels).length).toBeGreaterThan(0);
+      }
       if (isGroupNode(n)) {
         expect(n.width).toBeGreaterThan(0);
         expect(n.height).toBeGreaterThan(0);
@@ -22,6 +27,7 @@ describe("PLACEHOLDER_GRAPH (placeholderGraph.json)", () => {
       if (n.parentId) expect(seen.has(n.parentId)).toBe(true);
       seen.add(n.id);
     }
+    expect(PLACEHOLDER_GRAPH.nodes.filter(isExternalNode)).toHaveLength(1);
     for (const e of PLACEHOLDER_GRAPH.edges) {
       expect(e.type).toBe("graph");
       expect(ids.has(e.source)).toBe(true);

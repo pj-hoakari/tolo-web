@@ -1,6 +1,8 @@
 import type { GraphCanvasNode, GraphEdgeType } from "../../type";
-import { fitGroupsToChildren } from "../groups";
+import { isExternalNode, isPointNode } from "../../type";
+import { fitGroupsToChildren, sizeOf, withAbsolutePositions } from "../groups";
 import { assembleNodes } from "./assemble";
+import { LAYER_GAP } from "./constants";
 import { finalizeContainer } from "./finalizing";
 import { buildIndex, currentCentersOf } from "./graphIndex";
 import { planContainers } from "./planning";
@@ -29,6 +31,63 @@ import type { FinalizedContent } from "./types";
  *    フィットさせて確定する。
  */
 export function autoAlignGraph(
+  nodes: GraphCanvasNode[],
+  edges: GraphEdgeType[],
+): GraphCanvasNode[] {
+  const external = nodes.find(isExternalNode);
+  if (!external) return alignRoutes(nodes, edges);
+
+  const aligned = alignRoutes(
+    nodes.filter((n) => n !== external),
+    edges.filter((e) => e.source !== external.id && e.target !== external.id),
+  );
+  const placed = placeExternal(external, aligned, edges);
+  const alignedById = new Map(aligned.map((n) => [n.id, n]));
+  return nodes.map((n) =>
+    n === external ? placed : (alignedById.get(n.id) ?? n),
+  );
+}
+
+function placeExternal(
+  external: GraphCanvasNode,
+  aligned: GraphCanvasNode[],
+  edges: GraphEdgeType[],
+): GraphCanvasNode {
+  const absolute = withAbsolutePositions(aligned);
+  if (absolute.length === 0) return external;
+
+  const bottom = Math.max(
+    ...absolute.map(
+      (n) =>
+        n.position.y +
+        (isPointNode(n) ? sizeOf(n).height / 2 : sizeOf(n).height),
+    ),
+  );
+  const connectedIds = new Set(
+    edges.flatMap((e) =>
+      e.source === external.id
+        ? [e.target]
+        : e.target === external.id
+          ? [e.source]
+          : [],
+    ),
+  );
+  const connected = absolute.filter((n) => connectedIds.has(n.id));
+  const xs = (
+    connected.length > 0 ? connected : absolute.filter(isPointNode)
+  ).map((n) => n.position.x);
+  const x = xs.length > 0 ? (Math.min(...xs) + Math.max(...xs)) / 2 : 0;
+
+  return {
+    ...external,
+    position: {
+      x: Math.round(x),
+      y: Math.round(bottom + LAYER_GAP + sizeOf(external).height / 2),
+    },
+  };
+}
+
+function alignRoutes(
   nodes: GraphCanvasNode[],
   edges: GraphEdgeType[],
 ): GraphCanvasNode[] {

@@ -31,7 +31,7 @@
       "GOAL": "目的地",
       "GOAL_TRANSIT_MIXED": "目的地 / 通行",
       "TRANSIT_ONLY": "仅通行",
-      "BOUNDARY": "出入口"
+      "EXTERNAL": "外部"
     },
     "selectionKind": {
       "node": "节点",
@@ -58,10 +58,11 @@
       "GOAL": "例：展位",
       "GOAL_TRANSIT_MIXED": "例：墙面展示（既是目的地也可通行）",
       "TRANSIT_ONLY": "例：通道分叉",
-      "BOUNDARY": "例：出入口"
+      "EXTERNAL": "表示场馆外部的虚拟点。与外部连接的点将作为出入口。"
     },
     "notices": {
-      "dualDirection": "同时承担进入和离开（输入·输出）"
+      "boundary": "出入口（与外部连接）",
+      "closed": "封闭模式（无出入口）"
     },
     "labelLanguage": {
       "label": "标签语言",

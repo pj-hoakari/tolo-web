@@ -18,7 +18,7 @@ import type {
   GraphEdgeType,
   NodeType,
 } from "../type";
-import { isGroupNode, isPointNode } from "../type";
+import { isExternalNode, isGroupNode, isPointNode } from "../type";
 import {
   createEdge,
   createGroup,
@@ -184,7 +184,9 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
         id: newId("n"),
         labels: {
           [labelLocale]: t("newNodeLabel", {
-            index: source.nodes.filter(isPointNode).length + 1,
+            index:
+              source.nodes.filter((n) => isPointNode(n) && !isExternalNode(n))
+                .length + 1,
           }),
         },
         nodeType,
@@ -228,6 +230,7 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
   const deleteNode = useCallback(
     (id: string) => {
       const node = source.nodes.find((n) => n.id === id);
+      if (node && isExternalNode(node)) return;
       if (node && isGroupNode(node)) {
         // グループは「解除」: コンテナだけを取り除き、中身は残す
         removeGroup(id);
@@ -311,7 +314,7 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
       labelLocale,
       onChangeLabelLocale: setLabelLocale,
       labelCounts,
-      labelTargetCount: source.nodes.length,
+      labelTargetCount: source.nodes.filter((n) => !isExternalNode(n)).length,
     },
     properties: {
       selectedNode:

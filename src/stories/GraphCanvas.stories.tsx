@@ -18,7 +18,7 @@ const derivedEdges = assignHandlesByPosition(
 );
 const derivedNodes = deriveNodeNotices(
   deriveNodeHandles(
-    deriveNodeLabels(PLACEHOLDER_GRAPH.nodes, "ja"),
+    deriveNodeLabels(PLACEHOLDER_GRAPH.nodes, "ja", "外部"),
     derivedEdges,
   ),
   derivedEdges,

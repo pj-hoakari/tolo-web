@@ -10,7 +10,7 @@ import type {
   LocalizedLabel,
   NodeType,
 } from "../type";
-import { isPointNode } from "../type";
+import { isExternalNode, isPointNode } from "../type";
 import { GROUP_DEFAULT_HEIGHT, GROUP_DEFAULT_WIDTH } from "./groups";
 
 /** data を持たないエッジに補う既定の通行方向 */
@@ -37,6 +37,32 @@ export function createNode(params: {
     position: params.position,
     data: { labels: params.labels, nodeType: params.nodeType },
   };
+}
+
+export const EXTERNAL_NODE_ID = "external";
+
+export function ensureExternalNode(
+  nodes: GraphCanvasNode[],
+): GraphCanvasNode[] {
+  if (nodes.some(isExternalNode)) {
+    return nodes.map((n) =>
+      isExternalNode(n) ? { ...n, deletable: false } : n,
+    );
+  }
+  const roots = nodes.filter((n) => !n.parentId);
+  const external: GraphNodeType = {
+    ...createNode({
+      id: EXTERNAL_NODE_ID,
+      labels: {},
+      nodeType: "EXTERNAL",
+      position: {
+        x: Math.min(0, ...roots.map((n) => n.position.x)) - 240,
+        y: Math.min(0, ...roots.map((n) => n.position.y)),
+      },
+    }),
+    deletable: false,
+  };
+  return [...nodes, external];
 }
 
 export function createGroup(params: {

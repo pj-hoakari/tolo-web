@@ -797,3 +797,33 @@ describe("autoAlignGraph: 全体の不変条件", () => {
     expect(a.y).toBe(b.y);
   });
 });
+
+describe("autoAlignGraph: 外部ポイント", () => {
+  const external: GraphNodeType = {
+    ...point("x", 0, 0),
+    data: { labels: {}, nodeType: "EXTERNAL" },
+  };
+  const nodes = [point("a", 0, 0), point("b", 400, 0), point("c", 800, 0)];
+  const routes = [edge("e1", "a", "b"), edge("e2", "b", "c")];
+  const edges = [...routes, edge("ex1", "x", "a"), edge("ex2", "c", "x")];
+
+  it("外部ポイントとの接続は他のポイントの配置に影響しない", () => {
+    const withExternal = autoAlignGraph([...nodes, external], edges);
+    const without = autoAlignGraph(nodes, routes);
+
+    for (const id of ["a", "b", "c"]) {
+      expect(centerOf(withExternal, id)).toEqual(centerOf(without, id));
+    }
+  });
+
+  it("外部ポイントは接続先の中央、グラフの下側に置き、再整列しても動かない", () => {
+    const once = autoAlignGraph([...nodes, external], edges);
+    const a = centerOf(once, "a");
+    const c = centerOf(once, "c");
+    const x = centerOf(once, "x");
+
+    expect(x.x).toBe(Math.round((a.x + c.x) / 2));
+    expect(x.y).toBe(Math.max(a.y, c.y) + NODE_HEIGHT + LAYER_GAP);
+    expect(autoAlignGraph(once, edges)).toEqual(once);
+  });
+});

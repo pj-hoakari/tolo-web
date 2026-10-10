@@ -3,9 +3,9 @@ import { fn } from "storybook/test";
 
 import { PropertiesPanel } from "@/features/tenant/management/graph/components/properties";
 import {
-  DUAL_BOUNDARY_EDGES,
-  DUAL_BOUNDARY_NODES,
-  dualBoundaryNode,
+  BOUNDARY_EDGES,
+  BOUNDARY_NODES,
+  boundaryFixtureNode,
   GRAPH_EDGES,
   GRAPH_NODES,
   graphEdge,
@@ -58,10 +58,17 @@ export const EdgeSelected: Story = {
   },
 };
 
-export const BoundaryDualDirection: Story = {
+export const Boundary: Story = {
   args: {
-    // 入退出の両方を担う入退出点を選択 → タイプ欄に info 通知が表示される
-    graph: { nodes: DUAL_BOUNDARY_NODES, edges: DUAL_BOUNDARY_EDGES },
-    selectedNode: dualBoundaryNode(),
+    // 外部ポイントと接続したポイントを選択 → タイプ欄に入退出点の通知が表示される
+    graph: { nodes: BOUNDARY_NODES, edges: BOUNDARY_EDGES },
+    selectedNode: boundaryFixtureNode("gate"),
+  },
+};
+
+export const ExternalClosed: Story = {
+  args: {
+    graph: { nodes: BOUNDARY_NODES, edges: [] },
+    selectedNode: boundaryFixtureNode("external", []),
   },
 };

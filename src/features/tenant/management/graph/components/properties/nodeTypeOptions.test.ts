@@ -30,24 +30,14 @@ describe("deriveNodeTypeOption: タイプ選択肢の選択可否", () => {
   });
 
   it("制約違反のタイプは選択できず、理由を出す", () => {
-    const option = deriveNodeTypeOption(
-      "BOUNDARY",
-      false,
-      NG("接続が必要"),
-      asIs,
-    );
+    const option = deriveNodeTypeOption("GOAL", false, NG("接続が必要"), asIs);
 
     expect(option.assignable).toBe(false);
     expect(option.disabledReason).toBe("接続が必要");
   });
 
   it("選択中のタイプは制約違反でも選択解除されないよう有効のまま", () => {
-    const option = deriveNodeTypeOption(
-      "BOUNDARY",
-      true,
-      NG("接続が必要"),
-      asIs,
-    );
+    const option = deriveNodeTypeOption("GOAL", true, NG("接続が必要"), asIs);
 
     expect(option.assignable).toBe(true);
     expect(option.disabledReason).toBeNull();
@@ -80,11 +70,11 @@ describe("buildNodeTypeOptions: グラフ状態からの解決", () => {
   });
 
   it("選択中のタイプは常に選択可能", () => {
-    const nodes = [node("a", "BOUNDARY"), node("b", "TRANSIT_ONLY")];
+    const nodes = [node("a", "GOAL"), node("b", "TRANSIT_ONLY")];
     const edges = [edge("e1", "a", "b")];
 
-    const options = buildNodeTypeOptions("a", "BOUNDARY", nodes, edges, asIs);
-    const selected = options.find((o) => o.type === "BOUNDARY");
+    const options = buildNodeTypeOptions("a", "GOAL", nodes, edges, asIs);
+    const selected = options.find((o) => o.type === "GOAL");
 
     expect(selected?.assignable).toBe(true);
     expect(selected?.disabledReason).toBeNull();

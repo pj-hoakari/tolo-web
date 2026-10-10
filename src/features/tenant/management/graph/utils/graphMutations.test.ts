@@ -9,6 +9,8 @@ import type {
 import {
   createEdge,
   createNode,
+  EXTERNAL_NODE_ID,
+  ensureExternalNode,
   patchEdgeData,
   patchNodeData,
   patchNodeLabel,
@@ -55,7 +57,7 @@ describe("createNode / createEdge", () => {
     const created = createNode({
       id: "n1",
       labels: { ja: "ポイント 1" },
-      nodeType: "BOUNDARY",
+      nodeType: "TRANSIT_ONLY",
       position: { x: 10, y: 20 },
     });
 
@@ -63,7 +65,7 @@ describe("createNode / createEdge", () => {
       id: "n1",
       type: "graph",
       position: { x: 10, y: 20 },
-      data: { labels: { ja: "ポイント 1" }, nodeType: "BOUNDARY" },
+      data: { labels: { ja: "ポイント 1" }, nodeType: "TRANSIT_ONLY" },
     });
   });
 
@@ -85,11 +87,11 @@ describe("patchNodeData", () => {
   it("対象ノードの data だけを部分更新する", () => {
     const nodes = [node("n1"), node("n2")];
 
-    const next = patchNodeData(nodes, "n1", { nodeType: "BOUNDARY" });
+    const next = patchNodeData(nodes, "n1", { nodeType: "TRANSIT_ONLY" });
 
     expect(next[0].data).toEqual({
       labels: { ja: "n1" },
-      nodeType: "BOUNDARY",
+      nodeType: "TRANSIT_ONLY",
     });
     expect(next[1]).toBe(nodes[1]);
   });
@@ -97,7 +99,7 @@ describe("patchNodeData", () => {
   it("元の配列を書き換えない", () => {
     const nodes = [node("n1")];
 
-    patchNodeData(nodes, "n1", { nodeType: "BOUNDARY" });
+    patchNodeData(nodes, "n1", { nodeType: "TRANSIT_ONLY" });
 
     expect(nodes[0].data.nodeType).toBe("GOAL");
   });
@@ -209,5 +211,37 @@ describe("削除", () => {
 
   it("withoutEdge は指定ルートだけを除く", () => {
     expect(withoutEdge(edges, "e1").map((e) => e.id)).toEqual(["e2"]);
+  });
+});
+
+describe("ensureExternalNode", () => {
+  it("外部ポイントが無ければ、ルート要素の左上より外側に 1 つ追加する", () => {
+    const nodes = [
+      { ...node("n1"), position: { x: 100, y: 50 } },
+      { ...node("n2"), position: { x: -40, y: 300 } },
+    ];
+
+    const next = ensureExternalNode(nodes);
+
+    expect(next).toHaveLength(3);
+    expect(next[2]).toMatchObject({
+      id: EXTERNAL_NODE_ID,
+      type: "graph",
+      position: { x: -280, y: 0 },
+      deletable: false,
+      data: { labels: {}, nodeType: "EXTERNAL" },
+    });
+  });
+
+  it("外部ポイントがあれば追加せず、削除不可にする", () => {
+    const external: GraphNodeType = {
+      ...node("x"),
+      data: { labels: {}, nodeType: "EXTERNAL" },
+    };
+
+    const next = ensureExternalNode([node("n1"), external]);
+
+    expect(next).toHaveLength(2);
+    expect(next[1]).toEqual({ ...external, deletable: false });
   });
 });

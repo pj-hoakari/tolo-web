@@ -73,7 +73,7 @@ export const WithDisabledOptions: Story = {
   args: {
     value: "TRANSIT_ONLY",
     options: allAssignable.map((option) =>
-      option.type === "BOUNDARY"
+      option.type === "GOAL_TRANSIT_MIXED"
         ? {
             ...option,
             assignable: false,
@@ -86,7 +86,7 @@ export const WithDisabledOptions: Story = {
     const canvas = within(canvasElement);
 
     await expect(
-      canvas.getByRole("radio", { name: /入退出点/ }),
+      canvas.getByRole("radio", { name: /目的地 \/ 通過/ }),
     ).toBeDisabled();
   },
 };
@@ -94,8 +94,8 @@ export const WithDisabledOptions: Story = {
 /** 選択中のタイプに紐づく通知（info）を表示する */
 export const WithNotices: Story = {
   args: {
-    value: "BOUNDARY",
-    notices: [{ level: "info", messageKey: "dualDirection" }],
+    value: "GOAL",
+    notices: [{ level: "info", messageKey: "boundary" }],
   },
 };
 

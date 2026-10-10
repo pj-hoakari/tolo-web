@@ -8,8 +8,9 @@ import type {
   GraphEdgeType,
   GraphNodeData,
 } from "../../type";
-import { isGroupNode } from "../../type";
+import { isExternalNode, isGroupNode } from "../../type";
 import { EdgeProperties } from "./EdgeProperties";
+import { ExternalProperties } from "./ExternalProperties";
 import { resolveEdgeDirectionState } from "./edgeDirectionState";
 import { GroupProperties } from "./GroupProperties";
 import { NodeProperties } from "./NodeProperties";
@@ -43,7 +44,9 @@ export function PropertiesPanel({
   onDelete,
 }: PropertiesPanelProps) {
   const { nodes, edges } = graph;
-  const hasSelection = Boolean(selectedNode || selectedEdge);
+  const deletable = selectedNode
+    ? !isExternalNode(selectedNode)
+    : Boolean(selectedEdge);
   const t = useTranslations("Graph.properties");
   const tNotice = useTranslations("Graph.notices");
 
@@ -59,6 +62,8 @@ export function PropertiesPanel({
             labelLocale={labelLocale}
             onChangeLabel={(label) => onSetNodeLabel(selectedNode.id, label)}
           />
+        ) : selectedNode && isExternalNode(selectedNode) ? (
+          <ExternalProperties node={selectedNode} />
         ) : selectedNode ? (
           <NodeProperties
             node={selectedNode}
@@ -97,7 +102,7 @@ export function PropertiesPanel({
           <p className="text-muted-foreground text-xs">{t("empty")}</p>
         )}
       </div>
-      {hasSelection ? (
+      {deletable ? (
         <div className="border-border border-t p-3">
           <Button
             variant="destructive"

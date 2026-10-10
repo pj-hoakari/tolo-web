@@ -169,9 +169,9 @@ describe("useGraphViewer: グラフ構造", () => {
     });
 
     const data = result.current.getGraphData();
-    expect(data.nodes.map((n) => n.id)).toEqual(["n1", "n2"]);
+    expect(data.nodes.map((n) => n.id)).toEqual(["n1", "n2", "external"]);
     expect(data.edges.map((e) => e.id)).toEqual(["e1"]);
-    expect(data.nodes.map((n) => n.position)).toEqual([
+    expect(data.nodes.slice(0, 2).map((n) => n.position)).toEqual([
       { x: 0, y: 0 },
       { x: 300, y: 0 },
     ]);

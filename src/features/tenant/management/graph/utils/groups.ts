@@ -2,6 +2,7 @@ import type { XYPosition } from "@xyflow/react";
 import {
   type GraphCanvasNode,
   type GroupNodeType,
+  isExternalNode,
   isGroupNode,
   isPointNode,
 } from "../type";
@@ -131,7 +132,7 @@ export function resolveParentGroup(
 ): string | undefined {
   const byId = new Map<string, GraphCanvasNode>(nodes.map((n) => [n.id, n]));
   const node = byId.get(nodeId);
-  if (!node) return undefined;
+  if (!node || isExternalNode(node)) return undefined;
 
   const excluded = descendantIdsOf(nodes, nodeId);
   excluded.add(nodeId);
