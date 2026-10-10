@@ -98,6 +98,7 @@ export const router = {
               windowEnd: z.date(),
               countIn: z.number().int().nonnegative(),
               countOut: z.number().int().nonnegative(),
+              meanDetectedPeople: z.number().nonnegative().finite().optional(),
             }),
           ),
         }),

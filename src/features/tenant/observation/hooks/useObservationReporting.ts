@@ -60,7 +60,7 @@ export function useObservationReporting({
     }
     const detecting = status === "detecting";
     let windowStart = new Date();
-    let previous = resultStore.getState().lineCounts;
+    let previous = resultStore.getState();
 
     const heartbeat = (activeObservationPointIds: string[]) => {
       orpc.observation
@@ -82,7 +82,7 @@ export function useObservationReporting({
       heartbeat([...new Set(pointIdByLineId.values())]);
 
       const windowEnd = new Date();
-      const current = resultStore.getState().lineCounts;
+      const current = resultStore.getState();
       const measurements = buildWindowMeasurements({
         pointIdByLineId,
         previous,

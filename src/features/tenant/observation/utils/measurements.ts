@@ -1,6 +1,7 @@
 import {
   type DetectionCountingLineSetting,
-  type DetectionLineCount,
+  type DetectionResult,
+  INITIAL_DETECTED_PEOPLE,
   INITIAL_LINE_COUNT,
 } from "@/features/tenant/detection/stores/detectionStore";
 
@@ -10,10 +11,23 @@ export type WindowMeasurement = {
   windowEnd: Date;
   countIn: number;
   countOut: number;
+  meanDetectedPeople?: number;
 };
+
+type ResultSnapshot = Pick<DetectionResult, "lineCounts" | "detectedPeople">;
 
 function delta(previous: number, current: number): number {
   return current >= previous ? current - previous : current;
+}
+
+function meanDetectedPeople(
+  previous: ResultSnapshot["detectedPeople"],
+  current: ResultSnapshot["detectedPeople"],
+): number | undefined {
+  const base =
+    current.frames >= previous.frames ? previous : INITIAL_DETECTED_PEOPLE;
+  const frames = current.frames - base.frames;
+  return frames > 0 ? (current.people - base.people) / frames : undefined;
 }
 
 export function mapLinesToObservationPoints(
@@ -38,21 +52,26 @@ export function buildWindowMeasurements({
   windowEnd,
 }: {
   pointIdByLineId: ReadonlyMap<string, string>;
-  previous: Record<string, DetectionLineCount>;
-  current: Record<string, DetectionLineCount>;
+  previous: ResultSnapshot;
+  current: ResultSnapshot;
   windowStart: Date;
   windowEnd: Date;
 }): WindowMeasurement[] {
+  const mean = meanDetectedPeople(
+    previous.detectedPeople,
+    current.detectedPeople,
+  );
   const byPoint = new Map<string, WindowMeasurement>();
   for (const [lineId, observationPointId] of pointIdByLineId) {
-    const before = previous[lineId] ?? INITIAL_LINE_COUNT;
-    const after = current[lineId] ?? INITIAL_LINE_COUNT;
+    const before = previous.lineCounts[lineId] ?? INITIAL_LINE_COUNT;
+    const after = current.lineCounts[lineId] ?? INITIAL_LINE_COUNT;
     const measurement = byPoint.get(observationPointId) ?? {
       observationPointId,
       windowStart,
       windowEnd,
       countIn: 0,
       countOut: 0,
+      ...(mean === undefined ? {} : { meanDetectedPeople: mean }),
     };
     measurement.countIn += delta(before.forward, after.forward);
     measurement.countOut += delta(before.backward, after.backward);
