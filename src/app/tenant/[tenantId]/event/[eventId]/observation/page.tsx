@@ -8,9 +8,9 @@ import { ScreenWakeProvider } from "@/features/tenant/observation/components/Scr
 export default async function TenantObservation({
   params,
 }: {
-  params: Promise<{ tenantId: string; eventId: string }>;
+  params: Promise<{ tenantId: string; eventId: string; edgeDeviceId?: string }>;
 }) {
-  const { tenantId, eventId } = await params;
+  const { tenantId, eventId, edgeDeviceId } = await params;
   const t = await getTranslations("Observation");
 
   return (
@@ -25,7 +25,11 @@ export default async function TenantObservation({
         </header>
         <main className="flex w-full flex-col items-center gap-4">
           <ScreenWakeControl />
-          <CrowdDetection tenantId={tenantId} eventId={eventId} />
+          <CrowdDetection
+            tenantId={tenantId}
+            eventId={eventId}
+            edgeDeviceId={edgeDeviceId}
+          />
         </main>
       </div>
     </ScreenWakeProvider>
