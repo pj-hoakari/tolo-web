@@ -439,7 +439,6 @@ for (const { via, dissolve } of [
 test("グループを選んで Delete キーを押すとグループだけが解除され中のポイントとルートは残る", async ({
   page,
 }) => {
-  test.fail();
   await selectFloor1(page);
 
   await page.keyboard.press("Delete");
