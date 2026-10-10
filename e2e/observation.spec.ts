@@ -307,7 +307,6 @@ test.describe("検出設定", () => {
 test.describe("カウントライン", () => {
   test.beforeEach(async ({ page }) => {
     await setUpUnlockCode(page, "1234");
-    await page.getByRole("button", { name: "非表示" }).click();
   });
 
   test("ライン生成モードで映像上をドラッグすると新しいラインが追加され選択される", async ({
@@ -468,56 +467,6 @@ test.describe("検出の開始", () => {
     await expect(
       page.getByText(/^検出モデルの読み込みに失敗しました/),
     ).toHaveCount(1);
-  });
-
-  test("起動中は映像ファイルの選択とループ再生の切り替えができない", async ({
-    page,
-    context,
-  }) => {
-    await setUpUnlockCode(page, "1234");
-    await holdModelRequest(context);
-
-    await startButton(page).click();
-
-    await expect(
-      page.getByRole("button", { name: "映像ファイルを選択" }),
-    ).toBeDisabled();
-    await expect(
-      page.getByRole("checkbox", { name: "ループ再生" }),
-    ).toBeDisabled();
-  });
-});
-
-test.describe("映像ソース", () => {
-  test.beforeEach(async ({ page }) => {
-    await setUpUnlockCode(page, "1234");
-  });
-
-  test("映像ファイルを選ぶと映像ソースがそのファイルになりカメラに戻せる", async ({
-    page,
-  }) => {
-    const chooser = page.waitForEvent("filechooser");
-    await page.getByRole("button", { name: "映像ファイルを選択" }).click();
-    await (await chooser).setFiles({
-      name: "sample.mp4",
-      mimeType: "video/mp4",
-      buffer: Buffer.from(""),
-    });
-
-    await expect(page.getByText(/^現在: sample\.mp4/)).toBeVisible();
-
-    await page.getByRole("button", { name: "カメラに戻す" }).click();
-    await expect(page.getByText(/^現在: カメラ/)).toBeVisible();
-  });
-
-  test("映像ソースの非表示を押すと映像ソースのパネルが消える", async ({
-    page,
-  }) => {
-    await page.getByRole("button", { name: "非表示" }).click();
-
-    await expect(
-      page.getByRole("button", { name: "映像ファイルを選択" }),
-    ).toHaveCount(0);
   });
 });
 

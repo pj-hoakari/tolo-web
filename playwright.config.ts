@@ -15,7 +15,7 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: `pnpm exec next dev -p ${port}`,
+    command: `pnpm build && pnpm exec next start -p ${port}`,
     url: `http://localhost:${port}`,
     env: { NEXT_PUBLIC_API_MOCKING: "enabled" },
     reuseExistingServer: !process.env.CI,
