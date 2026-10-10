@@ -12,6 +12,7 @@ import {
   EXTERNAL_NODE_ID,
   ensureExternalNode,
   isLastExternal,
+  keepGroupContents,
   keepLastExternal,
   patchEdgeData,
   patchNodeData,
@@ -249,6 +250,48 @@ describe("ensureExternalNode", () => {
 
   it("新しく追加した外部ポイントは削除可否を保存しない", () => {
     expect(ensureExternalNode([node("n1")])[1]).not.toHaveProperty("deletable");
+  });
+});
+
+describe("keepGroupContents", () => {
+  const g1: GroupNodeType = {
+    id: "g1",
+    type: "graphGroup",
+    position: { x: 0, y: 0 },
+    data: { labels: { ja: "g1" } },
+    selected: true,
+  };
+  const g2: GroupNodeType = {
+    id: "g2",
+    type: "graphGroup",
+    position: { x: 0, y: 0 },
+    data: { labels: { ja: "g2" } },
+    parentId: "g1",
+  };
+  const a = { ...node("a"), parentId: "g1" };
+  const b = { ...node("b"), parentId: "g2" };
+
+  it("選択したグループだけを消し、巻き込まれた中身とそのルートは残す", () => {
+    const result = keepGroupContents({
+      nodes: [g1, g2, a, b],
+      edges: [edge("e1", "a", "b"), edge("e2", "a", "x")],
+    });
+
+    expect(result.nodes.map((n) => n.id)).toEqual(["g1"]);
+    expect(result.edges).toEqual([]);
+  });
+
+  it("中身も選択されていれば、そのポイントとルートは消す", () => {
+    const selectedA = { ...a, selected: true };
+    const selectedEdge = { ...edge("e3", "b", "x"), selected: true };
+
+    const result = keepGroupContents({
+      nodes: [g1, g2, selectedA, b],
+      edges: [edge("e1", "a", "b"), edge("e2", "a", "x"), selectedEdge],
+    });
+
+    expect(result.nodes.map((n) => n.id)).toEqual(["g1", "a"]);
+    expect(result.edges.map((e) => e.id)).toEqual(["e1", "e2", "e3"]);
   });
 });
 

@@ -24,6 +24,7 @@ import {
   createGroup,
   createNode,
   isLastExternal,
+  keepGroupContents,
   keepLastExternal,
   removedIds,
 } from "../utils/graphMutations";
@@ -252,7 +253,7 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
 
   const beforeDelete = useCallback(
     async (toDelete: { nodes: GraphCanvasNode[]; edges: GraphEdgeType[] }) =>
-      keepLastExternal(toDelete, source.nodes),
+      keepLastExternal(keepGroupContents(toDelete), source.nodes),
     [source.nodes],
   );
 

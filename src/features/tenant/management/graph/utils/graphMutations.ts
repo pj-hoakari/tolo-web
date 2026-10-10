@@ -66,6 +66,23 @@ export function isLastExternal(
   return externals.length === 1 && externals[0].id === nodeId;
 }
 
+export function keepGroupContents(toDelete: {
+  nodes: GraphCanvasNode[];
+  edges: GraphEdgeType[];
+}): { nodes: GraphCanvasNode[]; edges: GraphEdgeType[] } {
+  const deletingIds = new Set(toDelete.nodes.map((n) => n.id));
+  const nodes = toDelete.nodes.filter(
+    (n) => n.selected || !n.parentId || !deletingIds.has(n.parentId),
+  );
+  const keptIds = new Set(nodes.map((n) => n.id));
+  return {
+    nodes,
+    edges: toDelete.edges.filter(
+      (e) => e.selected || keptIds.has(e.source) || keptIds.has(e.target),
+    ),
+  };
+}
+
 export function keepLastExternal(
   toDelete: { nodes: GraphCanvasNode[]; edges: GraphEdgeType[] },
   allNodes: GraphCanvasNode[],
