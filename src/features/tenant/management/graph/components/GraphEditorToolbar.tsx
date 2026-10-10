@@ -1,7 +1,7 @@
 import { Network, SquareDashed } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { NODE_TYPE_DEFS } from "../nodeTypes";
+import { EXTERNAL_NODE_TYPE_DEF, NODE_TYPE_DEFS } from "../nodeTypes";
 import type { NodeType } from "../type";
 import { type LabelLocaleBindings, LabelLocaleMenu } from "./LabelLocaleMenu";
 import { NodeTypeIcon } from "./NodeTypeIcon";
@@ -36,7 +36,7 @@ export function GraphEditorToolbar({
         {t("title")}
       </p>
       <div className="flex flex-wrap items-center justify-end gap-2">
-        {NODE_TYPE_DEFS.map((def) => (
+        {[...NODE_TYPE_DEFS, EXTERNAL_NODE_TYPE_DEF].map((def) => (
           <Button
             key={def.type}
             variant="outline"

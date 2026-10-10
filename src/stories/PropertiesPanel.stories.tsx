@@ -72,3 +72,16 @@ export const ExternalClosed: Story = {
     selectedNode: boundaryFixtureNode("external", []),
   },
 };
+
+export const ExternalDeletable: Story = {
+  args: {
+    graph: {
+      nodes: [
+        ...BOUNDARY_NODES,
+        { ...boundaryFixtureNode("external"), id: "external-2" },
+      ],
+      edges: BOUNDARY_EDGES,
+    },
+    selectedNode: boundaryFixtureNode("external"),
+  },
+};

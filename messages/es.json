@@ -87,6 +87,7 @@
       "canvasLabel": "Acciones del lienzo",
       "endEdgeCreation": "Terminar de añadir rutas",
       "addNode": "Añadir punto",
+      "addExternal": "Añadir punto exterior",
       "addEdge": "Añadir ruta",
       "nodeLabel": "Acciones del punto «{label}»",
       "addEdgeFromNode": "Añadir una ruta desde este punto",

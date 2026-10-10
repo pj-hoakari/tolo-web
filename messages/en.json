@@ -87,6 +87,7 @@
       "canvasLabel": "Canvas actions",
       "endEdgeCreation": "Finish adding routes",
       "addNode": "Add point",
+      "addExternal": "Add outside point",
       "addEdge": "Add route",
       "nodeLabel": "Actions for point “{label}”",
       "addEdgeFromNode": "Add a route from this point",

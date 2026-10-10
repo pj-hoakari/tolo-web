@@ -176,14 +176,15 @@ export function reparentNode(
 ): GraphCanvasNode[] {
   const byId = new Map<string, GraphCanvasNode>(nodes.map((n) => [n.id, n]));
   const node = byId.get(id);
-  if (!node || node.parentId === parentId) return nodes;
+  const nextParentId = node && isExternalNode(node) ? undefined : parentId;
+  if (!node || node.parentId === nextParentId) return nodes;
 
   const abs = absolutePositionOf(node, byId);
-  const anchor = parentId ? byId.get(parentId) : undefined;
+  const anchor = nextParentId ? byId.get(nextParentId) : undefined;
   const base = anchor ? absolutePositionOf(anchor, byId) : { x: 0, y: 0 };
   const updated: GraphCanvasNode = {
     ...node,
-    parentId,
+    parentId: nextParentId,
     position: { x: abs.x - base.x, y: abs.y - base.y },
   };
   return sortByNesting(nodes.map((n) => (n.id === id ? updated : n)));

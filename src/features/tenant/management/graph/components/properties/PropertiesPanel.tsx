@@ -9,6 +9,7 @@ import type {
   GraphNodeData,
 } from "../../type";
 import { isExternalNode, isGroupNode } from "../../type";
+import { isLastExternal } from "../../utils/graphMutations";
 import { EdgeProperties } from "./EdgeProperties";
 import { ExternalProperties } from "./ExternalProperties";
 import { resolveEdgeDirectionState } from "./edgeDirectionState";
@@ -45,7 +46,7 @@ export function PropertiesPanel({
 }: PropertiesPanelProps) {
   const { nodes, edges } = graph;
   const deletable = selectedNode
-    ? !isExternalNode(selectedNode)
+    ? !isLastExternal(selectedNode.id, nodes)
     : Boolean(selectedEdge);
   const t = useTranslations("Graph.properties");
   const tNotice = useTranslations("Graph.notices");

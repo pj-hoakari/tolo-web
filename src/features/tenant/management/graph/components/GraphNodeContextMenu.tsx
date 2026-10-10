@@ -13,6 +13,7 @@ import type {
   NodeType,
 } from "../type";
 import { isExternalNode } from "../type";
+import { isLastExternal } from "../utils/graphMutations";
 import { ContextMenuItem } from "./ContextMenuItem";
 import {
   ContextMenuPopover,
@@ -95,6 +96,10 @@ export function GraphNodeContextMenu({
                 />
               ))}
             </MenuSection>
+          </>
+        )}
+        {isLastExternal(node.id, nodes) ? null : (
+          <>
             <MenuSeparator />
             <ContextMenuItem
               id="delete"

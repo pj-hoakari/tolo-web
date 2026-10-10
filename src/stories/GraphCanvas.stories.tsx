@@ -84,6 +84,7 @@ export const Editing: Story = {
       onAddGroupAtPosition: fn(),
       onDeleteNode: fn(),
       onDeleteEdge: fn(),
+      onBeforeDelete: fn(async () => true),
       onNodeDragStop: fn(),
       onGroupResizeEnd: fn(),
     },

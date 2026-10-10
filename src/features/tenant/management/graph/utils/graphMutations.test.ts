@@ -11,6 +11,8 @@ import {
   createNode,
   EXTERNAL_NODE_ID,
   ensureExternalNode,
+  isLastExternal,
+  keepLastExternal,
   patchEdgeData,
   patchNodeData,
   patchNodeLabel,
@@ -228,12 +230,11 @@ describe("ensureExternalNode", () => {
       id: EXTERNAL_NODE_ID,
       type: "graph",
       position: { x: -280, y: 0 },
-      deletable: false,
       data: { labels: {}, nodeType: "EXTERNAL" },
     });
   });
 
-  it("外部ポイントがあれば追加せず、削除不可にする", () => {
+  it("外部ポイントがあれば何も変えない", () => {
     const external: GraphNodeType = {
       ...node("x"),
       data: { labels: {}, nodeType: "EXTERNAL" },
@@ -242,6 +243,60 @@ describe("ensureExternalNode", () => {
     const next = ensureExternalNode([node("n1"), external]);
 
     expect(next).toHaveLength(2);
-    expect(next[1]).toEqual({ ...external, deletable: false });
+    expect(next[1]).toBe(external);
+    expect(next[1]).not.toHaveProperty("deletable");
+  });
+
+  it("新しく追加した外部ポイントは削除可否を保存しない", () => {
+    expect(ensureExternalNode([node("n1")])[1]).not.toHaveProperty("deletable");
+  });
+});
+
+describe("keepLastExternal", () => {
+  const x1 = node("x1", "EXTERNAL");
+  const x2 = node("x2", "EXTERNAL");
+  const n1 = node("n1");
+  const all = [n1, x1, x2];
+
+  it("すべての外部ポイントを消す削除では、先頭の外部ポイントとそのルートを残す", () => {
+    const result = keepLastExternal(
+      {
+        nodes: [x1, x2, n1],
+        edges: [edge("e1", "x1", "n1"), edge("e2", "n1", "x2")],
+      },
+      all,
+    );
+
+    expect(result.nodes.map((n) => n.id)).toEqual(["x2", "n1"]);
+    expect(result.edges.map((e) => e.id)).toEqual(["e2"]);
+  });
+
+  it("外部ポイントが残る削除はそのまま通す", () => {
+    const toDelete = { nodes: [x1], edges: [edge("e1", "x1", "n1")] };
+
+    expect(keepLastExternal(toDelete, all)).toEqual(toDelete);
+  });
+
+  it("外部ポイントを含まない削除はそのまま通す", () => {
+    const toDelete = { nodes: [n1], edges: [edge("e1", "x1", "n1")] };
+
+    expect(keepLastExternal(toDelete, all)).toEqual(toDelete);
+  });
+});
+
+describe("isLastExternal", () => {
+  const x1 = node("x1", "EXTERNAL");
+  const x2 = node("x2", "EXTERNAL");
+
+  it("外部ポイントが 1 つだけならそれが最後の外部ポイント", () => {
+    expect(isLastExternal("x1", [node("n1"), x1])).toBe(true);
+  });
+
+  it("外部ポイントが複数あればどれも最後ではない", () => {
+    expect(isLastExternal("x1", [x1, x2])).toBe(false);
+  });
+
+  it("外部ポイント以外は最後の外部ポイントではない", () => {
+    expect(isLastExternal("n1", [node("n1"), x1])).toBe(false);
   });
 });

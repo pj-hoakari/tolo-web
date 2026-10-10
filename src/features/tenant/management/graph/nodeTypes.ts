@@ -64,6 +64,12 @@ export type NodeTypeDef = {
   notices?: NodeTypeNotice[];
 };
 
+function touchesExternal(edge: GraphEdgeType, nodes: GraphCanvasNode[]) {
+  return nodes.some(
+    (n) => isExternalNode(n) && (n.id === edge.source || n.id === edge.target),
+  );
+}
+
 const boundaryNotice: NodeTypeNotice = {
   level: "info",
   messageKey: "boundary",
@@ -71,16 +77,14 @@ const boundaryNotice: NodeTypeNotice = {
     ctx.edges.some(
       (e) =>
         (e.source === ctx.nodeId || e.target === ctx.nodeId) &&
-        ctx.nodes.some(
-          (n) => isExternalNode(n) && (n.id === e.source || n.id === e.target),
-        ),
+        touchesExternal(e, ctx.nodes),
     ),
 };
 
 const closedNotice: NodeTypeNotice = {
   level: "info",
   messageKey: "closed",
-  match: (ctx) => ctx.roles.size === 0,
+  match: (ctx) => !ctx.edges.some((e) => touchesExternal(e, ctx.nodes)),
 };
 
 export const NODE_TYPE_DEFS: NodeTypeDef[] = [

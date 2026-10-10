@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { IntlTestProvider } from "@/test/IntlTestProvider";
@@ -99,6 +99,42 @@ describe("GraphNodeContextMenu", () => {
     fireEvent.click(deleteItem);
 
     expect(onDelete).toHaveBeenCalledWith("n1");
+  });
+
+  it("外部ポイントはタイプ変更を出さず、最後の 1 つでなければ削除できる", () => {
+    const external = (id: string): GraphNodeType => ({
+      id,
+      type: "graph",
+      position: { x: 0, y: 0 },
+      data: { labels: {}, label: "外部", nodeType: "EXTERNAL" },
+    });
+    const menu = (nodes: GraphNodeType[]) => (
+      <GraphNodeContextMenu
+        node={nodes[0]}
+        nodes={nodes}
+        edges={[]}
+        position={{ x: 100, y: 100 }}
+        onSetType={vi.fn()}
+        onStartEdgeCreation={vi.fn()}
+        onDelete={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    const externalMenu = () =>
+      within(screen.getByRole("menu", { name: "ポイント「外部」の操作" }));
+
+    const { rerender } = renderWithIntl(menu([external("x1"), node]));
+    expect(externalMenu().queryByText("タイプを変更")).toBeNull();
+    expect(
+      externalMenu().queryByRole("menuitem", { name: "このポイントを削除" }),
+    ).toBeNull();
+
+    rerender(menu([external("x1"), external("x2"), node]));
+    expect(externalMenu().queryByText("タイプを変更")).toBeNull();
+    expect(
+      externalMenu().getByRole("menuitem", { name: "このポイントを削除" }),
+    ).toBeTruthy();
   });
 
   it("このポイントを始点にルート追加モードを開始できる", () => {

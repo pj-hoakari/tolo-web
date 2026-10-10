@@ -87,6 +87,7 @@
       "canvasLabel": "キャンバスの操作",
       "endEdgeCreation": "ルート追加を終了",
       "addNode": "ポイントを追加",
+      "addExternal": "外部ポイントを追加",
       "addEdge": "ルートを追加",
       "nodeLabel": "ポイント「{label}」の操作",
       "addEdgeFromNode": "このポイントからルートを追加",

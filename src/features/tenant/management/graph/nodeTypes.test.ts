@@ -70,6 +70,32 @@ describe("collectNodeNotices: 入退出点とクローズドモード", () => {
 
     expect(collectNodeNotices("x", nodes, edges)).toHaveLength(0);
   });
+
+  it("どれか 1 つの外部ポイントに接続があれば、どの外部ポイントにもクローズドモードの通知が付かない", () => {
+    const nodes = [
+      node("x1", "EXTERNAL"),
+      node("x2", "EXTERNAL"),
+      node("g", "GOAL"),
+    ];
+    const edges = [edge("e1", "g", "x1", "oneway")];
+
+    expect(collectNodeNotices("x1", nodes, edges)).toHaveLength(0);
+    expect(collectNodeNotices("x2", nodes, edges)).toHaveLength(0);
+  });
+
+  it("どの外部ポイントにも接続がなければ、すべての外部ポイントにクローズドモードの通知が付く", () => {
+    const nodes = [
+      node("x1", "EXTERNAL"),
+      node("x2", "EXTERNAL"),
+      node("g", "GOAL"),
+      node("h", "GOAL"),
+    ];
+    const edges = [edge("e1", "g", "h", "both")];
+    const closed = [{ level: "info", messageKey: "closed" }];
+
+    expect(collectNodeNotices("x1", nodes, edges)).toEqual(closed);
+    expect(collectNodeNotices("x2", nodes, edges)).toEqual(closed);
+  });
 });
 
 describe("deriveNodeNotices: 派生情報の注入", () => {

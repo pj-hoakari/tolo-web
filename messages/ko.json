@@ -87,6 +87,7 @@
       "canvasLabel": "캔버스 작업",
       "endEdgeCreation": "경로 추가 종료",
       "addNode": "지점 추가",
+      "addExternal": "외부 지점 추가",
       "addEdge": "경로 추가",
       "nodeLabel": "지점 「{label}」 작업",
       "addEdgeFromNode": "이 지점에서 경로 추가",

@@ -150,6 +150,15 @@ describe("reparentNode: 所属変更と相対座標の変換", () => {
     const nodes = [group("g", 0, 0, 400, 300), point("p", 10, 10, "g")];
     expect(reparentNode(nodes, "p", "g")).toBe(nodes);
   });
+
+  it("外部ポイントはグループを指定されても入らない", () => {
+    const external: GraphNodeType = {
+      ...point("x", 150, 260),
+      data: { labels: {}, nodeType: "EXTERNAL" },
+    };
+    const nodes = [group("g", 100, 200, 400, 300), external];
+    expect(reparentNode(nodes, "x", "g")).toBe(nodes);
+  });
 });
 
 describe("dissolveGroups: グループ解除", () => {

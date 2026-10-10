@@ -23,6 +23,8 @@ import {
   createEdge,
   createGroup,
   createNode,
+  isLastExternal,
+  keepLastExternal,
   removedIds,
 } from "../utils/graphMutations";
 import { newId } from "../utils/idGen";
@@ -117,6 +119,7 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
       const tgtNode = source.nodes.find((n) => n.id === tgt);
       if (!srcNode || !tgtNode) return false;
       if (isGroupNode(srcNode) || isGroupNode(tgtNode)) return false;
+      if (isExternalNode(srcNode) && isExternalNode(tgtNode)) return false;
       // ノードタイプの制約
       // 既定 "both" が不可でも有効な方向があれば接続可とする
       return (
@@ -179,16 +182,20 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
       nodeType: NodeType = DEFAULT_NODE_TYPE,
       parentId?: string,
     ) => {
+      const external = nodeType === "EXTERNAL";
       // 初期ラベルは編集中の言語にだけ設定する
       const node = createNode({
         id: newId("n"),
-        labels: {
-          [labelLocale]: t("newNodeLabel", {
-            index:
-              source.nodes.filter((n) => isPointNode(n) && !isExternalNode(n))
-                .length + 1,
-          }),
-        },
+        labels: external
+          ? {}
+          : {
+              [labelLocale]: t("newNodeLabel", {
+                index:
+                  source.nodes.filter(
+                    (n) => isPointNode(n) && !isExternalNode(n),
+                  ).length + 1,
+              }),
+            },
         nodeType,
         position,
       });
@@ -229,8 +236,8 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
 
   const deleteNode = useCallback(
     (id: string) => {
+      if (isLastExternal(id, source.nodes)) return;
       const node = source.nodes.find((n) => n.id === id);
-      if (node && isExternalNode(node)) return;
       if (node && isGroupNode(node)) {
         // グループは「解除」: コンテナだけを取り除き、中身は残す
         removeGroup(id);
@@ -241,6 +248,12 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
       clearSelection();
     },
     [source.nodes, removeNode, removeGroup, clearSelection],
+  );
+
+  const beforeDelete = useCallback(
+    async (toDelete: { nodes: GraphCanvasNode[]; edges: GraphEdgeType[] }) =>
+      keepLastExternal(toDelete, source.nodes),
+    [source.nodes],
   );
 
   const deleteEdge = useCallback(
@@ -303,6 +316,7 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
         onAddGroupAtPosition: addGroupAtPosition,
         onDeleteNode: deleteNode,
         onDeleteEdge: deleteEdge,
+        onBeforeDelete: beforeDelete,
         onNodeDragStop,
         onGroupResizeEnd,
       },

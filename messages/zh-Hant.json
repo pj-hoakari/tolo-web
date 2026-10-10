@@ -87,6 +87,7 @@
       "canvasLabel": "畫布操作",
       "endEdgeCreation": "結束新增路徑",
       "addNode": "新增節點",
+      "addExternal": "新增外部點",
       "addEdge": "新增路徑",
       "nodeLabel": "節點「{label}」的操作",
       "addEdgeFromNode": "從此節點新增路徑",

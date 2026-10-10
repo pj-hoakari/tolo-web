@@ -700,4 +700,106 @@ describe("useGraphEditor: 外部ポイント", () => {
 
     expect(externals()).toHaveLength(1);
   });
+
+  it("最後の外部ポイントは削除できないが、2 つ目を追加すればどちらかは削除できる", () => {
+    const initial: GraphData = { nodes: [node("n1", 0, 0)], edges: [] };
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+    const externals = () => result.current.canvas.nodes.filter(isExternalNode);
+
+    act(() => {
+      result.current.canvas.editing.onAddNodeAtPosition(
+        { x: 500, y: 0 },
+        "EXTERNAL",
+      );
+    });
+    expect(externals()).toHaveLength(2);
+    expect(externals()[1].data.labels).toEqual({});
+
+    act(() => {
+      result.current.canvas.editing.onDeleteNode(externals()[0].id);
+    });
+    expect(externals()).toHaveLength(1);
+
+    act(() => {
+      result.current.canvas.editing.onDeleteNode(externals()[0].id);
+    });
+    expect(externals()).toHaveLength(1);
+  });
+
+  it("キーボード削除で外部ポイントをすべて選んでも 1 つは残る", async () => {
+    const initial: GraphData = { nodes: [node("n1", 0, 0)], edges: [] };
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+    act(() => {
+      result.current.canvas.editing.onAddNodeAtPosition(
+        { x: 500, y: 0 },
+        "EXTERNAL",
+      );
+    });
+    const externals = result.current.canvas.nodes.filter(isExternalNode);
+
+    const allowed = await result.current.canvas.editing.onBeforeDelete({
+      nodes: externals,
+      edges: [],
+    });
+
+    expect(allowed).toEqual({ nodes: [externals[1]], edges: [] });
+  });
+
+  it("外部ポイント同士は接続できない", () => {
+    const initial: GraphData = { nodes: [node("n1", 0, 0)], edges: [] };
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+    act(() => {
+      result.current.canvas.editing.onAddNodeAtPosition(
+        { x: 500, y: 0 },
+        "EXTERNAL",
+      );
+    });
+    const [x1, x2] = result.current.canvas.nodes.filter(isExternalNode);
+
+    expect(
+      result.current.canvas.editing.isValidConnection(connection(x1.id, x2.id)),
+    ).toBe(false);
+    expect(
+      result.current.canvas.editing.isValidConnection(connection(x1.id, "n1")),
+    ).toBe(true);
+  });
+
+  it("グループの中を指定しても外部ポイントはグループに入らない", () => {
+    const initial: GraphData = {
+      nodes: [
+        {
+          id: "g1",
+          type: "graphGroup",
+          position: { x: 0, y: 0 },
+          width: 400,
+          height: 300,
+          data: { labels: {} },
+        },
+      ],
+      edges: [],
+    };
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+
+    act(() => {
+      result.current.canvas.editing.onAddNodeAtPosition(
+        { x: 100, y: 100 },
+        "EXTERNAL",
+        "g1",
+      );
+    });
+
+    const added = result.current.canvas.nodes
+      .filter(isExternalNode)
+      .find((n) => n.id !== "external");
+    expect(added?.parentId).toBeUndefined();
+    expect(added?.position).toEqual({ x: 100, y: 100 });
+  });
 });
