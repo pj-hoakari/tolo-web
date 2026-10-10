@@ -55,3 +55,8 @@ storybook-static
 # ONNX Runtime WASM assets are copied from the package at build time
 # (see the wcdu-copy-runtime-assets scripts in package.json)
 /public/onnxruntime/
+
+# playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
