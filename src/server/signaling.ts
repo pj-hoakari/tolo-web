@@ -2,7 +2,6 @@ import "server-only";
 
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-node";
-import { EdgeRegistryService } from "@pj-hoakari/tolo-signaling-client-es/signaling/v1/edge_registry_pb";
 import { SignalingService } from "@pj-hoakari/tolo-signaling-client-es/signaling/v1/signaling_pb";
 
 // Next.js バックエンドから tolo-signaling を呼ぶための Connect-RPC クライアント。
@@ -13,5 +12,4 @@ const transport = createConnectTransport({
   httpVersion: "1.1",
 });
 
-export const edgeRegistryClient = createClient(EdgeRegistryService, transport);
 export const signalingClient = createClient(SignalingService, transport);

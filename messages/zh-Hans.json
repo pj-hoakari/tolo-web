@@ -49,8 +49,8 @@
       "refresh": "刷新",
       "error": "获取观测点失败",
       "loading": "加载中…",
-      "empty": "没有已连接的观测点",
-      "online": "已连接",
+      "empty": "没有运行中的观测点",
+      "online": "运行中",
       "offline": "离线",
       "usedByOther": "已被其他节点 / 路径使用"
     },
@@ -139,10 +139,10 @@
       "error": "连接失败"
     },
     "aliveEdges": {
-      "title": "已连接的边缘设备（{count}）",
+      "title": "运行中的边缘设备（{count}）",
       "refresh": "刷新",
       "loading": "加载中…",
-      "empty": "没有已连接的边缘设备",
+      "empty": "没有运行中的边缘设备",
       "lastSeen": "最后响应：{time}",
       "unknownTime": "未知",
       "connect": "连接",

@@ -11,7 +11,7 @@ import type {
 } from "@/features/tenant/management/graph/type";
 import { isPointNode } from "@/features/tenant/management/graph/type";
 import { deriveNodeLabels } from "@/features/tenant/management/graph/utils/labels";
-import type { AliveEdge } from "@/features/tenant/webrtc/type";
+import type { ObservationPoint } from "@/server/router";
 
 // 表示言語で解決したラベル（data.label）を注入した描画用の形にそろえる
 export const GRAPH_NODES = deriveNodeLabels(
@@ -42,11 +42,11 @@ export function graphEdge(id: string): GraphEdgeType {
   return found;
 }
 
-/** 紐づけ候補となる観測点（接続中のエッジ）のサンプル */
-export const OBSERVATION_POINTS: AliveEdge[] = [
-  { id: "demo_event_cam-entrance", lastSeenAt: null },
-  { id: "demo_event_cam-hall", lastSeenAt: null },
-  { id: "demo_event_cam-booth-a", lastSeenAt: null },
+/** 紐づけ候補となる観測点（稼働中のエッジ端末の観測点）のサンプル */
+export const OBSERVATION_POINTS: ObservationPoint[] = [
+  { observationPointId: "op-entrance", name: "エントランス" },
+  { observationPointId: "op-hall", name: "ホール" },
+  { observationPointId: "op-booth-a", name: "ブースA" },
 ];
 
 /** 観測点ピッカーに渡すデータ一式（差分だけ上書きして使う） */

@@ -49,8 +49,8 @@
       "refresh": "重新整理",
       "error": "取得觀測點失敗",
       "loading": "載入中…",
-      "empty": "沒有已連線的觀測點",
-      "online": "已連線",
+      "empty": "沒有運作中的觀測點",
+      "online": "運作中",
       "offline": "離線",
       "usedByOther": "已被其他節點 / 路徑使用"
     },
@@ -139,10 +139,10 @@
       "error": "連線失敗"
     },
     "aliveEdges": {
-      "title": "已連線的邊緣裝置（{count}）",
+      "title": "運作中的邊緣裝置（{count}）",
       "refresh": "重新整理",
       "loading": "載入中…",
-      "empty": "沒有已連線的邊緣裝置",
+      "empty": "沒有運作中的邊緣裝置",
       "lastSeen": "最後回應：{time}",
       "unknownTime": "未知",
       "connect": "連線",

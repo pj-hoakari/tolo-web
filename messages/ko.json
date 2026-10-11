@@ -49,8 +49,8 @@
       "refresh": "새로고침",
       "error": "관측점을 불러오지 못했습니다",
       "loading": "불러오는 중…",
-      "empty": "연결된 관측점이 없습니다",
-      "online": "연결됨",
+      "empty": "가동 중인 관측점이 없습니다",
+      "online": "가동 중",
       "offline": "오프라인",
       "usedByOther": "다른 지점 / 경로에서 사용 중"
     },
@@ -139,10 +139,10 @@
       "error": "연결 실패"
     },
     "aliveEdges": {
-      "title": "연결된 엣지 ({count})",
+      "title": "가동 중인 엣지 ({count})",
       "refresh": "새로고침",
       "loading": "불러오는 중…",
-      "empty": "연결된 엣지가 없습니다",
+      "empty": "가동 중인 엣지가 없습니다",
       "lastSeen": "마지막 응답: {time}",
       "unknownTime": "알 수 없음",
       "connect": "연결",
