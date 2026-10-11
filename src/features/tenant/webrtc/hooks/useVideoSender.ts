@@ -24,7 +24,6 @@ import {
   createFirestoreSignalingChannel,
 } from "../utils/signalingChannel";
 import { connectAsSender } from "../utils/webrtcSender";
-import { useEdgePresence } from "./useEdgePresence";
 
 interface SenderSession {
   pc: RTCPeerConnection;
@@ -56,16 +55,14 @@ function applyStream(pc: RTCPeerConnection, stream: MediaStream | null): void {
 }
 
 export function useVideoSender(params: {
-  tenantId: string;
-  eventId: string;
+  edgeDeviceId: string | undefined;
   stream: MediaStream | null;
   /** management 側と共有する検出設定 */
   settingsStore: DetectionSettingsStore;
 }): VideoSenderController {
-  const { tenantId, eventId, stream, settingsStore } = params;
+  const { edgeDeviceId, stream, settingsStore } = params;
   const active = stream !== null;
-
-  const { edgeId } = useEdgePresence({ tenantId, eventId, enabled: active });
+  const edgeId = active && edgeDeviceId ? edgeDeviceId : null;
 
   const streamRef = useRef<MediaStream | null>(stream);
   const sessionsRef = useRef<Map<string, SenderSession>>(new Map());
@@ -121,7 +118,7 @@ export function useVideoSender(params: {
   }, [stream]);
 
   useEffect(() => {
-    if (!edgeId || !active) {
+    if (!edgeId) {
       return;
     }
 
@@ -276,7 +273,7 @@ export function useVideoSender(params: {
       }
       startingSessionIds.clear();
     };
-  }, [edgeId, active, settingsStore]);
+  }, [edgeId, settingsStore]);
 
   return { active, edgeId, sendDetectionFrame };
 }

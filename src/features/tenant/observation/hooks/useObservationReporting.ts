@@ -11,16 +11,19 @@ import {
 import type { DetectCrowdStatus } from "./useDetectCrowd";
 
 const REPORT_INTERVAL_MS = 30_000;
+const HEARTBEAT_INTERVAL_MS = 10_000;
 
 export function useObservationReporting({
   eventId,
   edgeDeviceId,
+  listening,
   status,
   settingsStore,
   resultStore,
 }: {
   eventId: string;
   edgeDeviceId: string | undefined;
+  listening: boolean;
   status: DetectCrowdStatus;
   settingsStore: DetectionSettingsStore;
   resultStore: DetectionResultStore;
@@ -55,14 +58,23 @@ export function useObservationReporting({
   }, [eventId, edgeDeviceId]);
 
   useEffect(() => {
-    if (!edgeDeviceId || !pointIdByName) {
+    if (!edgeDeviceId || !listening) {
       return;
     }
     const detecting = status === "detecting";
-    let windowStart = new Date();
-    let previous = resultStore.getState();
 
-    const heartbeat = (activeObservationPointIds: string[]) => {
+    const heartbeat = () => {
+      const activeObservationPointIds =
+        detecting && pointIdByName
+          ? [
+              ...new Set(
+                mapLinesToObservationPoints(
+                  settingsStore.getState().countingLines,
+                  pointIdByName,
+                ).values(),
+              ),
+            ]
+          : [];
       orpc.observation
         .heartbeat({ eventId, edgeDeviceId, activeObservationPointIds })
         .catch((cause: unknown) => {
@@ -70,17 +82,23 @@ export function useObservationReporting({
         });
     };
 
+    heartbeat();
+    const timer = setInterval(heartbeat, HEARTBEAT_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [eventId, edgeDeviceId, listening, pointIdByName, status, settingsStore]);
+
+  useEffect(() => {
+    if (!edgeDeviceId || !pointIdByName || status !== "detecting") {
+      return;
+    }
+    let windowStart = new Date();
+    let previous = resultStore.getState();
+
     const tick = () => {
       const pointIdByLineId = mapLinesToObservationPoints(
         settingsStore.getState().countingLines,
         pointIdByName,
       );
-      if (!detecting) {
-        heartbeat([]);
-        return;
-      }
-      heartbeat([...new Set(pointIdByLineId.values())]);
-
       const windowEnd = new Date();
       const current = resultStore.getState();
       const measurements = buildWindowMeasurements({
@@ -102,7 +120,6 @@ export function useObservationReporting({
         });
     };
 
-    heartbeat([]);
     const timer = setInterval(tick, REPORT_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [
