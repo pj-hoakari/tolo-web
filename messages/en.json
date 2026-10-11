@@ -49,8 +49,8 @@
       "refresh": "Refresh",
       "error": "Failed to load observation points",
       "loading": "Loading…",
-      "empty": "No observation points are connected",
-      "online": "Connected",
+      "empty": "No observation points are online",
+      "online": "Online",
       "offline": "Offline",
       "usedByOther": "In use by another point / route"
     },
@@ -139,10 +139,10 @@
       "error": "Connection failed"
     },
     "aliveEdges": {
-      "title": "Connected edges ({count})",
+      "title": "Online edges ({count})",
       "refresh": "Refresh",
       "loading": "Loading…",
-      "empty": "No edges are connected",
+      "empty": "No edges are online",
       "lastSeen": "Last seen: {time}",
       "unknownTime": "Unknown",
       "connect": "Connect",

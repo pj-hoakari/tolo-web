@@ -49,8 +49,8 @@
       "refresh": "Actualizar",
       "error": "No se pudieron cargar los puntos de observación",
       "loading": "Cargando…",
-      "empty": "No hay puntos de observación conectados",
-      "online": "Conectado",
+      "empty": "No hay puntos de observación en línea",
+      "online": "En línea",
       "offline": "Sin conexión",
       "usedByOther": "En uso por otro punto u otra ruta"
     },
@@ -139,10 +139,10 @@
       "error": "Error de conexión"
     },
     "aliveEdges": {
-      "title": "Edges conectados ({count})",
+      "title": "Edges en línea ({count})",
       "refresh": "Actualizar",
       "loading": "Cargando…",
-      "empty": "No hay edges conectados",
+      "empty": "No hay edges en línea",
       "lastSeen": "Última respuesta: {time}",
       "unknownTime": "Desconocida",
       "connect": "Conectar",

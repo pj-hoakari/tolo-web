@@ -1,11 +1,15 @@
 import { expect, type Page, test } from "@playwright/test";
 
-const edgeA = "test_test_8c1f0e2a";
-const edgeB = "test_test_3b9d77f4";
+const pointA = "入口";
+const pointB = "ブース前";
+const offlinePoint = "ホール";
+const edgeA = "入口カメラ";
+const edgeB = "3b9d77f41e2a5c08";
+const offlineEdge = "ホールカメラ";
 
 const panel = (page: Page) => page.getByRole("complementary");
-const observationPoint = (page: Page, edgeId: string) =>
-  panel(page).getByRole("group", { name: "観測点" }).getByText(edgeId);
+const observationPoint = (page: Page, name: string) =>
+  panel(page).getByRole("group", { name: "観測点" }).getByText(name);
 const emptyNotice = "観測点を紐づけるポイントまたはルートを選択してください。";
 const booth = (page: Page) => page.getByTestId("rf__node-ph_booth");
 const nodeTransform = (page: Page, id: string) =>
@@ -41,7 +45,7 @@ test("グラフを編集リンクを押すとルート図編集ページに移�
   ).toBeVisible();
 });
 
-test("ポイントを選ぶとそのポイントの情報と接続中の観測点が表示される", async ({
+test("ポイントを選ぶとそのポイントの情報と稼働中の観測点が表示される", async ({
   page,
 }) => {
   await booth(page).click();
@@ -49,11 +53,14 @@ test("ポイントを選ぶとそのポイントの情報と接続中の観測�
   await expect(panel(page).getByRole("code")).toHaveText("ph_booth");
   await expect(panel(page)).toContainText("ブースA");
   await expect(
-    panel(page).getByRole("checkbox", { name: edgeA }),
+    panel(page).getByRole("checkbox", { name: pointA }),
   ).toBeVisible();
   await expect(
-    panel(page).getByRole("checkbox", { name: edgeB }),
+    panel(page).getByRole("checkbox", { name: pointB }),
   ).toBeVisible();
+  await expect(
+    panel(page).getByRole("checkbox", { name: offlinePoint }),
+  ).toHaveCount(0);
 });
 
 test("ルートを選ぶとそのルートの ID と端点が表示される", async ({ page }) => {
@@ -92,32 +99,32 @@ test("ルートに観測点を紐づけるとポイント側ではその観測�
   page,
 }) => {
   await page.getByTestId("rf__edge-ph_e2").click({ force: true });
-  await observationPoint(page, edgeA).click();
+  await observationPoint(page, pointA).click();
   await expect(
-    panel(page).getByRole("checkbox", { name: edgeA }),
+    panel(page).getByRole("checkbox", { name: pointA }),
   ).toBeChecked();
 
   await booth(page).click();
 
   await expect(
     panel(page).getByRole("checkbox", {
-      name: `${edgeA} 他のポイント / ルートで使用中`,
+      name: `${pointA} 他のポイント / ルートで使用中`,
     }),
   ).toBeDisabled();
 });
 
 test("観測点の紐づけを外すと他のポイントで再び選べる", async ({ page }) => {
   await booth(page).click();
-  await observationPoint(page, edgeA).click();
-  await observationPoint(page, edgeA).click();
+  await observationPoint(page, pointA).click();
+  await observationPoint(page, pointA).click();
   await expect(
-    panel(page).getByRole("checkbox", { name: edgeA }),
+    panel(page).getByRole("checkbox", { name: pointA }),
   ).not.toBeChecked();
 
   await page.getByTestId("rf__node-ph_wall").click();
 
   await expect(
-    panel(page).getByRole("checkbox", { name: edgeA }),
+    panel(page).getByRole("checkbox", { name: pointA }),
   ).toBeEnabled();
 });
 
@@ -158,10 +165,10 @@ test("ポイントに観測点を紐づけると観測点の件数が表示さ�
   page,
 }) => {
   await booth(page).click();
-  await observationPoint(page, edgeA).click();
+  await observationPoint(page, pointA).click();
 
   await expect(
-    panel(page).getByRole("checkbox", { name: edgeA }),
+    panel(page).getByRole("checkbox", { name: pointA }),
   ).toBeChecked();
   await expect(panel(page)).toContainText("観測点（1）");
 });
@@ -170,30 +177,30 @@ test("あるポイントに紐づけた観測点は他のポイントでは使�
   page,
 }) => {
   await booth(page).click();
-  await observationPoint(page, edgeA).click();
+  await observationPoint(page, pointA).click();
 
   await page.getByTestId("rf__node-ph_wall").click();
 
   await expect(
     panel(page).getByRole("checkbox", {
-      name: `${edgeA} 他のポイント / ルートで使用中`,
+      name: `${pointA} 他のポイント / ルートで使用中`,
     }),
   ).toBeDisabled();
   await expect(
-    panel(page).getByRole("checkbox", { name: edgeB }),
+    panel(page).getByRole("checkbox", { name: pointB }),
   ).toBeEnabled();
 });
 
 test("観測点の紐づけはタブを切り替えても保持される", async ({ page }) => {
   await booth(page).click();
-  await observationPoint(page, edgeA).click();
+  await observationPoint(page, pointA).click();
 
   await page.getByRole("tab", { name: "接続エッジ" }).click();
   await page.getByRole("tab", { name: "ルート図" }).click();
   await booth(page).click();
 
   await expect(
-    panel(page).getByRole("checkbox", { name: edgeA }),
+    panel(page).getByRole("checkbox", { name: pointA }),
   ).toBeChecked();
 });
 
@@ -206,16 +213,17 @@ test("ラベルの言語を English に切り替えるとポイントのラベ�
   await expect(booth(page)).toContainText("Booth A");
 });
 
-test("接続エッジタブを開くと接続中のエッジの一覧が表示される", async ({
+test("接続エッジタブを開くと稼働中のエッジの一覧が表示される", async ({
   page,
 }) => {
   await page.getByRole("tab", { name: "接続エッジ" }).click();
 
   const tabpanel = page.getByRole("tabpanel", { name: "接続エッジ" });
-  await expect(tabpanel).toContainText("接続中のエッジ（2）");
+  await expect(tabpanel).toContainText("稼働中のエッジ（2）");
   await expect(tabpanel.getByRole("listitem")).toHaveCount(2);
   await expect(tabpanel).toContainText(edgeA);
   await expect(tabpanel).toContainText(edgeB);
+  await expect(tabpanel).not.toContainText(offlineEdge);
 });
 
 test("接続エッジの一覧には各エッジの最終応答時刻が表示される", async ({

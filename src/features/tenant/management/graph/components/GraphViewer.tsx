@@ -34,7 +34,6 @@ function GraphViewerInner({
     useGraphViewer(initialGraph);
 
   const observationPoints = useObservationPointSource({
-    tenantId,
     eventId,
     graph,
   });

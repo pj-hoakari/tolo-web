@@ -1,8 +1,12 @@
-/** ListAliveEdges で取得した、presence 登録済み（接続中）の edge */
+import type { ObservationPoint } from "@/server/router";
+
+/** ListEdgeDevices で取得した、稼働中（WebRTC で待ち受け中）のエッジ端末 */
 export type AliveEdge = {
-  id: string;
-  // presence が未設定なら null
-  lastSeenAt: Date | null;
+  edgeDeviceId: string;
+  name: string;
+  // Heartbeat を一度も受けていなければ null
+  lastHeartbeatAt: Date | null;
+  observationPoints: ObservationPoint[];
 };
 
 /** management側の接続状態。 */

@@ -49,8 +49,8 @@
       "refresh": "更新",
       "error": "観測点の取得に失敗しました",
       "loading": "読み込み中…",
-      "empty": "接続中の観測点がありません",
-      "online": "接続中",
+      "empty": "稼働中の観測点がありません",
+      "online": "稼働中",
       "offline": "オフライン",
       "usedByOther": "他のポイント / ルートで使用中"
     },
@@ -139,10 +139,10 @@
       "error": "接続失敗"
     },
     "aliveEdges": {
-      "title": "接続中のエッジ（{count}）",
+      "title": "稼働中のエッジ（{count}）",
       "refresh": "更新",
       "loading": "読み込み中…",
-      "empty": "接続中のエッジがありません",
+      "empty": "稼働中のエッジがありません",
       "lastSeen": "最終応答: {time}",
       "unknownTime": "不明",
       "connect": "接続",

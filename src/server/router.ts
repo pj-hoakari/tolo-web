@@ -1,8 +1,7 @@
-import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { os } from "@orpc/server";
 import { z } from "zod";
 import { callObservation } from "./observation";
-import { edgeRegistryClient, signalingClient } from "./signaling";
+import { signalingClient } from "./signaling";
 
 const publicId = z.string().regex(/^[0-9a-f]{16}$/);
 
@@ -19,33 +18,43 @@ export interface ObservationPoint {
 type ListEdgeDevicesResponse = {
   devices?: {
     edgeDeviceId: string;
+    name?: string;
+    online?: boolean;
+    lastHeartbeatAt?: string;
     observationPoints?: { observationPointId: string; name?: string }[];
   }[];
 };
 
-export interface AliveEdge {
-  id: string;
-  // ISO 8601 文字列。presence が未設定なら null。
-  lastSeenAt: string | null;
+export interface EdgeDevice {
+  edgeDeviceId: string;
+  name: string;
+  online: boolean;
+  lastHeartbeatAt: string | null;
+  observationPoints: ObservationPoint[];
+}
+
+async function listEdgeDevices(eventId: string): Promise<EdgeDevice[]> {
+  const res = await callObservation<ListEdgeDevicesResponse>(
+    "EdgeDeviceService/ListEdgeDevices",
+    { eventId },
+  );
+  return (res.devices ?? []).map((d) => ({
+    edgeDeviceId: d.edgeDeviceId,
+    name: d.name ?? "",
+    online: d.online ?? false,
+    lastHeartbeatAt: d.lastHeartbeatAt
+      ? new Date(d.lastHeartbeatAt).toISOString()
+      : null,
+    observationPoints: (d.observationPoints ?? []).map((p) => ({
+      observationPointId: p.observationPointId,
+      name: p.name ?? "",
+    })),
+  }));
 }
 
 // フロント ↔ Next.js バックエンド間の oRPC ルータ。
 // tolo-signaling への Connect-RPC はこの層だけが叩く。
 export const router = {
-  edges: {
-    // 生存している edge の一覧を取得する（Connect-RPC で tolo-signaling に問い合わせ）。
-    listAlive: os.handler(async (): Promise<{ edges: AliveEdge[] }> => {
-      const res = await edgeRegistryClient.listAliveEdges({});
-      return {
-        edges: res.edges.map((edge) => ({
-          id: edge.id,
-          lastSeenAt: edge.lastSeenAt
-            ? timestampDate(edge.lastSeenAt).toISOString()
-            : null,
-        })),
-      };
-    }),
-  },
   signaling: {
     // edge への接続を要求する。tolo-signaling が Firestore にセッションを作成し session_id を返す。
     requestConnection: os
@@ -58,25 +67,22 @@ export const router = {
       }),
   },
   observation: {
+    listEdgeDevices: os.input(z.object({ eventId: z.string().min(1) })).handler(
+      async ({ input }): Promise<{ devices: EdgeDevice[] }> => ({
+        devices: await listEdgeDevices(input.eventId),
+      }),
+    ),
     listObservationPoints: os
       .input(edgeDeviceInput)
       .handler(
         async ({
           input,
         }): Promise<{ observationPoints: ObservationPoint[] }> => {
-          const res = await callObservation<ListEdgeDevicesResponse>(
-            "EdgeDeviceService/ListEdgeDevices",
-            { eventId: input.eventId },
-          );
-          const device = res.devices?.find(
+          const devices = await listEdgeDevices(input.eventId);
+          const device = devices.find(
             (d) => d.edgeDeviceId === input.edgeDeviceId,
           );
-          return {
-            observationPoints: (device?.observationPoints ?? []).map((p) => ({
-              observationPointId: p.observationPointId,
-              name: p.name ?? "",
-            })),
-          };
+          return { observationPoints: device?.observationPoints ?? [] };
         },
       ),
     heartbeat: os
