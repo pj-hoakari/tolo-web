@@ -58,6 +58,20 @@ services:
                 - action: rebuild
                   path: pnpm-lock.yaml
 
+    e2e:
+        build:
+            context: .
+            target: e2e
+            secrets:
+                - npm_token
+        image: tolo-web-e2e
+        profiles:
+            - e2e
+        volumes:
+            - type: bind
+              source: ./test-results
+              target: /app/test-results
+
 secrets:
     npm_token:
         environment: NPM_TOKEN
