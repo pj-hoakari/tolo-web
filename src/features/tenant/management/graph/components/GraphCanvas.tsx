@@ -15,6 +15,7 @@ import {
   type OnBeforeDelete,
   type OnConnectEnd,
   type OnConnectStart,
+  type OnSelectionChangeFunc,
   ReactFlow,
   useStoreApi,
   useViewport,
@@ -266,6 +267,19 @@ export function GraphCanvas({
     onClearSelection();
   }, [easyConnect, onClearSelection]);
 
+  const handleSelectionChange = useCallback<
+    OnSelectionChangeFunc<GraphCanvasNode, GraphEdgeType>
+  >(
+    ({ nodes: selectedNodes, edges: selectedEdges }) => {
+      const count = selectedNodes.length + selectedEdges.length;
+      if (count === 0) onClearSelection();
+      if (count !== 1) return;
+      if (selectedNodes[0]) onSelectNode(selectedNodes[0].id);
+      else onSelectEdge(selectedEdges[0].id);
+    },
+    [onSelectNode, onSelectEdge, onClearSelection],
+  );
+
   const labelEditing = useMemo(
     () =>
       editing
@@ -378,6 +392,7 @@ export function GraphCanvas({
                 editable ? contextMenu.openEdgeMenu : undefined
               }
               onPaneClick={handlePaneClick}
+              onSelectionChange={handleSelectionChange}
               onPaneContextMenu={
                 editable ? contextMenu.openPaneMenu : undefined
               }

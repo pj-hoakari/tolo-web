@@ -1,4 +1,4 @@
-import { Route, Trash2 } from "lucide-react";
+import { Flag, Hourglass, Route, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   Menu,
@@ -19,7 +19,6 @@ import {
   ContextMenuPopover,
   type ContextMenuPosition,
 } from "./ContextMenuPopover";
-import { NodeTypeIcon } from "./NodeTypeIcon";
 import { buildNodeTypeOptions } from "./properties/nodeTypeOptions";
 
 export type GraphNodeContextMenuProps = {
@@ -45,7 +44,7 @@ export function GraphNodeContextMenu({
   onClose,
 }: GraphNodeContextMenuProps) {
   const t = useTranslations("Graph.contextMenu");
-  const tType = useTranslations("Graph.nodeType");
+  const tFlag = useTranslations("Graph.nodeTypeFlag");
   const tNotice = useTranslations("Graph.notices");
 
   const options = buildNodeTypeOptions(
@@ -72,27 +71,22 @@ export function GraphNodeContextMenu({
         {isExternalNode(node) ? null : (
           <>
             <MenuSeparator />
-            {/* 選択中のタイプをラジオ選択として支援技術へ伝える */}
             <MenuSection
-              selectionMode="single"
-              selectedKeys={[node.data.nodeType]}
+              selectionMode="multiple"
+              selectedKeys={options.filter((o) => o.checked).map((o) => o.flag)}
             >
               <MenuHeader className="px-2 text-xs">
                 {t("changeType")}
               </MenuHeader>
               {options.map((option) => (
                 <ContextMenuItem
-                  id={option.type}
-                  key={option.type}
-                  icon={<NodeTypeIcon type={option.type} />}
-                  label={tType(option.type)}
+                  id={option.flag}
+                  key={option.flag}
+                  icon={option.flag === "dwell" ? Hourglass : Flag}
+                  label={tFlag(option.flag)}
                   description={option.disabledReason}
                   isDisabled={!option.assignable}
-                  onAction={() => {
-                    if (option.type !== node.data.nodeType) {
-                      onSetType(node.id, option.type);
-                    }
-                  }}
+                  onAction={() => onSetType(node.id, option.next)}
                 />
               ))}
             </MenuSection>

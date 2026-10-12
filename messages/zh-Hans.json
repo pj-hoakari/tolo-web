@@ -29,7 +29,7 @@
     },
     "nodeType": {
       "GOAL": "目的地",
-      "GOAL_TRANSIT_MIXED": "目的地 / 通行",
+      "GOAL_TRANSIT_MIXED": "可停留",
       "TRANSIT_ONLY": "仅通行",
       "EXTERNAL": "外部"
     },
@@ -55,10 +55,15 @@
       "usedByOther": "已被其他节点 / 路径使用"
     },
     "nodeTypeDescription": {
-      "GOAL": "例：展位",
-      "GOAL_TRANSIT_MIXED": "例：墙面展示（既是目的地也可通行）",
-      "TRANSIT_ONLY": "例：通道分叉",
       "EXTERNAL": "表示场馆外部的虚拟点。与外部连接的点将作为出入口。"
+    },
+    "nodeTypeFlag": {
+      "dwell": "允许停留",
+      "destination": "作为目的地"
+    },
+    "nodeTypeFlagDescription": {
+      "dwell": "人可能会停留的点。关闭后仅可通行（例：通道分叉）",
+      "destination": "不用于穿行的去处（例：展位）"
     },
     "notices": {
       "boundary": "出入口（与外部连接）",
@@ -71,6 +76,7 @@
     "editor": {
       "title": "路径图编辑器",
       "addNode": "添加{type}",
+      "point": "点",
       "save": "保存",
       "newNodeLabel": "节点 {index}",
       "addGroup": "添加分组",

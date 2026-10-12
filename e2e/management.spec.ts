@@ -154,11 +154,31 @@ test("表示専用のルート図ではポイントを動かせず削除や右�
 test("ポイントにキーボードでフォーカスして Enter を押すとそのポイントが選ばれる", async ({
   page,
 }) => {
-  test.fail();
   await booth(page).focus();
   await page.keyboard.press("Enter");
 
   await expect(panel(page).getByRole("code")).toHaveText("ph_booth");
+});
+
+test("ルートにキーボードでフォーカスして Enter を押すとそのルートが選ばれる", async ({
+  page,
+}) => {
+  await page.getByTestId("rf__edge-ph_e2").focus();
+  await page.keyboard.press("Enter");
+
+  await expect(panel(page).getByRole("code")).toHaveText("ph_e2");
+});
+
+test("キーボードで選んだポイントで Escape を押すと選択が解除される", async ({
+  page,
+}) => {
+  await booth(page).focus();
+  await page.keyboard.press("Enter");
+  await expect(panel(page).getByRole("code")).toHaveText("ph_booth");
+
+  await page.keyboard.press("Escape");
+
+  await expect(panel(page)).toContainText(emptyNotice);
 });
 
 test("ポイントに観測点を紐づけると観測点の件数が表示される", async ({

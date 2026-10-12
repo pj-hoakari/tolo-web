@@ -10,7 +10,7 @@ import { SelectionHeader } from "./SelectionHeader";
 
 export type NodePropertiesProps = {
   node: GraphNodeType;
-  /** 各ノードタイプの選択可否（`buildNodeTypeOptions` の結果） */
+  /** 各フラグの状態と切り替え可否（`buildNodeTypeOptions` の結果） */
   typeOptions: NodeTypeOption[];
   /** ラベルの編集言語 */
   labelLocale: Locale;
@@ -55,7 +55,6 @@ export function NodeProperties({
       </TextField>
 
       <NodeTypeSelector
-        value={node.data.nodeType}
         options={typeOptions}
         notices={node.data.notices}
         onChange={(nodeType) => onChange({ nodeType })}

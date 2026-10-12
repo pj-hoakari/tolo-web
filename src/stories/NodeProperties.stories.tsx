@@ -67,11 +67,11 @@ export const Boundary: Story = {
   },
 };
 
-/** 制約違反で変更できないタイプがある状態（理由が並ぶ） */
+/** 制約違反で切り替えられないフラグがある状態（理由が並ぶ） */
 export const WithDisabledType: Story = {
   args: {
     typeOptions: boothTypeOptions.map((option) =>
-      option.type === "TRANSIT_ONLY"
+      option.flag === "dwell"
         ? {
             ...option,
             assignable: false,
