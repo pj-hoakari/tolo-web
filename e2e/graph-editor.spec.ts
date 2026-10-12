@@ -297,6 +297,15 @@ test("プロパティのラベル欄で Backspace を押してもポイントは
   await expect(booth(page)).toBeVisible();
 });
 
+test("ポイントにキーボードでフォーカスして Enter を押すとプロパティにそのポイントが表示される", async ({
+  page,
+}) => {
+  await booth(page).focus();
+  await page.keyboard.press("Enter");
+
+  await expect(panel(page).getByRole("code")).toHaveText("ph_booth");
+});
+
 test("何もない所をクリックすると選択が解除される", async ({ page }) => {
   await selectBooth(page);
   await expect(panel(page).getByRole("code")).toHaveText("ph_booth");
