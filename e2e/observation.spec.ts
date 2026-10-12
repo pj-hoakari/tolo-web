@@ -39,6 +39,7 @@ const lineButtons = (page: Page) =>
   page.getByRole("button", { name: /: forward \d+ \/ backward \d+$/ });
 const wakeToggle = (page: Page) =>
   page.getByRole("button", { name: "画面の常時点灯" });
+const wakeAlert = (page: Page) => page.getByRole("main").getByRole("alert");
 const presetGroup = (page: Page, title: string) =>
   page
     .locator("div")
@@ -536,12 +537,50 @@ test.describe("画面の常時点灯が許可されないとき", () => {
   test("常時点灯を ON にしようとすると OFF に戻りエラーが表示される", async ({
     page,
   }) => {
-    test.fail();
     await wakeToggle(page).click();
 
+    await expect(wakeAlert(page)).toHaveText(
+      "画面の常時点灯を有効化できませんでした",
+    );
+    await expect(wakeAlert(page)).toBeVisible();
+    await expect(wakeToggle(page)).toHaveAttribute("aria-pressed", "false");
+    await expect(wakeToggle(page)).toHaveText("画面の常時点灯: OFF");
     await expect(
-      page.getByRole("alert").filter({ hasText: /Wake Lock/ }),
-    ).toBeVisible();
+      page.getByText("観測中は画面が自動で消灯しません"),
+    ).toHaveCount(0);
+    await expect(
+      page.getByText(
+        "観測中に画面が消灯し、観測が中断される可能性があります。タップして ON にしてください",
+      ),
+    ).toHaveCount(0);
+  });
+
+  test("取得失敗のエラーも選択中の言語に合わせて切り替わる", async ({
+    page,
+  }) => {
+    await wakeToggle(page).click();
+    await expect(wakeAlert(page)).toHaveText(
+      "画面の常時点灯を有効化できませんでした",
+    );
+
+    await page.getByRole("button", { name: "言語を切り替え" }).click();
+    await page.getByRole("menuitemradio", { name: "English" }).click();
+
+    const englishToggle = page.getByRole("button", {
+      name: "Keep the screen awake",
+    });
+    await expect(wakeAlert(page)).toHaveText("Could not keep the screen awake");
+    await expect(englishToggle).toHaveAttribute("aria-pressed", "false");
+    await englishToggle.click();
+    await expect(wakeAlert(page)).toHaveText("Could not keep the screen awake");
+    await expect(englishToggle).toHaveAttribute("aria-pressed", "false");
+
+    await page.getByRole("button", { name: "Change language" }).click();
+    await page.getByRole("menuitemradio", { name: "日本語" }).click();
+
+    await expect(wakeAlert(page)).toHaveText(
+      "画面の常時点灯を有効化できませんでした",
+    );
     await expect(wakeToggle(page)).toHaveAttribute("aria-pressed", "false");
   });
 });

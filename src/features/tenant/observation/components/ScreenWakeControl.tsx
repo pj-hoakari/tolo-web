@@ -6,7 +6,7 @@ import { Toggle } from "@/components/ui/toggle";
 import { useScreenWake } from "./ScreenWakeProvider";
 
 export function ScreenWakeControl() {
-  const { isSupported, enabled, error, enable, disable } = useScreenWake();
+  const { isSupported, enabled, errorKey, enable, disable } = useScreenWake();
   const t = useTranslations("Observation.screenWake");
 
   if (!isSupported) {
@@ -43,18 +43,19 @@ export function ScreenWakeControl() {
         )}
         {t("toggle", { state: enabled ? t("on") : t("off") })}
       </Toggle>
-      <p
-        className={
-          enabled
-            ? "text-muted-foreground text-sm"
-            : "font-medium text-destructive text-sm"
-        }
-      >
-        {enabled ? t("enabledHint") : t("disabledHint")}
-      </p>
-      {error !== null && (
+      {errorKey !== null ? (
         <p className="text-destructive text-xs" role="alert">
-          {error}
+          {t(errorKey)}
+        </p>
+      ) : (
+        <p
+          className={
+            enabled
+              ? "text-muted-foreground text-sm"
+              : "font-medium text-destructive text-sm"
+          }
+        >
+          {enabled ? t("enabledHint") : t("disabledHint")}
         </p>
       )}
     </div>
