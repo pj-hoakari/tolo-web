@@ -109,6 +109,17 @@
       "dissolveGroup": "Ungroup (keep contents)"
     },
     "properties": {
+      "bulk": {
+        "points": "Points ({count})",
+        "edges": "Edges ({count})",
+        "mixed": "Values are mixed",
+        "result": "Changed {changed, plural, one {# element} other {# elements}}. Could not change {skipped, plural, one {# element} other {# elements}}.",
+        "reasonCount": "{reason} ({count})",
+        "reasons": {
+          "requiresDwell": "Points that do not allow dwelling cannot be destinations.",
+          "bothNotReversed": "Bidirectional edges are excluded from reversal."
+        }
+      },
       "groupSelected": "Group selected points",
       "deleteSelected": "Delete selected elements",
       "deleteSelectedGroupHint": "Selected groups are dissolved; unselected contents are kept.",

@@ -109,6 +109,17 @@
       "dissolveGroup": "Desagrupar (mantener contenido)"
     },
     "properties": {
+      "bulk": {
+        "points": "Puntos ({count})",
+        "edges": "Flechas ({count})",
+        "mixed": "Los valores son diferentes",
+        "result": "Se modificaron {changed} elementos. No se pudieron modificar {skipped} elementos.",
+        "reasonCount": "{reason} ({count})",
+        "reasons": {
+          "requiresDwell": "Los puntos que no permiten permanecer no pueden ser destinos.",
+          "bothNotReversed": "Las flechas bidireccionales se excluyen de la inversión."
+        }
+      },
       "groupSelected": "Agrupar puntos seleccionados",
       "deleteSelected": "Eliminar elementos seleccionados",
       "deleteSelectedGroupHint": "Los grupos seleccionados se disuelven; se conserva el contenido no seleccionado.",

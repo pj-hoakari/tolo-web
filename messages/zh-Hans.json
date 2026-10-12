@@ -109,6 +109,17 @@
       "dissolveGroup": "取消分组（保留内容）"
     },
     "properties": {
+      "bulk": {
+        "points": "点（{count} 个）",
+        "edges": "箭头（{count} 个）",
+        "mixed": "值不一致",
+        "result": "已修改 {changed} 个元素。无法修改 {skipped} 个元素。",
+        "reasonCount": "{reason}（{count} 个）",
+        "reasons": {
+          "requiresDwell": "不允许停留的点无法设为目的地。",
+          "bothNotReversed": "双向箭头不进行反转。"
+        }
+      },
       "groupSelected": "将选中点分组",
       "deleteSelected": "删除选中元素",
       "deleteSelectedGroupHint": "选中的分组将被解除，未选中的内容将保留。",

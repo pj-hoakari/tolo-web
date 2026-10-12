@@ -109,6 +109,17 @@
       "dissolveGroup": "取消群組（保留內容）"
     },
     "properties": {
+      "bulk": {
+        "points": "點（{count} 個）",
+        "edges": "箭頭（{count} 個）",
+        "mixed": "值不一致",
+        "result": "已修改 {changed} 個元素。無法修改 {skipped} 個元素。",
+        "reasonCount": "{reason}（{count} 個）",
+        "reasons": {
+          "requiresDwell": "不允許停留的點無法設為目的地。",
+          "bothNotReversed": "雙向箭頭不進行反轉。"
+        }
+      },
       "groupSelected": "將選取的點分組",
       "deleteSelected": "刪除選取的元素",
       "deleteSelectedGroupHint": "選取的群組將被解除，未選取的內容將保留。",

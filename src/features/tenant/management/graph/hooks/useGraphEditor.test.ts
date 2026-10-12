@@ -960,6 +960,79 @@ describe("useGraphEditor: 選択要素の操作", () => {
   });
 });
 
+describe("useGraphEditor: 一括プロパティ編集", () => {
+  const initial = (): GraphData => ({
+    nodes: [
+      { ...node("a", 100, 100), selected: true },
+      {
+        ...node("b", 300, 100),
+        selected: true,
+        data: { labels: { ja: "b" }, nodeType: "TRANSIT_ONLY" },
+      },
+    ],
+    edges: [{ ...edge("e", "a", "b"), selected: true }],
+  });
+  it("操作結果を通知し、選択と他のプロパティを保つ", () => {
+    const { result } = renderHook(() => useGraphEditor(initial()), {
+      wrapper: IntlTestProvider,
+    });
+    const selection = result.current.selection;
+    const labels = result.current
+      .getGraphData()
+      .nodes.map((n) => n.data.labels);
+    act(() =>
+      result.current.properties.onSetSelectedNodeFlag("destination", true),
+    );
+    expect(result.current.properties.bulkResult).toMatchObject({
+      changedCount: 0,
+      skippedCount: 1,
+    });
+    expect(result.current.selection).toEqual(selection);
+    act(() =>
+      result.current.properties.onSetSelectedNodeFlag("destination", false),
+    );
+    expect(
+      result.current.graph.nodes.filter(isPointNode).find((n) => n.id === "a")
+        ?.data.nodeType,
+    ).toBe("GOAL_TRANSIT_MIXED");
+    expect(result.current.properties.bulkResult).toMatchObject({
+      changedCount: 1,
+      skippedCount: 0,
+    });
+    act(() => result.current.properties.onSetSelectedEdgeDirection("oneway"));
+    expect(result.current.graph.edges[0].data?.direction).toBe("oneway");
+    act(() => result.current.properties.onReverseSelectedEdges());
+    expect(result.current.graph.edges[0]).toMatchObject({
+      source: "b",
+      target: "a",
+    });
+    expect(result.current.selection).toEqual(selection);
+    expect(
+      result.current.getGraphData().nodes.map((n) => n.data.labels),
+    ).toEqual(labels);
+  });
+  it("選択変更後に結果をクリアし、元の選択に戻しても復活させない", () => {
+    const { result } = renderHook(() => useGraphEditor(initial()), {
+      wrapper: IntlTestProvider,
+    });
+    act(() => result.current.properties.onSetSelectedNodeFlag("dwell", true));
+    expect(result.current.properties.bulkResult).not.toBeNull();
+    act(() => result.current.canvas.onSelectNode("a"));
+    expect(result.current.properties.bulkResult).toBeNull();
+    act(() =>
+      result.current.canvas.onNodesChange([
+        { type: "select", id: "b", selected: true },
+      ]),
+    );
+    act(() =>
+      result.current.canvas.onEdgesChange([
+        { type: "select", id: "e", selected: true },
+      ]),
+    );
+    expect(result.current.properties.bulkResult).toBeNull();
+  });
+});
+
 describe("useGraphEditor: 親子の移動バッチ", () => {
   const initial: GraphData = {
     nodes: [

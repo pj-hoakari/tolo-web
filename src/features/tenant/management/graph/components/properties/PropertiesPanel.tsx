@@ -12,6 +12,7 @@ import type {
 import { isExternalNode, isGroupNode } from "../../type";
 import { isLastExternal } from "../../utils/graphMutations";
 import type { getGroupSelectionError } from "../../utils/selectionActions";
+import { BulkProperties, type BulkPropertiesBindings } from "./BulkProperties";
 import { EdgeProperties } from "./EdgeProperties";
 import { ExternalProperties } from "./ExternalProperties";
 import { resolveEdgeDirectionState } from "./edgeDirectionState";
@@ -19,7 +20,7 @@ import { GroupProperties } from "./GroupProperties";
 import { NodeProperties } from "./NodeProperties";
 import { buildNodeTypeOptions } from "./nodeTypeOptions";
 
-export type PropertiesPanelProps = {
+export type PropertiesPanelProps = BulkPropertiesBindings & {
   selectedNode: GraphCanvasNode | undefined;
   selectedEdge: GraphEdgeType | undefined;
   selectionCounts?: { nodes: number; edges: number; groups: number };
@@ -55,6 +56,10 @@ export function PropertiesPanel({
   canDeleteSelected,
   onGroupSelected,
   groupSelectionError,
+  onSetSelectedNodeFlag,
+  onSetSelectedEdgeDirection,
+  onReverseSelectedEdges,
+  bulkResult,
 }: PropertiesPanelProps) {
   const { nodes, edges } = graph;
   const groupReasonId = useId();
@@ -76,10 +81,19 @@ export function PropertiesPanel({
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {multiple && selectionCounts ? (
-          <div className="space-y-2 text-muted-foreground text-sm">
-            <p>{t("selectedNodes", { count: selectionCounts.nodes })}</p>
-            <p>{t("selectedEdges", { count: selectionCounts.edges })}</p>
-            <p>{t("selectedGroups", { count: selectionCounts.groups })}</p>
+          <div className="space-y-3">
+            <div className="space-y-2 text-muted-foreground text-sm">
+              <p>{t("selectedNodes", { count: selectionCounts.nodes })}</p>
+              <p>{t("selectedEdges", { count: selectionCounts.edges })}</p>
+              <p>{t("selectedGroups", { count: selectionCounts.groups })}</p>
+            </div>
+            <BulkProperties
+              graph={graph}
+              onSetSelectedNodeFlag={onSetSelectedNodeFlag}
+              onSetSelectedEdgeDirection={onSetSelectedEdgeDirection}
+              onReverseSelectedEdges={onReverseSelectedEdges}
+              bulkResult={bulkResult}
+            />
           </div>
         ) : selectedNode && isGroupNode(selectedNode) ? (
           <GroupProperties

@@ -20,6 +20,10 @@ import type {
 import { isGroupNode, isPointNode } from "../type";
 import { autoAlignGraph } from "../utils/autoLayout";
 import {
+  applyBulkProperty,
+  type BulkPropertyAction,
+} from "../utils/bulkProperties";
+import {
   ensureExternalNode,
   patchEdgeData,
   patchNodeData,
@@ -182,6 +186,16 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
     setNodes((nds) => fitGroupsToChildren(dissolveGroups(nds, [id])));
   }, []);
 
+  const updateSelectedProperty = useCallback(
+    (action: BulkPropertyAction) => {
+      const { graph: next, result } = applyBulkProperty(source, action);
+      setNodes(next.nodes);
+      setEdges(next.edges);
+      return result;
+    },
+    [source],
+  );
+
   const removeSelection = useCallback(() => {
     const next = deleteSelectedElements(source);
     setNodes(next.nodes);
@@ -283,6 +297,7 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
     setGroupMinSize,
     autoAlign,
     removeEdge,
+    updateSelectedProperty,
     updateNodeData,
     updateNodeLabel,
     updateEdgeData,

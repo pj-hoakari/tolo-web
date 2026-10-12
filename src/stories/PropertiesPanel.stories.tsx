@@ -35,6 +35,10 @@ const meta = {
     onSetNodeLabel: fn(),
     onUpdateEdge: fn(),
     onReverseEdge: fn(),
+    onSetSelectedNodeFlag: fn(),
+    onSetSelectedEdgeDirection: fn(),
+    onReverseSelectedEdges: fn(),
+    bulkResult: null,
     onDelete: fn(),
     onDeleteSelected: fn(),
     canDeleteSelected: false,
@@ -90,8 +94,20 @@ export const ExternalDeletable: Story = {
   },
 };
 
+const selectionGraph = (nodeIds: string[], edgeIds: string[]) => ({
+  nodes: GRAPH_NODES.map((node) => ({
+    ...node,
+    selected: nodeIds.includes(node.id),
+  })),
+  edges: GRAPH_EDGES.map((edge) => ({
+    ...edge,
+    selected: edgeIds.includes(edge.id),
+  })),
+});
+
 export const MultipleSelection: Story = {
   args: {
+    graph: selectionGraph(["ph_booth", "ph_wall", "ph_floor1"], ["ph_e2"]),
     selectionCounts: { nodes: 2, edges: 1, groups: 1 },
     canDeleteSelected: true,
     groupSelectionError: "pointsOnly",
@@ -100,6 +116,7 @@ export const MultipleSelection: Story = {
 
 export const GroupableSelection: Story = {
   args: {
+    graph: selectionGraph(["ph_booth", "ph_wall"], ["ph_e2"]),
     selectionCounts: { nodes: 2, edges: 1, groups: 0 },
     canDeleteSelected: true,
     groupSelectionError: null,
@@ -107,8 +124,52 @@ export const GroupableSelection: Story = {
 };
 export const DifferentParents: Story = {
   args: {
+    graph: selectionGraph(["ph_booth", "ph_gallery2f"], []),
     selectionCounts: { nodes: 2, edges: 0, groups: 0 },
     canDeleteSelected: true,
     groupSelectionError: "differentParents",
+  },
+};
+
+export const MixedProperties: Story = {
+  args: {
+    graph: {
+      nodes: GRAPH_NODES.map((node) =>
+        node.id === "ph_booth" || node.id === "ph_wall"
+          ? { ...node, selected: true }
+          : node,
+      ),
+      edges: GRAPH_EDGES.map((edge) =>
+        edge.id === "ph_e1" || edge.id === "ph_e2"
+          ? { ...edge, selected: true }
+          : edge,
+      ),
+    },
+    selectionCounts: { nodes: 2, edges: 2, groups: 0 },
+    canDeleteSelected: true,
+    groupSelectionError: null,
+  },
+};
+export const PartialPropertyUpdate: Story = {
+  args: {
+    ...MixedProperties.args,
+    graph: {
+      ...selectionGraph(["ph_booth", "ph_wall"], ["ph_e1", "ph_e2"]),
+      nodes: selectionGraph(["ph_booth", "ph_wall"], []).nodes.map((node) =>
+        node.id === "ph_wall"
+          ? {
+              ...graphNode("ph_wall"),
+              selected: true,
+              data: { ...graphNode("ph_wall").data, nodeType: "TRANSIT_ONLY" },
+            }
+          : node,
+      ),
+    },
+    bulkResult: {
+      targetCount: 2,
+      changedCount: 1,
+      skippedCount: 1,
+      reasons: [{ kind: "operation", messageKey: "requiresDwell", count: 1 }],
+    },
   },
 };

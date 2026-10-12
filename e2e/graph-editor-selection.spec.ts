@@ -533,3 +533,175 @@ test("単体選択から複数選択へ切り替えても削除ボタンをグ�
     ),
   ).toBe(true);
 });
+
+const pointsProperties = (page: Page, count = 2) =>
+  panel(page).getByRole("region", {
+    name: `ポイント（${count}件）`,
+    exact: true,
+  });
+const edgesProperties = (page: Page, count = 2) =>
+  panel(page).getByRole("region", { name: `矢印（${count}件）`, exact: true });
+
+test("ポイントと矢印の編集欄を上下に表示し、混在値を一括上書きできる", async ({
+  page,
+}) => {
+  await selectNode(page, "ph_booth");
+  await selectNode(page, "ph_junction", "Shift");
+  await selectEdge(page, "Shift", "ph_e1");
+  await selectEdge(page, "Shift", "ph_e2");
+  const points = pointsProperties(page);
+  const edges = edgesProperties(page);
+  await expect(points).toBeVisible();
+  await expect(edges).toBeVisible();
+  const pBox = await points.boundingBox();
+  const eBox = await edges.boundingBox();
+  if (!pBox || !eBox) throw new Error("Missing property sections");
+  expect(pBox.y + pBox.height).toBeLessThanOrEqual(eBox.y);
+  const dwell = points.getByRole("checkbox", { name: /^停滞を許容する/ });
+  await expect(dwell).toBeChecked({ indeterminate: true });
+  expect(await dwell.ariaSnapshot()).toContain("[checked=mixed]");
+  await dwell.focus();
+  await dwell.press("Space");
+  await expect(dwell).toBeChecked();
+  await dwell.press("Space");
+  await expect(dwell).not.toBeChecked();
+  await expect(
+    points.getByRole("checkbox", { name: /^目的地として扱う/ }),
+  ).toBeDisabled();
+  await expect(edges.getByRole("radio", { name: /^両通行可/ })).toHaveAttribute(
+    "aria-checked",
+    "false",
+  );
+  await expect(edges.getByRole("radio", { name: /^片方向/ })).toHaveAttribute(
+    "aria-checked",
+    "false",
+  );
+  await edges.getByRole("radio", { name: /^両通行可/ }).click();
+  await expect(edges.getByRole("radio", { name: /^両通行可/ })).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
+  await expect(
+    edges.getByRole("button", { name: /^向きを反転/ }),
+  ).toBeDisabled();
+  await expect(selectedNodes(page)).toHaveCount(2);
+  await expect(selectedEdges(page)).toHaveCount(2);
+  await selectNode(page, "ph_booth");
+  await expect(
+    panel(page).getByRole("checkbox", { name: /^停滞を許容する/ }),
+  ).not.toBeChecked();
+  await expect(
+    panel(page).getByRole("textbox", { name: "ラベル（日本語）" }),
+  ).toHaveValue("ブースA");
+  await selectNode(page, "ph_wall");
+  await expect(
+    panel(page).getByRole("checkbox", { name: /^停滞を許容する/ }),
+  ).toBeChecked();
+});
+
+test("混在が残る一部適用後も次の操作で解除でき、選択変更で操作意図と結果がリセットされる", async ({
+  page,
+}) => {
+  await selectNode(page, "ph_booth");
+  await selectNode(page, "ph_wall", "Shift");
+  await selectNode(page, "ph_junction", "Shift");
+  const destination = pointsProperties(page, 3).getByRole("checkbox", {
+    name: /^目的地として扱う/,
+  });
+  await expect(destination).toBeChecked({ indeterminate: true });
+  await pointsProperties(page, 3)
+    .getByText("目的地として扱う", { exact: true })
+    .click();
+  await expect(destination).toBeChecked({ indeterminate: true });
+  await expect(panel(page).getByRole("status")).toContainText(
+    "1件を変更しました。1件は変更できませんでした。",
+  );
+  await expect(panel(page).getByRole("status")).toContainText(
+    "停滞を許容しないポイントは、目的地として扱えません。（1件）",
+  );
+  await pointsProperties(page, 3)
+    .getByText("目的地として扱う", { exact: true })
+    .click();
+  await expect(destination).not.toBeChecked();
+  await expect(panel(page).getByRole("status")).toContainText(
+    "2件を変更しました。0件は変更できませんでした。",
+  );
+  await selectNode(page, "ph_booth");
+  await expect(
+    panel(page).getByRole("textbox", { name: "ラベル（日本語）" }),
+  ).toHaveValue("ブースA");
+  await selectNode(page, "ph_wall", "Shift");
+  await expect(panel(page).getByRole("status")).toBeEmpty();
+  await pointsProperties(page)
+    .getByText("目的地として扱う", { exact: true })
+    .click();
+  await expect(
+    pointsProperties(page).getByRole("checkbox", { name: /^目的地として扱う/ }),
+  ).toBeChecked();
+});
+
+test("片方向の矢印だけ反転し、両通行の除外件数と理由を通知する", async ({
+  page,
+}) => {
+  await selectEdge(page, undefined, "ph_e1");
+  await selectEdge(page, "Shift", "ph_e2");
+  await edgesProperties(page)
+    .getByRole("button", { name: /^向きを反転/ })
+    .click();
+  await expect(edge(page, "ph_e1")).toHaveAttribute(
+    "aria-label",
+    "Edge from ph_junction to ph_entrance",
+  );
+  await expect(edge(page, "ph_e2")).toHaveAttribute(
+    "aria-label",
+    "Edge from ph_junction to ph_booth",
+  );
+  await expect(panel(page).getByRole("status")).toContainText(
+    "1件を変更しました。1件は変更できませんでした。",
+  );
+  await expect(panel(page).getByRole("status")).toContainText(
+    "両通行の矢印は反転の対象外です。（1件）",
+  );
+  await expect(selectedEdges(page)).toHaveCount(2);
+});
+
+test("グループと外部ポイントを編集対象から除き、通常ポイントだけ上書きする", async ({
+  page,
+}) => {
+  await selectNode(page, "ph_booth");
+  await selectGroup(page, "ph_floor1", "Shift");
+  await selectNode(page, "external", "Shift");
+  await expect(pointsProperties(page, 1)).toBeVisible();
+  await pointsProperties(page, 1)
+    .getByText("停滞を許容する", { exact: true })
+    .click();
+  await expect(panel(page).getByRole("status")).toContainText(
+    "1件を変更しました。0件は変更できませんでした。",
+  );
+  await selectGroup(page, "ph_floor1");
+  await expect(
+    panel(page).getByRole("textbox", { name: "ラベル（日本語）" }),
+  ).toHaveValue("1F");
+  await selectNode(page, "external");
+  await expect(panel(page).getByRole("checkbox")).toHaveCount(0);
+});
+
+test("英語でも混在値と編集結果を表示する", async ({ page, context }) => {
+  await context.addCookies([
+    { name: "NEXT_LOCALE", value: "en", domain: "test.localhost", path: "/" },
+  ]);
+  await page.reload();
+  await selectNode(page, "ph_booth");
+  await selectNode(page, "ph_junction", "Shift");
+  const points = panel(page).getByRole("region", {
+    name: "Points (2)",
+    exact: true,
+  });
+  await expect(points.getByText("Values are mixed")).toHaveCount(2);
+  const dwell = points.getByRole("checkbox").first();
+  await expect(dwell).toBeChecked({ indeterminate: true });
+  await points.getByText("Allow dwelling", { exact: true }).click();
+  await expect(panel(page).getByRole("status")).toContainText(
+    "Changed 1 element. Could not change 0 elements.",
+  );
+});

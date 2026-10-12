@@ -2,14 +2,18 @@
 
 import type { Connection, EdgeChange, NodeChange } from "@xyflow/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   GraphCanvasEditing,
   GraphCanvasProps,
 } from "../components/GraphCanvas";
 import type { LabelLocaleBindings } from "../components/LabelLocaleMenu";
 import type { PropertiesPanelProps } from "../components/properties";
-import { DEFAULT_NODE_TYPE, resolveConnectionDirection } from "../nodeTypes";
+import {
+  DEFAULT_NODE_TYPE,
+  type NodeTypeFlag,
+  resolveConnectionDirection,
+} from "../nodeTypes";
 import { toGraphData } from "../serialize";
 import type {
   EdgeDirection,
@@ -19,6 +23,10 @@ import type {
   NodeType,
 } from "../type";
 import { isExternalNode, isGroupNode, isPointNode } from "../type";
+import type {
+  BulkEditResult,
+  BulkPropertyAction,
+} from "../utils/bulkProperties";
 import {
   createEdge,
   createGroup,
@@ -90,6 +98,7 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
     setGroupMinSize,
     autoAlign,
     removeEdge,
+    updateSelectedProperty,
     updateNodeData,
     updateNodeLabel,
     updateEdgeData,
@@ -105,6 +114,40 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
     }),
     [selectedNodes, selectedEdges],
   );
+  const selectionKey = JSON.stringify([
+    selection.nodeIds.toSorted(),
+    selection.edgeIds.toSorted(),
+  ]);
+  const [bulkFeedback, setBulkFeedback] = useState<{
+    selectionKey: string;
+    result: BulkEditResult;
+  } | null>(null);
+  useEffect(() => {
+    setBulkFeedback((current) =>
+      current?.selectionKey === selectionKey ? current : null,
+    );
+  }, [selectionKey]);
+  const runBulkEdit = useCallback(
+    (action: BulkPropertyAction) => {
+      setBulkFeedback({ selectionKey, result: updateSelectedProperty(action) });
+    },
+    [selectionKey, updateSelectedProperty],
+  );
+  const setSelectedNodeFlag = useCallback(
+    (flag: NodeTypeFlag, enabled: boolean) =>
+      runBulkEdit({ kind: "nodeFlag", flag, enabled }),
+    [runBulkEdit],
+  );
+  const setSelectedEdgeDirection = useCallback(
+    (direction: EdgeDirection) =>
+      runBulkEdit({ kind: "edgeDirection", direction }),
+    [runBulkEdit],
+  );
+  const reverseSelectedEdges = useCallback(
+    () => runBulkEdit({ kind: "reverseEdges" }),
+    [runBulkEdit],
+  );
+
   const selectionCount = selectedNodes.length + selectedEdges.length;
   const selectNode = useCallback(
     (id: string) => setSelection([id], []),
@@ -380,6 +423,13 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
       onSetNodeLabel: setNodeLabel,
       onUpdateEdge: updateEdgeData,
       onReverseEdge: reverseEdge,
+      onSetSelectedNodeFlag: setSelectedNodeFlag,
+      onSetSelectedEdgeDirection: setSelectedEdgeDirection,
+      onReverseSelectedEdges: reverseSelectedEdges,
+      bulkResult:
+        bulkFeedback?.selectionKey === selectionKey
+          ? bulkFeedback.result
+          : null,
       onDelete: deleteSelection,
       onDeleteSelected: removeSelection,
       canDeleteSelected: canDeleteSelection,
