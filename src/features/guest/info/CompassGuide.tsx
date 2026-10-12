@@ -363,8 +363,9 @@ export function CompassGuide({
             type="button"
             variant="outline"
             size="sm"
-            isDisabled={index === 0}
-            onPress={() => setIndex((v) => Math.max(0, v - 1))}
+            onPress={() =>
+              index === 0 ? onClose() : setIndex((v) => Math.max(0, v - 1))
+            }
           >
             <ChevronLeft className="mr-1 size-4" />
             {t("back")}

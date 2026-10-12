@@ -1,0 +1,311 @@
+{
+  "version": 1,
+  "north": 0,
+  "scale": 0,
+  "floors": [
+    {
+      "id": "ph_floor2",
+      "name": "2F",
+      "labels": {
+        "ja": "2F",
+        "en": "2F"
+      },
+      "x": 0,
+      "y": 0,
+      "w": 880,
+      "h": 260
+    },
+    {
+      "id": "ph_floor1",
+      "name": "1F",
+      "labels": {
+        "ja": "1F",
+        "en": "1F"
+      },
+      "x": 0,
+      "y": 320,
+      "w": 1060,
+      "h": 460
+    }
+  ],
+  "points": {
+    "ph_stairs2f": {
+      "label": "2F 階段",
+      "labels": {
+        "ja": "2F 階段",
+        "en": "2F Stairs"
+      },
+      "type": "TRANSIT_ONLY",
+      "floor": "ph_floor2",
+      "x": 260,
+      "y": 200,
+      "w": 72,
+      "h": 72,
+      "shape": "circle"
+    },
+    "ph_hall2f": {
+      "label": "2F ホール",
+      "labels": {
+        "ja": "2F ホール",
+        "en": "2F Hall"
+      },
+      "type": "TRANSIT_ONLY",
+      "floor": "ph_floor2",
+      "x": 380,
+      "y": 50,
+      "w": 120,
+      "h": 48,
+      "shape": "rect"
+    },
+    "ph_elevator2f": {
+      "label": "2F エレベーター",
+      "labels": {
+        "ja": "2F エレベーター",
+        "en": "2F Elevator"
+      },
+      "type": "TRANSIT_ONLY",
+      "floor": "ph_floor2",
+      "x": 540,
+      "y": 200,
+      "w": 72,
+      "h": 72,
+      "shape": "circle"
+    },
+    "ph_gallery2f": {
+      "label": "展示室B",
+      "labels": {
+        "ja": "展示室B",
+        "en": "Gallery B"
+      },
+      "type": "GOAL_TRANSIT_MIXED",
+      "floor": "ph_floor2",
+      "x": 740,
+      "y": 50,
+      "w": 140,
+      "h": 56,
+      "shape": "rect"
+    },
+    "ph_stairs1f": {
+      "label": "1F 階段",
+      "labels": {
+        "ja": "1F 階段",
+        "en": "1F Stairs"
+      },
+      "type": "TRANSIT_ONLY",
+      "floor": "ph_floor1",
+      "x": 260,
+      "y": 70,
+      "w": 72,
+      "h": 72,
+      "shape": "circle"
+    },
+    "ph_elevator1f": {
+      "label": "1F エレベーター",
+      "labels": {
+        "ja": "1F エレベーター",
+        "en": "1F Elevator"
+      },
+      "type": "TRANSIT_ONLY",
+      "floor": "ph_floor1",
+      "x": 540,
+      "y": 70,
+      "w": 72,
+      "h": 72,
+      "shape": "circle"
+    },
+    "ph_entrance": {
+      "label": "入口",
+      "labels": {
+        "ja": "入口",
+        "en": "Entrance"
+      },
+      "type": "BOUNDARY",
+      "floor": "ph_floor1",
+      "x": 120,
+      "y": 240,
+      "w": 112,
+      "h": 48,
+      "shape": "rect"
+    },
+    "ph_junction": {
+      "label": "エントランスホール",
+      "labels": {
+        "ja": "エントランスホール",
+        "en": "Entrance Hall"
+      },
+      "type": "TRANSIT_ONLY",
+      "floor": "ph_floor1",
+      "x": 380,
+      "y": 240,
+      "w": 120,
+      "h": 48,
+      "shape": "rect"
+    },
+    "ph_booth": {
+      "label": "ブースA",
+      "labels": {
+        "ja": "ブースA",
+        "en": "Booth A"
+      },
+      "type": "GOAL",
+      "floor": "ph_floor1",
+      "x": 700,
+      "y": 140,
+      "w": 140,
+      "h": 56,
+      "shape": "rect"
+    },
+    "ph_wall": {
+      "label": "壁展示",
+      "labels": {
+        "ja": "壁展示",
+        "en": "Wall Exhibit"
+      },
+      "type": "GOAL_TRANSIT_MIXED",
+      "floor": "ph_floor1",
+      "x": 700,
+      "y": 360,
+      "w": 140,
+      "h": 56,
+      "shape": "rect"
+    },
+    "ph_exit": {
+      "label": "出口",
+      "labels": {
+        "ja": "出口",
+        "en": "Exit"
+      },
+      "type": "BOUNDARY",
+      "floor": "ph_floor1",
+      "x": 960,
+      "y": 240,
+      "w": 112,
+      "h": 48,
+      "shape": "rect"
+    }
+  },
+  "routes": {
+    "ph_e1": {
+      "source": "ph_entrance",
+      "target": "ph_junction",
+      "direction": "oneway",
+      "anchors": []
+    },
+    "ph_e2": {
+      "source": "ph_junction",
+      "target": "ph_booth",
+      "direction": "both",
+      "anchors": []
+    },
+    "ph_e3": {
+      "source": "ph_junction",
+      "target": "ph_wall",
+      "direction": "both",
+      "anchors": []
+    },
+    "ph_e4": {
+      "source": "ph_booth",
+      "target": "ph_exit",
+      "direction": "oneway",
+      "anchors": []
+    },
+    "ph_e5": {
+      "source": "ph_wall",
+      "target": "ph_exit",
+      "direction": "oneway",
+      "anchors": []
+    },
+    "ph_e6": {
+      "source": "ph_junction",
+      "target": "ph_stairs1f",
+      "direction": "both",
+      "anchors": []
+    },
+    "ph_e7": {
+      "source": "ph_junction",
+      "target": "ph_elevator1f",
+      "direction": "both",
+      "anchors": []
+    },
+    "ph_e8": {
+      "source": "ph_stairs1f",
+      "target": "ph_stairs2f",
+      "direction": "both",
+      "label": "階段",
+      "anchors": []
+    },
+    "ph_e9": {
+      "source": "ph_elevator1f",
+      "target": "ph_elevator2f",
+      "direction": "both",
+      "label": "エレベーター",
+      "anchors": []
+    },
+    "ph_e10": {
+      "source": "ph_stairs2f",
+      "target": "ph_hall2f",
+      "direction": "both",
+      "anchors": []
+    },
+    "ph_e11": {
+      "source": "ph_elevator2f",
+      "target": "ph_hall2f",
+      "direction": "both",
+      "anchors": []
+    },
+    "ph_e12": {
+      "source": "ph_hall2f",
+      "target": "ph_gallery2f",
+      "direction": "both",
+      "anchors": []
+    }
+  },
+  "extraPoints": [
+    {
+      "id": "x-ea766578-c07a-42cc-8722-467e5ec16988",
+      "label": "コンビニ",
+      "labels": {
+        "ja": "コンビニ"
+      },
+      "type": "GOAL",
+      "floor": "ph_floor1",
+      "x": 120,
+      "y": 42,
+      "w": 140,
+      "h": 56,
+      "shape": "rect"
+    },
+    {
+      "id": "x-d7cbff09-012b-4f71-8d98-0503863225b0",
+      "label": "スーパー",
+      "labels": {
+        "ja": "スーパー"
+      },
+      "type": "GOAL",
+      "floor": "ph_floor1",
+      "x": -136,
+      "y": 42,
+      "w": 140,
+      "h": 56,
+      "shape": "rect"
+    }
+  ],
+  "extraRoutes": [
+    {
+      "id": "x-4c5e02af-9924-43d4-afa9-19152ebbfb47",
+      "source": "ph_entrance",
+      "target": "x-ea766578-c07a-42cc-8722-467e5ec16988",
+      "direction": "both",
+      "anchors": []
+    },
+    {
+      "id": "x-5bf78904-e26b-441c-a7ad-c375ba401f22",
+      "source": "x-d7cbff09-012b-4f71-8d98-0503863225b0",
+      "target": "x-ea766578-c07a-42cc-8722-467e5ec16988",
+      "direction": "both",
+      "anchors": []
+    }
+  ],
+  "areas": [],
+  "removedPoints": []
+}

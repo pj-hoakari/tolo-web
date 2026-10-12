@@ -303,6 +303,11 @@
       }
     },
     "guideMap": {
+      "swipeHint": "Desliza para ver cada dirección",
+      "aheadIs": "{name} está por aquí",
+      "noneAhead": "No hay destino al frente (prueba a girar)",
+      "faceHint": "Activa la brújula y apunta el móvil para ver destinos",
+      "goHere": "Ir aquí",
       "title": "Mapa de orientación",
       "hint": "Selecciona un destino para ver la ruta",
       "currentLocation": "Estás aquí",

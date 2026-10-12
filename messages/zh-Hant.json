@@ -303,6 +303,11 @@
       }
     },
     "guideMap": {
+      "swipeHint": "滑動查看各方向",
+      "aheadIs": "這個方向有{name}",
+      "noneAhead": "正前方沒有目的地（試著轉動）",
+      "faceHint": "開啟方向感測器，朝向手機即可查看目的地",
+      "goHere": "前往這裡",
       "title": "導覽圖",
       "hint": "選擇目的地即可顯示路線",
       "currentLocation": "目前位置",

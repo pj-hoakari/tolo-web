@@ -12,17 +12,12 @@ import {
 } from "@/components/ui/disclosure";
 import { cn } from "@/lib/utils";
 import { CompassGuide } from "./CompassGuide";
-import {
-  buildNav,
-  type GraphData,
-  type GraphicalInfo,
-  routePoints,
-} from "./graphicalInfoNav";
+import { routePoints } from "./graphicalInfoNav";
 import { InfoCard } from "./InfoCard";
-import sampleGraph from "./sampleGraph.json";
-import sampleInfo from "./sampleGraphicalInfo.json";
 import { defineGuestInfoComponent, type GuestInfoComponentProps } from "./type";
 import { useHeading } from "./useHeading";
+import { buildVenueNav, type VenueMap } from "./venueMap";
+import venueMap from "./venueMap.json";
 
 /**
  * 会場グラフ＋graphical_info を読み込み、現在地と目的地を選んで
@@ -36,12 +31,7 @@ function GraphCompassGuide(_props: GuestInfoComponentProps) {
   const locale = useLocale();
 
   const model = useMemo(
-    () =>
-      buildNav(
-        sampleGraph as unknown as GraphData,
-        sampleInfo as GraphicalInfo,
-        locale,
-      ),
+    () => buildVenueNav(venueMap as unknown as VenueMap, locale),
     [locale],
   );
 
@@ -60,6 +50,17 @@ function GraphCompassGuide(_props: GuestInfoComponentProps) {
   const closeCompass = () => {
     compass.stop();
     setOpen(false);
+  };
+
+  // 現在地・目的地を選んだ瞬間にコンパス案内を開く
+  // （センサー許可は iOS ではジェスチャ必須なので、この選択タップ内で開始する）
+  const selectGoal = (id: string) => {
+    setGoalId(id);
+    if (startId) openCompass();
+  };
+  const selectStart = (id: string) => {
+    setStartId(id);
+    if (goalId) openCompass();
   };
 
   const route = useMemo(
@@ -115,7 +116,7 @@ function GraphCompassGuide(_props: GuestInfoComponentProps) {
                     variant="outline"
                     size="sm"
                     className={chip(n.id === startId)}
-                    onPress={() => setStartId(n.id)}
+                    onPress={() => selectStart(n.id)}
                   >
                     {n.label}
                   </Button>
@@ -145,7 +146,7 @@ function GraphCompassGuide(_props: GuestInfoComponentProps) {
                     variant="outline"
                     size="sm"
                     className={chip(n.id === goalId)}
-                    onPress={() => setGoalId(n.id)}
+                    onPress={() => selectGoal(n.id)}
                   >
                     {n.label}
                   </Button>

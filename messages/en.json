@@ -303,6 +303,11 @@
       }
     },
     "guideMap": {
+      "swipeHint": "Swipe to see each direction",
+      "aheadIs": "{name} is this way",
+      "noneAhead": "No destination ahead (try turning)",
+      "faceHint": "Turn on the compass and point your phone to find destinations",
+      "goHere": "Go here",
       "title": "Guide map",
       "hint": "Select a destination to see the route",
       "currentLocation": "You are here",

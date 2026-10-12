@@ -110,7 +110,10 @@ export type NavModel = {
 const DEF_W = 140;
 const DEF_H = 56;
 
-function resolveLabel(labels: Record<string, string>, locale: string): string {
+export function resolveLabel(
+  labels: Record<string, string>,
+  locale: string,
+): string {
   if (labels[locale]) return labels[locale];
   for (const k of [locale, "ja", "en", ...Object.keys(labels)]) {
     if (labels[k]) return labels[k];
