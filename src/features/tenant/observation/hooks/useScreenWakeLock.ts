@@ -1,13 +1,12 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export type UseScreenWakeLockResult = {
   isSupported: boolean;
   enabled: boolean;
   isActive: boolean;
-  error: string | null;
+  errorKey: "enableError" | null;
   /** 画面ロックの取得を要求
    * iOS Safari ではユーザー操作が必須，ユーザー操作のイベントハンドラ内から呼び出し */
   enable: () => Promise<void>;
@@ -27,8 +26,8 @@ export function useScreenWakeLock(): UseScreenWakeLockResult {
   const [isSupported, setIsSupported] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [isActive, setIsActive] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const t = useTranslations("Observation.screenWake");
+  const [errorKey, setErrorKey] =
+    useState<UseScreenWakeLockResult["errorKey"]>(null);
 
   // 対応判定はクライアントでのみ
   useEffect(() => {
@@ -49,7 +48,7 @@ export function useScreenWakeLock(): UseScreenWakeLockResult {
       const acquired = await navigator.wakeLock.request("screen");
       sentinelRef.current = acquired;
       setIsActive(true);
-      setError(null);
+      setErrorKey(null);
 
       acquired.addEventListener("release", () => {
         if (sentinelRef.current === acquired) {
@@ -57,16 +56,18 @@ export function useScreenWakeLock(): UseScreenWakeLockResult {
           setIsActive(false);
         }
       });
-    } catch (e) {
+    } catch {
+      enabledRef.current = false;
+      setEnabled(false);
       setIsActive(false);
-      setError(e instanceof Error ? e.message : t("enableError"));
+      setErrorKey("enableError");
     }
-  }, [t]);
+  }, []);
 
   const enable = useCallback(async () => {
     enabledRef.current = true;
     setEnabled(true);
-    setError(null);
+    setErrorKey(null);
     await acquire();
   }, [acquire]);
 
@@ -113,5 +114,5 @@ export function useScreenWakeLock(): UseScreenWakeLockResult {
     };
   }, []);
 
-  return { isSupported, enabled, isActive, error, enable, disable };
+  return { isSupported, enabled, isActive, errorKey, enable, disable };
 }
