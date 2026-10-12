@@ -108,6 +108,56 @@ describe("groupSelectedPoints", () => {
         absolutePositions(graph.nodes)[id],
       );
   });
+  it("計測済みグループ内で繰り返しグループ化しても祖先の枠に収まる", () => {
+    let graph: GraphData = {
+      nodes: fitGroupsToChildren([
+        group("parent"),
+        point("a", 100, 100, "parent"),
+        point("b", 200, 300, "parent"),
+      ]),
+      edges: [],
+    };
+    const before = absolutePositions(graph.nodes);
+    let parentId = "parent";
+    for (const id of ["new1", "new2", "new3"]) {
+      graph = {
+        ...graph,
+        nodes: graph.nodes.map((node) => ({
+          ...node,
+          selected: node.id === "a" || node.id === "b",
+          ...(node.type === "graphGroup"
+            ? { measured: { width: node.width, height: node.height } }
+            : {}),
+        })),
+      };
+      graph = groupSelectedPoints(graph, group(id));
+      const positions = absolutePositions(graph.nodes);
+      const byId = new Map(graph.nodes.map((node) => [node.id, node]));
+      expect(byId.get(id)?.parentId).toBe(parentId);
+      for (const node of graph.nodes.filter(
+        (node) => node.type === "graphGroup" && node.parentId,
+      )) {
+        const parent = byId.get(node.parentId as string);
+        if (!parent) throw new Error("Missing parent");
+        expect(positions[node.id].x).toBeGreaterThanOrEqual(
+          positions[parent.id].x,
+        );
+        expect(positions[node.id].y).toBeGreaterThanOrEqual(
+          positions[parent.id].y,
+        );
+        expect(positions[node.id].x + (node.width ?? 0)).toBeLessThanOrEqual(
+          positions[parent.id].x + (parent.width ?? 0),
+        );
+        expect(positions[node.id].y + (node.height ?? 0)).toBeLessThanOrEqual(
+          positions[parent.id].y + (parent.height ?? 0),
+        );
+      }
+      expect(positions.a).toEqual(before.a);
+      expect(positions.b).toEqual(before.b);
+      parentId = id;
+    }
+  });
+
   it.each([
     { nodes: [point("a", 0, 0)], error: "tooFewPoints" },
     {

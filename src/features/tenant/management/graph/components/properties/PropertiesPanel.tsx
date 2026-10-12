@@ -130,6 +130,7 @@ export function PropertiesPanel({
       {multiple ? (
         <div className="space-y-2 border-border border-t p-3">
           <Button
+            key="group"
             size="sm"
             variant="outline"
             className="w-full"
@@ -147,6 +148,7 @@ export function PropertiesPanel({
             </p>
           ) : null}
           <Button
+            key="delete"
             size="sm"
             variant="destructive"
             className="w-full"
@@ -164,6 +166,7 @@ export function PropertiesPanel({
       ) : deletable ? (
         <div className="border-border border-t p-3">
           <Button
+            key="delete"
             variant="destructive"
             size="sm"
             onPress={onDelete}

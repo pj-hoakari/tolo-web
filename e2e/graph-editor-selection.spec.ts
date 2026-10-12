@@ -458,3 +458,78 @@ test("英語の一括操作ボタンでポイントをグループ化できる",
     panel(page).getByRole("textbox", { name: "Label (English)" }),
   ).toHaveValue("Group 3");
 });
+
+test("計測済みグループ内でグループ化を繰り返しても子が祖先の枠からはみ出さない", async ({
+  page,
+}) => {
+  const ids = ["ph_floor1"];
+  const before = await Promise.all(
+    ["ph_booth", "ph_wall"].map((id) => position(node(page, id))),
+  );
+  for (let i = 0; i < 3; i++) {
+    await selectNode(page, "ph_booth");
+    await selectNode(page, "ph_wall", "Shift");
+    await groupSelectedButton(page).click();
+    await expect(selectedNodes(page)).toHaveCount(1);
+    const createdId = await selectedNodes(page).getAttribute("data-id");
+    if (!createdId) throw new Error("Missing group");
+    ids.push(createdId);
+    await expect
+      .poll(async () => {
+        const boxes = await Promise.all(
+          ids.map((id) => node(page, id).boundingBox()),
+        );
+        return boxes.slice(1).every((child, index) => {
+          const parent = boxes[index];
+          return (
+            parent &&
+            child &&
+            child.x >= parent.x - 0.1 &&
+            child.y >= parent.y - 0.1 &&
+            child.x + child.width <= parent.x + parent.width + 0.1 &&
+            child.y + child.height <= parent.y + parent.height + 0.1
+          );
+        });
+      })
+      .toBe(true);
+    expect(
+      await Promise.all(
+        ["ph_booth", "ph_wall"].map((id) => position(node(page, id))),
+      ),
+    ).toEqual(before);
+  }
+});
+
+test("単体選択から複数選択へ切り替えても削除ボタンをグループ化ボタンとして再利用しない", async ({
+  page,
+}) => {
+  await selectNode(page, "ph_booth");
+  const original = await panel(page)
+    .getByRole("button", { name: "このポイントを削除", exact: true })
+    .elementHandle();
+  if (!original) throw new Error("Missing delete button");
+  await selectNode(page, "ph_wall", "Shift");
+  await expect(groupSelectedButton(page)).toBeVisible();
+  await expect(deleteSelectedButton(page)).toBeVisible();
+  expect(
+    await original.evaluate(
+      (element) =>
+        element.isConnected &&
+        element.textContent?.trim() === "選択した要素を削除",
+    ),
+  ).toBe(true);
+  await selectNode(page, "ph_wall", "Shift");
+  await expect(
+    panel(page).getByRole("button", {
+      name: "このポイントを削除",
+      exact: true,
+    }),
+  ).toBeVisible();
+  expect(
+    await original.evaluate(
+      (element) =>
+        element.isConnected &&
+        element.textContent?.trim() === "このポイントを削除",
+    ),
+  ).toBe(true);
+});
