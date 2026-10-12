@@ -349,5 +349,43 @@
         "goods": "商品区"
       }
     }
+  },
+  "PwaInstall": {
+    "button": "安装应用",
+    "title": "安装 Tolo",
+    "description": "从主屏幕或应用列表打开 Tolo。使用时需要连接互联网。",
+    "nativeIntro": "点击下方的“安装”，然后在浏览器确认窗口中选择“安装”。",
+    "nativeInstall": "安装",
+    "installing": "正在打开确认窗口…",
+    "dismissed": "已取消安装。你可以从浏览器菜单再次安装。",
+    "error": "无法打开确认窗口。请按照下方步骤从浏览器安装。",
+    "accepted": "已接受安装请求。完成后，请从主屏幕或应用列表打开 Tolo。",
+    "iosTitle": "iPhone 和 iPad（Safari）",
+    "iosSteps": {
+      "first": "在 Safari 中打开此页面，点击“共享”（方框中带向上箭头的图标）。如果找不到，请从地址栏的页面菜单选择“共享”。",
+      "second": "向下滚动菜单，选择“添加到主屏幕”。如果出现“作为网页 App 打开”，请将其开启。",
+      "third": "点击“添加”。通过主屏幕上新增的 Tolo 图标即可打开。"
+    },
+    "androidTitle": "Android（Chrome）",
+    "androidSteps": {
+      "first": "在 Chrome 中打开此页面，点击右上角的“︙”菜单。",
+      "second": "选择“安装并创建快捷方式”→“安装”。根据版本，也可能需要从“安装应用”或“添加到主屏幕”开始，然后按照屏幕提示操作。",
+      "third": "通过主屏幕或应用列表中的 Tolo 图标打开。如果没有该菜单选项，请在普通标签页中重新加载此页面后再试。"
+    },
+    "desktopTitle": "电脑（Chrome 和 Edge）",
+    "desktopSteps": {
+      "first": "在 Chrome 或 Edge 中打开此页面。",
+      "second": "点击地址栏右侧的安装图标。如果找不到，在 Chrome 中选择“︙”→“投放、保存和分享”→“将网页安装为应用”；在 Edge 中选择“…”→“更多工具”（如有显示）→“应用”→“将此站点作为应用安装”。",
+      "third": "在确认窗口中选择“安装”。你可以从应用列表打开 Tolo。"
+    },
+    "macTitle": "Mac（Safari）",
+    "macSteps": {
+      "first": "在 Safari 中打开此页面（macOS Sonoma 或更高版本）。",
+      "second": "从顶部菜单栏选择“文件”→“添加到程序坞”，然后点击“添加”。",
+      "third": "通过程序坞中新增的 Tolo 图标打开。"
+    },
+    "otherIntro": "不同浏览器和设备的操作步骤有所不同。请选择适合你设备的步骤。如果没有相应选项，请使用下方支持的浏览器打开此页面。",
+    "insecure": "安装需要 HTTPS 连接。请使用公开网站的 HTTPS URL 打开。",
+    "close": "关闭"
   }
 }

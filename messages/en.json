@@ -349,5 +349,43 @@
         "goods": "Merch"
       }
     }
+  },
+  "PwaInstall": {
+    "button": "Install app",
+    "title": "Install Tolo",
+    "description": "Open Tolo from your home screen or app list. An internet connection is required to use it.",
+    "nativeIntro": "Press Install below, then choose Install in your browser’s confirmation window.",
+    "nativeInstall": "Install",
+    "installing": "Opening the confirmation window…",
+    "dismissed": "Installation was canceled. You can try again from your browser’s menu.",
+    "error": "The confirmation window could not be opened. Follow the steps below to install from your browser.",
+    "accepted": "Your installation request was accepted. Once it finishes, open Tolo from your home screen or app list.",
+    "iosTitle": "iPhone and iPad (Safari)",
+    "iosSteps": {
+      "first": "Open this page in Safari and tap Share (a square with an upward arrow). If you cannot see it, open the page menu in the address bar and choose Share.",
+      "second": "Scroll down in the menu and choose Add to Home Screen. If Open as Web App appears, turn it on.",
+      "third": "Tap Add. Open Tolo using its new icon on your home screen."
+    },
+    "androidTitle": "Android (Chrome)",
+    "androidSteps": {
+      "first": "Open this page in Chrome and tap the ︙ menu at the top right.",
+      "second": "Choose Install and create shortcut → Install. Depending on your version, choose Install app or Add to home screen instead, then follow the instructions on the screen.",
+      "third": "Open Tolo using its icon on your home screen or app list. If the menu option is missing, reload this page in a regular tab and try again."
+    },
+    "desktopTitle": "Computer (Chrome and Edge)",
+    "desktopSteps": {
+      "first": "Open this page in Chrome or Edge.",
+      "second": "Click the install icon at the right of the address bar. If you cannot see it, in Chrome choose ︙ → Cast, save, and share → Install page as app. In Edge, choose … → More tools (if shown) → Apps → Install this site as an app.",
+      "third": "Choose Install in the confirmation window. Open Tolo from your app list."
+    },
+    "macTitle": "Mac (Safari)",
+    "macSteps": {
+      "first": "Open this page in Safari (macOS Sonoma or later).",
+      "second": "Choose File → Add to Dock in the menu bar, then click Add.",
+      "third": "Open Tolo using its new icon in the Dock."
+    },
+    "otherIntro": "Steps vary by browser and device. Choose the instructions for your device. If an option is missing, open this page in one of the supported browsers below.",
+    "insecure": "Installation requires HTTPS. Open the public site using its HTTPS URL.",
+    "close": "Close"
   }
 }

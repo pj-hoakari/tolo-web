@@ -9,6 +9,9 @@ export default async function TenantTop({
     <div>
       <h1>Tenant Top</h1>
       <p>Tenant ID: {tenantId}</p>
+      <PwaInstall />
     </div>
   );
 }
+
+import { PwaInstall } from "@/components/pwa/pwa-install";
