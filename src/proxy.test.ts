@@ -3,6 +3,20 @@ import { describe, expect, test } from "vitest";
 import { __test__, config, tenantProxy } from "./proxy";
 
 describe("proxy matcher", () => {
+  test("PWA manifest and icons bypass tenant routing on every host", () => {
+    const matcher = new RegExp(`^${config.matcher[0]}$`);
+    for (const asset of [
+      "/manifest.webmanifest",
+      "/icon-192x192.png",
+      "/icon-512x512.png",
+      "/apple-touch-icon.png",
+    ]) {
+      expect(matcher.test(asset)).toBe(false);
+    }
+    expect(matcher.test("/event/test/guest")).toBe(true);
+    expect(matcher.test("/manifest.webmanifest/page")).toBe(true);
+  });
+
   test("detection runtime assets should bypass tenant routing", () => {
     const matcher = new RegExp(`^${config.matcher[0]}$`);
 
