@@ -47,17 +47,20 @@ test("管理ページへ戻るリンクを押すと管理ページに移動す�
   ).toBeVisible();
 });
 
-test("目的地を追加すると新しいポイントが選択された状態でプロパティに表示される", async ({
+test("ポイントを追加すると停滞可のポイントが選択された状態でプロパティに表示される", async ({
   page,
 }) => {
-  await page.getByRole("button", { name: "目的地を追加" }).click();
+  await page.getByRole("button", { name: "ポイントを追加" }).click();
 
   await expect(
     panel(page).getByRole("textbox", { name: "ラベル（日本語）" }),
   ).toHaveValue("ポイント 12");
   await expect(
-    panel(page).getByRole("radio", { name: /^目的地 例:/ }),
+    panel(page).getByRole("checkbox", { name: /^停滞を許容する/ }),
   ).toBeChecked();
+  await expect(
+    panel(page).getByRole("checkbox", { name: /^目的地として扱う/ }),
+  ).not.toBeChecked();
   await expect(
     page.getByRole("button", { name: "「ポイント 12」のラベルを編集" }),
   ).toBeVisible();
@@ -175,21 +178,6 @@ test("最後の外部ポイントは Delete キーを押しても消えない", 
   await expect(page.getByTestId("rf__node-external-ph_exit")).toBeVisible();
 });
 
-for (const { type, radio } of [
-  { type: "目的地 / 通過", radio: /^目的地 \/ 通過 例:/ },
-  { type: "通過のみ", radio: /^通過のみ 例:/ },
-]) {
-  test(`${type}を追加するとそのタイプのポイントが選択された状態で追加される`, async ({
-    page,
-  }) => {
-    await page.getByRole("button", { name: `${type}を追加` }).click();
-
-    await expect(allNodes(page)).toHaveCount(16);
-    await expect(labelField(page)).toHaveValue("ポイント 12");
-    await expect(panel(page).getByRole("radio", { name: radio })).toBeChecked();
-  });
-}
-
 test("外部を追加すると外部ポイントが選択された状態で追加される", async ({
   page,
 }) => {
@@ -264,7 +252,7 @@ test("最後の外部ポイントには右クリックにもプロパティに�
   await expect(
     panel(page).getByRole("button", { name: "このポイントを削除" }),
   ).toHaveCount(0);
-  await expect(panel(page).getByRole("radio")).toHaveCount(0);
+  await expect(panel(page).getByRole("checkbox")).toHaveCount(0);
 
   await last.click({ button: "right" });
   const menu = page.getByRole("menu", { name: /^ポイント「.*」の操作$/ });
@@ -274,7 +262,7 @@ test("最後の外部ポイントには右クリックにもプロパティに�
   await expect(
     menu.getByRole("menuitem", { name: "このポイントを削除" }),
   ).toHaveCount(0);
-  await expect(menu.getByRole("menuitemradio")).toHaveCount(0);
+  await expect(menu.getByRole("menuitemcheckbox")).toHaveCount(0);
 });
 
 test("ポイントを選んで Backspace キーを押すとそのポイントが消える", async ({
@@ -374,9 +362,11 @@ test("プロパティでタイプを変えるとキャンバスのタイプ表�
 }) => {
   await selectBooth(page);
 
-  await panel(page)
-    .getByRole("radio", { name: /^通過のみ 例:/ })
-    .click();
+  await panel(page).getByText("停滞を許容する", { exact: true }).click();
+
+  await expect(
+    panel(page).getByRole("checkbox", { name: /^停滞を許容する/ }),
+  ).not.toBeChecked();
 
   await expect(
     booth(page).getByText("通過のみ", { exact: true }),
@@ -384,12 +374,12 @@ test("プロパティでタイプを変えるとキャンバスのタイプ表�
   await expect(booth(page).getByText("目的地", { exact: true })).toHaveCount(0);
 });
 
-test("ポイントの操作メニューでタイプを変えるとキャンバスのタイプ表示が変わり次に開くと選択済みになる", async ({
+test("ポイントの操作メニューでタイプを変えるとキャンバスのタイプ表示が変わり次に開くとチェックが外れている", async ({
   page,
 }) => {
   const menu = page.getByRole("menu", { name: "ポイント「ブースA」の操作" });
   await booth(page).click({ button: "right" });
-  await menu.getByRole("menuitemradio", { name: "通過のみ" }).click();
+  await menu.getByRole("menuitemcheckbox", { name: "停滞を許容する" }).click();
 
   await expect(
     booth(page).getByText("通過のみ", { exact: true }),
@@ -397,8 +387,8 @@ test("ポイントの操作メニューでタイプを変えるとキャンバ�
 
   await booth(page).click({ button: "right" });
   await expect(
-    menu.getByRole("menuitemradio", { name: "通過のみ" }),
-  ).toHaveAttribute("aria-checked", "true");
+    menu.getByRole("menuitemcheckbox", { name: "停滞を許容する" }),
+  ).toHaveAttribute("aria-checked", "false");
 });
 
 for (const { via, dissolve } of [

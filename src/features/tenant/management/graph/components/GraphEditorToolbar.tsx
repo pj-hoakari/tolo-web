@@ -1,7 +1,7 @@
 import { Network, SquareDashed } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { EXTERNAL_NODE_TYPE_DEF, NODE_TYPE_DEFS } from "../nodeTypes";
+import { DEFAULT_NODE_TYPE } from "../nodeTypes";
 import type { NodeType } from "../type";
 import { type LabelLocaleBindings, LabelLocaleMenu } from "./LabelLocaleMenu";
 import { NodeTypeIcon } from "./NodeTypeIcon";
@@ -36,18 +36,23 @@ export function GraphEditorToolbar({
         {t("title")}
       </p>
       <div className="flex flex-wrap items-center justify-end gap-2">
-        {[...NODE_TYPE_DEFS, EXTERNAL_NODE_TYPE_DEF].map((def) => (
+        {(
+          [
+            { type: DEFAULT_NODE_TYPE, label: t("point") },
+            { type: "EXTERNAL", label: tType("EXTERNAL") },
+          ] as const
+        ).map(({ type, label }) => (
           <Button
-            key={def.type}
+            key={type}
             variant="outline"
             size="sm"
-            onPress={() => onAddNode(def.type)}
-            aria-label={t("addNode", { type: tType(def.type) })}
+            onPress={() => onAddNode(type)}
+            aria-label={t("addNode", { type: label })}
             className="gap-1.5"
           >
             <span className="text-muted-foreground">+</span>
-            <NodeTypeIcon type={def.type} />
-            {tType(def.type)}
+            <NodeTypeIcon type={type} />
+            {label}
           </Button>
         ))}
         <Button
