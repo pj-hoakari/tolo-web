@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/i18n/locale";
 import type {
@@ -10,6 +11,7 @@ import type {
 } from "../../type";
 import { isExternalNode, isGroupNode } from "../../type";
 import { isLastExternal } from "../../utils/graphMutations";
+import type { getGroupSelectionError } from "../../utils/selectionActions";
 import { EdgeProperties } from "./EdgeProperties";
 import { ExternalProperties } from "./ExternalProperties";
 import { resolveEdgeDirectionState } from "./edgeDirectionState";
@@ -31,6 +33,10 @@ export type PropertiesPanelProps = {
   onUpdateEdge: (id: string, patch: Partial<GraphEdgeData>) => void;
   onReverseEdge: (id: string) => void;
   onDelete: () => void;
+  onDeleteSelected: () => void;
+  canDeleteSelected: boolean;
+  onGroupSelected: () => void;
+  groupSelectionError: ReturnType<typeof getGroupSelectionError>;
 };
 
 /** グラフ構造（ポイント・ルート）を編集するプロパティパネル */
@@ -45,8 +51,13 @@ export function PropertiesPanel({
   onUpdateEdge,
   onReverseEdge,
   onDelete,
+  onDeleteSelected,
+  canDeleteSelected,
+  onGroupSelected,
+  groupSelectionError,
 }: PropertiesPanelProps) {
   const { nodes, edges } = graph;
+  const groupReasonId = useId();
   const multiple =
     selectionCounts !== undefined &&
     selectionCounts.nodes + selectionCounts.edges + selectionCounts.groups > 1;
@@ -116,7 +127,41 @@ export function PropertiesPanel({
           <p className="text-muted-foreground text-xs">{t("empty")}</p>
         )}
       </div>
-      {deletable ? (
+      {multiple ? (
+        <div className="space-y-2 border-border border-t p-3">
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full"
+            onPress={onGroupSelected}
+            aria-describedby={
+              groupSelectionError !== null ? groupReasonId : undefined
+            }
+            isDisabled={groupSelectionError !== null}
+          >
+            {t("groupSelected")}
+          </Button>
+          {groupSelectionError !== null ? (
+            <p id={groupReasonId} className="text-muted-foreground text-xs">
+              {t(`groupSelectionErrors.${groupSelectionError}`)}
+            </p>
+          ) : null}
+          <Button
+            size="sm"
+            variant="destructive"
+            className="w-full"
+            onPress={onDeleteSelected}
+            isDisabled={!canDeleteSelected}
+          >
+            {t("deleteSelected")}
+          </Button>
+          {selectionCounts && selectionCounts.groups > 0 ? (
+            <p className="text-muted-foreground text-xs">
+              {t("deleteSelectedGroupHint")}
+            </p>
+          ) : null}
+        </div>
+      ) : deletable ? (
         <div className="border-border border-t p-3">
           <Button
             variant="destructive"

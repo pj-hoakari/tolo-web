@@ -99,7 +99,12 @@ for (const modifier of ["Shift", "Control"] as const) {
       panel(page).getByText("グループ: 1件", { exact: true }),
     ).toBeVisible();
     await expect(panel(page).getByRole("textbox")).toHaveCount(0);
-    await expect(panel(page).getByRole("button")).toHaveCount(0);
+    await expect(
+      panel(page).getByRole("button", { name: "選択したポイントをグループ化" }),
+    ).toBeDisabled();
+    await expect(
+      panel(page).getByRole("button", { name: "選択した要素を削除" }),
+    ).toBeEnabled();
     await selectEdge(page, modifier);
     await expect(selectedEdges(page)).toHaveCount(0);
     await selectGroup(page, "ph_floor2", modifier);
@@ -317,4 +322,139 @@ test("英語でも複数選択件数を表示する", async ({ page, context }) 
   await expect(
     panel(page).getByText("Groups: 0", { exact: true }),
   ).toBeVisible();
+});
+
+const groupSelectedButton = (page: Page) =>
+  panel(page).getByRole("button", {
+    name: "選択したポイントをグループ化",
+    exact: true,
+  });
+const deleteSelectedButton = (page: Page) =>
+  panel(page).getByRole("button", { name: "選択した要素を削除", exact: true });
+
+test("同じ親のポイントをグループ化すると位置と接続が保たれ、新しいグループだけが選択される", async ({
+  page,
+}) => {
+  await selectNode(page, "ph_booth");
+  await selectNode(page, "ph_wall", "Shift");
+  await selectEdge(page, "Shift");
+  const ids = ["ph_booth", "ph_wall", "ph_junction"];
+  const before = await Promise.all(ids.map((id) => position(node(page, id))));
+  const edgeCount = await page.locator(".react-flow__edge").count();
+  await expect(groupSelectedButton(page)).toBeEnabled();
+  await groupSelectedButton(page).click();
+  await expect(selectedNodes(page)).toHaveCount(1);
+  await expect(selectedEdges(page)).toHaveCount(0);
+  await expect(
+    panel(page).getByRole("textbox", { name: "ラベル（日本語）" }),
+  ).toHaveValue("グループ 3");
+  expect(await Promise.all(ids.map((id) => position(node(page, id))))).toEqual(
+    before,
+  );
+  await expect(page.locator(".react-flow__edge")).toHaveCount(edgeCount);
+  const createdId = await selectedNodes(page).getAttribute("data-id");
+  if (!createdId) throw new Error("New group is not selected");
+  const box = await node(page, createdId).boundingBox();
+  if (!box) throw new Error("New group is not visible");
+  await page.mouse.move(box.x + box.width - 30, box.y + 20);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width + 20, box.y + 50, { steps: 10 });
+  await page.mouse.up();
+  const after = await Promise.all(ids.map((id) => position(node(page, id))));
+  expectSameDelta(before.slice(0, 2), after.slice(0, 2));
+  expect(after[2]).toEqual(before[2]);
+});
+
+test("所属違い・グループ・外部・ポイント不足でグループ化を無効にする", async ({
+  page,
+}) => {
+  await selectNode(page, "ph_booth");
+  await selectNode(page, "ph_gallery2f", "Shift");
+  await expect(groupSelectedButton(page)).toBeDisabled();
+  await expect(
+    panel(page).getByText("同じ所属のポイントを選択してください。", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await selectNode(page, "ph_booth");
+  await selectGroup(page, "ph_floor1", "Shift");
+  await expect(groupSelectedButton(page)).toBeDisabled();
+  await expect(
+    panel(page).getByText("グループと外部ポイントはグループ化できません。", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await selectNode(page, "ph_booth");
+  await selectNode(page, "external", "Shift");
+  await expect(groupSelectedButton(page)).toBeDisabled();
+  await expect(
+    panel(page).getByText("グループと外部ポイントはグループ化できません。", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await selectNode(page, "ph_booth");
+  await selectEdge(page, "Shift");
+  await expect(groupSelectedButton(page)).toBeDisabled();
+  await expect(
+    panel(page).getByText("ポイントを2件以上選択してください。", {
+      exact: true,
+    }),
+  ).toBeVisible();
+});
+
+test("混在選択を一括削除し、未選択のグループの中身を残す", async ({ page }) => {
+  await selectNode(page, "ph_booth");
+  await selectGroup(page, "ph_floor1", "Shift");
+  await selectEdge(page, "Shift", "ph_e9");
+  const before = await position(node(page, "ph_junction"));
+  await expect(deleteSelectedButton(page)).toBeEnabled();
+  await deleteSelectedButton(page).click();
+  await expect(node(page, "ph_booth")).toHaveCount(0);
+  await expect(node(page, "ph_floor1")).toHaveCount(0);
+  await expect(edge(page, "ph_e9")).toHaveCount(0);
+  await expect(edge(page, "ph_e2")).toHaveCount(0);
+  await expect(edge(page, "ph_e4")).toHaveCount(0);
+  await expect(edge(page, "ph_e3")).toBeVisible();
+  await expect(node(page, "ph_junction")).toBeVisible();
+  expect(await position(node(page, "ph_junction"))).toEqual(before);
+  await expect(selectedNodes(page)).toHaveCount(0);
+  await expect(selectedEdges(page)).toHaveCount(0);
+});
+
+test("外部ポイントを全選択して削除しても最後の1件とその接続を残す", async ({
+  page,
+}) => {
+  await selectNode(page, "external");
+  await selectNode(page, "external-ph_exit", "Shift");
+  await selectEdge(page, "Shift", "ph_e_external_in");
+  await deleteSelectedButton(page).click();
+  await expect(node(page, "external")).toBeVisible();
+  await expect(node(page, "external-ph_exit")).toHaveCount(0);
+  await expect(edge(page, "ph_e_external_in")).toBeVisible();
+  await expect(edge(page, "ph_e_external_out")).toHaveCount(0);
+  await expect(selectedNodes(page)).toHaveCount(1);
+  await expect(selectedEdges(page)).toHaveCount(1);
+  await expect(deleteSelectedButton(page)).toBeDisabled();
+});
+
+test("英語の一括操作ボタンでポイントをグループ化できる", async ({
+  page,
+  context,
+}) => {
+  await context.addCookies([
+    { name: "NEXT_LOCALE", value: "en", domain: "test.localhost", path: "/" },
+  ]);
+  await page.reload();
+  await selectNode(page, "ph_booth");
+  await selectNode(page, "ph_wall", "Shift");
+  await expect(
+    panel(page).getByRole("button", { name: "Delete selected elements" }),
+  ).toBeEnabled();
+  await panel(page)
+    .getByRole("button", { name: "Group selected points" })
+    .click();
+  await expect(selectedNodes(page)).toHaveCount(1);
+  await expect(
+    panel(page).getByRole("textbox", { name: "Label (English)" }),
+  ).toHaveValue("Group 3");
 });

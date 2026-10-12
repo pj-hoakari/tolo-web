@@ -109,6 +109,14 @@
       "dissolveGroup": "그룹 해제(내용 유지)"
     },
     "properties": {
+      "groupSelected": "선택한 포인트 그룹화",
+      "deleteSelected": "선택한 요소 삭제",
+      "deleteSelectedGroupHint": "선택한 그룹은 해제되고 선택하지 않은 내용은 유지됩니다.",
+      "groupSelectionErrors": {
+        "pointsOnly": "그룹과 외부 포인트는 그룹화할 수 없습니다.",
+        "tooFewPoints": "포인트를 2개 이상 선택하세요.",
+        "differentParents": "같은 부모에 속한 포인트를 선택하세요."
+      },
       "selectedNodes": "노드: {count}개",
       "selectedEdges": "화살표: {count}개",
       "selectedGroups": "그룹: {count}개",

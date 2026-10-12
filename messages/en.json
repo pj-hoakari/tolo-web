@@ -109,6 +109,14 @@
       "dissolveGroup": "Ungroup (keep contents)"
     },
     "properties": {
+      "groupSelected": "Group selected points",
+      "deleteSelected": "Delete selected elements",
+      "deleteSelectedGroupHint": "Selected groups are dissolved; unselected contents are kept.",
+      "groupSelectionErrors": {
+        "pointsOnly": "Groups and external points cannot be grouped.",
+        "tooFewPoints": "Select at least two points.",
+        "differentParents": "Select points with the same parent."
+      },
       "selectedNodes": "Nodes: {count}",
       "selectedEdges": "Edges: {count}",
       "selectedGroups": "Groups: {count}",

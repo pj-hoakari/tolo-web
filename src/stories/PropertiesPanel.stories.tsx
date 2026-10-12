@@ -36,6 +36,10 @@ const meta = {
     onUpdateEdge: fn(),
     onReverseEdge: fn(),
     onDelete: fn(),
+    onDeleteSelected: fn(),
+    canDeleteSelected: false,
+    onGroupSelected: fn(),
+    groupSelectionError: "tooFewPoints",
   },
 } satisfies Meta<typeof PropertiesPanel>;
 
@@ -87,5 +91,24 @@ export const ExternalDeletable: Story = {
 };
 
 export const MultipleSelection: Story = {
-  args: { selectionCounts: { nodes: 2, edges: 1, groups: 1 } },
+  args: {
+    selectionCounts: { nodes: 2, edges: 1, groups: 1 },
+    canDeleteSelected: true,
+    groupSelectionError: "pointsOnly",
+  },
+};
+
+export const GroupableSelection: Story = {
+  args: {
+    selectionCounts: { nodes: 2, edges: 1, groups: 0 },
+    canDeleteSelected: true,
+    groupSelectionError: null,
+  },
+};
+export const DifferentParents: Story = {
+  args: {
+    selectionCounts: { nodes: 2, edges: 0, groups: 0 },
+    canDeleteSelected: true,
+    groupSelectionError: "differentParents",
+  },
 };

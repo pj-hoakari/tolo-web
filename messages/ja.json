@@ -109,6 +109,14 @@
       "dissolveGroup": "グループを解除（中身は残す）"
     },
     "properties": {
+      "groupSelected": "選択したポイントをグループ化",
+      "deleteSelected": "選択した要素を削除",
+      "deleteSelectedGroupHint": "選択したグループは解除され、未選択の中身は残ります。",
+      "groupSelectionErrors": {
+        "pointsOnly": "グループと外部ポイントはグループ化できません。",
+        "tooFewPoints": "ポイントを2件以上選択してください。",
+        "differentParents": "同じ所属のポイントを選択してください。"
+      },
       "selectedNodes": "ノード: {count}件",
       "selectedEdges": "矢印: {count}件",
       "selectedGroups": "グループ: {count}件",

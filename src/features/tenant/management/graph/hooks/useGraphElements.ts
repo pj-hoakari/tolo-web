@@ -15,6 +15,7 @@ import type {
   GraphEdgeData,
   GraphEdgeType,
   GraphNodeData,
+  GroupNodeType,
 } from "../type";
 import { isGroupNode, isPointNode } from "../type";
 import { autoAlignGraph } from "../utils/autoLayout";
@@ -38,6 +39,10 @@ import {
 } from "../utils/groups";
 import { assignHandlesByPosition, deriveNodeHandles } from "../utils/handles";
 import { deriveNodeLabels } from "../utils/labels";
+import {
+  deleteSelectedElements,
+  groupSelectedPoints,
+} from "../utils/selectionActions";
 
 /**
  * ノード/ルートの実体と、その描画用の派生情報を扱うフック。
@@ -177,6 +182,21 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
     setNodes((nds) => fitGroupsToChildren(dissolveGroups(nds, [id])));
   }, []);
 
+  const removeSelection = useCallback(() => {
+    const next = deleteSelectedElements(source);
+    setNodes(next.nodes);
+    setEdges(next.edges);
+  }, [source]);
+
+  const groupSelection = useCallback(
+    (group: GroupNodeType) => {
+      const next = groupSelectedPoints(source, group);
+      setNodes(next.nodes);
+      setEdges(next.edges);
+    },
+    [source],
+  );
+
   /** ドラッグ終了したノードを、その位置を含むグループへ所属させ直す */
   const reparentByDrop = useCallback((ids: string[]) => {
     setNodes((nds) => fitGroupsToChildren(reparentDroppedNodes(nds, ids)));
@@ -257,6 +277,8 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
     appendEdge,
     removeNode,
     removeGroup,
+    removeSelection,
+    groupSelection,
     reparentByDrop,
     setGroupMinSize,
     autoAlign,

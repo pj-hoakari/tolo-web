@@ -109,6 +109,14 @@
       "dissolveGroup": "取消分组（保留内容）"
     },
     "properties": {
+      "groupSelected": "将选中点分组",
+      "deleteSelected": "删除选中元素",
+      "deleteSelectedGroupHint": "选中的分组将被解除，未选中的内容将保留。",
+      "groupSelectionErrors": {
+        "pointsOnly": "分组和外部点无法合并到新分组中。",
+        "tooFewPoints": "请选择至少两个点。",
+        "differentParents": "请选择属于同一父级的点。"
+      },
       "selectedNodes": "节点：{count} 个",
       "selectedEdges": "箭头：{count} 个",
       "selectedGroups": "分组：{count} 个",

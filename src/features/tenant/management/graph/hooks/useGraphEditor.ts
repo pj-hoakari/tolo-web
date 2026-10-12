@@ -29,6 +29,10 @@ import {
 } from "../utils/graphMutations";
 import { newId } from "../utils/idGen";
 import { countLabeledNodes } from "../utils/labels";
+import {
+  canDeleteSelectedElements,
+  getGroupSelectionError,
+} from "../utils/selectionActions";
 import { useGraphElements } from "./useGraphElements";
 import { useLabelLocale } from "./useLabelLocale";
 
@@ -80,6 +84,8 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
     appendEdge,
     removeNode,
     removeGroup,
+    removeSelection,
+    groupSelection,
     reparentByDrop,
     setGroupMinSize,
     autoAlign,
@@ -283,6 +289,23 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
     else if (selectedEdges[0]) deleteEdge(selectedEdges[0].id);
   }, [selectionCount, selectedNodes, selectedEdges, deleteNode, deleteEdge]);
 
+  const groupSelectionError = getGroupSelectionError(source.nodes);
+  const canDeleteSelection = canDeleteSelectedElements(source);
+  const groupSelected = useCallback(() => {
+    if (getGroupSelectionError(source.nodes) !== null) return;
+    groupSelection(
+      createGroup({
+        id: newId("g"),
+        labels: {
+          [labelLocale]: t("newGroupLabel", {
+            index: source.nodes.filter(isGroupNode).length + 1,
+          }),
+        },
+        position: { x: 0, y: 0 },
+      }),
+    );
+  }, [source.nodes, groupSelection, labelLocale, t]);
+
   const onNodeDragStop = useCallback(
     (ids: string[]) => {
       reparentByDrop(ids);
@@ -358,6 +381,10 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
       onUpdateEdge: updateEdgeData,
       onReverseEdge: reverseEdge,
       onDelete: deleteSelection,
+      onDeleteSelected: removeSelection,
+      canDeleteSelected: canDeleteSelection,
+      onGroupSelected: groupSelected,
+      groupSelectionError,
     },
     getGraphData,
   };
