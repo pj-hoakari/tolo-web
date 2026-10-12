@@ -31,6 +31,7 @@ import {
 import {
   dissolveGroups,
   fitGroupsToChildren,
+  reparentDroppedNodes,
   reparentNode,
   resolveParentGroup,
   sortByNesting,
@@ -40,7 +41,7 @@ import { deriveNodeLabels } from "../utils/labels";
 
 /**
  * ノード/ルートの実体と、その描画用の派生情報を扱うフック。
- * 選択状態や観測点の使用状況には関与せず、要素の出し入れだけを担う。
+ * React Flow の selected を含む要素状態を持ち、観測点の使用状況には関与しない。
  * labelLocale はラベルの表示言語（ポイント・グループ共通で、描画用ラベルの解決に使う）。
  */
 export function useGraphElements(initial: GraphData, labelLocale: string) {
@@ -82,7 +83,29 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
       });
       const prepared =
         removedGroupIds.length > 0 ? dissolveGroups(nds, removedGroupIds) : nds;
-      const applied = applyNodeChanges(changes, prepared);
+      // XYDrag が選択前の親と選択済みの子を同じ移動バッチに含めても、
+      // 子は親の移動だけに追従させる。リサイズの位置補正には適用しない。
+      const movingIds = new Set(
+        changes.flatMap((change) =>
+          change.type === "position" && change.dragging !== undefined
+            ? [change.id]
+            : [],
+        ),
+      );
+      const byId = new Map(prepared.map((node) => [node.id, node]));
+      const normalized = changes.filter((change) => {
+        if (change.type !== "position" || change.dragging === undefined)
+          return true;
+        const visited = new Set([change.id]);
+        let parentId = byId.get(change.id)?.parentId;
+        while (parentId && !visited.has(parentId)) {
+          if (movingIds.has(parentId)) return false;
+          visited.add(parentId);
+          parentId = byId.get(parentId)?.parentId;
+        }
+        return true;
+      });
+      const applied = applyNodeChanges(normalized, prepared);
 
       // グループの拡縮は確定イベントでのみ行う:
       // - 削除（子が減った）
@@ -105,6 +128,18 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
 
   const changeEdges = useCallback((changes: EdgeChange<GraphEdgeType>[]) => {
     setEdges((eds) => applyEdgeChanges(changes, eds));
+  }, []);
+
+  /** プログラムからの選択は、描画とプロパティで共有する selected に反映する。 */
+  const setSelection = useCallback((nodeIds: string[], edgeIds: string[]) => {
+    const selectedNodes = new Set(nodeIds);
+    const selectedEdges = new Set(edgeIds);
+    setNodes((nds) =>
+      nds.map((n) => ({ ...n, selected: selectedNodes.has(n.id) })),
+    );
+    setEdges((eds) =>
+      eds.map((e) => ({ ...e, selected: selectedEdges.has(e.id) })),
+    );
   }, []);
 
   /**
@@ -144,13 +179,7 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
 
   /** ドラッグ終了したノードを、その位置を含むグループへ所属させ直す */
   const reparentByDrop = useCallback((ids: string[]) => {
-    setNodes((nds) => {
-      let next = nds;
-      for (const id of ids) {
-        next = reparentNode(next, id, resolveParentGroup(id, next));
-      }
-      return fitGroupsToChildren(next);
-    });
+    setNodes((nds) => fitGroupsToChildren(reparentDroppedNodes(nds, ids)));
   }, []);
 
   /**
@@ -223,6 +252,7 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
     source,
     changeNodes,
     changeEdges,
+    setSelection,
     appendNode,
     appendEdge,
     removeNode,

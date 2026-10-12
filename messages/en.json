@@ -109,6 +109,9 @@
       "dissolveGroup": "Ungroup (keep contents)"
     },
     "properties": {
+      "selectedNodes": "Nodes: {count}",
+      "selectedEdges": "Edges: {count}",
+      "selectedGroups": "Groups: {count}",
       "title": "Properties",
       "empty": "Select a point or a route.",
       "deleteNode": "Delete this point",

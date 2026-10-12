@@ -109,6 +109,9 @@
       "dissolveGroup": "समूह हटाउनुहोस् (सामग्री राख्नुहोस्)"
     },
     "properties": {
+      "selectedNodes": "नोड: {count}",
+      "selectedEdges": "तीर: {count}",
+      "selectedGroups": "समूह: {count}",
       "title": "गुणहरू",
       "empty": "बिन्दु वा मार्ग छान्नुहोस्।",
       "deleteNode": "यो बिन्दु मेट्नुहोस्",

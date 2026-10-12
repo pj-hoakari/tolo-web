@@ -109,6 +109,9 @@
       "dissolveGroup": "グループを解除（中身は残す）"
     },
     "properties": {
+      "selectedNodes": "ノード: {count}件",
+      "selectedEdges": "矢印: {count}件",
+      "selectedGroups": "グループ: {count}件",
       "title": "プロパティ",
       "empty": "ポイントまたはルートを選択してください。",
       "deleteNode": "このポイントを削除",

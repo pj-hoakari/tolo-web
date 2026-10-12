@@ -26,12 +26,10 @@ import {
   isLastExternal,
   keepGroupContents,
   keepLastExternal,
-  removedIds,
 } from "../utils/graphMutations";
 import { newId } from "../utils/idGen";
 import { countLabeledNodes } from "../utils/labels";
 import { useGraphElements } from "./useGraphElements";
-import { useGraphSelection } from "./useGraphSelection";
 import { useLabelLocale } from "./useLabelLocale";
 
 /** ツールバーに渡す props（保存の実処理は呼び出し側が持つ） */
@@ -47,6 +45,7 @@ export type PropertiesPanelBindings = Omit<PropertiesPanelProps, "graph">;
 export type GraphEditorApi = {
   /** 描画用のグラフ（ハンドル・通知を注入済み） */
   graph: GraphData;
+  selection: { nodeIds: string[]; edgeIds: string[] };
   /** 構造編集を有効にしたキャンバスの props */
   canvas: GraphCanvasProps & { editing: GraphCanvasEditing };
   toolbar: GraphToolbarBindings;
@@ -62,8 +61,8 @@ function randomPosition() {
 
 /**
  * グラフエディタの編集状態をまとめ、UI 各部へ渡す形に整えるフック。
- * 状態は要素（useGraphElements）と選択（useGraphSelection）が持ち、
- * ここでは「ノードを消したら選択も解除する」といった連携だけを担う。
+ * 要素と selected は useGraphElements が持ち、選択情報と各 UI への
+ * バインディングをここで導出する。
  */
 export function useGraphEditor(initial: GraphData): GraphEditorApi {
   const t = useTranslations("Graph.editor");
@@ -76,6 +75,7 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
     source,
     changeNodes,
     changeEdges,
+    setSelection,
     appendNode,
     appendEdge,
     removeNode,
@@ -90,23 +90,35 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
     reverseEdge,
   } = useGraphElements(initial, labelLocale);
 
-  const { selection, selectNode, selectEdge, clearSelection, clearIfSelected } =
-    useGraphSelection();
-
-  const onNodesChange = useCallback(
-    (changes: NodeChange<GraphCanvasNode>[]) => {
-      changeNodes(changes);
-      for (const id of removedIds(changes)) clearIfSelected("node", id);
-    },
-    [changeNodes, clearIfSelected],
+  const selectedNodes = useMemo(() => nodes.filter((n) => n.selected), [nodes]);
+  const selectedEdges = useMemo(() => edges.filter((e) => e.selected), [edges]);
+  const selection = useMemo(
+    () => ({
+      nodeIds: selectedNodes.map((n) => n.id),
+      edgeIds: selectedEdges.map((e) => e.id),
+    }),
+    [selectedNodes, selectedEdges],
   );
-
+  const selectionCount = selectedNodes.length + selectedEdges.length;
+  const selectNode = useCallback(
+    (id: string) => setSelection([id], []),
+    [setSelection],
+  );
+  const selectEdge = useCallback(
+    (id: string) => setSelection([], [id]),
+    [setSelection],
+  );
+  const clearSelection = useCallback(
+    () => setSelection([], []),
+    [setSelection],
+  );
+  const onNodesChange = useCallback(
+    (changes: NodeChange<GraphCanvasNode>[]) => changeNodes(changes),
+    [changeNodes],
+  );
   const onEdgesChange = useCallback(
-    (changes: EdgeChange<GraphEdgeType>[]) => {
-      changeEdges(changes);
-      for (const id of removedIds(changes)) clearIfSelected("edge", id);
-    },
-    [changeEdges, clearIfSelected],
+    (changes: EdgeChange<GraphEdgeType>[]) => changeEdges(changes),
+    [changeEdges],
   );
 
   const isValidConnection = useCallback(
@@ -266,10 +278,10 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
   );
 
   const deleteSelection = useCallback(() => {
-    if (!selection) return;
-    if (selection.type === "node") deleteNode(selection.id);
-    else deleteEdge(selection.id);
-  }, [selection, deleteNode, deleteEdge]);
+    if (selectionCount !== 1) return;
+    if (selectedNodes[0]) deleteNode(selectedNodes[0].id);
+    else if (selectedEdges[0]) deleteEdge(selectedEdges[0].id);
+  }, [selectionCount, selectedNodes, selectedEdges, deleteNode, deleteEdge]);
 
   const onNodeDragStop = useCallback(
     (ids: string[]) => {
@@ -297,6 +309,7 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
 
   return {
     graph: { nodes, edges },
+    selection,
     canvas: {
       nodes,
       edges,
@@ -332,14 +345,13 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
       labelTargetCount: source.nodes.filter((n) => !isExternalNode(n)).length,
     },
     properties: {
-      selectedNode:
-        selection?.type === "node"
-          ? nodes.find((n) => n.id === selection.id)
-          : undefined,
-      selectedEdge:
-        selection?.type === "edge"
-          ? edges.find((e) => e.id === selection.id)
-          : undefined,
+      selectedNode: selectionCount === 1 ? selectedNodes[0] : undefined,
+      selectedEdge: selectionCount === 1 ? selectedEdges[0] : undefined,
+      selectionCounts: {
+        nodes: selectedNodes.filter(isPointNode).length,
+        groups: selectedNodes.filter(isGroupNode).length,
+        edges: selectedEdges.length,
+      },
       labelLocale,
       onUpdateNode: updateNodeData,
       onSetNodeLabel: setNodeLabel,

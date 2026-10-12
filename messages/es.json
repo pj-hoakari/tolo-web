@@ -109,6 +109,9 @@
       "dissolveGroup": "Desagrupar (mantener contenido)"
     },
     "properties": {
+      "selectedNodes": "Nodos: {count}",
+      "selectedEdges": "Flechas: {count}",
+      "selectedGroups": "Grupos: {count}",
       "title": "Propiedades",
       "empty": "Selecciona un punto o una ruta.",
       "deleteNode": "Eliminar este punto",

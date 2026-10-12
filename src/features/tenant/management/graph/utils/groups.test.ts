@@ -10,6 +10,7 @@ import {
   GROUP_FIT_PADDING_BOTTOM,
   GROUP_FIT_PADDING_TOP,
   GROUP_FIT_PADDING_X,
+  reparentDroppedNodes,
   reparentNode,
   resolveParentGroup,
   sortByNesting,
@@ -273,5 +274,49 @@ describe("fitGroupsToChildren: 子に合わせた拡縮", () => {
       point("p1", 200, 300, "g"),
     ]);
     expect(fitGroupsToChildren(once)).toBe(once);
+  });
+});
+
+describe("reparentDroppedNodes: 一括ドロップ", () => {
+  it("移動した親グループ配下の所属を維持する", () => {
+    const nodes = [
+      group("g", 100, 100, 400, 300),
+      group("inner", 30, 30, 200, 120, "g"),
+      point("p", 90, 90, "inner"),
+    ];
+    const next = reparentDroppedNodes(nodes, ["g", "inner", "p"]);
+    expect(next).toEqual(nodes);
+  });
+  it("複数ノードを同じスナップショットで所属変更し絶対位置を保つ", () => {
+    const nodes = [
+      group("g", 100, 100, 400, 300),
+      point("a", 180, 200),
+      point("b", 240, 230),
+    ];
+    const next = fitGroupsToChildren(reparentDroppedNodes(nodes, ["a", "b"]));
+    const map = byId(next);
+    for (const id of ["a", "b"]) {
+      const found = map.get(id);
+      expect(found?.parentId).toBe("g");
+      expect(absolutePositionOf(found as GraphCanvasNode, map)).toEqual(
+        nodes.find((n) => n.id === id)?.position,
+      );
+    }
+    expect(reparentDroppedNodes(nodes, ["b", "a"])).toEqual(
+      reparentDroppedNodes(nodes, ["a", "b"]),
+    );
+  });
+  it("重なる移動グループ同士を親にして循環させない", () => {
+    const nodes = [group("a", 0, 0, 400, 300), group("b", 0, 0, 400, 300)];
+    expect(reparentDroppedNodes(nodes, ["a", "b"])).toEqual(nodes);
+  });
+  it("選択した子だけを移動した場合は従来どおりグループを出る", () => {
+    const nodes = [group("g", 0, 0, 400, 300), point("p", 800, 800, "g")];
+    const next = reparentDroppedNodes(nodes, ["p"]);
+    expect(next.find((n) => n.id === "p")?.parentId).toBeUndefined();
+    expect(next.find((n) => n.id === "p")?.position).toEqual({
+      x: 800,
+      y: 800,
+    });
   });
 });
