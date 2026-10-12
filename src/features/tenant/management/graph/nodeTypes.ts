@@ -53,8 +53,7 @@ export type NodeIcon =
   | { kind: "polygon"; points: string };
 
 /**
- * ノードタイプの定義。表示名と説明は `Graph.nodeType` / `Graph.nodeTypeDescription`
- * の `type` をキーにしたメッセージで解決する。
+ * ノードタイプの定義。表示名は `Graph.nodeType` の `type` をキーにしたメッセージで解決する。
  */
 export type NodeTypeDef = {
   type: NodeType;
@@ -121,6 +120,27 @@ export const EXTERNAL_NODE_TYPE_DEF: NodeTypeDef = {
 // 種別は最適化エンジンへのヒントであり厳密な分類ではない。
 // 実世界では純粋な終端(GOAL)か判断しづらいため、既定は GOAL_TRANSIT_MIXED とする。
 export const DEFAULT_NODE_TYPE: NodeType = "GOAL_TRANSIT_MIXED";
+
+export type NodeTypeFlag = "dwell" | "destination";
+
+export const NODE_TYPE_FLAGS: NodeTypeFlag[] = ["dwell", "destination"];
+
+export function hasNodeTypeFlag(type: NodeType, flag: NodeTypeFlag): boolean {
+  return flag === "dwell" ? type !== "TRANSIT_ONLY" : type === "GOAL";
+}
+
+export function setNodeTypeFlag(
+  type: NodeType,
+  flag: NodeTypeFlag,
+  on: boolean,
+): NodeType {
+  if (flag === "dwell") {
+    if (!on) return "TRANSIT_ONLY";
+    return type === "TRANSIT_ONLY" ? "GOAL_TRANSIT_MIXED" : type;
+  }
+  if (on) return "GOAL";
+  return type === "GOAL" ? "GOAL_TRANSIT_MIXED" : type;
+}
 
 const DEFS_BY_TYPE = new Map(
   [...NODE_TYPE_DEFS, EXTERNAL_NODE_TYPE_DEF].map((d) => [d.type, d]),

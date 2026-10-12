@@ -1,29 +1,27 @@
 import { useTranslations } from "next-intl";
-import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 import type { GraphNotice, NodeType } from "../../type";
-import { NodeTypeIcon } from "../NodeTypeIcon";
 import type { NodeTypeOption } from "./nodeTypeOptions";
 import { PropertyNotice } from "./PropertyNotice";
 
 export type NodeTypeSelectorProps = {
-  value: NodeType;
-  /** 各タイプの選択可否（`buildNodeTypeOptions` の結果） */
+  /** 各フラグの状態と切り替え可否（`buildNodeTypeOptions` の結果） */
   options: NodeTypeOption[];
   /** 選択中のタイプに紐づく通知（強調表示用） */
   notices?: GraphNotice[];
   onChange: (type: NodeType) => void;
 };
 
-/** ノードタイプを1つ選ぶトグル群。選択できないタイプにはその理由を添える */
+/** ノードタイプを「停滞を許容するか」「目的地か」のフラグで切り替える。切り替えられないときはその理由を添える */
 export function NodeTypeSelector({
-  value,
   options,
   notices,
   onChange,
 }: NodeTypeSelectorProps) {
   const t = useTranslations("Graph.properties");
-  const tType = useTranslations("Graph.nodeType");
-  const tDescription = useTranslations("Graph.nodeTypeDescription");
+  const tFlag = useTranslations("Graph.nodeTypeFlag");
+  const tDescription = useTranslations("Graph.nodeTypeFlagDescription");
   const tNotice = useTranslations("Graph.notices");
 
   return (
@@ -31,51 +29,44 @@ export function NodeTypeSelector({
       <p className="mb-1 font-medium text-[11px] text-muted-foreground">
         {t("type")}
       </p>
-      <ToggleButtonGroup
-        selectionMode="single"
-        disallowEmptySelection
-        selectedKeys={[value]}
-        onSelectionChange={(keys) => {
-          const next = [...keys][0] as NodeType | undefined;
-          if (next) onChange(next);
-        }}
-        className="flex-col items-stretch gap-1"
-      >
-        {options.map((option) => {
-          const selected = option.type === value;
-          return (
-            <div key={option.type} className="space-y-0.5">
-              <Toggle
-                id={option.type}
-                variant="outline"
-                isDisabled={!option.assignable}
-                className="h-auto w-full flex-col items-start gap-0.5 selected:border-primary selected:bg-accent px-2 py-1.5 text-left"
-              >
-                <span className="flex items-center gap-1.5 font-medium text-foreground text-xs">
-                  <NodeTypeIcon type={option.type} />
-                  {tType(option.type)}
+      <div className="space-y-1.5">
+        {options.map((option) => (
+          <div
+            key={option.flag}
+            className={cn(
+              "space-y-0.5",
+              option.flag === "destination" && "ml-6",
+            )}
+          >
+            <Checkbox
+              isSelected={option.checked}
+              isDisabled={!option.assignable}
+              onChange={() => onChange(option.next)}
+              className="items-start"
+            >
+              <span className="flex flex-col gap-0.5">
+                <span className="font-medium text-foreground text-xs">
+                  {tFlag(option.flag)}
                 </span>
-                <span className="text-[10px] text-muted-foreground">
-                  {tDescription(option.type)}
+                <span className="font-normal text-[10px] text-muted-foreground">
+                  {tDescription(option.flag)}
                 </span>
-              </Toggle>
-              {option.disabledReason ? (
-                <PropertyNotice message={option.disabledReason} />
-              ) : null}
-              {selected
-                ? notices?.map((notice) => (
-                    <PropertyNotice
-                      className="mt-2"
-                      key={notice.messageKey}
-                      level={notice.level}
-                      message={tNotice(notice.messageKey)}
-                    />
-                  ))
-                : null}
-            </div>
-          );
-        })}
-      </ToggleButtonGroup>
+              </span>
+            </Checkbox>
+            {option.disabledReason ? (
+              <PropertyNotice message={option.disabledReason} />
+            ) : null}
+          </div>
+        ))}
+      </div>
+      {notices?.map((notice) => (
+        <PropertyNotice
+          className="mt-2"
+          key={notice.messageKey}
+          level={notice.level}
+          message={tNotice(notice.messageKey)}
+        />
+      ))}
     </div>
   );
 }

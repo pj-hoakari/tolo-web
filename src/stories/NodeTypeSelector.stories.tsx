@@ -3,31 +3,37 @@ import { useState } from "react";
 import { expect, fn, userEvent, within } from "storybook/test";
 
 import {
+  buildNodeTypeOptions,
   NodeTypeSelector,
   type NodeTypeSelectorProps,
 } from "@/features/tenant/management/graph/components/properties";
-import { NODE_TYPE_DEFS } from "@/features/tenant/management/graph/nodeTypes";
 import type { NodeType } from "@/features/tenant/management/graph/type";
-import { PanelFrame } from "./_helpers/propertiesFixtures";
+import {
+  GRAPH_EDGES,
+  GRAPH_NODES,
+  PanelFrame,
+  passThroughNotice,
+} from "./_helpers/propertiesFixtures";
 
-/** すべてのタイプが選択可能な状態の選択肢 */
-const allAssignable = NODE_TYPE_DEFS.map((def) => ({
-  type: def.type,
-  assignable: true,
-  disabledReason: null,
-}));
+const optionsFor = (type: NodeType) =>
+  buildNodeTypeOptions(
+    "ph_booth",
+    type,
+    GRAPH_NODES,
+    GRAPH_EDGES,
+    passThroughNotice,
+  );
 
 /** 選択状態を自分で保持して、実際の切り替えを確認できるようにするラッパー */
 function StatefulNodeTypeSelector({
-  value,
   onChange,
   ...props
 }: NodeTypeSelectorProps) {
-  const [nodeType, setNodeType] = useState<NodeType>(value);
+  const [nodeType, setNodeType] = useState<NodeType>("GOAL_TRANSIT_MIXED");
   return (
     <NodeTypeSelector
       {...props}
-      value={nodeType}
+      options={optionsFor(nodeType)}
       onChange={(next) => {
         setNodeType(next);
         onChange(next);
@@ -50,15 +56,8 @@ const meta = {
       </PanelFrame>
     ),
   ],
-  argTypes: {
-    value: {
-      control: { type: "select" },
-      options: NODE_TYPE_DEFS.map((def) => def.type),
-    },
-  },
   args: {
-    value: "GOAL",
-    options: allAssignable,
+    options: optionsFor("GOAL_TRANSIT_MIXED"),
     onChange: fn(),
   },
 } satisfies Meta<typeof NodeTypeSelector>;
@@ -68,12 +67,31 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-/** 一部のタイプが制約違反で選択できず、その理由が並ぶ */
+/** 通過のみ。目的地のフラグは停滞を許容するまで選べない */
+export const TransitOnly: Story = {
+  args: {
+    options: optionsFor("TRANSIT_ONLY"),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(
+      canvas.getByRole("checkbox", { name: /^目的地として扱う/ }),
+    ).toBeDisabled();
+  },
+};
+
+export const Destination: Story = {
+  args: {
+    options: optionsFor("GOAL"),
+  },
+};
+
+/** 制約違反で切り替えられないフラグがあり、その理由が並ぶ */
 export const WithDisabledOptions: Story = {
   args: {
-    value: "TRANSIT_ONLY",
-    options: allAssignable.map((option) =>
-      option.type === "GOAL_TRANSIT_MIXED"
+    options: optionsFor("GOAL_TRANSIT_MIXED").map((option) =>
+      option.flag === "dwell"
         ? {
             ...option,
             assignable: false,
@@ -86,7 +104,7 @@ export const WithDisabledOptions: Story = {
     const canvas = within(canvasElement);
 
     await expect(
-      canvas.getByRole("radio", { name: /目的地 \/ 通過/ }),
+      canvas.getByRole("checkbox", { name: /^停滞を許容する/ }),
     ).toBeDisabled();
   },
 };
@@ -94,22 +112,26 @@ export const WithDisabledOptions: Story = {
 /** 選択中のタイプに紐づく通知（info）を表示する */
 export const WithNotices: Story = {
   args: {
-    value: "GOAL",
     notices: [{ level: "info", messageKey: "boundary" }],
   },
 };
 
-/** クリックでタイプが切り替わり、onChange に選択値が渡る */
+/** 停滞を外すと通過のみになり、目的地のフラグが選べなくなる */
 export const Interactive: Story = {
   render: (args) => <StatefulNodeTypeSelector {...args} />,
   play: async ({ args, canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await userEvent.click(canvas.getByRole("radio", { name: /通過のみ/ }));
+    await userEvent.click(
+      canvas.getByRole("checkbox", { name: /^停滞を許容する/ }),
+    );
 
     await expect(args.onChange).toHaveBeenCalledWith("TRANSIT_ONLY");
     await expect(
-      canvas.getByRole("radio", { name: /通過のみ/ }),
-    ).toHaveAttribute("aria-checked", "true");
+      canvas.getByRole("checkbox", { name: /^停滞を許容する/ }),
+    ).not.toBeChecked();
+    await expect(
+      canvas.getByRole("checkbox", { name: /^目的地として扱う/ }),
+    ).toBeDisabled();
   },
 };
