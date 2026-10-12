@@ -129,6 +129,7 @@ export function sortByNesting(nodes: GraphCanvasNode[]): GraphCanvasNode[] {
 export function resolveParentGroup(
   nodeId: string,
   nodes: GraphCanvasNode[],
+  excludedGroupIds: ReadonlySet<string> = new Set(),
 ): string | undefined {
   const byId = new Map<string, GraphCanvasNode>(nodes.map((n) => [n.id, n]));
   const node = byId.get(nodeId);
@@ -147,7 +148,12 @@ export function resolveParentGroup(
   let best: GroupNodeType | undefined;
   let bestArea = Number.POSITIVE_INFINITY;
   for (const candidate of nodes) {
-    if (!isGroupNode(candidate) || excluded.has(candidate.id)) continue;
+    if (
+      !isGroupNode(candidate) ||
+      excluded.has(candidate.id) ||
+      excludedGroupIds.has(candidate.id)
+    )
+      continue;
     const candidateAbs = absolutePositionOf(candidate, byId);
     const { width, height } = sizeOf(candidate);
     const contains =
@@ -188,6 +194,43 @@ export function reparentNode(
     position: { x: abs.x - base.x, y: abs.y - base.y },
   };
   return sortByNesting(nodes.map((n) => (n.id === id ? updated : n)));
+}
+
+/**
+ * 一括ドロップの所属を同一スナップショットから決める。
+ * 移動した祖先の子は所属を維持し、移動グループ同士を新たな親にしない。
+ */
+export function reparentDroppedNodes(
+  nodes: GraphCanvasNode[],
+  ids: string[],
+): GraphCanvasNode[] {
+  const moving = new Set(ids);
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const roots = nodes.filter((node) => {
+    if (!moving.has(node.id)) return false;
+    const visited = new Set([node.id]);
+    let parentId = node.parentId;
+    while (parentId && !visited.has(parentId)) {
+      if (moving.has(parentId)) return false;
+      visited.add(parentId);
+      parentId = byId.get(parentId)?.parentId;
+    }
+    return true;
+  });
+  const excluded = new Set<string>();
+  for (const root of roots) {
+    if (!isGroupNode(root)) continue;
+    excluded.add(root.id);
+    for (const id of descendantIdsOf(nodes, root.id)) excluded.add(id);
+  }
+  const destinations = roots.map((n) => ({
+    id: n.id,
+    parentId: resolveParentGroup(n.id, nodes, excluded),
+  }));
+  let next = nodes;
+  for (const { id, parentId } of destinations)
+    next = reparentNode(next, id, parentId);
+  return next;
 }
 
 /**

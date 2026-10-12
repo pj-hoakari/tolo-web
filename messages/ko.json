@@ -109,6 +109,9 @@
       "dissolveGroup": "그룹 해제(내용 유지)"
     },
     "properties": {
+      "selectedNodes": "노드: {count}개",
+      "selectedEdges": "화살표: {count}개",
+      "selectedGroups": "그룹: {count}개",
       "title": "속성",
       "empty": "지점 또는 경로를 선택하세요.",
       "deleteNode": "이 지점 삭제",

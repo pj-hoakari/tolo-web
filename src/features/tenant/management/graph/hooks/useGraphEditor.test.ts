@@ -803,3 +803,91 @@ describe("useGraphEditor: 外部ポイント", () => {
     expect(added?.position).toEqual({ x: 100, y: 100 });
   });
 });
+
+describe("useGraphEditor: 複数選択", () => {
+  const initial = (): GraphData => ({
+    nodes: [
+      node("n1", 0, 0),
+      node("n2", 300, 0),
+      {
+        id: "g1",
+        type: "graphGroup",
+        position: { x: 1000, y: 1000 },
+        width: 480,
+        height: 320,
+        data: { labels: { ja: "group" } },
+      },
+    ],
+    edges: [edge("e1", "n1", "n2")],
+  });
+  it("selected を選択情報と件数の情報源にし、単体プロパティを隠す", () => {
+    const { result } = renderHook(() => useGraphEditor(initial()), {
+      wrapper: IntlTestProvider,
+    });
+    act(() => {
+      result.current.canvas.onNodesChange([
+        { type: "select", id: "n1", selected: true },
+        { type: "select", id: "g1", selected: true },
+      ]);
+      result.current.canvas.onEdgesChange([
+        { type: "select", id: "e1", selected: true },
+      ]);
+    });
+    expect(result.current.selection).toEqual({
+      nodeIds: ["n1", "g1"],
+      edgeIds: ["e1"],
+    });
+    expect(result.current.properties.selectionCounts).toEqual({
+      nodes: 1,
+      groups: 1,
+      edges: 1,
+    });
+    expect(result.current.properties.selectedNode).toBeUndefined();
+    expect(result.current.properties.selectedEdge).toBeUndefined();
+    expect(
+      result.current
+        .getGraphData()
+        .nodes.every((n) => n.selected === undefined),
+    ).toBe(true);
+    expect(
+      result.current
+        .getGraphData()
+        .edges.every((e) => e.selected === undefined),
+    ).toBe(true);
+    act(() => result.current.canvas.onSelectEdge("e1"));
+    expect(result.current.selection).toEqual({ nodeIds: [], edgeIds: ["e1"] });
+    expect(result.current.canvas.nodes.every((n) => !n.selected)).toBe(true);
+    expect(result.current.properties.selectedEdge?.id).toBe("e1");
+    act(() => result.current.canvas.onClearSelection());
+    expect(result.current.selection).toEqual({ nodeIds: [], edgeIds: [] });
+    expect(result.current.canvas.edges.every((e) => !e.selected)).toBe(true);
+  });
+  it("削除した要素は選択から消え、残った1件のプロパティを表示する", () => {
+    const { result } = renderHook(() => useGraphEditor(initial()), {
+      wrapper: IntlTestProvider,
+    });
+    act(() =>
+      result.current.canvas.onNodesChange([
+        { type: "select", id: "n1", selected: true },
+        { type: "select", id: "n2", selected: true },
+      ]),
+    );
+    act(() =>
+      result.current.canvas.onNodesChange([{ type: "remove", id: "n1" }]),
+    );
+    expect(result.current.selection.nodeIds).toEqual(["n2"]);
+    expect(result.current.properties.selectedNode?.id).toBe("n2");
+  });
+  it("追加した要素だけを selected にする", () => {
+    const { result } = renderHook(() => useGraphEditor(initial()), {
+      wrapper: IntlTestProvider,
+    });
+    act(() => result.current.canvas.onSelectEdge("e1"));
+    act(() =>
+      result.current.canvas.editing.onAddNodeAtPosition({ x: 800, y: 0 }),
+    );
+    expect(result.current.selection.nodeIds).toHaveLength(1);
+    expect(result.current.selection.edgeIds).toEqual([]);
+    expect(result.current.properties.selectedNode?.selected).toBe(true);
+  });
+});

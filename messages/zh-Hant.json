@@ -109,6 +109,9 @@
       "dissolveGroup": "取消群組（保留內容）"
     },
     "properties": {
+      "selectedNodes": "節點：{count} 個",
+      "selectedEdges": "箭頭：{count} 個",
+      "selectedGroups": "群組：{count} 個",
       "title": "屬性",
       "empty": "請選擇節點或路徑。",
       "deleteNode": "刪除此節點",

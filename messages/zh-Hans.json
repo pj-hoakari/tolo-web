@@ -109,6 +109,9 @@
       "dissolveGroup": "取消分组（保留内容）"
     },
     "properties": {
+      "selectedNodes": "节点：{count} 个",
+      "selectedEdges": "箭头：{count} 个",
+      "selectedGroups": "分组：{count} 个",
       "title": "属性",
       "empty": "请选择节点或路径。",
       "deleteNode": "删除此节点",

@@ -85,3 +85,7 @@ export const ExternalDeletable: Story = {
     selectedNode: boundaryFixtureNode("external"),
   },
 };
+
+export const MultipleSelection: Story = {
+  args: { selectionCounts: { nodes: 2, edges: 1, groups: 1 } },
+};

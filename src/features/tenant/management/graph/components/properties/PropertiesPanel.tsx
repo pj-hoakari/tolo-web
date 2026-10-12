@@ -20,6 +20,7 @@ import { buildNodeTypeOptions } from "./nodeTypeOptions";
 export type PropertiesPanelProps = {
   selectedNode: GraphCanvasNode | undefined;
   selectedEdge: GraphEdgeType | undefined;
+  selectionCounts?: { nodes: number; edges: number; groups: number };
   /** 制約の検証と端点ラベルの解決に使うグラフ全体 */
   graph: GraphData;
   /** ポイントラベルの編集言語 */
@@ -36,6 +37,7 @@ export type PropertiesPanelProps = {
 export function PropertiesPanel({
   selectedNode,
   selectedEdge,
+  selectionCounts,
   graph,
   labelLocale,
   onUpdateNode,
@@ -45,9 +47,14 @@ export function PropertiesPanel({
   onDelete,
 }: PropertiesPanelProps) {
   const { nodes, edges } = graph;
-  const deletable = selectedNode
-    ? !isLastExternal(selectedNode.id, nodes)
-    : Boolean(selectedEdge);
+  const multiple =
+    selectionCounts !== undefined &&
+    selectionCounts.nodes + selectionCounts.edges + selectionCounts.groups > 1;
+  const deletable =
+    !multiple &&
+    (selectedNode
+      ? !isLastExternal(selectedNode.id, nodes)
+      : Boolean(selectedEdge));
   const t = useTranslations("Graph.properties");
   const tNotice = useTranslations("Graph.notices");
 
@@ -57,7 +64,13 @@ export function PropertiesPanel({
         <p className="font-semibold text-foreground text-sm">{t("title")}</p>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        {selectedNode && isGroupNode(selectedNode) ? (
+        {multiple && selectionCounts ? (
+          <div className="space-y-2 text-muted-foreground text-sm">
+            <p>{t("selectedNodes", { count: selectionCounts.nodes })}</p>
+            <p>{t("selectedEdges", { count: selectionCounts.edges })}</p>
+            <p>{t("selectedGroups", { count: selectionCounts.groups })}</p>
+          </div>
+        ) : selectedNode && isGroupNode(selectedNode) ? (
           <GroupProperties
             group={selectedNode}
             labelLocale={labelLocale}
