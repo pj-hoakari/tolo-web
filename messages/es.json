@@ -29,7 +29,7 @@
     },
     "nodeType": {
       "GOAL": "Destino",
-      "GOAL_TRANSIT_MIXED": "Destino / Tránsito",
+      "GOAL_TRANSIT_MIXED": "Permite permanencia",
       "TRANSIT_ONLY": "Solo tránsito",
       "EXTERNAL": "Exterior"
     },
@@ -55,10 +55,15 @@
       "usedByOther": "En uso por otro punto u otra ruta"
     },
     "nodeTypeDescription": {
-      "GOAL": "p. ej., un estand",
-      "GOAL_TRANSIT_MIXED": "p. ej., una exposición mural (destino y a la vez paso)",
-      "TRANSIT_ONLY": "p. ej., una bifurcación del pasillo",
       "EXTERNAL": "Punto virtual que representa el exterior del recinto. Los puntos conectados a él pasan a ser puntos de entrada / salida."
+    },
+    "nodeTypeFlag": {
+      "dwell": "Permitir permanencia",
+      "destination": "Tratar como destino"
+    },
+    "nodeTypeFlagDescription": {
+      "dwell": "Un punto donde la gente puede detenerse. Desactívalo para solo tránsito (p. ej., una bifurcación del pasillo)",
+      "destination": "Un destino que no se usa para pasar (p. ej., un estand)"
     },
     "notices": {
       "boundary": "Punto de entrada / salida (conectado al exterior)",
@@ -71,6 +76,7 @@
     "editor": {
       "title": "Editor del diagrama de rutas",
       "addNode": "Añadir {type}",
+      "point": "Punto",
       "save": "Guardar",
       "newNodeLabel": "Punto {index}",
       "addGroup": "Añadir grupo",

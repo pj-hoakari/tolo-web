@@ -28,7 +28,6 @@ export {
 } from "./NodeTypeSelector";
 export {
   buildNodeTypeOptions,
-  deriveNodeTypeOption,
   type NodeTypeOption,
 } from "./nodeTypeOptions";
 export {
