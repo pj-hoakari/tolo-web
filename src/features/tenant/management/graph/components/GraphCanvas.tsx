@@ -359,6 +359,22 @@ export function GraphCanvas({
               onConnect={editable ? handleConnect : undefined}
               onConnectStart={editable ? handleConnectStart : undefined}
               onConnectEnd={editable ? handleConnectEnd : undefined}
+              // クリックだけで選択をトグルし、ドラッグ開始では解除しない。
+              selectNodesOnDrag={false}
+              onNodeDragStart={
+                editable
+                  ? (event, node) => {
+                      if (node.selected) return;
+                      if (event.shiftKey || event.ctrlKey) {
+                        onNodesChange([
+                          { type: "select", id: node.id, selected: true },
+                        ]);
+                      } else {
+                        onSelectNode(node.id);
+                      }
+                    }
+                  : undefined
+              }
               onNodeDragStop={
                 editable
                   ? (_, __, draggedNodes) =>

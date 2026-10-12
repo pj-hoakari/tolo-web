@@ -891,3 +891,65 @@ describe("useGraphEditor: 複数選択", () => {
     expect(result.current.properties.selectedNode?.selected).toBe(true);
   });
 });
+
+describe("useGraphEditor: 親子の移動バッチ", () => {
+  const initial: GraphData = {
+    nodes: [
+      {
+        id: "group",
+        type: "graphGroup",
+        position: { x: 100, y: 100 },
+        width: 480,
+        height: 320,
+        data: { labels: {} },
+      },
+      { ...node("child", 90, 90), parentId: "group" },
+    ],
+    edges: [],
+  };
+  it("親子が同じドラッグバッチに含まれても子の相対位置を維持する", () => {
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+    for (const dragging of [true, false]) {
+      act(() =>
+        result.current.canvas.onNodesChange([
+          {
+            type: "position",
+            id: "group",
+            position: { x: 110, y: 120 },
+            dragging,
+          },
+          {
+            type: "position",
+            id: "child",
+            position: { x: 100, y: 110 },
+            dragging,
+          },
+        ]),
+      );
+      expect(
+        result.current.canvas.nodes.find((n) => n.id === "child")?.position,
+      ).toEqual({ x: 90, y: 90 });
+    }
+  });
+  it("リサイズ時の子の位置補正はそのまま反映する", () => {
+    const { result } = renderHook(() => useGraphEditor(initial), {
+      wrapper: IntlTestProvider,
+    });
+    act(() =>
+      result.current.canvas.onNodesChange([
+        { type: "position", id: "group", position: { x: 110, y: 120 } },
+        { type: "position", id: "child", position: { x: 80, y: 70 } },
+      ]),
+    );
+    const child = result.current.canvas.nodes.find((n) => n.id === "child");
+    expect(child?.position).toEqual({ x: 80, y: 70 });
+    expect(
+      absolutePositionOf(
+        child as GraphCanvasNode,
+        new Map(result.current.canvas.nodes.map((n) => [n.id, n])),
+      ),
+    ).toEqual({ x: 190, y: 190 });
+  });
+});

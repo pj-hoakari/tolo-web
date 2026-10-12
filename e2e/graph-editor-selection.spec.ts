@@ -168,6 +168,88 @@ test("親グループと子の同時選択では子が二重に移動しない",
   );
 });
 
+test("Shiftを押したまま親グループをドラッグしても選択と親子の相対位置を維持する", async ({
+  page,
+}, testInfo) => {
+  await selectGroup(page, "ph_floor1");
+  await selectNode(page, "ph_booth", "Shift");
+  await expect(node(page, "ph_floor1")).toHaveClass(/selected/);
+  await expect(node(page, "ph_booth")).toHaveClass(/selected/);
+  await expect(selectedNodes(page)).toHaveCount(2);
+
+  // 親、選択済みの子、選択していない子を比較する。
+  const ids = ["ph_floor1", "ph_booth", "ph_junction"];
+  const before = await Promise.all(ids.map((id) => position(node(page, id))));
+  const box = await node(page, "ph_floor1").boundingBox();
+  if (!box) throw new Error("Missing group");
+
+  await test.step("Shiftを押しながらグループ本体をドラッグする", async () => {
+    await page.keyboard.down("Shift");
+    try {
+      await page.mouse.move(box.x + box.width - 30, box.y + 20);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width + 20, box.y + 50, { steps: 10 });
+      await page.mouse.up();
+    } finally {
+      await page.keyboard.up("Shift");
+    }
+  });
+
+  const after = await Promise.all(ids.map((id) => position(node(page, id))));
+  const selectedIds = await selectedNodes(page).evaluateAll((elements) =>
+    elements.map((element) => element.getAttribute("data-id")),
+  );
+  await testInfo.attach("shift-drag-movement", {
+    contentType: "application/json",
+    body: JSON.stringify(
+      {
+        selectedIds,
+        nodes: ids.map((id, index) => ({
+          id,
+          before: before[index],
+          after: after[index],
+          delta: {
+            x: after[index].x - before[index].x,
+            y: after[index].y - before[index].y,
+          },
+        })),
+      },
+      null,
+      2,
+    ),
+  });
+
+  // 選択の検証が失敗しても、位置ずれの検証まで実行して両方の結果を残す。
+  await expect.soft(node(page, "ph_floor1")).toHaveClass(/selected/);
+  await expect.soft(node(page, "ph_booth")).toHaveClass(/selected/);
+  await expect.soft(selectedNodes(page)).toHaveCount(2);
+  expectSameDelta(before, after);
+});
+
+test("Shift付きで未選択の親グループをドラッグしても選択済みの子が二重に移動しない", async ({
+  page,
+}) => {
+  await selectNode(page, "ph_booth");
+  const ids = ["ph_floor1", "ph_booth", "ph_junction"];
+  const before = await Promise.all(ids.map((id) => position(node(page, id))));
+  const box = await node(page, "ph_floor1").boundingBox();
+  if (!box) throw new Error("Missing group");
+  await page.keyboard.down("Shift");
+  try {
+    await page.mouse.move(box.x + box.width - 30, box.y + 20);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width + 20, box.y + 50, { steps: 10 });
+    await page.mouse.up();
+  } finally {
+    await page.keyboard.up("Shift");
+  }
+  await expect(selectedNodes(page)).toHaveCount(2);
+  expectSameDelta(
+    before,
+    await Promise.all(ids.map((id) => position(node(page, id)))),
+  );
+});
+
 test("未選択ノードをキーなしでドラッグすると単体選択になる", async ({
   page,
 }) => {
@@ -178,6 +260,26 @@ test("未選択ノードをキーなしでドラッグすると単体選択に�
   await expect(selectedNodes(page)).toHaveCount(1);
   await expect(node(page, "ph_junction")).toHaveClass(/selected/);
   expect(await position(node(page, "ph_booth"))).toEqual(before);
+});
+
+test("Shift付きの未選択ノードのドラッグは既存の選択に追加して一括移動する", async ({
+  page,
+}) => {
+  await selectNode(page, "ph_booth");
+  const ids = ["ph_booth", "ph_gallery2f"];
+  const before = await Promise.all(ids.map((id) => position(node(page, id))));
+  await page.keyboard.down("Shift");
+  try {
+    await dragNode(page, "ph_gallery2f");
+  } finally {
+    await page.keyboard.up("Shift");
+  }
+  await expect(selectedNodes(page)).toHaveCount(2);
+  for (const id of ids) await expect(node(page, id)).toHaveClass(/selected/);
+  expectSameDelta(
+    before,
+    await Promise.all(ids.map((id) => position(node(page, id)))),
+  );
 });
 
 test("矢印のみ複数選択してドラッグしてもノードを移動しない", async ({
