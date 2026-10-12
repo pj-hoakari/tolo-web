@@ -10,7 +10,11 @@ const node: GraphNodeType = {
   id: "n1",
   type: "graph",
   position: { x: 0, y: 0 },
-  data: { labels: { ja: "ポイント 1" }, label: "ポイント 1", nodeType: "GOAL" },
+  data: {
+    labels: { ja: "ポイント 1" },
+    label: "ポイント 1",
+    nodeType: "GOAL_TRANSIT_MIXED",
+  },
 };
 
 /** メッセージを解決できるよう next-intl のプロバイダ配下で描画する */
@@ -36,13 +40,15 @@ describe("GraphNodeContextMenu", () => {
     );
 
     expect(screen.getByText("タイプを変更")).toBeTruthy();
-    fireEvent.click(screen.getByRole("menuitemradio", { name: "通過のみ" }));
+    fireEvent.click(
+      screen.getByRole("menuitemcheckbox", { name: "目的地として扱う" }),
+    );
 
-    expect(onSetType).toHaveBeenCalledWith("n1", "TRANSIT_ONLY");
+    expect(onSetType).toHaveBeenCalledWith("n1", "GOAL");
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("メニュー名に対象ポイント名を含み、現在のタイプをラジオ選択として伝える", () => {
+  it("メニュー名に対象ポイント名を含み、現在のタイプをフラグのチェック状態として伝える", () => {
     renderWithIntl(
       <GraphNodeContextMenu
         node={node}
@@ -63,15 +69,15 @@ describe("GraphNodeContextMenu", () => {
     // タイプ変更グループはヘッダー付きのグループとして関連付く
     expect(screen.getByRole("group", { name: "タイプを変更" })).toBeTruthy();
 
-    // 現在のタイプ（GOAL = 目的地）だけがチェック状態
+    // 現在のタイプ（GOAL_TRANSIT_MIXED = 停滞可）は停滞だけがチェック状態
     expect(
       screen
-        .getByRole("menuitemradio", { name: "目的地" })
+        .getByRole("menuitemcheckbox", { name: "停滞を許容する" })
         .getAttribute("aria-checked"),
     ).toBe("true");
     expect(
       screen
-        .getByRole("menuitemradio", { name: "通過のみ" })
+        .getByRole("menuitemcheckbox", { name: "目的地として扱う" })
         .getAttribute("aria-checked"),
     ).toBe("false");
   });

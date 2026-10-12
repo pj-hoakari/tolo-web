@@ -29,7 +29,7 @@
     },
     "nodeType": {
       "GOAL": "목적지",
-      "GOAL_TRANSIT_MIXED": "목적지 / 통과",
+      "GOAL_TRANSIT_MIXED": "체류 가능",
       "TRANSIT_ONLY": "통과 전용",
       "EXTERNAL": "외부"
     },
@@ -55,10 +55,15 @@
       "usedByOther": "다른 지점 / 경로에서 사용 중"
     },
     "nodeTypeDescription": {
-      "GOAL": "예: 전시 부스",
-      "GOAL_TRANSIT_MIXED": "예: 벽면 전시(목적지도 통과도 될 수 있음)",
-      "TRANSIT_ONLY": "예: 통로 분기",
       "EXTERNAL": "행사장 밖을 나타내는 가상 지점입니다. 외부와 연결된 지점이 출입 지점이 됩니다."
+    },
+    "nodeTypeFlag": {
+      "dwell": "체류 허용",
+      "destination": "목적지로 취급"
+    },
+    "nodeTypeFlagDescription": {
+      "dwell": "사람이 멈춰 설 수 있는 지점입니다. 끄면 통과 전용이 됩니다(예: 통로 분기)",
+      "destination": "통과하지 않는 행선지입니다(예: 전시 부스)"
     },
     "notices": {
       "boundary": "출입 지점(외부와 연결됨)",
@@ -71,6 +76,7 @@
     "editor": {
       "title": "경로도 편집기",
       "addNode": "{type} 추가",
+      "point": "지점",
       "save": "저장",
       "newNodeLabel": "지점 {index}",
       "addGroup": "그룹 추가",

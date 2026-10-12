@@ -29,7 +29,7 @@
     },
     "nodeType": {
       "GOAL": "目的地",
-      "GOAL_TRANSIT_MIXED": "目的地 / 通行",
+      "GOAL_TRANSIT_MIXED": "可停留",
       "TRANSIT_ONLY": "僅通行",
       "EXTERNAL": "外部"
     },
@@ -55,10 +55,15 @@
       "usedByOther": "已被其他節點 / 路徑使用"
     },
     "nodeTypeDescription": {
-      "GOAL": "例：攤位",
-      "GOAL_TRANSIT_MIXED": "例：牆面展示（既是目的地也可通行）",
-      "TRANSIT_ONLY": "例：通道分岔",
       "EXTERNAL": "表示場館外部的虛擬點。與外部連接的點將作為出入口。"
+    },
+    "nodeTypeFlag": {
+      "dwell": "允許停留",
+      "destination": "作為目的地"
+    },
+    "nodeTypeFlagDescription": {
+      "dwell": "人可能會停留的點。關閉後僅可通行（例：通道分岔）",
+      "destination": "不用於穿行的去處（例：攤位）"
     },
     "notices": {
       "boundary": "出入口（與外部連接）",
@@ -71,6 +76,7 @@
     "editor": {
       "title": "路徑圖編輯器",
       "addNode": "新增{type}",
+      "point": "點",
       "save": "儲存",
       "newNodeLabel": "節點 {index}",
       "addGroup": "新增群組",
