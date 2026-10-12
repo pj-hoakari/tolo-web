@@ -15,23 +15,23 @@
     "title": "{tenantId} 관리 페이지",
     "tabsLabel": "관리 화면 전환",
     "tabs": {
-      "graph": "행사장 그래프",
+      "graph": "경로도",
       "edges": "연결된 엣지"
     },
-    "graphEditTitle": "{tenantId} 행사장 그래프 편집",
+    "graphEditTitle": "{tenantId} 경로도 편집",
     "backLink": "관리 페이지로 돌아가기"
   },
   "Graph": {
     "viewer": {
-      "title": "행사장 그래프",
+      "title": "경로도",
       "edit": "그래프 편집",
       "save": "저장"
     },
     "nodeType": {
       "GOAL": "목적지",
-      "GOAL_TRANSIT_MIXED": "목적지 / 통과",
+      "GOAL_TRANSIT_MIXED": "체류 가능",
       "TRANSIT_ONLY": "통과 전용",
-      "BOUNDARY": "출입 지점"
+      "EXTERNAL": "외부"
     },
     "selectionKind": {
       "node": "지점",
@@ -49,27 +49,34 @@
       "refresh": "새로고침",
       "error": "관측점을 불러오지 못했습니다",
       "loading": "불러오는 중…",
-      "empty": "연결된 관측점이 없습니다",
-      "online": "연결됨",
+      "empty": "가동 중인 관측점이 없습니다",
+      "online": "가동 중",
       "offline": "오프라인",
       "usedByOther": "다른 지점 / 경로에서 사용 중"
     },
     "nodeTypeDescription": {
-      "GOAL": "예: 전시 부스",
-      "GOAL_TRANSIT_MIXED": "예: 벽면 전시(목적지도 통과도 될 수 있음)",
-      "TRANSIT_ONLY": "예: 통로 분기",
-      "BOUNDARY": "예: 행사장 출입구"
+      "EXTERNAL": "행사장 밖을 나타내는 가상 지점입니다. 외부와 연결된 지점이 출입 지점이 됩니다."
+    },
+    "nodeTypeFlag": {
+      "dwell": "체류 허용",
+      "destination": "목적지로 취급"
+    },
+    "nodeTypeFlagDescription": {
+      "dwell": "사람이 멈춰 설 수 있는 지점입니다. 끄면 통과 전용이 됩니다(예: 통로 분기)",
+      "destination": "통과하지 않는 행선지입니다(예: 전시 부스)"
     },
     "notices": {
-      "dualDirection": "출입(입력·출력) 양쪽을 담당하고 있습니다"
+      "boundary": "출입 지점(외부와 연결됨)",
+      "closed": "폐쇄 모드(출입 지점 없음)"
     },
     "labelLanguage": {
       "label": "라벨 언어",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
-      "title": "행사장 편집기",
+      "title": "경로도 편집기",
       "addNode": "{type} 추가",
+      "point": "지점",
       "save": "저장",
       "newNodeLabel": "지점 {index}",
       "addGroup": "그룹 추가",
@@ -86,6 +93,7 @@
       "canvasLabel": "캔버스 작업",
       "endEdgeCreation": "경로 추가 종료",
       "addNode": "지점 추가",
+      "addExternal": "외부 지점 추가",
       "addEdge": "경로 추가",
       "nodeLabel": "지점 「{label}」 작업",
       "addEdgeFromNode": "이 지점에서 경로 추가",
@@ -101,6 +109,28 @@
       "dissolveGroup": "그룹 해제(내용 유지)"
     },
     "properties": {
+      "bulk": {
+        "points": "포인트 ({count}개)",
+        "edges": "화살표 ({count}개)",
+        "mixed": "값이 서로 다릅니다",
+        "result": "{changed}개를 변경했습니다. {skipped}개는 변경하지 못했습니다.",
+        "reasonCount": "{reason} ({count}개)",
+        "reasons": {
+          "requiresDwell": "체류를 허용하지 않는 포인트는 목적지로 설정할 수 없습니다.",
+          "bothNotReversed": "양방향 화살표는 반전 대상에서 제외됩니다."
+        }
+      },
+      "groupSelected": "선택한 포인트 그룹화",
+      "deleteSelected": "선택한 요소 삭제",
+      "deleteSelectedGroupHint": "선택한 그룹은 해제되고 선택하지 않은 내용은 유지됩니다.",
+      "groupSelectionErrors": {
+        "pointsOnly": "그룹과 외부 포인트는 그룹화할 수 없습니다.",
+        "tooFewPoints": "포인트를 2개 이상 선택하세요.",
+        "differentParents": "같은 부모에 속한 포인트를 선택하세요."
+      },
+      "selectedNodes": "노드: {count}개",
+      "selectedEdges": "화살표: {count}개",
+      "selectedGroups": "그룹: {count}개",
       "title": "속성",
       "empty": "지점 또는 경로를 선택하세요.",
       "deleteNode": "이 지점 삭제",
@@ -137,10 +167,10 @@
       "error": "연결 실패"
     },
     "aliveEdges": {
-      "title": "연결된 엣지 ({count})",
+      "title": "가동 중인 엣지 ({count})",
       "refresh": "새로고침",
       "loading": "불러오는 중…",
-      "empty": "연결된 엣지가 없습니다",
+      "empty": "가동 중인 엣지가 없습니다",
       "lastSeen": "마지막 응답: {time}",
       "unknownTime": "알 수 없음",
       "connect": "연결",
@@ -183,9 +213,13 @@
     "lines": {
       "create": "라인 생성",
       "edit": "편집 모드",
+      "reverseForward": "forward 방향 반전",
       "deleteSelected": "선택한 라인 삭제",
       "reset": "라인 위치 초기화",
-      "count": "라인 {index}: forward {forward} / backward {backward}"
+      "count": "라인 {index}: forward {forward} / backward {backward}",
+      "namedCount": "{name}: forward {forward} / backward {backward}",
+      "nameLabel": "선택한 라인 이름",
+      "namePlaceholder": "예: A홀 입구, 북쪽 연결 통로"
     }
   },
   "Observation": {
@@ -368,5 +402,43 @@
         "goods": "굿즈 매장"
       }
     }
+  },
+  "PwaInstall": {
+    "button": "앱 설치",
+    "title": "Tolo 설치",
+    "description": "홈 화면이나 앱 목록에서 Tolo를 열 수 있습니다. 사용하려면 인터넷 연결이 필요합니다.",
+    "nativeIntro": "아래의 설치를 누른 다음 브라우저 확인 창에서 설치를 선택하세요.",
+    "nativeInstall": "설치",
+    "installing": "확인 창을 여는 중…",
+    "dismissed": "설치를 취소했습니다. 브라우저 메뉴에서 다시 설치할 수 있습니다.",
+    "error": "확인 창을 열지 못했습니다. 아래 단계에 따라 브라우저에서 설치하세요.",
+    "accepted": "설치 요청을 받았습니다. 설치가 완료되면 홈 화면이나 앱 목록에서 Tolo를 여세요.",
+    "iosTitle": "iPhone 및 iPad (Safari)",
+    "iosSteps": {
+      "first": "Safari에서 이 페이지를 열고 공유(사각형에서 위쪽 화살표가 나오는 아이콘)를 누르세요. 보이지 않으면 주소 막대의 페이지 메뉴에서 공유를 선택하세요.",
+      "second": "메뉴를 아래로 스크롤하여 홈 화면에 추가를 선택하세요. 웹 앱으로 열기가 표시되면 켜세요.",
+      "third": "추가를 누르세요. 홈 화면에 생성된 Tolo 아이콘으로 열 수 있습니다."
+    },
+    "androidTitle": "Android (Chrome)",
+    "androidSteps": {
+      "first": "Chrome에서 이 페이지를 열고 오른쪽 상단의 ︙ 메뉴를 누르세요.",
+      "second": "설치 및 바로가기 만들기 → 설치를 선택하세요. 버전에 따라 앱 설치 또는 홈 화면에 추가에서 시작한 다음 화면의 안내를 따르세요.",
+      "third": "홈 화면이나 앱 목록의 Tolo 아이콘으로 여세요. 메뉴 항목이 없으면 일반 탭에서 페이지를 새로고침하고 다시 시도하세요."
+    },
+    "desktopTitle": "컴퓨터 (Chrome 및 Edge)",
+    "desktopSteps": {
+      "first": "Chrome 또는 Edge에서 이 페이지를 여세요.",
+      "second": "주소 표시줄 오른쪽의 설치 아이콘을 클릭하세요. 보이지 않으면 Chrome에서 ︙ → 전송, 저장 및 공유 → 페이지를 앱으로 설치를 선택하세요. Edge에서는 … → 기타 도구(표시되는 경우) → 앱 → 이 사이트를 앱으로 설치를 선택하세요.",
+      "third": "확인 창에서 설치를 선택하세요. 앱 목록에서 Tolo를 열 수 있습니다."
+    },
+    "macTitle": "Mac (Safari)",
+    "macSteps": {
+      "first": "Safari에서 이 페이지를 여세요(macOS Sonoma 이상).",
+      "second": "메뉴 막대에서 파일 → Dock에 추가를 선택한 다음 추가를 클릭하세요.",
+      "third": "Dock에 생성된 Tolo 아이콘으로 여세요."
+    },
+    "otherIntro": "브라우저와 기기에 따라 단계가 다릅니다. 사용 중인 기기에 맞는 안내를 선택하세요. 메뉴 항목이 표시되지 않으면 아래의 지원 브라우저로 이 페이지를 여세요.",
+    "insecure": "설치하려면 HTTPS 연결이 필요합니다. 공개 사이트의 HTTPS URL로 접속하세요.",
+    "close": "닫기"
   }
 }

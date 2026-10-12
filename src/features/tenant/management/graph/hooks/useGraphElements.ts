@@ -6,6 +6,7 @@ import {
   type EdgeChange,
   type NodeChange,
 } from "@xyflow/react";
+import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 import { deriveNodeNotices } from "../nodeTypes";
 import type {
@@ -14,10 +15,16 @@ import type {
   GraphEdgeData,
   GraphEdgeType,
   GraphNodeData,
+  GroupNodeType,
 } from "../type";
 import { isGroupNode, isPointNode } from "../type";
 import { autoAlignGraph } from "../utils/autoLayout";
 import {
+  applyBulkProperty,
+  type BulkPropertyAction,
+} from "../utils/bulkProperties";
+import {
+  ensureExternalNode,
   patchEdgeData,
   patchNodeData,
   patchNodeLabel,
@@ -29,20 +36,28 @@ import {
 import {
   dissolveGroups,
   fitGroupsToChildren,
+  reparentDroppedNodes,
   reparentNode,
   resolveParentGroup,
   sortByNesting,
 } from "../utils/groups";
 import { assignHandlesByPosition, deriveNodeHandles } from "../utils/handles";
 import { deriveNodeLabels } from "../utils/labels";
+import {
+  deleteSelectedElements,
+  groupSelectedPoints,
+} from "../utils/selectionActions";
 
 /**
  * ノード/ルートの実体と、その描画用の派生情報を扱うフック。
- * 選択状態や観測点の使用状況には関与せず、要素の出し入れだけを担う。
+ * React Flow の selected を含む要素状態を持ち、観測点の使用状況には関与しない。
  * labelLocale はラベルの表示言語（ポイント・グループ共通で、描画用ラベルの解決に使う）。
  */
 export function useGraphElements(initial: GraphData, labelLocale: string) {
-  const [nodes, setNodes] = useState<GraphCanvasNode[]>(initial.nodes);
+  const tType = useTranslations("Graph.nodeType");
+  const [nodes, setNodes] = useState<GraphCanvasNode[]>(() =>
+    ensureExternalNode(initial.nodes),
+  );
   const [edges, setEdges] = useState<GraphEdgeType[]>(initial.edges);
 
   // ノード位置から各エッジの接続辺(上下左右)を決定
@@ -54,10 +69,13 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
   const derivedNodes = useMemo(
     () =>
       deriveNodeNotices(
-        deriveNodeHandles(deriveNodeLabels(nodes, labelLocale), derivedEdges),
+        deriveNodeHandles(
+          deriveNodeLabels(nodes, labelLocale, tType("EXTERNAL")),
+          derivedEdges,
+        ),
         derivedEdges,
       ),
-    [nodes, derivedEdges, labelLocale],
+    [nodes, derivedEdges, labelLocale, tType],
   );
 
   /** 派生情報を含まない、編集中のグラフそのもの */
@@ -74,7 +92,29 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
       });
       const prepared =
         removedGroupIds.length > 0 ? dissolveGroups(nds, removedGroupIds) : nds;
-      const applied = applyNodeChanges(changes, prepared);
+      // XYDrag が選択前の親と選択済みの子を同じ移動バッチに含めても、
+      // 子は親の移動だけに追従させる。リサイズの位置補正には適用しない。
+      const movingIds = new Set(
+        changes.flatMap((change) =>
+          change.type === "position" && change.dragging !== undefined
+            ? [change.id]
+            : [],
+        ),
+      );
+      const byId = new Map(prepared.map((node) => [node.id, node]));
+      const normalized = changes.filter((change) => {
+        if (change.type !== "position" || change.dragging === undefined)
+          return true;
+        const visited = new Set([change.id]);
+        let parentId = byId.get(change.id)?.parentId;
+        while (parentId && !visited.has(parentId)) {
+          if (movingIds.has(parentId)) return false;
+          visited.add(parentId);
+          parentId = byId.get(parentId)?.parentId;
+        }
+        return true;
+      });
+      const applied = applyNodeChanges(normalized, prepared);
 
       // グループの拡縮は確定イベントでのみ行う:
       // - 削除（子が減った）
@@ -97,6 +137,18 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
 
   const changeEdges = useCallback((changes: EdgeChange<GraphEdgeType>[]) => {
     setEdges((eds) => applyEdgeChanges(changes, eds));
+  }, []);
+
+  /** プログラムからの選択は、描画とプロパティで共有する selected に反映する。 */
+  const setSelection = useCallback((nodeIds: string[], edgeIds: string[]) => {
+    const selectedNodes = new Set(nodeIds);
+    const selectedEdges = new Set(edgeIds);
+    setNodes((nds) =>
+      nds.map((n) => ({ ...n, selected: selectedNodes.has(n.id) })),
+    );
+    setEdges((eds) =>
+      eds.map((e) => ({ ...e, selected: selectedEdges.has(e.id) })),
+    );
   }, []);
 
   /**
@@ -134,15 +186,34 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
     setNodes((nds) => fitGroupsToChildren(dissolveGroups(nds, [id])));
   }, []);
 
+  const updateSelectedProperty = useCallback(
+    (action: BulkPropertyAction) => {
+      const { graph: next, result } = applyBulkProperty(source, action);
+      setNodes(next.nodes);
+      setEdges(next.edges);
+      return result;
+    },
+    [source],
+  );
+
+  const removeSelection = useCallback(() => {
+    const next = deleteSelectedElements(source);
+    setNodes(next.nodes);
+    setEdges(next.edges);
+  }, [source]);
+
+  const groupSelection = useCallback(
+    (group: GroupNodeType) => {
+      const next = groupSelectedPoints(source, group);
+      setNodes(next.nodes);
+      setEdges(next.edges);
+    },
+    [source],
+  );
+
   /** ドラッグ終了したノードを、その位置を含むグループへ所属させ直す */
   const reparentByDrop = useCallback((ids: string[]) => {
-    setNodes((nds) => {
-      let next = nds;
-      for (const id of ids) {
-        next = reparentNode(next, id, resolveParentGroup(id, next));
-      }
-      return fitGroupsToChildren(next);
-    });
+    setNodes((nds) => fitGroupsToChildren(reparentDroppedNodes(nds, ids)));
   }, []);
 
   /**
@@ -173,8 +244,10 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
 
   /** グラフ全体を接続状況に基づいて自動整列する */
   const autoAlign = useCallback(() => {
-    setNodes((nds) => autoAlignGraph(nds, edges));
-  }, [edges]);
+    const aligned = autoAlignGraph(nodes, edges);
+    setNodes(aligned.nodes);
+    setEdges(aligned.edges);
+  }, [nodes, edges]);
 
   const removeEdge = useCallback((id: string) => {
     setEdges((eds) => withoutEdge(eds, id));
@@ -213,14 +286,18 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
     source,
     changeNodes,
     changeEdges,
+    setSelection,
     appendNode,
     appendEdge,
     removeNode,
     removeGroup,
+    removeSelection,
+    groupSelection,
     reparentByDrop,
     setGroupMinSize,
     autoAlign,
     removeEdge,
+    updateSelectedProperty,
     updateNodeData,
     updateNodeLabel,
     updateEdgeData,

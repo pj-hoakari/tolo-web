@@ -6,9 +6,9 @@ import {
   NodeProperties,
 } from "@/features/tenant/management/graph/components/properties";
 import {
-  DUAL_BOUNDARY_EDGES,
-  DUAL_BOUNDARY_NODES,
-  dualBoundaryNode,
+  BOUNDARY_EDGES,
+  BOUNDARY_NODES,
+  boundaryFixtureNode,
   GRAPH_EDGES,
   GRAPH_NODES,
   graphNode,
@@ -53,39 +53,25 @@ type Story = StoryObj<typeof meta>;
 /** ブースA（目的地）を選択した状態 */
 export const Default: Story = {};
 
-/** 入退出点を選択した状態 */
+/** 外部ポイントと接続した入退出点。タイプ欄に info の通知が出る */
 export const Boundary: Story = {
   args: {
-    node: graphNode("ph_entrance"),
-    typeOptions: buildNodeTypeOptions(
-      "ph_entrance",
-      "BOUNDARY",
-      GRAPH_NODES,
-      GRAPH_EDGES,
-      passThroughNotice,
-    ),
-  },
-};
-
-/** 入退出の両方を担う入退出点。タイプ欄に info の通知が出る */
-export const WithNotice: Story = {
-  args: {
-    node: dualBoundaryNode(),
+    node: boundaryFixtureNode("gate"),
     typeOptions: buildNodeTypeOptions(
       "gate",
-      "BOUNDARY",
-      DUAL_BOUNDARY_NODES,
-      DUAL_BOUNDARY_EDGES,
+      "TRANSIT_ONLY",
+      BOUNDARY_NODES,
+      BOUNDARY_EDGES,
       passThroughNotice,
     ),
   },
 };
 
-/** 制約違反で変更できないタイプがある状態（理由が並ぶ） */
+/** 制約違反で切り替えられないフラグがある状態（理由が並ぶ） */
 export const WithDisabledType: Story = {
   args: {
     typeOptions: boothTypeOptions.map((option) =>
-      option.type === "BOUNDARY"
+      option.flag === "dwell"
         ? {
             ...option,
             assignable: false,

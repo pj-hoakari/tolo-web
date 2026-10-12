@@ -25,5 +25,7 @@ export const COMPONENT_GAP = 96;
  */
 export const ROUTE_CLEARANCE = 48;
 
+export const EXTERNAL_CLUSTER_GAP = 240;
+
 /** 列内順序を接続相手の平均位置へ寄せる緩和計算の反復回数 */
 export const ORDERING_SWEEPS = 3;

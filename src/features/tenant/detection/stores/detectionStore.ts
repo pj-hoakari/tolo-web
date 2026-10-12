@@ -16,6 +16,7 @@ export type DetectionPoint = {
 
 export type DetectionCountingLineSetting = {
   id: string;
+  name: string;
   p1: DetectionPoint;
   p2: DetectionPoint;
 };
@@ -32,10 +33,16 @@ export type DetectionLineCount = {
   backward: number;
 };
 
+export type DetectedPeopleTally = {
+  frames: number;
+  people: number;
+};
+
 /** 検出ループが毎フレーム更新する結果 */
 export type DetectionResult = {
   lineCounts: Record<string, DetectionLineCount>;
   metrics: DetectionMetrics;
+  detectedPeople: DetectedPeopleTally;
 };
 
 /** 検出結果には影響しない画面操作の状態 */
@@ -54,6 +61,7 @@ export const DEFAULT_LINE_ID = "line-1";
 export const DEFAULT_COUNTING_LINES: DetectionCountingLineSetting[] = [
   {
     id: DEFAULT_LINE_ID,
+    name: "",
     p1: { x: 0, y: 0.6 },
     p2: { x: 1, y: 0.6 },
   },
@@ -62,6 +70,11 @@ export const DEFAULT_COUNTING_LINES: DetectionCountingLineSetting[] = [
 export const INITIAL_METRICS: DetectionMetrics = {
   trackedCount: 0,
   fps: 0,
+};
+
+export const INITIAL_DETECTED_PEOPLE: DetectedPeopleTally = {
+  frames: 0,
+  people: 0,
 };
 
 export const INITIAL_SETTINGS: DetectionSettings = {
@@ -130,6 +143,7 @@ export function createDetectionStores(
     resultStore: createStore<DetectionResult>()(() => ({
       lineCounts: createInitialLineCounts(settings.countingLines),
       metrics: INITIAL_METRICS,
+      detectedPeople: INITIAL_DETECTED_PEOPLE,
     })),
     viewStateStore: createStore<DetectionViewState>()(() => ({
       selectedLineId: settings.countingLines[0]?.id ?? DEFAULT_LINE_ID,
@@ -184,6 +198,7 @@ export function areCountingLinesEqual(
       return (
         other !== undefined &&
         line.id === other.id &&
+        line.name === other.name &&
         line.p1.x === other.p1.x &&
         line.p1.y === other.p1.y &&
         line.p2.x === other.p2.x &&
@@ -233,9 +248,33 @@ export function clampCountingLines(
 ): DetectionCountingLineSetting[] {
   return countingLines.map((line) => ({
     id: line.id,
+    name: line.name,
     p1: { x: clampUnit(line.p1.x), y: clampUnit(line.p1.y) },
     p2: { x: clampUnit(line.p2.x), y: clampUnit(line.p2.y) },
   }));
+}
+
+/**
+ * 新規ラインの向きを描画操作の開始・終了方向に依存させない。
+ * 横向きは p1→p2 を左→右にして forward を上→下へ、
+ * 縦向きは p1→p2 を下→上にして forward を左→右へ統一する。
+ */
+export function normalizeCountingLineDirection(
+  line: DetectionCountingLineSetting,
+): DetectionCountingLineSetting {
+  const dx = line.p2.x - line.p1.x;
+  const dy = line.p2.y - line.p1.y;
+  const isVertical = Math.abs(dy) > Math.abs(dx);
+  const shouldReverse = isVertical ? dy > 0 : dx < 0;
+
+  return shouldReverse ? { ...line, p1: line.p2, p2: line.p1 } : line;
+}
+
+/** p1→p2 を反転し、forward / backward の意味を入れ替える */
+export function reverseCountingLineDirection(
+  line: DetectionCountingLineSetting,
+): DetectionCountingLineSetting {
+  return { ...line, p1: line.p2, p2: line.p1 };
 }
 
 export function applyCountingLines(
@@ -324,6 +363,32 @@ export function applyMetrics(
   );
 }
 
+export function recordDetectedPeople(
+  store: DetectionResultStore,
+  people: number,
+): void {
+  store.setState(
+    (current) => ({
+      ...current,
+      detectedPeople: {
+        frames: current.detectedPeople.frames + 1,
+        people: current.detectedPeople.people + people,
+      },
+    }),
+    true,
+  );
+}
+
+export function resetDetectedPeople(store: DetectionResultStore): void {
+  store.setState(
+    (current) =>
+      current.detectedPeople === INITIAL_DETECTED_PEOPLE
+        ? current
+        : { ...current, detectedPeople: INITIAL_DETECTED_PEOPLE },
+    true,
+  );
+}
+
 export function selectLine(
   store: DetectionViewStateStore,
   lineId: string,
@@ -368,13 +433,19 @@ function parseCountingLine(
   if (typeof value !== "object" || value === null) {
     return null;
   }
-  const { id, p1, p2 } = value as Partial<DetectionCountingLineSetting>;
+  const { id, name, p1, p2 } = value as Partial<DetectionCountingLineSetting>;
   const parsedP1 = parsePoint(p1);
   const parsedP2 = parsePoint(p2);
-  if (typeof id !== "string" || !parsedP1 || !parsedP2) {
+  if (
+    typeof id !== "string" ||
+    (name !== undefined && typeof name !== "string") ||
+    !parsedP1 ||
+    !parsedP2
+  ) {
     return null;
   }
-  return { id, p1: parsedP1, p2: parsedP2 };
+  // name 導入前の保存設定も引き続き読み込めるよう、欠落時は空名にする。
+  return { id, name: name ?? "", p1: parsedP1, p2: parsedP2 };
 }
 
 export function parseDetectionSettings(

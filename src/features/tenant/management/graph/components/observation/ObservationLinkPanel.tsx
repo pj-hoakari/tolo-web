@@ -13,7 +13,7 @@ export type ObservationLinkPanelProps = {
   selectedEdge: GraphEdgeType | undefined;
   /** 端点ラベルの解決に使うグラフ全体 */
   graph: GraphData;
-  /** 紐づけ候補となる観測点（接続中のエッジ）一式 */
+  /** 紐づけ候補となる観測点（稼働中のエッジ端末の観測点）一式 */
   observationPoints: ObservationPointsSource;
   onLinkNode: (id: string, observationPointIds: string[]) => void;
   onLinkEdge: (id: string, observationPointIds: string[]) => void;

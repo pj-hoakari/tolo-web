@@ -29,8 +29,10 @@ export function AliveEdgeList({
   const t = useTranslations("Webrtc.aliveEdges");
   const tStatus = useTranslations("Webrtc.connectionStatus");
 
-  const formatLastSeen = (lastSeenAt: Date | null): string =>
-    lastSeenAt ? lastSeenAt.toLocaleTimeString(locale) : t("unknownTime");
+  const formatLastSeen = (lastHeartbeatAt: Date | null): string =>
+    lastHeartbeatAt
+      ? lastHeartbeatAt.toLocaleTimeString(locale)
+      : t("unknownTime");
 
   return (
     <div className="flex w-full max-w-3xl flex-col gap-2">
@@ -54,19 +56,23 @@ export function AliveEdgeList({
       ) : (
         <ul className="flex flex-col gap-2">
           {edges.map((edge) => {
-            const isConnected = edge.id === connectedEdgeId;
+            const isConnected = edge.edgeDeviceId === connectedEdgeId;
             const isActive = isConnected && isActiveConnection(receiveStatus);
 
             const canDisconnect = isConnected && receiveStatus !== "idle";
             return (
               <li
-                key={edge.id}
+                key={edge.edgeDeviceId}
                 className="flex items-center justify-between gap-2 rounded border border-gray-200 p-2"
               >
                 <div className="flex flex-col">
-                  <span className="break-all text-sm">{edge.id}</span>
+                  <span className="break-all text-sm">
+                    {edge.name || edge.edgeDeviceId}
+                  </span>
                   <span className="text-gray-500 text-xs">
-                    {t("lastSeen", { time: formatLastSeen(edge.lastSeenAt) })}
+                    {t("lastSeen", {
+                      time: formatLastSeen(edge.lastHeartbeatAt),
+                    })}
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
@@ -78,7 +84,7 @@ export function AliveEdgeList({
                   {!isActive && (
                     <button
                       type="button"
-                      onClick={() => onConnect(edge.id)}
+                      onClick={() => onConnect(edge.edgeDeviceId)}
                       className="rounded bg-blue-600 px-3 py-1 text-sm text-white"
                     >
                       {t("connect")}

@@ -1,6 +1,8 @@
 import type { GraphCanvasNode, GraphEdgeType } from "../../type";
+import { isExternalNode } from "../../type";
 import { fitGroupsToChildren } from "../groups";
 import { assembleNodes } from "./assemble";
+import { placeExternals } from "./externals";
 import { finalizeContainer } from "./finalizing";
 import { buildIndex, currentCentersOf } from "./graphIndex";
 import { planContainers } from "./planning";
@@ -29,6 +31,31 @@ import type { FinalizedContent } from "./types";
  *    フィットさせて確定する。
  */
 export function autoAlignGraph(
+  nodes: GraphCanvasNode[],
+  edges: GraphEdgeType[],
+): { nodes: GraphCanvasNode[]; edges: GraphEdgeType[] } {
+  const externals = nodes.filter(isExternalNode);
+  const externalIds = new Set(externals.map((n) => n.id));
+  const touchesExternal = (e: GraphEdgeType) =>
+    externalIds.has(e.source) || externalIds.has(e.target);
+
+  const aligned = alignRoutes(
+    nodes.filter((n) => !externalIds.has(n.id)),
+    edges.filter((e) => !touchesExternal(e)),
+  );
+  const placed = placeExternals({
+    aligned,
+    externals,
+    externalEdges: edges.filter(touchesExternal),
+  });
+  const rewired = new Map(placed.externalEdges.map((e) => [e.id, e]));
+  return {
+    nodes: [...aligned, ...placed.externals],
+    edges: edges.map((e) => rewired.get(e.id) ?? e),
+  };
+}
+
+function alignRoutes(
   nodes: GraphCanvasNode[],
   edges: GraphEdgeType[],
 ): GraphCanvasNode[] {

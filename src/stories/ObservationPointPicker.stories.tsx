@@ -43,32 +43,32 @@ export const Default: Story = {};
 /** 紐づけ済み。件数が見出しに出る */
 export const Linked: Story = {
   args: {
-    linkedIds: ["demo_event_cam-booth-a"],
-    usedIds: new Set(["demo_event_cam-booth-a"]),
+    linkedIds: ["op-booth-a"],
+    usedIds: new Set(["op-booth-a"]),
   },
 };
 
 /** 紐づけ済みだが接続が切れている観測点は末尾にオフラインとして残る */
 export const WithOfflinePoint: Story = {
   args: {
-    linkedIds: ["demo_event_cam-booth-a", "demo_event_cam-old"],
-    usedIds: new Set(["demo_event_cam-booth-a", "demo_event_cam-old"]),
+    linkedIds: ["op-booth-a", "op-old"],
+    usedIds: new Set(["op-booth-a", "op-old"]),
   },
 };
 
 /** 他のポイント / ルートで使用中の観測点は選択できない */
 export const UsedElsewhere: Story = {
   args: {
-    usedIds: new Set(["demo_event_cam-hall"]),
+    usedIds: new Set(["op-hall"]),
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
     await expect(
-      canvas.getByRole("checkbox", { name: /demo_event_cam-hall/ }),
+      canvas.getByRole("checkbox", { name: /ホール/ }),
     ).toBeDisabled();
     await expect(
-      canvas.getByRole("checkbox", { name: /demo_event_cam-entrance/ }),
+      canvas.getByRole("checkbox", { name: /エントランス/ }),
     ).toBeEnabled();
   },
 };
@@ -97,11 +97,9 @@ export const Interactive: Story = {
     const canvas = within(canvasElement);
 
     await userEvent.click(
-      canvas.getByRole("checkbox", { name: /demo_event_cam-entrance/ }),
+      canvas.getByRole("checkbox", { name: /エントランス/ }),
     );
 
-    await expect(args.onChange).toHaveBeenCalledWith([
-      "demo_event_cam-entrance",
-    ]);
+    await expect(args.onChange).toHaveBeenCalledWith(["op-entrance"]);
   },
 };

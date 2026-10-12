@@ -68,7 +68,7 @@ describe("deriveNodeLabels", () => {
       node("n2", { ja: "出口" }),
     ];
 
-    const derived = deriveNodeLabels(nodes, "en");
+    const derived = deriveNodeLabels(nodes, "en", "Outside");
 
     expect(derived.map((n) => n.data.label)).toEqual(["Entrance", "出口"]);
     expect(
@@ -84,12 +84,24 @@ describe("deriveNodeLabels", () => {
       group("g2", { ja: "2F" }),
     ];
 
-    const derived = deriveNodeLabels(nodes, "en");
+    const derived = deriveNodeLabels(nodes, "en", "Outside");
 
     expect(derived.map((n) => n.data.label)).toEqual(["Floor 1", "2F"]);
     expect(derived.map((n) => n.data.labelIsFallback)).toEqual([false, true]);
     // 元の配列は書き換えない
     expect(nodes[0].data.label).toBeUndefined();
+  });
+
+  it("外部ポイントには保存済みラベルではなく渡されたラベルを注入する", () => {
+    const external: GraphCanvasNode = {
+      ...node("x", { ja: "外" }),
+      data: { labels: { ja: "外" }, nodeType: "EXTERNAL" },
+    };
+
+    const [derived] = deriveNodeLabels([external], "ja", "外部");
+
+    expect(derived.data.label).toBe("外部");
+    expect(derived.data.labelIsFallback).toBe(false);
   });
 });
 

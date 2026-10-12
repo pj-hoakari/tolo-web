@@ -16,6 +16,7 @@
     "test": "vitest --project unit",
     "test:unit": "vitest --project unit",
     "test:all": "vitest",
+    "test:e2e": "playwright test",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
@@ -30,9 +31,9 @@
     "@xyflow/react": "^12.11.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "firebase": "^12.14.0",
+    "firebase": "^13.0.0",
     "lucide-react": "^1.21.0",
-    "next": "16.3.5",
+    "next": "16.4.0",
     "next-intl": "^4.13.4",
     "next-themes": "^0.4.6",
     "radix-ui": "^1.6.0",
@@ -48,31 +49,32 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.14",
-    "@chromatic-com/storybook": "5.3.1",
-    "@storybook/addon-a11y": "10.6.0",
-    "@storybook/addon-docs": "10.6.0",
-    "@storybook/addon-mcp": "10.6.0",
-    "@storybook/addon-themes": "10.6.0",
-    "@storybook/addon-vitest": "10.6.0",
-    "@storybook/nextjs-vite": "10.6.0",
+    "@biomejs/biome": "2.5.15",
+    "@chromatic-com/storybook": "5.4.0",
+    "@playwright/test": "1.64.0",
+    "@storybook/addon-a11y": "10.6.1",
+    "@storybook/addon-docs": "10.6.1",
+    "@storybook/addon-mcp": "10.6.1",
+    "@storybook/addon-themes": "10.6.1",
+    "@storybook/addon-vitest": "10.6.1",
+    "@storybook/nextjs-vite": "10.6.1",
     "@tailwindcss/postcss": "4.3.3",
     "@testing-library/react": "16.3.3",
-    "@types/node": "24.13.6",
+    "@types/node": "24.19.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "@vitest/browser-playwright": "5.0.1",
-    "@vitest/coverage-v8": "5.0.1",
+    "@vitest/browser-playwright": "5.0.3",
+    "@vitest/coverage-v8": "5.0.3",
     "babel-plugin-react-compiler": "1.0.0",
-    "jsdom": "30.1.0",
-    "msw": "2.15.0",
+    "jsdom": "30.1.2",
+    "msw": "3.0.2",
     "msw-storybook-addon": "3.0.3",
-    "playwright": "1.63.0",
-    "storybook": "10.6.0",
+    "playwright": "1.64.0",
+    "storybook": "10.6.1",
     "tailwindcss": "4.3.3",
     "typescript": "7.0.2",
-    "vite": "8.3.0",
-    "vitest": "5.0.1"
+    "vite": "8.3.4",
+    "vitest": "5.0.3"
   },
   "msw": {
     "workerDirectory": [
@@ -84,5 +86,5 @@
     "yarn": "⚠use pnpm",
     "node": ">=24.17.0"
   },
-  "packageManager": "pnpm@12.5.1"
+  "packageManager": "pnpm@12.10.1"
 }

@@ -2,8 +2,18 @@ import "@/features/guest/guest-theme.css";
 import GraphCompassGuide from "@/features/guest/info/GraphCompassGuide";
 import GuideMap from "@/features/guest/info/GuideMap";
 import type { GuestInfoComponent } from "@/features/guest/info/type";
+import { getPwaMetadata } from "@/lib/pwa/manifest";
 import { GuestHeader } from "./_components/GuestHeader";
 import { GuestInfoContainer } from "./_components/GuestInfoContainer";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ tenantId: string; eventId: string }>;
+}) {
+  const { eventId } = await params;
+  return getPwaMetadata(`/event/${encodeURIComponent(eventId)}/guest`);
+}
 
 export default async function TenantGuest({
   params,

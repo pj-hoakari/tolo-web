@@ -1,4 +1,4 @@
-import { Route, Trash2 } from "lucide-react";
+import { Flag, Hourglass, Route, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   Menu,
@@ -12,12 +12,13 @@ import type {
   GraphNodeType,
   NodeType,
 } from "../type";
+import { isExternalNode } from "../type";
+import { isLastExternal } from "../utils/graphMutations";
 import { ContextMenuItem } from "./ContextMenuItem";
 import {
   ContextMenuPopover,
   type ContextMenuPosition,
 } from "./ContextMenuPopover";
-import { NodeTypeIcon } from "./NodeTypeIcon";
 import { buildNodeTypeOptions } from "./properties/nodeTypeOptions";
 
 export type GraphNodeContextMenuProps = {
@@ -43,7 +44,7 @@ export function GraphNodeContextMenu({
   onClose,
 }: GraphNodeContextMenuProps) {
   const t = useTranslations("Graph.contextMenu");
-  const tType = useTranslations("Graph.nodeType");
+  const tFlag = useTranslations("Graph.nodeTypeFlag");
   const tNotice = useTranslations("Graph.notices");
 
   const options = buildNodeTypeOptions(
@@ -67,34 +68,42 @@ export function GraphNodeContextMenu({
           label={t("addEdgeFromNode")}
           onAction={() => onStartEdgeCreation(node.id)}
         />
-        <MenuSeparator />
-        {/* 選択中のタイプをラジオ選択として支援技術へ伝える */}
-        <MenuSection selectionMode="single" selectedKeys={[node.data.nodeType]}>
-          <MenuHeader className="px-2 text-xs">{t("changeType")}</MenuHeader>
-          {options.map((option) => (
+        {isExternalNode(node) ? null : (
+          <>
+            <MenuSeparator />
+            <MenuSection
+              selectionMode="multiple"
+              selectedKeys={options.filter((o) => o.checked).map((o) => o.flag)}
+            >
+              <MenuHeader className="px-2 text-xs">
+                {t("changeType")}
+              </MenuHeader>
+              {options.map((option) => (
+                <ContextMenuItem
+                  id={option.flag}
+                  key={option.flag}
+                  icon={option.flag === "dwell" ? Hourglass : Flag}
+                  label={tFlag(option.flag)}
+                  description={option.disabledReason}
+                  isDisabled={!option.assignable}
+                  onAction={() => onSetType(node.id, option.next)}
+                />
+              ))}
+            </MenuSection>
+          </>
+        )}
+        {isLastExternal(node.id, nodes) ? null : (
+          <>
+            <MenuSeparator />
             <ContextMenuItem
-              id={option.type}
-              key={option.type}
-              icon={<NodeTypeIcon type={option.type} />}
-              label={tType(option.type)}
-              description={option.disabledReason}
-              isDisabled={!option.assignable}
-              onAction={() => {
-                if (option.type !== node.data.nodeType) {
-                  onSetType(node.id, option.type);
-                }
-              }}
+              id="delete"
+              icon={Trash2}
+              label={t("deleteNode")}
+              variant="destructive"
+              onAction={() => onDelete(node.id)}
             />
-          ))}
-        </MenuSection>
-        <MenuSeparator />
-        <ContextMenuItem
-          id="delete"
-          icon={Trash2}
-          label={t("deleteNode")}
-          variant="destructive"
-          onAction={() => onDelete(node.id)}
-        />
+          </>
+        )}
       </Menu>
     </ContextMenuPopover>
   );

@@ -2,8 +2,8 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Checkbox, CheckboxGroup } from "@/components/ui/checkbox";
 import type { AliveEdgesStatus } from "@/features/tenant/webrtc/hooks/useAliveEdges";
-import type { AliveEdge } from "@/features/tenant/webrtc/type";
 import { cn } from "@/lib/utils";
+import type { ObservationPoint } from "@/server/router";
 import { buildObservationPointRows } from "./observationPointRows";
 
 /**
@@ -11,8 +11,8 @@ import { buildObservationPointRows } from "./observationPointRows";
  * 中間層はこの1つを受け取ってそのまま展開する（`{...observationPoints}`）。
  */
 export type ObservationPointsSource = {
-  /** 現在接続中の観測点 */
-  available: AliveEdge[];
+  /** 稼働中のエッジ端末の観測点 */
+  available: ObservationPoint[];
   status?: AliveEdgesStatus;
   /** いずれかの要素で使用中（＝他では選択不可）の観測点 ID 集合 */
   usedIds: ReadonlySet<string>;
@@ -26,8 +26,8 @@ export type ObservationPointPickerProps = ObservationPointsSource & {
 };
 
 /**
- * 観測点（接続中のエッジ）をノード/ルートに紐づけるピッカー
- * 接続中の観測点+紐づけ済みだが現在オフラインの観測点
+ * 観測点（稼働中のエッジ端末の観測点）をノード/ルートに紐づけるピッカー
+ * 稼働中の観測点+紐づけ済みだが現在オフラインの観測点
  * いずれかの要素で使用中の観測点は、この要素で未選択なら選択不可
  */
 export function ObservationPointPicker({
@@ -99,7 +99,7 @@ export function ObservationPointPicker({
                       )}
                     />
                     <span className="break-all font-mono text-[10px] text-muted-foreground">
-                      {row.id}
+                      {row.name || row.id}
                     </span>
                   </span>
                   {disabled ? (

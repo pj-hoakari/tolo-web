@@ -15,23 +15,23 @@
     "title": "{tenantId} 管理頁面",
     "tabsLabel": "切換管理檢視",
     "tabs": {
-      "graph": "會場圖",
+      "graph": "路徑圖",
       "edges": "連線的邊緣裝置"
     },
-    "graphEditTitle": "{tenantId} 會場圖編輯",
+    "graphEditTitle": "{tenantId} 路徑圖編輯",
     "backLink": "返回管理頁面"
   },
   "Graph": {
     "viewer": {
-      "title": "會場圖",
+      "title": "路徑圖",
       "edit": "編輯圖",
       "save": "儲存"
     },
     "nodeType": {
       "GOAL": "目的地",
-      "GOAL_TRANSIT_MIXED": "目的地 / 通行",
+      "GOAL_TRANSIT_MIXED": "可停留",
       "TRANSIT_ONLY": "僅通行",
-      "BOUNDARY": "出入口"
+      "EXTERNAL": "外部"
     },
     "selectionKind": {
       "node": "節點",
@@ -49,27 +49,34 @@
       "refresh": "重新整理",
       "error": "取得觀測點失敗",
       "loading": "載入中…",
-      "empty": "沒有已連線的觀測點",
-      "online": "已連線",
+      "empty": "沒有運作中的觀測點",
+      "online": "運作中",
       "offline": "離線",
       "usedByOther": "已被其他節點 / 路徑使用"
     },
     "nodeTypeDescription": {
-      "GOAL": "例：攤位",
-      "GOAL_TRANSIT_MIXED": "例：牆面展示（既是目的地也可通行）",
-      "TRANSIT_ONLY": "例：通道分岔",
-      "BOUNDARY": "例：會場出入口"
+      "EXTERNAL": "表示場館外部的虛擬點。與外部連接的點將作為出入口。"
+    },
+    "nodeTypeFlag": {
+      "dwell": "允許停留",
+      "destination": "作為目的地"
+    },
+    "nodeTypeFlagDescription": {
+      "dwell": "人可能會停留的點。關閉後僅可通行（例：通道分岔）",
+      "destination": "不用於穿行的去處（例：攤位）"
     },
     "notices": {
-      "dualDirection": "同時承擔進入與離開（輸入·輸出）"
+      "boundary": "出入口（與外部連接）",
+      "closed": "封閉模式（無出入口）"
     },
     "labelLanguage": {
       "label": "標籤語言",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
-      "title": "會場編輯器",
+      "title": "路徑圖編輯器",
       "addNode": "新增{type}",
+      "point": "點",
       "save": "儲存",
       "newNodeLabel": "節點 {index}",
       "addGroup": "新增群組",
@@ -86,6 +93,7 @@
       "canvasLabel": "畫布操作",
       "endEdgeCreation": "結束新增路徑",
       "addNode": "新增節點",
+      "addExternal": "新增外部點",
       "addEdge": "新增路徑",
       "nodeLabel": "節點「{label}」的操作",
       "addEdgeFromNode": "從此節點新增路徑",
@@ -101,6 +109,28 @@
       "dissolveGroup": "取消群組（保留內容）"
     },
     "properties": {
+      "bulk": {
+        "points": "點（{count} 個）",
+        "edges": "箭頭（{count} 個）",
+        "mixed": "值不一致",
+        "result": "已修改 {changed} 個元素。無法修改 {skipped} 個元素。",
+        "reasonCount": "{reason}（{count} 個）",
+        "reasons": {
+          "requiresDwell": "不允許停留的點無法設為目的地。",
+          "bothNotReversed": "雙向箭頭不進行反轉。"
+        }
+      },
+      "groupSelected": "將選取的點分組",
+      "deleteSelected": "刪除選取的元素",
+      "deleteSelectedGroupHint": "選取的群組將被解除，未選取的內容將保留。",
+      "groupSelectionErrors": {
+        "pointsOnly": "群組和外部點無法合併到新群組中。",
+        "tooFewPoints": "請選取至少兩個點。",
+        "differentParents": "請選取屬於同一父層的點。"
+      },
+      "selectedNodes": "節點：{count} 個",
+      "selectedEdges": "箭頭：{count} 個",
+      "selectedGroups": "群組：{count} 個",
       "title": "屬性",
       "empty": "請選擇節點或路徑。",
       "deleteNode": "刪除此節點",
@@ -137,10 +167,10 @@
       "error": "連線失敗"
     },
     "aliveEdges": {
-      "title": "已連線的邊緣裝置（{count}）",
+      "title": "運作中的邊緣裝置（{count}）",
       "refresh": "重新整理",
       "loading": "載入中…",
-      "empty": "沒有已連線的邊緣裝置",
+      "empty": "沒有運作中的邊緣裝置",
       "lastSeen": "最後回應：{time}",
       "unknownTime": "未知",
       "connect": "連線",
@@ -183,9 +213,13 @@
     "lines": {
       "create": "產生線",
       "edit": "編輯模式",
+      "reverseForward": "反轉 forward 方向",
       "deleteSelected": "刪除選取的線",
       "reset": "重設線位置",
-      "count": "線 {index}：forward {forward} / backward {backward}"
+      "count": "線 {index}：forward {forward} / backward {backward}",
+      "namedCount": "{name}：forward {forward} / backward {backward}",
+      "nameLabel": "所選線的名稱",
+      "namePlaceholder": "例如：A廳入口、北側連通走廊"
     }
   },
   "Observation": {
@@ -368,5 +402,43 @@
         "goods": "商品區"
       }
     }
+  },
+  "PwaInstall": {
+    "button": "安裝應用程式",
+    "title": "安裝 Tolo",
+    "description": "從主畫面或應用程式列表開啟 Tolo。使用時需要連接網際網路。",
+    "nativeIntro": "按下方的「安裝」，然後在瀏覽器確認視窗中選擇「安裝」。",
+    "nativeInstall": "安裝",
+    "installing": "正在開啟確認視窗…",
+    "dismissed": "已取消安裝。你可以從瀏覽器選單再次安裝。",
+    "error": "無法開啟確認視窗。請按照下方步驟從瀏覽器安裝。",
+    "accepted": "已接受安裝要求。完成後，請從主畫面或應用程式列表開啟 Tolo。",
+    "iosTitle": "iPhone 和 iPad（Safari）",
+    "iosSteps": {
+      "first": "在 Safari 中打開此頁面，點一下「分享」（方框中帶向上箭頭的圖示）。如果找不到，請從網址列的頁面選單選擇「分享」。",
+      "second": "向下捲動選單，選擇「加入主畫面」。如果出現「打開為網頁 App」，請將其開啟。",
+      "third": "點一下「加入」。透過主畫面上新增的 Tolo 圖示即可打開。"
+    },
+    "androidTitle": "Android（Chrome）",
+    "androidSteps": {
+      "first": "在 Chrome 中開啟此頁面，按右上方的「︙」選單。",
+      "second": "選擇「安裝並建立捷徑」→「安裝」。依版本而定，也可能需要從「安裝應用程式」或「新增至主畫面」開始，然後按照畫面指示操作。",
+      "third": "透過主畫面或應用程式列表中的 Tolo 圖示開啟。如果沒有該選單項目，請在一般分頁中重新載入此頁面後再試。"
+    },
+    "desktopTitle": "電腦（Chrome 和 Edge）",
+    "desktopSteps": {
+      "first": "在 Chrome 或 Edge 中開啟此頁面。",
+      "second": "按網址列右側的安裝圖示。如果找不到，在 Chrome 中選擇「︙」→「投放、儲存及分享」→「將頁面安裝為應用程式」；在 Edge 中選擇「…」→「其他工具」（如有顯示）→「應用程式」→「將此網站安裝為應用程式」。",
+      "third": "在確認視窗中選擇「安裝」。你可以從應用程式列表開啟 Tolo。"
+    },
+    "macTitle": "Mac（Safari）",
+    "macSteps": {
+      "first": "在 Safari 中打開此頁面（macOS Sonoma 或以上版本）。",
+      "second": "從頂端選單列選擇「檔案」→「加入 Dock 中」，然後按「加入」。",
+      "third": "透過 Dock 中新增的 Tolo 圖示打開。"
+    },
+    "otherIntro": "不同瀏覽器和裝置的操作步驟有所不同。請選擇適合你裝置的步驟。如果沒有相應選項，請使用下方支援的瀏覽器開啟此頁面。",
+    "insecure": "安裝需要 HTTPS 連線。請使用公開網站的 HTTPS URL 開啟。",
+    "close": "關閉"
   }
 }

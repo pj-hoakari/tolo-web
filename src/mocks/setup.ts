@@ -5,7 +5,7 @@ import { server } from "./server";
 // 全テスト前に MSW server を起動し、各テスト後に handler をリセット、全テスト後に停止
 // 既定では /rpc 以外のリクエストは bypass
 beforeAll(() => {
-  server.listen({ onUnhandledRequest: "bypass" });
+  server.listen({ onUnhandledFrame: "bypass" });
 });
 
 afterEach(() => {

@@ -18,7 +18,7 @@ export type PropertyNoticeProps = {
   message: string;
 };
 
-/** プロパティパネル内で制約違反や補足情報を伝える一行の通知 */
+/** プロパティパネルやノード内で制約違反や補足情報を伝える一行の通知 */
 export function PropertyNotice({
   className,
   level = "warning",

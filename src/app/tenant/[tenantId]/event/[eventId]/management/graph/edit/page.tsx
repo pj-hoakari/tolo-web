@@ -1,8 +1,21 @@
 import { getTranslations } from "next-intl/server";
 import { LocaleSelect } from "@/components/locale-select";
+import { PwaInstall } from "@/components/pwa/pwa-install";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ManagementBackLink } from "@/features/tenant/management/components/ManagementBackLink";
 import { GraphEditor } from "@/features/tenant/management/graph";
+import { getPwaMetadata } from "@/lib/pwa/manifest";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ tenantId: string; eventId: string }>;
+}) {
+  const { eventId } = await params;
+  return getPwaMetadata(
+    `/event/${encodeURIComponent(eventId)}/management/graph/edit`,
+  );
+}
 
 export default async function TenantGraphEdit({
   params,
@@ -19,6 +32,7 @@ export default async function TenantGraphEdit({
           {t("graphEditTitle", { tenantId })}
         </h2>
         <div className="flex items-center gap-2">
+          <PwaInstall compact />
           <LocaleSelect />
           <ThemeToggle />
         </div>

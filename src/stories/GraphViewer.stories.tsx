@@ -11,7 +11,7 @@ const meta = {
     layout: "fullscreen",
   },
   tags: ["autodocs"],
-  // 観測点一覧（/rpc の edges.listAlive）を MSW で返す
+  // 観測点一覧（/rpc の observation.listEdgeDevices）を MSW で返す
   beforeEach: mswBeforeEach,
   decorators: [
     (Story) => (

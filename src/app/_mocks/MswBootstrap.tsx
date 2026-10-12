@@ -8,7 +8,7 @@ export function MswBootstrap({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(!mockingEnabled);
 
   useEffect(() => {
-    if (!mockingEnabled) {
+    if (!mockingEnabled || typeof window === "undefined") {
       return;
     }
     let active = true;
