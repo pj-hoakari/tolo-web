@@ -109,6 +109,25 @@
       "dissolveGroup": "그룹 해제(내용 유지)"
     },
     "properties": {
+      "bulk": {
+        "points": "포인트 ({count}개)",
+        "edges": "화살표 ({count}개)",
+        "mixed": "값이 서로 다릅니다",
+        "result": "{changed}개를 변경했습니다. {skipped}개는 변경하지 못했습니다.",
+        "reasonCount": "{reason} ({count}개)",
+        "reasons": {
+          "requiresDwell": "체류를 허용하지 않는 포인트는 목적지로 설정할 수 없습니다.",
+          "bothNotReversed": "양방향 화살표는 반전 대상에서 제외됩니다."
+        }
+      },
+      "groupSelected": "선택한 포인트 그룹화",
+      "deleteSelected": "선택한 요소 삭제",
+      "deleteSelectedGroupHint": "선택한 그룹은 해제되고 선택하지 않은 내용은 유지됩니다.",
+      "groupSelectionErrors": {
+        "pointsOnly": "그룹과 외부 포인트는 그룹화할 수 없습니다.",
+        "tooFewPoints": "포인트를 2개 이상 선택하세요.",
+        "differentParents": "같은 부모에 속한 포인트를 선택하세요."
+      },
       "selectedNodes": "노드: {count}개",
       "selectedEdges": "화살표: {count}개",
       "selectedGroups": "그룹: {count}개",

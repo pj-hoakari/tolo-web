@@ -99,7 +99,12 @@ for (const modifier of ["Shift", "Control"] as const) {
       panel(page).getByText("グループ: 1件", { exact: true }),
     ).toBeVisible();
     await expect(panel(page).getByRole("textbox")).toHaveCount(0);
-    await expect(panel(page).getByRole("button")).toHaveCount(0);
+    await expect(
+      panel(page).getByRole("button", { name: "選択したポイントをグループ化" }),
+    ).toBeDisabled();
+    await expect(
+      panel(page).getByRole("button", { name: "選択した要素を削除" }),
+    ).toBeEnabled();
     await selectEdge(page, modifier);
     await expect(selectedEdges(page)).toHaveCount(0);
     await selectGroup(page, "ph_floor2", modifier);
@@ -317,4 +322,386 @@ test("英語でも複数選択件数を表示する", async ({ page, context }) 
   await expect(
     panel(page).getByText("Groups: 0", { exact: true }),
   ).toBeVisible();
+});
+
+const groupSelectedButton = (page: Page) =>
+  panel(page).getByRole("button", {
+    name: "選択したポイントをグループ化",
+    exact: true,
+  });
+const deleteSelectedButton = (page: Page) =>
+  panel(page).getByRole("button", { name: "選択した要素を削除", exact: true });
+
+test("同じ親のポイントをグループ化すると位置と接続が保たれ、新しいグループだけが選択される", async ({
+  page,
+}) => {
+  await selectNode(page, "ph_booth");
+  await selectNode(page, "ph_wall", "Shift");
+  await selectEdge(page, "Shift");
+  const ids = ["ph_booth", "ph_wall", "ph_junction"];
+  const before = await Promise.all(ids.map((id) => position(node(page, id))));
+  const edgeCount = await page.locator(".react-flow__edge").count();
+  await expect(groupSelectedButton(page)).toBeEnabled();
+  await groupSelectedButton(page).click();
+  await expect(selectedNodes(page)).toHaveCount(1);
+  await expect(selectedEdges(page)).toHaveCount(0);
+  await expect(
+    panel(page).getByRole("textbox", { name: "ラベル（日本語）" }),
+  ).toHaveValue("グループ 3");
+  expect(await Promise.all(ids.map((id) => position(node(page, id))))).toEqual(
+    before,
+  );
+  await expect(page.locator(".react-flow__edge")).toHaveCount(edgeCount);
+  const createdId = await selectedNodes(page).getAttribute("data-id");
+  if (!createdId) throw new Error("New group is not selected");
+  const box = await node(page, createdId).boundingBox();
+  if (!box) throw new Error("New group is not visible");
+  await page.mouse.move(box.x + box.width - 30, box.y + 20);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width + 20, box.y + 50, { steps: 10 });
+  await page.mouse.up();
+  const after = await Promise.all(ids.map((id) => position(node(page, id))));
+  expectSameDelta(before.slice(0, 2), after.slice(0, 2));
+  expect(after[2]).toEqual(before[2]);
+});
+
+test("所属違い・グループ・外部・ポイント不足でグループ化を無効にする", async ({
+  page,
+}) => {
+  await selectNode(page, "ph_booth");
+  await selectNode(page, "ph_gallery2f", "Shift");
+  await expect(groupSelectedButton(page)).toBeDisabled();
+  await expect(
+    panel(page).getByText("同じ所属のポイントを選択してください。", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await selectNode(page, "ph_booth");
+  await selectGroup(page, "ph_floor1", "Shift");
+  await expect(groupSelectedButton(page)).toBeDisabled();
+  await expect(
+    panel(page).getByText("グループと外部ポイントはグループ化できません。", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await selectNode(page, "ph_booth");
+  await selectNode(page, "external", "Shift");
+  await expect(groupSelectedButton(page)).toBeDisabled();
+  await expect(
+    panel(page).getByText("グループと外部ポイントはグループ化できません。", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await selectNode(page, "ph_booth");
+  await selectEdge(page, "Shift");
+  await expect(groupSelectedButton(page)).toBeDisabled();
+  await expect(
+    panel(page).getByText("ポイントを2件以上選択してください。", {
+      exact: true,
+    }),
+  ).toBeVisible();
+});
+
+test("混在選択を一括削除し、未選択のグループの中身を残す", async ({ page }) => {
+  await selectNode(page, "ph_booth");
+  await selectGroup(page, "ph_floor1", "Shift");
+  await selectEdge(page, "Shift", "ph_e9");
+  const before = await position(node(page, "ph_junction"));
+  await expect(deleteSelectedButton(page)).toBeEnabled();
+  await deleteSelectedButton(page).click();
+  await expect(node(page, "ph_booth")).toHaveCount(0);
+  await expect(node(page, "ph_floor1")).toHaveCount(0);
+  await expect(edge(page, "ph_e9")).toHaveCount(0);
+  await expect(edge(page, "ph_e2")).toHaveCount(0);
+  await expect(edge(page, "ph_e4")).toHaveCount(0);
+  await expect(edge(page, "ph_e3")).toBeVisible();
+  await expect(node(page, "ph_junction")).toBeVisible();
+  expect(await position(node(page, "ph_junction"))).toEqual(before);
+  await expect(selectedNodes(page)).toHaveCount(0);
+  await expect(selectedEdges(page)).toHaveCount(0);
+});
+
+test("外部ポイントを全選択して削除しても最後の1件とその接続を残す", async ({
+  page,
+}) => {
+  await selectNode(page, "external");
+  await selectNode(page, "external-ph_exit", "Shift");
+  await selectEdge(page, "Shift", "ph_e_external_in");
+  await deleteSelectedButton(page).click();
+  await expect(node(page, "external")).toBeVisible();
+  await expect(node(page, "external-ph_exit")).toHaveCount(0);
+  await expect(edge(page, "ph_e_external_in")).toBeVisible();
+  await expect(edge(page, "ph_e_external_out")).toHaveCount(0);
+  await expect(selectedNodes(page)).toHaveCount(1);
+  await expect(selectedEdges(page)).toHaveCount(1);
+  await expect(deleteSelectedButton(page)).toBeDisabled();
+});
+
+test("英語の一括操作ボタンでポイントをグループ化できる", async ({
+  page,
+  context,
+}) => {
+  await context.addCookies([
+    { name: "NEXT_LOCALE", value: "en", domain: "test.localhost", path: "/" },
+  ]);
+  await page.reload();
+  await selectNode(page, "ph_booth");
+  await selectNode(page, "ph_wall", "Shift");
+  await expect(
+    panel(page).getByRole("button", { name: "Delete selected elements" }),
+  ).toBeEnabled();
+  await panel(page)
+    .getByRole("button", { name: "Group selected points" })
+    .click();
+  await expect(selectedNodes(page)).toHaveCount(1);
+  await expect(
+    panel(page).getByRole("textbox", { name: "Label (English)" }),
+  ).toHaveValue("Group 3");
+});
+
+test("計測済みグループ内でグループ化を繰り返しても子が祖先の枠からはみ出さない", async ({
+  page,
+}) => {
+  const ids = ["ph_floor1"];
+  const before = await Promise.all(
+    ["ph_booth", "ph_wall"].map((id) => position(node(page, id))),
+  );
+  for (let i = 0; i < 3; i++) {
+    await selectNode(page, "ph_booth");
+    await selectNode(page, "ph_wall", "Shift");
+    await groupSelectedButton(page).click();
+    await expect(selectedNodes(page)).toHaveCount(1);
+    const createdId = await selectedNodes(page).getAttribute("data-id");
+    if (!createdId) throw new Error("Missing group");
+    ids.push(createdId);
+    await expect
+      .poll(async () => {
+        const boxes = await Promise.all(
+          ids.map((id) => node(page, id).boundingBox()),
+        );
+        return boxes.slice(1).every((child, index) => {
+          const parent = boxes[index];
+          return (
+            parent &&
+            child &&
+            child.x >= parent.x - 0.1 &&
+            child.y >= parent.y - 0.1 &&
+            child.x + child.width <= parent.x + parent.width + 0.1 &&
+            child.y + child.height <= parent.y + parent.height + 0.1
+          );
+        });
+      })
+      .toBe(true);
+    expect(
+      await Promise.all(
+        ["ph_booth", "ph_wall"].map((id) => position(node(page, id))),
+      ),
+    ).toEqual(before);
+  }
+});
+
+test("単体選択から複数選択へ切り替えても削除ボタンをグループ化ボタンとして再利用しない", async ({
+  page,
+}) => {
+  await selectNode(page, "ph_booth");
+  const original = await panel(page)
+    .getByRole("button", { name: "このポイントを削除", exact: true })
+    .elementHandle();
+  if (!original) throw new Error("Missing delete button");
+  await selectNode(page, "ph_wall", "Shift");
+  await expect(groupSelectedButton(page)).toBeVisible();
+  await expect(deleteSelectedButton(page)).toBeVisible();
+  expect(
+    await original.evaluate(
+      (element) =>
+        element.isConnected &&
+        element.textContent?.trim() === "選択した要素を削除",
+    ),
+  ).toBe(true);
+  await selectNode(page, "ph_wall", "Shift");
+  await expect(
+    panel(page).getByRole("button", {
+      name: "このポイントを削除",
+      exact: true,
+    }),
+  ).toBeVisible();
+  expect(
+    await original.evaluate(
+      (element) =>
+        element.isConnected &&
+        element.textContent?.trim() === "このポイントを削除",
+    ),
+  ).toBe(true);
+});
+
+const pointsProperties = (page: Page, count = 2) =>
+  panel(page).getByRole("region", {
+    name: `ポイント（${count}件）`,
+    exact: true,
+  });
+const edgesProperties = (page: Page, count = 2) =>
+  panel(page).getByRole("region", { name: `矢印（${count}件）`, exact: true });
+
+test("ポイントと矢印の編集欄を上下に表示し、混在値を一括上書きできる", async ({
+  page,
+}) => {
+  await selectNode(page, "ph_booth");
+  await selectNode(page, "ph_junction", "Shift");
+  await selectEdge(page, "Shift", "ph_e1");
+  await selectEdge(page, "Shift", "ph_e2");
+  const points = pointsProperties(page);
+  const edges = edgesProperties(page);
+  await expect(points).toBeVisible();
+  await expect(edges).toBeVisible();
+  const pBox = await points.boundingBox();
+  const eBox = await edges.boundingBox();
+  if (!pBox || !eBox) throw new Error("Missing property sections");
+  expect(pBox.y + pBox.height).toBeLessThanOrEqual(eBox.y);
+  const dwell = points.getByRole("checkbox", { name: /^停滞を許容する/ });
+  await expect(dwell).toBeChecked({ indeterminate: true });
+  expect(await dwell.ariaSnapshot()).toContain("[checked=mixed]");
+  await dwell.focus();
+  await dwell.press("Space");
+  await expect(dwell).toBeChecked();
+  await dwell.press("Space");
+  await expect(dwell).not.toBeChecked();
+  await expect(
+    points.getByRole("checkbox", { name: /^目的地として扱う/ }),
+  ).toBeDisabled();
+  await expect(edges.getByRole("radio", { name: /^両通行可/ })).toHaveAttribute(
+    "aria-checked",
+    "false",
+  );
+  await expect(edges.getByRole("radio", { name: /^片方向/ })).toHaveAttribute(
+    "aria-checked",
+    "false",
+  );
+  await edges.getByRole("radio", { name: /^両通行可/ }).click();
+  await expect(edges.getByRole("radio", { name: /^両通行可/ })).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
+  await expect(
+    edges.getByRole("button", { name: /^向きを反転/ }),
+  ).toBeDisabled();
+  await expect(selectedNodes(page)).toHaveCount(2);
+  await expect(selectedEdges(page)).toHaveCount(2);
+  await selectNode(page, "ph_booth");
+  await expect(
+    panel(page).getByRole("checkbox", { name: /^停滞を許容する/ }),
+  ).not.toBeChecked();
+  await expect(
+    panel(page).getByRole("textbox", { name: "ラベル（日本語）" }),
+  ).toHaveValue("ブースA");
+  await selectNode(page, "ph_wall");
+  await expect(
+    panel(page).getByRole("checkbox", { name: /^停滞を許容する/ }),
+  ).toBeChecked();
+});
+
+test("混在が残る一部適用後も次の操作で解除でき、選択変更で操作意図と結果がリセットされる", async ({
+  page,
+}) => {
+  await selectNode(page, "ph_booth");
+  await selectNode(page, "ph_wall", "Shift");
+  await selectNode(page, "ph_junction", "Shift");
+  const destination = pointsProperties(page, 3).getByRole("checkbox", {
+    name: /^目的地として扱う/,
+  });
+  await expect(destination).toBeChecked({ indeterminate: true });
+  await pointsProperties(page, 3)
+    .getByText("目的地として扱う", { exact: true })
+    .click();
+  await expect(destination).toBeChecked({ indeterminate: true });
+  await expect(panel(page).getByRole("status")).toContainText(
+    "1件を変更しました。1件は変更できませんでした。",
+  );
+  await expect(panel(page).getByRole("status")).toContainText(
+    "停滞を許容しないポイントは、目的地として扱えません。（1件）",
+  );
+  await pointsProperties(page, 3)
+    .getByText("目的地として扱う", { exact: true })
+    .click();
+  await expect(destination).not.toBeChecked();
+  await expect(panel(page).getByRole("status")).toContainText(
+    "2件を変更しました。0件は変更できませんでした。",
+  );
+  await selectNode(page, "ph_booth");
+  await expect(
+    panel(page).getByRole("textbox", { name: "ラベル（日本語）" }),
+  ).toHaveValue("ブースA");
+  await selectNode(page, "ph_wall", "Shift");
+  await expect(panel(page).getByRole("status")).toBeEmpty();
+  await pointsProperties(page)
+    .getByText("目的地として扱う", { exact: true })
+    .click();
+  await expect(
+    pointsProperties(page).getByRole("checkbox", { name: /^目的地として扱う/ }),
+  ).toBeChecked();
+});
+
+test("片方向の矢印だけ反転し、両通行の除外件数と理由を通知する", async ({
+  page,
+}) => {
+  await selectEdge(page, undefined, "ph_e1");
+  await selectEdge(page, "Shift", "ph_e2");
+  await edgesProperties(page)
+    .getByRole("button", { name: /^向きを反転/ })
+    .click();
+  await expect(edge(page, "ph_e1")).toHaveAttribute(
+    "aria-label",
+    "Edge from ph_junction to ph_entrance",
+  );
+  await expect(edge(page, "ph_e2")).toHaveAttribute(
+    "aria-label",
+    "Edge from ph_junction to ph_booth",
+  );
+  await expect(panel(page).getByRole("status")).toContainText(
+    "1件を変更しました。1件は変更できませんでした。",
+  );
+  await expect(panel(page).getByRole("status")).toContainText(
+    "両通行の矢印は反転の対象外です。（1件）",
+  );
+  await expect(selectedEdges(page)).toHaveCount(2);
+});
+
+test("グループと外部ポイントを編集対象から除き、通常ポイントだけ上書きする", async ({
+  page,
+}) => {
+  await selectNode(page, "ph_booth");
+  await selectGroup(page, "ph_floor1", "Shift");
+  await selectNode(page, "external", "Shift");
+  await expect(pointsProperties(page, 1)).toBeVisible();
+  await pointsProperties(page, 1)
+    .getByText("停滞を許容する", { exact: true })
+    .click();
+  await expect(panel(page).getByRole("status")).toContainText(
+    "1件を変更しました。0件は変更できませんでした。",
+  );
+  await selectGroup(page, "ph_floor1");
+  await expect(
+    panel(page).getByRole("textbox", { name: "ラベル（日本語）" }),
+  ).toHaveValue("1F");
+  await selectNode(page, "external");
+  await expect(panel(page).getByRole("checkbox")).toHaveCount(0);
+});
+
+test("英語でも混在値と編集結果を表示する", async ({ page, context }) => {
+  await context.addCookies([
+    { name: "NEXT_LOCALE", value: "en", domain: "test.localhost", path: "/" },
+  ]);
+  await page.reload();
+  await selectNode(page, "ph_booth");
+  await selectNode(page, "ph_junction", "Shift");
+  const points = panel(page).getByRole("region", {
+    name: "Points (2)",
+    exact: true,
+  });
+  await expect(points.getByText("Values are mixed")).toHaveCount(2);
+  const dwell = points.getByRole("checkbox").first();
+  await expect(dwell).toBeChecked({ indeterminate: true });
+  await points.getByText("Allow dwelling", { exact: true }).click();
+  await expect(panel(page).getByRole("status")).toContainText(
+    "Changed 1 element. Could not change 0 elements.",
+  );
 });

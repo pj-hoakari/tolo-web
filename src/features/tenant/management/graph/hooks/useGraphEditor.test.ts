@@ -892,6 +892,147 @@ describe("useGraphEditor: 複数選択", () => {
   });
 });
 
+describe("useGraphEditor: 選択要素の操作", () => {
+  const initial = (): GraphData => ({
+    nodes: [
+      {
+        id: "g",
+        type: "graphGroup",
+        position: { x: 500, y: 500 },
+        width: 480,
+        height: 320,
+        data: { labels: { ja: "parent" } },
+      },
+      { ...node("a", 100, 100), parentId: "g", selected: true },
+      { ...node("b", 300, 200), parentId: "g", selected: true },
+    ],
+    edges: [{ ...edge("e", "a", "b"), selected: true }],
+  });
+  it("選択ポイントを編集中の言語でグループ化し、新しいグループの単体プロパティを表示する", () => {
+    const { result } = renderHook(() => useGraphEditor(initial()), {
+      wrapper: IntlTestProvider,
+    });
+    expect(result.current.properties.groupSelectionError).toBeNull();
+    act(() => result.current.toolbar.onChangeLabelLocale("en"));
+    act(() => result.current.properties.onGroupSelected());
+    const selected = result.current.properties.selectedNode;
+    expect(selected?.type).toBe("graphGroup");
+    expect(selected?.parentId).toBe("g");
+    expect(selected?.data.labels.en).toBeDefined();
+    expect(selected?.data.labels.ja).toBeUndefined();
+    expect(result.current.selection).toEqual({
+      nodeIds: [selected?.id],
+      edgeIds: [],
+    });
+    expect(result.current.graph.edges).toHaveLength(1);
+    expect(
+      result.current
+        .getGraphData()
+        .nodes.every((n) => n.selected === undefined),
+    ).toBe(true);
+  });
+  it("選択要素を一括削除し、選択件数とプロパティを更新する", () => {
+    const { result } = renderHook(() => useGraphEditor(initial()), {
+      wrapper: IntlTestProvider,
+    });
+    expect(result.current.properties.canDeleteSelected).toBe(true);
+    act(() => result.current.properties.onDeleteSelected());
+    expect(
+      result.current.graph.nodes.some((n) => n.id === "a" || n.id === "b"),
+    ).toBe(false);
+    expect(result.current.graph.nodes.some((n) => n.id === "g")).toBe(true);
+    expect(result.current.graph.edges).toHaveLength(0);
+    expect(result.current.selection).toEqual({ nodeIds: [], edgeIds: [] });
+    expect(result.current.properties.canDeleteSelected).toBe(false);
+  });
+  it("所属が違うと無効で、ハンドラを直接呼んでもグループを追加しない", () => {
+    const graph = initial();
+    graph.nodes[2] = { ...graph.nodes[2], parentId: undefined };
+    const { result } = renderHook(() => useGraphEditor(graph), {
+      wrapper: IntlTestProvider,
+    });
+    expect(result.current.properties.groupSelectionError).toBe(
+      "differentParents",
+    );
+    const before = result.current.getGraphData();
+    act(() => result.current.properties.onGroupSelected());
+    expect(result.current.getGraphData()).toEqual(before);
+  });
+});
+
+describe("useGraphEditor: 一括プロパティ編集", () => {
+  const initial = (): GraphData => ({
+    nodes: [
+      { ...node("a", 100, 100), selected: true },
+      {
+        ...node("b", 300, 100),
+        selected: true,
+        data: { labels: { ja: "b" }, nodeType: "TRANSIT_ONLY" },
+      },
+    ],
+    edges: [{ ...edge("e", "a", "b"), selected: true }],
+  });
+  it("操作結果を通知し、選択と他のプロパティを保つ", () => {
+    const { result } = renderHook(() => useGraphEditor(initial()), {
+      wrapper: IntlTestProvider,
+    });
+    const selection = result.current.selection;
+    const labels = result.current
+      .getGraphData()
+      .nodes.map((n) => n.data.labels);
+    act(() =>
+      result.current.properties.onSetSelectedNodeFlag("destination", true),
+    );
+    expect(result.current.properties.bulkResult).toMatchObject({
+      changedCount: 0,
+      skippedCount: 1,
+    });
+    expect(result.current.selection).toEqual(selection);
+    act(() =>
+      result.current.properties.onSetSelectedNodeFlag("destination", false),
+    );
+    expect(
+      result.current.graph.nodes.filter(isPointNode).find((n) => n.id === "a")
+        ?.data.nodeType,
+    ).toBe("GOAL_TRANSIT_MIXED");
+    expect(result.current.properties.bulkResult).toMatchObject({
+      changedCount: 1,
+      skippedCount: 0,
+    });
+    act(() => result.current.properties.onSetSelectedEdgeDirection("oneway"));
+    expect(result.current.graph.edges[0].data?.direction).toBe("oneway");
+    act(() => result.current.properties.onReverseSelectedEdges());
+    expect(result.current.graph.edges[0]).toMatchObject({
+      source: "b",
+      target: "a",
+    });
+    expect(result.current.selection).toEqual(selection);
+    expect(
+      result.current.getGraphData().nodes.map((n) => n.data.labels),
+    ).toEqual(labels);
+  });
+  it("選択変更後に結果をクリアし、元の選択に戻しても復活させない", () => {
+    const { result } = renderHook(() => useGraphEditor(initial()), {
+      wrapper: IntlTestProvider,
+    });
+    act(() => result.current.properties.onSetSelectedNodeFlag("dwell", true));
+    expect(result.current.properties.bulkResult).not.toBeNull();
+    act(() => result.current.canvas.onSelectNode("a"));
+    expect(result.current.properties.bulkResult).toBeNull();
+    act(() =>
+      result.current.canvas.onNodesChange([
+        { type: "select", id: "b", selected: true },
+      ]),
+    );
+    act(() =>
+      result.current.canvas.onEdgesChange([
+        { type: "select", id: "e", selected: true },
+      ]),
+    );
+    expect(result.current.properties.bulkResult).toBeNull();
+  });
+});
+
 describe("useGraphEditor: 親子の移動バッチ", () => {
   const initial: GraphData = {
     nodes: [

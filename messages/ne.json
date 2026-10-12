@@ -109,6 +109,25 @@
       "dissolveGroup": "समूह हटाउनुहोस् (सामग्री राख्नुहोस्)"
     },
     "properties": {
+      "bulk": {
+        "points": "बिन्दुहरू ({count})",
+        "edges": "तीरहरू ({count})",
+        "mixed": "मानहरू फरक छन्",
+        "result": "{changed} तत्व परिवर्तन गरियो। {skipped} तत्व परिवर्तन गर्न सकिएन।",
+        "reasonCount": "{reason} ({count})",
+        "reasons": {
+          "requiresDwell": "रोकिएर बस्न नमिल्ने बिन्दुलाई गन्तव्य बनाउन मिल्दैन।",
+          "bothNotReversed": "दुवैतर्फ चल्ने तीरहरू उल्ट्याइँदैनन्।"
+        }
+      },
+      "groupSelected": "चयन गरिएका बिन्दुहरूको समूह बनाउनुहोस्",
+      "deleteSelected": "चयन गरिएका तत्वहरू मेटाउनुहोस्",
+      "deleteSelectedGroupHint": "चयन गरिएका समूहहरू हटाइन्छन्; चयन नगरिएको सामग्री बाँकी रहन्छ।",
+      "groupSelectionErrors": {
+        "pointsOnly": "समूह र बाह्य बिन्दुहरूलाई समूहमा राख्न मिल्दैन।",
+        "tooFewPoints": "कम्तीमा दुईवटा बिन्दु चयन गर्नुहोस्।",
+        "differentParents": "एउटै अभिभावक समूहका बिन्दुहरू चयन गर्नुहोस्।"
+      },
       "selectedNodes": "नोड: {count}",
       "selectedEdges": "तीर: {count}",
       "selectedGroups": "समूह: {count}",

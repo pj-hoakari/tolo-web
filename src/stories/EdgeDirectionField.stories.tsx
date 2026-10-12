@@ -15,7 +15,7 @@ function StatefulEdgeDirectionField({
   onChange,
   ...props
 }: EdgeDirectionFieldProps) {
-  const [direction, setDirection] = useState<EdgeDirection>(value);
+  const [direction, setDirection] = useState<EdgeDirection | null>(value);
   return (
     <EdgeDirectionField
       {...props}
@@ -97,3 +97,5 @@ export const Interactive: Story = {
     );
   },
 };
+
+export const Mixed: Story = { args: { value: null } };

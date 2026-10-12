@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/i18n/locale";
 import type {
@@ -10,6 +11,8 @@ import type {
 } from "../../type";
 import { isExternalNode, isGroupNode } from "../../type";
 import { isLastExternal } from "../../utils/graphMutations";
+import type { getGroupSelectionError } from "../../utils/selectionActions";
+import { BulkProperties, type BulkPropertiesBindings } from "./BulkProperties";
 import { EdgeProperties } from "./EdgeProperties";
 import { ExternalProperties } from "./ExternalProperties";
 import { resolveEdgeDirectionState } from "./edgeDirectionState";
@@ -17,7 +20,7 @@ import { GroupProperties } from "./GroupProperties";
 import { NodeProperties } from "./NodeProperties";
 import { buildNodeTypeOptions } from "./nodeTypeOptions";
 
-export type PropertiesPanelProps = {
+export type PropertiesPanelProps = BulkPropertiesBindings & {
   selectedNode: GraphCanvasNode | undefined;
   selectedEdge: GraphEdgeType | undefined;
   selectionCounts?: { nodes: number; edges: number; groups: number };
@@ -31,6 +34,10 @@ export type PropertiesPanelProps = {
   onUpdateEdge: (id: string, patch: Partial<GraphEdgeData>) => void;
   onReverseEdge: (id: string) => void;
   onDelete: () => void;
+  onDeleteSelected: () => void;
+  canDeleteSelected: boolean;
+  onGroupSelected: () => void;
+  groupSelectionError: ReturnType<typeof getGroupSelectionError>;
 };
 
 /** グラフ構造（ポイント・ルート）を編集するプロパティパネル */
@@ -45,8 +52,17 @@ export function PropertiesPanel({
   onUpdateEdge,
   onReverseEdge,
   onDelete,
+  onDeleteSelected,
+  canDeleteSelected,
+  onGroupSelected,
+  groupSelectionError,
+  onSetSelectedNodeFlag,
+  onSetSelectedEdgeDirection,
+  onReverseSelectedEdges,
+  bulkResult,
 }: PropertiesPanelProps) {
   const { nodes, edges } = graph;
+  const groupReasonId = useId();
   const multiple =
     selectionCounts !== undefined &&
     selectionCounts.nodes + selectionCounts.edges + selectionCounts.groups > 1;
@@ -65,10 +81,19 @@ export function PropertiesPanel({
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {multiple && selectionCounts ? (
-          <div className="space-y-2 text-muted-foreground text-sm">
-            <p>{t("selectedNodes", { count: selectionCounts.nodes })}</p>
-            <p>{t("selectedEdges", { count: selectionCounts.edges })}</p>
-            <p>{t("selectedGroups", { count: selectionCounts.groups })}</p>
+          <div className="space-y-3">
+            <div className="space-y-2 text-muted-foreground text-sm">
+              <p>{t("selectedNodes", { count: selectionCounts.nodes })}</p>
+              <p>{t("selectedEdges", { count: selectionCounts.edges })}</p>
+              <p>{t("selectedGroups", { count: selectionCounts.groups })}</p>
+            </div>
+            <BulkProperties
+              graph={graph}
+              onSetSelectedNodeFlag={onSetSelectedNodeFlag}
+              onSetSelectedEdgeDirection={onSetSelectedEdgeDirection}
+              onReverseSelectedEdges={onReverseSelectedEdges}
+              bulkResult={bulkResult}
+            />
           </div>
         ) : selectedNode && isGroupNode(selectedNode) ? (
           <GroupProperties
@@ -116,9 +141,46 @@ export function PropertiesPanel({
           <p className="text-muted-foreground text-xs">{t("empty")}</p>
         )}
       </div>
-      {deletable ? (
+      {multiple ? (
+        <div className="space-y-2 border-border border-t p-3">
+          <Button
+            key="group"
+            size="sm"
+            variant="outline"
+            className="w-full"
+            onPress={onGroupSelected}
+            aria-describedby={
+              groupSelectionError !== null ? groupReasonId : undefined
+            }
+            isDisabled={groupSelectionError !== null}
+          >
+            {t("groupSelected")}
+          </Button>
+          {groupSelectionError !== null ? (
+            <p id={groupReasonId} className="text-muted-foreground text-xs">
+              {t(`groupSelectionErrors.${groupSelectionError}`)}
+            </p>
+          ) : null}
+          <Button
+            key="delete"
+            size="sm"
+            variant="destructive"
+            className="w-full"
+            onPress={onDeleteSelected}
+            isDisabled={!canDeleteSelected}
+          >
+            {t("deleteSelected")}
+          </Button>
+          {selectionCounts && selectionCounts.groups > 0 ? (
+            <p className="text-muted-foreground text-xs">
+              {t("deleteSelectedGroupHint")}
+            </p>
+          ) : null}
+        </div>
+      ) : deletable ? (
         <div className="border-border border-t p-3">
           <Button
+            key="delete"
             variant="destructive"
             size="sm"
             onPress={onDelete}

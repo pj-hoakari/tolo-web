@@ -2,14 +2,18 @@
 
 import type { Connection, EdgeChange, NodeChange } from "@xyflow/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   GraphCanvasEditing,
   GraphCanvasProps,
 } from "../components/GraphCanvas";
 import type { LabelLocaleBindings } from "../components/LabelLocaleMenu";
 import type { PropertiesPanelProps } from "../components/properties";
-import { DEFAULT_NODE_TYPE, resolveConnectionDirection } from "../nodeTypes";
+import {
+  DEFAULT_NODE_TYPE,
+  type NodeTypeFlag,
+  resolveConnectionDirection,
+} from "../nodeTypes";
 import { toGraphData } from "../serialize";
 import type {
   EdgeDirection,
@@ -19,6 +23,10 @@ import type {
   NodeType,
 } from "../type";
 import { isExternalNode, isGroupNode, isPointNode } from "../type";
+import type {
+  BulkEditResult,
+  BulkPropertyAction,
+} from "../utils/bulkProperties";
 import {
   createEdge,
   createGroup,
@@ -29,6 +37,10 @@ import {
 } from "../utils/graphMutations";
 import { newId } from "../utils/idGen";
 import { countLabeledNodes } from "../utils/labels";
+import {
+  canDeleteSelectedElements,
+  getGroupSelectionError,
+} from "../utils/selectionActions";
 import { useGraphElements } from "./useGraphElements";
 import { useLabelLocale } from "./useLabelLocale";
 
@@ -80,10 +92,13 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
     appendEdge,
     removeNode,
     removeGroup,
+    removeSelection,
+    groupSelection,
     reparentByDrop,
     setGroupMinSize,
     autoAlign,
     removeEdge,
+    updateSelectedProperty,
     updateNodeData,
     updateNodeLabel,
     updateEdgeData,
@@ -99,6 +114,40 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
     }),
     [selectedNodes, selectedEdges],
   );
+  const selectionKey = JSON.stringify([
+    selection.nodeIds.toSorted(),
+    selection.edgeIds.toSorted(),
+  ]);
+  const [bulkFeedback, setBulkFeedback] = useState<{
+    selectionKey: string;
+    result: BulkEditResult;
+  } | null>(null);
+  useEffect(() => {
+    setBulkFeedback((current) =>
+      current?.selectionKey === selectionKey ? current : null,
+    );
+  }, [selectionKey]);
+  const runBulkEdit = useCallback(
+    (action: BulkPropertyAction) => {
+      setBulkFeedback({ selectionKey, result: updateSelectedProperty(action) });
+    },
+    [selectionKey, updateSelectedProperty],
+  );
+  const setSelectedNodeFlag = useCallback(
+    (flag: NodeTypeFlag, enabled: boolean) =>
+      runBulkEdit({ kind: "nodeFlag", flag, enabled }),
+    [runBulkEdit],
+  );
+  const setSelectedEdgeDirection = useCallback(
+    (direction: EdgeDirection) =>
+      runBulkEdit({ kind: "edgeDirection", direction }),
+    [runBulkEdit],
+  );
+  const reverseSelectedEdges = useCallback(
+    () => runBulkEdit({ kind: "reverseEdges" }),
+    [runBulkEdit],
+  );
+
   const selectionCount = selectedNodes.length + selectedEdges.length;
   const selectNode = useCallback(
     (id: string) => setSelection([id], []),
@@ -283,6 +332,23 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
     else if (selectedEdges[0]) deleteEdge(selectedEdges[0].id);
   }, [selectionCount, selectedNodes, selectedEdges, deleteNode, deleteEdge]);
 
+  const groupSelectionError = getGroupSelectionError(source.nodes);
+  const canDeleteSelection = canDeleteSelectedElements(source);
+  const groupSelected = useCallback(() => {
+    if (getGroupSelectionError(source.nodes) !== null) return;
+    groupSelection(
+      createGroup({
+        id: newId("g"),
+        labels: {
+          [labelLocale]: t("newGroupLabel", {
+            index: source.nodes.filter(isGroupNode).length + 1,
+          }),
+        },
+        position: { x: 0, y: 0 },
+      }),
+    );
+  }, [source.nodes, groupSelection, labelLocale, t]);
+
   const onNodeDragStop = useCallback(
     (ids: string[]) => {
       reparentByDrop(ids);
@@ -357,7 +423,18 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
       onSetNodeLabel: setNodeLabel,
       onUpdateEdge: updateEdgeData,
       onReverseEdge: reverseEdge,
+      onSetSelectedNodeFlag: setSelectedNodeFlag,
+      onSetSelectedEdgeDirection: setSelectedEdgeDirection,
+      onReverseSelectedEdges: reverseSelectedEdges,
+      bulkResult:
+        bulkFeedback?.selectionKey === selectionKey
+          ? bulkFeedback.result
+          : null,
       onDelete: deleteSelection,
+      onDeleteSelected: removeSelection,
+      canDeleteSelected: canDeleteSelection,
+      onGroupSelected: groupSelected,
+      groupSelectionError,
     },
     getGraphData,
   };

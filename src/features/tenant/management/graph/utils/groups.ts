@@ -31,6 +31,14 @@ export function sizeOf(node: GraphCanvasNode): {
   const fallback = isGroupNode(node)
     ? { width: GROUP_DEFAULT_WIDTH, height: GROUP_DEFAULT_HEIGHT }
     : { width: 160, height: 56 };
+  // グループの width / height はフィット・リサイズで確定した最新の寸法。
+  // DOM の再計測を待つ measured より優先し、祖先も同じ更新でフィットする。
+  if (isGroupNode(node)) {
+    return {
+      width: node.width ?? node.measured?.width ?? fallback.width,
+      height: node.height ?? node.measured?.height ?? fallback.height,
+    };
+  }
   return {
     width: node.measured?.width ?? node.width ?? fallback.width,
     height: node.measured?.height ?? node.height ?? fallback.height,
