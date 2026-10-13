@@ -81,7 +81,10 @@
       "newNodeLabel": "ポイント {index}",
       "addGroup": "グループを追加",
       "newGroupLabel": "グループ {index}",
-      "autoAlign": "自動整列"
+      "autoAlign": "自動整列",
+      "saved": "保存しました",
+      "saveFailed": "保存に失敗しました。時間をおいてもう一度お試しください。",
+      "saveInvalid": "ルート図に保存できない箇所があります"
     },
     "easyConnect": {
       "fromNode": "ルートを追加: 終点にするポイントをクリック",

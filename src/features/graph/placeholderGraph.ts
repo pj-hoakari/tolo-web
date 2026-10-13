@@ -2,7 +2,7 @@ import type { GraphData } from "@/features/tenant/management/graph/type";
 import placeholderGraph from "./placeholderGraph.json";
 
 /**
- * API 未接続時に返すサンプルグラフ（`placeholderGraph.json`）。
+ * モック API が返すサンプルグラフ（`placeholderGraph.json`）。
  * 1F / 2F をグループ（論理グルーピング）で表す。
  * 階段・エレベーターは「各階の乗降口ポイント（通過専用）」＋ 「階をまたぐルート」で表現する。
  * グループ内のノードの position は親グループ相対。

@@ -1,5 +1,8 @@
 import { ORPCError, os } from "@orpc/server";
 import { z } from "zod";
+import { graphDataSchema } from "@/features/graph/graphDataSchema";
+import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
+import type { GraphData } from "@/features/tenant/management/graph/type";
 import type { EdgeDevice } from "@/server/router";
 import { sampleEdgeDevicesWire } from "./fixtures/edges";
 
@@ -8,6 +11,7 @@ export type MockRouterOverrides = {
   devices?: EdgeDevice[];
   /** observation.listEdgeDevices を失敗させる（status: error の確認用） */
   devicesError?: boolean;
+  saveGraphError?: string;
 };
 
 /**
@@ -17,9 +21,27 @@ export type MockRouterOverrides = {
  * RPCHandler に載せて MSW から `/rpc` を傍受するために使う。
  */
 export function createMockRouter(overrides: MockRouterOverrides = {}) {
-  const { devices = sampleEdgeDevicesWire, devicesError = false } = overrides;
+  const {
+    devices = sampleEdgeDevicesWire,
+    devicesError = false,
+    saveGraphError,
+  } = overrides;
 
   return {
+    graph: {
+      getGraph: os
+        .input(z.object({ eventId: z.string().min(1) }))
+        .handler(
+          async (): Promise<GraphData> => structuredClone(PLACEHOLDER_GRAPH),
+        ),
+      saveGraph: os
+        .input(z.object({ eventId: z.string().min(1), graph: graphDataSchema }))
+        .handler(async (): Promise<void> => {
+          if (saveGraphError !== undefined) {
+            throw new ORPCError("BAD_REQUEST", { message: saveGraphError });
+          }
+        }),
+    },
     observation: {
       listEdgeDevices: os
         .input(z.object({ eventId: z.string().min(1) }))
