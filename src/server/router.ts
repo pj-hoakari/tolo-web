@@ -53,15 +53,15 @@ async function listEdgeDevices(eventId: string): Promise<EdgeDevice[]> {
 }
 
 // フロント ↔ Next.js バックエンド間の oRPC ルータ。
-// tolo-signaling への Connect-RPC はこの層だけが叩く。
+// tolo-edge-bridge への Connect-RPC はこの層だけが叩く。
 export const router = {
   signaling: {
-    // edge への接続を要求する。tolo-signaling が Firestore にセッションを作成し session_id を返す。
+    // edge への接続を要求する。tolo-edge-bridge が Firestore にセッションを作成し session_id を返す。
     requestConnection: os
       .input(z.object({ edgeId: z.string().min(1) }))
       .handler(async ({ input }): Promise<{ sessionId: string }> => {
         const res = await signalingClient.requestConnection({
-          edgeId: input.edgeId,
+          edgeDeviceId: input.edgeId,
         });
         return { sessionId: res.sessionId };
       }),
