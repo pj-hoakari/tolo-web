@@ -42,7 +42,7 @@ function GraphViewerInner({
   useImperativeHandle(handleRef, () => ({ getGraphData }), [getGraphData]);
 
   const handleSave = () => {
-    void saveGraph({ tenantId, eventId }, getGraphData());
+    saveGraph({ tenantId, eventId }, getGraphData()).catch(console.error);
   };
 
   return (

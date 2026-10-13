@@ -11,6 +11,7 @@ export type GraphEditorToolbarProps = LabelLocaleBindings & {
   onAddGroup: () => void;
   onAutoAlign: () => void;
   onSave: () => void;
+  saveStatus: "idle" | "saving" | "saved" | "failed";
 };
 
 /**
@@ -22,6 +23,7 @@ export function GraphEditorToolbar({
   onAddGroup,
   onAutoAlign,
   onSave,
+  saveStatus,
   labelLocale,
   onChangeLabelLocale,
   labelCounts,
@@ -81,7 +83,14 @@ export function GraphEditorToolbar({
             <Network aria-hidden className="size-4 shrink-0" />
             {t("autoAlign")}
           </Button>
-          <Button size="sm" onPress={onSave}>
+          <span role="status" className="text-muted-foreground text-sm">
+            {saveStatus === "saved" && t("saved")}
+          </span>
+          <Button
+            size="sm"
+            onPress={onSave}
+            isPending={saveStatus === "saving"}
+          >
             {t("save")}
           </Button>
         </div>

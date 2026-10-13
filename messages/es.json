@@ -81,7 +81,10 @@
       "newNodeLabel": "Punto {index}",
       "addGroup": "Añadir grupo",
       "newGroupLabel": "Grupo {index}",
-      "autoAlign": "Ordenar automáticamente"
+      "autoAlign": "Ordenar automáticamente",
+      "saved": "Guardado",
+      "saveFailed": "No se pudo guardar. Inténtalo de nuevo más tarde.",
+      "saveInvalid": "Hay partes del mapa que no se pueden guardar"
     },
     "easyConnect": {
       "fromNode": "Añadir ruta: haz clic en el punto final",
