@@ -7,7 +7,7 @@ import type {
   NodeType,
   NoticeLevel,
 } from "./type";
-import { isPointNode } from "./type";
+import { isExternalNode, isPointNode } from "./type";
 
 export type NodeRole = "in" | "out";
 
@@ -53,8 +53,7 @@ export type NodeIcon =
   | { kind: "polygon"; points: string };
 
 /**
- * ノードタイプの定義。表示名と説明は `Graph.nodeType` / `Graph.nodeTypeDescription`
- * の `type` をキーにしたメッセージで解決する。
+ * ノードタイプの定義。表示名は `Graph.nodeType` の `type` をキーにしたメッセージで解決する。
  */
 export type NodeTypeDef = {
   type: NodeType;
@@ -64,11 +63,27 @@ export type NodeTypeDef = {
   notices?: NodeTypeNotice[];
 };
 
-/** 入力(in)と出力(out)の両方を担っている入退出点を強調する通知 */
-const dualDirectionNotice: NodeTypeNotice = {
+function touchesExternal(edge: GraphEdgeType, nodes: GraphCanvasNode[]) {
+  return nodes.some(
+    (n) => isExternalNode(n) && (n.id === edge.source || n.id === edge.target),
+  );
+}
+
+const boundaryNotice: NodeTypeNotice = {
   level: "info",
-  messageKey: "dualDirection",
-  match: (ctx) => ctx.roles.has("in") && ctx.roles.has("out"),
+  messageKey: "boundary",
+  match: (ctx) =>
+    ctx.edges.some(
+      (e) =>
+        (e.source === ctx.nodeId || e.target === ctx.nodeId) &&
+        touchesExternal(e, ctx.nodes),
+    ),
+};
+
+const closedNotice: NodeTypeNotice = {
+  level: "info",
+  messageKey: "closed",
+  match: (ctx) => !ctx.edges.some((e) => touchesExternal(e, ctx.nodes)),
 };
 
 export const NODE_TYPE_DEFS: NodeTypeDef[] = [
@@ -77,33 +92,59 @@ export const NODE_TYPE_DEFS: NodeTypeDef[] = [
     color: "#22c55e",
     // 円形
     icon: { kind: "circle", r: 44 },
+    notices: [boundaryNotice],
   },
   {
     type: "GOAL",
     color: "#0ea5e9",
     // 四角形（正方形）
     icon: { kind: "polygon", points: "12,12 88,12 88,88 12,88" },
+    notices: [boundaryNotice],
   },
   {
     type: "TRANSIT_ONLY",
     color: "#a1a1aa",
     // ひし形
     icon: { kind: "polygon", points: "50,6 94,50 50,94 6,50" },
-  },
-  {
-    type: "BOUNDARY",
-    color: "#f59e0b",
-    // 三角形（▷）
-    icon: { kind: "polygon", points: "16,8 92,50 16,92" },
-    notices: [dualDirectionNotice],
+    notices: [boundaryNotice],
   },
 ];
+
+export const EXTERNAL_NODE_TYPE_DEF: NodeTypeDef = {
+  type: "EXTERNAL",
+  color: "#f59e0b",
+  icon: { kind: "polygon", points: "16,8 92,50 16,92" },
+  notices: [closedNotice],
+};
 
 // 種別は最適化エンジンへのヒントであり厳密な分類ではない。
 // 実世界では純粋な終端(GOAL)か判断しづらいため、既定は GOAL_TRANSIT_MIXED とする。
 export const DEFAULT_NODE_TYPE: NodeType = "GOAL_TRANSIT_MIXED";
 
-const DEFS_BY_TYPE = new Map(NODE_TYPE_DEFS.map((d) => [d.type, d]));
+export type NodeTypeFlag = "dwell" | "destination";
+
+export const NODE_TYPE_FLAGS: NodeTypeFlag[] = ["dwell", "destination"];
+
+export function hasNodeTypeFlag(type: NodeType, flag: NodeTypeFlag): boolean {
+  return flag === "dwell" ? type !== "TRANSIT_ONLY" : type === "GOAL";
+}
+
+export function setNodeTypeFlag(
+  type: NodeType,
+  flag: NodeTypeFlag,
+  on: boolean,
+): NodeType {
+  if (flag === "dwell") {
+    if (!on) return "TRANSIT_ONLY";
+    return type === "TRANSIT_ONLY" ? "GOAL_TRANSIT_MIXED" : type;
+  }
+  if (on) return "GOAL";
+  return type === "GOAL" ? "GOAL_TRANSIT_MIXED" : type;
+}
+
+const DEFS_BY_TYPE = new Map(
+  [...NODE_TYPE_DEFS, EXTERNAL_NODE_TYPE_DEF].map((d) => [d.type, d]),
+);
 
 export function getNodeTypeDef(type: NodeType): NodeTypeDef {
   return DEFS_BY_TYPE.get(type) ?? NODE_TYPE_DEFS[0];

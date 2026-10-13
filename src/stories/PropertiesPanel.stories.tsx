@@ -3,9 +3,9 @@ import { fn } from "storybook/test";
 
 import { PropertiesPanel } from "@/features/tenant/management/graph/components/properties";
 import {
-  DUAL_BOUNDARY_EDGES,
-  DUAL_BOUNDARY_NODES,
-  dualBoundaryNode,
+  BOUNDARY_EDGES,
+  BOUNDARY_NODES,
+  boundaryFixtureNode,
   GRAPH_EDGES,
   GRAPH_NODES,
   graphEdge,
@@ -35,7 +35,15 @@ const meta = {
     onSetNodeLabel: fn(),
     onUpdateEdge: fn(),
     onReverseEdge: fn(),
+    onSetSelectedNodeFlag: fn(),
+    onSetSelectedEdgeDirection: fn(),
+    onReverseSelectedEdges: fn(),
+    bulkResult: null,
     onDelete: fn(),
+    onDeleteSelected: fn(),
+    canDeleteSelected: false,
+    onGroupSelected: fn(),
+    groupSelectionError: "tooFewPoints",
   },
 } satisfies Meta<typeof PropertiesPanel>;
 
@@ -58,10 +66,110 @@ export const EdgeSelected: Story = {
   },
 };
 
-export const BoundaryDualDirection: Story = {
+export const Boundary: Story = {
   args: {
-    // 入退出の両方を担う入退出点を選択 → タイプ欄に info 通知が表示される
-    graph: { nodes: DUAL_BOUNDARY_NODES, edges: DUAL_BOUNDARY_EDGES },
-    selectedNode: dualBoundaryNode(),
+    // 外部ポイントと接続したポイントを選択 → タイプ欄に入退出点の通知が表示される
+    graph: { nodes: BOUNDARY_NODES, edges: BOUNDARY_EDGES },
+    selectedNode: boundaryFixtureNode("gate"),
+  },
+};
+
+export const ExternalClosed: Story = {
+  args: {
+    graph: { nodes: BOUNDARY_NODES, edges: [] },
+    selectedNode: boundaryFixtureNode("external", []),
+  },
+};
+
+export const ExternalDeletable: Story = {
+  args: {
+    graph: {
+      nodes: [
+        ...BOUNDARY_NODES,
+        { ...boundaryFixtureNode("external"), id: "external-2" },
+      ],
+      edges: BOUNDARY_EDGES,
+    },
+    selectedNode: boundaryFixtureNode("external"),
+  },
+};
+
+const selectionGraph = (nodeIds: string[], edgeIds: string[]) => ({
+  nodes: GRAPH_NODES.map((node) => ({
+    ...node,
+    selected: nodeIds.includes(node.id),
+  })),
+  edges: GRAPH_EDGES.map((edge) => ({
+    ...edge,
+    selected: edgeIds.includes(edge.id),
+  })),
+});
+
+export const MultipleSelection: Story = {
+  args: {
+    graph: selectionGraph(["ph_booth", "ph_wall", "ph_floor1"], ["ph_e2"]),
+    selectionCounts: { nodes: 2, edges: 1, groups: 1 },
+    canDeleteSelected: true,
+    groupSelectionError: "pointsOnly",
+  },
+};
+
+export const GroupableSelection: Story = {
+  args: {
+    graph: selectionGraph(["ph_booth", "ph_wall"], ["ph_e2"]),
+    selectionCounts: { nodes: 2, edges: 1, groups: 0 },
+    canDeleteSelected: true,
+    groupSelectionError: null,
+  },
+};
+export const DifferentParents: Story = {
+  args: {
+    graph: selectionGraph(["ph_booth", "ph_gallery2f"], []),
+    selectionCounts: { nodes: 2, edges: 0, groups: 0 },
+    canDeleteSelected: true,
+    groupSelectionError: "differentParents",
+  },
+};
+
+export const MixedProperties: Story = {
+  args: {
+    graph: {
+      nodes: GRAPH_NODES.map((node) =>
+        node.id === "ph_booth" || node.id === "ph_wall"
+          ? { ...node, selected: true }
+          : node,
+      ),
+      edges: GRAPH_EDGES.map((edge) =>
+        edge.id === "ph_e1" || edge.id === "ph_e2"
+          ? { ...edge, selected: true }
+          : edge,
+      ),
+    },
+    selectionCounts: { nodes: 2, edges: 2, groups: 0 },
+    canDeleteSelected: true,
+    groupSelectionError: null,
+  },
+};
+export const PartialPropertyUpdate: Story = {
+  args: {
+    ...MixedProperties.args,
+    graph: {
+      ...selectionGraph(["ph_booth", "ph_wall"], ["ph_e1", "ph_e2"]),
+      nodes: selectionGraph(["ph_booth", "ph_wall"], []).nodes.map((node) =>
+        node.id === "ph_wall"
+          ? {
+              ...graphNode("ph_wall"),
+              selected: true,
+              data: { ...graphNode("ph_wall").data, nodeType: "TRANSIT_ONLY" },
+            }
+          : node,
+      ),
+    },
+    bulkResult: {
+      targetCount: 2,
+      changedCount: 1,
+      skippedCount: 1,
+      reasons: [{ kind: "operation", messageKey: "requiresDwell", count: 1 }],
+    },
   },
 };

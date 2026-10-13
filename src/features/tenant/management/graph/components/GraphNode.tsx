@@ -21,6 +21,7 @@ import {
   EasyConnectHandle,
   HandlePort,
 } from "./nodeHandles";
+import { PropertyNotice } from "./properties/PropertyNotice";
 
 export function GraphNode({
   id,
@@ -31,6 +32,7 @@ export function GraphNode({
 }: NodeProps<GraphNodeType>) {
   const handles = data.handles;
   const t = useTranslations("Graph.nodeType");
+  const tNotice = useTranslations("Graph.notices");
   const updateNodeInternals = useUpdateNodeInternals();
   const labelEditing = useContext(GraphNodeLabelEditingContext);
   const easyConnectMode = useContext(GraphNodeEasyConnectContext);
@@ -38,6 +40,7 @@ export function GraphNode({
   const canStartEasyConnect =
     easyConnectMode?.kind !== "from-node" ||
     easyConnectMode.sourceNodeId === id;
+  const external = data.nodeType === "EXTERNAL";
   const connection = useConnection<GraphNodeType>();
   const isConnecting =
     connection.inProgress &&
@@ -80,8 +83,11 @@ export function GraphNode({
         selected={selected}
         dragging={dragging}
         isConnecting={isConnecting}
+        external={external}
       />
-      <NodeTypeBadge type={data.nodeType} label={t(data.nodeType)} />
+      {external ? null : (
+        <NodeTypeBadge type={data.nodeType} label={t(data.nodeType)} />
+      )}
       {/* 内容 */}
       <div className="relative min-w-0 px-4 py-5">
         <InlineNodeLabel
@@ -94,8 +100,16 @@ export function GraphNode({
           languageName={
             labelEditing ? localeLabels[labelEditing.locale] : undefined
           }
-          onUpdate={labelEditing?.onUpdate}
+          onUpdate={external ? undefined : labelEditing?.onUpdate}
         />
+        {data.notices?.map((notice) => (
+          <PropertyNotice
+            className="mt-1"
+            key={notice.messageKey}
+            level={notice.level}
+            message={tNotice(notice.messageKey)}
+          />
+        ))}
       </div>
 
       {SIDES.flatMap((side) =>
@@ -124,10 +138,12 @@ function NodeFrame({
   selected,
   dragging,
   isConnecting,
+  external,
 }: {
   selected: boolean;
   dragging: boolean;
   isConnecting: boolean;
+  external: boolean;
 }) {
   const borderClass =
     selected || dragging || isConnecting
@@ -136,7 +152,7 @@ function NodeFrame({
 
   return (
     <div
-      className={`graph-node-frame pointer-events-none absolute inset-0 rounded-lg border-2 bg-card shadow-sm transition-colors ${borderClass}`}
+      className={`graph-node-frame pointer-events-none absolute inset-0 rounded-lg border-2 bg-card shadow-sm transition-colors ${external ? "border-dashed" : ""} ${borderClass}`}
     />
   );
 }

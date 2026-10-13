@@ -15,23 +15,23 @@
     "title": "{tenantId} Management",
     "tabsLabel": "Switch management view",
     "tabs": {
-      "graph": "Venue graph",
+      "graph": "Route diagram",
       "edges": "Connected edges"
     },
-    "graphEditTitle": "{tenantId} Venue graph editor",
+    "graphEditTitle": "{tenantId} Route diagram editor",
     "backLink": "Back to management"
   },
   "Graph": {
     "viewer": {
-      "title": "Venue graph",
+      "title": "Route diagram",
       "edit": "Edit graph",
       "save": "Save"
     },
     "nodeType": {
       "GOAL": "Destination",
-      "GOAL_TRANSIT_MIXED": "Destination / Transit",
+      "GOAL_TRANSIT_MIXED": "Dwell allowed",
       "TRANSIT_ONLY": "Transit only",
-      "BOUNDARY": "Entry / Exit"
+      "EXTERNAL": "Outside"
     },
     "selectionKind": {
       "node": "Point",
@@ -49,32 +49,42 @@
       "refresh": "Refresh",
       "error": "Failed to load observation points",
       "loading": "Loading…",
-      "empty": "No observation points are connected",
-      "online": "Connected",
+      "empty": "No observation points are online",
+      "online": "Online",
       "offline": "Offline",
       "usedByOther": "In use by another point / route"
     },
     "nodeTypeDescription": {
-      "GOAL": "e.g. an exhibition booth",
-      "GOAL_TRANSIT_MIXED": "e.g. a wall exhibit (both a destination and a passage)",
-      "TRANSIT_ONLY": "e.g. a corridor junction",
-      "BOUNDARY": "e.g. a venue entrance or exit"
+      "EXTERNAL": "A virtual point for outside the venue. Points connected to it become entry / exit points."
+    },
+    "nodeTypeFlag": {
+      "dwell": "Allow dwelling",
+      "destination": "Treat as destination"
+    },
+    "nodeTypeFlagDescription": {
+      "dwell": "People may stop here. Turn off for transit only (e.g. a corridor junction)",
+      "destination": "An endpoint people don't pass through (e.g. an exhibition booth)"
     },
     "notices": {
-      "dualDirection": "Serves as both an entry and an exit"
+      "boundary": "Entry / exit point (connected to Outside)",
+      "closed": "Closed mode (no entry / exit points)"
     },
     "labelLanguage": {
       "label": "Label language",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
-      "title": "Venue editor",
+      "title": "Route diagram editor",
       "addNode": "Add {type}",
+      "point": "Point",
       "save": "Save",
       "newNodeLabel": "Point {index}",
       "addGroup": "Add group",
       "newGroupLabel": "Group {index}",
-      "autoAlign": "Auto-arrange"
+      "autoAlign": "Auto-arrange",
+      "saved": "Saved",
+      "saveFailed": "Failed to save. Please try again later.",
+      "saveInvalid": "Some parts of the route diagram can't be saved"
     },
     "easyConnect": {
       "fromNode": "Add route: click the point to use as the end",
@@ -86,6 +96,7 @@
       "canvasLabel": "Canvas actions",
       "endEdgeCreation": "Finish adding routes",
       "addNode": "Add point",
+      "addExternal": "Add outside point",
       "addEdge": "Add route",
       "nodeLabel": "Actions for point “{label}”",
       "addEdgeFromNode": "Add a route from this point",
@@ -101,6 +112,28 @@
       "dissolveGroup": "Ungroup (keep contents)"
     },
     "properties": {
+      "bulk": {
+        "points": "Points ({count})",
+        "edges": "Edges ({count})",
+        "mixed": "Values are mixed",
+        "result": "Changed {changed, plural, one {# element} other {# elements}}. Could not change {skipped, plural, one {# element} other {# elements}}.",
+        "reasonCount": "{reason} ({count})",
+        "reasons": {
+          "requiresDwell": "Points that do not allow dwelling cannot be destinations.",
+          "bothNotReversed": "Bidirectional edges are excluded from reversal."
+        }
+      },
+      "groupSelected": "Group selected points",
+      "deleteSelected": "Delete selected elements",
+      "deleteSelectedGroupHint": "Selected groups are dissolved; unselected contents are kept.",
+      "groupSelectionErrors": {
+        "pointsOnly": "Groups and external points cannot be grouped.",
+        "tooFewPoints": "Select at least two points.",
+        "differentParents": "Select points with the same parent."
+      },
+      "selectedNodes": "Nodes: {count}",
+      "selectedEdges": "Edges: {count}",
+      "selectedGroups": "Groups: {count}",
       "title": "Properties",
       "empty": "Select a point or a route.",
       "deleteNode": "Delete this point",
@@ -137,10 +170,10 @@
       "error": "Connection failed"
     },
     "aliveEdges": {
-      "title": "Connected edges ({count})",
+      "title": "Online edges ({count})",
       "refresh": "Refresh",
       "loading": "Loading…",
-      "empty": "No edges are connected",
+      "empty": "No edges are online",
       "lastSeen": "Last seen: {time}",
       "unknownTime": "Unknown",
       "connect": "Connect",
@@ -183,9 +216,13 @@
     "lines": {
       "create": "Add line",
       "edit": "Edit mode",
+      "reverseForward": "Reverse forward direction",
       "deleteSelected": "Delete selected line",
       "reset": "Reset line positions",
-      "count": "Line {index}: forward {forward} / backward {backward}"
+      "count": "Line {index}: forward {forward} / backward {backward}",
+      "namedCount": "{name}: forward {forward} / backward {backward}",
+      "nameLabel": "Selected line name",
+      "namePlaceholder": "e.g. Hall A entrance, north corridor"
     }
   },
   "Observation": {
@@ -346,5 +383,43 @@
         "goods": "Merch"
       }
     }
+  },
+  "PwaInstall": {
+    "button": "Install app",
+    "title": "Install Tolo",
+    "description": "Open Tolo from your home screen or app list. An internet connection is required to use it.",
+    "nativeIntro": "Press Install below, then choose Install in your browser’s confirmation window.",
+    "nativeInstall": "Install",
+    "installing": "Opening the confirmation window…",
+    "dismissed": "Installation was canceled. You can try again from your browser’s menu.",
+    "error": "The confirmation window could not be opened. Follow the steps below to install from your browser.",
+    "accepted": "Your installation request was accepted. Once it finishes, open Tolo from your home screen or app list.",
+    "iosTitle": "iPhone and iPad (Safari)",
+    "iosSteps": {
+      "first": "Open this page in Safari and tap Share (a square with an upward arrow). If you cannot see it, open the page menu in the address bar and choose Share.",
+      "second": "Scroll down in the menu and choose Add to Home Screen. If Open as Web App appears, turn it on.",
+      "third": "Tap Add. Open Tolo using its new icon on your home screen."
+    },
+    "androidTitle": "Android (Chrome)",
+    "androidSteps": {
+      "first": "Open this page in Chrome and tap the ︙ menu at the top right.",
+      "second": "Choose Install and create shortcut → Install. Depending on your version, choose Install app or Add to home screen instead, then follow the instructions on the screen.",
+      "third": "Open Tolo using its icon on your home screen or app list. If the menu option is missing, reload this page in a regular tab and try again."
+    },
+    "desktopTitle": "Computer (Chrome and Edge)",
+    "desktopSteps": {
+      "first": "Open this page in Chrome or Edge.",
+      "second": "Click the install icon at the right of the address bar. If you cannot see it, in Chrome choose ︙ → Cast, save, and share → Install page as app. In Edge, choose … → More tools (if shown) → Apps → Install this site as an app.",
+      "third": "Choose Install in the confirmation window. Open Tolo from your app list."
+    },
+    "macTitle": "Mac (Safari)",
+    "macSteps": {
+      "first": "Open this page in Safari (macOS Sonoma or later).",
+      "second": "Choose File → Add to Dock in the menu bar, then click Add.",
+      "third": "Open Tolo using its new icon in the Dock."
+    },
+    "otherIntro": "Steps vary by browser and device. Choose the instructions for your device. If an option is missing, open this page in one of the supported browsers below.",
+    "insecure": "Installation requires HTTPS. Open the public site using its HTTPS URL.",
+    "close": "Close"
   }
 }

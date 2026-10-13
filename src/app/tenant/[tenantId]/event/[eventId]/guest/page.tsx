@@ -7,8 +7,18 @@ import GraphGuide from "@/features/guest/info/GraphGuide";
 import QueueLayout from "@/features/guest/info/QueueLayout";
 import type { GuestInfoComponent } from "@/features/guest/info/type";
 import WaitingNumber from "@/features/guest/info/WaitingNumber";
+import { getPwaMetadata } from "@/lib/pwa/manifest";
 import { GuestHeader } from "./_components/GuestHeader";
 import { GuestInfoContainer } from "./_components/GuestInfoContainer";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ tenantId: string; eventId: string }>;
+}) {
+  const { eventId } = await params;
+  return getPwaMetadata(`/event/${encodeURIComponent(eventId)}/guest`);
+}
 
 export default async function TenantGuest({
   params,

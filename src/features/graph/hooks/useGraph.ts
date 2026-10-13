@@ -12,8 +12,7 @@ export type UseGraphResult =
   | { status: "error"; graph: null; error: unknown; refresh: () => void };
 
 /**
- * 会場グラフを取得して状態として持つフック
- * 取得元（API / サンプル）は `fetchGraph` が抽象化する。
+ * グラフを取得して状態として持つフック
  * key が変わるたび、および refresh のたびに取り直し、古い応答は捨てる。
  */
 export function useGraph({ tenantId, eventId }: GraphKey): UseGraphResult {

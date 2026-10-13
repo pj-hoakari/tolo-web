@@ -2,14 +2,18 @@
 
 import type { Connection, EdgeChange, NodeChange } from "@xyflow/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   GraphCanvasEditing,
   GraphCanvasProps,
 } from "../components/GraphCanvas";
 import type { LabelLocaleBindings } from "../components/LabelLocaleMenu";
 import type { PropertiesPanelProps } from "../components/properties";
-import { DEFAULT_NODE_TYPE, resolveConnectionDirection } from "../nodeTypes";
+import {
+  DEFAULT_NODE_TYPE,
+  type NodeTypeFlag,
+  resolveConnectionDirection,
+} from "../nodeTypes";
 import { toGraphData } from "../serialize";
 import type {
   EdgeDirection,
@@ -18,17 +22,26 @@ import type {
   GraphEdgeType,
   NodeType,
 } from "../type";
-import { isGroupNode, isPointNode } from "../type";
+import { isExternalNode, isGroupNode, isPointNode } from "../type";
+import type {
+  BulkEditResult,
+  BulkPropertyAction,
+} from "../utils/bulkProperties";
 import {
   createEdge,
   createGroup,
   createNode,
-  removedIds,
+  isLastExternal,
+  keepGroupContents,
+  keepLastExternal,
 } from "../utils/graphMutations";
 import { newId } from "../utils/idGen";
 import { countLabeledNodes } from "../utils/labels";
+import {
+  canDeleteSelectedElements,
+  getGroupSelectionError,
+} from "../utils/selectionActions";
 import { useGraphElements } from "./useGraphElements";
-import { useGraphSelection } from "./useGraphSelection";
 import { useLabelLocale } from "./useLabelLocale";
 
 /** ツールバーに渡す props（保存の実処理は呼び出し側が持つ） */
@@ -44,6 +57,8 @@ export type PropertiesPanelBindings = Omit<PropertiesPanelProps, "graph">;
 export type GraphEditorApi = {
   /** 描画用のグラフ（ハンドル・通知を注入済み） */
   graph: GraphData;
+  selection: { nodeIds: string[]; edgeIds: string[] };
+  setSelection: (nodeIds: string[], edgeIds: string[]) => void;
   /** 構造編集を有効にしたキャンバスの props */
   canvas: GraphCanvasProps & { editing: GraphCanvasEditing };
   toolbar: GraphToolbarBindings;
@@ -58,9 +73,9 @@ function randomPosition() {
 }
 
 /**
- * 会場エディタの編集状態をまとめ、UI 各部へ渡す形に整えるフック。
- * 状態は要素（useGraphElements）と選択（useGraphSelection）が持ち、
- * ここでは「ノードを消したら選択も解除する」といった連携だけを担う。
+ * グラフエディタの編集状態をまとめ、UI 各部へ渡す形に整えるフック。
+ * 要素と selected は useGraphElements が持ち、選択情報と各 UI への
+ * バインディングをここで導出する。
  */
 export function useGraphEditor(initial: GraphData): GraphEditorApi {
   const t = useTranslations("Graph.editor");
@@ -73,37 +88,87 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
     source,
     changeNodes,
     changeEdges,
+    setSelection,
     appendNode,
     appendEdge,
     removeNode,
     removeGroup,
+    removeSelection,
+    groupSelection,
     reparentByDrop,
     setGroupMinSize,
     autoAlign,
     removeEdge,
+    updateSelectedProperty,
     updateNodeData,
     updateNodeLabel,
     updateEdgeData,
     reverseEdge,
   } = useGraphElements(initial, labelLocale);
 
-  const { selection, selectNode, selectEdge, clearSelection, clearIfSelected } =
-    useGraphSelection();
-
-  const onNodesChange = useCallback(
-    (changes: NodeChange<GraphCanvasNode>[]) => {
-      changeNodes(changes);
-      for (const id of removedIds(changes)) clearIfSelected("node", id);
+  const selectedNodes = useMemo(() => nodes.filter((n) => n.selected), [nodes]);
+  const selectedEdges = useMemo(() => edges.filter((e) => e.selected), [edges]);
+  const selection = useMemo(
+    () => ({
+      nodeIds: selectedNodes.map((n) => n.id),
+      edgeIds: selectedEdges.map((e) => e.id),
+    }),
+    [selectedNodes, selectedEdges],
+  );
+  const selectionKey = JSON.stringify([
+    selection.nodeIds.toSorted(),
+    selection.edgeIds.toSorted(),
+  ]);
+  const [bulkFeedback, setBulkFeedback] = useState<{
+    selectionKey: string;
+    result: BulkEditResult;
+  } | null>(null);
+  useEffect(() => {
+    setBulkFeedback((current) =>
+      current?.selectionKey === selectionKey ? current : null,
+    );
+  }, [selectionKey]);
+  const runBulkEdit = useCallback(
+    (action: BulkPropertyAction) => {
+      setBulkFeedback({ selectionKey, result: updateSelectedProperty(action) });
     },
-    [changeNodes, clearIfSelected],
+    [selectionKey, updateSelectedProperty],
+  );
+  const setSelectedNodeFlag = useCallback(
+    (flag: NodeTypeFlag, enabled: boolean) =>
+      runBulkEdit({ kind: "nodeFlag", flag, enabled }),
+    [runBulkEdit],
+  );
+  const setSelectedEdgeDirection = useCallback(
+    (direction: EdgeDirection) =>
+      runBulkEdit({ kind: "edgeDirection", direction }),
+    [runBulkEdit],
+  );
+  const reverseSelectedEdges = useCallback(
+    () => runBulkEdit({ kind: "reverseEdges" }),
+    [runBulkEdit],
   );
 
+  const selectionCount = selectedNodes.length + selectedEdges.length;
+  const selectNode = useCallback(
+    (id: string) => setSelection([id], []),
+    [setSelection],
+  );
+  const selectEdge = useCallback(
+    (id: string) => setSelection([], [id]),
+    [setSelection],
+  );
+  const clearSelection = useCallback(
+    () => setSelection([], []),
+    [setSelection],
+  );
+  const onNodesChange = useCallback(
+    (changes: NodeChange<GraphCanvasNode>[]) => changeNodes(changes),
+    [changeNodes],
+  );
   const onEdgesChange = useCallback(
-    (changes: EdgeChange<GraphEdgeType>[]) => {
-      changeEdges(changes);
-      for (const id of removedIds(changes)) clearIfSelected("edge", id);
-    },
-    [changeEdges, clearIfSelected],
+    (changes: EdgeChange<GraphEdgeType>[]) => changeEdges(changes),
+    [changeEdges],
   );
 
   const isValidConnection = useCallback(
@@ -117,6 +182,7 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
       const tgtNode = source.nodes.find((n) => n.id === tgt);
       if (!srcNode || !tgtNode) return false;
       if (isGroupNode(srcNode) || isGroupNode(tgtNode)) return false;
+      if (isExternalNode(srcNode) && isExternalNode(tgtNode)) return false;
       // ノードタイプの制約
       // 既定 "both" が不可でも有効な方向があれば接続可とする
       return (
@@ -179,14 +245,20 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
       nodeType: NodeType = DEFAULT_NODE_TYPE,
       parentId?: string,
     ) => {
+      const external = nodeType === "EXTERNAL";
       // 初期ラベルは編集中の言語にだけ設定する
       const node = createNode({
         id: newId("n"),
-        labels: {
-          [labelLocale]: t("newNodeLabel", {
-            index: source.nodes.filter(isPointNode).length + 1,
-          }),
-        },
+        labels: external
+          ? {}
+          : {
+              [labelLocale]: t("newNodeLabel", {
+                index:
+                  source.nodes.filter(
+                    (n) => isPointNode(n) && !isExternalNode(n),
+                  ).length + 1,
+              }),
+            },
         nodeType,
         position,
       });
@@ -227,6 +299,7 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
 
   const deleteNode = useCallback(
     (id: string) => {
+      if (isLastExternal(id, source.nodes)) return;
       const node = source.nodes.find((n) => n.id === id);
       if (node && isGroupNode(node)) {
         // グループは「解除」: コンテナだけを取り除き、中身は残す
@@ -240,6 +313,12 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
     [source.nodes, removeNode, removeGroup, clearSelection],
   );
 
+  const beforeDelete = useCallback(
+    async (toDelete: { nodes: GraphCanvasNode[]; edges: GraphEdgeType[] }) =>
+      keepLastExternal(keepGroupContents(toDelete), source.nodes),
+    [source.nodes],
+  );
+
   const deleteEdge = useCallback(
     (id: string) => {
       removeEdge(id);
@@ -249,10 +328,27 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
   );
 
   const deleteSelection = useCallback(() => {
-    if (!selection) return;
-    if (selection.type === "node") deleteNode(selection.id);
-    else deleteEdge(selection.id);
-  }, [selection, deleteNode, deleteEdge]);
+    if (selectionCount !== 1) return;
+    if (selectedNodes[0]) deleteNode(selectedNodes[0].id);
+    else if (selectedEdges[0]) deleteEdge(selectedEdges[0].id);
+  }, [selectionCount, selectedNodes, selectedEdges, deleteNode, deleteEdge]);
+
+  const groupSelectionError = getGroupSelectionError(source.nodes);
+  const canDeleteSelection = canDeleteSelectedElements(source);
+  const groupSelected = useCallback(() => {
+    if (getGroupSelectionError(source.nodes) !== null) return;
+    groupSelection(
+      createGroup({
+        id: newId("g"),
+        labels: {
+          [labelLocale]: t("newGroupLabel", {
+            index: source.nodes.filter(isGroupNode).length + 1,
+          }),
+        },
+        position: { x: 0, y: 0 },
+      }),
+    );
+  }, [source.nodes, groupSelection, labelLocale, t]);
 
   const onNodeDragStop = useCallback(
     (ids: string[]) => {
@@ -280,6 +376,8 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
 
   return {
     graph: { nodes, edges },
+    selection,
+    setSelection,
     canvas: {
       nodes,
       edges,
@@ -300,6 +398,7 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
         onAddGroupAtPosition: addGroupAtPosition,
         onDeleteNode: deleteNode,
         onDeleteEdge: deleteEdge,
+        onBeforeDelete: beforeDelete,
         onNodeDragStop,
         onGroupResizeEnd,
       },
@@ -311,23 +410,33 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
       labelLocale,
       onChangeLabelLocale: setLabelLocale,
       labelCounts,
-      labelTargetCount: source.nodes.length,
+      labelTargetCount: source.nodes.filter((n) => !isExternalNode(n)).length,
     },
     properties: {
-      selectedNode:
-        selection?.type === "node"
-          ? nodes.find((n) => n.id === selection.id)
-          : undefined,
-      selectedEdge:
-        selection?.type === "edge"
-          ? edges.find((e) => e.id === selection.id)
-          : undefined,
+      selectedNode: selectionCount === 1 ? selectedNodes[0] : undefined,
+      selectedEdge: selectionCount === 1 ? selectedEdges[0] : undefined,
+      selectionCounts: {
+        nodes: selectedNodes.filter(isPointNode).length,
+        groups: selectedNodes.filter(isGroupNode).length,
+        edges: selectedEdges.length,
+      },
       labelLocale,
       onUpdateNode: updateNodeData,
       onSetNodeLabel: setNodeLabel,
       onUpdateEdge: updateEdgeData,
       onReverseEdge: reverseEdge,
+      onSetSelectedNodeFlag: setSelectedNodeFlag,
+      onSetSelectedEdgeDirection: setSelectedEdgeDirection,
+      onReverseSelectedEdges: reverseSelectedEdges,
+      bulkResult:
+        bulkFeedback?.selectionKey === selectionKey
+          ? bulkFeedback.result
+          : null,
       onDelete: deleteSelection,
+      onDeleteSelected: removeSelection,
+      canDeleteSelected: canDeleteSelection,
+      onGroupSelected: groupSelected,
+      groupSelectionError,
     },
     getGraphData,
   };

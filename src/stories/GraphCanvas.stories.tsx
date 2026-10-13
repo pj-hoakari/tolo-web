@@ -6,6 +6,7 @@ import { GraphCanvas } from "@/features/tenant/management/graph/components/Graph
 import { useGraphEditor } from "@/features/tenant/management/graph/hooks/useGraphEditor";
 import { useGraphViewer } from "@/features/tenant/management/graph/hooks/useGraphViewer";
 import { deriveNodeNotices } from "@/features/tenant/management/graph/nodeTypes";
+import { autoAlignGraph } from "@/features/tenant/management/graph/utils/autoLayout";
 import {
   assignHandlesByPosition,
   deriveNodeHandles,
@@ -18,7 +19,7 @@ const derivedEdges = assignHandlesByPosition(
 );
 const derivedNodes = deriveNodeNotices(
   deriveNodeHandles(
-    deriveNodeLabels(PLACEHOLDER_GRAPH.nodes, "ja"),
+    deriveNodeLabels(PLACEHOLDER_GRAPH.nodes, "ja", "外部"),
     derivedEdges,
   ),
   derivedEdges,
@@ -33,6 +34,16 @@ function EditableCanvas() {
 /** 表示専用（移動・接続ができない）状態のキャンバス */
 function ViewOnlyCanvas() {
   const { canvas } = useGraphViewer(PLACEHOLDER_GRAPH);
+  return <GraphCanvas {...canvas} />;
+}
+
+const AUTO_ALIGNED_GRAPH = autoAlignGraph(
+  PLACEHOLDER_GRAPH.nodes,
+  PLACEHOLDER_GRAPH.edges,
+);
+
+function AutoAlignedCanvas() {
+  const { canvas } = useGraphViewer(AUTO_ALIGNED_GRAPH);
   return <GraphCanvas {...canvas} />;
 }
 
@@ -84,6 +95,7 @@ export const Editing: Story = {
       onAddGroupAtPosition: fn(),
       onDeleteNode: fn(),
       onDeleteEdge: fn(),
+      onBeforeDelete: fn(async () => true),
       onNodeDragStop: fn(),
       onGroupResizeEnd: fn(),
     },
@@ -103,4 +115,8 @@ export const Editable: Story = {
 /** useGraphViewer と繋いだ表示専用の状態（選択のみできる） */
 export const ViewOnly: Story = {
   render: () => <ViewOnlyCanvas />,
+};
+
+export const AutoAligned: Story = {
+  render: () => <AutoAlignedCanvas />,
 };

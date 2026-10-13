@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { IntlTestProvider } from "@/test/IntlTestProvider";
@@ -10,7 +10,11 @@ const node: GraphNodeType = {
   id: "n1",
   type: "graph",
   position: { x: 0, y: 0 },
-  data: { labels: { ja: "ポイント 1" }, label: "ポイント 1", nodeType: "GOAL" },
+  data: {
+    labels: { ja: "ポイント 1" },
+    label: "ポイント 1",
+    nodeType: "GOAL_TRANSIT_MIXED",
+  },
 };
 
 /** メッセージを解決できるよう next-intl のプロバイダ配下で描画する */
@@ -36,13 +40,15 @@ describe("GraphNodeContextMenu", () => {
     );
 
     expect(screen.getByText("タイプを変更")).toBeTruthy();
-    fireEvent.click(screen.getByRole("menuitemradio", { name: "通過のみ" }));
+    fireEvent.click(
+      screen.getByRole("menuitemcheckbox", { name: "目的地として扱う" }),
+    );
 
-    expect(onSetType).toHaveBeenCalledWith("n1", "TRANSIT_ONLY");
+    expect(onSetType).toHaveBeenCalledWith("n1", "GOAL");
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("メニュー名に対象ポイント名を含み、現在のタイプをラジオ選択として伝える", () => {
+  it("メニュー名に対象ポイント名を含み、現在のタイプをフラグのチェック状態として伝える", () => {
     renderWithIntl(
       <GraphNodeContextMenu
         node={node}
@@ -63,15 +69,15 @@ describe("GraphNodeContextMenu", () => {
     // タイプ変更グループはヘッダー付きのグループとして関連付く
     expect(screen.getByRole("group", { name: "タイプを変更" })).toBeTruthy();
 
-    // 現在のタイプ（GOAL = 目的地）だけがチェック状態
+    // 現在のタイプ（GOAL_TRANSIT_MIXED = 停滞可）は停滞だけがチェック状態
     expect(
       screen
-        .getByRole("menuitemradio", { name: "目的地" })
+        .getByRole("menuitemcheckbox", { name: "停滞を許容する" })
         .getAttribute("aria-checked"),
     ).toBe("true");
     expect(
       screen
-        .getByRole("menuitemradio", { name: "通過のみ" })
+        .getByRole("menuitemcheckbox", { name: "目的地として扱う" })
         .getAttribute("aria-checked"),
     ).toBe("false");
   });
@@ -99,6 +105,42 @@ describe("GraphNodeContextMenu", () => {
     fireEvent.click(deleteItem);
 
     expect(onDelete).toHaveBeenCalledWith("n1");
+  });
+
+  it("外部ポイントはタイプ変更を出さず、最後の 1 つでなければ削除できる", () => {
+    const external = (id: string): GraphNodeType => ({
+      id,
+      type: "graph",
+      position: { x: 0, y: 0 },
+      data: { labels: {}, label: "外部", nodeType: "EXTERNAL" },
+    });
+    const menu = (nodes: GraphNodeType[]) => (
+      <GraphNodeContextMenu
+        node={nodes[0]}
+        nodes={nodes}
+        edges={[]}
+        position={{ x: 100, y: 100 }}
+        onSetType={vi.fn()}
+        onStartEdgeCreation={vi.fn()}
+        onDelete={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    const externalMenu = () =>
+      within(screen.getByRole("menu", { name: "ポイント「外部」の操作" }));
+
+    const { rerender } = renderWithIntl(menu([external("x1"), node]));
+    expect(externalMenu().queryByText("タイプを変更")).toBeNull();
+    expect(
+      externalMenu().queryByRole("menuitem", { name: "このポイントを削除" }),
+    ).toBeNull();
+
+    rerender(menu([external("x1"), external("x2"), node]));
+    expect(externalMenu().queryByText("タイプを変更")).toBeNull();
+    expect(
+      externalMenu().getByRole("menuitem", { name: "このポイントを削除" }),
+    ).toBeTruthy();
   });
 
   it("このポイントを始点にルート追加モードを開始できる", () => {

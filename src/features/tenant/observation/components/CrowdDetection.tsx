@@ -6,6 +6,7 @@ import { BroadcastIndicator } from "@/features/tenant/webrtc/components/Broadcas
 import { useVideoSender } from "@/features/tenant/webrtc/hooks/useVideoSender";
 import { useCrowdDetectionLoop } from "../hooks/useCrowdDetectionLoop";
 import { useDetectCrowd } from "../hooks/useDetectCrowd";
+import { useObservationReporting } from "../hooks/useObservationReporting";
 import {
   type CrowdVideoSourceFactory,
   createCameraVideoSource,
@@ -20,9 +21,14 @@ const DEV_VIDEO_SOURCE_ENABLED = process.env.NODE_ENV === "development";
 export type CrowdDetectionProps = {
   tenantId: string;
   eventId: string;
+  edgeDeviceId?: string;
 };
 
-export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
+export function CrowdDetection({
+  tenantId,
+  eventId,
+  edgeDeviceId,
+}: CrowdDetectionProps) {
   const [sourceFactory, setSourceFactory] = useState<CrowdVideoSourceFactory>(
     () => createCameraVideoSource,
   );
@@ -38,8 +44,7 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const { active, edgeId, sendDetectionFrame } = useVideoSender({
-    tenantId,
-    eventId,
+    edgeDeviceId,
     stream: broadcastStream,
     settingsStore,
   });
@@ -53,6 +58,15 @@ export function CrowdDetection({ tenantId, eventId }: CrowdDetectionProps) {
     onBroadcastStreamChange: setBroadcastStream,
     onDetectionFrame: sendDetectionFrame,
     onDetectionError: reportDetectionError,
+  });
+
+  useObservationReporting({
+    eventId,
+    edgeDeviceId,
+    listening: edgeId !== null,
+    status,
+    settingsStore,
+    resultStore,
   });
 
   const handleSourceChange = useCallback((factory: CrowdVideoSourceFactory) => {

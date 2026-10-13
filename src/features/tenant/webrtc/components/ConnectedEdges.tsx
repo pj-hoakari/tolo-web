@@ -8,15 +8,11 @@ import { AliveEdgeList } from "./AliveEdgeList";
 import { VideoReceiverView } from "./VideoReceiverView";
 
 export type ConnectedEdgesProps = {
-  tenantId: string;
   eventId: string;
 };
 
-export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
-  const { edges, status, error, refresh } = useAliveEdges({
-    tenantId,
-    eventId,
-  });
+export function ConnectedEdges({ eventId }: ConnectedEdgesProps) {
+  const { edges, status, error, refresh } = useAliveEdges({ eventId });
   const {
     status: receiveStatus,
     error: receiveError,

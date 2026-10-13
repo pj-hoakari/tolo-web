@@ -15,23 +15,23 @@
     "title": "{tenantId} 管理页面",
     "tabsLabel": "切换管理视图",
     "tabs": {
-      "graph": "会场图",
+      "graph": "路径图",
       "edges": "连接的边缘设备"
     },
-    "graphEditTitle": "{tenantId} 会场图编辑",
+    "graphEditTitle": "{tenantId} 路径图编辑",
     "backLink": "返回管理页面"
   },
   "Graph": {
     "viewer": {
-      "title": "会场图",
+      "title": "路径图",
       "edit": "编辑图",
       "save": "保存"
     },
     "nodeType": {
       "GOAL": "目的地",
-      "GOAL_TRANSIT_MIXED": "目的地 / 通行",
+      "GOAL_TRANSIT_MIXED": "可停留",
       "TRANSIT_ONLY": "仅通行",
-      "BOUNDARY": "出入口"
+      "EXTERNAL": "外部"
     },
     "selectionKind": {
       "node": "节点",
@@ -49,32 +49,42 @@
       "refresh": "刷新",
       "error": "获取观测点失败",
       "loading": "加载中…",
-      "empty": "没有已连接的观测点",
-      "online": "已连接",
+      "empty": "没有运行中的观测点",
+      "online": "运行中",
       "offline": "离线",
       "usedByOther": "已被其他节点 / 路径使用"
     },
     "nodeTypeDescription": {
-      "GOAL": "例：展位",
-      "GOAL_TRANSIT_MIXED": "例：墙面展示（既是目的地也可通行）",
-      "TRANSIT_ONLY": "例：通道分叉",
-      "BOUNDARY": "例：会场出入口"
+      "EXTERNAL": "表示场馆外部的虚拟点。与外部连接的点将作为出入口。"
+    },
+    "nodeTypeFlag": {
+      "dwell": "允许停留",
+      "destination": "作为目的地"
+    },
+    "nodeTypeFlagDescription": {
+      "dwell": "人可能会停留的点。关闭后仅可通行（例：通道分叉）",
+      "destination": "不用于穿行的去处（例：展位）"
     },
     "notices": {
-      "dualDirection": "同时承担进入和离开（输入·输出）"
+      "boundary": "出入口（与外部连接）",
+      "closed": "封闭模式（无出入口）"
     },
     "labelLanguage": {
       "label": "标签语言",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
-      "title": "会场编辑器",
+      "title": "路径图编辑器",
       "addNode": "添加{type}",
+      "point": "点",
       "save": "保存",
       "newNodeLabel": "节点 {index}",
       "addGroup": "添加分组",
       "newGroupLabel": "分组 {index}",
-      "autoAlign": "自动排列"
+      "autoAlign": "自动排列",
+      "saved": "已保存",
+      "saveFailed": "保存失败。请稍后重试。",
+      "saveInvalid": "有无法保存的部分"
     },
     "easyConnect": {
       "fromNode": "添加路径：点击作为终点的节点",
@@ -86,6 +96,7 @@
       "canvasLabel": "画布操作",
       "endEdgeCreation": "结束添加路径",
       "addNode": "添加节点",
+      "addExternal": "添加外部点",
       "addEdge": "添加路径",
       "nodeLabel": "节点“{label}”的操作",
       "addEdgeFromNode": "从此节点添加路径",
@@ -101,6 +112,28 @@
       "dissolveGroup": "取消分组（保留内容）"
     },
     "properties": {
+      "bulk": {
+        "points": "点（{count} 个）",
+        "edges": "箭头（{count} 个）",
+        "mixed": "值不一致",
+        "result": "已修改 {changed} 个元素。无法修改 {skipped} 个元素。",
+        "reasonCount": "{reason}（{count} 个）",
+        "reasons": {
+          "requiresDwell": "不允许停留的点无法设为目的地。",
+          "bothNotReversed": "双向箭头不进行反转。"
+        }
+      },
+      "groupSelected": "将选中点分组",
+      "deleteSelected": "删除选中元素",
+      "deleteSelectedGroupHint": "选中的分组将被解除，未选中的内容将保留。",
+      "groupSelectionErrors": {
+        "pointsOnly": "分组和外部点无法合并到新分组中。",
+        "tooFewPoints": "请选择至少两个点。",
+        "differentParents": "请选择属于同一父级的点。"
+      },
+      "selectedNodes": "节点：{count} 个",
+      "selectedEdges": "箭头：{count} 个",
+      "selectedGroups": "分组：{count} 个",
       "title": "属性",
       "empty": "请选择节点或路径。",
       "deleteNode": "删除此节点",
@@ -137,10 +170,10 @@
       "error": "连接失败"
     },
     "aliveEdges": {
-      "title": "已连接的边缘设备（{count}）",
+      "title": "运行中的边缘设备（{count}）",
       "refresh": "刷新",
       "loading": "加载中…",
-      "empty": "没有已连接的边缘设备",
+      "empty": "没有运行中的边缘设备",
       "lastSeen": "最后响应：{time}",
       "unknownTime": "未知",
       "connect": "连接",
@@ -183,9 +216,13 @@
     "lines": {
       "create": "生成线",
       "edit": "编辑模式",
+      "reverseForward": "反转 forward 方向",
       "deleteSelected": "删除选中的线",
       "reset": "重置线位置",
-      "count": "线 {index}：forward {forward} / backward {backward}"
+      "count": "线 {index}：forward {forward} / backward {backward}",
+      "namedCount": "{name}：forward {forward} / backward {backward}",
+      "nameLabel": "所选线的名称",
+      "namePlaceholder": "例如：A厅入口、北侧连廊"
     }
   },
   "Observation": {
@@ -346,5 +383,43 @@
         "goods": "商品区"
       }
     }
+  },
+  "PwaInstall": {
+    "button": "安装应用",
+    "title": "安装 Tolo",
+    "description": "从主屏幕或应用列表打开 Tolo。使用时需要连接互联网。",
+    "nativeIntro": "点击下方的“安装”，然后在浏览器确认窗口中选择“安装”。",
+    "nativeInstall": "安装",
+    "installing": "正在打开确认窗口…",
+    "dismissed": "已取消安装。你可以从浏览器菜单再次安装。",
+    "error": "无法打开确认窗口。请按照下方步骤从浏览器安装。",
+    "accepted": "已接受安装请求。完成后，请从主屏幕或应用列表打开 Tolo。",
+    "iosTitle": "iPhone 和 iPad（Safari）",
+    "iosSteps": {
+      "first": "在 Safari 中打开此页面，点击“共享”（方框中带向上箭头的图标）。如果找不到，请从地址栏的页面菜单选择“共享”。",
+      "second": "向下滚动菜单，选择“添加到主屏幕”。如果出现“作为网页 App 打开”，请将其开启。",
+      "third": "点击“添加”。通过主屏幕上新增的 Tolo 图标即可打开。"
+    },
+    "androidTitle": "Android（Chrome）",
+    "androidSteps": {
+      "first": "在 Chrome 中打开此页面，点击右上角的“︙”菜单。",
+      "second": "选择“安装并创建快捷方式”→“安装”。根据版本，也可能需要从“安装应用”或“添加到主屏幕”开始，然后按照屏幕提示操作。",
+      "third": "通过主屏幕或应用列表中的 Tolo 图标打开。如果没有该菜单选项，请在普通标签页中重新加载此页面后再试。"
+    },
+    "desktopTitle": "电脑（Chrome 和 Edge）",
+    "desktopSteps": {
+      "first": "在 Chrome 或 Edge 中打开此页面。",
+      "second": "点击地址栏右侧的安装图标。如果找不到，在 Chrome 中选择“︙”→“投放、保存和分享”→“将网页安装为应用”；在 Edge 中选择“…”→“更多工具”（如有显示）→“应用”→“将此站点作为应用安装”。",
+      "third": "在确认窗口中选择“安装”。你可以从应用列表打开 Tolo。"
+    },
+    "macTitle": "Mac（Safari）",
+    "macSteps": {
+      "first": "在 Safari 中打开此页面（macOS Sonoma 或更高版本）。",
+      "second": "从顶部菜单栏选择“文件”→“添加到程序坞”，然后点击“添加”。",
+      "third": "通过程序坞中新增的 Tolo 图标打开。"
+    },
+    "otherIntro": "不同浏览器和设备的操作步骤有所不同。请选择适合你设备的步骤。如果没有相应选项，请使用下方支持的浏览器打开此页面。",
+    "insecure": "安装需要 HTTPS 连接。请使用公开网站的 HTTPS URL 打开。",
+    "close": "关闭"
   }
 }

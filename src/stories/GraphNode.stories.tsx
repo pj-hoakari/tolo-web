@@ -39,7 +39,7 @@ const meta = {
         "GOAL",
         "GOAL_TRANSIT_MIXED",
         "TRANSIT_ONLY",
-        "BOUNDARY",
+        "EXTERNAL",
       ] satisfies NodeType[],
     },
     label: { control: { type: "text" } },
@@ -66,8 +66,8 @@ export const TransitOnly: Story = {
   args: { nodeType: "TRANSIT_ONLY", label: "エントランスホール" },
 };
 
-export const Boundary: Story = {
-  args: { nodeType: "BOUNDARY", label: "入口" },
+export const External: Story = {
+  args: { nodeType: "EXTERNAL", label: "外部" },
 };
 
 export const Selected: Story = {

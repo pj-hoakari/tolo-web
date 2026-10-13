@@ -1,6 +1,6 @@
 import { locales } from "@/i18n/locale";
 import type { GraphCanvasNode, LocalizedLabel } from "../type";
-import { isPointNode } from "../type";
+import { isExternalNode, isPointNode } from "../type";
 
 export type ResolvedLabel = {
   text: string;
@@ -32,9 +32,12 @@ export function resolveLabel(
 export function deriveNodeLabels(
   nodes: GraphCanvasNode[],
   locale: string,
+  externalLabel: string,
 ): GraphCanvasNode[] {
   return nodes.map((n) => {
-    const { text, isFallback } = resolveLabel(n.data.labels, locale);
+    const { text, isFallback } = isExternalNode(n)
+      ? { text: externalLabel, isFallback: false }
+      : resolveLabel(n.data.labels, locale);
     const resolved = { label: text, labelIsFallback: isFallback };
     // ポイントとグループで data の型が異なるため、分岐して型を保つ
     return isPointNode(n)

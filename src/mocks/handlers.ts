@@ -1,7 +1,7 @@
 import { RPCHandler } from "@orpc/server/fetch";
 import { http, passthrough, type RequestHandler } from "msw";
-import type { AliveEdge } from "@/server/router";
-import { sampleAliveEdgesWire } from "./fixtures/edges";
+import type { EdgeDevice } from "@/server/router";
+import { sampleEdgeDevicesWire } from "./fixtures/edges";
 import { createMockRouter, type MockRouterOverrides } from "./router";
 
 function orpcHandler(
@@ -27,15 +27,15 @@ export function createOrpcHandlers(
   return [orpcHandler(createMockRouter(overrides))];
 }
 
-/** edges.listAlive が任意の edge 一覧を返す handler 群 */
-export function edgesHandlers(edges: AliveEdge[]): RequestHandler[] {
-  return createOrpcHandlers({ edges });
+/** observation.listEdgeDevices が任意のエッジ端末一覧を返す handler 群 */
+export function edgesHandlers(devices: EdgeDevice[]): RequestHandler[] {
+  return createOrpcHandlers({ devices });
 }
 
-/** edges.listAlive が失敗する handler 群 */
+/** observation.listEdgeDevices が失敗する handler 群 */
 export function edgesErrorHandlers(): RequestHandler[] {
-  return createOrpcHandlers({ edgesError: true });
+  return createOrpcHandlers({ devicesError: true });
 }
 
-/** 既定: サンプルの edge 一覧を返す */
-export const handlers: RequestHandler[] = edgesHandlers(sampleAliveEdgesWire);
+/** 既定: サンプルのエッジ端末一覧を返す */
+export const handlers: RequestHandler[] = edgesHandlers(sampleEdgeDevicesWire);

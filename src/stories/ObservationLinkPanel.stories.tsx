@@ -56,11 +56,11 @@ export const NodeWithObservationPoints: Story = {
         labels: { ja: "ブースA" },
         label: "ブースA",
         nodeType: "GOAL",
-        observationPointIds: ["demo_event_cam-booth-a", "demo_event_cam-old"],
+        observationPointIds: ["op-booth-a", "op-old"],
       },
     },
     observationPoints: observationPointsSource({
-      usedIds: new Set(["demo_event_cam-booth-a", "demo_event_cam-old"]),
+      usedIds: new Set(["op-booth-a", "op-old"]),
       onRefresh: fn(),
     }),
   },
@@ -78,7 +78,7 @@ export const ObservationPointUsedElsewhere: Story = {
   args: {
     selectedNode: graphNode("ph_booth"),
     observationPoints: observationPointsSource({
-      usedIds: new Set(["demo_event_cam-hall"]),
+      usedIds: new Set(["op-hall"]),
       onRefresh: fn(),
     }),
   },
@@ -103,12 +103,10 @@ export const LinkNode: Story = {
   play: async ({ args, canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await userEvent.click(
-      canvas.getByRole("checkbox", { name: /demo_event_cam-booth-a/ }),
-    );
+    await userEvent.click(canvas.getByRole("checkbox", { name: /ブースA/ }));
 
     await expect(args.onLinkNode).toHaveBeenCalledWith("ph_booth", [
-      "demo_event_cam-booth-a",
+      "op-booth-a",
     ]);
   },
 };

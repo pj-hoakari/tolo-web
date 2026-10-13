@@ -15,23 +15,23 @@
     "title": "{tenantId} Administración",
     "tabsLabel": "Cambiar vista de administración",
     "tabs": {
-      "graph": "Gráfico del recinto",
+      "graph": "Diagrama de rutas",
       "edges": "Edges conectados"
     },
-    "graphEditTitle": "{tenantId} Editor del gráfico del recinto",
+    "graphEditTitle": "{tenantId} Editor del diagrama de rutas",
     "backLink": "Volver a administración"
   },
   "Graph": {
     "viewer": {
-      "title": "Gráfico del recinto",
+      "title": "Diagrama de rutas",
       "edit": "Editar gráfico",
       "save": "Guardar"
     },
     "nodeType": {
       "GOAL": "Destino",
-      "GOAL_TRANSIT_MIXED": "Destino / Tránsito",
+      "GOAL_TRANSIT_MIXED": "Permite permanencia",
       "TRANSIT_ONLY": "Solo tránsito",
-      "BOUNDARY": "Entrada / Salida"
+      "EXTERNAL": "Exterior"
     },
     "selectionKind": {
       "node": "Punto",
@@ -49,32 +49,42 @@
       "refresh": "Actualizar",
       "error": "No se pudieron cargar los puntos de observación",
       "loading": "Cargando…",
-      "empty": "No hay puntos de observación conectados",
-      "online": "Conectado",
+      "empty": "No hay puntos de observación en línea",
+      "online": "En línea",
       "offline": "Sin conexión",
       "usedByOther": "En uso por otro punto u otra ruta"
     },
     "nodeTypeDescription": {
-      "GOAL": "p. ej., un estand",
-      "GOAL_TRANSIT_MIXED": "p. ej., una exposición mural (destino y a la vez paso)",
-      "TRANSIT_ONLY": "p. ej., una bifurcación del pasillo",
-      "BOUNDARY": "p. ej., una entrada o salida del recinto"
+      "EXTERNAL": "Punto virtual que representa el exterior del recinto. Los puntos conectados a él pasan a ser puntos de entrada / salida."
+    },
+    "nodeTypeFlag": {
+      "dwell": "Permitir permanencia",
+      "destination": "Tratar como destino"
+    },
+    "nodeTypeFlagDescription": {
+      "dwell": "Un punto donde la gente puede detenerse. Desactívalo para solo tránsito (p. ej., una bifurcación del pasillo)",
+      "destination": "Un destino que no se usa para pasar (p. ej., un estand)"
     },
     "notices": {
-      "dualDirection": "Funciona a la vez como entrada y como salida"
+      "boundary": "Punto de entrada / salida (conectado al exterior)",
+      "closed": "Modo cerrado (sin puntos de entrada / salida)"
     },
     "labelLanguage": {
       "label": "Idioma de las etiquetas",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
-      "title": "Editor del recinto",
+      "title": "Editor del diagrama de rutas",
       "addNode": "Añadir {type}",
+      "point": "Punto",
       "save": "Guardar",
       "newNodeLabel": "Punto {index}",
       "addGroup": "Añadir grupo",
       "newGroupLabel": "Grupo {index}",
-      "autoAlign": "Ordenar automáticamente"
+      "autoAlign": "Ordenar automáticamente",
+      "saved": "Guardado",
+      "saveFailed": "No se pudo guardar. Inténtalo de nuevo más tarde.",
+      "saveInvalid": "Hay partes del mapa que no se pueden guardar"
     },
     "easyConnect": {
       "fromNode": "Añadir ruta: haz clic en el punto final",
@@ -86,6 +96,7 @@
       "canvasLabel": "Acciones del lienzo",
       "endEdgeCreation": "Terminar de añadir rutas",
       "addNode": "Añadir punto",
+      "addExternal": "Añadir punto exterior",
       "addEdge": "Añadir ruta",
       "nodeLabel": "Acciones del punto «{label}»",
       "addEdgeFromNode": "Añadir una ruta desde este punto",
@@ -101,6 +112,28 @@
       "dissolveGroup": "Desagrupar (mantener contenido)"
     },
     "properties": {
+      "bulk": {
+        "points": "Puntos ({count})",
+        "edges": "Flechas ({count})",
+        "mixed": "Los valores son diferentes",
+        "result": "Se modificaron {changed} elementos. No se pudieron modificar {skipped} elementos.",
+        "reasonCount": "{reason} ({count})",
+        "reasons": {
+          "requiresDwell": "Los puntos que no permiten permanecer no pueden ser destinos.",
+          "bothNotReversed": "Las flechas bidireccionales se excluyen de la inversión."
+        }
+      },
+      "groupSelected": "Agrupar puntos seleccionados",
+      "deleteSelected": "Eliminar elementos seleccionados",
+      "deleteSelectedGroupHint": "Los grupos seleccionados se disuelven; se conserva el contenido no seleccionado.",
+      "groupSelectionErrors": {
+        "pointsOnly": "No se pueden agrupar grupos ni puntos externos.",
+        "tooFewPoints": "Selecciona al menos dos puntos.",
+        "differentParents": "Selecciona puntos con el mismo grupo padre."
+      },
+      "selectedNodes": "Nodos: {count}",
+      "selectedEdges": "Flechas: {count}",
+      "selectedGroups": "Grupos: {count}",
       "title": "Propiedades",
       "empty": "Selecciona un punto o una ruta.",
       "deleteNode": "Eliminar este punto",
@@ -137,10 +170,10 @@
       "error": "Error de conexión"
     },
     "aliveEdges": {
-      "title": "Edges conectados ({count})",
+      "title": "Edges en línea ({count})",
       "refresh": "Actualizar",
       "loading": "Cargando…",
-      "empty": "No hay edges conectados",
+      "empty": "No hay edges en línea",
       "lastSeen": "Última respuesta: {time}",
       "unknownTime": "Desconocida",
       "connect": "Conectar",
@@ -183,9 +216,13 @@
     "lines": {
       "create": "Crear línea",
       "edit": "Modo de edición",
+      "reverseForward": "Invertir dirección forward",
       "deleteSelected": "Eliminar la línea seleccionada",
       "reset": "Restablecer las líneas",
-      "count": "Línea {index}: forward {forward} / backward {backward}"
+      "count": "Línea {index}: forward {forward} / backward {backward}",
+      "namedCount": "{name}: forward {forward} / backward {backward}",
+      "nameLabel": "Nombre de la línea seleccionada",
+      "namePlaceholder": "p. ej., entrada del salón A, pasillo norte"
     }
   },
   "Observation": {
@@ -346,5 +383,43 @@
         "goods": "Tienda"
       }
     }
+  },
+  "PwaInstall": {
+    "button": "Instalar aplicación",
+    "title": "Instalar Tolo",
+    "description": "Abre Tolo desde la pantalla de inicio o la lista de aplicaciones. Necesitas conexión a Internet para usarlo.",
+    "nativeIntro": "Pulsa Instalar abajo y, después, elige Instalar en la ventana de confirmación del navegador.",
+    "nativeInstall": "Instalar",
+    "installing": "Abriendo la ventana de confirmación…",
+    "dismissed": "Se ha cancelado la instalación. Puedes volver a intentarlo desde el menú del navegador.",
+    "error": "No se ha podido abrir la ventana de confirmación. Sigue los pasos de abajo para instalar desde el navegador.",
+    "accepted": "Se ha aceptado la solicitud de instalación. Cuando termine, abre Tolo desde la pantalla de inicio o la lista de aplicaciones.",
+    "iosTitle": "iPhone y iPad (Safari)",
+    "iosSteps": {
+      "first": "Abre esta página en Safari y toca Compartir (un cuadrado con una flecha hacia arriba). Si no aparece, abre el menú de página en la barra de direcciones y elige Compartir.",
+      "second": "Desplázate hacia abajo en el menú y elige Añadir a pantalla de inicio. Si aparece Abrir como app web, actívalo.",
+      "third": "Toca Añadir. Abre Tolo con el nuevo icono de la pantalla de inicio."
+    },
+    "androidTitle": "Android (Chrome)",
+    "androidSteps": {
+      "first": "Abre esta página en Chrome y toca el menú ︙ de la esquina superior derecha.",
+      "second": "Elige Instalar y crear acceso directo → Instalar. Según la versión, elige Instalar aplicación o Añadir a pantalla de inicio y sigue las instrucciones de la pantalla.",
+      "third": "Abre Tolo con su icono de la pantalla de inicio o la lista de aplicaciones. Si falta la opción del menú, recarga la página en una pestaña normal y vuelve a intentarlo."
+    },
+    "desktopTitle": "Ordenador (Chrome y Edge)",
+    "desktopSteps": {
+      "first": "Abre esta página en Chrome o Edge.",
+      "second": "Haz clic en el icono de instalación a la derecha de la barra de direcciones. Si no aparece, en Chrome elige ︙ → Enviar, guardar y compartir → Instalar página como aplicación. En Edge, elige … → Más herramientas (si aparece) → Aplicaciones → Instalar este sitio como una aplicación.",
+      "third": "Elige Instalar en la ventana de confirmación. Puedes abrir Tolo desde la lista de aplicaciones."
+    },
+    "macTitle": "Mac (Safari)",
+    "macSteps": {
+      "first": "Abre esta página en Safari (macOS Sonoma o posterior).",
+      "second": "En la barra de menús, elige Archivo → Añadir al Dock y haz clic en Añadir.",
+      "third": "Abre Tolo con su nuevo icono en el Dock."
+    },
+    "otherIntro": "Los pasos varían según el navegador y el dispositivo. Elige las instrucciones para tu dispositivo. Si falta una opción, abre esta página en uno de los navegadores compatibles de abajo.",
+    "insecure": "La instalación requiere una conexión HTTPS. Abre el sitio público con su URL HTTPS.",
+    "close": "Cerrar"
   }
 }

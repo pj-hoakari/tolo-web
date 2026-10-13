@@ -1,7 +1,7 @@
 import { Network, SquareDashed } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { NODE_TYPE_DEFS } from "../nodeTypes";
+import { DEFAULT_NODE_TYPE } from "../nodeTypes";
 import type { NodeType } from "../type";
 import { type LabelLocaleBindings, LabelLocaleMenu } from "./LabelLocaleMenu";
 import { NodeTypeIcon } from "./NodeTypeIcon";
@@ -11,6 +11,7 @@ export type GraphEditorToolbarProps = LabelLocaleBindings & {
   onAddGroup: () => void;
   onAutoAlign: () => void;
   onSave: () => void;
+  saveStatus: "idle" | "saving" | "saved" | "failed";
 };
 
 /**
@@ -22,6 +23,7 @@ export function GraphEditorToolbar({
   onAddGroup,
   onAutoAlign,
   onSave,
+  saveStatus,
   labelLocale,
   onChangeLabelLocale,
   labelCounts,
@@ -36,18 +38,23 @@ export function GraphEditorToolbar({
         {t("title")}
       </p>
       <div className="flex flex-wrap items-center justify-end gap-2">
-        {NODE_TYPE_DEFS.map((def) => (
+        {(
+          [
+            { type: DEFAULT_NODE_TYPE, label: t("point") },
+            { type: "EXTERNAL", label: tType("EXTERNAL") },
+          ] as const
+        ).map(({ type, label }) => (
           <Button
-            key={def.type}
+            key={type}
             variant="outline"
             size="sm"
-            onPress={() => onAddNode(def.type)}
-            aria-label={t("addNode", { type: tType(def.type) })}
+            onPress={() => onAddNode(type)}
+            aria-label={t("addNode", { type: label })}
             className="gap-1.5"
           >
             <span className="text-muted-foreground">+</span>
-            <NodeTypeIcon type={def.type} />
-            {tType(def.type)}
+            <NodeTypeIcon type={type} />
+            {label}
           </Button>
         ))}
         <Button
@@ -76,7 +83,14 @@ export function GraphEditorToolbar({
             <Network aria-hidden className="size-4 shrink-0" />
             {t("autoAlign")}
           </Button>
-          <Button size="sm" onPress={onSave}>
+          <span role="status" className="text-muted-foreground text-sm">
+            {saveStatus === "saved" && t("saved")}
+          </span>
+          <Button
+            size="sm"
+            onPress={onSave}
+            isPending={saveStatus === "saving"}
+          >
             {t("save")}
           </Button>
         </div>

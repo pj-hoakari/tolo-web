@@ -1,40 +1,21 @@
 import {
-  NODE_TYPE_DEFS,
+  hasNodeTypeFlag,
+  NODE_TYPE_FLAGS,
+  type NodeTypeFlag,
   type NoticeTranslator,
-  type ValidationResult,
+  setNodeTypeFlag,
   validateAssignType,
 } from "../../nodeTypes";
 import type { GraphCanvasNode, GraphEdgeType, NodeType } from "../../type";
 
-/** ノードタイプ選択肢1件分の選択可否 */
 export type NodeTypeOption = {
-  type: NodeType;
-  /** このタイプに変更できるか（選択中のタイプは常に true） */
+  flag: NodeTypeFlag;
+  checked: boolean;
+  next: NodeType;
   assignable: boolean;
-  /** 変更できない理由。変更できるときは null */
   disabledReason: string | null;
 };
 
-/**
- * 検証結果から選択肢1件分の表示状態を導出する。
- * 選択中のタイプは制約違反であっても操作を塞がないよう常に選択可能とする。
- */
-export function deriveNodeTypeOption(
-  type: NodeType,
-  selected: boolean,
-  result: ValidationResult,
-  translateNotice: NoticeTranslator,
-): NodeTypeOption {
-  const assignable = selected || result.ok;
-  return {
-    type,
-    assignable,
-    disabledReason:
-      assignable || result.ok ? null : translateNotice(result.messageKey),
-  };
-}
-
-/** 現在のグラフ状態から、各ノードタイプに変更できるかを解決する */
 export function buildNodeTypeOptions(
   nodeId: string,
   currentType: NodeType,
@@ -42,12 +23,18 @@ export function buildNodeTypeOptions(
   edges: GraphEdgeType[],
   translateNotice: NoticeTranslator,
 ): NodeTypeOption[] {
-  return NODE_TYPE_DEFS.map((def) =>
-    deriveNodeTypeOption(
-      def.type,
-      def.type === currentType,
-      validateAssignType(def.type, nodeId, nodes, edges),
-      translateNotice,
-    ),
-  );
+  return NODE_TYPE_FLAGS.map((flag) => {
+    const checked = hasNodeTypeFlag(currentType, flag);
+    const next = setNodeTypeFlag(currentType, flag, !checked);
+    const available =
+      flag !== "destination" || hasNodeTypeFlag(currentType, "dwell");
+    const result = validateAssignType(next, nodeId, nodes, edges);
+    return {
+      flag,
+      checked,
+      next,
+      assignable: available && result.ok,
+      disabledReason: result.ok ? null : translateNotice(result.messageKey),
+    };
+  });
 }

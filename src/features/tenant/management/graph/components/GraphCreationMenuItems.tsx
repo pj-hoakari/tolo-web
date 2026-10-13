@@ -1,5 +1,5 @@
 import type { XYPosition } from "@xyflow/react";
-import { MapPinPlus, Route, SquareDashed, X } from "lucide-react";
+import { LogIn, MapPinPlus, Route, SquareDashed, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { NodeType } from "../type";
 import { ContextMenuItem } from "./ContextMenuItem";
@@ -17,7 +17,7 @@ export type GraphCreationMenuItemsProps = {
 
 /**
  * 背景・グループの両メニューで共通の要素追加系項目
- * （ポイント追加・グループ追加・ルート追加）。
+ * （ポイント追加・外部ポイント追加・グループ追加・ルート追加）。
  * ルート追加モード中は追加操作の代わりに終了操作だけを出す。
  */
 export function GraphCreationMenuItems({
@@ -49,6 +49,12 @@ export function GraphCreationMenuItems({
         icon={MapPinPlus}
         label={t("addNode")}
         onAction={() => onAddNode(nodePosition, nodeType)}
+      />
+      <ContextMenuItem
+        id="add-external"
+        icon={LogIn}
+        label={t("addExternal")}
+        onAction={() => onAddNode(nodePosition, "EXTERNAL")}
       />
       <ContextMenuItem
         id="add-group"

@@ -1,24 +1,46 @@
 import type { AliveEdge } from "@/features/tenant/webrtc/type";
-import type { AliveEdge as WireAliveEdge } from "@/server/router";
+import type { EdgeDevice } from "@/server/router";
 
-// id は `${tenantId}_${eventId}_${suffix}` 形式
 export const SAMPLE_TENANT_ID = "test";
 export const SAMPLE_EVENT_ID = "test";
 
-export const sampleAliveEdgesWire: WireAliveEdge[] = [
+export const sampleEdgeDevicesWire: EdgeDevice[] = [
   {
-    id: `${SAMPLE_TENANT_ID}_${SAMPLE_EVENT_ID}_8c1f0e2a`,
-    lastSeenAt: "2026-06-14T10:00:00.000Z",
+    edgeDeviceId: "8c1f0e2a5d4b3c6e",
+    name: "入口カメラ",
+    online: true,
+    lastHeartbeatAt: "2026-06-14T10:00:00.000Z",
+    observationPoints: [
+      { observationPointId: "a1b2c3d4e5f60718", name: "入口" },
+    ],
   },
   {
-    id: `${SAMPLE_TENANT_ID}_${SAMPLE_EVENT_ID}_3b9d77f4`,
-    lastSeenAt: "2026-06-14T10:00:05.000Z",
+    edgeDeviceId: "3b9d77f41e2a5c08",
+    name: "",
+    online: true,
+    lastHeartbeatAt: "2026-06-14T10:00:05.000Z",
+    observationPoints: [
+      { observationPointId: "b2c3d4e5f6071829", name: "ブース前" },
+    ],
+  },
+  {
+    edgeDeviceId: "5e6f708192a3b4c5",
+    name: "ホールカメラ",
+    online: false,
+    lastHeartbeatAt: "2026-06-14T09:00:00.000Z",
+    observationPoints: [
+      { observationPointId: "c3d4e5f60718293a", name: "ホール" },
+    ],
   },
 ];
 
-export const sampleAliveEdges: AliveEdge[] = sampleAliveEdgesWire.map(
-  (edge) => ({
-    id: edge.id,
-    lastSeenAt: edge.lastSeenAt ? new Date(edge.lastSeenAt) : null,
-  }),
-);
+export const sampleAliveEdges: AliveEdge[] = sampleEdgeDevicesWire
+  .filter((device) => device.online)
+  .map((device) => ({
+    edgeDeviceId: device.edgeDeviceId,
+    name: device.name,
+    lastHeartbeatAt: device.lastHeartbeatAt
+      ? new Date(device.lastHeartbeatAt)
+      : null,
+    observationPoints: device.observationPoints,
+  }));

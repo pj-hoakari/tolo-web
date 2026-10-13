@@ -1,58 +1,9 @@
 import { describe, expect, it } from "vitest";
-import {
-  NODE_TYPE_DEFS,
-  type NoticeMessageKey,
-  type ValidationResult,
-} from "../../nodeTypes";
+import type { NoticeMessageKey } from "../../nodeTypes";
 import type { GraphEdgeType, GraphNodeType, NodeType } from "../../type";
-import { buildNodeTypeOptions, deriveNodeTypeOption } from "./nodeTypeOptions";
+import { buildNodeTypeOptions } from "./nodeTypeOptions";
 
-const OK: ValidationResult = { ok: true };
-// 制約が定義されていないため実在するキーは1つだけ。
-// 理由の出し分けを検証したいので、テスト内では任意の文字列をキーとして扱う。
-const NG = (messageKey: string): ValidationResult => ({
-  ok: false,
-  messageKey: messageKey as NoticeMessageKey,
-});
-
-/** 理由のキーをそのまま表示文言として扱う（アサーションを読みやすくするため） */
 const asIs = (messageKey: NoticeMessageKey): string => messageKey;
-
-describe("deriveNodeTypeOption: タイプ選択肢の選択可否", () => {
-  it("制約を満たすタイプは選択でき、理由も出さない", () => {
-    const option = deriveNodeTypeOption("GOAL", false, OK, asIs);
-
-    expect(option).toEqual({
-      type: "GOAL",
-      assignable: true,
-      disabledReason: null,
-    });
-  });
-
-  it("制約違反のタイプは選択できず、理由を出す", () => {
-    const option = deriveNodeTypeOption(
-      "BOUNDARY",
-      false,
-      NG("接続が必要"),
-      asIs,
-    );
-
-    expect(option.assignable).toBe(false);
-    expect(option.disabledReason).toBe("接続が必要");
-  });
-
-  it("選択中のタイプは制約違反でも選択解除されないよう有効のまま", () => {
-    const option = deriveNodeTypeOption(
-      "BOUNDARY",
-      true,
-      NG("接続が必要"),
-      asIs,
-    );
-
-    expect(option.assignable).toBe(true);
-    expect(option.disabledReason).toBeNull();
-  });
-});
 
 function node(id: string, nodeType: NodeType): GraphNodeType {
   return {
@@ -67,26 +18,53 @@ function edge(id: string, source: string, target: string): GraphEdgeType {
   return { id, source, target, type: "graph", data: { direction: "both" } };
 }
 
-describe("buildNodeTypeOptions: グラフ状態からの解決", () => {
-  it("定義順にすべてのタイプの選択肢を返す", () => {
-    const nodes = [node("a", "GOAL"), node("b", "TRANSIT_ONLY")];
-    const edges = [edge("e1", "a", "b")];
+function optionsFor(type: NodeType) {
+  const nodes = [node("a", type), node("b", "TRANSIT_ONLY")];
+  const edges = [edge("e1", "a", "b")];
+  return buildNodeTypeOptions("a", type, nodes, edges, asIs).map(
+    ({ flag, checked, next, assignable }) => ({
+      flag,
+      checked,
+      next,
+      assignable,
+    }),
+  );
+}
 
-    const options = buildNodeTypeOptions("a", "GOAL", nodes, edges, asIs);
-
-    expect(options.map((o) => o.type)).toEqual(
-      NODE_TYPE_DEFS.map((d) => d.type),
-    );
+describe("buildNodeTypeOptions: タイプをフラグとして切り替える", () => {
+  it("停滞可のポイントは、停滞を外すと通過のみ、目的地にすると目的地になる", () => {
+    expect(optionsFor("GOAL_TRANSIT_MIXED")).toEqual([
+      { flag: "dwell", checked: true, next: "TRANSIT_ONLY", assignable: true },
+      { flag: "destination", checked: false, next: "GOAL", assignable: true },
+    ]);
   });
 
-  it("選択中のタイプは常に選択可能", () => {
-    const nodes = [node("a", "BOUNDARY"), node("b", "TRANSIT_ONLY")];
-    const edges = [edge("e1", "a", "b")];
+  it("通過のみのポイントは、停滞を許すと停滞可になり、目的地は選べない", () => {
+    expect(optionsFor("TRANSIT_ONLY")).toEqual([
+      {
+        flag: "dwell",
+        checked: false,
+        next: "GOAL_TRANSIT_MIXED",
+        assignable: true,
+      },
+      {
+        flag: "destination",
+        checked: false,
+        next: "GOAL",
+        assignable: false,
+      },
+    ]);
+  });
 
-    const options = buildNodeTypeOptions("a", "BOUNDARY", nodes, edges, asIs);
-    const selected = options.find((o) => o.type === "BOUNDARY");
-
-    expect(selected?.assignable).toBe(true);
-    expect(selected?.disabledReason).toBeNull();
+  it("目的地のポイントは両方のフラグが立ち、目的地を外すと停滞可に戻る", () => {
+    expect(optionsFor("GOAL")).toEqual([
+      { flag: "dwell", checked: true, next: "TRANSIT_ONLY", assignable: true },
+      {
+        flag: "destination",
+        checked: true,
+        next: "GOAL_TRANSIT_MIXED",
+        assignable: true,
+      },
+    ]);
   });
 });

@@ -15,23 +15,23 @@
     "title": "{tenantId} 管理ページ",
     "tabsLabel": "管理ビュー切り替え",
     "tabs": {
-      "graph": "会場グラフ",
+      "graph": "ルート図",
       "edges": "接続エッジ"
     },
-    "graphEditTitle": "{tenantId} 会場グラフ編集",
+    "graphEditTitle": "{tenantId} ルート図編集",
     "backLink": "管理ページへ戻る"
   },
   "Graph": {
     "viewer": {
-      "title": "会場グラフ",
+      "title": "ルート図",
       "edit": "グラフを編集",
       "save": "保存"
     },
     "nodeType": {
       "GOAL": "目的地",
-      "GOAL_TRANSIT_MIXED": "目的地 / 通過",
+      "GOAL_TRANSIT_MIXED": "停滞可",
       "TRANSIT_ONLY": "通過のみ",
-      "BOUNDARY": "入退出点"
+      "EXTERNAL": "外部"
     },
     "selectionKind": {
       "node": "ポイント",
@@ -49,32 +49,42 @@
       "refresh": "更新",
       "error": "観測点の取得に失敗しました",
       "loading": "読み込み中…",
-      "empty": "接続中の観測点がありません",
-      "online": "接続中",
+      "empty": "稼働中の観測点がありません",
+      "online": "稼働中",
       "offline": "オフライン",
       "usedByOther": "他のポイント / ルートで使用中"
     },
     "nodeTypeDescription": {
-      "GOAL": "例: 展示ブース",
-      "GOAL_TRANSIT_MIXED": "例: 壁展示（目的地にも通過にもなりうる）",
-      "TRANSIT_ONLY": "例: 通路の分岐",
-      "BOUNDARY": "例: 会場の入口・出口"
+      "EXTERNAL": "会場の外を表す仮想ポイントです。外部と接続したポイントが入退出点になります。"
+    },
+    "nodeTypeFlag": {
+      "dwell": "停滞を許容する",
+      "destination": "目的地として扱う"
+    },
+    "nodeTypeFlagDescription": {
+      "dwell": "人が立ち止まりうる地点です。オフにすると通過のみになります（例: 通路の分岐）",
+      "destination": "通り抜けには使われない行き先です（例: 展示ブース）"
     },
     "notices": {
-      "dualDirection": "入退出（入力・出力）の両方を担っています"
+      "boundary": "入退出点（外部と接続）",
+      "closed": "クローズドモード（入退出点なし）"
     },
     "labelLanguage": {
       "label": "ラベルの言語",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
-      "title": "会場エディタ",
+      "title": "ルート図エディタ",
       "addNode": "{type}を追加",
+      "point": "ポイント",
       "save": "保存",
       "newNodeLabel": "ポイント {index}",
       "addGroup": "グループを追加",
       "newGroupLabel": "グループ {index}",
-      "autoAlign": "自動整列"
+      "autoAlign": "自動整列",
+      "saved": "保存しました",
+      "saveFailed": "保存に失敗しました。時間をおいてもう一度お試しください。",
+      "saveInvalid": "ルート図に保存できない箇所があります"
     },
     "easyConnect": {
       "fromNode": "ルートを追加: 終点にするポイントをクリック",
@@ -86,6 +96,7 @@
       "canvasLabel": "キャンバスの操作",
       "endEdgeCreation": "ルート追加を終了",
       "addNode": "ポイントを追加",
+      "addExternal": "外部ポイントを追加",
       "addEdge": "ルートを追加",
       "nodeLabel": "ポイント「{label}」の操作",
       "addEdgeFromNode": "このポイントからルートを追加",
@@ -101,6 +112,28 @@
       "dissolveGroup": "グループを解除（中身は残す）"
     },
     "properties": {
+      "bulk": {
+        "points": "ポイント（{count}件）",
+        "edges": "矢印（{count}件）",
+        "mixed": "値が混在しています",
+        "result": "{changed}件を変更しました。{skipped}件は変更できませんでした。",
+        "reasonCount": "{reason}（{count}件）",
+        "reasons": {
+          "requiresDwell": "停滞を許容しないポイントは、目的地として扱えません。",
+          "bothNotReversed": "両通行の矢印は反転の対象外です。"
+        }
+      },
+      "groupSelected": "選択したポイントをグループ化",
+      "deleteSelected": "選択した要素を削除",
+      "deleteSelectedGroupHint": "選択したグループは解除され、未選択の中身は残ります。",
+      "groupSelectionErrors": {
+        "pointsOnly": "グループと外部ポイントはグループ化できません。",
+        "tooFewPoints": "ポイントを2件以上選択してください。",
+        "differentParents": "同じ所属のポイントを選択してください。"
+      },
+      "selectedNodes": "ノード: {count}件",
+      "selectedEdges": "矢印: {count}件",
+      "selectedGroups": "グループ: {count}件",
       "title": "プロパティ",
       "empty": "ポイントまたはルートを選択してください。",
       "deleteNode": "このポイントを削除",
@@ -137,10 +170,10 @@
       "error": "接続失敗"
     },
     "aliveEdges": {
-      "title": "接続中のエッジ（{count}）",
+      "title": "稼働中のエッジ（{count}）",
       "refresh": "更新",
       "loading": "読み込み中…",
-      "empty": "接続中のエッジがありません",
+      "empty": "稼働中のエッジがありません",
       "lastSeen": "最終応答: {time}",
       "unknownTime": "不明",
       "connect": "接続",
@@ -183,9 +216,13 @@
     "lines": {
       "create": "ライン生成",
       "edit": "編集モード",
+      "reverseForward": "forward方向を反転",
       "deleteSelected": "選択ラインを削除",
       "reset": "ラインを初期位置に戻す",
-      "count": "ライン {index}: forward {forward} / backward {backward}"
+      "count": "ライン {index}: forward {forward} / backward {backward}",
+      "namedCount": "{name}: forward {forward} / backward {backward}",
+      "nameLabel": "選択ラインの名前",
+      "namePlaceholder": "例：ホールA入口、連絡通路北側"
     }
   },
   "Observation": {
@@ -346,5 +383,43 @@
         "goods": "グッズ売り場"
       }
     }
+  },
+  "PwaInstall": {
+    "button": "アプリをインストール",
+    "title": "Tolo をインストール",
+    "description": "ホーム画面やアプリ一覧から Tolo を開けるようになります。利用にはインターネット接続が必要です。",
+    "nativeIntro": "下の「インストール」を押し、ブラウザの確認画面で「インストール」を選んでください。",
+    "nativeInstall": "インストール",
+    "installing": "確認画面を開いています…",
+    "dismissed": "インストールをキャンセルしました。ブラウザのメニューから再度インストールできます。",
+    "error": "確認画面を開けませんでした。以下の手順でブラウザからインストールしてください。",
+    "accepted": "インストール操作を受け付けました。完了後、ホーム画面やアプリ一覧から Tolo を開いてください。",
+    "iosTitle": "iPhone・iPad（Safari）",
+    "iosSteps": {
+      "first": "このページを Safari で開き、「共有」（四角から上向き矢印のアイコン）を押します。見つからない場合は、アドレスバーのページメニューから「共有」を選びます。",
+      "second": "メニューを下にスクロールして「ホーム画面に追加」を選びます。「ウェブアプリとして開く」が表示されたらオンにします。",
+      "third": "「追加」を押します。ホーム画面にできた Tolo のアイコンから開けます。"
+    },
+    "androidTitle": "Android（Chrome）",
+    "androidSteps": {
+      "first": "このページを Chrome で開き、右上の「︙」メニューを押します。",
+      "second": "「インストールしてショートカットを作成」→「インストール」を選びます。バージョンによっては「アプリをインストール」または「ホーム画面に追加」から進み、画面の案内に従います。",
+      "third": "ホーム画面やアプリ一覧の Tolo アイコンから開きます。項目がない場合は、通常タブでページを再読み込みしてお試しください。"
+    },
+    "desktopTitle": "パソコン（Chrome・Edge）",
+    "desktopSteps": {
+      "first": "このページを Chrome または Edge で開きます。",
+      "second": "アドレスバー右端のインストールアイコンを押します。見つからない場合は、Chrome の「︙」→「キャスト、保存、共有」→「ページをアプリとしてインストール」、または Edge の「…」→「その他のツール」（表示される場合）→「アプリ」→「このサイトをアプリとしてインストール」を選びます。",
+      "third": "確認画面で「インストール」を選びます。アプリ一覧から Tolo を開けます。"
+    },
+    "macTitle": "Mac（Safari）",
+    "macSteps": {
+      "first": "このページを Safari で開きます（macOS Sonoma 以降）。",
+      "second": "上部の「ファイル」→「Dockに追加」を選び、「追加」を押します。",
+      "third": "Dock にできた Tolo アイコンから開きます。"
+    },
+    "otherIntro": "ブラウザや端末によって手順が異なります。お使いの環境に合う手順を選んでください。項目が表示されない場合は、下記の対応ブラウザでこのページを開いてください。",
+    "insecure": "インストールには HTTPS 接続が必要です。公開サイトの HTTPS の URL で開いてください。",
+    "close": "閉じる"
   }
 }

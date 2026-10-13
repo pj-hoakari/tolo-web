@@ -9,6 +9,15 @@
       "description": "Disable minimum release age checks for internal dependencies",
       "matchPackageNames": ["@pj-hoakari/*"],
       "minimumReleaseAge": null
+    },
+    {
+      "description": "Update the Playwright Docker image and npm packages together",
+      "matchPackageNames": [
+        "playwright",
+        "@playwright/test",
+        "mcr.microsoft.com/playwright"
+      ],
+      "groupName": "playwright"
     }
   ]
 }

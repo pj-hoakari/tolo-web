@@ -29,7 +29,7 @@ export type NodeType =
   | "GOAL"
   | "GOAL_TRANSIT_MIXED"
   | "TRANSIT_ONLY"
-  | "BOUNDARY";
+  | "EXTERNAL";
 
 /** 通知（強調表示）の重要度 */
 export type NoticeLevel = "info" | "warning";
@@ -65,8 +65,8 @@ export type GraphNodeData = {
   labelIsFallback?: boolean;
   nodeType: NodeType;
   /**
-   * 紐づけた観測点（接続エッジ）の ID 一覧。
-   * ID は webrtc の接続エッジ（AliveEdge）の id に対応
+   * 紐づけた観測点の ID 一覧。
+   * ID は Observation の observation_point_id に対応
    */
   observationPointIds?: string[];
   /**
@@ -90,8 +90,8 @@ export type GraphEdgeData = {
    */
   direction: EdgeDirection;
   /**
-   * 紐づけた観測点（接続エッジ）の ID 一覧。
-   * ID は webrtc の接続エッジ（AliveEdge）の id に対応
+   * 紐づけた観測点の ID 一覧。
+   * ID は Observation の observation_point_id に対応
    */
   observationPointIds?: string[];
 };
@@ -135,6 +135,10 @@ export function isGroupNode(node: GraphCanvasNode): node is GroupNodeType {
 
 export function isPointNode(node: GraphCanvasNode): node is GraphNodeType {
   return node.type !== "graphGroup";
+}
+
+export function isExternalNode(node: GraphCanvasNode): boolean {
+  return isPointNode(node) && node.data.nodeType === "EXTERNAL";
 }
 
 export type GraphData = {

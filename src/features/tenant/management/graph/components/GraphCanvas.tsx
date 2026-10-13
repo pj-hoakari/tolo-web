@@ -12,10 +12,11 @@ import {
   MiniMap,
   type NodeChange,
   type NodeTypes,
+  type OnBeforeDelete,
   type OnConnectEnd,
   type OnConnectStart,
+  type OnSelectionChangeFunc,
   ReactFlow,
-  useStoreApi,
   useViewport,
 } from "@xyflow/react";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -61,7 +62,7 @@ const edgeTypes: EdgeTypes = { graph: GraphEdge };
 /** MiniMap でのグループコンテナの塗り色 */
 const GROUP_MINIMAP_COLOR = "#d4d4d8";
 
-// React Flow の既定値（50%）だと、広い会場グラフを fitView しても
+// React Flow の既定値（50%）だと、広いグラフを fitView しても
 // 下限で止まり、端のノードが画面外に残る。
 const MIN_ZOOM = 0.01;
 export const FIT_VIEW_OPTIONS = { padding: 0.2, minZoom: MIN_ZOOM };
@@ -88,6 +89,7 @@ export type GraphCanvasEditing = {
   ) => void;
   onDeleteNode: (id: string) => void;
   onDeleteEdge: (id: string) => void;
+  onBeforeDelete: OnBeforeDelete<GraphCanvasNode, GraphEdgeType>;
   /** ドラッグ終了時に、位置に応じた所属グループの付け替えを行う */
   onNodeDragStop: (ids: string[]) => void;
   /** グループの手動リサイズ確定（最小サイズとして保存し、フィットし直す） */
@@ -114,7 +116,7 @@ export type GraphCanvasProps = {
 };
 
 /**
- * 会場グラフを描画する ReactFlow キャンバス。
+ * グラフを描画する ReactFlow キャンバス。
  * グラフ本体の状態は持たず、描画と入力イベントの受け渡しを担う。
  * ルート追加モードは useEasyConnect、コンテキストメニューは
  * useCanvasContextMenu が状態を持ち、ここでは配線だけを行う。
@@ -132,7 +134,6 @@ export function GraphCanvas({
 }: GraphCanvasProps) {
   const editable = editing !== undefined;
   const viewport = useViewport();
-  const store = useStoreApi();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const nativeConnectionHandled = useRef(false);
   const [virtualHandle, setVirtualHandle] = useState<VirtualHandle | null>(
@@ -264,21 +265,29 @@ export function GraphCanvas({
     onClearSelection();
   }, [easyConnect, onClearSelection]);
 
+  const handleSelectionChange = useCallback<
+    OnSelectionChangeFunc<GraphCanvasNode, GraphEdgeType>
+  >(
+    ({ nodes: selectedNodes, edges: selectedEdges }) => {
+      const count = selectedNodes.length + selectedEdges.length;
+      if (count === 0) onClearSelection();
+      if (count !== 1) return;
+      if (selectedNodes[0]) onSelectNode(selectedNodes[0].id);
+      else onSelectEdge(selectedEdges[0].id);
+    },
+    [onSelectNode, onSelectEdge, onClearSelection],
+  );
+
   const labelEditing = useMemo(
     () =>
       editing
         ? {
             locale: editing.labelLocale,
             onUpdate: editing.onSetNodeLabel,
-            onSelect: (id: string) => {
-              // React Flow 側の選択も同期させ、枠線の強調やリサイザ表示を
-              // ノード本体をクリックしたときと同じ状態にする
-              store.getState().addSelectedNodes([id]);
-              onSelectNode(id);
-            },
+            onSelect: onSelectNode,
           }
         : undefined,
-    [editing, onSelectNode, store],
+    [editing, onSelectNode],
   );
 
   return (
@@ -350,6 +359,22 @@ export function GraphCanvas({
               onConnect={editable ? handleConnect : undefined}
               onConnectStart={editable ? handleConnectStart : undefined}
               onConnectEnd={editable ? handleConnectEnd : undefined}
+              // クリックだけで選択をトグルし、ドラッグ開始では解除しない。
+              selectNodesOnDrag={false}
+              onNodeDragStart={
+                editable
+                  ? (event, node) => {
+                      if (node.selected) return;
+                      if (event.shiftKey || event.ctrlKey) {
+                        onNodesChange([
+                          { type: "select", id: node.id, selected: true },
+                        ]);
+                      } else {
+                        onSelectNode(node.id);
+                      }
+                    }
+                  : undefined
+              }
               onNodeDragStop={
                 editable
                   ? (_, __, draggedNodes) =>
@@ -366,15 +391,60 @@ export function GraphCanvas({
               nodesDraggable={editable && !easyConnect.active}
               nodesConnectable={editable}
               deleteKeyCode={editable ? ["Delete", "Backspace"] : null}
-              onNodeClick={(_, n) => onSelectNode(n.id)}
+              onBeforeDelete={editing?.onBeforeDelete}
+              multiSelectionKeyCode={editable ? ["Shift", "Control"] : null}
+              selectionKeyCode={editable ? null : "Shift"}
+              onNodeClick={(event, n) => {
+                if (!editable || (!event.shiftKey && !event.ctrlKey))
+                  onSelectNode(n.id);
+              }}
               onNodeContextMenu={
-                editable ? contextMenu.openNodeMenu : undefined
+                editable
+                  ? (event, node) => {
+                      // macOS の Ctrl + 左クリックは click の代わりに contextmenu を送る。
+                      if (event.ctrlKey && event.button === 0) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        contextMenu.close();
+                        onNodesChange([
+                          {
+                            type: "select",
+                            id: node.id,
+                            selected: !node.selected,
+                          },
+                        ]);
+                      } else {
+                        contextMenu.openNodeMenu(event, node);
+                      }
+                    }
+                  : undefined
               }
-              onEdgeClick={(_, e) => onSelectEdge(e.id)}
+              onEdgeClick={(event, e) => {
+                if (!editable || (!event.shiftKey && !event.ctrlKey))
+                  onSelectEdge(e.id);
+              }}
               onEdgeContextMenu={
-                editable ? contextMenu.openEdgeMenu : undefined
+                editable
+                  ? (event, edge) => {
+                      if (event.ctrlKey && event.button === 0) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        contextMenu.close();
+                        onEdgesChange([
+                          {
+                            type: "select",
+                            id: edge.id,
+                            selected: !edge.selected,
+                          },
+                        ]);
+                      } else {
+                        contextMenu.openEdgeMenu(event, edge);
+                      }
+                    }
+                  : undefined
               }
               onPaneClick={handlePaneClick}
+              onSelectionChange={handleSelectionChange}
               onPaneContextMenu={
                 editable ? contextMenu.openPaneMenu : undefined
               }

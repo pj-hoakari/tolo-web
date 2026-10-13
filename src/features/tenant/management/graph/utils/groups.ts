@@ -2,6 +2,7 @@ import type { XYPosition } from "@xyflow/react";
 import {
   type GraphCanvasNode,
   type GroupNodeType,
+  isExternalNode,
   isGroupNode,
   isPointNode,
 } from "../type";
@@ -30,6 +31,14 @@ export function sizeOf(node: GraphCanvasNode): {
   const fallback = isGroupNode(node)
     ? { width: GROUP_DEFAULT_WIDTH, height: GROUP_DEFAULT_HEIGHT }
     : { width: 160, height: 56 };
+  // グループの width / height はフィット・リサイズで確定した最新の寸法。
+  // DOM の再計測を待つ measured より優先し、祖先も同じ更新でフィットする。
+  if (isGroupNode(node)) {
+    return {
+      width: node.width ?? node.measured?.width ?? fallback.width,
+      height: node.height ?? node.measured?.height ?? fallback.height,
+    };
+  }
   return {
     width: node.measured?.width ?? node.width ?? fallback.width,
     height: node.measured?.height ?? node.height ?? fallback.height,
@@ -128,10 +137,11 @@ export function sortByNesting(nodes: GraphCanvasNode[]): GraphCanvasNode[] {
 export function resolveParentGroup(
   nodeId: string,
   nodes: GraphCanvasNode[],
+  excludedGroupIds: ReadonlySet<string> = new Set(),
 ): string | undefined {
   const byId = new Map<string, GraphCanvasNode>(nodes.map((n) => [n.id, n]));
   const node = byId.get(nodeId);
-  if (!node) return undefined;
+  if (!node || isExternalNode(node)) return undefined;
 
   const excluded = descendantIdsOf(nodes, nodeId);
   excluded.add(nodeId);
@@ -146,7 +156,12 @@ export function resolveParentGroup(
   let best: GroupNodeType | undefined;
   let bestArea = Number.POSITIVE_INFINITY;
   for (const candidate of nodes) {
-    if (!isGroupNode(candidate) || excluded.has(candidate.id)) continue;
+    if (
+      !isGroupNode(candidate) ||
+      excluded.has(candidate.id) ||
+      excludedGroupIds.has(candidate.id)
+    )
+      continue;
     const candidateAbs = absolutePositionOf(candidate, byId);
     const { width, height } = sizeOf(candidate);
     const contains =
@@ -175,17 +190,55 @@ export function reparentNode(
 ): GraphCanvasNode[] {
   const byId = new Map<string, GraphCanvasNode>(nodes.map((n) => [n.id, n]));
   const node = byId.get(id);
-  if (!node || node.parentId === parentId) return nodes;
+  const nextParentId = node && isExternalNode(node) ? undefined : parentId;
+  if (!node || node.parentId === nextParentId) return nodes;
 
   const abs = absolutePositionOf(node, byId);
-  const anchor = parentId ? byId.get(parentId) : undefined;
+  const anchor = nextParentId ? byId.get(nextParentId) : undefined;
   const base = anchor ? absolutePositionOf(anchor, byId) : { x: 0, y: 0 };
   const updated: GraphCanvasNode = {
     ...node,
-    parentId,
+    parentId: nextParentId,
     position: { x: abs.x - base.x, y: abs.y - base.y },
   };
   return sortByNesting(nodes.map((n) => (n.id === id ? updated : n)));
+}
+
+/**
+ * 一括ドロップの所属を同一スナップショットから決める。
+ * 移動した祖先の子は所属を維持し、移動グループ同士を新たな親にしない。
+ */
+export function reparentDroppedNodes(
+  nodes: GraphCanvasNode[],
+  ids: string[],
+): GraphCanvasNode[] {
+  const moving = new Set(ids);
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const roots = nodes.filter((node) => {
+    if (!moving.has(node.id)) return false;
+    const visited = new Set([node.id]);
+    let parentId = node.parentId;
+    while (parentId && !visited.has(parentId)) {
+      if (moving.has(parentId)) return false;
+      visited.add(parentId);
+      parentId = byId.get(parentId)?.parentId;
+    }
+    return true;
+  });
+  const excluded = new Set<string>();
+  for (const root of roots) {
+    if (!isGroupNode(root)) continue;
+    excluded.add(root.id);
+    for (const id of descendantIdsOf(nodes, root.id)) excluded.add(id);
+  }
+  const destinations = roots.map((n) => ({
+    id: n.id,
+    parentId: resolveParentGroup(n.id, nodes, excluded),
+  }));
+  let next = nodes;
+  for (const { id, parentId } of destinations)
+    next = reparentNode(next, id, parentId);
+  return next;
 }
 
 /**

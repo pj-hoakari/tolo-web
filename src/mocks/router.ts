@@ -1,13 +1,17 @@
 import { ORPCError, os } from "@orpc/server";
 import { z } from "zod";
-import type { AliveEdge } from "@/server/router";
-import { sampleAliveEdgesWire } from "./fixtures/edges";
+import { graphDataSchema } from "@/features/graph/graphDataSchema";
+import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
+import type { GraphData } from "@/features/tenant/management/graph/type";
+import type { EdgeDevice } from "@/server/router";
+import { sampleEdgeDevicesWire } from "./fixtures/edges";
 
 export type MockRouterOverrides = {
-  /** edges.listAlive が返す edge 一覧（未指定なら sampleAliveEdgesWire） */
-  edges?: AliveEdge[];
-  /** edges.listAlive を失敗させる（status: error の確認用） */
-  edgesError?: boolean;
+  /** observation.listEdgeDevices が返すエッジ端末一覧（未指定なら sampleEdgeDevicesWire） */
+  devices?: EdgeDevice[];
+  /** observation.listEdgeDevices を失敗させる（status: error の確認用） */
+  devicesError?: boolean;
+  saveGraphError?: string;
 };
 
 /**
@@ -17,18 +21,38 @@ export type MockRouterOverrides = {
  * RPCHandler に載せて MSW から `/rpc` を傍受するために使う。
  */
 export function createMockRouter(overrides: MockRouterOverrides = {}) {
-  const { edges = sampleAliveEdgesWire, edgesError = false } = overrides;
+  const {
+    devices = sampleEdgeDevicesWire,
+    devicesError = false,
+    saveGraphError,
+  } = overrides;
 
   return {
-    edges: {
-      listAlive: os.handler(async (): Promise<{ edges: AliveEdge[] }> => {
-        if (edgesError) {
-          throw new ORPCError("INTERNAL_SERVER_ERROR", {
-            message: "エッジ一覧の取得に失敗しました（モック）",
-          });
-        }
-        return { edges };
-      }),
+    graph: {
+      getGraph: os
+        .input(z.object({ eventId: z.string().min(1) }))
+        .handler(
+          async (): Promise<GraphData> => structuredClone(PLACEHOLDER_GRAPH),
+        ),
+      saveGraph: os
+        .input(z.object({ eventId: z.string().min(1), graph: graphDataSchema }))
+        .handler(async (): Promise<void> => {
+          if (saveGraphError !== undefined) {
+            throw new ORPCError("BAD_REQUEST", { message: saveGraphError });
+          }
+        }),
+    },
+    observation: {
+      listEdgeDevices: os
+        .input(z.object({ eventId: z.string().min(1) }))
+        .handler(async (): Promise<{ devices: EdgeDevice[] }> => {
+          if (devicesError) {
+            throw new ORPCError("INTERNAL_SERVER_ERROR", {
+              message: "エッジ一覧の取得に失敗しました（モック）",
+            });
+          }
+          return { devices };
+        }),
     },
     signaling: {
       // WebRTC はスコープ外。呼ばれてもエラーにならないよう、ダミーの sessionId を返す。

@@ -1,8 +1,14 @@
 "use client";
 
 import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
-import { type Ref, useImperativeHandle } from "react";
-import { type GraphKey, saveGraph, useGraph } from "@/features/graph";
+import { useTranslations } from "next-intl";
+import { type Ref, useEffect, useImperativeHandle, useState } from "react";
+import {
+  type GraphKey,
+  GraphValidationError,
+  saveGraph,
+  useGraph,
+} from "@/features/graph";
 import { useGraphEditor } from "../hooks/useGraphEditor";
 import type { GraphData } from "../type";
 import { FIT_VIEW_OPTIONS, GraphCanvas } from "./GraphCanvas";
@@ -16,6 +22,33 @@ export type GraphEditorHandle = {
 
 type GraphEditorProps = GraphKey;
 
+type SaveState =
+  | { status: "idle" }
+  | { status: "saving" }
+  | { status: "saved" }
+  | { status: "failed"; error: unknown };
+
+const SAVED_STATUS_MS = 3000;
+
+function SaveErrorAlert({ error }: { error: unknown }) {
+  const t = useTranslations("Graph.editor");
+  return (
+    <div
+      role="alert"
+      className="border-destructive/50 border-b bg-destructive/10 px-4 py-2 text-destructive text-sm"
+    >
+      {error instanceof GraphValidationError ? (
+        <>
+          <p className="font-semibold">{t("saveInvalid")}</p>
+          <p>{error.message}</p>
+        </>
+      ) : (
+        <p className="font-semibold">{t("saveFailed")}</p>
+      )}
+    </div>
+  );
+}
+
 function GraphEditorInner({
   tenantId,
   eventId,
@@ -25,14 +58,34 @@ function GraphEditorInner({
   initialGraph: GraphData;
   handleRef?: Ref<GraphEditorHandle>;
 }) {
-  const { graph, canvas, toolbar, properties, getGraphData } =
+  const { graph, canvas, toolbar, properties, getGraphData, setSelection } =
     useGraphEditor(initialGraph);
+  const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
 
   // 親から ref 経由で編集済みデータを取得できるように
   useImperativeHandle(handleRef, () => ({ getGraphData }), [getGraphData]);
 
-  const handleSave = () => {
-    void saveGraph({ tenantId, eventId }, getGraphData());
+  useEffect(() => {
+    if (saveState.status !== "saved") return;
+    const timer = setTimeout(
+      () => setSaveState({ status: "idle" }),
+      SAVED_STATUS_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [saveState]);
+
+  const handleSave = async () => {
+    setSaveState({ status: "saving" });
+    try {
+      await saveGraph({ tenantId, eventId }, getGraphData());
+      setSaveState({ status: "saved" });
+    } catch (error) {
+      setSaveState({ status: "failed", error });
+      if (error instanceof GraphValidationError && error.target) {
+        const { type, id } = error.target;
+        setSelection(type === "node" ? [id] : [], type === "edge" ? [id] : []);
+      }
+    }
   };
 
   const { fitView } = useReactFlow();
@@ -50,7 +103,11 @@ function GraphEditorInner({
         {...toolbar}
         onAutoAlign={handleAutoAlign}
         onSave={handleSave}
+        saveStatus={saveState.status}
       />
+      {saveState.status === "failed" && (
+        <SaveErrorAlert error={saveState.error} />
+      )}
       <div className="flex min-h-0 flex-1">
         <GraphCanvas {...canvas} />
         <PropertiesPanel {...properties} graph={graph} />
@@ -60,7 +117,7 @@ function GraphEditorInner({
 }
 
 /**
- * 会場グラフの構造（ポイント・ルート）を編集するエディタ。
+ * グラフの構造（ポイント・ルート）を編集するエディタ。
  * グラフは `@/features/graph` 経由で取得する（取得元は意識しない）。
  * 観測点などの付随情報は扱わず、紐づけは `GraphViewer` が担当する。
  */

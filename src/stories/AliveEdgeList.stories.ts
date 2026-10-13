@@ -53,7 +53,7 @@ export const Connected: Story = {
     edges: sampleEdges,
     status: "ready",
     error: null,
-    connectedEdgeId: "tenant-1_event-1_8c1f0e2a",
+    connectedEdgeId: sampleEdges[0].edgeDeviceId,
     receiveStatus: "connected",
   },
 };
@@ -63,7 +63,7 @@ export const Disconnected: Story = {
     edges: sampleEdges,
     status: "ready",
     error: null,
-    connectedEdgeId: "tenant-1_event-1_8c1f0e2a",
+    connectedEdgeId: sampleEdges[0].edgeDeviceId,
     receiveStatus: "disconnected",
   },
 };

@@ -4,7 +4,7 @@ import type { EdgeDirection } from "../../type";
 import { PropertyNotice } from "./PropertyNotice";
 
 export type EdgeDirectionFieldProps = {
-  value: EdgeDirection;
+  value: EdgeDirection | null;
   bothDisabled?: boolean;
   onewayDisabled?: boolean;
   /** 方向を変更できない理由。表示不要なら null */
@@ -30,7 +30,7 @@ export function EdgeDirectionField({
       <ToggleButtonGroup
         selectionMode="single"
         disallowEmptySelection
-        selectedKeys={[value]}
+        selectedKeys={value ? [value] : []}
         onSelectionChange={(keys) => {
           const next = [...keys][0] as EdgeDirection | undefined;
           if (next) onChange(next);

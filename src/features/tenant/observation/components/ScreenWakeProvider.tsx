@@ -1,16 +1,12 @@
 "use client";
 
 import { createContext, type ReactNode, useContext } from "react";
-import { useScreenWakeLock } from "../hooks/useScreenWakeLock";
+import {
+  type UseScreenWakeLockResult,
+  useScreenWakeLock,
+} from "../hooks/useScreenWakeLock";
 
-type ScreenWakeContextValue = {
-  isSupported: boolean;
-  enabled: boolean;
-  isActive: boolean;
-  error: string | null;
-  enable: () => Promise<void>;
-  disable: () => Promise<void>;
-};
+type ScreenWakeContextValue = UseScreenWakeLockResult;
 
 const ScreenWakeContext = createContext<ScreenWakeContextValue | null>(null);
 

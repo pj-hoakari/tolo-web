@@ -14,6 +14,7 @@ const meta = {
     onAddGroup: () => {},
     onAutoAlign: () => {},
     onSave: () => {},
+    saveStatus: "idle",
     labelLocale: "ja",
     onChangeLabelLocale: () => {},
     // ポイント 11 + グループ 2 を想定した設定状況（en は一部のみ設定済みの例）
@@ -30,4 +31,12 @@ export const Default: Story = {};
 /** 英語ラベルを編集中の状態 */
 export const EditingEnglishLabels: Story = {
   args: { labelLocale: "en" },
+};
+
+export const Saving: Story = {
+  args: { saveStatus: "saving" },
+};
+
+export const Saved: Story = {
+  args: { saveStatus: "saved" },
 };

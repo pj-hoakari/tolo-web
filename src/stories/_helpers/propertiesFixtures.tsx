@@ -11,10 +11,14 @@ import type {
 } from "@/features/tenant/management/graph/type";
 import { isPointNode } from "@/features/tenant/management/graph/type";
 import { deriveNodeLabels } from "@/features/tenant/management/graph/utils/labels";
-import type { AliveEdge } from "@/features/tenant/webrtc/type";
+import type { ObservationPoint } from "@/server/router";
 
 // 表示言語で解決したラベル（data.label）を注入した描画用の形にそろえる
-export const GRAPH_NODES = deriveNodeLabels(PLACEHOLDER_GRAPH.nodes, "ja");
+export const GRAPH_NODES = deriveNodeLabels(
+  PLACEHOLDER_GRAPH.nodes,
+  "ja",
+  "外部",
+);
 export const GRAPH_EDGES = PLACEHOLDER_GRAPH.edges;
 
 /**
@@ -38,11 +42,11 @@ export function graphEdge(id: string): GraphEdgeType {
   return found;
 }
 
-/** 紐づけ候補となる観測点（接続中のエッジ）のサンプル */
-export const OBSERVATION_POINTS: AliveEdge[] = [
-  { id: "demo_event_cam-entrance", lastSeenAt: null },
-  { id: "demo_event_cam-hall", lastSeenAt: null },
-  { id: "demo_event_cam-booth-a", lastSeenAt: null },
+/** 紐づけ候補となる観測点（稼働中のエッジ端末の観測点）のサンプル */
+export const OBSERVATION_POINTS: ObservationPoint[] = [
+  { observationPointId: "op-entrance", name: "エントランス" },
+  { observationPointId: "op-hall", name: "ホール" },
+  { observationPointId: "op-booth-a", name: "ブースA" },
 ];
 
 /** 観測点ピッカーに渡すデータ一式（差分だけ上書きして使う） */
@@ -57,9 +61,18 @@ export function observationPointsSource(
   };
 }
 
-// 入退出（入力・出力）の両方を担う入退出点。両通行ルートに接続することで
-// 両方向のロールを持ち、info の通知が表示される。
-export const DUAL_BOUNDARY_NODES: GraphNodeType[] = [
+// 外部ポイントと接続した入退出点。boundary の通知が表示される。
+export const BOUNDARY_NODES: GraphNodeType[] = [
+  {
+    id: "external",
+    type: "graph",
+    position: { x: -300, y: 0 },
+    data: {
+      labels: {},
+      label: "外部",
+      nodeType: "EXTERNAL",
+    },
+  },
   {
     id: "gate",
     type: "graph",
@@ -68,7 +81,7 @@ export const DUAL_BOUNDARY_NODES: GraphNodeType[] = [
     data: {
       labels: { ja: "入退出口" },
       label: "入退出口",
-      nodeType: "BOUNDARY",
+      nodeType: "TRANSIT_ONLY",
     },
   },
   {
@@ -83,7 +96,14 @@ export const DUAL_BOUNDARY_NODES: GraphNodeType[] = [
   },
 ];
 
-export const DUAL_BOUNDARY_EDGES: GraphEdgeType[] = [
+export const BOUNDARY_EDGES: GraphEdgeType[] = [
+  {
+    id: "de0",
+    source: "external",
+    target: "gate",
+    type: "graph",
+    data: { direction: "both" },
+  },
   {
     id: "de1",
     source: "gate",
@@ -93,12 +113,15 @@ export const DUAL_BOUNDARY_EDGES: GraphEdgeType[] = [
   },
 ];
 
-/** 通知が注入された状態の入退出点 */
-export function dualBoundaryNode(): GraphNodeType {
-  const derived = deriveNodeNotices(DUAL_BOUNDARY_NODES, DUAL_BOUNDARY_EDGES);
-  const found = derived.find((n) => n.id === "gate");
+/** 通知が注入された状態のポイント */
+export function boundaryFixtureNode(
+  id: string,
+  edges: GraphEdgeType[] = BOUNDARY_EDGES,
+): GraphNodeType {
+  const derived = deriveNodeNotices(BOUNDARY_NODES, edges);
+  const found = derived.find((n) => n.id === id);
   if (!found || !isPointNode(found))
-    throw new Error("入退出点が見つかりません");
+    throw new Error(`ポイント ${id} が見つかりません`);
   return found;
 }
 
