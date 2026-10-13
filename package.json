@@ -27,6 +27,7 @@
     "@orpc/client": "^1.14.6",
     "@orpc/server": "^1.14.6",
     "@pj-hoakari/tolo-edge-bridge-client-es": "0.1.0-rc",
+    "@pj-hoakari/tolo-graph-authoring-client-es": "0.1.0-rc.1",
     "@pj-hoakari/web-crowd-detection-utils": "^0.7.0",
     "@xyflow/react": "^12.11.0",
     "class-variance-authority": "^0.7.1",
