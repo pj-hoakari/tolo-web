@@ -24,3 +24,28 @@ export async function fetchGraph(_key: GraphKey): Promise<GraphData> {
 export async function saveGraph(key: GraphKey, data: GraphData): Promise<void> {
   console.log("saveGraph", key, data);
 }
+
+export type GraphValidationTarget = { type: "node" | "edge"; id: string };
+
+const TARGET_TYPES: Record<string, GraphValidationTarget["type"]> = {
+  node: "node",
+  point: "node",
+  group: "node",
+  edge: "edge",
+};
+
+export function validationTarget(
+  message: string,
+): GraphValidationTarget | null {
+  const match = /\b(node|point|group|edge) "([^"]+)"/.exec(message);
+  return match ? { type: TARGET_TYPES[match[1]], id: match[2] } : null;
+}
+
+export class GraphValidationError extends Error {
+  readonly target = validationTarget(this.message);
+
+  constructor(message: string) {
+    super(message);
+    this.name = "GraphValidationError";
+  }
+}
