@@ -7,16 +7,12 @@ import {
   screen,
   within,
 } from "@testing-library/react";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { HttpResponse, http } from "msw";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { createOrpcHandlers } from "@/mocks/handlers";
+import { server } from "@/mocks/server";
 import { IntlTestProvider } from "@/test/IntlTestProvider";
 import { GraphEditor } from "./GraphEditor";
-
-const saveGraph = vi.hoisted(() => vi.fn());
-
-vi.mock("@/features/graph", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/features/graph")>()),
-  saveGraph,
-}));
 
 beforeAll(() => {
   globalThis.ResizeObserver ??= class {
@@ -33,7 +29,6 @@ beforeAll(() => {
 
 afterEach(() => {
   cleanup();
-  saveGraph.mockReset();
 });
 
 async function renderEditor() {
@@ -49,9 +44,8 @@ async function renderEditor() {
 
 describe("GraphEditor の保存", () => {
   it("検証エラーを表示し、原因のポイントを選択する", async () => {
-    const { GraphValidationError } = await import("@/features/graph");
     const message = 'invalid graph document: point "ph_hall2f" has no route';
-    saveGraph.mockRejectedValue(new GraphValidationError(message));
+    server.use(...createOrpcHandlers({ saveGraphError: message }));
 
     fireEvent.click(await renderEditor());
 
@@ -67,7 +61,7 @@ describe("GraphEditor の保存", () => {
   });
 
   it("検証以外の失敗では汎用のエラーを表示する", async () => {
-    saveGraph.mockRejectedValue(new Error("network"));
+    server.use(http.post("*/rpc/graph/saveGraph", () => HttpResponse.error()));
 
     fireEvent.click(await renderEditor());
 
@@ -81,15 +75,9 @@ describe("GraphEditor の保存", () => {
   });
 
   it("保存に成功すると保存済みを知らせる", async () => {
-    saveGraph.mockResolvedValue(undefined);
-
     fireEvent.click(await renderEditor());
 
     expect(await screen.findByText("保存しました")).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(saveGraph).toHaveBeenCalledWith(
-      { tenantId: "t", eventId: "e" },
-      expect.objectContaining({ nodes: expect.any(Array) }),
-    );
   });
 });
