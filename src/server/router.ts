@@ -1,5 +1,10 @@
-import { os } from "@orpc/server";
+import { Code, ConnectError } from "@connectrpc/connect";
+import { ORPCError, os } from "@orpc/server";
 import { z } from "zod";
+import { graphDataSchema } from "@/features/graph/graphDataSchema";
+import type { GraphData } from "@/features/tenant/management/graph/type";
+import { graphAuthoringClient } from "./graphAuthoring";
+import { fromGraphDocument, toGraphDocument } from "./graphDocument";
 import { callObservation } from "./observation";
 import { signalingClient } from "./signaling";
 
@@ -53,15 +58,50 @@ async function listEdgeDevices(eventId: string): Promise<EdgeDevice[]> {
 }
 
 // フロント ↔ Next.js バックエンド間の oRPC ルータ。
-// tolo-signaling への Connect-RPC はこの層だけが叩く。
+// tolo-edge-bridge への Connect-RPC はこの層だけが叩く。
 export const router = {
+  graph: {
+    getGraph: os
+      .input(z.object({ eventId: z.string().min(1) }))
+      .handler(async ({ input }): Promise<GraphData> => {
+        try {
+          const res = await graphAuthoringClient.getGraph(input);
+          return res.document
+            ? fromGraphDocument(res.document)
+            : { nodes: [], edges: [] };
+        } catch (err) {
+          if (err instanceof ConnectError && err.code === Code.NotFound) {
+            return { nodes: [], edges: [] };
+          }
+          throw err;
+        }
+      }),
+    saveGraph: os
+      .input(z.object({ eventId: z.string().min(1), graph: graphDataSchema }))
+      .handler(async ({ input }): Promise<void> => {
+        try {
+          await graphAuthoringClient.saveGraph({
+            eventId: input.eventId,
+            document: toGraphDocument(input.graph),
+          });
+        } catch (err) {
+          if (
+            err instanceof ConnectError &&
+            err.code === Code.InvalidArgument
+          ) {
+            throw new ORPCError("BAD_REQUEST", { message: err.rawMessage });
+          }
+          throw err;
+        }
+      }),
+  },
   signaling: {
-    // edge への接続を要求する。tolo-signaling が Firestore にセッションを作成し session_id を返す。
+    // edge への接続を要求する。tolo-edge-bridge が Firestore にセッションを作成し session_id を返す。
     requestConnection: os
       .input(z.object({ edgeId: z.string().min(1) }))
       .handler(async ({ input }): Promise<{ sessionId: string }> => {
         const res = await signalingClient.requestConnection({
-          edgeId: input.edgeId,
+          edgeDeviceId: input.edgeId,
         });
         return { sessionId: res.sessionId };
       }),

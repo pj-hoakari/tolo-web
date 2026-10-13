@@ -13,7 +13,6 @@ export type UseGraphResult =
 
 /**
  * グラフを取得して状態として持つフック
- * 取得元（API / サンプル）は `fetchGraph` が抽象化する。
  * key が変わるたび、および refresh のたびに取り直し、古い応答は捨てる。
  */
 export function useGraph({ tenantId, eventId }: GraphKey): UseGraphResult {

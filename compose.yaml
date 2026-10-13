@@ -7,12 +7,12 @@ services:
             - "8080:8080" # Firestore
             - "4000:4000" # Emulator UI
 
-    tolo-signaling:
-        image: ghcr.io/pj-hoakari/tolo-signaling:0.1.0-rc@sha256:f7d1a2108e7eedc4d520cf07cb5a88a62e9b5ef871cbce0acfb7affaa739c410
+    tolo-edge-bridge:
+        image: ghcr.io/pj-hoakari/tolo-edge-bridge:0.1.0-rc@sha256:6a402d7fe9243aa7768ba7a7cbdd0606d14a4fea01b2bb6ec8314d3f82950cb1
         ports:
             - "8787:8787"
         environment:
-            SIGNALING_ADDR: ":8787"
+            SERVER_ADDR: ":8787"
             FIRESTORE_PROJECT_ID: demo-tolo
             FIRESTORE_EMULATOR_HOST: firebase-emulator:8080
         depends_on:
@@ -33,10 +33,10 @@ services:
             WATCHPACK_POLLING: "true"
             NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-tolo
             NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
-            SIGNALING_URL: http://tolo-signaling:8787
+            SIGNALING_URL: http://tolo-edge-bridge:8787
         depends_on:
             - firebase-emulator
-            - tolo-signaling
+            - tolo-edge-bridge
         volumes:
             - type: bind
               source: ./public/models

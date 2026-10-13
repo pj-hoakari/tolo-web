@@ -2,9 +2,9 @@ import "server-only";
 
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-node";
-import { SignalingService } from "@pj-hoakari/tolo-signaling-client-es/signaling/v1/signaling_pb";
+import { SignalingService } from "@pj-hoakari/tolo-edge-bridge-client-es/tolo/edgebridge/v1/signaling_pb";
 
-// Next.js バックエンドから tolo-signaling を呼ぶための Connect-RPC クライアント。
+// Next.js バックエンドから tolo-edge-bridge を呼ぶための Connect-RPC クライアント。
 // Connect-RPC はこのサーバ層からのみ叩く（フロントからは叩かない）。
 // h2c で待ち受けるサーバへ HTTP/1.1 の Connect プロトコルで接続する。
 const transport = createConnectTransport({
