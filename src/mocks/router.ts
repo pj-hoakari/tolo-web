@@ -8,6 +8,7 @@ export type MockRouterOverrides = {
   devices?: EdgeDevice[];
   /** observation.listEdgeDevices を失敗させる（status: error の確認用） */
   devicesError?: boolean;
+  saveGraphError?: string;
 };
 
 /**
@@ -17,9 +18,22 @@ export type MockRouterOverrides = {
  * RPCHandler に載せて MSW から `/rpc` を傍受するために使う。
  */
 export function createMockRouter(overrides: MockRouterOverrides = {}) {
-  const { devices = sampleEdgeDevicesWire, devicesError = false } = overrides;
+  const {
+    devices = sampleEdgeDevicesWire,
+    devicesError = false,
+    saveGraphError,
+  } = overrides;
 
   return {
+    graph: {
+      saveGraph: os
+        .input(z.object({ eventId: z.string().min(1), document: z.unknown() }))
+        .handler(async (): Promise<void> => {
+          if (saveGraphError !== undefined) {
+            throw new ORPCError("BAD_REQUEST", { message: saveGraphError });
+          }
+        }),
+    },
     observation: {
       listEdgeDevices: os
         .input(z.object({ eventId: z.string().min(1) }))
