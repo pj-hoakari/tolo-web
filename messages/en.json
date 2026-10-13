@@ -81,7 +81,10 @@
       "newNodeLabel": "Point {index}",
       "addGroup": "Add group",
       "newGroupLabel": "Group {index}",
-      "autoAlign": "Auto-arrange"
+      "autoAlign": "Auto-arrange",
+      "saved": "Saved",
+      "saveFailed": "Failed to save. Please try again later.",
+      "saveInvalid": "Some parts of the route diagram can't be saved"
     },
     "easyConnect": {
       "fromNode": "Add route: click the point to use as the end",

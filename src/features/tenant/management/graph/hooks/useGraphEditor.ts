@@ -58,6 +58,7 @@ export type GraphEditorApi = {
   /** 描画用のグラフ（ハンドル・通知を注入済み） */
   graph: GraphData;
   selection: { nodeIds: string[]; edgeIds: string[] };
+  setSelection: (nodeIds: string[], edgeIds: string[]) => void;
   /** 構造編集を有効にしたキャンバスの props */
   canvas: GraphCanvasProps & { editing: GraphCanvasEditing };
   toolbar: GraphToolbarBindings;
@@ -376,6 +377,7 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
   return {
     graph: { nodes, edges },
     selection,
+    setSelection,
     canvas: {
       nodes,
       edges,
