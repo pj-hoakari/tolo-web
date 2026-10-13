@@ -181,7 +181,7 @@ importers:
       '@orpc/server':
         specifier: ^1.14.6
         version: 1.15.5(ws@8.22.0)
-      '@pj-hoakari/tolo-signaling-client-es':
+      '@pj-hoakari/tolo-edge-bridge-client-es':
         specifier: 0.1.0-rc
         version: 0.1.0-rc(@connectrpc/connect@2.2.0(@bufbuild/protobuf@2.16.0))
       '@pj-hoakari/web-crowd-detection-utils':
@@ -1783,8 +1783,8 @@ packages:
     resolution: {integrity: sha512-7FNeNl8NCE7aINx7WXiKQrPYZWC/hvrTsmk6zmxbI7LTXE7hVek/n8AfVgpe2y82zl3w0HvCHN0bVKMBoJcC0w==}
     engines: {node: '>= 10.0.0'}
 
-  '@pj-hoakari/tolo-signaling-client-es@0.1.0-rc':
-    resolution: {integrity: sha512-kRDFEWnaiEYJGrzzdXhxoNeq9trEygRJWNBwrgs1MdWBXSnu7KlPLldxEMuOvwAPJrgNxEvjtOjIlNkx1DIQzQ==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-signaling-client-es/0.1.0-rc/2e3ace382ab0e639e36e97c5177fd2386e6db4a3}
+  '@pj-hoakari/tolo-edge-bridge-client-es@0.1.0-rc':
+    resolution: {integrity: sha512-gwrlPemi4LmQAkhMvt65zpYkBM0eEWkA4WTj0q+U+/y0zwPgnh/bS3X0x3ds8404tluO9pufoK+pIe0oxpvPGA==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-edge-bridge-client-es/0.1.0-rc/d0a4f0cfcaf618e8ee1b468d7e8366ce2c11fb4d}
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
@@ -6984,7 +6984,7 @@ snapshots:
       '@parcel/watcher-win32-arm64': 2.6.0
       '@parcel/watcher-win32-x64': 2.6.0
 
-  '@pj-hoakari/tolo-signaling-client-es@0.1.0-rc(@connectrpc/connect@2.2.0(@bufbuild/protobuf@2.16.0))':
+  '@pj-hoakari/tolo-edge-bridge-client-es@0.1.0-rc(@connectrpc/connect@2.2.0(@bufbuild/protobuf@2.16.0))':
     dependencies:
       '@bufbuild/protobuf': 2.16.0
       '@connectrpc/connect': 2.2.0(@bufbuild/protobuf@2.16.0)
