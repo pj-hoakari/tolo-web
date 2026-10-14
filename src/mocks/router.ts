@@ -62,13 +62,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     signaling: {
       // WebRTC はスコープ外。呼ばれてもエラーにならないよう、ダミーの sessionId を返す。
       requestConnection: os
-        .input(
-          z.object({
-            tenantId: z.string().min(1),
-            eventId: z.string().min(1),
-            edgeId: z.string().min(1),
-          }),
-        )
+        .input(z.object({ edgeId: z.string().min(1) }))
         .handler(
           async ({ input }): Promise<{ sessionId: string }> => ({
             sessionId: `mock-session_${input.edgeId}`,

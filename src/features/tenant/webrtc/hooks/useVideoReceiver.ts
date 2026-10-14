@@ -173,8 +173,6 @@ export function useVideoReceiver({
 
       const run = async () => {
         const { sessionId } = await orpc.signaling.requestConnection({
-          tenantId,
-          eventId,
           edgeId,
         });
         const db = getDb();
