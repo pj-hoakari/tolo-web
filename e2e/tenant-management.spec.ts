@@ -41,10 +41,10 @@ test("イベント名を入力して作成すると一覧に下書きとして�
 }) => {
   await open(page);
   const field = page.getByRole("textbox", { name: "イベント名" });
-  await field.fill("Event E");
+  await field.fill("Event F");
   await page.getByRole("button", { name: "作成" }).click();
 
-  await expect(eventRow(page, "Event E")).toContainText("下書き");
+  await expect(eventRow(page, "Event F")).toContainText("下書き");
   await expect(eventList(page).getByRole("listitem")).toHaveCount(5);
   await expect(field).toHaveValue("");
 });
@@ -105,12 +105,12 @@ test("イベントの作成に失敗するとサーバーのエラー文が表�
   await open(page, { createEventError: message });
 
   const field = page.getByRole("textbox", { name: "イベント名" });
-  await field.fill("Event E");
+  await field.fill("Event F");
   await page.getByRole("button", { name: "作成" }).click();
 
   await expect(page.getByRole("main").getByRole("alert")).toHaveText(message);
-  await expect(field).toHaveValue("Event E");
-  await expect(eventRow(page, "Event E")).toHaveCount(0);
+  await expect(field).toHaveValue("Event F");
+  await expect(eventRow(page, "Event F")).toHaveCount(0);
 });
 
 test("アーカイブに失敗するとダイアログにサーバーのエラー文が表示され一覧に残る", async ({

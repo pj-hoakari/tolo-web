@@ -4,6 +4,7 @@ import { graphDataSchema } from "@/features/graph/graphDataSchema";
 import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
 import {
   ARCHIVABLE_STATUSES,
+  RESTORABLE_STATUSES,
   type TenantEvent,
 } from "@/features/tenant/management/events/type";
 import type { GraphData } from "@/features/tenant/management/graph/type";
@@ -20,6 +21,7 @@ export type MockRouterOverrides = {
   listEventsError?: boolean;
   createEventError?: string;
   archiveEventError?: string;
+  restoreEventError?: string;
 };
 
 /**
@@ -37,6 +39,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     listEventsError = false,
     createEventError,
     archiveEventError,
+    restoreEventError,
   } = overrides;
 
   const events: TenantEvent[] = [
@@ -44,6 +47,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     { eventId: "0000000000000002", name: "Event B", status: "open" },
     { eventId: "0000000000000003", name: "Event C", status: "locked" },
     { eventId: "0000000000000004", name: "Event D", status: "closed" },
+    { eventId: "0000000000000005", name: "Event E", status: "archived" },
   ];
   let nextEventNumber = events.length + 1;
 
@@ -79,12 +83,21 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     },
     tenant: {
       listEvents: os
-        .input(z.object({ tenantId: z.string().min(1) }))
-        .handler(async (): Promise<{ events: TenantEvent[] }> => {
+        .input(
+          z.object({
+            tenantId: z.string().min(1),
+            includeArchived: z.boolean().default(false),
+          }),
+        )
+        .handler(async ({ input }): Promise<{ events: TenantEvent[] }> => {
           if (listEventsError) {
             throw new ORPCError("INTERNAL_SERVER_ERROR");
           }
-          return { events: events.filter((e) => e.status !== "archived") };
+          return {
+            events: input.includeArchived
+              ? [...events]
+              : events.filter((e) => e.status !== "archived"),
+          };
         }),
       createEvent: os
         .input(
@@ -123,6 +136,26 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             });
           }
           event.status = "archived";
+          return event;
+        }),
+      restoreEvent: os
+        .input(z.object({ eventId: z.string().min(1) }))
+        .handler(async ({ input }): Promise<TenantEvent> => {
+          if (restoreEventError !== undefined) {
+            throw new ORPCError("PRECONDITION_FAILED", {
+              message: restoreEventError,
+            });
+          }
+          const event = events.find((e) => e.eventId === input.eventId);
+          if (!event) {
+            throw new ORPCError("NOT_FOUND");
+          }
+          if (!RESTORABLE_STATUSES.has(event.status)) {
+            throw new ORPCError("PRECONDITION_FAILED", {
+              message: `event status ${event.status} cannot transition to closed`,
+            });
+          }
+          event.status = "closed";
           return event;
         }),
     },

@@ -156,7 +156,12 @@ export const router = {
   },
   tenant: {
     listEvents: os
-      .input(z.object({ tenantId: publicId }))
+      .input(
+        z.object({
+          tenantId: publicId,
+          includeArchived: z.boolean().default(false),
+        }),
+      )
       .handler(async ({ input }): Promise<{ events: TenantEvent[] }> => {
         try {
           const res = await tenantManagementClient.listEvents(input);
@@ -182,6 +187,19 @@ export const router = {
           const res = await tenantManagementClient.transitionEventStatus({
             eventId: input.eventId,
             to: ProtoEventStatus.ARCHIVED,
+          });
+          return toTenantEvent(res.event);
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    restoreEvent: os
+      .input(z.object({ eventId: publicId }))
+      .handler(async ({ input }): Promise<TenantEvent> => {
+        try {
+          const res = await tenantManagementClient.transitionEventStatus({
+            eventId: input.eventId,
+            to: ProtoEventStatus.CLOSED,
           });
           return toTenantEvent(res.event);
         } catch (err) {

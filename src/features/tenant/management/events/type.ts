@@ -10,3 +10,7 @@ export const ARCHIVABLE_STATUSES: ReadonlySet<EventStatus> = new Set([
   "draft",
   "closed",
 ]);
+
+export const RESTORABLE_STATUSES: ReadonlySet<EventStatus> = new Set([
+  "archived",
+]);
