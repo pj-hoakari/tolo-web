@@ -7,16 +7,33 @@ services:
             - "8080:8080" # Firestore
             - "4000:4000" # Emulator UI
 
+    fakeidp:
+        build:
+            context: https://github.com/pj-hoakari/tolo-service-gateway.git#a61f55d8f1124a09839711cbc7d960ddf59f9456
+            target: fakeidp
+        environment:
+            SERVER_ADDR: :8080
+            FAKE_IDP_ISSUER: http://fakeidp:8080
+            FAKE_IDP_AUDIENCE: backend-api
+        ports:
+            - "8082:8080"
+
     tolo-edge-bridge:
-        image: ghcr.io/pj-hoakari/tolo-edge-bridge:0.2.0-rc@sha256:220179d5ab7b0883d2cf9fe6139aa232140b1dedfc8af5a168492d55823a621e
+        image: ghcr.io/pj-hoakari/tolo-edge-bridge:0.3.0-rc@sha256:1fdc0bb07af3eb93e637b1ea19fac86c1daf15c0a8ec92bd657006e0e85476f6
         ports:
             - "8787:8787"
         environment:
             SERVER_ADDR: ":8787"
             FIRESTORE_PROJECT_ID: demo-tolo
             FIRESTORE_EMULATOR_HOST: firebase-emulator:8080
+            IDP_ISSUER: http://fakeidp:8080
+            IDP_AUDIENCE: backend-api
+            IDP_JWKS_URL: http://fakeidp:8080/oauth2/jwks
+            CONSOLE_CLIENT_ID: console-ui
+            EDGE_CLIENT_ID: edge-page
         depends_on:
             - firebase-emulator
+            - fakeidp
 
     web:
         build:
@@ -34,6 +51,7 @@ services:
             NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-tolo
             NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
             SIGNALING_URL: http://tolo-edge-bridge:8787
+            GRAPH_ACCESS_TOKEN: ${GRAPH_ACCESS_TOKEN:-}
         depends_on:
             - firebase-emulator
             - tolo-edge-bridge
