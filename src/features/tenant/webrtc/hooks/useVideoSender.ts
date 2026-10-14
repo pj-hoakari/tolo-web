@@ -55,12 +55,14 @@ function applyStream(pc: RTCPeerConnection, stream: MediaStream | null): void {
 }
 
 export function useVideoSender(params: {
+  tenantId: string;
+  eventId: string;
   edgeDeviceId: string | undefined;
   stream: MediaStream | null;
   /** management 側と共有する検出設定 */
   settingsStore: DetectionSettingsStore;
 }): VideoSenderController {
-  const { edgeDeviceId, stream, settingsStore } = params;
+  const { tenantId, eventId, edgeDeviceId, stream, settingsStore } = params;
   const active = stream !== null;
   const edgeId = active && edgeDeviceId ? edgeDeviceId : null;
 
@@ -132,7 +134,7 @@ export function useVideoSender(params: {
     sessionsListenerRef.current = null;
 
     const db = getDb();
-    const sessionsCol = sessionsCollection(db, edgeId);
+    const sessionsCol = sessionsCollection(db, tenantId, eventId, edgeId);
     const sessions = sessionsRef.current;
     const startingSessionIds = startingSessionIdsRef.current;
     let disposed = false;
@@ -158,7 +160,9 @@ export function useVideoSender(params: {
         return;
       }
       try {
-        const signalsRef = signalsCollection(sessionDoc(db, edgeId, sessionId));
+        const signalsRef = signalsCollection(
+          sessionDoc(db, tenantId, eventId, edgeId, sessionId),
+        );
         await clearSignals(signalsRef);
         if (disposed) {
           return;
@@ -273,7 +277,7 @@ export function useVideoSender(params: {
       }
       startingSessionIds.clear();
     };
-  }, [edgeId, settingsStore]);
+  }, [tenantId, eventId, edgeId, settingsStore]);
 
   return { active, edgeId, sendDetectionFrame };
 }

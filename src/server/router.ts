@@ -98,11 +98,23 @@ export const router = {
   signaling: {
     // edge への接続を要求する。tolo-edge-bridge が Firestore にセッションを作成し session_id を返す。
     requestConnection: os
-      .input(z.object({ edgeId: z.string().min(1) }))
+      .input(
+        z.object({
+          tenantId: z.string().min(1),
+          eventId: z.string().min(1),
+          edgeId: z.string().min(1),
+        }),
+      )
       .handler(async ({ input }): Promise<{ sessionId: string }> => {
-        const res = await signalingClient.requestConnection({
-          edgeDeviceId: input.edgeId,
-        });
+        const res = await signalingClient.requestConnection(
+          { edgeDeviceId: input.edgeId },
+          {
+            headers: {
+              "X-Tolo-Tenant-Id": input.tenantId,
+              "X-Tolo-Event-Id": input.eventId,
+            },
+          },
+        );
         return { sessionId: res.sessionId };
       }),
   },
