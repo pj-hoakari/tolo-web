@@ -1,12 +1,14 @@
-import { Code, ConnectError } from "@connectrpc/connect";
+import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { type Client, Code, ConnectError } from "@connectrpc/connect";
 import { ORPCError, os } from "@orpc/server";
+import type { SignalingService } from "@pj-hoakari/tolo-edge-bridge-client-es/tolo/edgebridge/v1/signaling_pb";
 import { z } from "zod";
 import { graphDataSchema } from "@/features/graph/graphDataSchema";
 import type { GraphData } from "@/features/tenant/management/graph/type";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
 import { callObservation } from "./observation";
-import { signalingClient } from "./signaling";
+import { consoleSignalingClient, edgeSignalingClient } from "./signaling";
 
 const publicId = z.string().regex(/^[0-9a-f]{16}$/);
 
@@ -57,6 +59,24 @@ async function listEdgeDevices(eventId: string): Promise<EdgeDevice[]> {
   }));
 }
 
+export interface FirestoreToken {
+  customToken: string;
+  expiresAt: Date;
+}
+
+async function issueFirestoreToken(
+  client: Client<typeof SignalingService>,
+): Promise<FirestoreToken> {
+  const res = await client.issueFirestoreToken({});
+  if (!res.expiresAt) {
+    throw new Error("IssueFirestoreToken returned no expires_at");
+  }
+  return {
+    customToken: res.firebaseCustomToken,
+    expiresAt: timestampDate(res.expiresAt),
+  };
+}
+
 // フロント ↔ Next.js バックエンド間の oRPC ルータ。
 // tolo-edge-bridge への Connect-RPC はこの層だけが叩く。
 export const router = {
@@ -100,11 +120,17 @@ export const router = {
     requestConnection: os
       .input(z.object({ edgeId: z.string().min(1) }))
       .handler(async ({ input }): Promise<{ sessionId: string }> => {
-        const res = await signalingClient.requestConnection({
+        const res = await consoleSignalingClient.requestConnection({
           edgeDeviceId: input.edgeId,
         });
         return { sessionId: res.sessionId };
       }),
+    issueConsoleFirestoreToken: os.handler(() =>
+      issueFirestoreToken(consoleSignalingClient),
+    ),
+    issueEdgeFirestoreToken: os.handler(() =>
+      issueFirestoreToken(edgeSignalingClient),
+    ),
   },
   observation: {
     listEdgeDevices: os.input(z.object({ eventId: z.string().min(1) })).handler(

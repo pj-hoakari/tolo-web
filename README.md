@@ -22,13 +22,15 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Docker Compose での開発環境
 
-`compose.yaml` は Firestore エミュレータ、開発用の偽 IdP（`fakeidp`）、tolo-edge-bridge、Next.js の開発サーバー（`web`）を起動します。tolo-edge-bridge はすべての RPC で `event_access` トークンを検証します。`web` は環境変数 `GRAPH_ACCESS_TOKEN` のトークンを `Authorization: Bearer` で tolo-edge-bridge へ送ります。
+`compose.yaml` は Firebase エミュレータ（Firestore と Auth）、開発用の偽 IdP（`fakeidp`）、tolo-edge-bridge、Next.js の開発サーバー（`web`）を起動します。tolo-edge-bridge はすべての RPC で `event_access` トークンを検証します。`web` は、管理ページからの呼び出しでは環境変数 `GRAPH_ACCESS_TOKEN`、観測ページからの呼び出しでは `OBSERVATION_ACCESS_TOKEN` のトークンを `Authorization: Bearer` で tolo-edge-bridge へ送ります。
+
+ブラウザは、tolo-edge-bridge が発行した Firebase のカスタムトークンで Auth エミュレータにサインインしてから、シグナリング文書を読み書きします。Firebase エミュレータは tolo-edge-bridge リポジトリの `firebase-emulator/` を固定したコミットからビルドし、同じディレクトリのセキュリティルールを適用します。ホストへは Firestore を `localhost:8080`、Auth を `localhost:9099`、Emulator UI を `http://localhost:4000` で公開します。
 
 Service Gateway は起動しません。「接続エッジ」タブの端末一覧は Service Gateway の `ListEdgeDevices` から取得するので、Service Gateway がない状態では一覧が表示されず、接続ボタンも表示されません。
 
 ### トークンの発行
 
-`fakeidp` を先に起動し、管理 UI 用の `event_access` を発行します。
+`fakeidp` を先に起動し、管理ページ用と観測ページ用の `event_access` を発行します。
 
 ```bash
 docker compose up -d fakeidp
@@ -36,9 +38,13 @@ export GRAPH_ACCESS_TOKEN=$(curl -sf http://localhost:8082/token \
   -H 'Content-Type: application/json' \
   -d '{"token_use":"event_access","sub":"dev-console","client_id":"console-ui","scope":"events.read","tenant_id":"0123456789abcdef","event_id":"fedcba9876543210","ttl_seconds":86400}' \
   | jq -r .access_token)
+export OBSERVATION_ACCESS_TOKEN=$(curl -sf http://localhost:8082/token \
+  -H 'Content-Type: application/json' \
+  -d '{"token_use":"event_access","sub":"dev-edge","client_id":"edge-page","scope":"events.report","tenant_id":"0123456789abcdef","event_id":"fedcba9876543210","ttl_seconds":86400}' \
+  | jq -r .access_token)
 ```
 
-`client_id` は tolo-edge-bridge の `CONSOLE_CLIENT_ID`（`console-ui`）に合わせます。`tenant_id` と `event_id` は、開くページのテナント ID とイベント ID に合わせます。tolo-edge-bridge は 16 桁の小文字 16 進数以外の ID を拒否します。
+`client_id` は、管理ページ用を tolo-edge-bridge の `CONSOLE_CLIENT_ID`（`console-ui`）に、観測ページ用を `EDGE_CLIENT_ID`（`edge-page`）に合わせます。tolo-edge-bridge は `client_id` からシグナリングでの役割（`console` または `edge`）を決めます。`tenant_id` と `event_id` は、開くページのテナント ID とイベント ID に合わせます。tolo-edge-bridge は 16 桁の小文字 16 進数以外の ID を拒否します。
 
 `fakeidp` が発行するトークンの有効期限は既定で 5 分なので、`ttl_seconds` で延ばしています。`fakeidp` は起動のたびに署名鍵を作り直すため、再起動した後はトークンを発行し直します。
 

@@ -13,7 +13,7 @@ export type SignalMessage =
   | { kind: "description"; description: RTCSessionDescriptionInit }
   | { kind: "candidate"; candidate: RTCIceCandidateInit | null };
 
-export type SignalingRole = "edge" | "management";
+export type SignalingRole = "edge" | "console";
 
 export interface SignalingChannel {
   /** シグナリングメッセージを相手へ送る */
@@ -68,9 +68,7 @@ export async function clearSession(
   await batch.commit();
 }
 
-export async function clearSignals(
-  signalsRef: CollectionReference,
-): Promise<void> {
+async function clearSignals(signalsRef: CollectionReference): Promise<void> {
   const snapshot = await getDocs(signalsRef);
   const batch = writeBatch(signalsRef.firestore);
   for (const docSnapshot of snapshot.docs) {

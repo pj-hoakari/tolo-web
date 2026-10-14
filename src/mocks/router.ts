@@ -3,7 +3,7 @@ import { z } from "zod";
 import { graphDataSchema } from "@/features/graph/graphDataSchema";
 import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
 import type { GraphData } from "@/features/tenant/management/graph/type";
-import type { EdgeDevice } from "@/server/router";
+import type { EdgeDevice, FirestoreToken } from "@/server/router";
 import { sampleEdgeDevicesWire } from "./fixtures/edges";
 
 export type MockRouterOverrides = {
@@ -68,6 +68,18 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             sessionId: `mock-session_${input.edgeId}`,
           }),
         ),
+      issueConsoleFirestoreToken: os.handler(
+        async (): Promise<FirestoreToken> => ({
+          customToken: "mock-console-token",
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+        }),
+      ),
+      issueEdgeFirestoreToken: os.handler(
+        async (): Promise<FirestoreToken> => ({
+          customToken: "mock-edge-token",
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+        }),
+      ),
     },
   };
 }
