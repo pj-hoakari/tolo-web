@@ -340,6 +340,11 @@
       }
     },
     "guideMap": {
+      "swipeHint": "Swipe to see each direction",
+      "aheadIs": "{name} is this way",
+      "noneAhead": "No destination ahead (try turning)",
+      "faceHint": "Turn on the compass and point your phone to find destinations",
+      "goHere": "Go here",
       "title": "Guide map",
       "hint": "Select a destination to see the route",
       "currentLocation": "You are here",
@@ -354,7 +359,33 @@
       "collapse": "Shrink the map",
       "search": "Search destination",
       "noResults": "No results",
-      "reset": "Reset"
+      "reset": "Reset",
+      "compass": {
+        "open": "Compass guide",
+        "title": "Compass",
+        "enable": "Use compass",
+        "denied": "Couldn't access the compass. The arrow points as if north is up.",
+        "unsupported": "This device can't provide orientation. The arrow points as if north is up.",
+        "northUpNote": "Showing with north up (device heading not applied)",
+        "next": "Next",
+        "back": "Back",
+        "finish": "Finish",
+        "close": "Close",
+        "start": "Start here",
+        "arrive": "Arrive",
+        "turnRight": "Turn right",
+        "turnLeft": "Turn left",
+        "straight": "Go straight",
+        "stepOf": "{current} / {total}",
+        "navTitle": "Compass navigation",
+        "navHint": "Pick your location and destination to start",
+        "advanceHint": "Walk in the arrow's direction; tap next at the corner.",
+        "arrivedNext": "Arrived · Next",
+        "retrySensor": "Try again",
+        "distanceTotal": "About {m} m total · {min} min walk",
+        "distanceNext": "About {m} m to next",
+        "overview": "Route overview"
+      }
     },
     "floor": {
       "title": "Current floor",

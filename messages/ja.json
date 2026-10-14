@@ -340,6 +340,11 @@
       }
     },
     "guideMap": {
+      "swipeHint": "スワイプで目的地の方向を確認",
+      "aheadIs": "この方向に{name}があります",
+      "noneAhead": "正面に目的地はありません（回してみてください）",
+      "faceHint": "方位センサーをオンにして、スマホを向けた方向の目的地を確認",
+      "goHere": "ここに向かう",
       "title": "案内マップ",
       "hint": "目的地を選択すると経路が表示されます",
       "currentLocation": "現在地",
@@ -354,7 +359,33 @@
       "collapse": "地図を縮小",
       "search": "目的地を検索",
       "noResults": "見つかりませんでした",
-      "reset": "リセット"
+      "reset": "リセット",
+      "compass": {
+        "open": "コンパスで案内",
+        "title": "コンパス案内",
+        "enable": "方位センサーを使う",
+        "denied": "方位センサーを許可できませんでした。矢印は北を上として表示します。",
+        "unsupported": "この端末では方位を取得できません。矢印は北を上として表示します。",
+        "northUpNote": "※北を上として表示（端末の向きは未反映）",
+        "next": "次へ",
+        "back": "戻る",
+        "finish": "案内を終了",
+        "close": "閉じる",
+        "start": "ここから出発",
+        "arrive": "到着",
+        "turnRight": "右に曲がる",
+        "turnLeft": "左に曲がる",
+        "straight": "そのまま進む",
+        "stepOf": "{current} / {total}",
+        "navTitle": "コンパス道案内",
+        "navHint": "現在地と目的地を選ぶと案内できます",
+        "advanceHint": "矢印の方向へ進み、曲がり角に着いたら「次へ」",
+        "arrivedNext": "着いた・次へ",
+        "retrySensor": "もう一度試す",
+        "distanceTotal": "全体 約{m}m・徒歩 約{min}分",
+        "distanceNext": "次まで 約{m}m",
+        "overview": "ルート全体"
+      }
     },
     "floor": {
       "title": "現在のフロア",
