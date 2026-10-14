@@ -21,6 +21,41 @@
     "graphEditTitle": "{tenantId} Route diagram editor",
     "backLink": "Back to management"
   },
+  "TenantManagement": {
+    "title": "{tenantId} Event management",
+    "create": {
+      "label": "Event name",
+      "submit": "Create",
+      "failed": "Could not create the event."
+    },
+    "list": {
+      "heading": "Events",
+      "loading": "Loading…",
+      "empty": "No events yet.",
+      "error": "Could not load the events.",
+      "retry": "Reload",
+      "showArchived": "Show archived"
+    },
+    "status": {
+      "draft": "Draft",
+      "open": "Open",
+      "locked": "Locked",
+      "closed": "Closed",
+      "archived": "Archived"
+    },
+    "archive": {
+      "button": "Archive",
+      "title": "Archive event",
+      "description": "Archive “{name}”? Archived events appear in this list only when “Show archived” is on, and you can restore them from there.",
+      "cancel": "Cancel",
+      "confirm": "Archive",
+      "failed": "Could not archive the event."
+    },
+    "restore": {
+      "button": "Restore",
+      "failed": "Could not restore the event."
+    }
+  },
   "Graph": {
     "viewer": {
       "title": "Route diagram",

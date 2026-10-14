@@ -21,6 +21,41 @@
     "graphEditTitle": "{tenantId} Editor del diagrama de rutas",
     "backLink": "Volver a administración"
   },
+  "TenantManagement": {
+    "title": "{tenantId} Gestión de eventos",
+    "create": {
+      "label": "Nombre del evento",
+      "submit": "Crear",
+      "failed": "No se pudo crear el evento."
+    },
+    "list": {
+      "heading": "Eventos",
+      "loading": "Cargando…",
+      "empty": "Todavía no hay eventos.",
+      "error": "No se pudieron cargar los eventos.",
+      "retry": "Volver a cargar",
+      "showArchived": "Mostrar también archivados"
+    },
+    "status": {
+      "draft": "Borrador",
+      "open": "Abierto",
+      "locked": "Bloqueado",
+      "closed": "Cerrado",
+      "archived": "Archivado"
+    },
+    "archive": {
+      "button": "Archivar",
+      "title": "Archivar evento",
+      "description": "¿Archivar «{name}»? Los eventos archivados solo aparecen en esta lista con «Mostrar también archivados» activado, y desde ahí se pueden restaurar.",
+      "cancel": "Cancelar",
+      "confirm": "Archivar",
+      "failed": "No se pudo archivar el evento."
+    },
+    "restore": {
+      "button": "Restaurar",
+      "failed": "No se pudo restaurar el evento."
+    }
+  },
   "Graph": {
     "viewer": {
       "title": "Diagrama de rutas",

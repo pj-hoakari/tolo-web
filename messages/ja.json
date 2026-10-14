@@ -21,6 +21,41 @@
     "graphEditTitle": "{tenantId} ルート図編集",
     "backLink": "管理ページへ戻る"
   },
+  "TenantManagement": {
+    "title": "{tenantId} イベント管理",
+    "create": {
+      "label": "イベント名",
+      "submit": "作成",
+      "failed": "イベントを作成できませんでした。"
+    },
+    "list": {
+      "heading": "イベント",
+      "loading": "読み込み中…",
+      "empty": "イベントはまだありません。",
+      "error": "イベント一覧を取得できませんでした。",
+      "retry": "再読み込み",
+      "showArchived": "アーカイブ済みも表示"
+    },
+    "status": {
+      "draft": "下書き",
+      "open": "公開中",
+      "locked": "ロック中",
+      "closed": "終了",
+      "archived": "アーカイブ済み"
+    },
+    "archive": {
+      "button": "アーカイブ",
+      "title": "イベントをアーカイブ",
+      "description": "「{name}」をアーカイブします。アーカイブしたイベントは、「アーカイブ済みも表示」をオンにすると一覧に表示され、そこから復元できます。",
+      "cancel": "キャンセル",
+      "confirm": "アーカイブする",
+      "failed": "イベントをアーカイブできませんでした。"
+    },
+    "restore": {
+      "button": "復元",
+      "failed": "イベントを復元できませんでした。"
+    }
+  },
   "Graph": {
     "viewer": {
       "title": "ルート図",
