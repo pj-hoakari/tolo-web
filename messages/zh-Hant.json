@@ -21,6 +21,36 @@
     "graphEditTitle": "{tenantId} 路徑圖編輯",
     "backLink": "返回管理頁面"
   },
+  "TenantManagement": {
+    "title": "{tenantId} 活動管理",
+    "create": {
+      "label": "活動名稱",
+      "submit": "建立",
+      "failed": "無法建立活動。"
+    },
+    "list": {
+      "heading": "活動",
+      "loading": "載入中…",
+      "empty": "尚無活動。",
+      "error": "無法取得活動清單。",
+      "retry": "重新載入"
+    },
+    "status": {
+      "draft": "草稿",
+      "open": "進行中",
+      "locked": "已鎖定",
+      "closed": "已結束",
+      "archived": "已封存"
+    },
+    "archive": {
+      "button": "封存",
+      "title": "封存活動",
+      "description": "將封存「{name}」。封存後的活動將不再顯示於清單中。",
+      "cancel": "取消",
+      "confirm": "封存",
+      "failed": "無法封存活動。"
+    }
+  },
   "Graph": {
     "viewer": {
       "title": "路徑圖",

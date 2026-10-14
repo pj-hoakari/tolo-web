@@ -21,6 +21,36 @@
     "graphEditTitle": "{tenantId} 路径图编辑",
     "backLink": "返回管理页面"
   },
+  "TenantManagement": {
+    "title": "{tenantId} 活动管理",
+    "create": {
+      "label": "活动名称",
+      "submit": "创建",
+      "failed": "无法创建活动。"
+    },
+    "list": {
+      "heading": "活动",
+      "loading": "加载中…",
+      "empty": "暂无活动。",
+      "error": "无法获取活动列表。",
+      "retry": "重新加载"
+    },
+    "status": {
+      "draft": "草稿",
+      "open": "进行中",
+      "locked": "已锁定",
+      "closed": "已结束",
+      "archived": "已归档"
+    },
+    "archive": {
+      "button": "归档",
+      "title": "归档活动",
+      "description": "将归档“{name}”。归档后的活动将不再显示在列表中。",
+      "cancel": "取消",
+      "confirm": "归档",
+      "failed": "无法归档活动。"
+    }
+  },
   "Graph": {
     "viewer": {
       "title": "路径图",
