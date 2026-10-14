@@ -65,6 +65,45 @@ docker compose up -d --build
 
 観測ページから映像を配信するには、`public/models` に人検出モデルが必要です（[人検出モデルセットアップ](docs/setup-for-detection-model.md)）。
 
+## テナントのイベント管理ページ
+
+`/management` は、テナントのイベントを一覧し、作成し、アーカイブするページです。`web` はこのページからの呼び出しで、環境変数 `TENANT_ACCESS_TOKEN` の `tenant_access` トークンを Service Gateway（`GATEWAY_URL`）へ送ります。Service Gateway はその呼び出しを Tenant Management へ転送します。
+
+`compose.yaml` は Service Gateway と Tenant Management を起動しません。開発では、tolo-service-gateway の compose で Service Gateway、偽 IdP、Tenant Management を起動し、Next.js はホストで起動します。tolo-service-gateway の Service Gateway は、この compose の Firestore エミュレータと同じポート 8080 を使います。そのため、2 つの compose は同時に起動できません。
+
+### テナントとトークンの用意
+
+tolo-service-gateway のディレクトリで、Tenant Management を含む compose を起動します。次に仮テナントを作り、所有権を取得してから、そのテナントの `tenant_access` トークンを発行します。手順の詳細は tolo-service-gateway の `docs/dev_tenant_management.md` にあります。
+
+```bash
+docker compose -f compose.yml -f compose.tm.yml up -d --build
+
+TENANT=$(curl -sS -X POST -H 'Content-Type: application/json' -d '{"name":"acme","contractPlan":"standard"}' \
+  http://localhost:8080/tolo.tenant.v1.TenantService/StartTenantRegistration)
+TID=$(printf '%s' "$TENANT" | jq -r .tenant.tenantId)
+CLAIM=$(printf '%s' "$TENANT" | jq -r .ownershipClaimToken)
+
+REG=$(./scripts/dev/fakeidp-token.sh -k registration -b user-owner -s "tenant.claim")
+curl -sS -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $REG" \
+  -d "{\"tenantId\":\"$TID\",\"ownershipClaimToken\":\"$CLAIM\"}" \
+  http://localhost:8080/tolo.tenant.v1.TenantService/ClaimTenantOwnership
+
+export TENANT_ACCESS_TOKEN=$(./scripts/dev/fakeidp-token.sh -k tenant_access -b user-owner -t "$TID" -s "events.read events.manage" -l 86400)
+echo "$TID"
+```
+
+トークンの `tenant_id` は、開くページのテナント ID と同じでなければなりません。違う場合は Tenant Management が呼び出しを拒否し、一覧は取得に失敗します。
+
+### 起動と開く URL
+
+同じシェルで、このリポジトリのディレクトリから Next.js を起動します。`NEXT_PUBLIC_API_MOCKING` が `enabled` だと API がモックに置き換わるので、ここでは `disabled` にします。
+
+```bash
+GATEWAY_URL=http://127.0.0.1:8080 NEXT_PUBLIC_API_MOCKING=disabled pnpm dev
+```
+
+`http://{TID}.localhost:3000/management` を開きます。`{TID}` は上で表示したテナント ID です。
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
