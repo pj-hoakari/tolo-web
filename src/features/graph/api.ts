@@ -14,6 +14,19 @@ export type GraphKey = {
  * 呼び出しごとに複製して返し、編集状態が共有オブジェクトへ漏れないようにする。
  */
 export async function fetchGraph(_key: GraphKey): Promise<GraphData> {
+  if (
+    process.env.NEXT_PUBLIC_API_MOCKING === "enabled" &&
+    typeof window !== "undefined"
+  ) {
+    const name =
+      new URLSearchParams(window.location.search).get("layoutFixture") ??
+      window.sessionStorage.getItem("tolo-layout-fixture");
+    if (name) {
+      const { layoutFixture } = await import("@/mocks/fixtures/graphLayout");
+      const graph = layoutFixture(name);
+      if (graph) return graph;
+    }
+  }
   return structuredClone(PLACEHOLDER_GRAPH);
 }
 
