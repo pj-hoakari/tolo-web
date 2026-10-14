@@ -17,6 +17,9 @@ export type MockRouterOverrides = {
   devicesError?: boolean;
   getGraphError?: boolean;
   saveGraphError?: string;
+  listEventsError?: boolean;
+  createEventError?: string;
+  archiveEventError?: string;
 };
 
 /**
@@ -31,6 +34,9 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     devicesError = false,
     getGraphError = false,
     saveGraphError,
+    listEventsError = false,
+    createEventError,
+    archiveEventError,
   } = overrides;
 
   const events: TenantEvent[] = [
@@ -72,11 +78,14 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
         }),
     },
     tenant: {
-      listEvents: os.input(z.object({ tenantId: z.string().min(1) })).handler(
-        async (): Promise<{ events: TenantEvent[] }> => ({
-          events: events.filter((e) => e.status !== "archived"),
+      listEvents: os
+        .input(z.object({ tenantId: z.string().min(1) }))
+        .handler(async (): Promise<{ events: TenantEvent[] }> => {
+          if (listEventsError) {
+            throw new ORPCError("INTERNAL_SERVER_ERROR");
+          }
+          return { events: events.filter((e) => e.status !== "archived") };
         }),
-      ),
       createEvent: os
         .input(
           z.object({
@@ -85,6 +94,9 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           }),
         )
         .handler(async ({ input }): Promise<TenantEvent> => {
+          if (createEventError !== undefined) {
+            throw new ORPCError("BAD_REQUEST", { message: createEventError });
+          }
           const event: TenantEvent = {
             eventId: (nextEventNumber++).toString(16).padStart(16, "0"),
             name: input.name,
@@ -96,6 +108,11 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
       archiveEvent: os
         .input(z.object({ eventId: z.string().min(1) }))
         .handler(async ({ input }): Promise<TenantEvent> => {
+          if (archiveEventError !== undefined) {
+            throw new ORPCError("PRECONDITION_FAILED", {
+              message: archiveEventError,
+            });
+          }
           const event = events.find((e) => e.eventId === input.eventId);
           if (!event) {
             throw new ORPCError("NOT_FOUND");

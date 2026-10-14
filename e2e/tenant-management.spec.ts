@@ -6,14 +6,26 @@ const eventRow = (page: Page, name: string) =>
 const archiveButton = (page: Page, name: string) =>
   eventRow(page, name).getByRole("button", { name: "アーカイブ" });
 
-test.beforeEach(async ({ page }) => {
+type MockOverrides = {
+  listEventsError?: boolean;
+  createEventError?: string;
+  archiveEventError?: string;
+};
+
+const open = async (page: Page, overrides?: MockOverrides) => {
+  if (overrides) {
+    await page.addInitScript((value) => {
+      sessionStorage.setItem("msw:overrides", value);
+    }, JSON.stringify(overrides));
+  }
   await page.goto("/management");
   await expect(
     page.getByRole("heading", { level: 2, name: "test イベント管理" }),
   ).toBeVisible();
-});
+};
 
 test("テナントのイベントが状態とともに一覧に表示される", async ({ page }) => {
+  await open(page);
   await expect(eventList(page).getByRole("listitem")).toHaveCount(4);
   await expect(eventRow(page, "Event A")).toContainText("下書き");
   await expect(eventRow(page, "Event B")).toContainText("公開中");
@@ -27,6 +39,7 @@ test("テナントのイベントが状態とともに一覧に表示される",
 test("イベント名を入力して作成すると一覧に下書きとして追加され入力欄が空になる", async ({
   page,
 }) => {
+  await open(page);
   const field = page.getByRole("textbox", { name: "イベント名" });
   await field.fill("Event E");
   await page.getByRole("button", { name: "作成" }).click();
@@ -39,6 +52,7 @@ test("イベント名を入力して作成すると一覧に下書きとして�
 test("下書きのイベントをダイアログで確認してアーカイブすると一覧から消える", async ({
   page,
 }) => {
+  await open(page);
   await archiveButton(page, "Event A").click();
   const dialog = page.getByRole("alertdialog", {
     name: "イベントをアーカイブ",
@@ -55,6 +69,7 @@ test("下書きのイベントをダイアログで確認してアーカイブ�
 test("アーカイブのダイアログをキャンセルするとイベントは一覧に残る", async ({
   page,
 }) => {
+  await open(page);
   await archiveButton(page, "Event D").click();
   await page.getByRole("button", { name: "キャンセル" }).click();
 
@@ -65,8 +80,52 @@ test("アーカイブのダイアログをキャンセルするとイベント�
 test("公開中とロック中のイベントにはアーカイブボタンが表示されない", async ({
   page,
 }) => {
+  await open(page);
   await expect(eventRow(page, "Event B")).toBeVisible();
   await expect(archiveButton(page, "Event B")).toHaveCount(0);
   await expect(archiveButton(page, "Event C")).toHaveCount(0);
   await expect(archiveButton(page, "Event D")).toBeVisible();
+});
+
+test("イベント一覧の取得に失敗するとエラーと再読み込みボタンが表示される", async ({
+  page,
+}) => {
+  await open(page, { listEventsError: true });
+
+  const alert = page.getByRole("main").getByRole("alert");
+  await expect(alert).toContainText("イベント一覧を取得できませんでした。");
+  await expect(alert.getByRole("button", { name: "再読み込み" })).toBeVisible();
+  await expect(eventList(page)).toHaveCount(0);
+});
+
+test("イベントの作成に失敗するとサーバーのエラー文が表示され入力は残る", async ({
+  page,
+}) => {
+  const message = "event name is too long";
+  await open(page, { createEventError: message });
+
+  const field = page.getByRole("textbox", { name: "イベント名" });
+  await field.fill("Event E");
+  await page.getByRole("button", { name: "作成" }).click();
+
+  await expect(page.getByRole("main").getByRole("alert")).toHaveText(message);
+  await expect(field).toHaveValue("Event E");
+  await expect(eventRow(page, "Event E")).toHaveCount(0);
+});
+
+test("アーカイブに失敗するとダイアログにサーバーのエラー文が表示され一覧に残る", async ({
+  page,
+}) => {
+  const message = "invalid event status transition";
+  await open(page, { archiveEventError: message });
+
+  await archiveButton(page, "Event A").click();
+  const dialog = page.getByRole("alertdialog", {
+    name: "イベントをアーカイブ",
+  });
+  await dialog.getByRole("button", { name: "アーカイブする" }).click();
+
+  await expect(dialog.getByRole("alert")).toHaveText(message);
+  await dialog.getByRole("button", { name: "キャンセル" }).click();
+  await expect(eventRow(page, "Event A")).toBeVisible();
 });
