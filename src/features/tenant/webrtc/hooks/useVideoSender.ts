@@ -6,6 +6,7 @@ import {
   applySettings,
   type DetectionSettingsStore,
 } from "@/features/tenant/detection/stores/detectionStore";
+import { orpc } from "@/lib/orpc";
 import {
   encodeDetectionControlNotice,
   parseDetectionControlRequest,
@@ -13,6 +14,7 @@ import {
 } from "../utils/detectionControl";
 import type { DetectionOverlayFrame } from "../utils/detectionOverlay";
 import { getDb } from "../utils/firebase";
+import { signInForSignaling } from "../utils/firestoreSignIn";
 import { PeerSignalingAdapter } from "../utils/peerSignaling";
 import {
   sessionDoc,
@@ -229,30 +231,44 @@ export function useVideoSender(params: {
       startingSessionIds.delete(sessionId);
     };
 
-    const unsubscribeSessions = onSnapshot(sessionsCol, (snapshot) => {
-      for (const change of snapshot.docChanges()) {
-        const sessionId = change.doc.id;
-        if (change.type === "removed") {
-          closeSession(sessionId);
-          continue;
+    const listenSessions = () =>
+      onSnapshot(sessionsCol, (snapshot) => {
+        for (const change of snapshot.docChanges()) {
+          const sessionId = change.doc.id;
+          if (change.type === "removed") {
+            closeSession(sessionId);
+            continue;
+          }
+          if (change.type !== "added" && change.type !== "modified") {
+            continue;
+          }
+          if (sessions.has(sessionId)) {
+            continue;
+          }
+          if (change.doc.data().status === "requested") {
+            startSession(sessionId).catch((e) =>
+              console.error("[webrtc-sender] start session", e),
+            );
+          }
         }
-        if (change.type !== "added" && change.type !== "modified") {
-          continue;
+      });
+
+    let unsubscribeSessions: (() => void) | null = null;
+    let stopSignIn: (() => void) | null = null;
+    signInForSignaling(orpc.signaling.issueEdgeFirestoreToken)
+      .then((stop) => {
+        if (disposed) {
+          stop();
+          return;
         }
-        if (sessions.has(sessionId)) {
-          continue;
-        }
-        if (change.doc.data().status === "requested") {
-          startSession(sessionId).catch((e) =>
-            console.error("[webrtc-sender] start session", e),
-          );
-        }
-      }
-    });
-    sessionsListenerRef.current = {
-      edgeId,
-      unsubscribe: unsubscribeSessions,
-    };
+        stopSignIn = stop;
+        unsubscribeSessions = listenSessions();
+        sessionsListenerRef.current = {
+          edgeId,
+          unsubscribe: unsubscribeSessions,
+        };
+      })
+      .catch((e) => console.error("[webrtc-sender] sign in", e));
 
     return () => {
       disposed = true;
@@ -261,7 +277,8 @@ export function useVideoSender(params: {
         edgeId,
         sessionCount: sessions.size,
       });
-      unsubscribeSessions();
+      stopSignIn?.();
+      unsubscribeSessions?.();
       if (sessionsListenerRef.current?.unsubscribe === unsubscribeSessions) {
         sessionsListenerRef.current = null;
       }

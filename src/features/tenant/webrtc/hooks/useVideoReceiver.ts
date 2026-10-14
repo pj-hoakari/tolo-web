@@ -27,6 +27,7 @@ import {
   parseDetectionOverlayFrame,
 } from "../utils/detectionOverlay";
 import { getDb } from "../utils/firebase";
+import { signInForSignaling } from "../utils/firestoreSignIn";
 import { PeerSignalingAdapter } from "../utils/peerSignaling";
 import { sessionDoc, signalsCollection } from "../utils/refs";
 import {
@@ -73,6 +74,7 @@ export function useVideoReceiver({
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const sessionRefRef = useRef<DocumentReference | null>(null);
+  const stopSignInRef = useRef<(() => void) | null>(null);
   const detectionFrameRef = useRef<DetectionOverlayFrame | null>(null);
   const controlChannelRef = useRef<RTCDataChannel | null>(null);
   // observation から受け取った設定を反映している間の変更要求を止める
@@ -108,6 +110,8 @@ export function useVideoReceiver({
 
   const disconnect = useCallback(() => {
     closePeer();
+    stopSignInRef.current?.();
+    stopSignInRef.current = null;
     const sessionRef = sessionRefRef.current;
     if (sessionRef) {
       clearSession(sessionRef).catch((e) =>
@@ -172,6 +176,9 @@ export function useVideoReceiver({
       setConnectedEdgeId(edgeId);
 
       const run = async () => {
+        stopSignInRef.current = await signInForSignaling(
+          orpc.signaling.issueConsoleFirestoreToken,
+        );
         const { sessionId } = await orpc.signaling.requestConnection({
           edgeId,
         });
