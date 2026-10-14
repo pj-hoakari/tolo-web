@@ -2,6 +2,10 @@ import { ORPCError, os } from "@orpc/server";
 import { z } from "zod";
 import { graphDataSchema } from "@/features/graph/graphDataSchema";
 import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
+import {
+  ARCHIVABLE_STATUSES,
+  type TenantEvent,
+} from "@/features/tenant/management/events/type";
 import type { GraphData } from "@/features/tenant/management/graph/type";
 import type { EdgeDevice, FirestoreToken } from "@/server/router";
 import { sampleEdgeDevicesWire } from "./fixtures/edges";
@@ -28,6 +32,14 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     getGraphError = false,
     saveGraphError,
   } = overrides;
+
+  const events: TenantEvent[] = [
+    { eventId: "0000000000000001", name: "Event A", status: "draft" },
+    { eventId: "0000000000000002", name: "Event B", status: "open" },
+    { eventId: "0000000000000003", name: "Event C", status: "locked" },
+    { eventId: "0000000000000004", name: "Event D", status: "closed" },
+  ];
+  let nextEventNumber = events.length + 1;
 
   return {
     graph: {
@@ -57,6 +69,44 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             });
           }
           return { devices };
+        }),
+    },
+    tenant: {
+      listEvents: os.input(z.object({ tenantId: z.string().min(1) })).handler(
+        async (): Promise<{ events: TenantEvent[] }> => ({
+          events: events.filter((e) => e.status !== "archived"),
+        }),
+      ),
+      createEvent: os
+        .input(
+          z.object({
+            tenantId: z.string().min(1),
+            name: z.string().trim().min(1),
+          }),
+        )
+        .handler(async ({ input }): Promise<TenantEvent> => {
+          const event: TenantEvent = {
+            eventId: (nextEventNumber++).toString(16).padStart(16, "0"),
+            name: input.name,
+            status: "draft",
+          };
+          events.push(event);
+          return event;
+        }),
+      archiveEvent: os
+        .input(z.object({ eventId: z.string().min(1) }))
+        .handler(async ({ input }): Promise<TenantEvent> => {
+          const event = events.find((e) => e.eventId === input.eventId);
+          if (!event) {
+            throw new ORPCError("NOT_FOUND");
+          }
+          if (!ARCHIVABLE_STATUSES.has(event.status)) {
+            throw new ORPCError("PRECONDITION_FAILED", {
+              message: `event status ${event.status} cannot transition to archived`,
+            });
+          }
+          event.status = "archived";
+          return event;
         }),
     },
     signaling: {

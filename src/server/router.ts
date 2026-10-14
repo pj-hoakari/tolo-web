@@ -2,13 +2,22 @@ import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { type Client, Code, ConnectError } from "@connectrpc/connect";
 import { ORPCError, os } from "@orpc/server";
 import type { SignalingService } from "@pj-hoakari/tolo-edge-bridge-client-es/tolo/edgebridge/v1/signaling_pb";
+import {
+  type Event,
+  EventStatus as ProtoEventStatus,
+} from "@pj-hoakari/tolo-tenant-management-connect-es/tolo/tenant/v1/tenant_pb";
 import { z } from "zod";
 import { graphDataSchema } from "@/features/graph/graphDataSchema";
+import type {
+  EventStatus,
+  TenantEvent,
+} from "@/features/tenant/management/events/type";
 import type { GraphData } from "@/features/tenant/management/graph/type";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
 import { callObservation } from "./observation";
 import { consoleSignalingClient, edgeSignalingClient } from "./signaling";
+import { tenantManagementClient } from "./tenantManagement";
 
 const publicId = z.string().regex(/^[0-9a-f]{16}$/);
 
@@ -57,6 +66,36 @@ async function listEdgeDevices(eventId: string): Promise<EdgeDevice[]> {
       name: p.name ?? "",
     })),
   }));
+}
+
+const EVENT_STATUSES: Partial<Record<ProtoEventStatus, EventStatus>> = {
+  [ProtoEventStatus.DRAFT]: "draft",
+  [ProtoEventStatus.OPEN]: "open",
+  [ProtoEventStatus.LOCKED]: "locked",
+  [ProtoEventStatus.CLOSED]: "closed",
+  [ProtoEventStatus.ARCHIVED]: "archived",
+};
+
+function toTenantEvent(event: Event | undefined): TenantEvent {
+  const status = event && EVENT_STATUSES[event.status];
+  if (!event || !status) {
+    throw new Error(
+      `unexpected event from tenant-management: ${event?.status}`,
+    );
+  }
+  return { eventId: event.eventId, name: event.name, status };
+}
+
+const ORPC_ERROR_CODES: Partial<Record<Code, string>> = {
+  [Code.InvalidArgument]: "BAD_REQUEST",
+  [Code.FailedPrecondition]: "PRECONDITION_FAILED",
+  [Code.NotFound]: "NOT_FOUND",
+};
+
+function toORPCError(err: unknown): unknown {
+  if (!(err instanceof ConnectError)) return err;
+  const code = ORPC_ERROR_CODES[err.code];
+  return code ? new ORPCError(code, { message: err.rawMessage }) : err;
 }
 
 export interface FirestoreToken {
@@ -112,6 +151,41 @@ export const router = {
             throw new ORPCError("BAD_REQUEST", { message: err.rawMessage });
           }
           throw err;
+        }
+      }),
+  },
+  tenant: {
+    listEvents: os
+      .input(z.object({ tenantId: publicId }))
+      .handler(async ({ input }): Promise<{ events: TenantEvent[] }> => {
+        try {
+          const res = await tenantManagementClient.listEvents(input);
+          return { events: res.events.map(toTenantEvent) };
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    createEvent: os
+      .input(z.object({ tenantId: publicId, name: z.string().trim().min(1) }))
+      .handler(async ({ input }): Promise<TenantEvent> => {
+        try {
+          const res = await tenantManagementClient.createEvent(input);
+          return toTenantEvent(res.event);
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    archiveEvent: os
+      .input(z.object({ eventId: publicId }))
+      .handler(async ({ input }): Promise<TenantEvent> => {
+        try {
+          const res = await tenantManagementClient.transitionEventStatus({
+            eventId: input.eventId,
+            to: ProtoEventStatus.ARCHIVED,
+          });
+          return toTenantEvent(res.event);
+        } catch (err) {
+          throw toORPCError(err);
         }
       }),
   },
