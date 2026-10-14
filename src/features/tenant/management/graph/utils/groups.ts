@@ -32,8 +32,12 @@ export function sizeOf(node: GraphCanvasNode): {
     ? { width: GROUP_DEFAULT_WIDTH, height: GROUP_DEFAULT_HEIGHT }
     : { width: 160, height: 56 };
   return {
-    width: node.measured?.width ?? node.width ?? fallback.width,
-    height: node.measured?.height ?? node.height ?? fallback.height,
+    width: isGroupNode(node)
+      ? (node.width ?? node.measured?.width ?? fallback.width)
+      : (node.measured?.width ?? node.width ?? fallback.width),
+    height: isGroupNode(node)
+      ? (node.height ?? node.measured?.height ?? fallback.height)
+      : (node.measured?.height ?? node.height ?? fallback.height),
   };
 }
 

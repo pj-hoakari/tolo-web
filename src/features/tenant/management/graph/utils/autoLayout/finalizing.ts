@@ -40,8 +40,6 @@ type AxisGeometry = {
   mainSizeOf: (id: string) => number;
   crossSizeOf: (id: string) => number;
   toPoint: (main: number, cross: number) => XYPosition;
-  /** 整列前の現在位置のクロス軸成分 */
-  crossOfCurrent: (id: string) => number;
   /** 確定済みメンバー内にあるルート端点の、メンバー中心からの主軸オフセット */
   endpointOffsetMain: (memberId: string, endpointId: string) => number;
   /** 同じくクロス軸オフセット */
@@ -52,7 +50,6 @@ function createAxisGeometry(
   axis: Axis,
   memberSizes: Map<string, Size>,
   finalizedGroups: Map<string, FinalizedContent>,
-  currentCenters: Map<string, XYPosition>,
 ): AxisGeometry {
   const sizeAlong = (id: string, along: Axis): number => {
     const size = memberSizes.get(id);
@@ -81,10 +78,6 @@ function createAxisGeometry(
     crossSizeOf: (id) => sizeAlong(id, crossAxis),
     toPoint: (main, cross) =>
       axis === "x" ? { x: main, y: cross } : { x: cross, y: main },
-    crossOfCurrent: (id) => {
-      const center = currentCenters.get(id);
-      return center ? (axis === "x" ? center.y : center.x) : 0;
-    },
     endpointOffsetMain: (memberId, endpointId) =>
       endpointOffsetAlong(memberId, endpointId, axis),
     endpointOffsetCross: (memberId, endpointId) =>
@@ -131,8 +124,6 @@ type Lane = {
   /** 手前側の端点（レーンの揃え先） */
   startMember: string;
   startPoint: string;
-  /** 挿し込み位置の手掛かり: 両端点の現在位置の中間 */
-  seed: number;
 };
 
 type LanePlan = {
@@ -142,11 +133,7 @@ type LanePlan = {
 };
 
 /** 成分内の飛び越すルートを洗い出し、中間の列ごとにレーンを割り当てる */
-function planLanes(
-  component: PlannedComponent,
-  plan: ContainerPlan,
-  geometry: AxisGeometry,
-): LanePlan {
+function planLanes(component: PlannedComponent, plan: ContainerPlan): LanePlan {
   const columnMemberSet = new Set(component.columns.flat());
   const lanesByColumn = new Map<number, Lane[]>();
   const longEdgeByIndex = new Map<
@@ -164,10 +151,6 @@ function planLanes(
     const ascending = columnFrom < columnTo;
     const low = Math.min(columnFrom, columnTo);
     const high = Math.max(columnFrom, columnTo);
-    const seed =
-      (geometry.crossOfCurrent(edge.sourceId) +
-        geometry.crossOfCurrent(edge.targetId)) /
-      2;
     let prevKey: string | undefined;
     let lastKey = "";
     for (let column = low + 1; column < high; column += 1) {
@@ -177,7 +160,6 @@ function planLanes(
         prevKey,
         startMember: ascending ? edge.from : edge.to,
         startPoint: ascending ? edge.sourceId : edge.targetId,
-        seed,
       };
       const list = lanesByColumn.get(column);
       if (list) list.push(lane);
@@ -263,24 +245,12 @@ function placeColumn(args: {
   const columnMain = Math.max(...column.map((id) => geometry.mainSizeOf(id)));
   const centerMain = columnStart + columnMain / 2;
 
-  // 実メンバーの並びは保ったまま、レーンを現在位置の近い位置へ挿し込む
-  const lanes = [...(lanePlan.lanesByColumn.get(columnIndex) ?? [])].sort(
-    (a, b) => a.seed - b.seed || (a.key < b.key ? -1 : 1),
-  );
+  // 手動配置から選んだ側へレーンを置き、ノード間の順序は保持する。
+  const lanes = lanePlan.lanesByColumn.get(columnIndex) ?? [];
   const laneByKey = new Map(lanes.map((lane) => [lane.key, lane]));
-  const entryIds: string[] = [];
-  let laneCursor = 0;
-  for (const id of column) {
-    const memberSeed = geometry.crossOfCurrent(id);
-    while (laneCursor < lanes.length && lanes[laneCursor].seed < memberSeed) {
-      entryIds.push(lanes[laneCursor].key);
-      laneCursor += 1;
-    }
-    entryIds.push(id);
-  }
-  for (; laneCursor < lanes.length; laneCursor += 1) {
-    entryIds.push(lanes[laneCursor].key);
-  }
+  const laneIds = lanes.map((lane) => lane.key);
+  const entryIds =
+    plan.laneSide < 0 ? [...laneIds, ...column] : [...column, ...laneIds];
   // レーンには占有幅を持たせ、ルートを挟むノード同士の間隔を
   // 通常より広めにとる
   const entryCrossSize = (id: string): number =>
@@ -501,7 +471,7 @@ function placeComponent(
   crossExtent: number;
 } {
   const placed = new Map<string, MainCross>();
-  const lanePlan = planLanes(component, plan, geometry);
+  const lanePlan = planLanes(component, plan);
   const laneCrosses = new Map<string, number>();
 
   let columnStart = 0;
@@ -592,20 +562,13 @@ export function finalizeContainer(
   index: GraphIndex,
   plans: Map<ContainerId, ContainerPlan>,
   finalizedGroups: Map<string, FinalizedContent>,
-  currentCenters: Map<string, XYPosition>,
 ): FinalizedContent {
   const members = index.childrenOf.get(container) ?? [];
   for (const member of members) {
-    if (isGroupNode(member)) {
+    if (isGroupNode(member) && !finalizedGroups.has(member.id)) {
       finalizedGroups.set(
         member.id,
-        finalizeContainer(
-          member.id,
-          index,
-          plans,
-          finalizedGroups,
-          currentCenters,
-        ),
+        finalizeContainer(member.id, index, plans, finalizedGroups),
       );
     }
   }
@@ -625,12 +588,7 @@ export function finalizeContainer(
   for (const member of members) {
     memberSizes.set(member.id, boxSizeOf(member, finalizedGroups));
   }
-  const geometry = createAxisGeometry(
-    plan.axis,
-    memberSizes,
-    finalizedGroups,
-    currentCenters,
-  );
+  const geometry = createAxisGeometry(plan.axis, memberSizes, finalizedGroups);
 
   // 成分ごとに配置し、成分はクロス軸方向へ積む
   let componentCrossTop = 0;

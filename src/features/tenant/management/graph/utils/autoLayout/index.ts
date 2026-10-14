@@ -5,6 +5,7 @@ import { assembleNodes } from "./assemble";
 import { placeExternals } from "./externals";
 import { finalizeContainer } from "./finalizing";
 import { buildIndex, currentCentersOf } from "./graphIndex";
+import { matchesAlignedLayout } from "./matching";
 import { planContainers } from "./planning";
 import type { FinalizedContent } from "./types";
 
@@ -12,6 +13,7 @@ import type { FinalizedContent } from "./types";
  * 自動整列。接続（ルート）に沿って流れる階層型レイアウトを、
  * グループのネスト構造に対して再帰的に適用する。
  *
+ * 整列規則を既に満たす配置は、方向とレーン側を照合して保持する。
  * 1. 計画パス（planning.ts / 外側→内側）: コンテナ（キャンバス直下・
  *    各グループ）ごとに、直下メンバーへ持ち上げたルートから列（レイヤー）と
  *    列内順序を決める。
@@ -63,15 +65,11 @@ function alignRoutes(
   const index = buildIndex(nodes);
   const currentCenters = currentCentersOf(nodes, index);
 
+  if (matchesAlignedLayout(nodes, edges, index, currentCenters)) return nodes;
+
   const plans = planContainers(index, edges, currentCenters);
   const finalizedGroups = new Map<string, FinalizedContent>();
-  const root = finalizeContainer(
-    undefined,
-    index,
-    plans,
-    finalizedGroups,
-    currentCenters,
-  );
+  const root = finalizeContainer(undefined, index, plans, finalizedGroups);
 
   const aligned = assembleNodes(
     nodes,
