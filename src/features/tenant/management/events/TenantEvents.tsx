@@ -1,12 +1,15 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "@/components/ui/link";
 import { managementPath } from "../routes";
 import { ArchiveEventDialog } from "./ArchiveEventDialog";
 import { CreateEventForm } from "./CreateEventForm";
-import { ARCHIVABLE_STATUSES } from "./type";
+import { RestoreEventButton } from "./RestoreEventButton";
+import { ARCHIVABLE_STATUSES, RESTORABLE_STATUSES } from "./type";
 import { useTenantEvents } from "./useTenantEvents";
 
 type Props = {
@@ -15,13 +18,17 @@ type Props = {
 
 export function TenantEvents({ tenantId }: Props) {
   const t = useTranslations("TenantManagement");
-  const list = useTenantEvents(tenantId);
+  const [includeArchived, setIncludeArchived] = useState(false);
+  const list = useTenantEvents(tenantId, includeArchived);
 
   return (
     <div className="flex w-full max-w-3xl flex-col gap-6">
       <CreateEventForm tenantId={tenantId} onCreated={list.refresh} />
       <section className="flex flex-col gap-2">
         <h3 className="font-semibold text-lg">{t("list.heading")}</h3>
+        <Checkbox isSelected={includeArchived} onChange={setIncludeArchived}>
+          {t("list.showArchived")}
+        </Checkbox>
         {list.status === "loading" && (
           <p className="text-muted-foreground text-sm">{t("list.loading")}</p>
         )}
@@ -56,6 +63,9 @@ export function TenantEvents({ tenantId }: Props) {
                 </div>
                 {ARCHIVABLE_STATUSES.has(event.status) && (
                   <ArchiveEventDialog event={event} onArchived={list.refresh} />
+                )}
+                {RESTORABLE_STATUSES.has(event.status) && (
+                  <RestoreEventButton event={event} onRestored={list.refresh} />
                 )}
               </li>
             ))}

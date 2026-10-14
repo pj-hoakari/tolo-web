@@ -33,7 +33,8 @@
       "loading": "Cargando…",
       "empty": "Todavía no hay eventos.",
       "error": "No se pudieron cargar los eventos.",
-      "retry": "Volver a cargar"
+      "retry": "Volver a cargar",
+      "showArchived": "Mostrar también archivados"
     },
     "status": {
       "draft": "Borrador",
@@ -49,6 +50,10 @@
       "cancel": "Cancelar",
       "confirm": "Archivar",
       "failed": "No se pudo archivar el evento."
+    },
+    "restore": {
+      "button": "Restaurar",
+      "failed": "No se pudo restaurar el evento."
     }
   },
   "Graph": {

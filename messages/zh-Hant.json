@@ -33,7 +33,8 @@
       "loading": "載入中…",
       "empty": "尚無活動。",
       "error": "無法取得活動清單。",
-      "retry": "重新載入"
+      "retry": "重新載入",
+      "showArchived": "同時顯示已封存"
     },
     "status": {
       "draft": "草稿",
@@ -49,6 +50,10 @@
       "cancel": "取消",
       "confirm": "封存",
       "failed": "無法封存活動。"
+    },
+    "restore": {
+      "button": "還原",
+      "failed": "無法還原活動。"
     }
   },
   "Graph": {

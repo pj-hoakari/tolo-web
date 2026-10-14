@@ -9,18 +9,27 @@ export type UseTenantEventsResult =
   | { status: "ready"; events: TenantEvent[]; error: null; refresh: () => void }
   | { status: "error"; events: null; error: unknown; refresh: () => void };
 
-export function useTenantEvents(tenantId: string): UseTenantEventsResult {
+export function useTenantEvents(
+  tenantId: string,
+  includeArchived: boolean,
+): UseTenantEventsResult {
   const [state, setState] = useState<Omit<UseTenantEventsResult, "refresh">>({
     status: "loading",
     events: null,
     error: null,
   });
 
-  const [request, setRequest] = useState({ tenantId });
-  if (request.tenantId !== tenantId) {
-    setRequest({ tenantId });
+  const [request, setRequest] = useState({ tenantId, includeArchived });
+  if (
+    request.tenantId !== tenantId ||
+    request.includeArchived !== includeArchived
+  ) {
+    setRequest({ tenantId, includeArchived });
   }
-  const refresh = useCallback(() => setRequest({ tenantId }), [tenantId]);
+  const refresh = useCallback(
+    () => setRequest({ tenantId, includeArchived }),
+    [tenantId, includeArchived],
+  );
 
   useEffect(() => {
     let active = true;
