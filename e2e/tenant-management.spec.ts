@@ -5,11 +5,23 @@ const eventRow = (page: Page, name: string) =>
   eventList(page).getByRole("listitem").filter({ hasText: name });
 const archiveButton = (page: Page, name: string) =>
   eventRow(page, name).getByRole("button", { name: "アーカイブ" });
+const restoreButton = (page: Page, name: string) =>
+  eventRow(page, name).getByRole("button", { name: "復元" });
+const showArchived = (page: Page) =>
+  page.getByRole("checkbox", { name: "アーカイブ済みも表示" });
+const checkShowArchived = async (page: Page) => {
+  await page
+    .getByRole("main")
+    .getByText("アーカイブ済みも表示", { exact: true })
+    .click();
+  await expect(showArchived(page)).toBeChecked();
+};
 
 type MockOverrides = {
   listEventsError?: boolean;
   createEventError?: string;
   archiveEventError?: string;
+  restoreEventError?: string;
 };
 
 const open = async (page: Page, overrides?: MockOverrides) => {
@@ -128,4 +140,69 @@ test("アーカイブに失敗するとダイアログにサーバーのエラ�
   await expect(dialog.getByRole("alert")).toHaveText(message);
   await dialog.getByRole("button", { name: "キャンセル" }).click();
   await expect(eventRow(page, "Event A")).toBeVisible();
+});
+
+test("アーカイブ済みのイベントは既定では一覧に表示されない", async ({
+  page,
+}) => {
+  await open(page);
+  await expect(showArchived(page)).not.toBeChecked();
+  await expect(eventList(page).getByRole("listitem")).toHaveCount(4);
+  await expect(eventRow(page, "Event E")).toHaveCount(0);
+});
+
+test("アーカイブ済みも表示にすると復元ボタン付きでアーカイブ済みのイベントが表示される", async ({
+  page,
+}) => {
+  await open(page);
+  await checkShowArchived(page);
+
+  await expect(eventList(page).getByRole("listitem")).toHaveCount(5);
+  await expect(eventRow(page, "Event E")).toContainText("アーカイブ済み");
+  await expect(restoreButton(page, "Event E")).toBeVisible();
+  await expect(archiveButton(page, "Event E")).toHaveCount(0);
+  await expect(restoreButton(page, "Event D")).toHaveCount(0);
+});
+
+test("アーカイブ済みのイベントを復元すると終了に戻りアーカイブできるようになる", async ({
+  page,
+}) => {
+  await open(page);
+  await checkShowArchived(page);
+  await restoreButton(page, "Event E").click();
+
+  await expect(eventRow(page, "Event E")).toContainText("終了");
+  await expect(archiveButton(page, "Event E")).toBeVisible();
+  await expect(restoreButton(page, "Event E")).toHaveCount(0);
+});
+
+test("アーカイブ済みも表示のままアーカイブするとアーカイブ済みとして一覧に残る", async ({
+  page,
+}) => {
+  await open(page);
+  await checkShowArchived(page);
+  await archiveButton(page, "Event A").click();
+  await page
+    .getByRole("alertdialog", { name: "イベントをアーカイブ" })
+    .getByRole("button", { name: "アーカイブする" })
+    .click();
+
+  await expect(eventRow(page, "Event A")).toContainText("アーカイブ済み");
+  await expect(restoreButton(page, "Event A")).toBeVisible();
+  await expect(eventList(page).getByRole("listitem")).toHaveCount(5);
+});
+
+test("復元に失敗すると行にサーバーのエラー文が表示されアーカイブ済みのまま残る", async ({
+  page,
+}) => {
+  const message = "invalid event status transition";
+  await open(page, { restoreEventError: message });
+  await checkShowArchived(page);
+  await restoreButton(page, "Event E").click();
+
+  await expect(eventRow(page, "Event E").getByRole("alert")).toHaveText(
+    message,
+  );
+  await expect(eventRow(page, "Event E")).toContainText("アーカイブ済み");
+  await expect(restoreButton(page, "Event E")).toBeEnabled();
 });
