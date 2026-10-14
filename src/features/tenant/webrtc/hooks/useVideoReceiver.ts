@@ -56,7 +56,13 @@ export interface VideoReceiverController {
   disconnect: () => void;
 }
 
-export function useVideoReceiver(): VideoReceiverController {
+export function useVideoReceiver({
+  tenantId,
+  eventId,
+}: {
+  tenantId: string;
+  eventId: string;
+}): VideoReceiverController {
   const [status, setStatus] = useState<ConnectionStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -167,10 +173,12 @@ export function useVideoReceiver(): VideoReceiverController {
 
       const run = async () => {
         const { sessionId } = await orpc.signaling.requestConnection({
+          tenantId,
+          eventId,
           edgeId,
         });
         const db = getDb();
-        const sessionRef = sessionDoc(db, edgeId, sessionId);
+        const sessionRef = sessionDoc(db, tenantId, eventId, edgeId, sessionId);
         sessionRefRef.current = sessionRef;
         const signalsRef = signalsCollection(sessionRef);
         const channel = createFirestoreSignalingChannel({
@@ -202,6 +210,8 @@ export function useVideoReceiver(): VideoReceiverController {
       });
     },
     [
+      tenantId,
+      eventId,
       disconnect,
       watchConnection,
       handleDetectionMessage,

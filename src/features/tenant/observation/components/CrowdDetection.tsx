@@ -44,6 +44,8 @@ export function CrowdDetection({
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const { active, edgeId, sendDetectionFrame } = useVideoSender({
+    tenantId,
+    eventId,
     edgeDeviceId,
     stream: broadcastStream,
     settingsStore,

@@ -8,10 +8,11 @@ import { AliveEdgeList } from "./AliveEdgeList";
 import { VideoReceiverView } from "./VideoReceiverView";
 
 export type ConnectedEdgesProps = {
+  tenantId: string;
   eventId: string;
 };
 
-export function ConnectedEdges({ eventId }: ConnectedEdgesProps) {
+export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
   const { edges, status, error, refresh } = useAliveEdges({ eventId });
   const {
     status: receiveStatus,
@@ -23,7 +24,7 @@ export function ConnectedEdges({ eventId }: ConnectedEdgesProps) {
     connectedEdgeId,
     connect,
     disconnect,
-  } = useVideoReceiver();
+  } = useVideoReceiver({ tenantId, eventId });
 
   // 設定を受け取るまでは観測側の値が分からないため，操作させない
   const editable = settingsSynced && receiveStatus === "connected";
