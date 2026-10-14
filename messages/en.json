@@ -46,7 +46,7 @@
     "archive": {
       "button": "Archive",
       "title": "Archive event",
-      "description": "Archive “{name}”? Archived events no longer appear in this list.",
+      "description": "Archive “{name}”? Archived events appear in this list only when “Show archived” is on, and you can restore them from there.",
       "cancel": "Cancel",
       "confirm": "Archive",
       "failed": "Could not archive the event."

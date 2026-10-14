@@ -46,7 +46,7 @@
     "archive": {
       "button": "封存",
       "title": "封存活動",
-      "description": "將封存「{name}」。封存後的活動將不再顯示於清單中。",
+      "description": "將封存「{name}」。封存後的活動僅在開啟「同時顯示已封存」時顯示於清單中，並可在那裡還原。",
       "cancel": "取消",
       "confirm": "封存",
       "failed": "無法封存活動。"

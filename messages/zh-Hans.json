@@ -46,7 +46,7 @@
     "archive": {
       "button": "归档",
       "title": "归档活动",
-      "description": "将归档“{name}”。归档后的活动将不再显示在列表中。",
+      "description": "将归档“{name}”。归档后的活动仅在开启“同时显示已归档”时显示在列表中，并可在那里恢复。",
       "cancel": "取消",
       "confirm": "归档",
       "failed": "无法归档活动。"
