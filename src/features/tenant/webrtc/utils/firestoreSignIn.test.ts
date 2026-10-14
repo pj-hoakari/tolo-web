@@ -1,6 +1,10 @@
 import { signInWithCustomToken } from "firebase/auth";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { REFRESH_MARGIN_MS, signInForSignaling } from "./firestoreSignIn";
+import {
+  REFRESH_MARGIN_MS,
+  RETRY_DELAY_MS,
+  signInForSignaling,
+} from "./firestoreSignIn";
 
 vi.mock("firebase/auth", () => ({
   signInWithCustomToken: vi.fn(() => Promise.resolve()),
@@ -57,6 +61,28 @@ describe("シグナリング用のサインイン", () => {
     await vi.advanceTimersByTimeAsync(2 * HOUR);
 
     expect(issue).toHaveBeenCalledTimes(2);
+  });
+
+  it("取り直しに失敗したら期限までやり直す", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const issue = vi
+      .fn()
+      .mockResolvedValueOnce({
+        customToken: "token-1",
+        expiresAt: new Date(HOUR),
+      })
+      .mockRejectedValueOnce(new Error("unavailable"))
+      .mockResolvedValue({
+        customToken: "token-2",
+        expiresAt: new Date(2 * HOUR),
+      });
+    await signInForSignaling(issue);
+
+    await vi.advanceTimersByTimeAsync(HOUR - REFRESH_MARGIN_MS);
+    expect(signInWithCustomToken).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(RETRY_DELAY_MS);
+    expect(signInWithCustomToken).toHaveBeenLastCalledWith("auth", "token-2");
   });
 
   it("止めたあとは取り直さない", async () => {
