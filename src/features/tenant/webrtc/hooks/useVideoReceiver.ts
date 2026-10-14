@@ -181,7 +181,7 @@ export function useVideoReceiver({
         const signalsRef = signalsCollection(sessionRef);
         const channel = createFirestoreSignalingChannel({
           signalsRef,
-          self: "management",
+          self: "console",
         });
         const adapter = new PeerSignalingAdapter(channel.send);
 

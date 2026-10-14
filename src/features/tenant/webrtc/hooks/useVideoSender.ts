@@ -19,10 +19,7 @@ import {
   sessionsCollection,
   signalsCollection,
 } from "../utils/refs";
-import {
-  clearSignals,
-  createFirestoreSignalingChannel,
-} from "../utils/signalingChannel";
+import { createFirestoreSignalingChannel } from "../utils/signalingChannel";
 import { connectAsSender } from "../utils/webrtcSender";
 
 interface SenderSession {
@@ -163,10 +160,6 @@ export function useVideoSender(params: {
         const signalsRef = signalsCollection(
           sessionDoc(db, tenantId, eventId, edgeId, sessionId),
         );
-        await clearSignals(signalsRef);
-        if (disposed) {
-          return;
-        }
         const channel = createFirestoreSignalingChannel({
           signalsRef,
           self: "edge",
