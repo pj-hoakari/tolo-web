@@ -11,6 +11,7 @@ export type MockRouterOverrides = {
   devices?: EdgeDevice[];
   /** observation.listEdgeDevices を失敗させる（status: error の確認用） */
   devicesError?: boolean;
+  getGraphError?: boolean;
   saveGraphError?: string;
 };
 
@@ -24,6 +25,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
   const {
     devices = sampleEdgeDevicesWire,
     devicesError = false,
+    getGraphError = false,
     saveGraphError,
   } = overrides;
 
@@ -31,9 +33,12 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     graph: {
       getGraph: os
         .input(z.object({ eventId: z.string().min(1) }))
-        .handler(
-          async (): Promise<GraphData> => structuredClone(PLACEHOLDER_GRAPH),
-        ),
+        .handler(async (): Promise<GraphData> => {
+          if (getGraphError) {
+            throw new ORPCError("INTERNAL_SERVER_ERROR");
+          }
+          return structuredClone(PLACEHOLDER_GRAPH);
+        }),
       saveGraph: os
         .input(z.object({ eventId: z.string().min(1), graph: graphDataSchema }))
         .handler(async (): Promise<void> => {
