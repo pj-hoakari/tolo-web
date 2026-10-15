@@ -305,7 +305,13 @@
     "errors": {
       "videoSource": "取得視訊來源失敗",
       "detection": "人體偵測處理失敗",
-      "modelLoad": "載入偵測模型失敗（{status}: {path}）"
+      "modelLoad": "載入偵測模型失敗（{status}: {path}）",
+      "camera": {
+        "permissionDenied": "未允許使用攝影機。請在瀏覽器設定中允許存取攝影機。",
+        "notFound": "找不到攝影機。請確認攝影機已連接。",
+        "unsupported": "此瀏覽器或連線無法使用攝影機",
+        "unavailable": "無法啟動攝影機"
+      }
     },
     "devSource": {
       "title": "視訊來源",

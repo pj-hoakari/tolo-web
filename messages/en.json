@@ -305,7 +305,13 @@
     "errors": {
       "videoSource": "Failed to obtain the video source",
       "detection": "Person detection failed",
-      "modelLoad": "Failed to load the detection model ({status}: {path})"
+      "modelLoad": "Failed to load the detection model ({status}: {path})",
+      "camera": {
+        "permissionDenied": "Camera access is not allowed. Allow camera access in your browser settings.",
+        "notFound": "No camera was found. Check that a camera is connected.",
+        "unsupported": "The camera is not available in this browser or connection",
+        "unavailable": "Could not start the camera"
+      }
     },
     "devSource": {
       "title": "Video source",

@@ -305,7 +305,13 @@
     "errors": {
       "videoSource": "영상 소스를 가져오지 못했습니다",
       "detection": "사람 검출 처리에 실패했습니다",
-      "modelLoad": "검출 모델을 불러오지 못했습니다（{status}: {path}）"
+      "modelLoad": "검출 모델을 불러오지 못했습니다（{status}: {path}）",
+      "camera": {
+        "permissionDenied": "카메라 사용이 허용되지 않았습니다. 브라우저 설정에서 카메라 접근을 허용해 주세요.",
+        "notFound": "카메라를 찾을 수 없습니다. 카메라가 연결되어 있는지 확인해 주세요.",
+        "unsupported": "이 브라우저 또는 연결에서는 카메라를 사용할 수 없습니다",
+        "unavailable": "카메라를 시작할 수 없습니다"
+      }
     },
     "devSource": {
       "title": "영상 소스",

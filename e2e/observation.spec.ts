@@ -498,6 +498,29 @@ test.describe("検出の開始", () => {
       page.getByText(/^検出モデルの読み込みに失敗しました/),
     ).toHaveCount(1);
   });
+
+  test("カメラの使用が拒否されるとブラウザの文言ではなく翻訳済みの理由が表示される", async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      navigator.mediaDevices.getUserMedia = () =>
+        Promise.reject(
+          new DOMException("Permission denied", "NotAllowedError"),
+        );
+    });
+    await page.reload();
+    await setUpUnlockCode(page, "1234");
+
+    await startButton(page).click();
+
+    await expect(page.getByText("検出状態: エラー")).toBeVisible();
+    await expect(
+      page.getByText(
+        "カメラの使用が許可されていません。ブラウザの設定でカメラへのアクセスを許可してください。",
+      ),
+    ).toBeVisible();
+    await expect(page.getByText("Permission denied")).toHaveCount(0);
+  });
 });
 
 test.describe("画面の常時点灯", () => {
