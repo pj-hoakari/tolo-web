@@ -42,7 +42,7 @@ export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
         onDisconnect={disconnect}
       />
       {connectedEdgeId && (
-        <>
+        <div className="flex w-full flex-col items-center gap-2">
           <VideoReceiverView
             stream={stream}
             status={receiveStatus}
@@ -64,7 +64,7 @@ export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
               />
             </>
           )}
-        </>
+        </div>
       )}
     </div>
   );
