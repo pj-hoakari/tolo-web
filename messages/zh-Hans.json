@@ -208,12 +208,13 @@
       "error": "连接失败"
     },
     "aliveEdges": {
-      "title": "运行中的边缘设备（{count}）",
+      "title": "边缘设备（{count}）",
       "refresh": "刷新",
       "loading": "加载中…",
-      "empty": "没有运行中的边缘设备",
+      "empty": "没有边缘设备",
       "lastSeen": "最后响应：{time}",
       "unknownTime": "未知",
+      "offline": "离线",
       "connect": "连接",
       "disconnect": "断开",
       "connectLabel": "连接到“{name}”",

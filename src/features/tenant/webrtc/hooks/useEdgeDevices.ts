@@ -3,24 +3,24 @@
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { orpc } from "@/lib/orpc";
-import type { AliveEdge } from "../type";
+import type { EdgeDeviceItem } from "../type";
 
-export type AliveEdgesStatus = "idle" | "loading" | "ready" | "error";
+export type EdgeDevicesStatus = "idle" | "loading" | "ready" | "error";
 
-export interface UseAliveEdgesResult {
-  edges: AliveEdge[];
-  status: AliveEdgesStatus;
+export interface UseEdgeDevicesResult {
+  edges: EdgeDeviceItem[];
+  status: EdgeDevicesStatus;
   error: string | null;
   refresh: () => void;
 }
 
-export function useAliveEdges(params: {
+export function useEdgeDevices(params: {
   eventId: string;
   intervalMs?: number;
-}): UseAliveEdgesResult {
+}): UseEdgeDevicesResult {
   const { eventId, intervalMs = 5_000 } = params;
-  const [edges, setEdges] = useState<AliveEdge[]>([]);
-  const [status, setStatus] = useState<AliveEdgesStatus>("idle");
+  const [edges, setEdges] = useState<EdgeDeviceItem[]>([]);
+  const [status, setStatus] = useState<EdgeDevicesStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const t = useTranslations("Webrtc.aliveEdges");
 
@@ -28,17 +28,18 @@ export function useAliveEdges(params: {
     setStatus((prev) => (prev === "ready" ? prev : "loading"));
     try {
       const response = await orpc.observation.listEdgeDevices({ eventId });
-      const filtered: AliveEdge[] = response.devices
-        .filter((device) => device.online)
+      const items: EdgeDeviceItem[] = response.devices
         .map((device) => ({
           edgeDeviceId: device.edgeDeviceId,
           name: device.name,
+          online: device.online,
           lastHeartbeatAt: device.lastHeartbeatAt
             ? new Date(device.lastHeartbeatAt)
             : null,
           observationPoints: device.observationPoints,
-        }));
-      setEdges(filtered);
+        }))
+        .toSorted((a, b) => Number(b.online) - Number(a.online));
+      setEdges(items);
       setError(null);
       setStatus("ready");
     } catch (e) {

@@ -2,7 +2,7 @@
 
 import { DetectionLineCountList } from "@/features/tenant/detection/components/DetectionLineCountList";
 import { DetectionSettingsPanel } from "@/features/tenant/detection/components/DetectionSettingsPanel";
-import { useAliveEdges } from "../hooks/useAliveEdges";
+import { useEdgeDevices } from "../hooks/useEdgeDevices";
 import { useVideoReceiver } from "../hooks/useVideoReceiver";
 import { AliveEdgeList } from "./AliveEdgeList";
 import { VideoReceiverView } from "./VideoReceiverView";
@@ -13,7 +13,7 @@ export type ConnectedEdgesProps = {
 };
 
 export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
-  const { edges, status, error, refresh } = useAliveEdges({ eventId });
+  const { edges, status, error, refresh } = useEdgeDevices({ eventId });
   const {
     status: receiveStatus,
     error: receiveError,

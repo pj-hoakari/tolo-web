@@ -1,12 +1,12 @@
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import type { AliveEdgesStatus } from "../hooks/useAliveEdges";
-import type { AliveEdge, ConnectionStatus } from "../type";
+import type { EdgeDevicesStatus } from "../hooks/useEdgeDevices";
+import type { ConnectionStatus, EdgeDeviceItem } from "../type";
 import { isActiveConnection } from "../utils/connectionStatus";
 
 export type AliveEdgeListProps = {
-  edges: AliveEdge[];
-  status: AliveEdgesStatus;
+  edges: EdgeDeviceItem[];
+  status: EdgeDevicesStatus;
   error: string | null;
   onRefresh: () => void;
   connectedEdgeId: string | null;
@@ -80,6 +80,11 @@ export function AliveEdgeList({
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
+                  {!edge.online && (
+                    <span className="rounded-full border px-2 py-0.5 text-muted-foreground text-xs">
+                      {t("offline")}
+                    </span>
+                  )}
                   {showStatus && (
                     <span className="rounded-full border px-2 py-0.5 text-muted-foreground text-xs">
                       {tStatus(receiveStatus)}
@@ -89,6 +94,7 @@ export function AliveEdgeList({
                     <Button
                       size="sm"
                       onPress={() => onConnect(edge.edgeDeviceId)}
+                      isDisabled={!edge.online}
                       aria-label={t("connectLabel", { name })}
                     >
                       {t("connect")}

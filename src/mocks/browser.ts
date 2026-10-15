@@ -17,6 +17,10 @@ function storedOverrides(): MockRouterOverrides | undefined {
  */
 export const worker = setupWorker(...createOrpcHandlers(storedOverrides()));
 
+window.addEventListener("msw:overrides", () => {
+  worker.use(...createOrpcHandlers(storedOverrides()));
+});
+
 let startPromise: Promise<unknown> | undefined;
 
 export function startWorker(): Promise<unknown> {

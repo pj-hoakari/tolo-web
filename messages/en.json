@@ -208,12 +208,13 @@
       "error": "Connection failed"
     },
     "aliveEdges": {
-      "title": "Online edges ({count})",
+      "title": "Edges ({count})",
       "refresh": "Refresh",
       "loading": "Loading…",
-      "empty": "No edges are online",
+      "empty": "No edges",
       "lastSeen": "Last seen: {time}",
       "unknownTime": "Unknown",
+      "offline": "Offline",
       "connect": "Connect",
       "disconnect": "Disconnect",
       "connectLabel": "Connect to “{name}”",
