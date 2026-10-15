@@ -59,4 +59,26 @@ describe("AliveEdgeList", () => {
       within(row("入口カメラ") as HTMLElement).getByText("接続済み"),
     ).toBeTruthy();
   });
+
+  it("切断した後の行では状態と操作を別の語で表示する", () => {
+    renderList("disconnected");
+
+    const connected = within(row("入口カメラ") as HTMLElement);
+    expect(connected.getByText("切断済み")).toBeTruthy();
+    expect(connected.getByRole("button", { name: /切断$/ })).toBeTruthy();
+  });
+
+  it("行ごとの接続と切断のボタンの名前にエッジ名を含める", () => {
+    renderList("error");
+
+    expect(
+      screen.getByRole("button", { name: "「入口カメラ」に接続" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "「入口カメラ」から切断" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "「ホールカメラ」に接続" }),
+    ).toBeTruthy();
+  });
 });

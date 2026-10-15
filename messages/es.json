@@ -216,6 +216,8 @@
       "unknownTime": "Desconocida",
       "connect": "Conectar",
       "disconnect": "Desconectar",
+      "connectLabel": "Conectar a «{name}»",
+      "disconnectLabel": "Desconectar de «{name}»",
       "loadError": "No se pudo cargar la lista de edges"
     },
     "receiver": {

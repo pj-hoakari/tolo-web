@@ -204,7 +204,7 @@
       "connecting": "接続要求中…",
       "negotiating": "ネゴシエーション中…",
       "connected": "接続済み",
-      "disconnected": "切断",
+      "disconnected": "切断済み",
       "error": "接続失敗"
     },
     "aliveEdges": {
@@ -216,6 +216,8 @@
       "unknownTime": "不明",
       "connect": "接続",
       "disconnect": "切断",
+      "connectLabel": "「{name}」に接続",
+      "disconnectLabel": "「{name}」から切断",
       "loadError": "エッジ一覧の取得に失敗しました"
     },
     "receiver": {

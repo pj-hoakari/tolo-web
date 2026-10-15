@@ -216,6 +216,8 @@
       "unknownTime": "未知",
       "connect": "连接",
       "disconnect": "断开",
+      "connectLabel": "连接到“{name}”",
+      "disconnectLabel": "断开与“{name}”的连接",
       "loadError": "获取边缘设备列表失败"
     },
     "receiver": {

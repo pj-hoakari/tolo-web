@@ -65,15 +65,14 @@ export function AliveEdgeList({
             const isActive = isConnected && isActiveConnection(receiveStatus);
 
             const canDisconnect = isConnected && receiveStatus !== "idle";
+            const name = edge.name || edge.edgeDeviceId;
             return (
               <li
                 key={edge.edgeDeviceId}
                 className="flex items-center justify-between gap-4 px-4 py-3"
               >
                 <div className="flex flex-col">
-                  <span className="break-all font-medium">
-                    {edge.name || edge.edgeDeviceId}
-                  </span>
+                  <span className="break-all font-medium">{name}</span>
                   <span className="text-muted-foreground text-xs">
                     {t("lastSeen", {
                       time: formatLastSeen(edge.lastHeartbeatAt),
@@ -90,12 +89,18 @@ export function AliveEdgeList({
                     <Button
                       size="sm"
                       onPress={() => onConnect(edge.edgeDeviceId)}
+                      aria-label={t("connectLabel", { name })}
                     >
                       {t("connect")}
                     </Button>
                   )}
                   {canDisconnect && (
-                    <Button variant="outline" size="sm" onPress={onDisconnect}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onPress={onDisconnect}
+                      aria-label={t("disconnectLabel", { name })}
+                    >
                       {t("disconnect")}
                     </Button>
                   )}
