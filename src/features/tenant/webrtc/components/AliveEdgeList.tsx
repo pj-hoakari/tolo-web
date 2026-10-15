@@ -1,4 +1,5 @@
 import { useLocale, useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
 import type { AliveEdgesStatus } from "../hooks/useAliveEdges";
 import type { AliveEdge, ConnectionStatus } from "../type";
 import { isActiveConnection } from "../utils/connectionStatus";
@@ -38,14 +39,14 @@ export function AliveEdgeList({
     <div className="flex w-full max-w-3xl flex-col gap-2">
       <div className="flex items-center justify-between">
         <h3 className="font-bold">{t("title", { count: edges.length })}</h3>
-        <button
-          type="button"
-          onClick={onRefresh}
-          disabled={loading}
-          className="rounded bg-gray-200 px-3 py-1 text-sm disabled:opacity-50"
+        <Button
+          variant="secondary"
+          size="sm"
+          onPress={onRefresh}
+          isDisabled={loading}
         >
           {t("refresh")}
-        </button>
+        </Button>
       </div>
       {status === "error" && error ? (
         <p className="text-red-600 text-sm">{error}</p>
@@ -82,22 +83,17 @@ export function AliveEdgeList({
                     </span>
                   )}
                   {!isActive && (
-                    <button
-                      type="button"
-                      onClick={() => onConnect(edge.edgeDeviceId)}
-                      className="rounded bg-blue-600 px-3 py-1 text-sm text-white"
+                    <Button
+                      size="sm"
+                      onPress={() => onConnect(edge.edgeDeviceId)}
                     >
                       {t("connect")}
-                    </button>
+                    </Button>
                   )}
                   {canDisconnect && (
-                    <button
-                      type="button"
-                      onClick={onDisconnect}
-                      className="rounded bg-gray-600 px-3 py-1 text-sm text-white"
-                    >
+                    <Button variant="outline" size="sm" onPress={onDisconnect}>
                       {t("disconnect")}
-                    </button>
+                    </Button>
                   )}
                 </div>
               </li>
