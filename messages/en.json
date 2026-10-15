@@ -180,7 +180,10 @@
       "oneway": "One-way →",
       "reverse": "Reverse direction (start ↔ end)",
       "dissolveGroup": "Ungroup",
-      "groupHint": "A logical grouping for management, such as a floor or a building. Drag points in or out to change membership. Ungrouping keeps the points inside."
+      "groupHint": "A logical grouping for management, such as a floor or a building. Drag points in or out to change membership. Ungrouping keeps the points inside.",
+      "edgeTarget": "End point",
+      "edgeTargetPlaceholder": "Select an end point",
+      "addEdge": "Add a route from this point"
     },
     "node": {
       "editLabel": "Edit the label of “{label}”",

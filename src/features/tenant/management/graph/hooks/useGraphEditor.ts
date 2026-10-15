@@ -217,6 +217,39 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
     [source, appendEdge, selectEdge, isValidConnection],
   );
 
+  const selectedPoint =
+    selectionCount === 1 && selectedNodes[0] && !isGroupNode(selectedNodes[0])
+      ? selectedNodes[0]
+      : undefined;
+  const edgeTargets = useMemo(
+    () =>
+      selectedPoint
+        ? nodes
+            .filter((n) =>
+              isValidConnection({
+                source: selectedPoint.id,
+                target: n.id,
+                sourceHandle: null,
+                targetHandle: null,
+              }),
+            )
+            .map((n) => ({ id: n.id, label: n.data.label ?? n.id }))
+        : [],
+    [selectedPoint, nodes, isValidConnection],
+  );
+  const addEdgeFromSelected = useCallback(
+    (target: string) => {
+      if (!selectedPoint) return;
+      onConnect({
+        source: selectedPoint.id,
+        target,
+        sourceHandle: null,
+        targetHandle: null,
+      });
+    },
+    [selectedPoint, onConnect],
+  );
+
   const setEdgeDirection = useCallback(
     (id: string, direction: EdgeDirection) => {
       updateEdgeData(id, { direction });
@@ -425,6 +458,8 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
       onSetNodeLabel: setNodeLabel,
       onUpdateEdge: updateEdgeData,
       onReverseEdge: reverseEdge,
+      edgeTargets,
+      onAddEdge: addEdgeFromSelected,
       onSetSelectedNodeFlag: setSelectedNodeFlag,
       onSetSelectedEdgeDirection: setSelectedEdgeDirection,
       onReverseSelectedEdges: reverseSelectedEdges,

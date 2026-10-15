@@ -252,6 +252,33 @@ test.describe("ドラッグでの接続", () => {
   });
 });
 
+test.describe("プロパティパネルからの接続", () => {
+  test("選択したポイントの終点を選んで追加するとルートが追加され選択される", async ({
+    page,
+  }) => {
+    await node(page, "ph_booth").click({ position: { x: 8, y: 8 } });
+    await panel(page).getByRole("button", { name: /終点/ }).click();
+    await page.getByRole("option", { name: /壁展示/ }).click();
+    await panel(page)
+      .getByRole("button", { name: "このポイントからルートを追加" })
+      .click();
+
+    await expect(allEdges(page)).toHaveCount(15);
+    await expect(panel(page).getByRole("code")).toHaveText(/^e_/);
+    await expect(panel(page)).toContainText("ブースA⇌壁展示");
+  });
+
+  test("外部ポイントの終点の候補に外部ポイントは出ない", async ({ page }) => {
+    await node(page, "external").click();
+    await panel(page).getByRole("button", { name: /終点/ }).click();
+
+    await expect(page.getByRole("option", { name: /ブースA/ })).toBeVisible();
+    await expect(
+      page.getByRole("option", { name: /external-ph_exit/ }),
+    ).toHaveCount(0);
+  });
+});
+
 test.describe("ルート追加モード", () => {
   test("ルートを追加モードではポイント間のドラッグでルートが追加されモードが続き Esc で終わる", async ({
     page,

@@ -13,6 +13,7 @@ import { isExternalNode, isGroupNode } from "../../type";
 import { isLastExternal } from "../../utils/graphMutations";
 import type { getGroupSelectionError } from "../../utils/selectionActions";
 import { BulkProperties, type BulkPropertiesBindings } from "./BulkProperties";
+import { EdgeCreationField, type EdgeTarget } from "./EdgeCreationField";
 import { EdgeProperties } from "./EdgeProperties";
 import { ExternalProperties } from "./ExternalProperties";
 import { resolveEdgeDirectionState } from "./edgeDirectionState";
@@ -33,6 +34,8 @@ export type PropertiesPanelProps = BulkPropertiesBindings & {
   onSetNodeLabel: (id: string, label: string) => void;
   onUpdateEdge: (id: string, patch: Partial<GraphEdgeData>) => void;
   onReverseEdge: (id: string) => void;
+  edgeTargets: EdgeTarget[];
+  onAddEdge: (target: string) => void;
   onDelete: () => void;
   onDeleteSelected: () => void;
   canDeleteSelected: boolean;
@@ -51,6 +54,8 @@ export function PropertiesPanel({
   onSetNodeLabel,
   onUpdateEdge,
   onReverseEdge,
+  edgeTargets,
+  onAddEdge,
   onDelete,
   onDeleteSelected,
   canDeleteSelected,
@@ -101,22 +106,33 @@ export function PropertiesPanel({
             labelLocale={labelLocale}
             onChangeLabel={(label) => onSetNodeLabel(selectedNode.id, label)}
           />
-        ) : selectedNode && isExternalNode(selectedNode) ? (
-          <ExternalProperties node={selectedNode} />
         ) : selectedNode ? (
-          <NodeProperties
-            node={selectedNode}
-            typeOptions={buildNodeTypeOptions(
-              selectedNode.id,
-              selectedNode.data.nodeType,
-              nodes,
-              edges,
-              tNotice,
+          <div className="space-y-3">
+            {isExternalNode(selectedNode) ? (
+              <ExternalProperties node={selectedNode} />
+            ) : (
+              <NodeProperties
+                node={selectedNode}
+                typeOptions={buildNodeTypeOptions(
+                  selectedNode.id,
+                  selectedNode.data.nodeType,
+                  nodes,
+                  edges,
+                  tNotice,
+                )}
+                labelLocale={labelLocale}
+                onChange={(patch) => onUpdateNode(selectedNode.id, patch)}
+                onChangeLabel={(label) =>
+                  onSetNodeLabel(selectedNode.id, label)
+                }
+              />
             )}
-            labelLocale={labelLocale}
-            onChange={(patch) => onUpdateNode(selectedNode.id, patch)}
-            onChangeLabel={(label) => onSetNodeLabel(selectedNode.id, label)}
-          />
+            <EdgeCreationField
+              key={selectedNode.id}
+              targets={edgeTargets}
+              onAdd={onAddEdge}
+            />
+          </div>
         ) : selectedEdge ? (
           <EdgeProperties
             edge={selectedEdge}
