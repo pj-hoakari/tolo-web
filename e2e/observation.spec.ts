@@ -106,7 +106,9 @@ test.describe("画面ロック", () => {
   test("ロック中は Tab キーでヘッダーや画面の常時点灯にも移動できない", async ({
     page,
   }) => {
-    test.fail();
+    await expect(
+      page.getByRole("heading", { level: 2, name: "解除コードを設定" }),
+    ).toBeVisible();
     const reached = new Set<string>();
     for (let i = 0; i < 20; i++) {
       await page.keyboard.press("Tab");
@@ -120,6 +122,8 @@ test.describe("画面ロック", () => {
       );
     }
 
+    expect(reached).toContain("設定して解除");
+    expect(reached).not.toContain("アプリをインストール");
     expect(reached).not.toContain("言語を切り替え");
     expect(reached).not.toContain("テーマを切り替え");
     expect(reached).not.toContain("画面の常時点灯");
