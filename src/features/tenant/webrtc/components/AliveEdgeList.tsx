@@ -104,6 +104,16 @@ export function AliveEdgeList({
                       {t("disconnect")}
                     </Button>
                   )}
+                  {showStatus && !isActive && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onPress={onDisconnect}
+                      aria-label={t("closeLabel", { name })}
+                    >
+                      {t("close")}
+                    </Button>
+                  )}
                 </div>
               </li>
             );

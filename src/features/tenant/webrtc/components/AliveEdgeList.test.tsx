@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { IntlTestProvider } from "@/test/IntlTestProvider";
 import type { ConnectionStatus } from "../type";
@@ -7,7 +13,10 @@ import { AliveEdgeList } from "./AliveEdgeList";
 
 afterEach(cleanup);
 
-const renderList = (receiveStatus: ConnectionStatus) =>
+const renderList = (
+  receiveStatus: ConnectionStatus,
+  onDisconnect: () => void = vi.fn(),
+) =>
   render(
     <AliveEdgeList
       edges={[
@@ -30,7 +39,7 @@ const renderList = (receiveStatus: ConnectionStatus) =>
       connectedEdgeId="edge-a"
       receiveStatus={receiveStatus}
       onConnect={vi.fn()}
-      onDisconnect={vi.fn()}
+      onDisconnect={onDisconnect}
     />,
     { wrapper: IntlTestProvider },
   );
@@ -61,9 +70,10 @@ describe("AliveEdgeList", () => {
   });
 
   it.each<ConnectionStatus>(["disconnected", "error"])(
-    "%s の行では状態を表示し、切断を出さずに接続だけを出す",
+    "%s の行では状態を表示し、切断の代わりに接続と閉じるを出す",
     (status) => {
-      renderList(status);
+      const onDisconnect = vi.fn();
+      renderList(status, onDisconnect);
 
       const connected = within(row("入口カメラ") as HTMLElement);
       expect(
@@ -75,6 +85,11 @@ describe("AliveEdgeList", () => {
         connected.getByRole("button", { name: "「入口カメラ」に接続" }),
       ).toBeTruthy();
       expect(connected.queryByRole("button", { name: /切断$/ })).toBeNull();
+
+      fireEvent.click(
+        connected.getByRole("button", { name: "「入口カメラ」の映像を閉じる" }),
+      );
+      expect(onDisconnect).toHaveBeenCalledOnce();
     },
   );
 
@@ -88,6 +103,7 @@ describe("AliveEdgeList", () => {
         connected.getByRole("button", { name: "「入口カメラ」から切断" }),
       ).toBeTruthy();
       expect(connected.queryByRole("button", { name: /に接続$/ })).toBeNull();
+      expect(connected.queryByRole("button", { name: /閉じる$/ })).toBeNull();
     },
   );
 

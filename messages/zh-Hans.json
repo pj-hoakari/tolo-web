@@ -218,6 +218,8 @@
       "disconnect": "断开",
       "connectLabel": "连接到“{name}”",
       "disconnectLabel": "断开与“{name}”的连接",
+      "close": "关闭",
+      "closeLabel": "关闭“{name}”的视频",
       "loadError": "获取边缘设备列表失败"
     },
     "receiver": {

@@ -218,6 +218,8 @@
       "disconnect": "中斷",
       "connectLabel": "連線到「{name}」",
       "disconnectLabel": "中斷與「{name}」的連線",
+      "close": "關閉",
+      "closeLabel": "關閉「{name}」的影像",
       "loadError": "取得邊緣裝置清單失敗"
     },
     "receiver": {

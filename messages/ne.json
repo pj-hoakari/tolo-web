@@ -218,6 +218,8 @@
       "disconnect": "विच्छेद गर्नुहोस्",
       "connectLabel": "“{name}” मा जोड्नुहोस्",
       "disconnectLabel": "“{name}” बाट विच्छेद गर्नुहोस्",
+      "close": "बन्द गर्नुहोस्",
+      "closeLabel": "“{name}” को भिडियो बन्द गर्नुहोस्",
       "loadError": "एज सूची लोड गर्न सकिएन"
     },
     "receiver": {

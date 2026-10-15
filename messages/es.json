@@ -218,6 +218,8 @@
       "disconnect": "Desconectar",
       "connectLabel": "Conectar a «{name}»",
       "disconnectLabel": "Desconectar de «{name}»",
+      "close": "Cerrar",
+      "closeLabel": "Cerrar el vídeo de «{name}»",
       "loadError": "No se pudo cargar la lista de edges"
     },
     "receiver": {

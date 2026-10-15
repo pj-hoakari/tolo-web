@@ -218,6 +218,8 @@
       "disconnect": "切断",
       "connectLabel": "「{name}」に接続",
       "disconnectLabel": "「{name}」から切断",
+      "close": "閉じる",
+      "closeLabel": "「{name}」の映像を閉じる",
       "loadError": "エッジ一覧の取得に失敗しました"
     },
     "receiver": {

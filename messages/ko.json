@@ -218,6 +218,8 @@
       "disconnect": "연결 끊기",
       "connectLabel": "“{name}”에 연결",
       "disconnectLabel": "“{name}” 연결 끊기",
+      "close": "닫기",
+      "closeLabel": "“{name}” 영상 닫기",
       "loadError": "엣지 목록을 불러오지 못했습니다"
     },
     "receiver": {

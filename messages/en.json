@@ -218,6 +218,8 @@
       "disconnect": "Disconnect",
       "connectLabel": "Connect to “{name}”",
       "disconnectLabel": "Disconnect from “{name}”",
+      "close": "Close",
+      "closeLabel": "Close the video from “{name}”",
       "loadError": "Failed to load the edge list"
     },
     "receiver": {
