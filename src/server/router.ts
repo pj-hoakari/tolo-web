@@ -14,6 +14,7 @@ import type {
   TenantEvent,
 } from "@/features/tenant/management/events/type";
 import type { GraphData } from "@/features/tenant/management/graph/type";
+import { sampleEdgeDevicesWire } from "@/mocks/fixtures/edges";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
 import { edgeDeviceClient, measurementIngestClient } from "./observation";
@@ -54,6 +55,13 @@ async function listEdgeDevices(eventId: string): Promise<EdgeDevice[]> {
       name: p.name,
     })),
   }));
+}
+
+function observationMocking(): boolean {
+  return (
+    process.env.NODE_ENV === "development" &&
+    process.env.OBSERVATION_API_MOCKING === "enabled"
+  );
 }
 
 const EVENT_STATUSES: Partial<Record<ProtoEventStatus, EventStatus>> = {
@@ -215,7 +223,9 @@ export const router = {
   observation: {
     listEdgeDevices: os.input(z.object({ eventId: z.string().min(1) })).handler(
       async ({ input }): Promise<{ devices: EdgeDevice[] }> => ({
-        devices: await listEdgeDevices(input.eventId),
+        devices: observationMocking()
+          ? sampleEdgeDevicesWire
+          : await listEdgeDevices(input.eventId),
       }),
     ),
     listObservationPoints: os
@@ -224,7 +234,9 @@ export const router = {
         async ({
           input,
         }): Promise<{ observationPoints: ObservationPoint[] }> => {
-          const devices = await listEdgeDevices(input.eventId);
+          const devices = observationMocking()
+            ? sampleEdgeDevicesWire
+            : await listEdgeDevices(input.eventId);
           const device = devices.find(
             (d) => d.edgeDeviceId === input.edgeDeviceId,
           );
@@ -238,6 +250,9 @@ export const router = {
         }),
       )
       .handler(async ({ input }): Promise<void> => {
+        if (observationMocking()) {
+          return;
+        }
         await edgeDeviceClient.heartbeat(input);
       }),
     reportMeasurements: os
@@ -256,6 +271,9 @@ export const router = {
         }),
       )
       .handler(async ({ input }): Promise<void> => {
+        if (observationMocking()) {
+          return;
+        }
         await measurementIngestClient.reportMeasurements({
           eventId: input.eventId,
           edgeDeviceId: input.edgeDeviceId,
