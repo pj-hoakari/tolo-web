@@ -250,7 +250,7 @@
     },
     "lines": {
       "create": "Crear línea",
-      "edit": "Modo de edición",
+      "listLabel": "Líneas",
       "reverseForward": "Invertir dirección forward",
       "deleteSelected": "Eliminar la línea seleccionada",
       "reset": "Restablecer las líneas",
