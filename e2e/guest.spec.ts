@@ -13,6 +13,10 @@ const localeButton = (page: Page) =>
   page.getByRole("button", { name: "言語を切り替え" });
 const themeButton = (page: Page) =>
   page.getByRole("button", { name: "テーマを切り替え" });
+const staffMessageBell = (page: Page) =>
+  page.getByRole("button", { name: "スタッフからのお知らせ" });
+const staffMessageDialog = (page: Page) =>
+  page.getByRole("dialog", { name: "スタッフからのお知らせ" });
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/event/test/guest");
@@ -42,59 +46,55 @@ test("ゲストページを開くと各情報セクションの見出しが表�
 test("お知らせボタンを押すとスタッフからのお知らせ一覧が開き未読バッジが消える", async ({
   page,
 }) => {
-  const bell = page.getByRole("button", { name: "スタッフからのお知らせ" });
+  const bell = staffMessageBell(page);
   await expect(bell).toHaveText("2");
   await expect(bell).toHaveAttribute("aria-expanded", "false");
 
   await bell.click();
 
+  const dialog = staffMessageDialog(page);
+  await expect(dialog).toBeVisible();
   await expect(bell).toHaveAttribute("aria-expanded", "true");
+  await expect(bell).toHaveAttribute(
+    "aria-controls",
+    (await dialog.getAttribute("id")) ?? "",
+  );
   await expect(bell).not.toHaveText("2");
-  const list = page.getByRole("banner").getByRole("list");
+  const list = dialog.getByRole("list");
   await expect(list.getByRole("listitem")).toHaveCount(2);
   await expect(list).toContainText("東ゲート付近が大変混雑しています。");
   await expect(list).toContainText("06/15 14:30");
 });
 
-test("お知らせ一覧はキーボードで開いて閉じられる", async ({ page }) => {
-  const bell = page.getByRole("button", { name: "スタッフからのお知らせ" });
+test("お知らせ一覧はキーボードで開き Escape で閉じるとベルにフォーカスが戻る", async ({
+  page,
+}) => {
+  const bell = staffMessageBell(page);
   await bell.focus();
   await page.keyboard.press("Enter");
 
-  await expect(bell).toHaveAttribute("aria-expanded", "true");
+  const dialog = staffMessageDialog(page);
+  await expect(dialog).toBeVisible();
   await expect(
-    page.getByRole("heading", { level: 2, name: "スタッフからのお知らせ" }),
+    dialog.getByRole("heading", { level: 2, name: "スタッフからのお知らせ" }),
   ).toBeVisible();
-
-  await page.keyboard.press("Tab");
-  await expect(
-    page.getByRole("button", { name: "お知らせを閉じる" }),
-  ).toBeFocused();
-  await page.keyboard.press("Enter");
-
-  await expect(bell).toHaveAttribute("aria-expanded", "false");
-  await expect(page.getByRole("banner").getByRole("list")).toBeHidden();
-});
-
-test("お知らせ一覧は Escape で閉じる", async ({ page }) => {
-  test.fail();
-  const bell = page.getByRole("button", { name: "スタッフからのお知らせ" });
-  await bell.click();
-  await expect(bell).toHaveAttribute("aria-expanded", "true");
 
   await page.keyboard.press("Escape");
 
+  await expect(dialog).toBeHidden();
   await expect(bell).toHaveAttribute("aria-expanded", "false");
+  await expect(bell).toBeFocused();
 });
 
 test("お知らせ一覧の外側を押すとお知らせ一覧が閉じる", async ({ page }) => {
-  await page.getByRole("button", { name: "スタッフからのお知らせ" }).click();
-  await page
-    .getByRole("button", { name: "お知らせを閉じる" })
-    .click({ position: { x: 5, y: 5 } });
+  await staffMessageBell(page).click();
+  const dialog = staffMessageDialog(page);
+  await expect(dialog).toBeVisible();
 
-  await expect(page.getByRole("banner").getByRole("list")).toBeHidden();
-  const bell = page.getByRole("button", { name: "スタッフからのお知らせ" });
+  await page.mouse.click(5, 300);
+
+  await expect(dialog).toBeHidden();
+  const bell = staffMessageBell(page);
   await expect(bell).toHaveAttribute("aria-expanded", "false");
   await expect(bell).not.toHaveText("2");
 });

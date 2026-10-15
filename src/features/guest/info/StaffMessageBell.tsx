@@ -48,15 +48,12 @@ export function StaffMessageBell(_props: StaffMessageBellProps) {
     (message) => !readIds.includes(message.id),
   ).length;
 
-  const handleToggle = () => {
-    setIsOpen((prev) => {
-      const next = !prev;
-      // 開いたタイミングで既読にする
-      if (next) {
-        setReadIds(rawMessages.map((message) => message.id));
-      }
-      return next;
-    });
+  const handleOpenChange = (next: boolean) => {
+    setIsOpen(next);
+    // 開いたタイミングで既読にする
+    if (next) {
+      setReadIds(rawMessages.map((message) => message.id));
+    }
   };
 
   return (
@@ -64,10 +61,9 @@ export function StaffMessageBell(_props: StaffMessageBellProps) {
       messages={localizedMessages}
       unreadCount={unreadCount}
       isOpen={isOpen}
-      onToggle={handleToggle}
+      onOpenChange={handleOpenChange}
       title={t("title")}
       ariaOpen={t("ariaOpen")}
-      ariaClose={t("ariaClose")}
       emptyText={t("empty")}
       locale={locale}
     />

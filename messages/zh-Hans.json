@@ -368,7 +368,6 @@
     "staffMessage": {
       "title": "工作人员通知",
       "ariaOpen": "工作人员通知",
-      "ariaClose": "关闭通知",
       "empty": "暂无通知",
       "samples": {
         "msg-2": {

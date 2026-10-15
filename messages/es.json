@@ -368,7 +368,6 @@
     "staffMessage": {
       "title": "Avisos del personal",
       "ariaOpen": "Avisos del personal",
-      "ariaClose": "Cerrar los avisos",
       "empty": "No hay avisos por ahora",
       "samples": {
         "msg-2": {

@@ -368,7 +368,6 @@
     "staffMessage": {
       "title": "スタッフからのお知らせ",
       "ariaOpen": "スタッフからのお知らせ",
-      "ariaClose": "お知らせを閉じる",
       "empty": "現在お知らせはありません",
       "samples": {
         "msg-2": {
