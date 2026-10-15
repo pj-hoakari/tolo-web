@@ -8,6 +8,7 @@ import {
   resetCrowdTracking,
 } from "../utils/detectCrowd";
 import {
+  CameraAccessError,
   type CrowdVideoSource,
   type CrowdVideoSourceFactory,
   createCameraVideoSource,
@@ -28,11 +29,14 @@ export function useDetectCrowd(
   const [error, setError] = useState<string | null>(null);
   const t = useTranslations("Observation.errors");
 
-  /** 起動時の失敗を、モデル読み込み失敗だけ専用の文言にして伝える */
+  /** 起動時の失敗を、モデル読み込み失敗とカメラ取得失敗だけ専用の文言にして伝える */
   const describeStartError = useCallback(
     (cause: unknown): string => {
       if (cause instanceof DetectionModelLoadError) {
         return t("modelLoad", { status: cause.status, path: cause.path });
+      }
+      if (cause instanceof CameraAccessError) {
+        return t(`camera.${cause.reason}`);
       }
       return cause instanceof Error ? cause.message : t("videoSource");
     },

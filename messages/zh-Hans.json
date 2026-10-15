@@ -305,7 +305,13 @@
     "errors": {
       "videoSource": "获取视频源失败",
       "detection": "人体检测处理失败",
-      "modelLoad": "加载检测模型失败（{status}: {path}）"
+      "modelLoad": "加载检测模型失败（{status}: {path}）",
+      "camera": {
+        "permissionDenied": "未允许使用摄像头。请在浏览器设置中允许访问摄像头。",
+        "notFound": "未找到摄像头。请确认摄像头已连接。",
+        "unsupported": "此浏览器或连接无法使用摄像头",
+        "unavailable": "无法启动摄像头"
+      }
     },
     "devSource": {
       "title": "视频源",

@@ -305,7 +305,13 @@
     "errors": {
       "videoSource": "No se pudo obtener la fuente de vídeo",
       "detection": "Falló la detección de personas",
-      "modelLoad": "No se pudo cargar el modelo de detección ({status}: {path})"
+      "modelLoad": "No se pudo cargar el modelo de detección ({status}: {path})",
+      "camera": {
+        "permissionDenied": "No se permite el acceso a la cámara. Permite el acceso a la cámara en la configuración del navegador.",
+        "notFound": "No se encontró ninguna cámara. Comprueba que haya una cámara conectada.",
+        "unsupported": "La cámara no está disponible en este navegador o conexión",
+        "unavailable": "No se pudo iniciar la cámara"
+      }
     },
     "devSource": {
       "title": "Fuente de vídeo",
