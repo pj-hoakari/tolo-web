@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/client";
 import type { GraphData } from "@/features/tenant/management/graph/type";
 import { orpc } from "@/lib/orpc";
+import { type GraphViolation, graphViolationsSchema } from "./graphDataSchema";
 
 /** グラフを特定するためのキー。tenant / guest のどちらからも同じ値で引く */
 export type GraphKey = {
@@ -20,33 +21,22 @@ export async function saveGraph(
     await orpc.graph.saveGraph({ eventId, graph });
   } catch (error) {
     if (error instanceof ORPCError && error.code === "BAD_REQUEST") {
-      throw new GraphValidationError(error.message);
+      const details = graphViolationsSchema.safeParse(error.data);
+      throw new GraphValidationError(
+        error.message,
+        details.success ? details.data.violations : [],
+      );
     }
     throw error;
   }
 }
 
-export type GraphValidationTarget = { type: "node" | "edge"; id: string };
-
-const TARGET_TYPES: Record<string, GraphValidationTarget["type"]> = {
-  node: "node",
-  point: "node",
-  group: "node",
-  edge: "edge",
-};
-
-export function validationTarget(
-  message: string,
-): GraphValidationTarget | null {
-  const match = /\b(node|point|group|edge) "([^"]+)"/.exec(message);
-  return match ? { type: TARGET_TYPES[match[1]], id: match[2] } : null;
-}
-
 export class GraphValidationError extends Error {
-  readonly target = validationTarget(this.message);
+  readonly violations: GraphViolation[];
 
-  constructor(message: string) {
+  constructor(message: string, violations: GraphViolation[]) {
     super(message);
     this.name = "GraphValidationError";
+    this.violations = violations;
   }
 }

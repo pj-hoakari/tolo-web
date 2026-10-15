@@ -1,6 +1,9 @@
 import { ORPCError, os } from "@orpc/server";
 import { z } from "zod";
-import { graphDataSchema } from "@/features/graph/graphDataSchema";
+import {
+  type GraphViolation,
+  graphDataSchema,
+} from "@/features/graph/graphDataSchema";
 import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
 import {
   ARCHIVABLE_STATUSES,
@@ -17,7 +20,7 @@ export type MockRouterOverrides = {
   /** observation.listEdgeDevices を失敗させる（status: error の確認用） */
   devicesError?: boolean;
   getGraphError?: boolean;
-  saveGraphError?: string;
+  saveGraphError?: { message: string; violations: GraphViolation[] };
   listEventsError?: boolean;
   createEventError?: string;
   archiveEventError?: string;
@@ -65,7 +68,10 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
         .input(z.object({ eventId: z.string().min(1), graph: graphDataSchema }))
         .handler(async (): Promise<void> => {
           if (saveGraphError !== undefined) {
-            throw new ORPCError("BAD_REQUEST", { message: saveGraphError });
+            throw new ORPCError("BAD_REQUEST", {
+              message: saveGraphError.message,
+              data: { violations: saveGraphError.violations },
+            });
           }
         }),
     },

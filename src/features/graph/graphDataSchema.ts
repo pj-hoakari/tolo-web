@@ -53,3 +53,18 @@ export const graphDataSchema: z.ZodType<GraphData> = z.object({
   nodes: z.array(z.discriminatedUnion("type", [pointNode, groupNode])),
   edges: z.array(edge),
 });
+
+export const graphViolationsSchema = z.object({
+  violations: z.array(
+    z.object({
+      kind: z.string(),
+      elementKind: z.enum(["node", "group", "edge"]).nullable(),
+      elementId: z.string(),
+      relatedIds: z.array(z.string()),
+    }),
+  ),
+});
+
+export type GraphViolation = z.infer<
+  typeof graphViolationsSchema
+>["violations"][number];

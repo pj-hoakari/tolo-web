@@ -81,9 +81,20 @@ function GraphEditorInner({
       setSaveState({ status: "saved" });
     } catch (error) {
       setSaveState({ status: "failed", error });
-      if (error instanceof GraphValidationError && error.target) {
-        const { type, id } = error.target;
-        setSelection(type === "node" ? [id] : [], type === "edge" ? [id] : []);
+      if (error instanceof GraphValidationError) {
+        const targets = error.violations.filter(
+          (v) => v.elementKind && v.elementId,
+        );
+        if (targets.length > 0) {
+          setSelection(
+            targets
+              .filter((v) => v.elementKind !== "edge")
+              .map((v) => v.elementId),
+            targets
+              .filter((v) => v.elementKind === "edge")
+              .map((v) => v.elementId),
+          );
+        }
       }
     }
   };
