@@ -2,13 +2,22 @@ import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { type Client, Code, ConnectError } from "@connectrpc/connect";
 import { ORPCError, os } from "@orpc/server";
 import type { SignalingService } from "@pj-hoakari/tolo-edge-bridge-client-es/tolo/edgebridge/v1/signaling_pb";
+import {
+  ElementKind,
+  type GraphViolations,
+  GraphViolationsSchema,
+  ViolationKind,
+} from "@pj-hoakari/tolo-graph-authoring-client-es/tolo/graph/v1/graph_pb";
 import { MeasurementSource } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
 import {
   type Event,
   EventStatus as ProtoEventStatus,
 } from "@pj-hoakari/tolo-tenant-management-connect-es/tolo/tenant/v1/tenant_pb";
 import { z } from "zod";
-import { graphDataSchema } from "@/features/graph/graphDataSchema";
+import {
+  type GraphViolation,
+  graphDataSchema,
+} from "@/features/graph/graphDataSchema";
 import type {
   EventStatus,
   TenantEvent,
@@ -82,6 +91,23 @@ function toTenantEvent(event: Event | undefined): TenantEvent {
   return { eventId: event.eventId, name: event.name, status };
 }
 
+const ELEMENT_KINDS: Partial<
+  Record<ElementKind, GraphViolation["elementKind"]>
+> = {
+  [ElementKind.NODE]: "node",
+  [ElementKind.GROUP]: "group",
+  [ElementKind.EDGE]: "edge",
+};
+
+function toGraphViolations({ violations }: GraphViolations): GraphViolation[] {
+  return violations.map((v) => ({
+    kind: ViolationKind[v.kind] ?? "UNSPECIFIED",
+    elementKind: ELEMENT_KINDS[v.elementKind] ?? null,
+    elementId: v.elementId,
+    relatedIds: v.relatedIds,
+  }));
+}
+
 const ORPC_ERROR_CODES: Partial<Record<Code, string>> = {
   [Code.InvalidArgument]: "BAD_REQUEST",
   [Code.FailedPrecondition]: "PRECONDITION_FAILED",
@@ -144,7 +170,14 @@ export const router = {
             err instanceof ConnectError &&
             err.code === Code.InvalidArgument
           ) {
-            throw new ORPCError("BAD_REQUEST", { message: err.rawMessage });
+            throw new ORPCError("BAD_REQUEST", {
+              message: err.rawMessage,
+              data: {
+                violations: err
+                  .findDetails(GraphViolationsSchema)
+                  .flatMap(toGraphViolations),
+              },
+            });
           }
           throw err;
         }

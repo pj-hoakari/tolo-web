@@ -1,6 +1,14 @@
-import { call } from "@orpc/server";
+import { Code, ConnectError } from "@connectrpc/connect";
+import { call, ORPCError } from "@orpc/server";
+import {
+  ElementKind,
+  GraphViolationsSchema,
+  ViolationKind,
+} from "@pj-hoakari/tolo-graph-authoring-client-es/tolo/graph/v1/graph_pb";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
 import { sampleEdgeDevicesWire } from "@/mocks/fixtures/edges";
+import { graphAuthoringClient } from "./graphAuthoring";
 import { router } from "./router";
 
 vi.hoisted(() => {
@@ -17,6 +25,95 @@ const [device] = sampleEdgeDevicesWire;
 
 afterEach(() => {
   vi.unstubAllEnvs();
+  vi.restoreAllMocks();
+});
+
+describe("graph.saveGraph", () => {
+  const save = () =>
+    call(router.graph.saveGraph, { eventId, graph: PLACEHOLDER_GRAPH });
+
+  it("passes the violations in the error details to the browser as plain values", async () => {
+    vi.spyOn(graphAuthoringClient, "saveGraph").mockRejectedValue(
+      new ConnectError("invalid graph document", Code.InvalidArgument, {}, [
+        {
+          desc: GraphViolationsSchema,
+          value: {
+            violations: [
+              {
+                kind: ViolationKind.NODE_WITHOUT_ROUTE,
+                elementKind: ElementKind.NODE,
+                elementId: "p1",
+              },
+              {
+                kind: ViolationKind.MISSING_PARENT_GROUP,
+                elementKind: ElementKind.GROUP,
+                elementId: "g1",
+                relatedIds: ["g0"],
+              },
+              {
+                kind: ViolationKind.MISSING_NODE,
+                elementKind: ElementKind.EDGE,
+                elementId: "e1",
+                relatedIds: ["a", "b"],
+              },
+              {
+                kind: 99 as ViolationKind,
+                elementKind: 99 as ElementKind,
+                elementId: "",
+              },
+            ],
+          },
+        },
+      ]),
+    );
+
+    const error = await save().catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ORPCError);
+    expect(error).toMatchObject({
+      code: "BAD_REQUEST",
+      message: "invalid graph document",
+      data: {
+        violations: [
+          {
+            kind: "NODE_WITHOUT_ROUTE",
+            elementKind: "node",
+            elementId: "p1",
+            relatedIds: [],
+          },
+          {
+            kind: "MISSING_PARENT_GROUP",
+            elementKind: "group",
+            elementId: "g1",
+            relatedIds: ["g0"],
+          },
+          {
+            kind: "MISSING_NODE",
+            elementKind: "edge",
+            elementId: "e1",
+            relatedIds: ["a", "b"],
+          },
+          {
+            kind: "UNSPECIFIED",
+            elementKind: null,
+            elementId: "",
+            relatedIds: [],
+          },
+        ],
+      },
+    });
+  });
+
+  it("passes no violations when the error has no details", async () => {
+    vi.spyOn(graphAuthoringClient, "saveGraph").mockRejectedValue(
+      new ConnectError("invalid graph document", Code.InvalidArgument),
+    );
+
+    await expect(save()).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      data: { violations: [] },
+    });
+  });
 });
 
 describe("observation procedures with OBSERVATION_API_MOCKING", () => {

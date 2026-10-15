@@ -45,7 +45,21 @@ async function renderEditor() {
 describe("GraphEditor の保存", () => {
   it("検証エラーを表示し、原因のポイントを選択する", async () => {
     const message = 'invalid graph document: point "ph_hall2f" has no route';
-    server.use(...createOrpcHandlers({ saveGraphError: message }));
+    server.use(
+      ...createOrpcHandlers({
+        saveGraphError: {
+          message,
+          violations: [
+            {
+              kind: "NODE_WITHOUT_ROUTE",
+              elementKind: "node",
+              elementId: "ph_hall2f",
+              relatedIds: [],
+            },
+          ],
+        },
+      }),
+    );
 
     fireEvent.click(await renderEditor());
 
@@ -58,6 +72,49 @@ describe("GraphEditor の保存", () => {
       (screen.getByRole("textbox", { name: /ラベル/ }) as HTMLInputElement)
         .value,
     ).toBe("2F ホール");
+  });
+
+  it("違反が複数あると、ID を持つ要素をすべて選択する", async () => {
+    server.use(
+      ...createOrpcHandlers({
+        saveGraphError: {
+          message: "invalid graph document",
+          violations: [
+            {
+              kind: "NODE_WITHOUT_ROUTE",
+              elementKind: "node",
+              elementId: "ph_hall2f",
+              relatedIds: [],
+            },
+            {
+              kind: "GROUP_WITHOUT_MEMBERS",
+              elementKind: "group",
+              elementId: "ph_floor2",
+              relatedIds: [],
+            },
+            {
+              kind: "SELF_LOOP_EDGE",
+              elementKind: "edge",
+              elementId: "ph_e1",
+              relatedIds: ["ph_hall2f"],
+            },
+            {
+              kind: "EMPTY_NODE_ID",
+              elementKind: "node",
+              elementId: "",
+              relatedIds: [],
+            },
+          ],
+        },
+      }),
+    );
+
+    fireEvent.click(await renderEditor());
+
+    const panel = await screen.findByRole("complementary");
+    expect(await within(panel).findByText("ノード: 1件")).toBeTruthy();
+    expect(within(panel).getByText("矢印: 1件")).toBeTruthy();
+    expect(within(panel).getByText("グループ: 1件")).toBeTruthy();
   });
 
   it("検証以外の失敗では汎用のエラーを表示する", async () => {

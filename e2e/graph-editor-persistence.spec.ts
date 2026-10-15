@@ -1,8 +1,12 @@
 import { expect, type Page, test } from "@playwright/test";
+import type { MockRouterOverrides } from "@/mocks/router";
 
 test.use({ viewport: { width: 1600, height: 1000 } });
 
-type MockOverrides = { getGraphError?: boolean; saveGraphError?: string };
+type MockOverrides = Pick<
+  MockRouterOverrides,
+  "getGraphError" | "saveGraphError"
+>;
 type SavedNode = { id: string; data: { labels: Record<string, string> } };
 
 const editPath = "/event/test/management/graph/edit";
@@ -75,7 +79,19 @@ test("保存が構造検証で弾かれると理由を表示し該当するポ�
   page,
 }) => {
   const message = 'point "ph_booth" has no route';
-  await open(page, { saveGraphError: message });
+  await open(page, {
+    saveGraphError: {
+      message,
+      violations: [
+        {
+          kind: "NODE_WITHOUT_ROUTE",
+          elementKind: "node",
+          elementId: "ph_booth",
+          relatedIds: [],
+        },
+      ],
+    },
+  });
   await expect(panel(page)).toContainText(
     "ポイントまたはルートを選択してください。",
   );

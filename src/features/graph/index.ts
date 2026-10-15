@@ -2,7 +2,6 @@ export {
   fetchGraph,
   type GraphKey,
   GraphValidationError,
-  type GraphValidationTarget,
   saveGraph,
 } from "./api";
 export {
