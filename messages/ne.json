@@ -224,7 +224,6 @@
       "stoppedTitle": "अवलोकन रोकियो",
       "stoppedDescription": "स्रोत क्यामेरा रोकिएको छ",
       "connecting": "जोड्दै…",
-      "status": "स्थिति: {status}",
       "connectError": "जडान गर्न सकिएन"
     },
     "broadcast": {

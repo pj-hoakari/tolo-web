@@ -224,7 +224,6 @@
       "stoppedTitle": "Observation stopped",
       "stoppedDescription": "The source camera was stopped",
       "connecting": "Connecting…",
-      "status": "Status: {status}",
       "connectError": "Failed to connect"
     },
     "broadcast": {

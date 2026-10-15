@@ -224,7 +224,6 @@
       "stoppedTitle": "觀測已停止",
       "stoppedDescription": "來源攝影機已停止",
       "connecting": "連線中…",
-      "status": "狀態：{status}",
       "connectError": "連線失敗"
     },
     "broadcast": {

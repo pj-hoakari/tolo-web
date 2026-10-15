@@ -224,7 +224,6 @@
       "stoppedTitle": "観測が停止しました",
       "stoppedDescription": "配信元のカメラが停止されました",
       "connecting": "接続中…",
-      "status": "状態: {status}",
       "connectError": "接続に失敗しました"
     },
     "broadcast": {

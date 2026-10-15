@@ -224,7 +224,6 @@
       "stoppedTitle": "La observación se detuvo",
       "stoppedDescription": "La cámara de origen se detuvo",
       "connecting": "Conectando…",
-      "status": "Estado: {status}",
       "connectError": "No se pudo conectar"
     },
     "broadcast": {

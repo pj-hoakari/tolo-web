@@ -224,7 +224,6 @@
       "stoppedTitle": "观测已停止",
       "stoppedDescription": "源摄像头已停止",
       "connecting": "连接中…",
-      "status": "状态：{status}",
       "connectError": "连接失败"
     },
     "broadcast": {

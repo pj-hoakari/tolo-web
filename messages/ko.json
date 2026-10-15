@@ -224,7 +224,6 @@
       "stoppedTitle": "관측이 중지되었습니다",
       "stoppedDescription": "송출 측 카메라가 중지되었습니다",
       "connecting": "연결 중…",
-      "status": "상태: {status}",
       "connectError": "연결에 실패했습니다"
     },
     "broadcast": {

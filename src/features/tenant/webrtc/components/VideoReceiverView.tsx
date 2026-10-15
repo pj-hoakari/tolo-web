@@ -41,7 +41,6 @@ export function VideoReceiverView({
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const t = useTranslations("Webrtc.receiver");
-  const tStatus = useTranslations("Webrtc.connectionStatus");
 
   const editable = settingsStore !== undefined && viewStateStore !== undefined;
   const lineEditorHandlers = useCountingLineEditor({
@@ -154,9 +153,6 @@ export function VideoReceiverView({
           </>
         )}
       </div>
-      <span className="text-muted-foreground text-sm">
-        {t("status", { status: tStatus(status) })}
-      </span>
       {status === "error" && error && (
         <p role="alert" className="text-destructive text-sm">
           {error}
