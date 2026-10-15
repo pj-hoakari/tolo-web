@@ -2,18 +2,18 @@ import { useTranslations } from "next-intl";
 import { memo, useCallback, useEffect } from "react";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
-import { Button } from "@/components/ui/button";
+import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
 import {
   DEFAULT_LINE_ID,
   type DetectionLineCount,
   type DetectionResult,
   type DetectionResultStore,
   type DetectionSettingsStore,
-  type DetectionViewState,
   type DetectionViewStateStore,
   INITIAL_LINE_COUNT,
   selectCountingLines,
   selectLine,
+  selectSelectedLineId,
 } from "../stores/detectionStore";
 
 type DetectionLineCountButtonProps = {
@@ -21,7 +21,6 @@ type DetectionLineCountButtonProps = {
   lineName: string;
   index: number;
   resultStore: DetectionResultStore;
-  viewStateStore: DetectionViewStateStore;
 };
 
 function DetectionLineCountButtonComponent({
@@ -29,28 +28,21 @@ function DetectionLineCountButtonComponent({
   lineName,
   index,
   resultStore,
-  viewStateStore,
 }: DetectionLineCountButtonProps) {
   const selectCount = useCallback(
     (state: DetectionResult): DetectionLineCount =>
       state.lineCounts[lineId] ?? INITIAL_LINE_COUNT,
     [lineId],
   );
-  const selectIsSelected = useCallback(
-    (state: DetectionViewState) => state.selectedLineId === lineId,
-    [lineId],
-  );
-
   const count = useStore(resultStore, selectCount);
-  const isSelected = useStore(viewStateStore, selectIsSelected);
   const t = useTranslations("Detection.lines");
 
   return (
-    <Button
-      type="button"
-      variant={isSelected ? "default" : "outline"}
+    <Toggle
+      id={lineId}
+      variant="outline"
       size="sm"
-      onPress={() => selectLine(viewStateStore, lineId)}
+      className="selected:border-primary selected:bg-primary px-3 selected:text-primary-foreground"
     >
       {t(lineName ? "namedCount" : "count", {
         name: lineName,
@@ -58,7 +50,7 @@ function DetectionLineCountButtonComponent({
         forward: count.forward,
         backward: count.backward,
       })}
-    </Button>
+    </Toggle>
   );
 }
 
@@ -81,6 +73,8 @@ function DetectionLineCountListComponent({
   // id の配列は毎回組み立て直されるので浅い比較で再レンダリングを抑える
   const lines = useStore(settingsStore, useShallow(selectCountingLines));
   const lineIds = lines.map((line) => line.id);
+  const selectedLineId = useStore(viewStateStore, selectSelectedLineId);
+  const t = useTranslations("Detection.lines");
 
   // 選択中のラインが消えたときの取りこぼしを拾う
   useEffect(() => {
@@ -90,7 +84,19 @@ function DetectionLineCountListComponent({
   }, [lineIds, viewStateStore]);
 
   return (
-    <div className="flex w-full max-w-3xl flex-wrap gap-3 text-sm">
+    <ToggleButtonGroup
+      aria-label={t("listLabel")}
+      selectionMode="single"
+      disallowEmptySelection
+      selectedKeys={[selectedLineId]}
+      onSelectionChange={(keys) => {
+        const [lineId] = keys;
+        if (typeof lineId === "string") {
+          selectLine(viewStateStore, lineId);
+        }
+      }}
+      className="w-full max-w-3xl flex-wrap justify-start gap-3"
+    >
       {lines.map((line, index) => (
         <DetectionLineCountButton
           key={line.id}
@@ -98,10 +104,9 @@ function DetectionLineCountListComponent({
           lineName={line.name}
           index={index}
           resultStore={resultStore}
-          viewStateStore={viewStateStore}
         />
       ))}
-    </div>
+    </ToggleButtonGroup>
   );
 }
 

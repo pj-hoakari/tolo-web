@@ -1,16 +1,11 @@
-import {
-  ArrowLeftRight,
-  MousePointer2,
-  Plus,
-  RotateCcw,
-  Trash2,
-} from "lucide-react";
+import { ArrowLeftRight, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { memo, useCallback } from "react";
 import { useStore } from "zustand";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/field";
 import { Input, TextField } from "@/components/ui/textfield";
+import { Toggle } from "@/components/ui/toggle";
 import {
   applyCountingLines,
   DEFAULT_COUNTING_LINES,
@@ -75,19 +70,16 @@ function LineCreationModeToggleComponent({
   const t = useTranslations("Detection.lines");
 
   return (
-    <Button
-      type="button"
-      variant={lineCreationMode ? "default" : "outline"}
+    <Toggle
+      variant="outline"
       size="sm"
-      onPress={() => toggleLineCreationMode(viewStateStore)}
+      isSelected={lineCreationMode}
+      onChange={() => toggleLineCreationMode(viewStateStore)}
+      className="selected:border-primary selected:bg-primary px-3 selected:text-primary-foreground"
     >
-      {lineCreationMode ? (
-        <MousePointer2 className="mr-2 size-4" />
-      ) : (
-        <Plus className="mr-2 size-4" />
-      )}
-      {lineCreationMode ? t("edit") : t("create")}
-    </Button>
+      <Plus className="mr-2 size-4" />
+      {t("create")}
+    </Toggle>
   );
 }
 

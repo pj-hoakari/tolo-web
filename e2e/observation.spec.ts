@@ -36,16 +36,17 @@ const stopButton = (page: Page) =>
 const lineName = (page: Page) =>
   page.getByRole("textbox", { name: "選択ラインの名前" });
 const lineButtons = (page: Page) =>
-  page.getByRole("button", { name: /: forward \d+ \/ backward \d+$/ });
+  page.getByRole("radio", { name: /: forward \d+ \/ backward \d+$/ });
 const wakeToggle = (page: Page) =>
   page.getByRole("button", { name: "画面の常時点灯" });
 const wakeAlert = (page: Page) => page.getByRole("main").getByRole("alert");
 const presetGroup = (page: Page, title: string) =>
   page
     .locator("div")
-    .filter({ has: page.getByText(title, { exact: true }) })
-    .filter({ has: page.getByRole("button", { name: "標準" }) })
+    .filter({ has: page.getByRole("radiogroup", { name: title }) })
     .last();
+const lineCreationToggle = (page: Page) =>
+  page.getByRole("button", { name: "ライン生成" });
 
 const canvasPoint = async (page: Page, u: number, v: number) => {
   const box = await page.locator("canvas").boundingBox();
@@ -72,9 +73,9 @@ const clickOnCanvas = async (page: Page, u: number, v: number) => {
 };
 
 const addLine = async (page: Page) => {
-  await page.getByRole("button", { name: "ライン生成" }).click();
+  await lineCreationToggle(page).click();
   await dragOnCanvas(page, [0.2, 0.2], [0.5, 0.3]);
-  await page.getByRole("button", { name: "編集モード" }).click();
+  await lineCreationToggle(page).click();
 };
 
 const holdModelRequest = async (context: BrowserContext) => {
@@ -253,7 +254,7 @@ test.describe("検出設定", () => {
       .fill("ホールA入口");
 
     await expect(
-      page.getByRole("button", { name: "ホールA入口: forward 0 / backward 0" }),
+      page.getByRole("radio", { name: "ホールA入口: forward 0 / backward 0" }),
     ).toBeVisible();
   });
 
@@ -265,7 +266,7 @@ test.describe("検出設定", () => {
     test(`プリセット「${preset}」を選ぶと詳細調整の「${field}」が ${value} になる`, async ({
       page,
     }) => {
-      await page.getByRole("button", { name: preset }).click();
+      await page.getByRole("radio", { name: preset }).click();
       await page.getByRole("button", { name: "詳細調整" }).click();
 
       await expect(page.getByRole("spinbutton", { name: field })).toHaveValue(
@@ -309,10 +310,11 @@ test.describe("検出設定", () => {
       const group = presetGroup(page, title);
       await expect(group).toContainText(standard);
 
-      await group.getByRole("button", { name: preset }).click();
+      await group.getByRole("radio", { name: preset }).click();
       await expect(group).toContainText(value);
+      await expect(group.getByRole("radio", { name: preset })).toBeChecked();
 
-      await group.getByRole("button", { name: "標準" }).click();
+      await group.getByRole("radio", { name: "標準" }).click();
       await expect(group).toContainText(standard);
     });
   }
@@ -336,15 +338,16 @@ test.describe("カウントライン", () => {
     page,
   }) => {
     await lineName(page).fill("ホールA入口");
-    await page.getByRole("button", { name: "ライン生成" }).click();
-    await expect(
-      page.getByRole("button", { name: "編集モード" }),
-    ).toBeVisible();
+    await lineCreationToggle(page).click();
+    await expect(lineCreationToggle(page)).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
 
     await dragOnCanvas(page, [0.2, 0.2], [0.5, 0.3]);
 
     await expect(
-      page.getByRole("button", { name: "ライン 2: forward 0 / backward 0" }),
+      page.getByRole("radio", { name: "ライン 2: forward 0 / backward 0" }),
     ).toBeVisible();
     await expect(lineName(page)).toHaveValue("");
   });
@@ -356,7 +359,7 @@ test.describe("カウントライン", () => {
     await addLine(page);
     await dragOnCanvas(page, [0.7, 0.6], [0.7, 0.9]);
     await page
-      .getByRole("button", { name: "ライン 2: forward 0 / backward 0" })
+      .getByRole("radio", { name: "ライン 2: forward 0 / backward 0" })
       .click();
 
     await clickOnCanvas(page, 0.7, 0.6);
@@ -377,7 +380,7 @@ test.describe("カウントライン", () => {
     await deleteButton.click();
 
     await expect(
-      page.getByRole("button", { name: "ライン 2: forward 0 / backward 0" }),
+      page.getByRole("radio", { name: "ライン 2: forward 0 / backward 0" }),
     ).toHaveCount(0);
     await expect(lineButtons(page)).toHaveCount(1);
     await expect(deleteButton).toBeDisabled();
@@ -393,7 +396,7 @@ test.describe("カウントライン", () => {
 
     await expect(lineButtons(page)).toHaveCount(1);
     await expect(
-      page.getByRole("button", { name: "ライン 1: forward 0 / backward 0" }),
+      page.getByRole("radio", { name: "ライン 1: forward 0 / backward 0" }),
     ).toBeVisible();
     await expect(lineName(page)).toHaveValue("");
   });
@@ -404,7 +407,7 @@ test.describe("カウントライン", () => {
     await expect(lineName(page)).toHaveValue("");
 
     await page
-      .getByRole("button", { name: "ホールA入口: forward 0 / backward 0" })
+      .getByRole("radio", { name: "ホールA入口: forward 0 / backward 0" })
       .click();
 
     await expect(lineName(page)).toHaveValue("ホールA入口");
