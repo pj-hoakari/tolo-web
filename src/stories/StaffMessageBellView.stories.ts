@@ -29,7 +29,7 @@ const meta = {
   tags: ["autodocs"],
   args: {
     messages,
-    onToggle: () => {},
+    onOpenChange: () => {},
   },
 } satisfies Meta<typeof StaffMessageBellView>;
 

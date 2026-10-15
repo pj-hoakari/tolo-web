@@ -368,7 +368,6 @@
     "staffMessage": {
       "title": "스태프 공지",
       "ariaOpen": "스태프 공지",
-      "ariaClose": "공지 닫기",
       "empty": "현재 공지가 없습니다",
       "samples": {
         "msg-2": {

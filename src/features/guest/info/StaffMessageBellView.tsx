@@ -1,4 +1,10 @@
+import { useId } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverDialog,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { type StaffMessage, StaffMessageView } from "./StaffMessageView";
 
 export type StaffMessageBellViewProps = {
@@ -7,14 +13,11 @@ export type StaffMessageBellViewProps = {
   unreadCount: number;
   /** 一覧パネルが開いているか */
   isOpen: boolean;
-  /** ベル押下時のコールバック */
-  onToggle: () => void;
+  onOpenChange: (isOpen: boolean) => void;
   /** パネル見出し（省略時は日本語） */
   title?: string;
   /** ベルボタンの aria-label */
   ariaOpen?: string;
-  /** 閉じる用 aria-label */
-  ariaClose?: string;
   /** お知らせが無いときの文言 */
   emptyText?: string;
   /** 日時整形に使うロケール */
@@ -25,19 +28,18 @@ export function StaffMessageBellView({
   messages,
   unreadCount,
   isOpen,
-  onToggle,
+  onOpenChange,
   title = "スタッフからのお知らせ",
   ariaOpen = "スタッフからのお知らせ",
-  ariaClose = "お知らせを閉じる",
   emptyText,
   locale,
 }: StaffMessageBellViewProps) {
+  const titleId = useId();
+
   return (
-    <div className="relative">
+    <PopoverTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
       <Button
-        onPress={onToggle}
         aria-label={ariaOpen}
-        aria-expanded={isOpen}
         variant="ghost"
         size="icon"
         className="relative h-10 w-10 rounded-full border border-primary/12 bg-secondary text-primary/55 hover:bg-secondary hover:text-accent"
@@ -61,27 +63,25 @@ export function StaffMessageBellView({
           </span>
         )}
       </Button>
-
-      {isOpen && (
-        <>
-          <Button
-            aria-label={ariaClose}
-            onPress={onToggle}
-            variant="ghost"
-            className="fixed inset-0 z-10 block h-auto w-auto cursor-default rounded-none bg-transparent p-0 hover:bg-transparent"
+      <Popover
+        placement="bottom end"
+        offset={8}
+        className="guest-theme w-80 rounded-2xl border-primary/12 bg-secondary shadow-lg"
+      >
+        <PopoverDialog aria-labelledby={titleId}>
+          <h2
+            id={titleId}
+            className="mb-3 font-medium text-primary/55 text-sm tracking-wide"
+          >
+            {title}
+          </h2>
+          <StaffMessageView
+            messages={messages}
+            emptyText={emptyText}
+            locale={locale}
           />
-          <div className="absolute right-0 z-20 mt-2 w-80 rounded-2xl border border-primary/12 bg-secondary p-4 shadow-lg">
-            <h2 className="mb-3 font-medium text-primary/55 text-sm tracking-wide">
-              {title}
-            </h2>
-            <StaffMessageView
-              messages={messages}
-              emptyText={emptyText}
-              locale={locale}
-            />
-          </div>
-        </>
-      )}
-    </div>
+        </PopoverDialog>
+      </Popover>
+    </PopoverTrigger>
   );
 }
