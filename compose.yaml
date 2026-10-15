@@ -63,6 +63,7 @@ services:
             SIGNALING_URL: http://tolo-edge-bridge:8787
             GRAPH_ACCESS_TOKEN: ${GRAPH_ACCESS_TOKEN:-}
             OBSERVATION_ACCESS_TOKEN: ${OBSERVATION_ACCESS_TOKEN:-}
+            OBSERVATION_API_MOCKING: ${OBSERVATION_API_MOCKING:-enabled}
             TENANT_ACCESS_TOKEN: ${TENANT_ACCESS_TOKEN:-}
         depends_on:
             - firebase-emulator
