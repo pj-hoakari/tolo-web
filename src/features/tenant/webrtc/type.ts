@@ -1,9 +1,10 @@
 import type { ObservationPoint } from "@/server/router";
 
-/** ListEdgeDevices で取得した、稼働中（WebRTC で待ち受け中）のエッジ端末 */
-export type AliveEdge = {
+/** ListEdgeDevices で取得したエッジ端末 */
+export type EdgeDeviceItem = {
   edgeDeviceId: string;
   name: string;
+  online: boolean;
   // Heartbeat を一度も受けていなければ null
   lastHeartbeatAt: Date | null;
   observationPoints: ObservationPoint[];

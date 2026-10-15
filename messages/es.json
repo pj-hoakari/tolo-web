@@ -208,12 +208,13 @@
       "error": "Error de conexión"
     },
     "aliveEdges": {
-      "title": "Edges en línea ({count})",
+      "title": "Edges ({count})",
       "refresh": "Actualizar",
       "loading": "Cargando…",
-      "empty": "No hay edges en línea",
+      "empty": "No hay edges",
       "lastSeen": "Última respuesta: {time}",
       "unknownTime": "Desconocida",
+      "offline": "Sin conexión",
       "connect": "Conectar",
       "disconnect": "Desconectar",
       "connectLabel": "Conectar a «{name}»",

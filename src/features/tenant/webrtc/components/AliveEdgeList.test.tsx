@@ -16,6 +16,7 @@ afterEach(cleanup);
 const renderList = (
   receiveStatus: ConnectionStatus,
   onDisconnect: () => void = vi.fn(),
+  { connectedOnline = true }: { connectedOnline?: boolean } = {},
 ) =>
   render(
     <AliveEdgeList
@@ -23,13 +24,22 @@ const renderList = (
         {
           edgeDeviceId: "edge-a",
           name: "入口カメラ",
+          online: connectedOnline,
           lastHeartbeatAt: null,
           observationPoints: [],
         },
         {
           edgeDeviceId: "edge-b",
           name: "ホールカメラ",
+          online: true,
           lastHeartbeatAt: null,
+          observationPoints: [],
+        },
+        {
+          edgeDeviceId: "edge-c",
+          name: "倉庫カメラ",
+          online: false,
+          lastHeartbeatAt: new Date("2026-06-14T09:00:00.000Z"),
           observationPoints: [],
         },
       ]}
@@ -104,6 +114,65 @@ describe("AliveEdgeList", () => {
       ).toBeTruthy();
       expect(connected.queryByRole("button", { name: /に接続$/ })).toBeNull();
       expect(connected.queryByRole("button", { name: /閉じる$/ })).toBeNull();
+    },
+  );
+
+  it.each<ConnectionStatus>(["connecting", "negotiating", "connected"])(
+    "%s の端末がオフラインになっても、切断できる",
+    (status) => {
+      const onDisconnect = vi.fn();
+      renderList(status, onDisconnect, { connectedOnline: false });
+
+      const connected = within(row("入口カメラ") as HTMLElement);
+      expect(connected.getByText("オフライン")).toBeTruthy();
+
+      fireEvent.click(
+        connected.getByRole("button", { name: "「入口カメラ」から切断" }),
+      );
+      expect(onDisconnect).toHaveBeenCalledOnce();
+    },
+  );
+
+  it("オフラインの端末の行にオフラインと最終応答時刻を表示し、接続を押せなくする", () => {
+    renderList("idle");
+
+    const offline = within(row("倉庫カメラ") as HTMLElement);
+    expect(offline.getByText("オフライン")).toBeTruthy();
+    expect(offline.getByText(/^最終応答: \S+/)).toBeTruthy();
+    expect(offline.queryByText(/不明/)).toBeNull();
+    expect(
+      offline
+        .getByRole("button", { name: "「倉庫カメラ」に接続" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+
+    const online = within(row("ホールカメラ") as HTMLElement);
+    expect(online.queryByText("オフライン")).toBeNull();
+    expect(
+      online
+        .getByRole("button", { name: "「ホールカメラ」に接続" })
+        .hasAttribute("disabled"),
+    ).toBe(false);
+  });
+
+  it.each<ConnectionStatus>(["disconnected", "error"])(
+    "%s の端末がオフラインになっても、映像を閉じられる",
+    (status) => {
+      const onDisconnect = vi.fn();
+      renderList(status, onDisconnect, { connectedOnline: false });
+
+      const connected = within(row("入口カメラ") as HTMLElement);
+      expect(connected.getByText("オフライン")).toBeTruthy();
+      expect(
+        connected
+          .getByRole("button", { name: "「入口カメラ」に接続" })
+          .hasAttribute("disabled"),
+      ).toBe(true);
+
+      fireEvent.click(
+        connected.getByRole("button", { name: "「入口カメラ」の映像を閉じる" }),
+      );
+      expect(onDisconnect).toHaveBeenCalledOnce();
     },
   );
 

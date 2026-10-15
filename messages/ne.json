@@ -208,12 +208,13 @@
       "error": "जडान असफल"
     },
     "aliveEdges": {
-      "title": "सक्रिय एजहरू ({count})",
+      "title": "एजहरू ({count})",
       "refresh": "अद्यावधिक गर्नुहोस्",
       "loading": "लोड हुँदै…",
-      "empty": "कुनै एज सक्रिय छैन",
+      "empty": "कुनै एज छैन",
       "lastSeen": "अन्तिम प्रतिक्रिया: {time}",
       "unknownTime": "अज्ञात",
+      "offline": "अफलाइन",
       "connect": "जोड्नुहोस्",
       "disconnect": "विच्छेद गर्नुहोस्",
       "connectLabel": "“{name}” मा जोड्नुहोस्",

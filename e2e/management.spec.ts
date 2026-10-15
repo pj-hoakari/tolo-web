@@ -236,17 +236,25 @@ test("ラベルの言語を English に切り替えるとポイントのラベ�
   ).toBeVisible();
 });
 
-test("接続エッジタブを開くと稼働中のエッジの一覧が表示される", async ({
+test("接続エッジタブを開くとオフラインの端末を含むエッジの一覧が表示される", async ({
   page,
 }) => {
   await page.getByRole("tab", { name: "接続エッジ" }).click();
 
   const tabpanel = page.getByRole("tabpanel", { name: "接続エッジ" });
-  await expect(tabpanel).toContainText("稼働中のエッジ（2）");
-  await expect(tabpanel.getByRole("listitem")).toHaveCount(2);
-  await expect(tabpanel).toContainText(edgeA);
-  await expect(tabpanel).toContainText(edgeB);
-  await expect(tabpanel).not.toContainText(offlineEdge);
+  await expect(tabpanel).toContainText("エッジ（3）");
+  const items = tabpanel.getByRole("listitem");
+  await expect(items).toHaveCount(3);
+  await expect(items.nth(0)).toContainText(edgeA);
+  await expect(items.nth(1)).toContainText(edgeB);
+  await expect(items.nth(2)).toContainText(offlineEdge);
+  await expect(items.nth(2)).toContainText("オフライン");
+  await expect(
+    tabpanel.getByRole("button", { name: `「${offlineEdge}」に接続` }),
+  ).toBeDisabled();
+  await expect(
+    tabpanel.getByRole("button", { name: `「${edgeA}」に接続` }),
+  ).toBeEnabled();
 });
 
 test("接続エッジの一覧には各エッジの最終応答時刻が表示される", async ({
@@ -262,5 +270,8 @@ test("接続エッジの一覧には各エッジの最終応答時刻が表示�
   );
   await expect(items.filter({ hasText: edgeB })).toContainText(
     "最終応答: 19:00:05",
+  );
+  await expect(items.filter({ hasText: offlineEdge })).toContainText(
+    "最終応答: 18:00:00",
   );
 });

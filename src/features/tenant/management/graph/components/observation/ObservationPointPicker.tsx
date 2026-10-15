@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Checkbox, CheckboxGroup } from "@/components/ui/checkbox";
-import type { AliveEdgesStatus } from "@/features/tenant/webrtc/hooks/useAliveEdges";
+import type { EdgeDevicesStatus } from "@/features/tenant/webrtc/hooks/useEdgeDevices";
 import { cn } from "@/lib/utils";
 import type { ObservationPoint } from "@/server/router";
 import { buildObservationPointRows } from "./observationPointRows";
@@ -13,7 +13,7 @@ import { buildObservationPointRows } from "./observationPointRows";
 export type ObservationPointsSource = {
   /** 稼働中のエッジ端末の観測点 */
   available: ObservationPoint[];
-  status?: AliveEdgesStatus;
+  status?: EdgeDevicesStatus;
   /** いずれかの要素で使用中（＝他では選択不可）の観測点 ID 集合 */
   usedIds: ReadonlySet<string>;
   onRefresh?: () => void;

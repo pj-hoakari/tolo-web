@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useAliveEdges } from "@/features/tenant/webrtc/hooks/useAliveEdges";
+import { useEdgeDevices } from "@/features/tenant/webrtc/hooks/useEdgeDevices";
 import type { ObservationPointsSource } from "../components/observation";
 import type { GraphData } from "../type";
 import { collectObservationPointIds } from "../utils/observationPoints";
@@ -17,9 +17,12 @@ export function useObservationPointSource({
   eventId: string;
   graph: GraphData;
 }): ObservationPointsSource {
-  const { edges, status, refresh } = useAliveEdges({ eventId });
+  const { edges, status, refresh } = useEdgeDevices({ eventId });
   const available = useMemo(
-    () => edges.flatMap((edge) => edge.observationPoints),
+    () =>
+      edges
+        .filter((edge) => edge.online)
+        .flatMap((edge) => edge.observationPoints),
     [edges],
   );
 
