@@ -42,14 +42,14 @@ export function LabelLocaleMenu({
 
   return (
     <MenuTrigger>
-      <Button
-        variant="outline"
-        size="sm"
-        aria-label={t("label")}
-        className="gap-1.5"
-      >
+      <Button variant="outline" size="sm" className="gap-1.5">
         <Languages aria-hidden className="size-4 shrink-0" />
-        {localeLabels[labelLocale]}
+        <span>
+          {t.rich("label", {
+            language: localeLabels[labelLocale],
+            lang: (chunks) => <span lang={labelLocale}>{chunks}</span>,
+          })}
+        </span>
       </Button>
       <MenuPopover placement="bottom end">
         <Menu
@@ -61,7 +61,7 @@ export function LabelLocaleMenu({
           {locales.map((item) => (
             <MenuItem key={item} id={item} textValue={localeLabels[item]}>
               <span className="flex w-full items-center justify-between gap-4">
-                {localeLabels[item]}
+                <span lang={item}>{localeLabels[item]}</span>
                 <span className="text-muted-foreground text-xs">
                   {t("labeledPointCount", {
                     count: labelCounts[item] ?? 0,

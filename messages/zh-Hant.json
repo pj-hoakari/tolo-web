@@ -105,7 +105,7 @@
       "closed": "封閉模式（無出入口）"
     },
     "labelLanguage": {
-      "label": "標籤語言",
+      "label": "標籤語言（<lang>{language}</lang>）",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {

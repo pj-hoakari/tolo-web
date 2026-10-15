@@ -105,7 +105,7 @@
       "closed": "封闭模式（无出入口）"
     },
     "labelLanguage": {
-      "label": "标签语言",
+      "label": "标签语言（<lang>{language}</lang>）",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
