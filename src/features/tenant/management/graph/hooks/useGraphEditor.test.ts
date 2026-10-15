@@ -1094,3 +1094,72 @@ describe("useGraphEditor: 親子の移動バッチ", () => {
     ).toEqual({ x: 190, y: 190 });
   });
 });
+
+describe("useGraphEditor: プロパティパネルからのルート追加", () => {
+  const initial = (): GraphData => ({
+    nodes: [
+      {
+        id: "g",
+        type: "graphGroup",
+        position: { x: 0, y: 0 },
+        width: 480,
+        height: 320,
+        data: { labels: {} },
+      },
+      node("a", 600, 0),
+      node("b", 900, 0),
+      {
+        id: "x",
+        type: "graph",
+        position: { x: 0, y: 600 },
+        data: { labels: {}, nodeType: "EXTERNAL" },
+      },
+      {
+        id: "y",
+        type: "graph",
+        position: { x: 300, y: 600 },
+        data: { labels: {}, nodeType: "EXTERNAL" },
+      },
+    ],
+    edges: [],
+  });
+
+  it("選択中のポイントから接続できる終点だけを候補にする", () => {
+    const { result } = renderHook(() => useGraphEditor(initial()), {
+      wrapper: IntlTestProvider,
+    });
+    expect(result.current.properties.edgeTargets).toEqual([]);
+
+    act(() => result.current.canvas.onSelectNode("a"));
+    expect(result.current.properties.edgeTargets.map((t) => t.id)).toEqual([
+      "b",
+      "x",
+      "y",
+    ]);
+
+    act(() => result.current.canvas.onSelectNode("x"));
+    expect(result.current.properties.edgeTargets.map((t) => t.id)).toEqual([
+      "a",
+      "b",
+    ]);
+
+    act(() => result.current.canvas.onSelectNode("g"));
+    expect(result.current.properties.edgeTargets).toEqual([]);
+  });
+
+  it("選択中のポイントを始点にルートを追加し、追加したルートを選択する", () => {
+    const { result } = renderHook(() => useGraphEditor(initial()), {
+      wrapper: IntlTestProvider,
+    });
+    act(() => result.current.canvas.onSelectNode("a"));
+    act(() => result.current.properties.onAddEdge("b"));
+
+    const edges = result.current.graph.edges;
+    expect(edges).toHaveLength(1);
+    expect(edges[0]).toMatchObject({ source: "a", target: "b" });
+    expect(result.current.selection).toEqual({
+      nodeIds: [],
+      edgeIds: [edges[0].id],
+    });
+  });
+});

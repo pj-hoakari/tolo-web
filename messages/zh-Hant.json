@@ -180,7 +180,10 @@
       "oneway": "單向 →",
       "reverse": "反轉方向（起點 ↔ 終點）",
       "dissolveGroup": "取消群組",
-      "groupHint": "用於管理的邏輯群組，例如樓層或建築。拖曳點即可移入或移出。取消群組後其中的點會保留。"
+      "groupHint": "用於管理的邏輯群組，例如樓層或建築。拖曳點即可移入或移出。取消群組後其中的點會保留。",
+      "edgeTarget": "終點",
+      "edgeTargetPlaceholder": "選擇作為終點的節點",
+      "addEdge": "從此節點新增路徑"
     },
     "node": {
       "editLabel": "編輯「{label}」的標籤",

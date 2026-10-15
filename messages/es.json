@@ -180,7 +180,10 @@
       "oneway": "Unidireccional →",
       "reverse": "Invertir el sentido (inicio ↔ fin)",
       "dissolveGroup": "Desagrupar",
-      "groupHint": "Una agrupación lógica para la gestión, como una planta o un edificio. Arrastra los puntos para meterlos o sacarlos. Al desagrupar, los puntos se conservan."
+      "groupHint": "Una agrupación lógica para la gestión, como una planta o un edificio. Arrastra los puntos para meterlos o sacarlos. Al desagrupar, los puntos se conservan.",
+      "edgeTarget": "Punto final",
+      "edgeTargetPlaceholder": "Selecciona el punto final",
+      "addEdge": "Añadir una ruta desde este punto"
     },
     "node": {
       "editLabel": "Editar la etiqueta de «{label}»",

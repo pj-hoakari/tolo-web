@@ -35,6 +35,8 @@ const meta = {
     onSetNodeLabel: fn(),
     onUpdateEdge: fn(),
     onReverseEdge: fn(),
+    edgeTargets: [],
+    onAddEdge: fn(),
     onSetSelectedNodeFlag: fn(),
     onSetSelectedEdgeDirection: fn(),
     onReverseSelectedEdges: fn(),
