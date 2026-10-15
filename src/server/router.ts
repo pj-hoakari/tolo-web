@@ -1,7 +1,8 @@
-import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { type Client, Code, ConnectError } from "@connectrpc/connect";
 import { ORPCError, os } from "@orpc/server";
 import type { SignalingService } from "@pj-hoakari/tolo-edge-bridge-client-es/tolo/edgebridge/v1/signaling_pb";
+import { MeasurementSource } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
 import {
   type Event,
   EventStatus as ProtoEventStatus,
@@ -15,7 +16,7 @@ import type {
 import type { GraphData } from "@/features/tenant/management/graph/type";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
-import { callObservation } from "./observation";
+import { edgeDeviceClient, measurementIngestClient } from "./observation";
 import { consoleSignalingClient, edgeSignalingClient } from "./signaling";
 import { tenantManagementClient } from "./tenantManagement";
 
@@ -31,16 +32,6 @@ export interface ObservationPoint {
   name: string;
 }
 
-type ListEdgeDevicesResponse = {
-  devices?: {
-    edgeDeviceId: string;
-    name?: string;
-    online?: boolean;
-    lastHeartbeatAt?: string;
-    observationPoints?: { observationPointId: string; name?: string }[];
-  }[];
-};
-
 export interface EdgeDevice {
   edgeDeviceId: string;
   name: string;
@@ -50,20 +41,17 @@ export interface EdgeDevice {
 }
 
 async function listEdgeDevices(eventId: string): Promise<EdgeDevice[]> {
-  const res = await callObservation<ListEdgeDevicesResponse>(
-    "EdgeDeviceService/ListEdgeDevices",
-    { eventId },
-  );
-  return (res.devices ?? []).map((d) => ({
+  const res = await edgeDeviceClient.listEdgeDevices({ eventId });
+  return res.devices.map((d) => ({
     edgeDeviceId: d.edgeDeviceId,
-    name: d.name ?? "",
-    online: d.online ?? false,
+    name: d.name,
+    online: d.online,
     lastHeartbeatAt: d.lastHeartbeatAt
-      ? new Date(d.lastHeartbeatAt).toISOString()
+      ? timestampDate(d.lastHeartbeatAt).toISOString()
       : null,
-    observationPoints: (d.observationPoints ?? []).map((p) => ({
+    observationPoints: d.observationPoints.map((p) => ({
       observationPointId: p.observationPointId,
-      name: p.name ?? "",
+      name: p.name,
     })),
   }));
 }
@@ -250,7 +238,7 @@ export const router = {
         }),
       )
       .handler(async ({ input }): Promise<void> => {
-        await callObservation("EdgeDeviceService/Heartbeat", input);
+        await edgeDeviceClient.heartbeat(input);
       }),
     reportMeasurements: os
       .input(
@@ -268,14 +256,14 @@ export const router = {
         }),
       )
       .handler(async ({ input }): Promise<void> => {
-        await callObservation("MeasurementIngestService/ReportMeasurements", {
+        await measurementIngestClient.reportMeasurements({
           eventId: input.eventId,
           edgeDeviceId: input.edgeDeviceId,
           measurements: input.measurements.map((m) => ({
             ...m,
-            windowStart: m.windowStart.toISOString(),
-            windowEnd: m.windowEnd.toISOString(),
-            source: "MEASUREMENT_SOURCE_EDGE",
+            windowStart: timestampFromDate(m.windowStart),
+            windowEnd: timestampFromDate(m.windowEnd),
+            source: MeasurementSource.EDGE,
           })),
         });
       }),
