@@ -60,20 +60,40 @@ describe("AliveEdgeList", () => {
     ).toBeTruthy();
   });
 
-  it("切断した後の行では状態と操作を別の語で表示する", () => {
-    renderList("disconnected");
+  it.each<ConnectionStatus>(["disconnected", "error"])(
+    "%s の行では状態を表示し、切断を出さずに接続だけを出す",
+    (status) => {
+      renderList(status);
 
-    const connected = within(row("入口カメラ") as HTMLElement);
-    expect(connected.getByText("切断済み")).toBeTruthy();
-    expect(connected.getByRole("button", { name: /切断$/ })).toBeTruthy();
-  });
+      const connected = within(row("入口カメラ") as HTMLElement);
+      expect(
+        connected.getByText(
+          status === "disconnected" ? "切断済み" : "接続失敗",
+        ),
+      ).toBeTruthy();
+      expect(
+        connected.getByRole("button", { name: "「入口カメラ」に接続" }),
+      ).toBeTruthy();
+      expect(connected.queryByRole("button", { name: /切断$/ })).toBeNull();
+    },
+  );
+
+  it.each<ConnectionStatus>(["connecting", "negotiating", "connected"])(
+    "%s の行では接続を出さずに切断だけを出す",
+    (status) => {
+      renderList(status);
+
+      const connected = within(row("入口カメラ") as HTMLElement);
+      expect(
+        connected.getByRole("button", { name: "「入口カメラ」から切断" }),
+      ).toBeTruthy();
+      expect(connected.queryByRole("button", { name: /に接続$/ })).toBeNull();
+    },
+  );
 
   it("行ごとの接続と切断のボタンの名前にエッジ名を含める", () => {
-    renderList("error");
+    renderList("connected");
 
-    expect(
-      screen.getByRole("button", { name: "「入口カメラ」に接続" }),
-    ).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "「入口カメラ」から切断" }),
     ).toBeTruthy();

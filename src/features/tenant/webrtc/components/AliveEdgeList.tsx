@@ -64,7 +64,7 @@ export function AliveEdgeList({
             const isConnected = edge.edgeDeviceId === connectedEdgeId;
             const isActive = isConnected && isActiveConnection(receiveStatus);
 
-            const canDisconnect = isConnected && receiveStatus !== "idle";
+            const showStatus = isConnected && receiveStatus !== "idle";
             const name = edge.name || edge.edgeDeviceId;
             return (
               <li
@@ -80,7 +80,7 @@ export function AliveEdgeList({
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  {canDisconnect && (
+                  {showStatus && (
                     <span className="rounded-full border px-2 py-0.5 text-muted-foreground text-xs">
                       {tStatus(receiveStatus)}
                     </span>
@@ -94,7 +94,7 @@ export function AliveEdgeList({
                       {t("connect")}
                     </Button>
                   )}
-                  {canDisconnect && (
+                  {isActive && (
                     <Button
                       variant="outline"
                       size="sm"
