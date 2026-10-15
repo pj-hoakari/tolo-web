@@ -3,8 +3,10 @@
 import { LockKeyhole, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
+  createContext,
   type FormEvent,
   type ReactNode,
+  useContext,
   useEffect,
   useMemo,
   useState,
@@ -27,6 +29,8 @@ export type ObservationSoftLockProps = {
 };
 
 const MIN_UNLOCK_CODE_LENGTH = 4;
+
+const LockContext = createContext<(() => void) | null>(null);
 
 function credentialStorageKey(tenantId: string, eventId: string): string {
   return `tolo:observation-lock:${tenantId}:${eventId}`;
@@ -188,21 +192,7 @@ export function ObservationSoftLock({
   };
 
   return (
-    <div className="relative flex w-full flex-col items-center gap-4">
-      {!blocksOperation && (
-        <div className="flex w-full max-w-3xl justify-end px-4 sm:px-0">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onPress={handleLock}
-          >
-            <LockKeyhole className="mr-2 size-4" />
-            {t("lockButton")}
-          </Button>
-        </div>
-      )}
-
+    <LockContext.Provider value={blocksOperation ? null : handleLock}>
       <div
         inert={blocksOperation ? true : undefined}
         className={cn(
@@ -276,6 +266,24 @@ export function ObservationSoftLock({
           </form>
         </div>
       )}
+    </LockContext.Provider>
+  );
+}
+
+export function ObservationLockButton() {
+  const lock = useContext(LockContext);
+  const t = useTranslations("Observation.lock");
+
+  if (!lock) {
+    return null;
+  }
+
+  return (
+    <div className="flex w-full max-w-3xl justify-end px-4 sm:px-0">
+      <Button type="button" variant="outline" size="sm" onPress={lock}>
+        <LockKeyhole className="mr-2 size-4" />
+        {t("lockButton")}
+      </Button>
     </div>
   );
 }
