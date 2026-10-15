@@ -105,7 +105,7 @@
       "closed": "폐쇄 모드(출입 지점 없음)"
     },
     "labelLanguage": {
-      "label": "라벨 언어",
+      "label": "라벨 언어(<lang>{language}</lang>)",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {

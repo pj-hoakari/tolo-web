@@ -105,7 +105,7 @@
       "closed": "बन्द मोड (प्रवेश / निकास बिन्दु छैन)"
     },
     "labelLanguage": {
-      "label": "लेबल भाषा",
+      "label": "लेबल भाषा (<lang>{language}</lang>)",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {

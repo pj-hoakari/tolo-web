@@ -105,7 +105,7 @@
       "closed": "Modo cerrado (sin puntos de entrada / salida)"
     },
     "labelLanguage": {
-      "label": "Idioma de las etiquetas",
+      "label": "Idioma de las etiquetas (<lang>{language}</lang>)",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {

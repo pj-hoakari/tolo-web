@@ -105,7 +105,7 @@
       "closed": "Closed mode (no entry / exit points)"
     },
     "labelLanguage": {
-      "label": "Label language",
+      "label": "Label language (<lang>{language}</lang>)",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {

@@ -231,6 +231,9 @@ test("ラベルの言語を English に切り替えるとポイントのラベ�
   await page.getByRole("menuitemradio", { name: "English" }).click();
 
   await expect(booth(page)).toContainText("Booth A");
+  await expect(
+    page.getByRole("button", { name: "ラベルの言語（English）" }),
+  ).toBeVisible();
 });
 
 test("接続エッジタブを開くと稼働中のエッジの一覧が表示される", async ({
