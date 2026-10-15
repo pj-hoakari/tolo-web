@@ -204,7 +204,7 @@
       "connecting": "接続要求中…",
       "negotiating": "ネゴシエーション中…",
       "connected": "接続済み",
-      "disconnected": "切断",
+      "disconnected": "切断済み",
       "error": "接続失敗"
     },
     "aliveEdges": {
@@ -216,13 +216,16 @@
       "unknownTime": "不明",
       "connect": "接続",
       "disconnect": "切断",
+      "connectLabel": "「{name}」に接続",
+      "disconnectLabel": "「{name}」から切断",
+      "close": "閉じる",
+      "closeLabel": "「{name}」の映像を閉じる",
       "loadError": "エッジ一覧の取得に失敗しました"
     },
     "receiver": {
       "stoppedTitle": "観測が停止しました",
       "stoppedDescription": "配信元のカメラが停止されました",
       "connecting": "接続中…",
-      "status": "状態: {status}",
       "connectError": "接続に失敗しました"
     },
     "broadcast": {

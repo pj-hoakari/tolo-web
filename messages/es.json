@@ -216,13 +216,16 @@
       "unknownTime": "Desconocida",
       "connect": "Conectar",
       "disconnect": "Desconectar",
+      "connectLabel": "Conectar a «{name}»",
+      "disconnectLabel": "Desconectar de «{name}»",
+      "close": "Cerrar",
+      "closeLabel": "Cerrar el vídeo de «{name}»",
       "loadError": "No se pudo cargar la lista de edges"
     },
     "receiver": {
       "stoppedTitle": "La observación se detuvo",
       "stoppedDescription": "La cámara de origen se detuvo",
       "connecting": "Conectando…",
-      "status": "Estado: {status}",
       "connectError": "No se pudo conectar"
     },
     "broadcast": {
