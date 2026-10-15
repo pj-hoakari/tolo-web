@@ -38,7 +38,9 @@ export function AliveEdgeList({
   return (
     <div className="flex w-full max-w-3xl flex-col gap-2">
       <div className="flex items-center justify-between">
-        <h3 className="font-bold">{t("title", { count: edges.length })}</h3>
+        <h3 className="font-semibold text-lg">
+          {t("title", { count: edges.length })}
+        </h3>
         <Button
           variant="secondary"
           size="sm"
@@ -49,13 +51,15 @@ export function AliveEdgeList({
         </Button>
       </div>
       {status === "error" && error ? (
-        <p className="text-red-600 text-sm">{error}</p>
+        <p role="alert" className="text-destructive text-sm">
+          {error}
+        </p>
       ) : edges.length === 0 ? (
-        <p className="text-gray-500 text-sm">
+        <p className="text-muted-foreground text-sm">
           {loading ? t("loading") : t("empty")}
         </p>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="divide-y rounded-md border">
           {edges.map((edge) => {
             const isConnected = edge.edgeDeviceId === connectedEdgeId;
             const isActive = isConnected && isActiveConnection(receiveStatus);
@@ -64,21 +68,21 @@ export function AliveEdgeList({
             return (
               <li
                 key={edge.edgeDeviceId}
-                className="flex items-center justify-between gap-2 rounded border border-gray-200 p-2"
+                className="flex items-center justify-between gap-4 px-4 py-3"
               >
                 <div className="flex flex-col">
-                  <span className="break-all text-sm">
+                  <span className="break-all font-medium">
                     {edge.name || edge.edgeDeviceId}
                   </span>
-                  <span className="text-gray-500 text-xs">
+                  <span className="text-muted-foreground text-xs">
                     {t("lastSeen", {
                       time: formatLastSeen(edge.lastHeartbeatAt),
                     })}
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  {isActive && (
-                    <span className="text-gray-500 text-xs">
+                  {canDisconnect && (
+                    <span className="rounded-full border px-2 py-0.5 text-muted-foreground text-xs">
                       {tStatus(receiveStatus)}
                     </span>
                   )}

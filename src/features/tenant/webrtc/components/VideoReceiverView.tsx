@@ -121,7 +121,7 @@ export function VideoReceiverView({
     <div className="flex w-full flex-col items-center gap-2">
       <div className="relative w-full max-w-3xl">
         {stopped ? (
-          <div className="flex aspect-video w-full flex-col items-center justify-center gap-1 rounded bg-gray-100 text-gray-600">
+          <div className="flex aspect-video w-full flex-col items-center justify-center gap-1 rounded bg-muted text-muted-foreground">
             <span className="font-bold">{t("stoppedTitle")}</span>
             <span className="text-sm">{t("stoppedDescription")}</span>
           </div>
@@ -154,10 +154,14 @@ export function VideoReceiverView({
           </>
         )}
       </div>
-      <span className="text-gray-600 text-sm">
+      <span className="text-muted-foreground text-sm">
         {t("status", { status: tStatus(status) })}
       </span>
-      {status === "error" && error && <p className="text-red-600">{error}</p>}
+      {status === "error" && error && (
+        <p role="alert" className="text-destructive text-sm">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
