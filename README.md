@@ -82,11 +82,10 @@ TUNNEL_ALLOWED_MAIL=alice@example.com,bob@example.com
 
 `TUNNEL_TENANT_ID` は、トンネルの URL で開くテナントです。トンネルの URL にはテナントのサブドメインを付けられないので、テナントを 1 つに固定します。トークンの `tenant_id` と同じ値にします。`TUNNEL_ALLOWED_MAIL` には、許可するアドレスをカンマで区切って並べます。`*@example.com` と書くと、そのドメインのアドレスをすべて許可します。
 
-`compose.tunnel.yaml` を重ねて起動し、ログから URL を確かめます。
+`task tunnel` で、`compose.tunnel.yaml` を重ねて起動します。トンネルがつながると、URL を表示します。起動したあとで URL を確かめるときは、`task tunnel:url` を実行します。`task` は mise で入ります。
 
 ```bash
-docker compose -f compose.yaml -f compose.tunnel.yaml up -d --build
-docker compose -f compose.yaml -f compose.tunnel.yaml logs tunnel | grep trycloudflare.com
+task tunnel
 ```
 
 観測ページは `https://{発行された URL}/event/fedcba9876543210/observation/{edgeDeviceId}` で開きます。URL は起動のたびに変わります。トンネルを止めると、全員がアクセスできなくなります。

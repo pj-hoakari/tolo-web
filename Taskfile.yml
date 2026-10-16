@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+vars:
+  TUNNEL_COMPOSE: docker compose -f compose.yaml -f compose.tunnel.yaml
+
+tasks:
+  tunnel:
+    desc: Quick Tunnel で開発環境を公開し、URL を表示する
+    cmds:
+      - '{{.TUNNEL_COMPOSE}} up -d --build'
+      - task: tunnel:url
+
+  tunnel:url:
+    desc: Quick Tunnel の URL を表示する
+    silent: true
+    cmds:
+      - |
+        container=$({{.TUNNEL_COMPOSE}} ps -q tunnel)
+        if [ -z "$container" ]; then
+          echo "Quick Tunnel が起動していません。task tunnel で起動してください。" >&2
+          exit 1
+        fi
+        started=$(docker inspect --format '{{"{{.State.StartedAt}}"}}' "$container")
+        for _ in $(seq 1 30); do
+          url=$({{.TUNNEL_COMPOSE}} logs --no-log-prefix --since "$started" tunnel 2>/dev/null | awk '
+            match($0, /https:\/\/[a-z0-9-]+\.trycloudflare\.com/) { url = substr($0, RSTART, RLENGTH); registered = 0 }
+            /Registered tunnel connection/ { registered = 1 }
+            END { if (registered) print url }
+          ')
+          if [ -n "$url" ]; then
+            echo "$url"
+            exit 0
+          fi
+          sleep 2
+        done
+        echo "Quick Tunnel の接続を確認できませんでした。{{.TUNNEL_COMPOSE}} logs tunnel を確認してください。" >&2
+        exit 1
