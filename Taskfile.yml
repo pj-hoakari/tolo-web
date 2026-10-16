@@ -12,6 +12,11 @@ tasks:
       - '{{.TUNNEL_COMPOSE}} up -d --build'
       - task: tunnel:url
 
+  tunnel:stop:
+    desc: Quick Tunnel を止めて公開を終える
+    cmds:
+      - '{{.TUNNEL_COMPOSE}} stop tunnel tunnel-proxy'
+
   tunnel:url:
     desc: Quick Tunnel の URL を表示する
     silent: true

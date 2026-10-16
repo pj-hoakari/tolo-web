@@ -91,7 +91,7 @@ task tunnel
 観測ページは `https://{発行された URL}/event/fedcba9876543210/observation/{edgeDeviceId}` で開きます。URL は起動のたびに変わります。トンネルを止めると、全員がアクセスできなくなります。
 
 ```bash
-docker compose -f compose.yaml -f compose.tunnel.yaml stop tunnel
+task tunnel:stop
 ```
 
 `tunnel-proxy`（Caddy）がトンネルからの通信を Firebase エミュレータと `web` に振り分けます。HTTPS で開いたページは、ページと同じオリジンを通してエミュレータに接続します。
