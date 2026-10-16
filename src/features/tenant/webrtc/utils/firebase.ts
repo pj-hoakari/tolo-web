@@ -9,6 +9,7 @@ import {
   connectFirestoreEmulator,
   type Firestore,
   getFirestore,
+  initializeFirestore,
 } from "firebase/firestore";
 
 const globalForFirestore = globalThis as unknown as {
@@ -22,6 +23,19 @@ function parseHostPort(
 ): { host: string; port: number } {
   const [host, port] = value.split(":");
   return { host: host || "127.0.0.1", port: Number(port) || fallbackPort };
+}
+
+function emulatorEndpoint(
+  configuredHost: string | undefined,
+  fallbackPort: number,
+  page: Pick<Location, "protocol" | "host"> | undefined = globalThis.location,
+):
+  | { ssl: true; host: string }
+  | { ssl: false; host: string; port: number }
+  | undefined {
+  if (!configuredHost) return undefined;
+  if (page?.protocol === "https:") return { ssl: true, host: page.host };
+  return { ssl: false, ...parseHostPort(configuredHost, fallbackPort) };
 }
 
 function getApp(): FirebaseApp {
@@ -42,12 +56,16 @@ export function getDb(): Firestore {
     return globalForFirestore.__toloWebDb;
   }
 
-  const db = getFirestore(getApp());
-
-  const emulatorHost = process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST;
-  if (emulatorHost) {
-    const { host, port } = parseHostPort(emulatorHost, 8080);
-    connectFirestoreEmulator(db, host, port);
+  const emulator = emulatorEndpoint(
+    process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST,
+    8080,
+  );
+  let db: Firestore;
+  if (emulator?.ssl) {
+    db = initializeFirestore(getApp(), { host: emulator.host, ssl: true });
+  } else {
+    db = getFirestore(getApp());
+    if (emulator) connectFirestoreEmulator(db, emulator.host, emulator.port);
   }
 
   globalForFirestore.__toloWebDb = db;
@@ -61,12 +79,15 @@ export function getAuth(): Auth {
 
   const auth = initializeAuth(getApp(), { persistence: inMemoryPersistence });
 
-  const emulatorHost = process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST;
-  if (emulatorHost) {
-    const { host, port } = parseHostPort(emulatorHost, 9099);
-    connectAuthEmulator(auth, `http://${host}:${port}`, {
-      disableWarnings: true,
-    });
+  const emulator = emulatorEndpoint(
+    process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST,
+    9099,
+  );
+  if (emulator) {
+    const origin = emulator.ssl
+      ? `https://${emulator.host}`
+      : `http://${emulator.host}:${emulator.port}`;
+    connectAuthEmulator(auth, origin, { disableWarnings: true });
   }
 
   globalForFirestore.__toloWebAuth = auth;

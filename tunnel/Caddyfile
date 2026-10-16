@@ -1,0 +1,21 @@
+{
+	auto_https off
+}
+
+:8080 {
+	@firestore path /google.firestore.v1.Firestore/* /v1/*
+	handle @firestore {
+		reverse_proxy firebase-emulator:8080
+	}
+
+	@auth path /identitytoolkit.googleapis.com/* /securetoken.googleapis.com/* /emulator/*
+	handle @auth {
+		reverse_proxy firebase-emulator:9099
+	}
+
+	handle {
+		reverse_proxy web:3000 {
+			header_up Host {$TUNNEL_TENANT_ID}.localhost:3000
+		}
+	}
+}

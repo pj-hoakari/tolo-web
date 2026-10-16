@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
 
   output: "standalone",
+
+  allowedDevOrigins: process.env.TUNNEL_TENANT_ID
+    ? ["*.trycloudflare.com"]
+    : [],
 };
 
 const withNextIntl = createNextIntlPlugin();
