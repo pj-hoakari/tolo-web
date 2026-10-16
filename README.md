@@ -67,6 +67,35 @@ docker compose up -d --build
 
 観測ページから映像を配信するには、`public/models` に人検出モデルが必要です（[人検出モデルセットアップ](docs/setup-for-detection-model.md)）。
 
+### スマートフォンから開く
+
+スマートフォンなど別の端末からは、Cloudflare の Quick Tunnel が発行する HTTPS の URL で開きます。カメラと画面の常時点灯は、HTTPS か `localhost` で開いたページでしか使えません。LAN の IP アドレスを http で開いても、観測ページのカメラは起動できません。
+
+Quick Tunnel はローカルの環境をインターネットに公開します。そのため、メール認証を必須にしています。ページを開いた人は `TUNNEL_ALLOWED_MAIL` に指定したアドレスで届くワンタイム PIN を入力して入ります。開く人にもトンネルを立てる人にも、Cloudflare のアカウントは要りません。
+
+`.env` に次の 2 つを設定します。
+
+```bash
+TUNNEL_TENANT_ID=0123456789abcdef
+TUNNEL_ALLOWED_MAIL=alice@example.com,bob@example.com
+```
+
+`TUNNEL_TENANT_ID` は、トンネルの URL で開くテナントです。トンネルの URL にはテナントのサブドメインを付けられないので、テナントを 1 つに固定します。トークンの `tenant_id` と同じ値にします。`TUNNEL_ALLOWED_MAIL` には、許可するアドレスをカンマで区切って並べます。`*@example.com` と書くと、そのドメインのアドレスをすべて許可します。
+
+`task tunnel` で、`compose.tunnel.yaml` を重ねて起動します。トンネルがつながると、URL を表示します。起動したあとで URL を確かめるときは、`task tunnel:url` を実行します。`task` は mise で入ります。
+
+```bash
+task tunnel
+```
+
+観測ページは `https://{発行された URL}/event/fedcba9876543210/observation/{edgeDeviceId}` で開きます。URL は起動のたびに変わります。トンネルを止めると、全員がアクセスできなくなります。
+
+```bash
+task tunnel:stop
+```
+
+`tunnel-proxy`（Caddy）がトンネルからの通信を Firebase エミュレータと `web` に振り分けます。HTTPS で開いたページは、ページと同じオリジンを通してエミュレータに接続します。
+
 ## テナントのイベント管理ページ
 
 `/management` は、テナントのイベントを一覧し、作成し、アーカイブするページです。`web` はこのページからの呼び出しで、環境変数 `TENANT_ACCESS_TOKEN` の `tenant_access` トークンを Service Gateway（`GATEWAY_URL`）へ送ります。Service Gateway はその呼び出しを Tenant Management へ転送します。
