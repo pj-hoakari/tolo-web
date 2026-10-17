@@ -258,8 +258,8 @@ importers:
         specifier: 2.5.15
         version: 2.5.15
       '@chromatic-com/storybook':
-        specifier: 5.4.0
-        version: 5.4.0(storybook@10.6.2(@types/react@19.3.0)(react@19.3.0))
+        specifier: 5.5.1
+        version: 5.5.1(storybook@10.6.2(@types/react@19.3.0)(react@19.3.0))
       '@playwright/test':
         specifier: 1.64.0
         version: 1.64.0
@@ -554,8 +554,8 @@ packages:
   '@bufbuild/protobuf@2.16.0':
     resolution: {integrity: sha512-FWa0sPlqYGJgpTs6OxBRcL/AW4JT0OIO+W1ajerluoTVh8CV0B7XM1qsNCRgnkSCkRCgOICKHRQlY17jrsm0+Q==}
 
-  '@chromatic-com/storybook@5.4.0':
-    resolution: {integrity: sha512-U4Rny8H6BBa8uiRMnL0CFZyqZ0MWogN/szlMugsInfSnX+PtrLCVp2kjrvaG9bv6X5xSgHpnmepOzLm8+QFseA==}
+  '@chromatic-com/storybook@5.5.1':
+    resolution: {integrity: sha512-DOtUEBIJHmqsOWg+Hi1t5m5FTNlyzL0NpZUwQob+ex30nDvL4p+MrYctmvEqH/QT72mf9mLXbz3Uj8aoWD2OYA==}
     engines: {node: '>=20.0.0', yarn: '>=1.22.18'}
     peerDependencies:
       storybook: ^0.0.0-0 || ^10.1.0 || ^10.1.0-0 || ^10.2.0-0 || ^10.3.0-0 || ^10.4.0-0 || ^10.5.0-0 || ^10.6.0-0 || ^11.0.0-0
@@ -5899,7 +5899,7 @@ snapshots:
 
   '@bufbuild/protobuf@2.16.0': {}
 
-  '@chromatic-com/storybook@5.4.0(storybook@10.6.2(@types/react@19.3.0)(react@19.3.0))':
+  '@chromatic-com/storybook@5.5.1(storybook@10.6.2(@types/react@19.3.0)(react@19.3.0))':
     dependencies:
       '@neoconfetti/react': 1.0.0
       chromatic: 18.10.1
