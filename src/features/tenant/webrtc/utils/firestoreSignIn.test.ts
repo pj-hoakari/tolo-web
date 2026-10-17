@@ -1,4 +1,4 @@
-import { signInWithCustomToken } from "firebase/auth";
+import { type Auth, signInWithCustomToken } from "firebase/auth";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   REFRESH_MARGIN_MS,
@@ -9,9 +9,9 @@ import {
 vi.mock("firebase/auth", () => ({
   signInWithCustomToken: vi.fn(() => Promise.resolve()),
 }));
-vi.mock("./firebase", () => ({ getAuth: () => "auth" }));
 
 const HOUR = 60 * 60 * 1000;
+const auth = {} as Auth;
 
 describe("シグナリング用のサインイン", () => {
   beforeEach(() => {
@@ -21,12 +21,15 @@ describe("シグナリング用のサインイン", () => {
   afterEach(() => vi.useRealTimers());
 
   it("発行されたカスタムトークンでサインインする", async () => {
-    await signInForSignaling(async () => ({
-      customToken: "token-1",
-      expiresAt: new Date(HOUR),
-    }));
+    await signInForSignaling(
+      async () => ({
+        customToken: "token-1",
+        expiresAt: new Date(HOUR),
+      }),
+      auth,
+    );
 
-    expect(signInWithCustomToken).toHaveBeenCalledWith("auth", "token-1");
+    expect(signInWithCustomToken).toHaveBeenCalledWith(auth, "token-1");
   });
 
   it("expiresAt の手前でトークンを取り直してサインインし直す", async () => {
@@ -40,13 +43,13 @@ describe("シグナリング用のサインイン", () => {
         customToken: "token-2",
         expiresAt: new Date(2 * HOUR),
       });
-    await signInForSignaling(issue);
+    await signInForSignaling(issue, auth);
 
     await vi.advanceTimersByTimeAsync(HOUR - REFRESH_MARGIN_MS - 1);
     expect(signInWithCustomToken).toHaveBeenCalledTimes(1);
 
     await vi.advanceTimersByTimeAsync(1);
-    expect(signInWithCustomToken).toHaveBeenLastCalledWith("auth", "token-2");
+    expect(signInWithCustomToken).toHaveBeenLastCalledWith(auth, "token-2");
 
     await vi.advanceTimersByTimeAsync(HOUR);
     expect(signInWithCustomToken).toHaveBeenCalledTimes(3);
@@ -56,7 +59,7 @@ describe("シグナリング用のサインイン", () => {
     const issue = vi
       .fn()
       .mockResolvedValue({ customToken: "token", expiresAt: new Date(HOUR) });
-    await signInForSignaling(issue);
+    await signInForSignaling(issue, auth);
 
     await vi.advanceTimersByTimeAsync(2 * HOUR);
 
@@ -76,20 +79,20 @@ describe("シグナリング用のサインイン", () => {
         customToken: "token-2",
         expiresAt: new Date(2 * HOUR),
       });
-    await signInForSignaling(issue);
+    await signInForSignaling(issue, auth);
 
     await vi.advanceTimersByTimeAsync(HOUR - REFRESH_MARGIN_MS);
     expect(signInWithCustomToken).toHaveBeenCalledTimes(1);
 
     await vi.advanceTimersByTimeAsync(RETRY_DELAY_MS);
-    expect(signInWithCustomToken).toHaveBeenLastCalledWith("auth", "token-2");
+    expect(signInWithCustomToken).toHaveBeenLastCalledWith(auth, "token-2");
   });
 
   it("止めたあとは取り直さない", async () => {
     const issue = vi
       .fn()
       .mockResolvedValue({ customToken: "token", expiresAt: new Date(HOUR) });
-    const stop = await signInForSignaling(issue);
+    const stop = await signInForSignaling(issue, auth);
 
     stop();
     await vi.advanceTimersByTimeAsync(2 * HOUR);
