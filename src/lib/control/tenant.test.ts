@@ -1,5 +1,5 @@
-import { describe, expect, test } from "vitest";
-import { resolveTenant } from "./tenant";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { getRootDomain, resolveTenant } from "./tenant";
 
 describe("extractTenantId", () => {
   test("extract one subdomain as tenant id from hostHeader string", () => {
@@ -81,5 +81,19 @@ describe("extractTenantId", () => {
     const hostHeader = "tenant1.localhost:3000";
     const result = resolveTenant(hostHeader);
     expect(result).toEqual({ type: "tenant", tenantId: "tenant1" });
+  });
+});
+
+describe("getRootDomain", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+  test("reads the root domain from ROOT_DOMAIN", () => {
+    vi.stubEnv("ROOT_DOMAIN", "Runtime.Example");
+    expect(getRootDomain()).toBe("runtime.example");
+  });
+  test("falls back to localhost when ROOT_DOMAIN is unset", () => {
+    vi.stubEnv("ROOT_DOMAIN", "");
+    expect(getRootDomain()).toBe("localhost");
   });
 });
