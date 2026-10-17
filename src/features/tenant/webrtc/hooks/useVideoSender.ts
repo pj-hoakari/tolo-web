@@ -7,13 +7,14 @@ import {
   type DetectionSettingsStore,
 } from "@/features/tenant/detection/stores/detectionStore";
 import { orpc } from "@/lib/orpc";
+import { useFirebaseConfig } from "../components/FirebaseConfigProvider";
 import {
   encodeDetectionControlNotice,
   parseDetectionControlRequest,
   sendOverDataChannel,
 } from "../utils/detectionControl";
 import type { DetectionOverlayFrame } from "../utils/detectionOverlay";
-import { getDb } from "../utils/firebase";
+import { getAuth, getDb } from "../utils/firebase";
 import { signInForSignaling } from "../utils/firestoreSignIn";
 import { PeerSignalingAdapter } from "../utils/peerSignaling";
 import {
@@ -64,6 +65,7 @@ export function useVideoSender(params: {
   const { tenantId, eventId, edgeDeviceId, stream, settingsStore } = params;
   const active = stream !== null;
   const edgeId = active && edgeDeviceId ? edgeDeviceId : null;
+  const firebaseConfig = useFirebaseConfig();
 
   const streamRef = useRef<MediaStream | null>(stream);
   const sessionsRef = useRef<Map<string, SenderSession>>(new Map());
@@ -132,7 +134,7 @@ export function useVideoSender(params: {
     sessionsListenerRef.current?.unsubscribe();
     sessionsListenerRef.current = null;
 
-    const db = getDb();
+    const db = getDb(firebaseConfig);
     const sessionsCol = sessionsCollection(db, tenantId, eventId, edgeId);
     const sessions = sessionsRef.current;
     const startingSessionIds = startingSessionIdsRef.current;
@@ -255,7 +257,10 @@ export function useVideoSender(params: {
 
     let unsubscribeSessions: (() => void) | null = null;
     let stopSignIn: (() => void) | null = null;
-    signInForSignaling(orpc.signaling.issueEdgeFirestoreToken)
+    signInForSignaling(
+      orpc.signaling.issueEdgeFirestoreToken,
+      getAuth(firebaseConfig),
+    )
       .then((stop) => {
         if (disposed) {
           stop();
@@ -287,7 +292,7 @@ export function useVideoSender(params: {
       }
       startingSessionIds.clear();
     };
-  }, [tenantId, eventId, edgeId, settingsStore]);
+  }, [tenantId, eventId, edgeId, settingsStore, firebaseConfig]);
 
   return { active, edgeId, sendDetectionFrame };
 }

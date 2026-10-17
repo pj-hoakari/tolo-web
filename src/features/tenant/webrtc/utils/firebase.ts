@@ -11,6 +11,7 @@ import {
   getFirestore,
   initializeFirestore,
 } from "firebase/firestore";
+import type { FirebaseConfig } from "./firebaseConfig";
 
 const globalForFirestore = globalThis as unknown as {
   __toloWebDb?: Firestore;
@@ -38,33 +39,32 @@ function emulatorEndpoint(
   return { ssl: false, ...parseHostPort(configuredHost, fallbackPort) };
 }
 
-function getApp(): FirebaseApp {
+function getApp(config: FirebaseConfig): FirebaseApp {
   return (
     getApps()[0] ??
     initializeApp({
-      projectId:
-        process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "tolo-signaling",
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "demo-tolo-web",
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+      projectId: config.projectId,
+      apiKey: config.apiKey,
+      authDomain: config.authDomain,
+      appId: config.appId,
     })
   );
 }
 
-export function getDb(): Firestore {
+export function getDb(config: FirebaseConfig): Firestore {
   if (globalForFirestore.__toloWebDb) {
     return globalForFirestore.__toloWebDb;
   }
 
-  const emulator = emulatorEndpoint(
-    process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST,
-    8080,
-  );
+  const emulator = emulatorEndpoint(config.firestoreEmulatorHost, 8080);
   let db: Firestore;
   if (emulator?.ssl) {
-    db = initializeFirestore(getApp(), { host: emulator.host, ssl: true });
+    db = initializeFirestore(getApp(config), {
+      host: emulator.host,
+      ssl: true,
+    });
   } else {
-    db = getFirestore(getApp());
+    db = getFirestore(getApp(config));
     if (emulator) connectFirestoreEmulator(db, emulator.host, emulator.port);
   }
 
@@ -72,17 +72,16 @@ export function getDb(): Firestore {
   return db;
 }
 
-export function getAuth(): Auth {
+export function getAuth(config: FirebaseConfig): Auth {
   if (globalForFirestore.__toloWebAuth) {
     return globalForFirestore.__toloWebAuth;
   }
 
-  const auth = initializeAuth(getApp(), { persistence: inMemoryPersistence });
+  const auth = initializeAuth(getApp(config), {
+    persistence: inMemoryPersistence,
+  });
 
-  const emulator = emulatorEndpoint(
-    process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST,
-    9099,
-  );
+  const emulator = emulatorEndpoint(config.authEmulatorHost, 9099);
   if (emulator) {
     const origin = emulator.ssl
       ? `https://${emulator.host}`

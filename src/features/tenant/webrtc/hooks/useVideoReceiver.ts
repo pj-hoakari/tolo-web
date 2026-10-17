@@ -16,6 +16,7 @@ import {
   useDetectionStores,
 } from "@/features/tenant/detection/stores/detectionStore";
 import { orpc } from "@/lib/orpc";
+import { useFirebaseConfig } from "../components/FirebaseConfigProvider";
 import type { ConnectionStatus } from "../type";
 import {
   encodeDetectionControlRequest,
@@ -26,7 +27,7 @@ import {
   type DetectionOverlayFrame,
   parseDetectionOverlayFrame,
 } from "../utils/detectionOverlay";
-import { getDb } from "../utils/firebase";
+import { getAuth, getDb } from "../utils/firebase";
 import { signInForSignaling } from "../utils/firestoreSignIn";
 import { PeerSignalingAdapter } from "../utils/peerSignaling";
 import { sessionDoc, signalsCollection } from "../utils/refs";
@@ -80,6 +81,7 @@ export function useVideoReceiver({
   // observation から受け取った設定を反映している間の変更要求を止める
   const applyingRemoteSettingsRef = useRef(false);
 
+  const firebaseConfig = useFirebaseConfig();
   const stores = useDetectionStores();
   const { settingsStore, resultStore } = stores;
 
@@ -178,11 +180,12 @@ export function useVideoReceiver({
       const run = async () => {
         stopSignInRef.current = await signInForSignaling(
           orpc.signaling.issueConsoleFirestoreToken,
+          getAuth(firebaseConfig),
         );
         const { sessionId } = await orpc.signaling.requestConnection({
           edgeId,
         });
-        const db = getDb();
+        const db = getDb(firebaseConfig);
         const sessionRef = sessionDoc(db, tenantId, eventId, edgeId, sessionId);
         sessionRefRef.current = sessionRef;
         const signalsRef = signalsCollection(sessionRef);
@@ -217,6 +220,7 @@ export function useVideoReceiver({
     [
       tenantId,
       eventId,
+      firebaseConfig,
       disconnect,
       watchConnection,
       handleDetectionMessage,

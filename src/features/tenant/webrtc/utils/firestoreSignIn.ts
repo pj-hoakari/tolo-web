@@ -1,6 +1,5 @@
-import { signInWithCustomToken } from "firebase/auth";
+import { type Auth, signInWithCustomToken } from "firebase/auth";
 import type { FirestoreToken } from "@/server/router";
-import { getAuth } from "./firebase";
 
 export const REFRESH_MARGIN_MS = 60_000;
 export const RETRY_DELAY_MS = 10_000;
@@ -8,6 +7,7 @@ const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 
 export async function signInForSignaling(
   issueToken: () => Promise<FirestoreToken>,
+  auth: Auth,
 ): Promise<() => void> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let stopped = false;
@@ -15,7 +15,7 @@ export async function signInForSignaling(
   const signIn = async (): Promise<void> => {
     const { customToken, expiresAt } = await issueToken();
     if (stopped) return;
-    await signInWithCustomToken(getAuth(), customToken);
+    await signInWithCustomToken(auth, customToken);
     const delay = expiresAt.getTime() - REFRESH_MARGIN_MS - Date.now();
     if (delay > 0) schedule(delay, expiresAt);
   };
