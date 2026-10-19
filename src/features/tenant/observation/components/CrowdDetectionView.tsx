@@ -55,7 +55,11 @@ function CrowdDetectionViewComponent({
         settingsStore={settingsStore}
         viewStateStore={viewStateStore}
       />
-      {status === "error" && error && <p className="text-red-600">{error}</p>}
+      {status === "error" && error && (
+        <p role="alert" className="text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
