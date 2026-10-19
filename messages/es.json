@@ -26,7 +26,9 @@
     "create": {
       "label": "Nombre del evento",
       "submit": "Crear",
-      "failed": "No se pudo crear el evento."
+      "failed": "No se pudo crear el evento.",
+      "tenantUnavailable": "No se pueden crear eventos en este inquilino. Es posible que el inquilino esté archivado.",
+      "tenantNotFound": "No se encontró el inquilino."
     },
     "list": {
       "heading": "Eventos",
@@ -54,6 +56,10 @@
     "restore": {
       "button": "Restaurar",
       "failed": "No se pudo restaurar el evento."
+    },
+    "transition": {
+      "stale": "No se pudo completar la operación porque el estado del evento o del inquilino cambió. Vuelve a cargar la lista.",
+      "eventNotFound": "No se encontró el evento. Vuelve a cargar la lista."
     }
   },
   "Graph": {
@@ -119,7 +125,31 @@
       "autoAlign": "Ordenar automáticamente",
       "saved": "Guardado",
       "saveFailed": "No se pudo guardar. Inténtalo de nuevo más tarde.",
-      "saveInvalid": "Hay partes del mapa que no se pueden guardar"
+      "saveInvalid": "Hay partes del mapa que no se pueden guardar",
+      "saveUnavailable": "No se pudo guardar porque el evento no se encontró o está archivado. Si está archivado, restáuralo antes de editarlo.",
+      "violations": {
+        "UNSPECIFIED": "El diagrama de rutas tiene un problema de estructura.",
+        "EMPTY_NODE_ID": "Hay un punto con el ID vacío.",
+        "DUPLICATE_NODE_ID": "Hay puntos con el mismo ID.",
+        "NODE_WITHOUT_TYPE": "Hay un punto sin tipo.",
+        "NON_FINITE_NODE_LAYOUT": "Hay un punto con una posición no válida.",
+        "EMPTY_GROUP_ID": "Hay un grupo con el ID vacío.",
+        "DUPLICATE_GROUP_ID": "Hay grupos con el mismo ID.",
+        "NON_FINITE_GROUP_LAYOUT": "Hay un grupo con una posición o un tamaño no válidos.",
+        "EXTERNAL_NODE_IN_GROUP": "Hay un punto exterior dentro de un grupo. Los puntos exteriores no pueden pertenecer a un grupo.",
+        "MISSING_GROUP": "Hay un punto que pertenece a un grupo que no existe.",
+        "MISSING_PARENT_GROUP": "Hay un grupo que pertenece a un grupo que no existe.",
+        "GROUP_CYCLE": "Hay grupos anidados entre sí en un ciclo.",
+        "EMPTY_EDGE_ID": "Hay una ruta con el ID vacío.",
+        "DUPLICATE_EDGE_ID": "Hay rutas con el mismo ID.",
+        "EDGE_WITHOUT_DIRECTION": "Hay una ruta sin sentido definido.",
+        "MISSING_NODE": "Hay una ruta conectada a un punto que no existe.",
+        "EDGE_BETWEEN_EXTERNAL_NODES": "Hay una ruta que conecta dos puntos exteriores.",
+        "SELF_LOOP_EDGE": "Hay una ruta que empieza y termina en el mismo punto.",
+        "EXTERNAL_NODE_WITHOUT_EDGE": "Hay un punto exterior sin ninguna ruta.",
+        "NODE_WITHOUT_ROUTE": "Hay un punto sin ninguna ruta.",
+        "GROUP_WITHOUT_MEMBERS": "Hay un grupo vacío."
+      }
     },
     "easyConnect": {
       "fromNode": "Añadir ruta: haz clic en el punto final",

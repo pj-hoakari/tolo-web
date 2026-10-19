@@ -57,7 +57,7 @@ function DetectionSettingsPanelComponent({
     }));
 
   return (
-    <section className="grid w-full max-w-3xl gap-4 rounded border border-gray-200 p-4 sm:grid-cols-2">
+    <section className="grid w-full max-w-3xl gap-4 rounded border border-border p-4 sm:grid-cols-2">
       <div className="grid gap-3 sm:col-span-2">
         <h3 className="font-bold">{t("title")}</h3>
         <DetectionLineActions

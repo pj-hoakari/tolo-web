@@ -26,7 +26,9 @@
     "create": {
       "label": "活动名称",
       "submit": "创建",
-      "failed": "无法创建活动。"
+      "failed": "无法创建活动。",
+      "tenantUnavailable": "无法在此租户下创建活动。该租户可能已被归档。",
+      "tenantNotFound": "找不到该租户。"
     },
     "list": {
       "heading": "活动",
@@ -54,6 +56,10 @@
     "restore": {
       "button": "恢复",
       "failed": "无法恢复活动。"
+    },
+    "transition": {
+      "stale": "活动或租户的状态已变化，无法完成操作。请重新加载列表。",
+      "eventNotFound": "找不到该活动。请重新加载列表。"
     }
   },
   "Graph": {
@@ -119,7 +125,31 @@
       "autoAlign": "自动排列",
       "saved": "已保存",
       "saveFailed": "保存失败。请稍后重试。",
-      "saveInvalid": "有无法保存的部分"
+      "saveInvalid": "有无法保存的部分",
+      "saveUnavailable": "找不到该活动或活动已归档，无法保存。如已归档，请先恢复再编辑。",
+      "violations": {
+        "UNSPECIFIED": "路径图的结构有问题。",
+        "EMPTY_NODE_ID": "有 ID 为空的节点。",
+        "DUPLICATE_NODE_ID": "有 ID 重复的节点。",
+        "NODE_WITHOUT_TYPE": "有未设置类型的节点。",
+        "NON_FINITE_NODE_LAYOUT": "有位置无效的节点。",
+        "EMPTY_GROUP_ID": "有 ID 为空的分组。",
+        "DUPLICATE_GROUP_ID": "有 ID 重复的分组。",
+        "NON_FINITE_GROUP_LAYOUT": "有位置或大小无效的分组。",
+        "EXTERNAL_NODE_IN_GROUP": "有外部节点位于分组中。外部节点不能放入分组。",
+        "MISSING_GROUP": "有节点属于不存在的分组。",
+        "MISSING_PARENT_GROUP": "有分组属于不存在的分组。",
+        "GROUP_CYCLE": "有分组之间形成了循环嵌套。",
+        "EMPTY_EDGE_ID": "有 ID 为空的路径。",
+        "DUPLICATE_EDGE_ID": "有 ID 重复的路径。",
+        "EDGE_WITHOUT_DIRECTION": "有未设置方向的路径。",
+        "MISSING_NODE": "有路径连接到不存在的节点。",
+        "EDGE_BETWEEN_EXTERNAL_NODES": "有路径连接了两个外部节点。",
+        "SELF_LOOP_EDGE": "有起点和终点相同的路径。",
+        "EXTERNAL_NODE_WITHOUT_EDGE": "有未连接路径的外部节点。",
+        "NODE_WITHOUT_ROUTE": "有未连接路径的节点。",
+        "GROUP_WITHOUT_MEMBERS": "有空的分组。"
+      }
     },
     "easyConnect": {
       "fromNode": "添加路径：点击作为终点的节点",
