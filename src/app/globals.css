@@ -3,11 +3,23 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --muted: var(--color-zinc-50);
+  --muted-foreground: var(--color-zinc-600);
+  --border: rgb(0 0 0 / 8%);
+  --accent: rgb(0 0 0 / 4%);
+  --primary-hover: #383838;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-primary: var(--foreground);
+  --color-primary-foreground: var(--background);
+  --color-primary-hover: var(--primary-hover);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -16,6 +28,11 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --muted: var(--background);
+    --muted-foreground: var(--color-zinc-400);
+    --border: rgb(255 255 255 / 14.5%);
+    --accent: #1a1a1a;
+    --primary-hover: #cccccc;
   }
 }
 
