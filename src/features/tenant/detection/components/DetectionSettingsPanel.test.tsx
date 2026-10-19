@@ -52,15 +52,21 @@ describe("DetectionSettingsPanel", () => {
     expect(checked(radio(tracking, "標準"))).toBe("true");
   });
 
-  it("ライン生成の切替は押下状態を伝える", () => {
+  it("モードの選択状態を伝え、生成と編集を切り替える", () => {
     const { viewStateStore } = renderPanel();
-    const toggle = screen.getByRole("button", { name: "ライン生成" });
-    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+    const group = screen.getByRole("radiogroup", { name: "ライン操作モード" });
+    const toggle = radio(group, "ライン生成");
+    expect(checked(toggle)).toBe("false");
 
     fireEvent.click(toggle);
 
     expect(viewStateStore.getState().lineCreationMode).toBe(true);
-    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+    expect(checked(toggle)).toBe("true");
+    fireEvent.click(radio(group, "編集モード"));
+    expect(viewStateStore.getState().lineCreationMode).toBe(false);
+    expect(viewStateStore.getState().editingLineId).toBe(
+      viewStateStore.getState().selectedLineId,
+    );
   });
 });
 
@@ -76,15 +82,19 @@ describe("DetectionLineCountList", () => {
     render(<DetectionLineCountList {...stores} />, {
       wrapper: IntlTestProvider,
     });
-    const list = screen.getByRole("radiogroup", { name: "ライン一覧" });
-    const first = radio(list, "ライン 1: forward 0 / backward 0");
-    const second = radio(list, "ホールA入口: forward 0 / backward 0");
-    expect(checked(first)).toBe("true");
-
-    fireEvent.click(second);
+    expect(
+      screen.getByRole("button", { name: "ライン 1の編集を終了" }),
+    ).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "ホールA入口を編集" }));
 
     expect(stores.viewStateStore.getState().selectedLineId).toBe("second");
-    expect(checked(second)).toBe("true");
-    expect(checked(first)).toBe("false");
+    expect(stores.viewStateStore.getState().editingLineId).toBe("second");
+    expect(
+      screen.getByRole("button", { name: "ライン 1を編集" }),
+    ).toBeDefined();
+    fireEvent.click(
+      screen.getByRole("button", { name: "ホールA入口の編集を終了" }),
+    );
+    expect(stores.viewStateStore.getState().editingLineId).toBeNull();
   });
 });

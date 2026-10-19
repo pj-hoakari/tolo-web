@@ -22,14 +22,11 @@ function CrowdDetectionControlsComponent({
       <Button type="button" onPress={onStart} isDisabled={isActive}>
         {t("start")}
       </Button>
-      <Button
-        type="button"
-        variant="secondary"
-        onPress={onStop}
-        isDisabled={!isActive}
-      >
-        {t("stop")}
-      </Button>
+      {isActive && (
+        <Button type="button" variant="secondary" onPress={onStop}>
+          {t("stop")}
+        </Button>
+      )}
     </div>
   );
 }

@@ -1,16 +1,16 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { getRootDomain, resolveTenant } from "./tenant";
 
-describe("extractTenantId", () => {
-  test("extract one subdomain as tenant id from hostHeader string", () => {
+describe("resolveTenant", () => {
+  test("extract one label below the root domain as the subdomain name", () => {
     const hostHeader = "tenant1.example.com";
     const result = resolveTenant(hostHeader, "example.com");
-    expect(result).toEqual({ type: "tenant", tenantId: "tenant1" });
+    expect(result).toEqual({ type: "tenant", subdomain: "tenant1" });
   });
   test("default root domain should be localhost", () => {
     const hostHeader = "tenant2.localhost";
     const result = resolveTenant(hostHeader);
-    expect(result).toEqual({ type: "tenant", tenantId: "tenant2" });
+    expect(result).toEqual({ type: "tenant", subdomain: "tenant2" });
   });
   test("www prefix should be treated as root", () => {
     const hostHeader = "www.example.com";
@@ -62,25 +62,29 @@ describe("extractTenantId", () => {
     const result = resolveTenant(hostHeader, "example.com");
     expect(result).toEqual({ type: "invalid", reason: "foreign-domain" });
   });
-  test("uppercase host should be normalized to a lowercase tenant id", () => {
+  test("uppercase host should be normalized to a lowercase subdomain name", () => {
     const hostHeader = "Tenant1.Example.com";
     const result = resolveTenant(hostHeader, "example.com");
-    expect(result).toEqual({ type: "tenant", tenantId: "tenant1" });
+    expect(result).toEqual({ type: "tenant", subdomain: "tenant1" });
   });
   test("uppercase root domain should still match the host", () => {
     const hostHeader = "tenant1.example.com";
     const result = resolveTenant(hostHeader, "EXAMPLE.COM");
-    expect(result).toEqual({ type: "tenant", tenantId: "tenant1" });
+    expect(result).toEqual({ type: "tenant", subdomain: "tenant1" });
   });
   test("reserved subdomain with an extra level should be invalid as a nested subdomain", () => {
     const hostHeader = "www.tenant1.example.com";
     const result = resolveTenant(hostHeader, "example.com");
     expect(result).toEqual({ type: "invalid", reason: "nested-subdomain" });
   });
-  test("port number is ignored while extracting a tenant id", () => {
+  test("port number is ignored while extracting a subdomain name", () => {
     const hostHeader = "tenant1.localhost:3000";
     const result = resolveTenant(hostHeader);
-    expect(result).toEqual({ type: "tenant", tenantId: "tenant1" });
+    expect(result).toEqual({ type: "tenant", subdomain: "tenant1" });
+  });
+  test("a public id label is parsed as a subdomain name like any other label", () => {
+    const result = resolveTenant("0123456789abcdef.localhost");
+    expect(result).toEqual({ type: "tenant", subdomain: "0123456789abcdef" });
   });
 });
 

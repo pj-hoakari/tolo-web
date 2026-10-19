@@ -6,6 +6,7 @@ import {
   createInitialLineCounts,
   type DetectionResultStore,
   type DetectionSettingsStore,
+  type DetectionViewStateStore,
   INITIAL_LINE_COUNT,
   INITIAL_METRICS,
   recordDetectedPeople,
@@ -70,8 +71,10 @@ function toDetectionOverlayFrame(
 export type UseCrowdDetectionLoopParams = {
   videoRef: RefObject<HTMLVideoElement | null>;
   overlayCanvasRef: RefObject<HTMLCanvasElement | null>;
+  lineCanvasRef?: RefObject<HTMLCanvasElement | null>;
   status: DetectCrowdStatus;
   settingsStore: DetectionSettingsStore;
+  viewStateStore: DetectionViewStateStore;
   resultStore: DetectionResultStore;
   onBroadcastStreamChange: (stream: MediaStream | null) => void;
   onDetectionFrame: (frame: DetectionOverlayFrame | null) => void;
@@ -91,8 +94,10 @@ export type UseCrowdDetectionLoopParams = {
 export function useCrowdDetectionLoop({
   videoRef,
   overlayCanvasRef,
+  lineCanvasRef,
   status,
   settingsStore,
+  viewStateStore,
   resultStore,
   onBroadcastStreamChange,
   onDetectionFrame,
@@ -136,6 +141,10 @@ export function useCrowdDetectionLoop({
     if (status !== "detecting") {
       const canvas = overlayCanvasRef.current;
       canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
+      const lineCanvas = lineCanvasRef?.current;
+      lineCanvas
+        ?.getContext("2d")
+        ?.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
       latestFrameRef.current = null;
       applyLineCounts(
         resultStore,
@@ -251,6 +260,10 @@ export function useCrowdDetectionLoop({
                 width,
                 height,
               ),
+              {
+                highlightedLineId: viewStateStore.getState().editingLineId,
+                lineCanvas: lineCanvasRef?.current,
+              },
             );
           }
         }
@@ -291,7 +304,9 @@ export function useCrowdDetectionLoop({
     stopBroadcast,
     videoRef,
     overlayCanvasRef,
+    lineCanvasRef,
     settingsStore,
+    viewStateStore,
     resultStore,
   ]);
 }

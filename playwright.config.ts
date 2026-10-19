@@ -20,6 +20,7 @@ export default defineConfig({
     url: `http://localhost:${port}`,
     env: {
       NEXT_PUBLIC_API_MOCKING: "enabled",
+      TENANT_SUBDOMAIN_MOCKING: "enabled",
       FIREBASE_PROJECT_ID: "e2e-tolo-signaling",
     },
     reuseExistingServer: !process.env.CI,

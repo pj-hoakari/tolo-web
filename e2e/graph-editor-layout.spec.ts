@@ -126,7 +126,10 @@ const autoAlign = async (page: Page) => {
 test.beforeEach(async ({ page }) => {
   await page.goto("/event/test/management/graph/edit");
   await expect(
-    page.getByRole("heading", { level: 2, name: "test ルート図編集" }),
+    page.getByRole("heading", {
+      level: 2,
+      name: "0123456789abcdef ルート図編集",
+    }),
   ).toBeVisible();
   await expect(allNodes(page)).toHaveCount(15);
   await waitForGraphLayout(page);

@@ -17,6 +17,7 @@ export type CrowdDetectionViewProps = {
   error: string | null;
   videoRef: RefObject<HTMLVideoElement | null>;
   overlayCanvasRef: RefObject<HTMLCanvasElement | null>;
+  lineCanvasRef?: RefObject<HTMLCanvasElement | null>;
   settingsStore: DetectionSettingsStore;
   resultStore: DetectionResultStore;
   viewStateStore: DetectionViewStateStore;
@@ -31,6 +32,7 @@ function CrowdDetectionViewComponent({
   error,
   videoRef,
   overlayCanvasRef,
+  lineCanvasRef,
   settingsStore,
   resultStore,
   viewStateStore,
@@ -42,6 +44,7 @@ function CrowdDetectionViewComponent({
         status={status}
         videoRef={videoRef}
         overlayCanvasRef={overlayCanvasRef}
+        lineCanvasRef={lineCanvasRef}
         settingsStore={settingsStore}
         viewStateStore={viewStateStore}
       />
@@ -54,6 +57,7 @@ function CrowdDetectionViewComponent({
       <DetectionSettingsPanel
         settingsStore={settingsStore}
         viewStateStore={viewStateStore}
+        showLineCreationModeToggle={false}
       />
       {status === "error" && error && (
         <p role="alert" className="text-destructive">
