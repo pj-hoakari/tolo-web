@@ -291,6 +291,7 @@
       "editLine": "{name} 편집",
       "stopEditingLine": "{name} 편집 종료",
       "create": "라인 생성",
+      "edit": "편집 모드",
       "listLabel": "라인 목록",
       "reverseForward": "forward 방향 반전",
       "deleteSelected": "선택한 라인 삭제",

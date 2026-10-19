@@ -291,6 +291,7 @@
       "editLine": "Edit {name}",
       "stopEditingLine": "Stop editing {name}",
       "create": "Add line",
+      "edit": "Edit mode",
       "listLabel": "Lines",
       "reverseForward": "Reverse forward direction",
       "deleteSelected": "Delete selected line",

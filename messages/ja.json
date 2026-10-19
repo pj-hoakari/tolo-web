@@ -291,6 +291,7 @@
       "editLine": "{name}を編集",
       "stopEditingLine": "{name}の編集を終了",
       "create": "ライン生成",
+      "edit": "編集モード",
       "listLabel": "ライン一覧",
       "reverseForward": "forward方向を反転",
       "deleteSelected": "選択ラインを削除",

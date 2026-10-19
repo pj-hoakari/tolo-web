@@ -89,7 +89,7 @@ export function drawCountingLine(
   const dx = countingLine.p2.x - countingLine.p1.x;
   const dy = countingLine.p2.y - countingLine.p1.y;
   const lineLength = Math.hypot(dx, dy);
-  if (lineLength > 0) {
+  if (isHighlighted && lineLength > 0) {
     const normalX = -dy / lineLength;
     const normalY = dx / lineLength;
     const midpointX = (countingLine.p1.x + countingLine.p2.x) / 2;

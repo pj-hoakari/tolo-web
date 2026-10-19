@@ -4,7 +4,7 @@ import {
   drawDetectionOverlay,
 } from "./detectionOverlay";
 
-it("未選択ラインを破線、選択中を実線で専用レイヤーに描く", () => {
+it("未選択ラインは破線、編集中は実線と矢印で描く", () => {
   const strokes: unknown[] = [];
   const lineContext = {
     save: vi.fn(),
@@ -40,7 +40,7 @@ it("未選択ラインを破線、選択中を実線で専用レイヤーに描�
   expect(lineCanvas.width).toBe(640);
   expect(lineCanvas.height).toBe(480);
   expect(lineContext.clearRect).toHaveBeenCalledWith(0, 0, 640, 480);
-  expect(strokes).toEqual(["#22d3ee", "#22d3ee", "#fbbf24", "#fbbf24"]);
+  expect(strokes).toEqual(["#22d3ee", "#fbbf24", "#fbbf24"]);
   expect(lineContext.setLineDash.mock.calls).toEqual([
     [[12, 10]],
     [[]],
