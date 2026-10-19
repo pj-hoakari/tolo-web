@@ -1,19 +1,21 @@
+import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { memo, useCallback, useEffect } from "react";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
-import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
+import { Button } from "@/components/ui/button";
 import {
   DEFAULT_LINE_ID,
   type DetectionLineCount,
   type DetectionResult,
   type DetectionResultStore,
   type DetectionSettingsStore,
+  type DetectionViewState,
   type DetectionViewStateStore,
   INITIAL_LINE_COUNT,
   selectCountingLines,
   selectLine,
-  selectSelectedLineId,
+  setEditingLine,
 } from "../stores/detectionStore";
 
 type DetectionLineCountButtonProps = {
@@ -21,6 +23,7 @@ type DetectionLineCountButtonProps = {
   lineName: string;
   index: number;
   resultStore: DetectionResultStore;
+  viewStateStore: DetectionViewStateStore;
 };
 
 function DetectionLineCountButtonComponent({
@@ -28,29 +31,46 @@ function DetectionLineCountButtonComponent({
   lineName,
   index,
   resultStore,
+  viewStateStore,
 }: DetectionLineCountButtonProps) {
   const selectCount = useCallback(
     (state: DetectionResult): DetectionLineCount =>
       state.lineCounts[lineId] ?? INITIAL_LINE_COUNT,
     [lineId],
   );
+  const selectIsEditing = useCallback(
+    (state: DetectionViewState) => state.editingLineId === lineId,
+    [lineId],
+  );
+
   const count = useStore(resultStore, selectCount);
+  const isEditing = useStore(viewStateStore, selectIsEditing);
   const t = useTranslations("Detection.lines");
+  const displayName = lineName || t("defaultName", { index: index + 1 });
+
+  const editLine = () => {
+    setEditingLine(viewStateStore, isEditing ? null : lineId);
+  };
 
   return (
-    <Toggle
-      id={lineId}
-      variant="outline"
+    <Button
+      type="button"
+      variant={isEditing ? "default" : "outline"}
+      className={isEditing ? "ring-2 ring-primary ring-offset-2" : undefined}
       size="sm"
-      className="selected:border-primary selected:bg-primary px-3 selected:text-primary-foreground"
+      aria-label={t(isEditing ? "stopEditingLine" : "editLine", {
+        name: displayName,
+      })}
+      onPress={editLine}
     >
+      <Pencil className="mr-2 size-4" />
       {t(lineName ? "namedCount" : "count", {
         name: lineName,
         index: index + 1,
         forward: count.forward,
         backward: count.backward,
       })}
-    </Toggle>
+    </Button>
   );
 }
 
@@ -70,33 +90,23 @@ function DetectionLineCountListComponent({
   resultStore,
   viewStateStore,
 }: DetectionLineCountListProps) {
-  // id の配列は毎回組み立て直されるので浅い比較で再レンダリングを抑える
+  // ライン配列の各要素を浅く比較して不要な再レンダリングを抑える
   const lines = useStore(settingsStore, useShallow(selectCountingLines));
   const lineIds = lines.map((line) => line.id);
-  const selectedLineId = useStore(viewStateStore, selectSelectedLineId);
-  const t = useTranslations("Detection.lines");
 
   // 選択中のラインが消えたときの取りこぼしを拾う
   useEffect(() => {
-    if (!lineIds.includes(viewStateStore.getState().selectedLineId)) {
+    const { editingLineId, selectedLineId } = viewStateStore.getState();
+    if (!lineIds.includes(selectedLineId)) {
       selectLine(viewStateStore, lineIds[0] ?? DEFAULT_LINE_ID);
+    }
+    if (editingLineId && !lineIds.includes(editingLineId)) {
+      setEditingLine(viewStateStore, null);
     }
   }, [lineIds, viewStateStore]);
 
   return (
-    <ToggleButtonGroup
-      aria-label={t("listLabel")}
-      selectionMode="single"
-      disallowEmptySelection
-      selectedKeys={[selectedLineId]}
-      onSelectionChange={(keys) => {
-        const [lineId] = keys;
-        if (typeof lineId === "string") {
-          selectLine(viewStateStore, lineId);
-        }
-      }}
-      className="w-full max-w-3xl flex-wrap justify-start gap-3"
-    >
+    <div className="flex w-full max-w-3xl flex-wrap gap-3 text-sm">
       {lines.map((line, index) => (
         <DetectionLineCountButton
           key={line.id}
@@ -104,9 +114,10 @@ function DetectionLineCountListComponent({
           lineName={line.name}
           index={index}
           resultStore={resultStore}
+          viewStateStore={viewStateStore}
         />
       ))}
-    </ToggleButtonGroup>
+    </div>
   );
 }
 

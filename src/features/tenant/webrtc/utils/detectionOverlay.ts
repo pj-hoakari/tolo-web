@@ -65,22 +65,31 @@ export function drawCountingLine(
   context: CanvasRenderingContext2D,
   countingLine: DetectionOverlayLine,
   width: number,
+  isHighlighted = false,
 ): void {
-  context.lineWidth = Math.max(2, width / 320);
-  context.strokeStyle = "#f59e0b";
-  context.fillStyle = "#f59e0b";
-  context.setLineDash([12, 8]);
+  context.save();
+  const lineWidth = Math.max(5, width / 192) * (isHighlighted ? 1.5 : 1);
+  const lineColor = isHighlighted ? "#fbbf24" : "#22d3ee";
+  context.lineCap = "round";
+  context.lineJoin = "round";
+  const strokeVisiblePath = () => {
+    context.lineWidth = lineWidth;
+    context.strokeStyle = lineColor;
+    context.stroke();
+  };
+
+  context.setLineDash(isHighlighted ? [] : [12, 10]);
   context.beginPath();
   context.moveTo(countingLine.p1.x, countingLine.p1.y);
   context.lineTo(countingLine.p2.x, countingLine.p2.y);
-  context.stroke();
+  strokeVisiblePath();
   context.setLineDash([]);
 
   // forward は p1→p2 に対する負側→正側なので、左法線方向の矢印で示す。
   const dx = countingLine.p2.x - countingLine.p1.x;
   const dy = countingLine.p2.y - countingLine.p1.y;
   const lineLength = Math.hypot(dx, dy);
-  if (lineLength > 0) {
+  if (isHighlighted && lineLength > 0) {
     const normalX = -dy / lineLength;
     const normalY = dx / lineLength;
     const midpointX = (countingLine.p1.x + countingLine.p2.x) / 2;
@@ -107,7 +116,7 @@ export function drawCountingLine(
       arrowEndX - normalX * arrowHeadLength - tangentX * arrowHeadLength * 0.6,
       arrowEndY - normalY * arrowHeadLength - tangentY * arrowHeadLength * 0.6,
     );
-    context.stroke();
+    strokeVisiblePath();
   }
 
   if (countingLine.name) {
@@ -123,7 +132,7 @@ export function drawCountingLine(
     const labelY = midpointY - labelHeight - 8;
     context.fillStyle = "rgba(17, 24, 39, 0.85)";
     context.fillRect(labelX, labelY, labelWidth, labelHeight);
-    context.fillStyle = "#fbbf24";
+    context.fillStyle = lineColor;
     context.fillText(
       countingLine.name,
       labelX + paddingX,
@@ -131,33 +140,54 @@ export function drawCountingLine(
     );
   }
 
-  const handleRadius = Math.max(6, width / 96);
-  context.beginPath();
-  context.arc(
-    countingLine.p1.x,
-    countingLine.p1.y,
-    handleRadius,
-    0,
-    Math.PI * 2,
-  );
-  context.arc(
-    countingLine.p2.x,
-    countingLine.p2.y,
-    handleRadius,
-    0,
-    Math.PI * 2,
-  );
-  context.fill();
+  const handleRadius = Math.max(isHighlighted ? 8 : 6, width / 96);
+  context.fillStyle = lineColor;
+  for (const point of [countingLine.p1, countingLine.p2]) {
+    context.beginPath();
+    context.arc(point.x, point.y, handleRadius, 0, Math.PI * 2);
+    context.fill();
+    if (isHighlighted) {
+      context.beginPath();
+      context.arc(point.x, point.y, handleRadius * 0.35, 0, Math.PI * 2);
+      context.fillStyle = "#0f172a";
+      context.fill();
+      context.fillStyle = lineColor;
+    }
+  }
+  context.restore();
 }
 
 export function drawDetectionOverlay(
   context: CanvasRenderingContext2D,
   frame: DetectionOverlayFrame,
+  options: {
+    highlightedLineId?: string | null;
+    lineCanvas?: HTMLCanvasElement | null;
+  } = {},
 ): void {
   const { width } = frame;
+  const lineCanvas = options.lineCanvas;
+  if (
+    lineCanvas &&
+    (lineCanvas.width !== width || lineCanvas.height !== frame.height)
+  ) {
+    lineCanvas.width = width;
+    lineCanvas.height = frame.height;
+  }
+  const lineContext = lineCanvas?.getContext("2d") ?? context;
+  if (lineContext !== context) lineContext.clearRect(0, 0, width, frame.height);
 
+  // 編集対象を最後に描き、交差している他のラインにも埋もれないようにする。
   for (const countingLine of frame.countingLines) {
-    drawCountingLine(context, countingLine, width);
+    if (countingLine.id !== options.highlightedLineId) {
+      drawCountingLine(lineContext, countingLine, width, false);
+    }
+  }
+  const highlightedLine = frame.countingLines.find(
+    (line) => line.id === options.highlightedLineId,
+  );
+  if (highlightedLine) {
+    drawCountingLine(lineContext, highlightedLine, width, true);
   }
 
   context.font = `${Math.max(16, width / 40)}px sans-serif`;

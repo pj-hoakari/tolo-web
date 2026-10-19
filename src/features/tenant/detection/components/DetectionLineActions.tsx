@@ -1,23 +1,22 @@
-import { ArrowLeftRight, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ArrowLeftRight, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { memo, useCallback } from "react";
 import { useStore } from "zustand";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/field";
 import { Input, TextField } from "@/components/ui/textfield";
-import { Toggle } from "@/components/ui/toggle";
+import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
 import {
   applyCountingLines,
   DEFAULT_COUNTING_LINES,
-  DEFAULT_LINE_ID,
   type DetectionSettingsStore,
   type DetectionViewStateStore,
   reverseCountingLineDirection,
   selectCountingLineCount,
-  selectLine,
   selectLineCreationMode,
   selectSelectedLineId,
-  toggleLineCreationMode,
+  setEditingLine,
+  setLineCreationMode,
 } from "../stores/detectionStore";
 
 type LineActionsProps = {
@@ -63,27 +62,53 @@ function SelectedLineNameFieldComponent({
 
 const SelectedLineNameField = memo(SelectedLineNameFieldComponent);
 
-function LineCreationModeToggleComponent({
+function DetectionLineCreationModeToggleComponent({
   viewStateStore,
 }: Pick<LineActionsProps, "viewStateStore">) {
   const lineCreationMode = useStore(viewStateStore, selectLineCreationMode);
   const t = useTranslations("Detection.lines");
 
   return (
-    <Toggle
-      variant="outline"
-      size="sm"
-      isSelected={lineCreationMode}
-      onChange={() => toggleLineCreationMode(viewStateStore)}
-      className="selected:border-primary selected:bg-primary px-3 selected:text-primary-foreground"
+    <ToggleButtonGroup
+      aria-label={t("modeLabel")}
+      selectionMode="single"
+      disallowEmptySelection
+      selectedKeys={[lineCreationMode ? "create" : "edit"]}
+      onSelectionChange={(keys) => {
+        if (keys.has("create")) {
+          setLineCreationMode(viewStateStore, true);
+        } else if (keys.has("edit")) {
+          setEditingLine(
+            viewStateStore,
+            viewStateStore.getState().selectedLineId,
+          );
+        }
+      }}
+      className="w-full rounded-lg border border-input bg-muted p-1 sm:w-auto"
     >
-      <Plus className="mr-2 size-4" />
-      {t("create")}
-    </Toggle>
+      <Toggle
+        id="create"
+        size="sm"
+        className="flex-1 gap-2 whitespace-nowrap selected:bg-primary px-3 selected:text-primary-foreground selected:shadow-sm"
+      >
+        <Plus aria-hidden="true" className="size-4" />
+        {t("create")}
+      </Toggle>
+      <Toggle
+        id="edit"
+        size="sm"
+        className="flex-1 gap-2 whitespace-nowrap selected:bg-primary px-3 selected:text-primary-foreground selected:shadow-sm"
+      >
+        <Pencil aria-hidden="true" className="size-4" />
+        {t("edit")}
+      </Toggle>
+    </ToggleButtonGroup>
   );
 }
 
-const LineCreationModeToggle = memo(LineCreationModeToggleComponent);
+export const DetectionLineCreationModeToggle = memo(
+  DetectionLineCreationModeToggleComponent,
+);
 
 function ReverseSelectedLineButtonComponent({
   settingsStore,
@@ -134,7 +159,7 @@ function DeleteSelectedLineButtonComponent({
     const nextLines = countingLines.filter(
       (line) => line.id !== selectedLineId,
     );
-    selectLine(viewStateStore, nextLines[0]?.id ?? DEFAULT_LINE_ID);
+    setEditingLine(viewStateStore, nextLines[0]?.id ?? null);
     applyCountingLines(settingsStore, nextLines);
   };
 
@@ -161,7 +186,7 @@ function ResetCountingLinesButtonComponent({
   const t = useTranslations("Detection.lines");
 
   const resetCountingLines = () => {
-    selectLine(viewStateStore, DEFAULT_COUNTING_LINES[0].id);
+    setEditingLine(viewStateStore, DEFAULT_COUNTING_LINES[0].id);
     applyCountingLines(settingsStore, DEFAULT_COUNTING_LINES);
   };
 
@@ -183,7 +208,8 @@ const ResetCountingLinesButton = memo(ResetCountingLinesButtonComponent);
 function DetectionLineActionsComponent({
   settingsStore,
   viewStateStore,
-}: LineActionsProps) {
+  showLineCreationModeToggle = true,
+}: LineActionsProps & { showLineCreationModeToggle?: boolean }) {
   return (
     <div className="flex w-full flex-wrap items-end gap-3">
       <SelectedLineNameField
@@ -191,7 +217,9 @@ function DetectionLineActionsComponent({
         viewStateStore={viewStateStore}
       />
       <div className="flex flex-wrap gap-2">
-        <LineCreationModeToggle viewStateStore={viewStateStore} />
+        {showLineCreationModeToggle && (
+          <DetectionLineCreationModeToggle viewStateStore={viewStateStore} />
+        )}
         <ReverseSelectedLineButton
           settingsStore={settingsStore}
           viewStateStore={viewStateStore}
