@@ -32,11 +32,15 @@ export function matchesAlignedLayout(
   const plans = new Map<ContainerId, ContainerPlan>();
   const finalized = new Map<string, FinalizedContent>();
   const visiting = new Set<ContainerId>();
-  const failed = new Set<string>();
+  const results = new Map<
+    string,
+    { plan: ContainerPlan; content: FinalizedContent } | false
+  >();
   const visit = (container: ContainerId): boolean => {
     if (visiting.has(container)) return false;
     // Only the directions of routes leaving this subtree depend on ancestor
-    // choices. Memoize failed subtrees to avoid exponential work on deep nests.
+    // choices. Cache both outcomes: a successful subtree is also retried for
+    // each ancestor orientation and would otherwise cause exponential work.
     const outside = [
       ...new Set(
         [...liftEdges(container, edges, index).external.values()].flat(),
@@ -51,20 +55,28 @@ export function matchesAlignedLayout(
           : externalDirection(container, id, index, plans),
       ]),
     ]);
-    if (failed.has(key)) return false;
+    const cached = results.get(key);
+    if (cached !== undefined) {
+      if (cached === false) return false;
+      plans.set(container, cached.plan);
+      if (container !== undefined) finalized.set(container, cached.content);
+      return true;
+    }
     visiting.add(container);
     const members = index.childrenOf.get(container) ?? [];
     for (const axis of ["x", "y"] as const) {
       for (const flip of [false, true]) {
         for (const laneSide of [-1, 1] as const) {
-          plans.set(
+          const plan = planContainer(
             container,
-            planContainer(container, members, index, edges, centers, plans, {
-              axis,
-              flip,
-              laneSide,
-            }),
+            members,
+            index,
+            edges,
+            centers,
+            plans,
+            { axis, flip, laneSide },
           );
+          plans.set(container, plan);
           if (members.some((n) => isGroupNode(n) && !visit(n.id))) continue;
           const content = finalizeContainer(container, index, plans, finalized);
           const parent =
@@ -104,6 +116,7 @@ export function matchesAlignedLayout(
             );
           });
           if (matches) {
+            results.set(key, { plan, content });
             if (container !== undefined) finalized.set(container, content);
             visiting.delete(container);
             return true;
@@ -112,7 +125,7 @@ export function matchesAlignedLayout(
       }
     }
     visiting.delete(container);
-    failed.add(key);
+    results.set(key, false);
     return false;
   };
   return nodes.length > 0 && visit(undefined);
