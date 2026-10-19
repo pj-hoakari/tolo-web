@@ -117,7 +117,7 @@ const ORPC_ERROR_CODES: Partial<Record<Code, string>> = {
 function toORPCError(err: unknown): unknown {
   if (!(err instanceof ConnectError)) return err;
   const code = ORPC_ERROR_CODES[err.code];
-  return code ? new ORPCError(code, { message: err.rawMessage }) : err;
+  return code ? new ORPCError(code) : err;
 }
 
 export interface FirestoreToken {
@@ -171,7 +171,6 @@ export const router = {
             err.code === Code.InvalidArgument
           ) {
             throw new ORPCError("BAD_REQUEST", {
-              message: err.rawMessage,
               data: {
                 violations: err
                   .findDetails(GraphViolationsSchema)
@@ -179,7 +178,7 @@ export const router = {
               },
             });
           }
-          throw err;
+          throw toORPCError(err);
         }
       }),
   },

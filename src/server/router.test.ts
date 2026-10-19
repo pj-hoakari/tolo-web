@@ -32,7 +32,7 @@ describe("graph.saveGraph", () => {
   const save = () =>
     call(router.graph.saveGraph, { eventId, graph: PLACEHOLDER_GRAPH });
 
-  it("passes the violations in the error details to the browser as plain values", async () => {
+  it("passes the violations in the error details to the browser as plain values without the server message", async () => {
     vi.spyOn(graphAuthoringClient, "saveGraph").mockRejectedValue(
       new ConnectError("invalid graph document", Code.InvalidArgument, {}, [
         {
@@ -70,9 +70,11 @@ describe("graph.saveGraph", () => {
     const error = await save().catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(ORPCError);
+    expect((error as ORPCError<string, unknown>).message).not.toContain(
+      "invalid graph document",
+    );
     expect(error).toMatchObject({
       code: "BAD_REQUEST",
-      message: "invalid graph document",
       data: {
         violations: [
           {
@@ -113,6 +115,20 @@ describe("graph.saveGraph", () => {
       code: "BAD_REQUEST",
       data: { violations: [] },
     });
+  });
+
+  it("passes a rejected precondition to the browser as its code without the server message", async () => {
+    vi.spyOn(graphAuthoringClient, "saveGraph").mockRejectedValue(
+      new ConnectError("event is archived", Code.FailedPrecondition),
+    );
+
+    const error = await save().catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ORPCError);
+    expect(error).toMatchObject({ code: "PRECONDITION_FAILED" });
+    expect((error as ORPCError<string, unknown>).message).not.toContain(
+      "event is archived",
+    );
   });
 });
 
