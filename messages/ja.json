@@ -21,6 +21,47 @@
     "graphEditTitle": "{tenantId} ルート図編集",
     "backLink": "管理ページへ戻る"
   },
+  "TenantManagement": {
+    "title": "{tenantId} イベント管理",
+    "create": {
+      "label": "イベント名",
+      "submit": "作成",
+      "failed": "イベントを作成できませんでした。",
+      "tenantUnavailable": "このテナントではイベントを作成できません。テナントがアーカイブされている可能性があります。",
+      "tenantNotFound": "テナントが見つかりませんでした。"
+    },
+    "list": {
+      "heading": "イベント",
+      "loading": "読み込み中…",
+      "empty": "イベントはまだありません。",
+      "error": "イベント一覧を取得できませんでした。",
+      "retry": "再読み込み",
+      "showArchived": "アーカイブ済みも表示"
+    },
+    "status": {
+      "draft": "下書き",
+      "open": "公開中",
+      "locked": "ロック中",
+      "closed": "終了",
+      "archived": "アーカイブ済み"
+    },
+    "archive": {
+      "button": "アーカイブ",
+      "title": "イベントをアーカイブ",
+      "description": "「{name}」をアーカイブします。アーカイブしたイベントは、「アーカイブ済みも表示」をオンにすると一覧に表示され、そこから復元できます。",
+      "cancel": "キャンセル",
+      "confirm": "アーカイブする",
+      "failed": "イベントをアーカイブできませんでした。"
+    },
+    "restore": {
+      "button": "復元",
+      "failed": "イベントを復元できませんでした。"
+    },
+    "transition": {
+      "stale": "イベントまたはテナントの状態が変わったため、操作できませんでした。一覧を再読み込みしてください。",
+      "eventNotFound": "イベントが見つかりませんでした。一覧を再読み込みしてください。"
+    }
+  },
   "Graph": {
     "viewer": {
       "title": "ルート図",
@@ -70,7 +111,7 @@
       "closed": "クローズドモード（入退出点なし）"
     },
     "labelLanguage": {
-      "label": "ラベルの言語",
+      "label": "ラベルの言語（<lang>{language}</lang>）",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
@@ -81,7 +122,34 @@
       "newNodeLabel": "ポイント {index}",
       "addGroup": "グループを追加",
       "newGroupLabel": "グループ {index}",
-      "autoAlign": "自動整列"
+      "autoAlign": "自動整列",
+      "saved": "保存しました",
+      "saveFailed": "保存に失敗しました。時間をおいてもう一度お試しください。",
+      "saveInvalid": "ルート図に保存できない箇所があります",
+      "saveUnavailable": "イベントが見つからないか、アーカイブ済みのため保存できませんでした。アーカイブ済みの場合は復元してから編集してください。",
+      "violations": {
+        "UNSPECIFIED": "ルート図の構造に問題があります。",
+        "EMPTY_NODE_ID": "ID が空のポイントがあります。",
+        "DUPLICATE_NODE_ID": "ID が重複しているポイントがあります。",
+        "NODE_WITHOUT_TYPE": "タイプが設定されていないポイントがあります。",
+        "NON_FINITE_NODE_LAYOUT": "位置が不正なポイントがあります。",
+        "EMPTY_GROUP_ID": "ID が空のグループがあります。",
+        "DUPLICATE_GROUP_ID": "ID が重複しているグループがあります。",
+        "NON_FINITE_GROUP_LAYOUT": "位置または大きさが不正なグループがあります。",
+        "EXTERNAL_NODE_IN_GROUP": "グループに入っている外部ポイントがあります。外部ポイントはグループに入れられません。",
+        "MISSING_GROUP": "存在しないグループに属しているポイントがあります。",
+        "MISSING_PARENT_GROUP": "存在しないグループに属しているグループがあります。",
+        "GROUP_CYCLE": "入れ子が循環しているグループがあります。",
+        "EMPTY_EDGE_ID": "ID が空のルートがあります。",
+        "DUPLICATE_EDGE_ID": "ID が重複しているルートがあります。",
+        "EDGE_WITHOUT_DIRECTION": "向きが設定されていないルートがあります。",
+        "MISSING_NODE": "存在しないポイントにつながっているルートがあります。",
+        "EDGE_BETWEEN_EXTERNAL_NODES": "外部ポイント同士をつなぐルートがあります。",
+        "SELF_LOOP_EDGE": "始点と終点が同じルートがあります。",
+        "EXTERNAL_NODE_WITHOUT_EDGE": "ルートがつながっていない外部ポイントがあります。",
+        "NODE_WITHOUT_ROUTE": "ルートがつながっていないポイントがあります。",
+        "GROUP_WITHOUT_MEMBERS": "中身が空のグループがあります。"
+      }
     },
     "easyConnect": {
       "fromNode": "ルートを追加: 終点にするポイントをクリック",
@@ -109,6 +177,25 @@
       "dissolveGroup": "グループを解除（中身は残す）"
     },
     "properties": {
+      "bulk": {
+        "points": "ポイント（{count}件）",
+        "edges": "矢印（{count}件）",
+        "mixed": "値が混在しています",
+        "result": "{changed}件を変更しました。{skipped}件は変更できませんでした。",
+        "reasonCount": "{reason}（{count}件）",
+        "reasons": {
+          "requiresDwell": "停滞を許容しないポイントは、目的地として扱えません。",
+          "bothNotReversed": "両通行の矢印は反転の対象外です。"
+        }
+      },
+      "groupSelected": "選択したポイントをグループ化",
+      "deleteSelected": "選択した要素を削除",
+      "deleteSelectedGroupHint": "選択したグループは解除され、未選択の中身は残ります。",
+      "groupSelectionErrors": {
+        "pointsOnly": "グループと外部ポイントはグループ化できません。",
+        "tooFewPoints": "ポイントを2件以上選択してください。",
+        "differentParents": "同じ所属のポイントを選択してください。"
+      },
       "selectedNodes": "ノード: {count}件",
       "selectedEdges": "矢印: {count}件",
       "selectedGroups": "グループ: {count}件",
@@ -123,7 +210,10 @@
       "oneway": "片方向 →",
       "reverse": "向きを反転（始点↔終点）",
       "dissolveGroup": "グループを解除",
-      "groupHint": "階や建物などの管理用のくくりです。ポイントをドラッグして出し入れできます。解除しても中のポイントは残ります。"
+      "groupHint": "階や建物などの管理用のくくりです。ポイントをドラッグして出し入れできます。解除しても中のポイントは残ります。",
+      "edgeTarget": "終点",
+      "edgeTargetPlaceholder": "終点のポイントを選択",
+      "addEdge": "このポイントからルートを追加"
     },
     "node": {
       "editLabel": "「{label}」のラベルを編集",
@@ -144,25 +234,29 @@
       "connecting": "接続要求中…",
       "negotiating": "ネゴシエーション中…",
       "connected": "接続済み",
-      "disconnected": "切断",
+      "disconnected": "切断済み",
       "error": "接続失敗"
     },
     "aliveEdges": {
-      "title": "稼働中のエッジ（{count}）",
+      "title": "エッジ（{count}）",
       "refresh": "更新",
       "loading": "読み込み中…",
-      "empty": "稼働中のエッジがありません",
+      "empty": "エッジがありません",
       "lastSeen": "最終応答: {time}",
       "unknownTime": "不明",
+      "offline": "オフライン",
       "connect": "接続",
       "disconnect": "切断",
+      "connectLabel": "「{name}」に接続",
+      "disconnectLabel": "「{name}」から切断",
+      "close": "閉じる",
+      "closeLabel": "「{name}」の映像を閉じる",
       "loadError": "エッジ一覧の取得に失敗しました"
     },
     "receiver": {
       "stoppedTitle": "観測が停止しました",
       "stoppedDescription": "配信元のカメラが停止されました",
       "connecting": "接続中…",
-      "status": "状態: {status}",
       "connectError": "接続に失敗しました"
     },
     "broadcast": {
@@ -193,7 +287,7 @@
     },
     "lines": {
       "create": "ライン生成",
-      "edit": "編集モード",
+      "listLabel": "ライン一覧",
       "reverseForward": "forward方向を反転",
       "deleteSelected": "選択ラインを削除",
       "reset": "ラインを初期位置に戻す",
@@ -248,7 +342,13 @@
     "errors": {
       "videoSource": "映像ソースの取得に失敗しました",
       "detection": "人検出処理に失敗しました",
-      "modelLoad": "検出モデルの読み込みに失敗しました（{status}: {path}）"
+      "modelLoad": "検出モデルの読み込みに失敗しました（{status}: {path}）",
+      "camera": {
+        "permissionDenied": "カメラの使用が許可されていません。ブラウザの設定でカメラへのアクセスを許可してください。",
+        "notFound": "カメラが見つかりません。カメラが接続されているか確認してください。",
+        "unsupported": "このブラウザまたは接続ではカメラを利用できません",
+        "unavailable": "カメラを起動できませんでした"
+      }
     },
     "devSource": {
       "title": "映像ソース",
@@ -302,7 +402,6 @@
     "staffMessage": {
       "title": "スタッフからのお知らせ",
       "ariaOpen": "スタッフからのお知らせ",
-      "ariaClose": "お知らせを閉じる",
       "empty": "現在お知らせはありません",
       "samples": {
         "msg-2": {

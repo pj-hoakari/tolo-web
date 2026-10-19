@@ -16,6 +16,7 @@ import {
   useDetectionStores,
 } from "@/features/tenant/detection/stores/detectionStore";
 import { orpc } from "@/lib/orpc";
+import { useFirebaseConfig } from "../components/FirebaseConfigProvider";
 import type { ConnectionStatus } from "../type";
 import {
   encodeDetectionControlRequest,
@@ -26,7 +27,8 @@ import {
   type DetectionOverlayFrame,
   parseDetectionOverlayFrame,
 } from "../utils/detectionOverlay";
-import { getDb } from "../utils/firebase";
+import { getAuth, getDb } from "../utils/firebase";
+import { signInForSignaling } from "../utils/firestoreSignIn";
 import { PeerSignalingAdapter } from "../utils/peerSignaling";
 import { sessionDoc, signalsCollection } from "../utils/refs";
 import {
@@ -56,7 +58,13 @@ export interface VideoReceiverController {
   disconnect: () => void;
 }
 
-export function useVideoReceiver(): VideoReceiverController {
+export function useVideoReceiver({
+  tenantId,
+  eventId,
+}: {
+  tenantId: string;
+  eventId: string;
+}): VideoReceiverController {
   const [status, setStatus] = useState<ConnectionStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -67,11 +75,13 @@ export function useVideoReceiver(): VideoReceiverController {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const sessionRefRef = useRef<DocumentReference | null>(null);
+  const stopSignInRef = useRef<(() => void) | null>(null);
   const detectionFrameRef = useRef<DetectionOverlayFrame | null>(null);
   const controlChannelRef = useRef<RTCDataChannel | null>(null);
   // observation から受け取った設定を反映している間の変更要求を止める
   const applyingRemoteSettingsRef = useRef(false);
 
+  const firebaseConfig = useFirebaseConfig();
   const stores = useDetectionStores();
   const { settingsStore, resultStore } = stores;
 
@@ -102,6 +112,8 @@ export function useVideoReceiver(): VideoReceiverController {
 
   const disconnect = useCallback(() => {
     closePeer();
+    stopSignInRef.current?.();
+    stopSignInRef.current = null;
     const sessionRef = sessionRefRef.current;
     if (sessionRef) {
       clearSession(sessionRef).catch((e) =>
@@ -166,16 +178,20 @@ export function useVideoReceiver(): VideoReceiverController {
       setConnectedEdgeId(edgeId);
 
       const run = async () => {
+        stopSignInRef.current = await signInForSignaling(
+          orpc.signaling.issueConsoleFirestoreToken,
+          getAuth(firebaseConfig),
+        );
         const { sessionId } = await orpc.signaling.requestConnection({
           edgeId,
         });
-        const db = getDb();
-        const sessionRef = sessionDoc(db, edgeId, sessionId);
+        const db = getDb(firebaseConfig);
+        const sessionRef = sessionDoc(db, tenantId, eventId, edgeId, sessionId);
         sessionRefRef.current = sessionRef;
         const signalsRef = signalsCollection(sessionRef);
         const channel = createFirestoreSignalingChannel({
           signalsRef,
-          self: "management",
+          self: "console",
         });
         const adapter = new PeerSignalingAdapter(channel.send);
 
@@ -202,6 +218,9 @@ export function useVideoReceiver(): VideoReceiverController {
       });
     },
     [
+      tenantId,
+      eventId,
+      firebaseConfig,
       disconnect,
       watchConnection,
       handleDetectionMessage,

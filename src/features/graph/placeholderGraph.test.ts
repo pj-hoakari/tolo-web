@@ -38,10 +38,9 @@ describe("PLACEHOLDER_GRAPH (placeholderGraph.json)", () => {
     }
   });
 
-  it("fetchGraph はサンプルの複製を返す", async () => {
-    const a = await fetchGraph({ tenantId: "t", eventId: "e" });
-    expect(a).toEqual(PLACEHOLDER_GRAPH);
-    expect(a).not.toBe(PLACEHOLDER_GRAPH);
-    expect(a.nodes[0]).not.toBe(PLACEHOLDER_GRAPH.nodes[0]);
+  it("fetchGraph はモック API からサンプルを受け取る", async () => {
+    expect(await fetchGraph({ tenantId: "t", eventId: "e" })).toEqual(
+      PLACEHOLDER_GRAPH,
+    );
   });
 });

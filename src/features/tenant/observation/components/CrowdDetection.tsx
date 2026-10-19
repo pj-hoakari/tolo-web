@@ -14,7 +14,7 @@ import {
 import { CrowdDetectionControls } from "./CrowdDetectionControls";
 import { CrowdDetectionView } from "./CrowdDetectionView";
 import { DevVideoSourcePanel } from "./DevVideoSourcePanel";
-import { ObservationSoftLock } from "./ObservationSoftLock";
+import { ObservationLockButton } from "./ObservationSoftLock";
 
 const DEV_VIDEO_SOURCE_ENABLED = process.env.NODE_ENV === "development";
 
@@ -44,6 +44,8 @@ export function CrowdDetection({
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const { active, edgeId, sendDetectionFrame } = useVideoSender({
+    tenantId,
+    eventId,
     edgeDeviceId,
     stream: broadcastStream,
     settingsStore,
@@ -74,27 +76,26 @@ export function CrowdDetection({
   }, []);
 
   return (
-    <ObservationSoftLock tenantId={tenantId} eventId={eventId}>
-      <div className="flex w-full flex-col items-center gap-4">
-        {DEV_VIDEO_SOURCE_ENABLED && (
-          <DevVideoSourcePanel
-            status={status}
-            onSourceChange={handleSourceChange}
-          />
-        )}
-        <CrowdDetectionControls status={status} onStart={start} onStop={stop} />
-        <CrowdDetectionView
-          videoSource={videoSource}
+    <div className="flex w-full flex-col items-center gap-4">
+      <ObservationLockButton />
+      {DEV_VIDEO_SOURCE_ENABLED && (
+        <DevVideoSourcePanel
           status={status}
-          error={error}
-          videoRef={videoRef}
-          overlayCanvasRef={overlayCanvasRef}
-          settingsStore={settingsStore}
-          resultStore={resultStore}
-          viewStateStore={viewStateStore}
+          onSourceChange={handleSourceChange}
         />
-        <BroadcastIndicator active={active} edgeId={edgeId} />
-      </div>
-    </ObservationSoftLock>
+      )}
+      <CrowdDetectionControls status={status} onStart={start} onStop={stop} />
+      <CrowdDetectionView
+        videoSource={videoSource}
+        status={status}
+        error={error}
+        videoRef={videoRef}
+        overlayCanvasRef={overlayCanvasRef}
+        settingsStore={settingsStore}
+        resultStore={resultStore}
+        viewStateStore={viewStateStore}
+      />
+      <BroadcastIndicator active={active} edgeId={edgeId} />
+    </div>
   );
 }

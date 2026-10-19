@@ -20,6 +20,121 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Docker Compose での開発環境
+
+`compose.yaml` は Firebase エミュレータ（Firestore と Auth）、開発用の偽 IdP（`fakeidp`）、tolo-edge-bridge、Next.js の開発サーバー（`web`）を起動します。tolo-edge-bridge はすべての RPC で `event_access` トークンを検証します。`web` は、管理ページからの呼び出しでは環境変数 `GRAPH_ACCESS_TOKEN`、観測ページからの呼び出しでは `OBSERVATION_ACCESS_TOKEN` のトークンを `Authorization: Bearer` で tolo-edge-bridge へ送ります。
+
+ブラウザは、tolo-edge-bridge が発行した Firebase のカスタムトークンで Auth エミュレータにサインインしてから、シグナリング文書を読み書きします。Firebase エミュレータは tolo-edge-bridge リポジトリの `firebase-emulator/` を固定したコミットからビルドし、同じディレクトリのセキュリティルールを適用します。ホストへは Firestore を `localhost:8080`、Auth を `localhost:9099`、Emulator UI を `http://localhost:4000` で公開します。
+
+Service Gateway と Observation は起動しません。代わりに、`web` は環境変数 `OBSERVATION_API_MOCKING` が `enabled` のとき、Observation の手続き（端末一覧、観測地点、ハートビート、計測値の送信）に Service Gateway を呼ばずに応答します。端末一覧は MSW のモックと同じサンプル（`src/mocks/fixtures/edges.ts`）で、「接続エッジ」タブには、稼働中の 2 台とオフラインの 1 台が表示されます。計測値は捨てます。シグナリングはこの切り替えの対象外で、tolo-edge-bridge を通ります。`compose.yaml` はこの変数を既定で `enabled` にします。この切り替えは `NODE_ENV` が `development` のときだけ働きます。
+
+ホストで起動する Next.js（`pnpm dev`）では、`.env.example` のとおりこの変数を `disabled` にし、`GATEWAY_URL` の Service Gateway を呼びます。
+
+### トークンの発行
+
+`fakeidp` を先に起動し、管理ページ用と観測ページ用の `event_access` を発行します。
+
+```bash
+docker compose up -d fakeidp
+export GRAPH_ACCESS_TOKEN=$(curl -sf http://localhost:8082/token \
+  -H 'Content-Type: application/json' \
+  -d '{"token_use":"event_access","sub":"dev-console","client_id":"console-ui","scope":"events.read","tenant_id":"0123456789abcdef","event_id":"fedcba9876543210","ttl_seconds":86400}' \
+  | jq -r .access_token)
+export OBSERVATION_ACCESS_TOKEN=$(curl -sf http://localhost:8082/token \
+  -H 'Content-Type: application/json' \
+  -d '{"token_use":"event_access","sub":"dev-edge","client_id":"edge-page","scope":"events.report","tenant_id":"0123456789abcdef","event_id":"fedcba9876543210","ttl_seconds":86400}' \
+  | jq -r .access_token)
+```
+
+`client_id` は、管理ページ用を tolo-edge-bridge の `CONSOLE_CLIENT_ID`（`console-ui`）に、観測ページ用を `EDGE_CLIENT_ID`（`edge-page`）に合わせます。tolo-edge-bridge は `client_id` からシグナリングでの役割（`console` または `edge`）を決めます。`tenant_id` と `event_id` は、開くページのテナント ID とイベント ID に合わせます。tolo-edge-bridge は 16 桁の小文字 16 進数以外の ID を拒否します。
+
+`fakeidp` が発行するトークンの有効期限は既定で 5 分なので、`ttl_seconds` で延ばしています。`fakeidp` は起動のたびに署名鍵を作り直すため、再起動した後はトークンを発行し直します。
+
+### 起動
+
+```bash
+docker compose up -d --build
+```
+
+トークンを発行し直したときは、`docker compose up -d web` で `web` を作り直します。
+
+### 開く URL
+
+テナントはサブドメインで決まります。上のトークンに対応する URL は次のとおりです。
+
+- 管理ページ: `http://0123456789abcdef.localhost:3000/event/fedcba9876543210/management`（「接続エッジ」タブ）
+- エッジ端末の観測ページ: `http://0123456789abcdef.localhost:3000/event/fedcba9876543210/observation/{edgeDeviceId}`
+
+観測ページから映像を配信するには、`public/models` に人検出モデルが必要です（[人検出モデルセットアップ](docs/setup-for-detection-model.md)）。
+
+### スマートフォンから開く
+
+スマートフォンなど別の端末からは、Cloudflare の Quick Tunnel が発行する HTTPS の URL で開きます。カメラと画面の常時点灯は、HTTPS か `localhost` で開いたページでしか使えません。LAN の IP アドレスを http で開いても、観測ページのカメラは起動できません。
+
+Quick Tunnel はローカルの環境をインターネットに公開します。そのため、メール認証を必須にしています。ページを開いた人は `TUNNEL_ALLOWED_MAIL` に指定したアドレスで届くワンタイム PIN を入力して入ります。開く人にもトンネルを立てる人にも、Cloudflare のアカウントは要りません。
+
+`.env` に次の 2 つを設定します。
+
+```bash
+TUNNEL_TENANT_ID=0123456789abcdef
+TUNNEL_ALLOWED_MAIL=alice@example.com,bob@example.com
+```
+
+`TUNNEL_TENANT_ID` は、トンネルの URL で開くテナントです。トンネルの URL にはテナントのサブドメインを付けられないので、テナントを 1 つに固定します。トークンの `tenant_id` と同じ値にします。`TUNNEL_ALLOWED_MAIL` には、許可するアドレスをカンマで区切って並べます。`*@example.com` と書くと、そのドメインのアドレスをすべて許可します。
+
+`task tunnel` で、`compose.tunnel.yaml` を重ねて起動します。トンネルがつながると、URL を表示します。起動したあとで URL を確かめるときは、`task tunnel:url` を実行します。`task` は mise で入ります。
+
+```bash
+task tunnel
+```
+
+観測ページは `https://{発行された URL}/event/fedcba9876543210/observation/{edgeDeviceId}` で開きます。URL は起動のたびに変わります。トンネルを止めると、全員がアクセスできなくなります。
+
+```bash
+task tunnel:stop
+```
+
+`tunnel-proxy`（Caddy）がトンネルからの通信を Firebase エミュレータと `web` に振り分けます。HTTPS で開いたページは、ページと同じオリジンを通してエミュレータに接続します。
+
+## テナントのイベント管理ページ
+
+`/management` は、テナントのイベントを一覧し、作成し、アーカイブするページです。`web` はこのページからの呼び出しで、環境変数 `TENANT_ACCESS_TOKEN` の `tenant_access` トークンを Service Gateway（`GATEWAY_URL`）へ送ります。Service Gateway はその呼び出しを Tenant Management へ転送します。
+
+`compose.yaml` は Service Gateway と Tenant Management を起動しません。開発では、tolo-service-gateway の compose で Service Gateway、偽 IdP、Tenant Management を起動し、Next.js はホストで起動します。tolo-service-gateway の Service Gateway は、この compose の Firestore エミュレータと同じポート 8080 を使います。そのため、2 つの compose は同時に起動できません。
+
+### テナントとトークンの用意
+
+tolo-service-gateway のディレクトリで、Tenant Management を含む compose を起動します。次に仮テナントを作り、所有権を取得してから、そのテナントの `tenant_access` トークンを発行します。手順の詳細は tolo-service-gateway の `docs/dev_tenant_management.md` にあります。
+
+```bash
+docker compose -f compose.yml -f compose.tm.yml up -d --build
+
+TENANT=$(curl -sS -X POST -H 'Content-Type: application/json' -d '{"name":"acme","contractPlan":"standard"}' \
+  http://localhost:8080/tolo.tenant.v1.TenantService/StartTenantRegistration)
+TID=$(printf '%s' "$TENANT" | jq -r .tenant.tenantId)
+CLAIM=$(printf '%s' "$TENANT" | jq -r .ownershipClaimToken)
+
+REG=$(./scripts/dev/fakeidp-token.sh -k registration -b user-owner -s "tenant.claim")
+curl -sS -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $REG" \
+  -d "{\"tenantId\":\"$TID\",\"ownershipClaimToken\":\"$CLAIM\"}" \
+  http://localhost:8080/tolo.tenant.v1.TenantService/ClaimTenantOwnership
+
+export TENANT_ACCESS_TOKEN=$(./scripts/dev/fakeidp-token.sh -k tenant_access -b user-owner -t "$TID" -s "events.read events.manage" -l 86400)
+echo "$TID"
+```
+
+トークンの `tenant_id` は、開くページのテナント ID と同じでなければなりません。違う場合は Tenant Management が呼び出しを拒否し、一覧は取得に失敗します。
+
+### 起動と開く URL
+
+同じシェルで、このリポジトリのディレクトリから Next.js を起動します。`NEXT_PUBLIC_API_MOCKING` が `enabled` だと API がモックに置き換わるので、ここでは `disabled` にします。
+
+```bash
+GATEWAY_URL=http://127.0.0.1:8080 NEXT_PUBLIC_API_MOCKING=disabled pnpm dev
+```
+
+`http://{TID}.localhost:3000/management` を開きます。`{TID}` は上で表示したテナント ID です。
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

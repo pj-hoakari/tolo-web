@@ -18,7 +18,10 @@ export default defineConfig({
   webServer: {
     command: `pnpm build && pnpm exec next start -p ${port}`,
     url: `http://localhost:${port}`,
-    env: { NEXT_PUBLIC_API_MOCKING: "enabled" },
+    env: {
+      NEXT_PUBLIC_API_MOCKING: "enabled",
+      FIREBASE_PROJECT_ID: "e2e-tolo-signaling",
+    },
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
   },

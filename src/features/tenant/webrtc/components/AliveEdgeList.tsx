@@ -1,11 +1,12 @@
 import { useLocale, useTranslations } from "next-intl";
-import type { AliveEdgesStatus } from "../hooks/useAliveEdges";
-import type { AliveEdge, ConnectionStatus } from "../type";
+import { Button } from "@/components/ui/button";
+import type { EdgeDevicesStatus } from "../hooks/useEdgeDevices";
+import type { ConnectionStatus, EdgeDeviceItem } from "../type";
 import { isActiveConnection } from "../utils/connectionStatus";
 
 export type AliveEdgeListProps = {
-  edges: AliveEdge[];
-  status: AliveEdgesStatus;
+  edges: EdgeDeviceItem[];
+  status: EdgeDevicesStatus;
   error: string | null;
   onRefresh: () => void;
   connectedEdgeId: string | null;
@@ -37,67 +38,87 @@ export function AliveEdgeList({
   return (
     <div className="flex w-full max-w-3xl flex-col gap-2">
       <div className="flex items-center justify-between">
-        <h3 className="font-bold">{t("title", { count: edges.length })}</h3>
-        <button
-          type="button"
-          onClick={onRefresh}
-          disabled={loading}
-          className="rounded bg-gray-200 px-3 py-1 text-sm disabled:opacity-50"
+        <h3 className="font-semibold text-lg">
+          {t("title", { count: edges.length })}
+        </h3>
+        <Button
+          variant="secondary"
+          size="sm"
+          onPress={onRefresh}
+          isDisabled={loading}
         >
           {t("refresh")}
-        </button>
+        </Button>
       </div>
       {status === "error" && error ? (
-        <p className="text-red-600 text-sm">{error}</p>
+        <p role="alert" className="text-destructive text-sm">
+          {error}
+        </p>
       ) : edges.length === 0 ? (
-        <p className="text-gray-500 text-sm">
+        <p className="text-muted-foreground text-sm">
           {loading ? t("loading") : t("empty")}
         </p>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="divide-y rounded-md border">
           {edges.map((edge) => {
             const isConnected = edge.edgeDeviceId === connectedEdgeId;
             const isActive = isConnected && isActiveConnection(receiveStatus);
 
-            const canDisconnect = isConnected && receiveStatus !== "idle";
+            const showStatus = isConnected && receiveStatus !== "idle";
+            const name = edge.name || edge.edgeDeviceId;
             return (
               <li
                 key={edge.edgeDeviceId}
-                className="flex items-center justify-between gap-2 rounded border border-gray-200 p-2"
+                className="flex items-center justify-between gap-4 px-4 py-3"
               >
                 <div className="flex flex-col">
-                  <span className="break-all text-sm">
-                    {edge.name || edge.edgeDeviceId}
-                  </span>
-                  <span className="text-gray-500 text-xs">
+                  <span className="break-all font-medium">{name}</span>
+                  <span className="text-muted-foreground text-xs">
                     {t("lastSeen", {
                       time: formatLastSeen(edge.lastHeartbeatAt),
                     })}
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  {isActive && (
-                    <span className="text-gray-500 text-xs">
+                  {!edge.online && (
+                    <span className="rounded-full border px-2 py-0.5 text-muted-foreground text-xs">
+                      {t("offline")}
+                    </span>
+                  )}
+                  {showStatus && (
+                    <span className="rounded-full border px-2 py-0.5 text-muted-foreground text-xs">
                       {tStatus(receiveStatus)}
                     </span>
                   )}
                   {!isActive && (
-                    <button
-                      type="button"
-                      onClick={() => onConnect(edge.edgeDeviceId)}
-                      className="rounded bg-blue-600 px-3 py-1 text-sm text-white"
+                    <Button
+                      size="sm"
+                      onPress={() => onConnect(edge.edgeDeviceId)}
+                      isDisabled={!edge.online}
+                      aria-label={t("connectLabel", { name })}
                     >
                       {t("connect")}
-                    </button>
+                    </Button>
                   )}
-                  {canDisconnect && (
-                    <button
-                      type="button"
-                      onClick={onDisconnect}
-                      className="rounded bg-gray-600 px-3 py-1 text-sm text-white"
+                  {isActive && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onPress={onDisconnect}
+                      aria-label={t("disconnectLabel", { name })}
                     >
                       {t("disconnect")}
-                    </button>
+                    </Button>
+                  )}
+                  {showStatus && !isActive && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onPress={onDisconnect}
+                      aria-label={t("closeLabel", { name })}
+                    >
+                      {t("close")}
+                    </Button>
                   )}
                 </div>
               </li>

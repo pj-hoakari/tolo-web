@@ -1,25 +1,27 @@
 import "server-only";
 
-const baseUrl = process.env.GATEWAY_URL ?? "http://127.0.0.1:8080";
+import { createClient, type Interceptor } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-node";
+import {
+  EdgeDeviceService,
+  MeasurementIngestService,
+} from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
 
-function authorizationHeader(): Record<string, string> {
+const authorize: Interceptor = (next) => (req) => {
   const token = process.env.OBSERVATION_ACCESS_TOKEN;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
+  if (token) req.header.set("Authorization", `Bearer ${token}`);
+  return next(req);
+};
 
-export async function callObservation<T>(
-  procedure: string,
-  body: unknown,
-): Promise<T> {
-  const response = await fetch(`${baseUrl}/tolo.observation.v1.${procedure}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...authorizationHeader() },
-    body: JSON.stringify(body),
-  });
-  if (!response.ok) {
-    throw new Error(
-      `${procedure} failed: ${response.status} ${await response.text()}`,
-    );
-  }
-  return (await response.json()) as T;
-}
+const transport = createConnectTransport({
+  baseUrl: process.env.GATEWAY_URL ?? "http://127.0.0.1:8080",
+  httpVersion: "1.1",
+  interceptors: [authorize],
+});
+
+export const edgeDeviceClient = createClient(EdgeDeviceService, transport);
+
+export const measurementIngestClient = createClient(
+  MeasurementIngestService,
+  transport,
+);

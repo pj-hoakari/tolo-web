@@ -21,6 +21,47 @@
     "graphEditTitle": "{tenantId} 路徑圖編輯",
     "backLink": "返回管理頁面"
   },
+  "TenantManagement": {
+    "title": "{tenantId} 活動管理",
+    "create": {
+      "label": "活動名稱",
+      "submit": "建立",
+      "failed": "無法建立活動。",
+      "tenantUnavailable": "無法在此租戶下建立活動。該租戶可能已被封存。",
+      "tenantNotFound": "找不到該租戶。"
+    },
+    "list": {
+      "heading": "活動",
+      "loading": "載入中…",
+      "empty": "尚無活動。",
+      "error": "無法取得活動清單。",
+      "retry": "重新載入",
+      "showArchived": "同時顯示已封存"
+    },
+    "status": {
+      "draft": "草稿",
+      "open": "進行中",
+      "locked": "已鎖定",
+      "closed": "已結束",
+      "archived": "已封存"
+    },
+    "archive": {
+      "button": "封存",
+      "title": "封存活動",
+      "description": "將封存「{name}」。封存後的活動僅在開啟「同時顯示已封存」時顯示於清單中，並可在那裡還原。",
+      "cancel": "取消",
+      "confirm": "封存",
+      "failed": "無法封存活動。"
+    },
+    "restore": {
+      "button": "還原",
+      "failed": "無法還原活動。"
+    },
+    "transition": {
+      "stale": "活動或租戶的狀態已變更，無法完成操作。請重新載入列表。",
+      "eventNotFound": "找不到該活動。請重新載入列表。"
+    }
+  },
   "Graph": {
     "viewer": {
       "title": "路徑圖",
@@ -70,7 +111,7 @@
       "closed": "封閉模式（無出入口）"
     },
     "labelLanguage": {
-      "label": "標籤語言",
+      "label": "標籤語言（<lang>{language}</lang>）",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
@@ -81,7 +122,34 @@
       "newNodeLabel": "節點 {index}",
       "addGroup": "新增群組",
       "newGroupLabel": "群組 {index}",
-      "autoAlign": "自動排列"
+      "autoAlign": "自動排列",
+      "saved": "已儲存",
+      "saveFailed": "儲存失敗。請稍後再試。",
+      "saveInvalid": "有無法儲存的部分",
+      "saveUnavailable": "找不到該活動或活動已封存，無法儲存。如已封存，請先還原再編輯。",
+      "violations": {
+        "UNSPECIFIED": "路徑圖的結構有問題。",
+        "EMPTY_NODE_ID": "有 ID 為空的節點。",
+        "DUPLICATE_NODE_ID": "有 ID 重複的節點。",
+        "NODE_WITHOUT_TYPE": "有未設定類型的節點。",
+        "NON_FINITE_NODE_LAYOUT": "有位置無效的節點。",
+        "EMPTY_GROUP_ID": "有 ID 為空的群組。",
+        "DUPLICATE_GROUP_ID": "有 ID 重複的群組。",
+        "NON_FINITE_GROUP_LAYOUT": "有位置或大小無效的群組。",
+        "EXTERNAL_NODE_IN_GROUP": "有外部節點位於群組中。外部節點不能放入群組。",
+        "MISSING_GROUP": "有節點屬於不存在的群組。",
+        "MISSING_PARENT_GROUP": "有群組屬於不存在的群組。",
+        "GROUP_CYCLE": "有群組之間形成了循環巢狀。",
+        "EMPTY_EDGE_ID": "有 ID 為空的路徑。",
+        "DUPLICATE_EDGE_ID": "有 ID 重複的路徑。",
+        "EDGE_WITHOUT_DIRECTION": "有未設定方向的路徑。",
+        "MISSING_NODE": "有路徑連接到不存在的節點。",
+        "EDGE_BETWEEN_EXTERNAL_NODES": "有路徑連接了兩個外部節點。",
+        "SELF_LOOP_EDGE": "有起點和終點相同的路徑。",
+        "EXTERNAL_NODE_WITHOUT_EDGE": "有未連接路徑的外部節點。",
+        "NODE_WITHOUT_ROUTE": "有未連接路徑的節點。",
+        "GROUP_WITHOUT_MEMBERS": "有空的群組。"
+      }
     },
     "easyConnect": {
       "fromNode": "新增路徑：點擊作為終點的節點",
@@ -109,6 +177,25 @@
       "dissolveGroup": "取消群組（保留內容）"
     },
     "properties": {
+      "bulk": {
+        "points": "點（{count} 個）",
+        "edges": "箭頭（{count} 個）",
+        "mixed": "值不一致",
+        "result": "已修改 {changed} 個元素。無法修改 {skipped} 個元素。",
+        "reasonCount": "{reason}（{count} 個）",
+        "reasons": {
+          "requiresDwell": "不允許停留的點無法設為目的地。",
+          "bothNotReversed": "雙向箭頭不進行反轉。"
+        }
+      },
+      "groupSelected": "將選取的點分組",
+      "deleteSelected": "刪除選取的元素",
+      "deleteSelectedGroupHint": "選取的群組將被解除，未選取的內容將保留。",
+      "groupSelectionErrors": {
+        "pointsOnly": "群組和外部點無法合併到新群組中。",
+        "tooFewPoints": "請選取至少兩個點。",
+        "differentParents": "請選取屬於同一父層的點。"
+      },
       "selectedNodes": "節點：{count} 個",
       "selectedEdges": "箭頭：{count} 個",
       "selectedGroups": "群組：{count} 個",
@@ -123,7 +210,10 @@
       "oneway": "單向 →",
       "reverse": "反轉方向（起點 ↔ 終點）",
       "dissolveGroup": "取消群組",
-      "groupHint": "用於管理的邏輯群組，例如樓層或建築。拖曳點即可移入或移出。取消群組後其中的點會保留。"
+      "groupHint": "用於管理的邏輯群組，例如樓層或建築。拖曳點即可移入或移出。取消群組後其中的點會保留。",
+      "edgeTarget": "終點",
+      "edgeTargetPlaceholder": "選擇作為終點的節點",
+      "addEdge": "從此節點新增路徑"
     },
     "node": {
       "editLabel": "編輯「{label}」的標籤",
@@ -148,21 +238,25 @@
       "error": "連線失敗"
     },
     "aliveEdges": {
-      "title": "運作中的邊緣裝置（{count}）",
+      "title": "邊緣裝置（{count}）",
       "refresh": "重新整理",
       "loading": "載入中…",
-      "empty": "沒有運作中的邊緣裝置",
+      "empty": "沒有邊緣裝置",
       "lastSeen": "最後回應：{time}",
       "unknownTime": "未知",
+      "offline": "離線",
       "connect": "連線",
       "disconnect": "中斷",
+      "connectLabel": "連線到「{name}」",
+      "disconnectLabel": "中斷與「{name}」的連線",
+      "close": "關閉",
+      "closeLabel": "關閉「{name}」的影像",
       "loadError": "取得邊緣裝置清單失敗"
     },
     "receiver": {
       "stoppedTitle": "觀測已停止",
       "stoppedDescription": "來源攝影機已停止",
       "connecting": "連線中…",
-      "status": "狀態：{status}",
       "connectError": "連線失敗"
     },
     "broadcast": {
@@ -193,7 +287,7 @@
     },
     "lines": {
       "create": "產生線",
-      "edit": "編輯模式",
+      "listLabel": "線列表",
       "reverseForward": "反轉 forward 方向",
       "deleteSelected": "刪除選取的線",
       "reset": "重設線位置",
@@ -248,7 +342,13 @@
     "errors": {
       "videoSource": "取得視訊來源失敗",
       "detection": "人體偵測處理失敗",
-      "modelLoad": "載入偵測模型失敗（{status}: {path}）"
+      "modelLoad": "載入偵測模型失敗（{status}: {path}）",
+      "camera": {
+        "permissionDenied": "未允許使用攝影機。請在瀏覽器設定中允許存取攝影機。",
+        "notFound": "找不到攝影機。請確認攝影機已連接。",
+        "unsupported": "此瀏覽器或連線無法使用攝影機",
+        "unavailable": "無法啟動攝影機"
+      }
     },
     "devSource": {
       "title": "視訊來源",
@@ -302,7 +402,6 @@
     "staffMessage": {
       "title": "工作人員通知",
       "ariaOpen": "工作人員通知",
-      "ariaClose": "關閉通知",
       "empty": "目前沒有通知",
       "samples": {
         "msg-2": {

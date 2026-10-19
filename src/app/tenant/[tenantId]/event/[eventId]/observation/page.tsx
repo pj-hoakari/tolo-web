@@ -3,6 +3,7 @@ import { LocaleSelect } from "@/components/locale-select";
 import { PwaInstall } from "@/components/pwa/pwa-install";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CrowdDetection } from "@/features/tenant/observation/components/CrowdDetection";
+import { ObservationSoftLock } from "@/features/tenant/observation/components/ObservationSoftLock";
 import { ScreenWakeControl } from "@/features/tenant/observation/components/ScreenWakeControl";
 import { ScreenWakeProvider } from "@/features/tenant/observation/components/ScreenWakeProvider";
 import { getPwaMetadata } from "@/lib/pwa/manifest";
@@ -29,24 +30,26 @@ export default async function TenantObservation({
 
   return (
     <ScreenWakeProvider>
-      <div className="flex flex-col">
-        <header className="mb-4 flex w-full items-center justify-between px-10 py-5">
-          <h2 className="font-bold text-2xl">{t("title", { tenantId })}</h2>
-          <div className="flex items-center gap-2">
-            <PwaInstall compact />
-            <LocaleSelect />
-            <ThemeToggle />
-          </div>
-        </header>
-        <main className="flex w-full flex-col items-center gap-4">
-          <ScreenWakeControl />
-          <CrowdDetection
-            tenantId={tenantId}
-            eventId={eventId}
-            edgeDeviceId={edgeDeviceId}
-          />
-        </main>
-      </div>
+      <ObservationSoftLock tenantId={tenantId} eventId={eventId}>
+        <div className="flex w-full flex-col">
+          <header className="mb-4 flex w-full items-center justify-between px-10 py-5">
+            <h2 className="font-bold text-2xl">{t("title", { tenantId })}</h2>
+            <div className="flex items-center gap-2">
+              <PwaInstall compact />
+              <LocaleSelect />
+              <ThemeToggle />
+            </div>
+          </header>
+          <main className="flex w-full flex-col items-center gap-4">
+            <ScreenWakeControl />
+            <CrowdDetection
+              tenantId={tenantId}
+              eventId={eventId}
+              edgeDeviceId={edgeDeviceId}
+            />
+          </main>
+        </div>
+      </ObservationSoftLock>
     </ScreenWakeProvider>
   );
 }

@@ -20,7 +20,7 @@ function DetectionStatusPanelComponent({
   const t = useTranslations("Observation.status");
 
   return (
-    <section className="grid w-full max-w-3xl gap-4 rounded border border-gray-200 p-4 sm:grid-cols-3">
+    <section className="grid w-full max-w-3xl gap-4 rounded border border-border p-4 sm:grid-cols-3">
       <p>{t("detection", { status: t(status) })}</p>
       <p>{t("trackedCount", { count: metrics.trackedCount })}</p>
       <p>{t("fps", { fps: metrics.fps.toFixed(1) })}</p>

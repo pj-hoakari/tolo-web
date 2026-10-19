@@ -1,4 +1,9 @@
-export { fetchGraph, type GraphKey, saveGraph } from "./api";
+export {
+  fetchGraph,
+  type GraphKey,
+  GraphValidationError,
+  saveGraph,
+} from "./api";
 export {
   type GraphLoadStatus,
   type UseGraphResult,

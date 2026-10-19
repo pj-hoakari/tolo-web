@@ -1,8 +1,15 @@
 "use client";
 
 import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
-import { type Ref, useImperativeHandle } from "react";
-import { type GraphKey, saveGraph, useGraph } from "@/features/graph";
+import { useMessages, useTranslations } from "next-intl";
+import { type Ref, useEffect, useImperativeHandle, useState } from "react";
+import {
+  type GraphKey,
+  GraphValidationError,
+  saveGraph,
+  useGraph,
+} from "@/features/graph";
+import { errorMessageKey } from "@/lib/errorMessageKey";
 import { useGraphEditor } from "../hooks/useGraphEditor";
 import type { GraphData } from "../type";
 import { FIT_VIEW_OPTIONS, GraphCanvas } from "./GraphCanvas";
@@ -16,6 +23,49 @@ export type GraphEditorHandle = {
 
 type GraphEditorProps = GraphKey;
 
+type SaveState =
+  | { status: "idle" }
+  | { status: "saving" }
+  | { status: "saved" }
+  | { status: "failed"; error: unknown };
+
+const SAVED_STATUS_MS = 3000;
+
+const SAVE_ERROR_MESSAGES = {
+  byCode: { PRECONDITION_FAILED: "saveUnavailable" },
+  fallback: "saveFailed",
+} as const;
+
+function SaveErrorAlert({ error }: { error: unknown }) {
+  const t = useTranslations("Graph.editor");
+  const violationMessages = useMessages().Graph.editor.violations;
+  const violationKey = (kind: string) =>
+    Object.hasOwn(violationMessages, kind)
+      ? (kind as keyof typeof violationMessages)
+      : "UNSPECIFIED";
+  return (
+    <div
+      role="alert"
+      className="border-destructive/50 border-b bg-destructive/10 px-4 py-2 text-destructive text-sm"
+    >
+      {error instanceof GraphValidationError ? (
+        <>
+          <p className="font-semibold">{t("saveInvalid")}</p>
+          {[...new Set(error.violations.map((v) => violationKey(v.kind)))].map(
+            (key) => (
+              <p key={key}>{t(`violations.${key}`)}</p>
+            ),
+          )}
+        </>
+      ) : (
+        <p className="font-semibold">
+          {t(errorMessageKey(error, SAVE_ERROR_MESSAGES))}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function GraphEditorInner({
   tenantId,
   eventId,
@@ -25,14 +75,45 @@ function GraphEditorInner({
   initialGraph: GraphData;
   handleRef?: Ref<GraphEditorHandle>;
 }) {
-  const { graph, canvas, toolbar, properties, getGraphData } =
+  const { graph, canvas, toolbar, properties, getGraphData, setSelection } =
     useGraphEditor(initialGraph);
+  const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
 
   // 親から ref 経由で編集済みデータを取得できるように
   useImperativeHandle(handleRef, () => ({ getGraphData }), [getGraphData]);
 
-  const handleSave = () => {
-    void saveGraph({ tenantId, eventId }, getGraphData());
+  useEffect(() => {
+    if (saveState.status !== "saved") return;
+    const timer = setTimeout(
+      () => setSaveState({ status: "idle" }),
+      SAVED_STATUS_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [saveState]);
+
+  const handleSave = async () => {
+    setSaveState({ status: "saving" });
+    try {
+      await saveGraph({ tenantId, eventId }, getGraphData());
+      setSaveState({ status: "saved" });
+    } catch (error) {
+      setSaveState({ status: "failed", error });
+      if (error instanceof GraphValidationError) {
+        const targets = error.violations.filter(
+          (v) => v.elementKind && v.elementId,
+        );
+        if (targets.length > 0) {
+          setSelection(
+            targets
+              .filter((v) => v.elementKind !== "edge")
+              .map((v) => v.elementId),
+            targets
+              .filter((v) => v.elementKind === "edge")
+              .map((v) => v.elementId),
+          );
+        }
+      }
+    }
   };
 
   const { fitView } = useReactFlow();
@@ -50,7 +131,11 @@ function GraphEditorInner({
         {...toolbar}
         onAutoAlign={handleAutoAlign}
         onSave={handleSave}
+        saveStatus={saveState.status}
       />
+      {saveState.status === "failed" && (
+        <SaveErrorAlert error={saveState.error} />
+      )}
       <div className="flex min-h-0 flex-1">
         <GraphCanvas {...canvas} />
         <PropertiesPanel {...properties} graph={graph} />

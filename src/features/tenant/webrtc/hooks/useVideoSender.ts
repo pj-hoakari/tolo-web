@@ -6,23 +6,23 @@ import {
   applySettings,
   type DetectionSettingsStore,
 } from "@/features/tenant/detection/stores/detectionStore";
+import { orpc } from "@/lib/orpc";
+import { useFirebaseConfig } from "../components/FirebaseConfigProvider";
 import {
   encodeDetectionControlNotice,
   parseDetectionControlRequest,
   sendOverDataChannel,
 } from "../utils/detectionControl";
 import type { DetectionOverlayFrame } from "../utils/detectionOverlay";
-import { getDb } from "../utils/firebase";
+import { getAuth, getDb } from "../utils/firebase";
+import { signInForSignaling } from "../utils/firestoreSignIn";
 import { PeerSignalingAdapter } from "../utils/peerSignaling";
 import {
   sessionDoc,
   sessionsCollection,
   signalsCollection,
 } from "../utils/refs";
-import {
-  clearSignals,
-  createFirestoreSignalingChannel,
-} from "../utils/signalingChannel";
+import { createFirestoreSignalingChannel } from "../utils/signalingChannel";
 import { connectAsSender } from "../utils/webrtcSender";
 
 interface SenderSession {
@@ -55,14 +55,17 @@ function applyStream(pc: RTCPeerConnection, stream: MediaStream | null): void {
 }
 
 export function useVideoSender(params: {
+  tenantId: string;
+  eventId: string;
   edgeDeviceId: string | undefined;
   stream: MediaStream | null;
   /** management 側と共有する検出設定 */
   settingsStore: DetectionSettingsStore;
 }): VideoSenderController {
-  const { edgeDeviceId, stream, settingsStore } = params;
+  const { tenantId, eventId, edgeDeviceId, stream, settingsStore } = params;
   const active = stream !== null;
   const edgeId = active && edgeDeviceId ? edgeDeviceId : null;
+  const firebaseConfig = useFirebaseConfig();
 
   const streamRef = useRef<MediaStream | null>(stream);
   const sessionsRef = useRef<Map<string, SenderSession>>(new Map());
@@ -131,8 +134,8 @@ export function useVideoSender(params: {
     sessionsListenerRef.current?.unsubscribe();
     sessionsListenerRef.current = null;
 
-    const db = getDb();
-    const sessionsCol = sessionsCollection(db, edgeId);
+    const db = getDb(firebaseConfig);
+    const sessionsCol = sessionsCollection(db, tenantId, eventId, edgeId);
     const sessions = sessionsRef.current;
     const startingSessionIds = startingSessionIdsRef.current;
     let disposed = false;
@@ -158,11 +161,9 @@ export function useVideoSender(params: {
         return;
       }
       try {
-        const signalsRef = signalsCollection(sessionDoc(db, edgeId, sessionId));
-        await clearSignals(signalsRef);
-        if (disposed) {
-          return;
-        }
+        const signalsRef = signalsCollection(
+          sessionDoc(db, tenantId, eventId, edgeId, sessionId),
+        );
         const channel = createFirestoreSignalingChannel({
           signalsRef,
           self: "edge",
@@ -232,30 +233,47 @@ export function useVideoSender(params: {
       startingSessionIds.delete(sessionId);
     };
 
-    const unsubscribeSessions = onSnapshot(sessionsCol, (snapshot) => {
-      for (const change of snapshot.docChanges()) {
-        const sessionId = change.doc.id;
-        if (change.type === "removed") {
-          closeSession(sessionId);
-          continue;
+    const listenSessions = () =>
+      onSnapshot(sessionsCol, (snapshot) => {
+        for (const change of snapshot.docChanges()) {
+          const sessionId = change.doc.id;
+          if (change.type === "removed") {
+            closeSession(sessionId);
+            continue;
+          }
+          if (change.type !== "added" && change.type !== "modified") {
+            continue;
+          }
+          if (sessions.has(sessionId)) {
+            continue;
+          }
+          if (change.doc.data().status === "requested") {
+            startSession(sessionId).catch((e) =>
+              console.error("[webrtc-sender] start session", e),
+            );
+          }
         }
-        if (change.type !== "added" && change.type !== "modified") {
-          continue;
+      });
+
+    let unsubscribeSessions: (() => void) | null = null;
+    let stopSignIn: (() => void) | null = null;
+    signInForSignaling(
+      orpc.signaling.issueEdgeFirestoreToken,
+      getAuth(firebaseConfig),
+    )
+      .then((stop) => {
+        if (disposed) {
+          stop();
+          return;
         }
-        if (sessions.has(sessionId)) {
-          continue;
-        }
-        if (change.doc.data().status === "requested") {
-          startSession(sessionId).catch((e) =>
-            console.error("[webrtc-sender] start session", e),
-          );
-        }
-      }
-    });
-    sessionsListenerRef.current = {
-      edgeId,
-      unsubscribe: unsubscribeSessions,
-    };
+        stopSignIn = stop;
+        unsubscribeSessions = listenSessions();
+        sessionsListenerRef.current = {
+          edgeId,
+          unsubscribe: unsubscribeSessions,
+        };
+      })
+      .catch((e) => console.error("[webrtc-sender] sign in", e));
 
     return () => {
       disposed = true;
@@ -264,7 +282,8 @@ export function useVideoSender(params: {
         edgeId,
         sessionCount: sessions.size,
       });
-      unsubscribeSessions();
+      stopSignIn?.();
+      unsubscribeSessions?.();
       if (sessionsListenerRef.current?.unsubscribe === unsubscribeSessions) {
         sessionsListenerRef.current = null;
       }
@@ -273,7 +292,7 @@ export function useVideoSender(params: {
       }
       startingSessionIds.clear();
     };
-  }, [edgeId, settingsStore]);
+  }, [tenantId, eventId, edgeId, settingsStore, firebaseConfig]);
 
   return { active, edgeId, sendDetectionFrame };
 }

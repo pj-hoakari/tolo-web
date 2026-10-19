@@ -2,17 +2,18 @@
 
 import { DetectionLineCountList } from "@/features/tenant/detection/components/DetectionLineCountList";
 import { DetectionSettingsPanel } from "@/features/tenant/detection/components/DetectionSettingsPanel";
-import { useAliveEdges } from "../hooks/useAliveEdges";
+import { useEdgeDevices } from "../hooks/useEdgeDevices";
 import { useVideoReceiver } from "../hooks/useVideoReceiver";
 import { AliveEdgeList } from "./AliveEdgeList";
 import { VideoReceiverView } from "./VideoReceiverView";
 
 export type ConnectedEdgesProps = {
+  tenantId: string;
   eventId: string;
 };
 
-export function ConnectedEdges({ eventId }: ConnectedEdgesProps) {
-  const { edges, status, error, refresh } = useAliveEdges({ eventId });
+export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
+  const { edges, status, error, refresh } = useEdgeDevices({ eventId });
   const {
     status: receiveStatus,
     error: receiveError,
@@ -23,7 +24,7 @@ export function ConnectedEdges({ eventId }: ConnectedEdgesProps) {
     connectedEdgeId,
     connect,
     disconnect,
-  } = useVideoReceiver();
+  } = useVideoReceiver({ tenantId, eventId });
 
   // 設定を受け取るまでは観測側の値が分からないため，操作させない
   const editable = settingsSynced && receiveStatus === "connected";
@@ -41,7 +42,7 @@ export function ConnectedEdges({ eventId }: ConnectedEdgesProps) {
         onDisconnect={disconnect}
       />
       {connectedEdgeId && (
-        <>
+        <div className="flex w-full flex-col items-center gap-2">
           <VideoReceiverView
             stream={stream}
             status={receiveStatus}
@@ -63,7 +64,7 @@ export function ConnectedEdges({ eventId }: ConnectedEdgesProps) {
               />
             </>
           )}
-        </>
+        </div>
       )}
     </div>
   );

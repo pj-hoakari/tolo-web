@@ -46,7 +46,14 @@ for (const name of cases)
   }) => {
     const fixture = layoutFixture(name);
     if (!fixture) throw new Error(name);
-    await page.goto(`/event/test/management/graph/edit?layoutFixture=${name}`);
+    await page.addInitScript((graph) => {
+      sessionStorage.setItem("msw:overrides", JSON.stringify({ graph }));
+    }, fixture);
+    const request = page.waitForRequest("**/rpc/graph/getGraph");
+    await page.goto("/event/test/management/graph/edit");
+    expect((await request).postDataJSON()).toEqual({
+      json: { eventId: "test" },
+    });
     const align = page.getByRole("button", { name: "自動整列" });
     await expect(align).toBeVisible();
     await expect(page.locator(".react-flow__node")).toHaveCount(
@@ -63,3 +70,36 @@ for (const name of cases)
       expect(await snapshot(page), `alignment ${step}`).toEqual(first);
     }
   });
+
+test("manual layoutFixture URL uses the graph RPC mock", async ({ page }) => {
+  const name = "issue249-group-movement";
+  const fixture = layoutFixture(name);
+  if (!fixture) throw new Error(name);
+  const request = page.waitForRequest("**/rpc/graph/getGraph");
+  await page.goto(`/event/test/management/graph/edit?layoutFixture=${name}`);
+  expect((await request).postDataJSON()).toEqual({ json: { eventId: "test" } });
+  await expect(page.locator(".react-flow__node")).toHaveCount(
+    fixture.nodes.length + 1,
+  );
+  await expect(page.locator(".react-flow__edge")).toHaveCount(
+    fixture.edges.length,
+  );
+});
+
+test("layoutFixture does not bypass graph retrieval errors", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    sessionStorage.setItem(
+      "msw:overrides",
+      JSON.stringify({ getGraphError: true }),
+    );
+  });
+  await page.goto(
+    "/event/test/management/graph/edit?layoutFixture=issue249-group-movement",
+  );
+  await expect(page.getByRole("status")).toContainText(
+    "グラフの取得に失敗しました",
+  );
+  await expect(page.locator(".react-flow__node")).toHaveCount(0);
+});

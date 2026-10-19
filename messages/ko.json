@@ -21,6 +21,47 @@
     "graphEditTitle": "{tenantId} 경로도 편집",
     "backLink": "관리 페이지로 돌아가기"
   },
+  "TenantManagement": {
+    "title": "{tenantId} 이벤트 관리",
+    "create": {
+      "label": "이벤트 이름",
+      "submit": "만들기",
+      "failed": "이벤트를 만들 수 없습니다.",
+      "tenantUnavailable": "이 테넌트에서는 이벤트를 만들 수 없습니다. 테넌트가 보관되었을 수 있습니다.",
+      "tenantNotFound": "테넌트를 찾을 수 없습니다."
+    },
+    "list": {
+      "heading": "이벤트",
+      "loading": "불러오는 중…",
+      "empty": "아직 이벤트가 없습니다.",
+      "error": "이벤트 목록을 불러올 수 없습니다.",
+      "retry": "다시 불러오기",
+      "showArchived": "보관된 이벤트도 표시"
+    },
+    "status": {
+      "draft": "초안",
+      "open": "공개 중",
+      "locked": "잠김",
+      "closed": "종료",
+      "archived": "보관됨"
+    },
+    "archive": {
+      "button": "보관",
+      "title": "이벤트 보관",
+      "description": "“{name}”을(를) 보관합니다. 보관한 이벤트는 “보관된 이벤트도 표시”를 켜면 목록에 표시되며, 거기서 복원할 수 있습니다.",
+      "cancel": "취소",
+      "confirm": "보관하기",
+      "failed": "이벤트를 보관할 수 없습니다."
+    },
+    "restore": {
+      "button": "복원",
+      "failed": "이벤트를 복원할 수 없습니다."
+    },
+    "transition": {
+      "stale": "이벤트 또는 테넌트의 상태가 바뀌어 작업을 완료할 수 없습니다. 목록을 다시 불러와 주세요.",
+      "eventNotFound": "이벤트를 찾을 수 없습니다. 목록을 다시 불러와 주세요."
+    }
+  },
   "Graph": {
     "viewer": {
       "title": "경로도",
@@ -70,7 +111,7 @@
       "closed": "폐쇄 모드(출입 지점 없음)"
     },
     "labelLanguage": {
-      "label": "라벨 언어",
+      "label": "라벨 언어(<lang>{language}</lang>)",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
@@ -81,7 +122,34 @@
       "newNodeLabel": "지점 {index}",
       "addGroup": "그룹 추가",
       "newGroupLabel": "그룹 {index}",
-      "autoAlign": "자동 정렬"
+      "autoAlign": "자동 정렬",
+      "saved": "저장했습니다",
+      "saveFailed": "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      "saveInvalid": "저장할 수 없는 부분이 있습니다",
+      "saveUnavailable": "이벤트를 찾을 수 없거나 보관된 상태여서 저장하지 못했습니다. 보관된 경우 복원한 후 편집해 주세요.",
+      "violations": {
+        "UNSPECIFIED": "경로도의 구조에 문제가 있습니다.",
+        "EMPTY_NODE_ID": "ID가 비어 있는 지점이 있습니다.",
+        "DUPLICATE_NODE_ID": "ID가 중복된 지점이 있습니다.",
+        "NODE_WITHOUT_TYPE": "유형이 설정되지 않은 지점이 있습니다.",
+        "NON_FINITE_NODE_LAYOUT": "위치가 올바르지 않은 지점이 있습니다.",
+        "EMPTY_GROUP_ID": "ID가 비어 있는 그룹이 있습니다.",
+        "DUPLICATE_GROUP_ID": "ID가 중복된 그룹이 있습니다.",
+        "NON_FINITE_GROUP_LAYOUT": "위치나 크기가 올바르지 않은 그룹이 있습니다.",
+        "EXTERNAL_NODE_IN_GROUP": "그룹에 들어 있는 외부 지점이 있습니다. 외부 지점은 그룹에 넣을 수 없습니다.",
+        "MISSING_GROUP": "존재하지 않는 그룹에 속한 지점이 있습니다.",
+        "MISSING_PARENT_GROUP": "존재하지 않는 그룹에 속한 그룹이 있습니다.",
+        "GROUP_CYCLE": "서로를 순환하며 포함하는 그룹이 있습니다.",
+        "EMPTY_EDGE_ID": "ID가 비어 있는 경로가 있습니다.",
+        "DUPLICATE_EDGE_ID": "ID가 중복된 경로가 있습니다.",
+        "EDGE_WITHOUT_DIRECTION": "방향이 설정되지 않은 경로가 있습니다.",
+        "MISSING_NODE": "존재하지 않는 지점에 연결된 경로가 있습니다.",
+        "EDGE_BETWEEN_EXTERNAL_NODES": "외부 지점끼리 연결하는 경로가 있습니다.",
+        "SELF_LOOP_EDGE": "시작점과 끝점이 같은 경로가 있습니다.",
+        "EXTERNAL_NODE_WITHOUT_EDGE": "경로가 연결되지 않은 외부 지점이 있습니다.",
+        "NODE_WITHOUT_ROUTE": "경로가 연결되지 않은 지점이 있습니다.",
+        "GROUP_WITHOUT_MEMBERS": "비어 있는 그룹이 있습니다."
+      }
     },
     "easyConnect": {
       "fromNode": "경로 추가: 끝점으로 사용할 지점을 클릭하세요",
@@ -109,6 +177,25 @@
       "dissolveGroup": "그룹 해제(내용 유지)"
     },
     "properties": {
+      "bulk": {
+        "points": "포인트 ({count}개)",
+        "edges": "화살표 ({count}개)",
+        "mixed": "값이 서로 다릅니다",
+        "result": "{changed}개를 변경했습니다. {skipped}개는 변경하지 못했습니다.",
+        "reasonCount": "{reason} ({count}개)",
+        "reasons": {
+          "requiresDwell": "체류를 허용하지 않는 포인트는 목적지로 설정할 수 없습니다.",
+          "bothNotReversed": "양방향 화살표는 반전 대상에서 제외됩니다."
+        }
+      },
+      "groupSelected": "선택한 포인트 그룹화",
+      "deleteSelected": "선택한 요소 삭제",
+      "deleteSelectedGroupHint": "선택한 그룹은 해제되고 선택하지 않은 내용은 유지됩니다.",
+      "groupSelectionErrors": {
+        "pointsOnly": "그룹과 외부 포인트는 그룹화할 수 없습니다.",
+        "tooFewPoints": "포인트를 2개 이상 선택하세요.",
+        "differentParents": "같은 부모에 속한 포인트를 선택하세요."
+      },
       "selectedNodes": "노드: {count}개",
       "selectedEdges": "화살표: {count}개",
       "selectedGroups": "그룹: {count}개",
@@ -123,7 +210,10 @@
       "oneway": "일방향 →",
       "reverse": "방향 반전 (시작 ↔ 끝)",
       "dissolveGroup": "그룹 해제",
-      "groupHint": "층이나 건물 같은 관리용 묶음입니다. 포인트를 드래그하여 넣거나 뺄 수 있습니다. 해제해도 안의 포인트는 남습니다."
+      "groupHint": "층이나 건물 같은 관리용 묶음입니다. 포인트를 드래그하여 넣거나 뺄 수 있습니다. 해제해도 안의 포인트는 남습니다.",
+      "edgeTarget": "끝점",
+      "edgeTargetPlaceholder": "끝점으로 사용할 지점을 선택하세요",
+      "addEdge": "이 지점에서 경로 추가"
     },
     "node": {
       "editLabel": "「{label}」의 라벨 편집",
@@ -148,21 +238,25 @@
       "error": "연결 실패"
     },
     "aliveEdges": {
-      "title": "가동 중인 엣지 ({count})",
+      "title": "엣지 ({count})",
       "refresh": "새로고침",
       "loading": "불러오는 중…",
-      "empty": "가동 중인 엣지가 없습니다",
+      "empty": "엣지가 없습니다",
       "lastSeen": "마지막 응답: {time}",
       "unknownTime": "알 수 없음",
+      "offline": "오프라인",
       "connect": "연결",
       "disconnect": "연결 끊기",
+      "connectLabel": "“{name}”에 연결",
+      "disconnectLabel": "“{name}” 연결 끊기",
+      "close": "닫기",
+      "closeLabel": "“{name}” 영상 닫기",
       "loadError": "엣지 목록을 불러오지 못했습니다"
     },
     "receiver": {
       "stoppedTitle": "관측이 중지되었습니다",
       "stoppedDescription": "송출 측 카메라가 중지되었습니다",
       "connecting": "연결 중…",
-      "status": "상태: {status}",
       "connectError": "연결에 실패했습니다"
     },
     "broadcast": {
@@ -193,7 +287,7 @@
     },
     "lines": {
       "create": "라인 생성",
-      "edit": "편집 모드",
+      "listLabel": "라인 목록",
       "reverseForward": "forward 방향 반전",
       "deleteSelected": "선택한 라인 삭제",
       "reset": "라인 위치 초기화",
@@ -248,7 +342,13 @@
     "errors": {
       "videoSource": "영상 소스를 가져오지 못했습니다",
       "detection": "사람 검출 처리에 실패했습니다",
-      "modelLoad": "검출 모델을 불러오지 못했습니다（{status}: {path}）"
+      "modelLoad": "검출 모델을 불러오지 못했습니다（{status}: {path}）",
+      "camera": {
+        "permissionDenied": "카메라 사용이 허용되지 않았습니다. 브라우저 설정에서 카메라 접근을 허용해 주세요.",
+        "notFound": "카메라를 찾을 수 없습니다. 카메라가 연결되어 있는지 확인해 주세요.",
+        "unsupported": "이 브라우저 또는 연결에서는 카메라를 사용할 수 없습니다",
+        "unavailable": "카메라를 시작할 수 없습니다"
+      }
     },
     "devSource": {
       "title": "영상 소스",
@@ -302,7 +402,6 @@
     "staffMessage": {
       "title": "스태프 공지",
       "ariaOpen": "스태프 공지",
-      "ariaClose": "공지 닫기",
       "empty": "현재 공지가 없습니다",
       "samples": {
         "msg-2": {

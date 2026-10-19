@@ -21,6 +21,47 @@
     "graphEditTitle": "{tenantId} Editor del diagrama de rutas",
     "backLink": "Volver a administración"
   },
+  "TenantManagement": {
+    "title": "{tenantId} Gestión de eventos",
+    "create": {
+      "label": "Nombre del evento",
+      "submit": "Crear",
+      "failed": "No se pudo crear el evento.",
+      "tenantUnavailable": "No se pueden crear eventos en este inquilino. Es posible que el inquilino esté archivado.",
+      "tenantNotFound": "No se encontró el inquilino."
+    },
+    "list": {
+      "heading": "Eventos",
+      "loading": "Cargando…",
+      "empty": "Todavía no hay eventos.",
+      "error": "No se pudieron cargar los eventos.",
+      "retry": "Volver a cargar",
+      "showArchived": "Mostrar también archivados"
+    },
+    "status": {
+      "draft": "Borrador",
+      "open": "Abierto",
+      "locked": "Bloqueado",
+      "closed": "Cerrado",
+      "archived": "Archivado"
+    },
+    "archive": {
+      "button": "Archivar",
+      "title": "Archivar evento",
+      "description": "¿Archivar «{name}»? Los eventos archivados solo aparecen en esta lista con «Mostrar también archivados» activado, y desde ahí se pueden restaurar.",
+      "cancel": "Cancelar",
+      "confirm": "Archivar",
+      "failed": "No se pudo archivar el evento."
+    },
+    "restore": {
+      "button": "Restaurar",
+      "failed": "No se pudo restaurar el evento."
+    },
+    "transition": {
+      "stale": "No se pudo completar la operación porque el estado del evento o del inquilino cambió. Vuelve a cargar la lista.",
+      "eventNotFound": "No se encontró el evento. Vuelve a cargar la lista."
+    }
+  },
   "Graph": {
     "viewer": {
       "title": "Diagrama de rutas",
@@ -70,7 +111,7 @@
       "closed": "Modo cerrado (sin puntos de entrada / salida)"
     },
     "labelLanguage": {
-      "label": "Idioma de las etiquetas",
+      "label": "Idioma de las etiquetas (<lang>{language}</lang>)",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
@@ -81,7 +122,34 @@
       "newNodeLabel": "Punto {index}",
       "addGroup": "Añadir grupo",
       "newGroupLabel": "Grupo {index}",
-      "autoAlign": "Ordenar automáticamente"
+      "autoAlign": "Ordenar automáticamente",
+      "saved": "Guardado",
+      "saveFailed": "No se pudo guardar. Inténtalo de nuevo más tarde.",
+      "saveInvalid": "Hay partes del mapa que no se pueden guardar",
+      "saveUnavailable": "No se pudo guardar porque el evento no se encontró o está archivado. Si está archivado, restáuralo antes de editarlo.",
+      "violations": {
+        "UNSPECIFIED": "El diagrama de rutas tiene un problema de estructura.",
+        "EMPTY_NODE_ID": "Hay un punto con el ID vacío.",
+        "DUPLICATE_NODE_ID": "Hay puntos con el mismo ID.",
+        "NODE_WITHOUT_TYPE": "Hay un punto sin tipo.",
+        "NON_FINITE_NODE_LAYOUT": "Hay un punto con una posición no válida.",
+        "EMPTY_GROUP_ID": "Hay un grupo con el ID vacío.",
+        "DUPLICATE_GROUP_ID": "Hay grupos con el mismo ID.",
+        "NON_FINITE_GROUP_LAYOUT": "Hay un grupo con una posición o un tamaño no válidos.",
+        "EXTERNAL_NODE_IN_GROUP": "Hay un punto exterior dentro de un grupo. Los puntos exteriores no pueden pertenecer a un grupo.",
+        "MISSING_GROUP": "Hay un punto que pertenece a un grupo que no existe.",
+        "MISSING_PARENT_GROUP": "Hay un grupo que pertenece a un grupo que no existe.",
+        "GROUP_CYCLE": "Hay grupos anidados entre sí en un ciclo.",
+        "EMPTY_EDGE_ID": "Hay una ruta con el ID vacío.",
+        "DUPLICATE_EDGE_ID": "Hay rutas con el mismo ID.",
+        "EDGE_WITHOUT_DIRECTION": "Hay una ruta sin sentido definido.",
+        "MISSING_NODE": "Hay una ruta conectada a un punto que no existe.",
+        "EDGE_BETWEEN_EXTERNAL_NODES": "Hay una ruta que conecta dos puntos exteriores.",
+        "SELF_LOOP_EDGE": "Hay una ruta que empieza y termina en el mismo punto.",
+        "EXTERNAL_NODE_WITHOUT_EDGE": "Hay un punto exterior sin ninguna ruta.",
+        "NODE_WITHOUT_ROUTE": "Hay un punto sin ninguna ruta.",
+        "GROUP_WITHOUT_MEMBERS": "Hay un grupo vacío."
+      }
     },
     "easyConnect": {
       "fromNode": "Añadir ruta: haz clic en el punto final",
@@ -109,6 +177,25 @@
       "dissolveGroup": "Desagrupar (mantener contenido)"
     },
     "properties": {
+      "bulk": {
+        "points": "Puntos ({count})",
+        "edges": "Flechas ({count})",
+        "mixed": "Los valores son diferentes",
+        "result": "Se modificaron {changed} elementos. No se pudieron modificar {skipped} elementos.",
+        "reasonCount": "{reason} ({count})",
+        "reasons": {
+          "requiresDwell": "Los puntos que no permiten permanecer no pueden ser destinos.",
+          "bothNotReversed": "Las flechas bidireccionales se excluyen de la inversión."
+        }
+      },
+      "groupSelected": "Agrupar puntos seleccionados",
+      "deleteSelected": "Eliminar elementos seleccionados",
+      "deleteSelectedGroupHint": "Los grupos seleccionados se disuelven; se conserva el contenido no seleccionado.",
+      "groupSelectionErrors": {
+        "pointsOnly": "No se pueden agrupar grupos ni puntos externos.",
+        "tooFewPoints": "Selecciona al menos dos puntos.",
+        "differentParents": "Selecciona puntos con el mismo grupo padre."
+      },
       "selectedNodes": "Nodos: {count}",
       "selectedEdges": "Flechas: {count}",
       "selectedGroups": "Grupos: {count}",
@@ -123,7 +210,10 @@
       "oneway": "Unidireccional →",
       "reverse": "Invertir el sentido (inicio ↔ fin)",
       "dissolveGroup": "Desagrupar",
-      "groupHint": "Una agrupación lógica para la gestión, como una planta o un edificio. Arrastra los puntos para meterlos o sacarlos. Al desagrupar, los puntos se conservan."
+      "groupHint": "Una agrupación lógica para la gestión, como una planta o un edificio. Arrastra los puntos para meterlos o sacarlos. Al desagrupar, los puntos se conservan.",
+      "edgeTarget": "Punto final",
+      "edgeTargetPlaceholder": "Selecciona el punto final",
+      "addEdge": "Añadir una ruta desde este punto"
     },
     "node": {
       "editLabel": "Editar la etiqueta de «{label}»",
@@ -148,21 +238,25 @@
       "error": "Error de conexión"
     },
     "aliveEdges": {
-      "title": "Edges en línea ({count})",
+      "title": "Edges ({count})",
       "refresh": "Actualizar",
       "loading": "Cargando…",
-      "empty": "No hay edges en línea",
+      "empty": "No hay edges",
       "lastSeen": "Última respuesta: {time}",
       "unknownTime": "Desconocida",
+      "offline": "Sin conexión",
       "connect": "Conectar",
       "disconnect": "Desconectar",
+      "connectLabel": "Conectar a «{name}»",
+      "disconnectLabel": "Desconectar de «{name}»",
+      "close": "Cerrar",
+      "closeLabel": "Cerrar el vídeo de «{name}»",
       "loadError": "No se pudo cargar la lista de edges"
     },
     "receiver": {
       "stoppedTitle": "La observación se detuvo",
       "stoppedDescription": "La cámara de origen se detuvo",
       "connecting": "Conectando…",
-      "status": "Estado: {status}",
       "connectError": "No se pudo conectar"
     },
     "broadcast": {
@@ -193,7 +287,7 @@
     },
     "lines": {
       "create": "Crear línea",
-      "edit": "Modo de edición",
+      "listLabel": "Líneas",
       "reverseForward": "Invertir dirección forward",
       "deleteSelected": "Eliminar la línea seleccionada",
       "reset": "Restablecer las líneas",
@@ -248,7 +342,13 @@
     "errors": {
       "videoSource": "No se pudo obtener la fuente de vídeo",
       "detection": "Falló la detección de personas",
-      "modelLoad": "No se pudo cargar el modelo de detección ({status}: {path})"
+      "modelLoad": "No se pudo cargar el modelo de detección ({status}: {path})",
+      "camera": {
+        "permissionDenied": "No se permite el acceso a la cámara. Permite el acceso a la cámara en la configuración del navegador.",
+        "notFound": "No se encontró ninguna cámara. Comprueba que haya una cámara conectada.",
+        "unsupported": "La cámara no está disponible en este navegador o conexión",
+        "unavailable": "No se pudo iniciar la cámara"
+      }
     },
     "devSource": {
       "title": "Fuente de vídeo",
@@ -302,7 +402,6 @@
     "staffMessage": {
       "title": "Avisos del personal",
       "ariaOpen": "Avisos del personal",
-      "ariaClose": "Cerrar los avisos",
       "empty": "No hay avisos por ahora",
       "samples": {
         "msg-2": {

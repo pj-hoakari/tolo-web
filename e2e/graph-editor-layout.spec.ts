@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
+import { waitForGraphLayout } from "./graph-layout-helpers";
 
 test.use({ viewport: { width: 1600, height: 1000 } });
 
@@ -117,8 +118,10 @@ const connect = async (
   await page.mouse.up();
 };
 
-const autoAlign = (page: Page) =>
-  page.getByRole("button", { name: "自動整列" }).click();
+const autoAlign = async (page: Page) => {
+  await page.getByRole("button", { name: "自動整列" }).click();
+  await waitForGraphLayout(page);
+};
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/event/test/management/graph/edit");
@@ -126,15 +129,26 @@ test.beforeEach(async ({ page }) => {
     page.getByRole("heading", { level: 2, name: "test ルート図編集" }),
   ).toBeVisible();
   await expect(allNodes(page)).toHaveCount(15);
+  await waitForGraphLayout(page);
 });
 
 test.describe("自動整列", () => {
   test("自動整列するとポイントが重ならず 2F が 1F の上に来て子はグループに収まる", async ({
     page,
   }) => {
-    await dragNodeBy(page, "ph_booth", 0, 160);
-    const messed = await flowBoxes(page, ["ph_booth", "ph_wall"]);
-    expect(overlaps(messed.ph_booth, messed.ph_wall)).toBe(true);
+    const before = await flowBoxes(page, ["ph_booth", "ph_wall"]);
+    await dragNodeBy(
+      page,
+      "ph_booth",
+      before.ph_wall.x - before.ph_booth.x,
+      before.ph_wall.y - before.ph_booth.y,
+    );
+    await expect
+      .poll(async () => {
+        const messed = await flowBoxes(page, ["ph_booth", "ph_wall"]);
+        return overlaps(messed.ph_booth, messed.ph_wall);
+      })
+      .toBe(true);
 
     await autoAlign(page);
 
@@ -249,6 +263,33 @@ test.describe("ドラッグでの接続", () => {
     );
 
     await expect(allEdges(page)).toHaveCount(14);
+  });
+});
+
+test.describe("プロパティパネルからの接続", () => {
+  test("選択したポイントの終点を選んで追加するとルートが追加され選択される", async ({
+    page,
+  }) => {
+    await node(page, "ph_booth").click({ position: { x: 8, y: 8 } });
+    await panel(page).getByRole("button", { name: /終点/ }).click();
+    await page.getByRole("option", { name: /壁展示/ }).click();
+    await panel(page)
+      .getByRole("button", { name: "このポイントからルートを追加" })
+      .click();
+
+    await expect(allEdges(page)).toHaveCount(15);
+    await expect(panel(page).getByRole("code")).toHaveText(/^e_/);
+    await expect(panel(page)).toContainText("ブースA⇌壁展示");
+  });
+
+  test("外部ポイントの終点の候補に外部ポイントは出ない", async ({ page }) => {
+    await node(page, "external").click();
+    await panel(page).getByRole("button", { name: /終点/ }).click();
+
+    await expect(page.getByRole("option", { name: /ブースA/ })).toBeVisible();
+    await expect(
+      page.getByRole("option", { name: /external-ph_exit/ }),
+    ).toHaveCount(0);
   });
 });
 

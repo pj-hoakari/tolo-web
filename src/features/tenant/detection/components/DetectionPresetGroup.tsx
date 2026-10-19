@@ -1,6 +1,6 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useId } from "react";
 import { useStore } from "zustand";
-import { Button } from "@/components/ui/button";
+import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
 import {
   applyNumberSetting,
   type DetectionSettings,
@@ -37,30 +37,44 @@ function DetectionPresetGroupComponent({
     [settingKey],
   );
   const value = useStore(settingsStore, selectValue);
+  const titleId = useId();
+  const selectedIndex = presets.findIndex((preset) =>
+    isSameNumberSetting(value, preset.value),
+  );
 
   return (
     <div className="flex flex-col gap-2 text-sm">
       <div className="flex items-center justify-between gap-3">
-        <span className="font-medium">{title}</span>
-        <span className="text-gray-500">{formatValue(value)}</span>
+        <span id={titleId} className="font-medium">
+          {title}
+        </span>
+        <span className="text-muted-foreground">{formatValue(value)}</span>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {presets.map((preset) => (
-          <Button
+      <ToggleButtonGroup
+        aria-labelledby={titleId}
+        selectionMode="single"
+        disallowEmptySelection
+        selectedKeys={selectedIndex === -1 ? [] : [String(selectedIndex)]}
+        onSelectionChange={(keys) => {
+          const preset = presets[Number([...keys][0])];
+          if (preset) {
+            applyNumberSetting(settingsStore, settingKey, preset.value);
+          }
+        }}
+        className="flex-wrap justify-start gap-2"
+      >
+        {presets.map((preset, index) => (
+          <Toggle
             key={`${settingKey}-${preset.value}`}
-            type="button"
-            variant={
-              isSameNumberSetting(value, preset.value) ? "default" : "outline"
-            }
+            id={String(index)}
+            variant="outline"
             size="sm"
-            onPress={() =>
-              applyNumberSetting(settingsStore, settingKey, preset.value)
-            }
+            className="selected:border-primary selected:bg-primary px-3 selected:text-primary-foreground"
           >
             {preset.label}
-          </Button>
+          </Toggle>
         ))}
-      </div>
+      </ToggleButtonGroup>
     </div>
   );
 }

@@ -21,6 +21,47 @@
     "graphEditTitle": "{tenantId} Route diagram editor",
     "backLink": "Back to management"
   },
+  "TenantManagement": {
+    "title": "{tenantId} Event management",
+    "create": {
+      "label": "Event name",
+      "submit": "Create",
+      "failed": "Could not create the event.",
+      "tenantUnavailable": "Events can't be created for this tenant. The tenant may have been archived.",
+      "tenantNotFound": "The tenant could not be found."
+    },
+    "list": {
+      "heading": "Events",
+      "loading": "Loading…",
+      "empty": "No events yet.",
+      "error": "Could not load the events.",
+      "retry": "Reload",
+      "showArchived": "Show archived"
+    },
+    "status": {
+      "draft": "Draft",
+      "open": "Open",
+      "locked": "Locked",
+      "closed": "Closed",
+      "archived": "Archived"
+    },
+    "archive": {
+      "button": "Archive",
+      "title": "Archive event",
+      "description": "Archive “{name}”? Archived events appear in this list only when “Show archived” is on, and you can restore them from there.",
+      "cancel": "Cancel",
+      "confirm": "Archive",
+      "failed": "Could not archive the event."
+    },
+    "restore": {
+      "button": "Restore",
+      "failed": "Could not restore the event."
+    },
+    "transition": {
+      "stale": "The event or tenant has changed, so the operation could not be completed. Please reload the list.",
+      "eventNotFound": "The event could not be found. Please reload the list."
+    }
+  },
   "Graph": {
     "viewer": {
       "title": "Route diagram",
@@ -70,7 +111,7 @@
       "closed": "Closed mode (no entry / exit points)"
     },
     "labelLanguage": {
-      "label": "Label language",
+      "label": "Label language (<lang>{language}</lang>)",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
@@ -81,7 +122,34 @@
       "newNodeLabel": "Point {index}",
       "addGroup": "Add group",
       "newGroupLabel": "Group {index}",
-      "autoAlign": "Auto-arrange"
+      "autoAlign": "Auto-arrange",
+      "saved": "Saved",
+      "saveFailed": "Failed to save. Please try again later.",
+      "saveInvalid": "Some parts of the route diagram can't be saved",
+      "saveUnavailable": "Could not save because the event was not found or has been archived. If it is archived, restore it before editing.",
+      "violations": {
+        "UNSPECIFIED": "The route diagram has a structural problem.",
+        "EMPTY_NODE_ID": "A point has an empty ID.",
+        "DUPLICATE_NODE_ID": "Some points share the same ID.",
+        "NODE_WITHOUT_TYPE": "A point has no type.",
+        "NON_FINITE_NODE_LAYOUT": "A point has an invalid position.",
+        "EMPTY_GROUP_ID": "A group has an empty ID.",
+        "DUPLICATE_GROUP_ID": "Some groups share the same ID.",
+        "NON_FINITE_GROUP_LAYOUT": "A group has an invalid position or size.",
+        "EXTERNAL_NODE_IN_GROUP": "An outside point is inside a group. Outside points can't belong to a group.",
+        "MISSING_GROUP": "A point belongs to a group that doesn't exist.",
+        "MISSING_PARENT_GROUP": "A group belongs to a group that doesn't exist.",
+        "GROUP_CYCLE": "Some groups are nested inside each other in a loop.",
+        "EMPTY_EDGE_ID": "A route has an empty ID.",
+        "DUPLICATE_EDGE_ID": "Some routes share the same ID.",
+        "EDGE_WITHOUT_DIRECTION": "A route has no direction.",
+        "MISSING_NODE": "A route connects to a point that doesn't exist.",
+        "EDGE_BETWEEN_EXTERNAL_NODES": "A route connects two outside points.",
+        "SELF_LOOP_EDGE": "A route starts and ends at the same point.",
+        "EXTERNAL_NODE_WITHOUT_EDGE": "An outside point has no route.",
+        "NODE_WITHOUT_ROUTE": "A point has no route.",
+        "GROUP_WITHOUT_MEMBERS": "A group is empty."
+      }
     },
     "easyConnect": {
       "fromNode": "Add route: click the point to use as the end",
@@ -109,6 +177,25 @@
       "dissolveGroup": "Ungroup (keep contents)"
     },
     "properties": {
+      "bulk": {
+        "points": "Points ({count})",
+        "edges": "Edges ({count})",
+        "mixed": "Values are mixed",
+        "result": "Changed {changed, plural, one {# element} other {# elements}}. Could not change {skipped, plural, one {# element} other {# elements}}.",
+        "reasonCount": "{reason} ({count})",
+        "reasons": {
+          "requiresDwell": "Points that do not allow dwelling cannot be destinations.",
+          "bothNotReversed": "Bidirectional edges are excluded from reversal."
+        }
+      },
+      "groupSelected": "Group selected points",
+      "deleteSelected": "Delete selected elements",
+      "deleteSelectedGroupHint": "Selected groups are dissolved; unselected contents are kept.",
+      "groupSelectionErrors": {
+        "pointsOnly": "Groups and external points cannot be grouped.",
+        "tooFewPoints": "Select at least two points.",
+        "differentParents": "Select points with the same parent."
+      },
       "selectedNodes": "Nodes: {count}",
       "selectedEdges": "Edges: {count}",
       "selectedGroups": "Groups: {count}",
@@ -123,7 +210,10 @@
       "oneway": "One-way →",
       "reverse": "Reverse direction (start ↔ end)",
       "dissolveGroup": "Ungroup",
-      "groupHint": "A logical grouping for management, such as a floor or a building. Drag points in or out to change membership. Ungrouping keeps the points inside."
+      "groupHint": "A logical grouping for management, such as a floor or a building. Drag points in or out to change membership. Ungrouping keeps the points inside.",
+      "edgeTarget": "End point",
+      "edgeTargetPlaceholder": "Select an end point",
+      "addEdge": "Add a route from this point"
     },
     "node": {
       "editLabel": "Edit the label of “{label}”",
@@ -148,21 +238,25 @@
       "error": "Connection failed"
     },
     "aliveEdges": {
-      "title": "Online edges ({count})",
+      "title": "Edges ({count})",
       "refresh": "Refresh",
       "loading": "Loading…",
-      "empty": "No edges are online",
+      "empty": "No edges",
       "lastSeen": "Last seen: {time}",
       "unknownTime": "Unknown",
+      "offline": "Offline",
       "connect": "Connect",
       "disconnect": "Disconnect",
+      "connectLabel": "Connect to “{name}”",
+      "disconnectLabel": "Disconnect from “{name}”",
+      "close": "Close",
+      "closeLabel": "Close the video from “{name}”",
       "loadError": "Failed to load the edge list"
     },
     "receiver": {
       "stoppedTitle": "Observation stopped",
       "stoppedDescription": "The source camera was stopped",
       "connecting": "Connecting…",
-      "status": "Status: {status}",
       "connectError": "Failed to connect"
     },
     "broadcast": {
@@ -193,7 +287,7 @@
     },
     "lines": {
       "create": "Add line",
-      "edit": "Edit mode",
+      "listLabel": "Lines",
       "reverseForward": "Reverse forward direction",
       "deleteSelected": "Delete selected line",
       "reset": "Reset line positions",
@@ -248,7 +342,13 @@
     "errors": {
       "videoSource": "Failed to obtain the video source",
       "detection": "Person detection failed",
-      "modelLoad": "Failed to load the detection model ({status}: {path})"
+      "modelLoad": "Failed to load the detection model ({status}: {path})",
+      "camera": {
+        "permissionDenied": "Camera access is not allowed. Allow camera access in your browser settings.",
+        "notFound": "No camera was found. Check that a camera is connected.",
+        "unsupported": "The camera is not available in this browser or connection",
+        "unavailable": "Could not start the camera"
+      }
     },
     "devSource": {
       "title": "Video source",
@@ -302,7 +402,6 @@
     "staffMessage": {
       "title": "Staff notices",
       "ariaOpen": "Staff notices",
-      "ariaClose": "Close notices",
       "empty": "No notices at the moment",
       "samples": {
         "msg-2": {

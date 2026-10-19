@@ -21,6 +21,47 @@
     "graphEditTitle": "{tenantId} 路径图编辑",
     "backLink": "返回管理页面"
   },
+  "TenantManagement": {
+    "title": "{tenantId} 活动管理",
+    "create": {
+      "label": "活动名称",
+      "submit": "创建",
+      "failed": "无法创建活动。",
+      "tenantUnavailable": "无法在此租户下创建活动。该租户可能已被归档。",
+      "tenantNotFound": "找不到该租户。"
+    },
+    "list": {
+      "heading": "活动",
+      "loading": "加载中…",
+      "empty": "暂无活动。",
+      "error": "无法获取活动列表。",
+      "retry": "重新加载",
+      "showArchived": "同时显示已归档"
+    },
+    "status": {
+      "draft": "草稿",
+      "open": "进行中",
+      "locked": "已锁定",
+      "closed": "已结束",
+      "archived": "已归档"
+    },
+    "archive": {
+      "button": "归档",
+      "title": "归档活动",
+      "description": "将归档“{name}”。归档后的活动仅在开启“同时显示已归档”时显示在列表中，并可在那里恢复。",
+      "cancel": "取消",
+      "confirm": "归档",
+      "failed": "无法归档活动。"
+    },
+    "restore": {
+      "button": "恢复",
+      "failed": "无法恢复活动。"
+    },
+    "transition": {
+      "stale": "活动或租户的状态已变化，无法完成操作。请重新加载列表。",
+      "eventNotFound": "找不到该活动。请重新加载列表。"
+    }
+  },
   "Graph": {
     "viewer": {
       "title": "路径图",
@@ -70,7 +111,7 @@
       "closed": "封闭模式（无出入口）"
     },
     "labelLanguage": {
-      "label": "标签语言",
+      "label": "标签语言（<lang>{language}</lang>）",
       "labeledPointCount": "{count}/{total}"
     },
     "editor": {
@@ -81,7 +122,34 @@
       "newNodeLabel": "节点 {index}",
       "addGroup": "添加分组",
       "newGroupLabel": "分组 {index}",
-      "autoAlign": "自动排列"
+      "autoAlign": "自动排列",
+      "saved": "已保存",
+      "saveFailed": "保存失败。请稍后重试。",
+      "saveInvalid": "有无法保存的部分",
+      "saveUnavailable": "找不到该活动或活动已归档，无法保存。如已归档，请先恢复再编辑。",
+      "violations": {
+        "UNSPECIFIED": "路径图的结构有问题。",
+        "EMPTY_NODE_ID": "有 ID 为空的节点。",
+        "DUPLICATE_NODE_ID": "有 ID 重复的节点。",
+        "NODE_WITHOUT_TYPE": "有未设置类型的节点。",
+        "NON_FINITE_NODE_LAYOUT": "有位置无效的节点。",
+        "EMPTY_GROUP_ID": "有 ID 为空的分组。",
+        "DUPLICATE_GROUP_ID": "有 ID 重复的分组。",
+        "NON_FINITE_GROUP_LAYOUT": "有位置或大小无效的分组。",
+        "EXTERNAL_NODE_IN_GROUP": "有外部节点位于分组中。外部节点不能放入分组。",
+        "MISSING_GROUP": "有节点属于不存在的分组。",
+        "MISSING_PARENT_GROUP": "有分组属于不存在的分组。",
+        "GROUP_CYCLE": "有分组之间形成了循环嵌套。",
+        "EMPTY_EDGE_ID": "有 ID 为空的路径。",
+        "DUPLICATE_EDGE_ID": "有 ID 重复的路径。",
+        "EDGE_WITHOUT_DIRECTION": "有未设置方向的路径。",
+        "MISSING_NODE": "有路径连接到不存在的节点。",
+        "EDGE_BETWEEN_EXTERNAL_NODES": "有路径连接了两个外部节点。",
+        "SELF_LOOP_EDGE": "有起点和终点相同的路径。",
+        "EXTERNAL_NODE_WITHOUT_EDGE": "有未连接路径的外部节点。",
+        "NODE_WITHOUT_ROUTE": "有未连接路径的节点。",
+        "GROUP_WITHOUT_MEMBERS": "有空的分组。"
+      }
     },
     "easyConnect": {
       "fromNode": "添加路径：点击作为终点的节点",
@@ -109,6 +177,25 @@
       "dissolveGroup": "取消分组（保留内容）"
     },
     "properties": {
+      "bulk": {
+        "points": "点（{count} 个）",
+        "edges": "箭头（{count} 个）",
+        "mixed": "值不一致",
+        "result": "已修改 {changed} 个元素。无法修改 {skipped} 个元素。",
+        "reasonCount": "{reason}（{count} 个）",
+        "reasons": {
+          "requiresDwell": "不允许停留的点无法设为目的地。",
+          "bothNotReversed": "双向箭头不进行反转。"
+        }
+      },
+      "groupSelected": "将选中点分组",
+      "deleteSelected": "删除选中元素",
+      "deleteSelectedGroupHint": "选中的分组将被解除，未选中的内容将保留。",
+      "groupSelectionErrors": {
+        "pointsOnly": "分组和外部点无法合并到新分组中。",
+        "tooFewPoints": "请选择至少两个点。",
+        "differentParents": "请选择属于同一父级的点。"
+      },
       "selectedNodes": "节点：{count} 个",
       "selectedEdges": "箭头：{count} 个",
       "selectedGroups": "分组：{count} 个",
@@ -123,7 +210,10 @@
       "oneway": "单向 →",
       "reverse": "反转方向（起点 ↔ 终点）",
       "dissolveGroup": "取消分组",
-      "groupHint": "用于管理的逻辑分组，例如楼层或建筑。拖动点即可移入或移出。取消分组后其中的点会保留。"
+      "groupHint": "用于管理的逻辑分组，例如楼层或建筑。拖动点即可移入或移出。取消分组后其中的点会保留。",
+      "edgeTarget": "终点",
+      "edgeTargetPlaceholder": "选择作为终点的节点",
+      "addEdge": "从此节点添加路径"
     },
     "node": {
       "editLabel": "编辑“{label}”的标签",
@@ -148,21 +238,25 @@
       "error": "连接失败"
     },
     "aliveEdges": {
-      "title": "运行中的边缘设备（{count}）",
+      "title": "边缘设备（{count}）",
       "refresh": "刷新",
       "loading": "加载中…",
-      "empty": "没有运行中的边缘设备",
+      "empty": "没有边缘设备",
       "lastSeen": "最后响应：{time}",
       "unknownTime": "未知",
+      "offline": "离线",
       "connect": "连接",
       "disconnect": "断开",
+      "connectLabel": "连接到“{name}”",
+      "disconnectLabel": "断开与“{name}”的连接",
+      "close": "关闭",
+      "closeLabel": "关闭“{name}”的视频",
       "loadError": "获取边缘设备列表失败"
     },
     "receiver": {
       "stoppedTitle": "观测已停止",
       "stoppedDescription": "源摄像头已停止",
       "connecting": "连接中…",
-      "status": "状态：{status}",
       "connectError": "连接失败"
     },
     "broadcast": {
@@ -193,7 +287,7 @@
     },
     "lines": {
       "create": "生成线",
-      "edit": "编辑模式",
+      "listLabel": "线列表",
       "reverseForward": "反转 forward 方向",
       "deleteSelected": "删除选中的线",
       "reset": "重置线位置",
@@ -248,7 +342,13 @@
     "errors": {
       "videoSource": "获取视频源失败",
       "detection": "人体检测处理失败",
-      "modelLoad": "加载检测模型失败（{status}: {path}）"
+      "modelLoad": "加载检测模型失败（{status}: {path}）",
+      "camera": {
+        "permissionDenied": "未允许使用摄像头。请在浏览器设置中允许访问摄像头。",
+        "notFound": "未找到摄像头。请确认摄像头已连接。",
+        "unsupported": "此浏览器或连接无法使用摄像头",
+        "unavailable": "无法启动摄像头"
+      }
     },
     "devSource": {
       "title": "视频源",
@@ -302,7 +402,6 @@
     "staffMessage": {
       "title": "工作人员通知",
       "ariaOpen": "工作人员通知",
-      "ariaClose": "关闭通知",
       "empty": "暂无通知",
       "samples": {
         "msg-2": {

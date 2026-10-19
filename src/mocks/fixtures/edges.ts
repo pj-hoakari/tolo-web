@@ -1,4 +1,4 @@
-import type { AliveEdge } from "@/features/tenant/webrtc/type";
+import type { EdgeDeviceItem } from "@/features/tenant/webrtc/type";
 import type { EdgeDevice } from "@/server/router";
 
 export const SAMPLE_TENANT_ID = "test";
@@ -34,13 +34,10 @@ export const sampleEdgeDevicesWire: EdgeDevice[] = [
   },
 ];
 
-export const sampleAliveEdges: AliveEdge[] = sampleEdgeDevicesWire
-  .filter((device) => device.online)
-  .map((device) => ({
-    edgeDeviceId: device.edgeDeviceId,
-    name: device.name,
+export const sampleEdgeDeviceItems: EdgeDeviceItem[] =
+  sampleEdgeDevicesWire.map((device) => ({
+    ...device,
     lastHeartbeatAt: device.lastHeartbeatAt
       ? new Date(device.lastHeartbeatAt)
       : null,
-    observationPoints: device.observationPoints,
   }));

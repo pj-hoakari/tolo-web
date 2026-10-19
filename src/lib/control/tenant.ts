@@ -1,5 +1,5 @@
 export function getRootDomain(): string {
-  return (process.env.NEXT_PUBLIC_ROOT_DOMAIN || "localhost").toLowerCase();
+  return (process.env.ROOT_DOMAIN || "localhost").toLowerCase();
 }
 
 const RESERVED_SUBDOMAINS = new Set(["www"]);

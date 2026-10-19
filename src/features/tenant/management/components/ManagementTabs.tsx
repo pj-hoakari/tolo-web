@@ -52,9 +52,9 @@ export function ManagementTabs({ tenantId, eventId }: Props) {
 
         <TabPanel
           id="edges"
-          className="flex h-full w-full flex-col items-center gap-4 overflow-y-auto"
+          className="flex h-full w-full flex-col items-center gap-4 overflow-y-auto px-8 py-3"
         >
-          <ConnectedEdges eventId={eventId} />
+          <ConnectedEdges tenantId={tenantId} eventId={eventId} />
         </TabPanel>
       </div>
     </Tabs>

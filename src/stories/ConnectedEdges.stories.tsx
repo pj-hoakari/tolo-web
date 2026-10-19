@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { ConnectedEdges } from "@/features/tenant/webrtc/components/ConnectedEdges";
-import { SAMPLE_EVENT_ID } from "@/mocks/fixtures/edges";
+import { FirebaseConfigProvider } from "@/features/tenant/webrtc/components/FirebaseConfigProvider";
+import { SAMPLE_EVENT_ID, SAMPLE_TENANT_ID } from "@/mocks/fixtures/edges";
 import { edgesErrorHandlers, edgesHandlers } from "@/mocks/handlers";
 import { mswBeforeEach } from "@/mocks/storybook";
 
@@ -13,9 +14,19 @@ const meta = {
     layout: "padded",
   },
   tags: ["autodocs"],
+  decorators: [
+    (Story) => (
+      <FirebaseConfigProvider
+        config={{ projectId: "demo-tolo", apiKey: "demo-tolo-web" }}
+      >
+        <Story />
+      </FirebaseConfigProvider>
+    ),
+  ],
   // 観測点一覧（/rpc の observation.listEdgeDevices）を MSW で返す
   beforeEach: mswBeforeEach,
   args: {
+    tenantId: SAMPLE_TENANT_ID,
     eventId: SAMPLE_EVENT_ID,
   },
 } satisfies Meta<typeof ConnectedEdges>;

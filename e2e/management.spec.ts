@@ -1,4 +1,8 @@
 import { expect, type Page, test } from "@playwright/test";
+import { sampleEdgeDevicesWire } from "@/mocks/fixtures/edges";
+import type { MockRouterOverrides } from "@/mocks/router";
+
+type MockOverrides = Pick<MockRouterOverrides, "devices">;
 
 const pointA = "入口";
 const pointB = "ブース前";
@@ -16,6 +20,17 @@ const nodeTransform = (page: Page, id: string) =>
   page
     .getByTestId(`rf__node-${id}`)
     .evaluate((el: HTMLElement) => el.style.transform);
+const edgeRow = (page: Page, name: string) =>
+  page
+    .getByRole("tabpanel", { name: "接続エッジ" })
+    .getByRole("listitem")
+    .filter({ hasText: name });
+const overrideMock = async (page: Page, overrides: MockOverrides) => {
+  await page.evaluate((value) => {
+    sessionStorage.setItem("msw:overrides", value);
+    window.dispatchEvent(new Event("msw:overrides"));
+  }, JSON.stringify(overrides));
+};
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/event/test/management");
@@ -231,19 +246,30 @@ test("ラベルの言語を English に切り替えるとポイントのラベ�
   await page.getByRole("menuitemradio", { name: "English" }).click();
 
   await expect(booth(page)).toContainText("Booth A");
+  await expect(
+    page.getByRole("button", { name: "ラベルの言語（English）" }),
+  ).toBeVisible();
 });
 
-test("接続エッジタブを開くと稼働中のエッジの一覧が表示される", async ({
+test("接続エッジタブを開くとオフラインの端末を含むエッジの一覧が表示される", async ({
   page,
 }) => {
   await page.getByRole("tab", { name: "接続エッジ" }).click();
 
   const tabpanel = page.getByRole("tabpanel", { name: "接続エッジ" });
-  await expect(tabpanel).toContainText("稼働中のエッジ（2）");
-  await expect(tabpanel.getByRole("listitem")).toHaveCount(2);
-  await expect(tabpanel).toContainText(edgeA);
-  await expect(tabpanel).toContainText(edgeB);
-  await expect(tabpanel).not.toContainText(offlineEdge);
+  await expect(tabpanel).toContainText("エッジ（3）");
+  const items = tabpanel.getByRole("listitem");
+  await expect(items).toHaveCount(3);
+  await expect(items.nth(0)).toContainText(edgeA);
+  await expect(items.nth(1)).toContainText(edgeB);
+  await expect(items.nth(2)).toContainText(offlineEdge);
+  await expect(items.nth(2)).toContainText("オフライン");
+  await expect(
+    tabpanel.getByRole("button", { name: `「${offlineEdge}」に接続` }),
+  ).toBeDisabled();
+  await expect(
+    tabpanel.getByRole("button", { name: `「${edgeA}」に接続` }),
+  ).toBeEnabled();
 });
 
 test("接続エッジの一覧には各エッジの最終応答時刻が表示される", async ({
@@ -260,4 +286,71 @@ test("接続エッジの一覧には各エッジの最終応答時刻が表示�
   await expect(items.filter({ hasText: edgeB })).toContainText(
     "最終応答: 19:00:05",
   );
+  await expect(items.filter({ hasText: offlineEdge })).toContainText(
+    "最終応答: 18:00:00",
+  );
+});
+
+test("未接続のエッジの行には接続ボタンだけが表示される", async ({ page }) => {
+  await page.getByRole("tab", { name: "接続エッジ" }).click();
+
+  const row = edgeRow(page, edgeA);
+  await expect(row.getByRole("button")).toHaveCount(1);
+  await expect(
+    row.getByRole("button", { name: `「${edgeA}」に接続` }),
+  ).toBeEnabled();
+});
+
+test("エッジへの接続に失敗するとその行に接続失敗と表示され接続ボタンと閉じるボタンが出る", async ({
+  page,
+}) => {
+  await page.getByRole("tab", { name: "接続エッジ" }).click();
+  const row = edgeRow(page, edgeA);
+  await row.getByRole("button", { name: `「${edgeA}」に接続` }).click();
+
+  await expect(row).toContainText("接続失敗");
+  await expect(row.getByRole("button")).toHaveCount(2);
+  await expect(
+    row.getByRole("button", { name: `「${edgeA}」に接続` }),
+  ).toBeEnabled();
+  await expect(
+    row.getByRole("button", { name: `「${edgeA}」の映像を閉じる` }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("tabpanel", { name: "接続エッジ" }).getByRole("alert"),
+  ).toBeVisible();
+});
+
+test("接続に失敗したエッジがオフラインになっても行が残り閉じるを押すと映像の枠が消えて未接続の行に戻る", async ({
+  page,
+}) => {
+  await page.getByRole("tab", { name: "接続エッジ" }).click();
+  const tabpanel = page.getByRole("tabpanel", { name: "接続エッジ" });
+  const row = edgeRow(page, edgeA);
+  await row.getByRole("button", { name: `「${edgeA}」に接続` }).click();
+  await expect(row).toContainText("接続失敗");
+
+  await overrideMock(page, {
+    devices: sampleEdgeDevicesWire.map((device) =>
+      device.name === edgeA ? { ...device, online: false } : device,
+    ),
+  });
+  await tabpanel.getByRole("button", { name: "更新" }).click();
+
+  await expect(row).toContainText("オフライン");
+  await expect(row).toContainText("接続失敗");
+  await expect(
+    row.getByRole("button", { name: `「${edgeA}」に接続` }),
+  ).toBeDisabled();
+
+  await row.getByRole("button", { name: `「${edgeA}」の映像を閉じる` }).click();
+
+  await expect(tabpanel.getByRole("alert")).toHaveCount(0);
+  await expect(tabpanel).toContainText("エッジ（3）");
+  await expect(row).toContainText("オフライン");
+  await expect(row).not.toContainText("接続失敗");
+  await expect(row.getByRole("button")).toHaveCount(1);
+  await expect(
+    row.getByRole("button", { name: `「${edgeA}」に接続` }),
+  ).toBeDisabled();
 });
