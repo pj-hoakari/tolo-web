@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
+import { waitForGraphLayout } from "./graph-layout-helpers";
 
 test.use({ viewport: { width: 1600, height: 1000 } });
 
@@ -117,8 +118,10 @@ const connect = async (
   await page.mouse.up();
 };
 
-const autoAlign = (page: Page) =>
-  page.getByRole("button", { name: "自動整列" }).click();
+const autoAlign = async (page: Page) => {
+  await page.getByRole("button", { name: "自動整列" }).click();
+  await waitForGraphLayout(page);
+};
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/event/test/management/graph/edit");
@@ -129,15 +132,26 @@ test.beforeEach(async ({ page }) => {
     }),
   ).toBeVisible();
   await expect(allNodes(page)).toHaveCount(15);
+  await waitForGraphLayout(page);
 });
 
 test.describe("自動整列", () => {
   test("自動整列するとポイントが重ならず 2F が 1F の上に来て子はグループに収まる", async ({
     page,
   }) => {
-    await dragNodeBy(page, "ph_booth", 0, 160);
-    const messed = await flowBoxes(page, ["ph_booth", "ph_wall"]);
-    expect(overlaps(messed.ph_booth, messed.ph_wall)).toBe(true);
+    const before = await flowBoxes(page, ["ph_booth", "ph_wall"]);
+    await dragNodeBy(
+      page,
+      "ph_booth",
+      before.ph_wall.x - before.ph_booth.x,
+      before.ph_wall.y - before.ph_booth.y,
+    );
+    await expect
+      .poll(async () => {
+        const messed = await flowBoxes(page, ["ph_booth", "ph_wall"]);
+        return overlaps(messed.ph_booth, messed.ph_wall);
+      })
+      .toBe(true);
 
     await autoAlign(page);
 

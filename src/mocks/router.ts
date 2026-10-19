@@ -20,6 +20,8 @@ export type MockRouterOverrides = {
   devices?: EdgeDevice[];
   /** observation.listEdgeDevices を失敗させる（status: error の確認用） */
   devicesError?: boolean;
+  /** graph.getGraph が返すグラフ（未指定なら PLACEHOLDER_GRAPH） */
+  graph?: GraphData;
   getGraphError?: boolean;
   saveGraphError?: {
     code: CommonORPCErrorCode;
@@ -43,6 +45,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
   const {
     devices = sampleEdgeDevicesWire,
     devicesError = false,
+    graph = PLACEHOLDER_GRAPH,
     getGraphError = false,
     saveGraphError,
     listEventsError = false,
@@ -68,7 +71,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           if (getGraphError) {
             throw new ORPCError("INTERNAL_SERVER_ERROR");
           }
-          return structuredClone(PLACEHOLDER_GRAPH);
+          return structuredClone(graph);
         }),
       saveGraph: os
         .input(z.object({ eventId: z.string().min(1), graph: graphDataSchema }))
