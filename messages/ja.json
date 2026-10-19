@@ -26,7 +26,9 @@
     "create": {
       "label": "イベント名",
       "submit": "作成",
-      "failed": "イベントを作成できませんでした。"
+      "failed": "イベントを作成できませんでした。",
+      "tenantUnavailable": "このテナントではイベントを作成できません。テナントがアーカイブされている可能性があります。",
+      "tenantNotFound": "テナントが見つかりませんでした。"
     },
     "list": {
       "heading": "イベント",
@@ -54,6 +56,10 @@
     "restore": {
       "button": "復元",
       "failed": "イベントを復元できませんでした。"
+    },
+    "transition": {
+      "stale": "イベントまたはテナントの状態が変わったため、操作できませんでした。一覧を再読み込みしてください。",
+      "eventNotFound": "イベントが見つかりませんでした。一覧を再読み込みしてください。"
     }
   },
   "Graph": {
@@ -119,7 +125,31 @@
       "autoAlign": "自動整列",
       "saved": "保存しました",
       "saveFailed": "保存に失敗しました。時間をおいてもう一度お試しください。",
-      "saveInvalid": "ルート図に保存できない箇所があります"
+      "saveInvalid": "ルート図に保存できない箇所があります",
+      "saveUnavailable": "イベントが見つからないか、アーカイブ済みのため保存できませんでした。アーカイブ済みの場合は復元してから編集してください。",
+      "violations": {
+        "UNSPECIFIED": "ルート図の構造に問題があります。",
+        "EMPTY_NODE_ID": "ID が空のポイントがあります。",
+        "DUPLICATE_NODE_ID": "ID が重複しているポイントがあります。",
+        "NODE_WITHOUT_TYPE": "タイプが設定されていないポイントがあります。",
+        "NON_FINITE_NODE_LAYOUT": "位置が不正なポイントがあります。",
+        "EMPTY_GROUP_ID": "ID が空のグループがあります。",
+        "DUPLICATE_GROUP_ID": "ID が重複しているグループがあります。",
+        "NON_FINITE_GROUP_LAYOUT": "位置または大きさが不正なグループがあります。",
+        "EXTERNAL_NODE_IN_GROUP": "グループに入っている外部ポイントがあります。外部ポイントはグループに入れられません。",
+        "MISSING_GROUP": "存在しないグループに属しているポイントがあります。",
+        "MISSING_PARENT_GROUP": "存在しないグループに属しているグループがあります。",
+        "GROUP_CYCLE": "入れ子が循環しているグループがあります。",
+        "EMPTY_EDGE_ID": "ID が空のルートがあります。",
+        "DUPLICATE_EDGE_ID": "ID が重複しているルートがあります。",
+        "EDGE_WITHOUT_DIRECTION": "向きが設定されていないルートがあります。",
+        "MISSING_NODE": "存在しないポイントにつながっているルートがあります。",
+        "EDGE_BETWEEN_EXTERNAL_NODES": "外部ポイント同士をつなぐルートがあります。",
+        "SELF_LOOP_EDGE": "始点と終点が同じルートがあります。",
+        "EXTERNAL_NODE_WITHOUT_EDGE": "ルートがつながっていない外部ポイントがあります。",
+        "NODE_WITHOUT_ROUTE": "ルートがつながっていないポイントがあります。",
+        "GROUP_WITHOUT_MEMBERS": "中身が空のグループがあります。"
+      }
     },
     "easyConnect": {
       "fromNode": "ルートを追加: 終点にするポイントをクリック",

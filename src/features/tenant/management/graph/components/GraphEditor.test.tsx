@@ -10,6 +10,7 @@ import {
 import { HttpResponse, http } from "msw";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createOrpcHandlers } from "@/mocks/handlers";
+import { MOCK_SERVER_MESSAGE } from "@/mocks/router";
 import { server } from "@/mocks/server";
 import { IntlTestProvider } from "@/test/IntlTestProvider";
 import { GraphEditor } from "./GraphEditor";
@@ -43,12 +44,11 @@ async function renderEditor() {
 }
 
 describe("GraphEditor の保存", () => {
-  it("検証エラーを表示し、原因のポイントを選択する", async () => {
-    const message = 'invalid graph document: point "ph_hall2f" has no route';
+  it("検証エラーを違反の種類の文言で表示し、原因のポイントを選択する", async () => {
     server.use(
       ...createOrpcHandlers({
         saveGraphError: {
-          message,
+          code: "BAD_REQUEST",
           violations: [
             {
               kind: "NODE_WITHOUT_ROUTE",
@@ -67,7 +67,10 @@ describe("GraphEditor の保存", () => {
     expect(
       within(alert).getByText("ルート図に保存できない箇所があります"),
     ).toBeTruthy();
-    expect(within(alert).getByText(message)).toBeTruthy();
+    expect(
+      within(alert).getByText("ルートがつながっていないポイントがあります。"),
+    ).toBeTruthy();
+    expect(within(alert).queryByText(MOCK_SERVER_MESSAGE)).toBeNull();
     expect(
       (screen.getByRole("textbox", { name: /ラベル/ }) as HTMLInputElement)
         .value,
@@ -78,7 +81,7 @@ describe("GraphEditor の保存", () => {
     server.use(
       ...createOrpcHandlers({
         saveGraphError: {
-          message: "invalid graph document",
+          code: "BAD_REQUEST",
           violations: [
             {
               kind: "NODE_WITHOUT_ROUTE",

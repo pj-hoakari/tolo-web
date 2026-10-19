@@ -1,5 +1,7 @@
+import { ORPCError } from "@orpc/client";
 import { describe, expect, it } from "vitest";
 import { createOrpcHandlers } from "@/mocks/handlers";
+import { MOCK_SERVER_MESSAGE } from "@/mocks/router";
 import { server } from "@/mocks/server";
 import { GraphValidationError, saveGraph } from "./api";
 import type { GraphViolation } from "./graphDataSchema";
@@ -28,23 +30,22 @@ describe("saveGraph", () => {
     ];
     server.use(
       ...createOrpcHandlers({
-        saveGraphError: { message: "invalid graph document", violations },
+        saveGraphError: { code: "BAD_REQUEST", violations },
       }),
     );
 
     const error = await save("e");
 
     expect(error).toBeInstanceOf(GraphValidationError);
-    expect(error).toMatchObject({
-      message: "invalid graph document",
-      violations,
-    });
+    expect(error).toMatchObject({ violations });
+    expect((error as Error).message).not.toContain(MOCK_SERVER_MESSAGE);
   });
 
-  it("違反の詳細がない拒否では違反を持たない", async () => {
+  it("違反の詳細がない拒否は GraphValidationError にせずそのまま投げる", async () => {
     const error = await save("");
 
-    expect(error).toBeInstanceOf(GraphValidationError);
-    expect(error).toMatchObject({ violations: [] });
+    expect(error).not.toBeInstanceOf(GraphValidationError);
+    expect(error).toBeInstanceOf(ORPCError);
+    expect(error).toMatchObject({ code: "BAD_REQUEST" });
   });
 });

@@ -26,7 +26,9 @@
     "create": {
       "label": "이벤트 이름",
       "submit": "만들기",
-      "failed": "이벤트를 만들 수 없습니다."
+      "failed": "이벤트를 만들 수 없습니다.",
+      "tenantUnavailable": "이 테넌트에서는 이벤트를 만들 수 없습니다. 테넌트가 보관되었을 수 있습니다.",
+      "tenantNotFound": "테넌트를 찾을 수 없습니다."
     },
     "list": {
       "heading": "이벤트",
@@ -54,6 +56,10 @@
     "restore": {
       "button": "복원",
       "failed": "이벤트를 복원할 수 없습니다."
+    },
+    "transition": {
+      "stale": "이벤트 또는 테넌트의 상태가 바뀌어 작업을 완료할 수 없습니다. 목록을 다시 불러와 주세요.",
+      "eventNotFound": "이벤트를 찾을 수 없습니다. 목록을 다시 불러와 주세요."
     }
   },
   "Graph": {
@@ -119,7 +125,31 @@
       "autoAlign": "자동 정렬",
       "saved": "저장했습니다",
       "saveFailed": "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
-      "saveInvalid": "저장할 수 없는 부분이 있습니다"
+      "saveInvalid": "저장할 수 없는 부분이 있습니다",
+      "saveUnavailable": "이벤트를 찾을 수 없거나 보관된 상태여서 저장하지 못했습니다. 보관된 경우 복원한 후 편집해 주세요.",
+      "violations": {
+        "UNSPECIFIED": "경로도의 구조에 문제가 있습니다.",
+        "EMPTY_NODE_ID": "ID가 비어 있는 지점이 있습니다.",
+        "DUPLICATE_NODE_ID": "ID가 중복된 지점이 있습니다.",
+        "NODE_WITHOUT_TYPE": "유형이 설정되지 않은 지점이 있습니다.",
+        "NON_FINITE_NODE_LAYOUT": "위치가 올바르지 않은 지점이 있습니다.",
+        "EMPTY_GROUP_ID": "ID가 비어 있는 그룹이 있습니다.",
+        "DUPLICATE_GROUP_ID": "ID가 중복된 그룹이 있습니다.",
+        "NON_FINITE_GROUP_LAYOUT": "위치나 크기가 올바르지 않은 그룹이 있습니다.",
+        "EXTERNAL_NODE_IN_GROUP": "그룹에 들어 있는 외부 지점이 있습니다. 외부 지점은 그룹에 넣을 수 없습니다.",
+        "MISSING_GROUP": "존재하지 않는 그룹에 속한 지점이 있습니다.",
+        "MISSING_PARENT_GROUP": "존재하지 않는 그룹에 속한 그룹이 있습니다.",
+        "GROUP_CYCLE": "서로를 순환하며 포함하는 그룹이 있습니다.",
+        "EMPTY_EDGE_ID": "ID가 비어 있는 경로가 있습니다.",
+        "DUPLICATE_EDGE_ID": "ID가 중복된 경로가 있습니다.",
+        "EDGE_WITHOUT_DIRECTION": "방향이 설정되지 않은 경로가 있습니다.",
+        "MISSING_NODE": "존재하지 않는 지점에 연결된 경로가 있습니다.",
+        "EDGE_BETWEEN_EXTERNAL_NODES": "외부 지점끼리 연결하는 경로가 있습니다.",
+        "SELF_LOOP_EDGE": "시작점과 끝점이 같은 경로가 있습니다.",
+        "EXTERNAL_NODE_WITHOUT_EDGE": "경로가 연결되지 않은 외부 지점이 있습니다.",
+        "NODE_WITHOUT_ROUTE": "경로가 연결되지 않은 지점이 있습니다.",
+        "GROUP_WITHOUT_MEMBERS": "비어 있는 그룹이 있습니다."
+      }
     },
     "easyConnect": {
       "fromNode": "경로 추가: 끝점으로 사용할 지점을 클릭하세요",
