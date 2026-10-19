@@ -1,11 +1,11 @@
-import { ArrowLeftRight, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ArrowLeftRight, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { memo, useCallback } from "react";
 import { useStore } from "zustand";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/field";
 import { Input, TextField } from "@/components/ui/textfield";
-import { Toggle } from "@/components/ui/toggle";
+import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
 import {
   applyCountingLines,
   DEFAULT_COUNTING_LINES,
@@ -69,15 +69,40 @@ function DetectionLineCreationModeToggleComponent({
   const t = useTranslations("Detection.lines");
 
   return (
-    <Toggle
-      variant="outline"
-      size="sm"
-      isSelected={lineCreationMode}
-      onChange={(isSelected) => setLineCreationMode(viewStateStore, isSelected)}
+    <ToggleButtonGroup
+      aria-label={t("modeLabel")}
+      selectionMode="single"
+      disallowEmptySelection
+      selectedKeys={[lineCreationMode ? "create" : "edit"]}
+      onSelectionChange={(keys) => {
+        if (keys.has("create")) {
+          setLineCreationMode(viewStateStore, true);
+        } else if (keys.has("edit")) {
+          setEditingLine(
+            viewStateStore,
+            viewStateStore.getState().selectedLineId,
+          );
+        }
+      }}
+      className="w-full rounded-lg border border-input bg-muted p-1 sm:w-auto"
     >
-      <Plus className="mr-2 size-4" />
-      {t("create")}
-    </Toggle>
+      <Toggle
+        id="create"
+        size="sm"
+        className="flex-1 gap-2 whitespace-nowrap selected:bg-primary px-3 selected:text-primary-foreground selected:shadow-sm"
+      >
+        <Plus aria-hidden="true" className="size-4" />
+        {t("create")}
+      </Toggle>
+      <Toggle
+        id="edit"
+        size="sm"
+        className="flex-1 gap-2 whitespace-nowrap selected:bg-primary px-3 selected:text-primary-foreground selected:shadow-sm"
+      >
+        <Pencil aria-hidden="true" className="size-4" />
+        {t("edit")}
+      </Toggle>
+    </ToggleButtonGroup>
   );
 }
 

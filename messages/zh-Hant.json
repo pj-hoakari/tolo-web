@@ -286,6 +286,7 @@
       "close": "關閉進階設定"
     },
     "lines": {
+      "modeLabel": "線條操作模式",
       "defaultName": "線 {index}",
       "editLine": "編輯{name}",
       "stopEditingLine": "停止編輯{name}",

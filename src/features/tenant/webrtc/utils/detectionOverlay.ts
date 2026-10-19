@@ -67,11 +67,15 @@ export function drawCountingLine(
   width: number,
   isHighlighted = false,
 ): void {
-  const lineWidth = Math.max(isHighlighted ? 4 : 3, width / 320);
-  const lineColor = isHighlighted ? "#22d3ee" : "#fbbf24";
+  context.save();
+  const lineWidth = Math.max(3, width / 320) * (isHighlighted ? 1.5 : 1);
+  const lineColor = isHighlighted ? "#fbbf24" : "#f8fafc";
+  context.lineCap = "round";
+  context.lineJoin = "round";
   const strokeVisiblePath = () => {
-    context.lineWidth = lineWidth + 4;
-    context.strokeStyle = "rgba(3, 7, 18, 0.9)";
+    // 明るい映像でも輪郭を保ち、色だけに頼らず編集対象を見分けられるようにする。
+    context.lineWidth = lineWidth + Math.max(3, width / 480);
+    context.strokeStyle = "rgba(15, 23, 42, 0.85)";
     context.stroke();
     context.lineWidth = lineWidth;
     context.strokeStyle = lineColor;
@@ -141,40 +145,23 @@ export function drawCountingLine(
   }
 
   const handleRadius = Math.max(isHighlighted ? 8 : 6, width / 96);
-  context.beginPath();
-  context.arc(
-    countingLine.p1.x,
-    countingLine.p1.y,
-    handleRadius,
-    0,
-    Math.PI * 2,
-  );
-  context.arc(
-    countingLine.p2.x,
-    countingLine.p2.y,
-    handleRadius,
-    0,
-    Math.PI * 2,
-  );
-  context.fillStyle = "rgba(3, 7, 18, 0.9)";
-  context.fill();
-  context.beginPath();
-  context.arc(
-    countingLine.p1.x,
-    countingLine.p1.y,
-    Math.max(3, handleRadius - 3),
-    0,
-    Math.PI * 2,
-  );
-  context.arc(
-    countingLine.p2.x,
-    countingLine.p2.y,
-    Math.max(3, handleRadius - 3),
-    0,
-    Math.PI * 2,
-  );
   context.fillStyle = lineColor;
-  context.fill();
+  for (const point of [countingLine.p1, countingLine.p2]) {
+    context.beginPath();
+    context.arc(point.x, point.y, handleRadius, 0, Math.PI * 2);
+    context.fill();
+    context.lineWidth = Math.max(2, width / 480);
+    context.strokeStyle = "#0f172a";
+    context.stroke();
+    if (isHighlighted) {
+      context.beginPath();
+      context.arc(point.x, point.y, handleRadius * 0.35, 0, Math.PI * 2);
+      context.fillStyle = "#0f172a";
+      context.fill();
+      context.fillStyle = lineColor;
+    }
+  }
+  context.restore();
 }
 
 export function drawDetectionOverlay(

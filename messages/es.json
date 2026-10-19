@@ -286,6 +286,7 @@
       "close": "Cerrar ajustes avanzados"
     },
     "lines": {
+      "modeLabel": "Modo de interacción con líneas",
       "defaultName": "Línea {index}",
       "editLine": "Editar {name}",
       "stopEditingLine": "Dejar de editar {name}",

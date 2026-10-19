@@ -286,6 +286,7 @@
       "close": "उन्नत सेटिङ बन्द गर्नुहोस्"
     },
     "lines": {
+      "modeLabel": "लाइन सञ्चालन मोड",
       "defaultName": "लाइन {index}",
       "editLine": "{name} सम्पादन गर्नुहोस्",
       "stopEditingLine": "{name} सम्पादन गर्न रोक्नुहोस्",

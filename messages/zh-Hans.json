@@ -286,6 +286,7 @@
       "close": "关闭高级设置"
     },
     "lines": {
+      "modeLabel": "线条操作模式",
       "defaultName": "线 {index}",
       "editLine": "编辑{name}",
       "stopEditingLine": "停止编辑{name}",
