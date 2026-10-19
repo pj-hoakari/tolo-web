@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import type { MockRouterOverrides } from "@/mocks/router";
+import { MOCK_SERVER_MESSAGE, type MockRouterOverrides } from "@/mocks/router";
 
 test.use({ viewport: { width: 1600, height: 1000 } });
 
@@ -75,13 +75,12 @@ test("保存を押すと編集後のグラフを送り保存しましたと表�
   await expect(saveError(page)).toHaveCount(0);
 });
 
-test("保存が構造検証で弾かれると理由を表示し該当するポイントを選択する", async ({
+test("保存が構造検証で弾かれると違反の種類ごとの理由を表示し該当するポイントを選択する", async ({
   page,
 }) => {
-  const message = 'point "ph_booth" has no route';
   await open(page, {
     saveGraphError: {
-      message,
+      code: "BAD_REQUEST",
       violations: [
         {
           kind: "NODE_WITHOUT_ROUTE",
@@ -98,10 +97,81 @@ test("保存が構造検証で弾かれると理由を表示し該当するポ�
 
   await saveButton(page).click();
 
-  await expect(saveError(page)).toContainText(
+  await expect(saveError(page).locator("p")).toHaveText([
     "ルート図に保存できない箇所があります",
-  );
-  await expect(saveError(page)).toContainText(message);
+    "ルートがつながっていないポイントがあります。",
+  ]);
+  await expect(page.getByText(MOCK_SERVER_MESSAGE)).toHaveCount(0);
   await expect(panel(page).getByRole("code")).toHaveText("ph_booth");
   await expect(page.getByRole("status")).not.toHaveText("保存しました");
 });
+
+test("同じ種類の違反は理由を 1 行にまとめ、知らない種類の違反は汎用の理由で表示する", async ({
+  page,
+}) => {
+  await open(page, {
+    saveGraphError: {
+      code: "BAD_REQUEST",
+      violations: [
+        {
+          kind: "NODE_WITHOUT_ROUTE",
+          elementKind: "node",
+          elementId: "ph_booth",
+          relatedIds: [],
+        },
+        {
+          kind: "NODE_WITHOUT_ROUTE",
+          elementKind: "node",
+          elementId: "ph_exit",
+          relatedIds: [],
+        },
+        {
+          kind: "SELF_LOOP_EDGE",
+          elementKind: "edge",
+          elementId: "ph_e1",
+          relatedIds: [],
+        },
+        {
+          kind: "KIND_FROM_A_NEWER_SERVER",
+          elementKind: null,
+          elementId: "",
+          relatedIds: [],
+        },
+      ],
+    },
+  });
+
+  await saveButton(page).click();
+
+  await expect(saveError(page).locator("p")).toHaveText([
+    "ルート図に保存できない箇所があります",
+    "ルートがつながっていないポイントがあります。",
+    "始点と終点が同じルートがあります。",
+    "ルート図の構造に問題があります。",
+  ]);
+  await expect(page.getByText(MOCK_SERVER_MESSAGE)).toHaveCount(0);
+});
+
+for (const { name, code, message } of [
+  {
+    name: "イベントが見つからないかアーカイブ済みで保存できないと、復元してから編集するよう表示する",
+    code: "PRECONDITION_FAILED",
+    message:
+      "イベントが見つからないか、アーカイブ済みのため保存できませんでした。アーカイブ済みの場合は復元してから編集してください。",
+  },
+  {
+    name: "違反の詳細がないまま保存が拒否されると、汎用の保存失敗を表示する",
+    code: "BAD_REQUEST",
+    message: "保存に失敗しました。時間をおいてもう一度お試しください。",
+  },
+] as const) {
+  test(name, async ({ page }) => {
+    await open(page, { saveGraphError: { code } });
+
+    await saveButton(page).click();
+
+    await expect(saveError(page)).toHaveText(message);
+    await expect(page.getByText(MOCK_SERVER_MESSAGE)).toHaveCount(0);
+    await expect(page.getByRole("status")).not.toHaveText("保存しました");
+  });
+}

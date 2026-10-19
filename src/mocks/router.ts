@@ -1,3 +1,4 @@
+import type { CommonORPCErrorCode } from "@orpc/client";
 import { ORPCError, os } from "@orpc/server";
 import { z } from "zod";
 import {
@@ -20,12 +21,17 @@ export type MockRouterOverrides = {
   /** observation.listEdgeDevices を失敗させる（status: error の確認用） */
   devicesError?: boolean;
   getGraphError?: boolean;
-  saveGraphError?: { message: string; violations: GraphViolation[] };
+  saveGraphError?: {
+    code: CommonORPCErrorCode;
+    violations?: GraphViolation[];
+  };
   listEventsError?: boolean;
-  createEventError?: string;
-  archiveEventError?: string;
-  restoreEventError?: string;
+  createEventError?: CommonORPCErrorCode;
+  archiveEventError?: CommonORPCErrorCode;
+  restoreEventError?: CommonORPCErrorCode;
 };
+
+export const MOCK_SERVER_MESSAGE = "message from the mock server";
 
 /**
  * 本物の `@/server/router` と同じ shape のモック router。
@@ -68,9 +74,10 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
         .input(z.object({ eventId: z.string().min(1), graph: graphDataSchema }))
         .handler(async (): Promise<void> => {
           if (saveGraphError !== undefined) {
-            throw new ORPCError("BAD_REQUEST", {
-              message: saveGraphError.message,
-              data: { violations: saveGraphError.violations },
+            const { code, violations } = saveGraphError;
+            throw new ORPCError(code, {
+              message: MOCK_SERVER_MESSAGE,
+              data: violations && { violations },
             });
           }
         }),
@@ -114,7 +121,9 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
         )
         .handler(async ({ input }): Promise<TenantEvent> => {
           if (createEventError !== undefined) {
-            throw new ORPCError("BAD_REQUEST", { message: createEventError });
+            throw new ORPCError(createEventError, {
+              message: MOCK_SERVER_MESSAGE,
+            });
           }
           const event: TenantEvent = {
             eventId: (nextEventNumber++).toString(16).padStart(16, "0"),
@@ -128,8 +137,8 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
         .input(z.object({ eventId: z.string().min(1) }))
         .handler(async ({ input }): Promise<TenantEvent> => {
           if (archiveEventError !== undefined) {
-            throw new ORPCError("PRECONDITION_FAILED", {
-              message: archiveEventError,
+            throw new ORPCError(archiveEventError, {
+              message: MOCK_SERVER_MESSAGE,
             });
           }
           const event = events.find((e) => e.eventId === input.eventId);
@@ -148,8 +157,8 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
         .input(z.object({ eventId: z.string().min(1) }))
         .handler(async ({ input }): Promise<TenantEvent> => {
           if (restoreEventError !== undefined) {
-            throw new ORPCError("PRECONDITION_FAILED", {
-              message: restoreEventError,
+            throw new ORPCError(restoreEventError, {
+              message: MOCK_SERVER_MESSAGE,
             });
           }
           const event = events.find((e) => e.eventId === input.eventId);

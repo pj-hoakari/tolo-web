@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
-import { useTranslations } from "next-intl";
+import { useMessages, useTranslations } from "next-intl";
 import { type Ref, useEffect, useImperativeHandle, useState } from "react";
 import {
   type GraphKey,
@@ -9,6 +9,7 @@ import {
   saveGraph,
   useGraph,
 } from "@/features/graph";
+import { errorMessageKey } from "@/lib/errorMessageKey";
 import { useGraphEditor } from "../hooks/useGraphEditor";
 import type { GraphData } from "../type";
 import { FIT_VIEW_OPTIONS, GraphCanvas } from "./GraphCanvas";
@@ -30,8 +31,18 @@ type SaveState =
 
 const SAVED_STATUS_MS = 3000;
 
+const SAVE_ERROR_MESSAGES = {
+  byCode: { PRECONDITION_FAILED: "saveUnavailable" },
+  fallback: "saveFailed",
+} as const;
+
 function SaveErrorAlert({ error }: { error: unknown }) {
   const t = useTranslations("Graph.editor");
+  const violationMessages = useMessages().Graph.editor.violations;
+  const violationKey = (kind: string) =>
+    Object.hasOwn(violationMessages, kind)
+      ? (kind as keyof typeof violationMessages)
+      : "UNSPECIFIED";
   return (
     <div
       role="alert"
@@ -40,10 +51,16 @@ function SaveErrorAlert({ error }: { error: unknown }) {
       {error instanceof GraphValidationError ? (
         <>
           <p className="font-semibold">{t("saveInvalid")}</p>
-          <p>{error.message}</p>
+          {[...new Set(error.violations.map((v) => violationKey(v.kind)))].map(
+            (key) => (
+              <p key={key}>{t(`violations.${key}`)}</p>
+            ),
+          )}
         </>
       ) : (
-        <p className="font-semibold">{t("saveFailed")}</p>
+        <p className="font-semibold">
+          {t(errorMessageKey(error, SAVE_ERROR_MESSAGES))}
+        </p>
       )}
     </div>
   );

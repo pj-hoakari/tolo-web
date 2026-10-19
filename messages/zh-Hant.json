@@ -26,7 +26,9 @@
     "create": {
       "label": "活動名稱",
       "submit": "建立",
-      "failed": "無法建立活動。"
+      "failed": "無法建立活動。",
+      "tenantUnavailable": "無法在此租戶下建立活動。該租戶可能已被封存。",
+      "tenantNotFound": "找不到該租戶。"
     },
     "list": {
       "heading": "活動",
@@ -54,6 +56,10 @@
     "restore": {
       "button": "還原",
       "failed": "無法還原活動。"
+    },
+    "transition": {
+      "stale": "活動或租戶的狀態已變更，無法完成操作。請重新載入列表。",
+      "eventNotFound": "找不到該活動。請重新載入列表。"
     }
   },
   "Graph": {
@@ -119,7 +125,31 @@
       "autoAlign": "自動排列",
       "saved": "已儲存",
       "saveFailed": "儲存失敗。請稍後再試。",
-      "saveInvalid": "有無法儲存的部分"
+      "saveInvalid": "有無法儲存的部分",
+      "saveUnavailable": "找不到該活動或活動已封存，無法儲存。如已封存，請先還原再編輯。",
+      "violations": {
+        "UNSPECIFIED": "路徑圖的結構有問題。",
+        "EMPTY_NODE_ID": "有 ID 為空的節點。",
+        "DUPLICATE_NODE_ID": "有 ID 重複的節點。",
+        "NODE_WITHOUT_TYPE": "有未設定類型的節點。",
+        "NON_FINITE_NODE_LAYOUT": "有位置無效的節點。",
+        "EMPTY_GROUP_ID": "有 ID 為空的群組。",
+        "DUPLICATE_GROUP_ID": "有 ID 重複的群組。",
+        "NON_FINITE_GROUP_LAYOUT": "有位置或大小無效的群組。",
+        "EXTERNAL_NODE_IN_GROUP": "有外部節點位於群組中。外部節點不能放入群組。",
+        "MISSING_GROUP": "有節點屬於不存在的群組。",
+        "MISSING_PARENT_GROUP": "有群組屬於不存在的群組。",
+        "GROUP_CYCLE": "有群組之間形成了循環巢狀。",
+        "EMPTY_EDGE_ID": "有 ID 為空的路徑。",
+        "DUPLICATE_EDGE_ID": "有 ID 重複的路徑。",
+        "EDGE_WITHOUT_DIRECTION": "有未設定方向的路徑。",
+        "MISSING_NODE": "有路徑連接到不存在的節點。",
+        "EDGE_BETWEEN_EXTERNAL_NODES": "有路徑連接了兩個外部節點。",
+        "SELF_LOOP_EDGE": "有起點和終點相同的路徑。",
+        "EXTERNAL_NODE_WITHOUT_EDGE": "有未連接路徑的外部節點。",
+        "NODE_WITHOUT_ROUTE": "有未連接路徑的節點。",
+        "GROUP_WITHOUT_MEMBERS": "有空的群組。"
+      }
     },
     "easyConnect": {
       "fromNode": "新增路徑：點擊作為終點的節點",

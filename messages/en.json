@@ -26,7 +26,9 @@
     "create": {
       "label": "Event name",
       "submit": "Create",
-      "failed": "Could not create the event."
+      "failed": "Could not create the event.",
+      "tenantUnavailable": "Events can't be created for this tenant. The tenant may have been archived.",
+      "tenantNotFound": "The tenant could not be found."
     },
     "list": {
       "heading": "Events",
@@ -54,6 +56,10 @@
     "restore": {
       "button": "Restore",
       "failed": "Could not restore the event."
+    },
+    "transition": {
+      "stale": "The event or tenant has changed, so the operation could not be completed. Please reload the list.",
+      "eventNotFound": "The event could not be found. Please reload the list."
     }
   },
   "Graph": {
@@ -119,7 +125,31 @@
       "autoAlign": "Auto-arrange",
       "saved": "Saved",
       "saveFailed": "Failed to save. Please try again later.",
-      "saveInvalid": "Some parts of the route diagram can't be saved"
+      "saveInvalid": "Some parts of the route diagram can't be saved",
+      "saveUnavailable": "Could not save because the event was not found or has been archived. If it is archived, restore it before editing.",
+      "violations": {
+        "UNSPECIFIED": "The route diagram has a structural problem.",
+        "EMPTY_NODE_ID": "A point has an empty ID.",
+        "DUPLICATE_NODE_ID": "Some points share the same ID.",
+        "NODE_WITHOUT_TYPE": "A point has no type.",
+        "NON_FINITE_NODE_LAYOUT": "A point has an invalid position.",
+        "EMPTY_GROUP_ID": "A group has an empty ID.",
+        "DUPLICATE_GROUP_ID": "Some groups share the same ID.",
+        "NON_FINITE_GROUP_LAYOUT": "A group has an invalid position or size.",
+        "EXTERNAL_NODE_IN_GROUP": "An outside point is inside a group. Outside points can't belong to a group.",
+        "MISSING_GROUP": "A point belongs to a group that doesn't exist.",
+        "MISSING_PARENT_GROUP": "A group belongs to a group that doesn't exist.",
+        "GROUP_CYCLE": "Some groups are nested inside each other in a loop.",
+        "EMPTY_EDGE_ID": "A route has an empty ID.",
+        "DUPLICATE_EDGE_ID": "Some routes share the same ID.",
+        "EDGE_WITHOUT_DIRECTION": "A route has no direction.",
+        "MISSING_NODE": "A route connects to a point that doesn't exist.",
+        "EDGE_BETWEEN_EXTERNAL_NODES": "A route connects two outside points.",
+        "SELF_LOOP_EDGE": "A route starts and ends at the same point.",
+        "EXTERNAL_NODE_WITHOUT_EDGE": "An outside point has no route.",
+        "NODE_WITHOUT_ROUTE": "A point has no route.",
+        "GROUP_WITHOUT_MEMBERS": "A group is empty."
+      }
     },
     "easyConnect": {
       "fromNode": "Add route: click the point to use as the end",

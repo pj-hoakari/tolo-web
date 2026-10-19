@@ -4,8 +4,9 @@ import { useTranslations } from "next-intl";
 import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { JollyTextField } from "@/components/ui/textfield";
+import { errorMessageKey } from "@/lib/errorMessageKey";
 import { orpc } from "@/lib/orpc";
-import { serverErrorMessage } from "./serverErrorMessage";
+import { EVENT_ERROR_MESSAGES } from "./errorMessages";
 
 type Props = {
   tenantId: string;
@@ -14,6 +15,7 @@ type Props = {
 
 export function CreateEventForm({ tenantId, onCreated }: Props) {
   const t = useTranslations("TenantManagement.create");
+  const tError = useTranslations("TenantManagement");
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export function CreateEventForm({ tenantId, onCreated }: Props) {
       setName("");
       onCreated();
     } catch (err) {
-      setError(serverErrorMessage(err) ?? t("failed"));
+      setError(tError(errorMessageKey(err, EVENT_ERROR_MESSAGES.create)));
     } finally {
       setSubmitting(false);
     }
