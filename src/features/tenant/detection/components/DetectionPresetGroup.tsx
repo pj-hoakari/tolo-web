@@ -48,7 +48,7 @@ function DetectionPresetGroupComponent({
         <span id={titleId} className="font-medium">
           {title}
         </span>
-        <span className="text-gray-500">{formatValue(value)}</span>
+        <span className="text-muted-foreground">{formatValue(value)}</span>
       </div>
       <ToggleButtonGroup
         aria-labelledby={titleId}

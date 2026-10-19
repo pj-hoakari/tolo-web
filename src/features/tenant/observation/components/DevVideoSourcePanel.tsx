@@ -62,7 +62,7 @@ function DevVideoSourcePanelComponent({
   };
 
   return (
-    <section className="fixed right-4 bottom-4 z-50 flex w-72 flex-col gap-2 rounded border border-gray-300 border-dashed p-3 text-sm">
+    <section className="fixed right-4 bottom-4 z-50 flex w-72 flex-col gap-2 rounded border border-border border-dashed bg-background p-3 text-sm">
       <Disclosure defaultExpanded className="min-w-0">
         <DisclosureHeader className="py-0 font-bold text-xs">
           {t("title")}
