@@ -8,6 +8,7 @@ import {
   normalizeCountingLineDirection,
   selectLine,
   setEditingLine,
+  setLineCreationMode,
 } from "../stores/detectionStore";
 
 type LineDragTarget = "p1" | "p2" | "line";
@@ -140,6 +141,7 @@ export function useCountingLineEditor({
   viewStateStore,
 }: UseCountingLineEditorParams): CountingLineEditorHandlers {
   const dragStateRef = useRef<DragState | null>(null);
+  const createdLineToAdjustRef = useRef<string | null>(null);
 
   const getPointerPoint = useCallback(
     (event: PointerEvent<HTMLCanvasElement>): DetectionPoint | null => {
@@ -172,6 +174,7 @@ export function useCountingLineEditor({
       };
 
       if (viewStateStore.getState().lineCreationMode) {
+        createdLineToAdjustRef.current = null;
         event.currentTarget.setPointerCapture(event.pointerId);
         const lineId = createLineId(countingLines);
         const nextLines = [
@@ -191,6 +194,9 @@ export function useCountingLineEditor({
       }
 
       const { editingLineId } = viewStateStore.getState();
+      if (editingLineId !== createdLineToAdjustRef.current) {
+        createdLineToAdjustRef.current = null;
+      }
       if (!editingLineId) {
         return;
       }
@@ -327,7 +333,21 @@ export function useCountingLineEditor({
         // 生成したラインを選択したまま編集へ戻し、すぐ微調整できるようにする。
         if (viewStateStore) {
           setEditingLine(viewStateStore, dragState.lineId);
+          createdLineToAdjustRef.current = dragState.lineId;
         }
+      }
+
+      if (
+        dragState.kind === "edit" &&
+        createdLineToAdjustRef.current === dragState.lineId &&
+        event.type !== "pointercancel" &&
+        canvas &&
+        point &&
+        distance(dragState.startPoint, point) > 0 &&
+        viewStateStore?.getState().editingLineId === dragState.lineId
+      ) {
+        createdLineToAdjustRef.current = null;
+        setLineCreationMode(viewStateStore, true);
       }
 
       event.currentTarget.releasePointerCapture(event.pointerId);
