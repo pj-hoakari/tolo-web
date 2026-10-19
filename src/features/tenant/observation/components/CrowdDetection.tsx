@@ -80,9 +80,11 @@ export function CrowdDetection({
   return (
     <div className="flex w-full flex-col items-center gap-4">
       <ObservationLockButton />
-      <div className="flex w-full max-w-3xl justify-end px-4 sm:px-0">
-        <DetectionLineCreationModeToggle viewStateStore={viewStateStore} />
-      </div>
+      {status === "detecting" && (
+        <div className="flex w-full max-w-3xl justify-end px-4 sm:px-0">
+          <DetectionLineCreationModeToggle viewStateStore={viewStateStore} />
+        </div>
+      )}
       {DEV_VIDEO_SOURCE_ENABLED && (
         <DevVideoSourcePanel
           status={status}
