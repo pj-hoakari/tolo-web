@@ -87,7 +87,10 @@ const holdModelRequest = async (context: BrowserContext) => {
 test.beforeEach(async ({ page }) => {
   await page.goto("/event/test/observation");
   await expect(
-    page.getByRole("heading", { level: 2, name: "test 観測ページ" }),
+    page.getByRole("heading", {
+      level: 2,
+      name: "0123456789abcdef 観測ページ",
+    }),
   ).toBeVisible();
 });
 
@@ -637,6 +640,9 @@ test("エッジデバイス付きの URL でも観測ページが表示される
   await page.goto("/event/test/observation/0123456789abcdef");
 
   await expect(
-    page.getByRole("heading", { level: 2, name: "test 観測ページ" }),
+    page.getByRole("heading", {
+      level: 2,
+      name: "0123456789abcdef 観測ページ",
+    }),
   ).toBeVisible();
 });

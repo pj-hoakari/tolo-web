@@ -32,7 +32,10 @@ const open = async (page: Page, overrides?: MockOverrides) => {
   }
   await page.goto("/management");
   await expect(
-    page.getByRole("heading", { level: 2, name: "test イベント管理" }),
+    page.getByRole("heading", {
+      level: 2,
+      name: "0123456789abcdef イベント管理",
+    }),
   ).toBeVisible();
 };
 

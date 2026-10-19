@@ -244,7 +244,7 @@ test.describe("online standalone app", () => {
   }) => {
     await page.goto("/event/test/guest");
     await expect(
-      page.getByRole("heading", { level: 1, name: "test" }),
+      page.getByRole("heading", { level: 1, name: "0123456789abcdef" }),
     ).toBeVisible();
     await expect(installButton(page)).toHaveCount(0);
     const search = page.getByRole("textbox", { name: "目的地を検索" });
@@ -272,7 +272,10 @@ test.describe("online standalone app", () => {
   }) => {
     await page.goto("/event/test/management");
     await expect(
-      page.getByRole("heading", { level: 2, name: "test 管理ページ" }),
+      page.getByRole("heading", {
+        level: 2,
+        name: "0123456789abcdef 管理ページ",
+      }),
     ).toBeVisible();
     await expect(installButton(page)).toHaveCount(0);
     const booth = page.getByTestId("rf__node-ph_booth");
@@ -289,7 +292,10 @@ test.describe("online standalone app", () => {
 
     await page.getByRole("link", { name: "グラフを編集" }).click();
     await expect(
-      page.getByRole("heading", { level: 2, name: "test ルート図編集" }),
+      page.getByRole("heading", {
+        level: 2,
+        name: "0123456789abcdef ルート図編集",
+      }),
     ).toBeVisible();
     await expect(installButton(page)).toHaveCount(0);
     await booth.click({ position: { x: 8, y: 8 } });
@@ -310,7 +316,10 @@ test.describe("online standalone app", () => {
       const publicPath = `/event/test/observation${devicePath}`;
       await page.goto(publicPath);
       await expect(
-        page.getByRole("heading", { level: 2, name: "test 観測ページ" }),
+        page.getByRole("heading", {
+          level: 2,
+          name: "0123456789abcdef 観測ページ",
+        }),
       ).toBeVisible();
       const manifestLink = page.locator('link[rel="manifest"]');
       await expect(manifestLink).toHaveAttribute(

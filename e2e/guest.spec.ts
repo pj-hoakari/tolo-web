@@ -21,7 +21,7 @@ const staffMessageDialog = (page: Page) =>
 test.beforeEach(async ({ page }) => {
   await page.goto("/event/test/guest");
   await expect(
-    page.getByRole("heading", { level: 1, name: "test" }),
+    page.getByRole("heading", { level: 1, name: "0123456789abcdef" }),
   ).toBeVisible();
 });
 
