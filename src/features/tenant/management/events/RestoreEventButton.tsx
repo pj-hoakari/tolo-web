@@ -3,8 +3,9 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { errorMessageKey } from "@/lib/errorMessageKey";
 import { orpc } from "@/lib/orpc";
-import { serverErrorMessage } from "./serverErrorMessage";
+import { EVENT_ERROR_MESSAGES } from "./errorMessages";
 import type { TenantEvent } from "./type";
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
 
 export function RestoreEventButton({ event, onRestored }: Props) {
   const t = useTranslations("TenantManagement.restore");
+  const tError = useTranslations("TenantManagement");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +26,7 @@ export function RestoreEventButton({ event, onRestored }: Props) {
       await orpc.tenant.restoreEvent({ eventId: event.eventId });
       onRestored();
     } catch (err) {
-      setError(serverErrorMessage(err) ?? t("failed"));
+      setError(tError(errorMessageKey(err, EVENT_ERROR_MESSAGES.restore)));
     } finally {
       setSubmitting(false);
     }

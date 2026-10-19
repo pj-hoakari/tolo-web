@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
+import { MOCK_SERVER_MESSAGE, type MockRouterOverrides } from "@/mocks/router";
 
 const eventList = (page: Page) => page.getByRole("main").getByRole("list");
 const eventRow = (page: Page, name: string) =>
@@ -17,12 +18,13 @@ const checkShowArchived = async (page: Page) => {
   await expect(showArchived(page)).toBeChecked();
 };
 
-type MockOverrides = {
-  listEventsError?: boolean;
-  createEventError?: string;
-  archiveEventError?: string;
-  restoreEventError?: string;
-};
+type MockOverrides = Pick<
+  MockRouterOverrides,
+  | "listEventsError"
+  | "createEventError"
+  | "archiveEventError"
+  | "restoreEventError"
+>;
 
 const open = async (page: Page, overrides?: MockOverrides) => {
   if (overrides) {
@@ -110,37 +112,71 @@ test("イベント一覧の取得に失敗するとエラーと再読み込み�
   await expect(eventList(page)).toHaveCount(0);
 });
 
-test("イベントの作成に失敗するとサーバーのエラー文が表示され入力は残る", async ({
-  page,
-}) => {
-  const message = "event name is too long";
-  await open(page, { createEventError: message });
+for (const { name, code, message } of [
+  {
+    name: "テナントの状態によりイベントを作成できないと、テナントがアーカイブされている可能性が表示され入力は残る",
+    code: "PRECONDITION_FAILED",
+    message:
+      "このテナントではイベントを作成できません。テナントがアーカイブされている可能性があります。",
+  },
+  {
+    name: "テナントが見つからずイベントを作成できないと、その旨が表示され入力は残る",
+    code: "NOT_FOUND",
+    message: "テナントが見つかりませんでした。",
+  },
+  {
+    name: "入力の拒否などそれ以外の理由でイベントの作成に失敗すると、作成できなかった旨が表示され入力は残る",
+    code: "BAD_REQUEST",
+    message: "イベントを作成できませんでした。",
+  },
+] as const) {
+  test(name, async ({ page }) => {
+    await open(page, { createEventError: code });
 
-  const field = page.getByRole("textbox", { name: "イベント名" });
-  await field.fill("Event F");
-  await page.getByRole("button", { name: "作成" }).click();
+    const field = page.getByRole("textbox", { name: "イベント名" });
+    await field.fill("Event F");
+    await page.getByRole("button", { name: "作成" }).click();
 
-  await expect(page.getByRole("main").getByRole("alert")).toHaveText(message);
-  await expect(field).toHaveValue("Event F");
-  await expect(eventRow(page, "Event F")).toHaveCount(0);
-});
-
-test("アーカイブに失敗するとダイアログにサーバーのエラー文が表示され一覧に残る", async ({
-  page,
-}) => {
-  const message = "invalid event status transition";
-  await open(page, { archiveEventError: message });
-
-  await archiveButton(page, "Event A").click();
-  const dialog = page.getByRole("alertdialog", {
-    name: "イベントをアーカイブ",
+    await expect(page.getByRole("main").getByRole("alert")).toHaveText(message);
+    await expect(page.getByText(MOCK_SERVER_MESSAGE)).toHaveCount(0);
+    await expect(field).toHaveValue("Event F");
+    await expect(eventRow(page, "Event F")).toHaveCount(0);
   });
-  await dialog.getByRole("button", { name: "アーカイブする" }).click();
+}
 
-  await expect(dialog.getByRole("alert")).toHaveText(message);
-  await dialog.getByRole("button", { name: "キャンセル" }).click();
-  await expect(eventRow(page, "Event A")).toBeVisible();
-});
+for (const { name, code, message } of [
+  {
+    name: "イベントかテナントの状態が変わりアーカイブできないと、ダイアログに再読み込みを促す文言が表示され一覧に残る",
+    code: "PRECONDITION_FAILED",
+    message:
+      "イベントまたはテナントの状態が変わったため、操作できませんでした。一覧を再読み込みしてください。",
+  },
+  {
+    name: "イベントが見つからずアーカイブできないと、ダイアログにその旨が表示され一覧に残る",
+    code: "NOT_FOUND",
+    message: "イベントが見つかりませんでした。一覧を再読み込みしてください。",
+  },
+  {
+    name: "それ以外の理由でアーカイブに失敗すると、ダイアログにアーカイブできなかった旨が表示され一覧に残る",
+    code: "INTERNAL_SERVER_ERROR",
+    message: "イベントをアーカイブできませんでした。",
+  },
+] as const) {
+  test(name, async ({ page }) => {
+    await open(page, { archiveEventError: code });
+
+    await archiveButton(page, "Event A").click();
+    const dialog = page.getByRole("alertdialog", {
+      name: "イベントをアーカイブ",
+    });
+    await dialog.getByRole("button", { name: "アーカイブする" }).click();
+
+    await expect(dialog.getByRole("alert")).toHaveText(message);
+    await expect(page.getByText(MOCK_SERVER_MESSAGE)).toHaveCount(0);
+    await dialog.getByRole("button", { name: "キャンセル" }).click();
+    await expect(eventRow(page, "Event A")).toBeVisible();
+  });
+}
 
 test("アーカイブ済みのイベントは既定では一覧に表示されない", async ({
   page,
@@ -192,17 +228,34 @@ test("アーカイブ済みも表示のままアーカイブするとアーカ�
   await expect(eventList(page).getByRole("listitem")).toHaveCount(5);
 });
 
-test("復元に失敗すると行にサーバーのエラー文が表示されアーカイブ済みのまま残る", async ({
-  page,
-}) => {
-  const message = "invalid event status transition";
-  await open(page, { restoreEventError: message });
-  await checkShowArchived(page);
-  await restoreButton(page, "Event E").click();
+for (const { name, code, message } of [
+  {
+    name: "イベントかテナントの状態が変わり復元できないと、行に再読み込みを促す文言が表示されアーカイブ済みのまま残る",
+    code: "PRECONDITION_FAILED",
+    message:
+      "イベントまたはテナントの状態が変わったため、操作できませんでした。一覧を再読み込みしてください。",
+  },
+  {
+    name: "イベントが見つからず復元できないと、行にその旨が表示されアーカイブ済みのまま残る",
+    code: "NOT_FOUND",
+    message: "イベントが見つかりませんでした。一覧を再読み込みしてください。",
+  },
+  {
+    name: "それ以外の理由で復元に失敗すると、行に復元できなかった旨が表示されアーカイブ済みのまま残る",
+    code: "INTERNAL_SERVER_ERROR",
+    message: "イベントを復元できませんでした。",
+  },
+] as const) {
+  test(name, async ({ page }) => {
+    await open(page, { restoreEventError: code });
+    await checkShowArchived(page);
+    await restoreButton(page, "Event E").click();
 
-  await expect(eventRow(page, "Event E").getByRole("alert")).toHaveText(
-    message,
-  );
-  await expect(eventRow(page, "Event E")).toContainText("アーカイブ済み");
-  await expect(restoreButton(page, "Event E")).toBeEnabled();
-});
+    await expect(eventRow(page, "Event E").getByRole("alert")).toHaveText(
+      message,
+    );
+    await expect(page.getByText(MOCK_SERVER_MESSAGE)).toHaveCount(0);
+    await expect(eventRow(page, "Event E")).toContainText("アーカイブ済み");
+    await expect(restoreButton(page, "Event E")).toBeEnabled();
+  });
+}

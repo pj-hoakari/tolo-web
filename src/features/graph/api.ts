@@ -22,10 +22,9 @@ export async function saveGraph(
   } catch (error) {
     if (error instanceof ORPCError && error.code === "BAD_REQUEST") {
       const details = graphViolationsSchema.safeParse(error.data);
-      throw new GraphValidationError(
-        error.message,
-        details.success ? details.data.violations : [],
-      );
+      if (details.success && details.data.violations.length > 0) {
+        throw new GraphValidationError(details.data.violations);
+      }
     }
     throw error;
   }
@@ -34,8 +33,8 @@ export async function saveGraph(
 export class GraphValidationError extends Error {
   readonly violations: GraphViolation[];
 
-  constructor(message: string, violations: GraphViolation[]) {
-    super(message);
+  constructor(violations: GraphViolation[]) {
+    super();
     this.name = "GraphValidationError";
     this.violations = violations;
   }

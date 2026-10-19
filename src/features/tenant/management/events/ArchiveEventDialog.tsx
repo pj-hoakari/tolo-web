@@ -12,8 +12,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { errorMessageKey } from "@/lib/errorMessageKey";
 import { orpc } from "@/lib/orpc";
-import { serverErrorMessage } from "./serverErrorMessage";
+import { EVENT_ERROR_MESSAGES } from "./errorMessages";
 import type { TenantEvent } from "./type";
 
 type Props = {
@@ -23,6 +24,7 @@ type Props = {
 
 export function ArchiveEventDialog({ event, onArchived }: Props) {
   const t = useTranslations("TenantManagement.archive");
+  const tError = useTranslations("TenantManagement");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +36,7 @@ export function ArchiveEventDialog({ event, onArchived }: Props) {
       close();
       onArchived();
     } catch (err) {
-      setError(serverErrorMessage(err) ?? t("failed"));
+      setError(tError(errorMessageKey(err, EVENT_ERROR_MESSAGES.archive)));
     } finally {
       setSubmitting(false);
     }
