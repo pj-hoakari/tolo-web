@@ -35,7 +35,10 @@ const overrideMock = async (page: Page, overrides: MockOverrides) => {
 test.beforeEach(async ({ page }) => {
   await page.goto("/event/test/management");
   await expect(
-    page.getByRole("heading", { level: 2, name: "test 管理ページ" }),
+    page.getByRole("heading", {
+      level: 2,
+      name: "0123456789abcdef 管理ページ",
+    }),
   ).toBeVisible();
 });
 
@@ -56,7 +59,10 @@ test("グラフを編集リンクを押すとルート図編集ページに移�
   await page.getByRole("link", { name: "グラフを編集" }).click();
   await expect(page).toHaveURL("/event/test/management/graph/edit");
   await expect(
-    page.getByRole("heading", { level: 2, name: "test ルート図編集" }),
+    page.getByRole("heading", {
+      level: 2,
+      name: "0123456789abcdef ルート図編集",
+    }),
   ).toBeVisible();
 });
 

@@ -34,7 +34,10 @@ const openCanvasMenu = async (
 test.beforeEach(async ({ page }) => {
   await page.goto("/event/test/management/graph/edit");
   await expect(
-    page.getByRole("heading", { level: 2, name: "test ルート図編集" }),
+    page.getByRole("heading", {
+      level: 2,
+      name: "0123456789abcdef ルート図編集",
+    }),
   ).toBeVisible();
   await expect(booth(page)).toBeVisible();
 });
@@ -43,7 +46,10 @@ test("管理ページへ戻るリンクを押すと管理ページに移動す�
   await page.getByRole("link", { name: "管理ページへ戻る" }).click();
   await expect(page).toHaveURL("/event/test/management");
   await expect(
-    page.getByRole("heading", { level: 2, name: "test 管理ページ" }),
+    page.getByRole("heading", {
+      level: 2,
+      name: "0123456789abcdef 管理ページ",
+    }),
   ).toBeVisible();
 });
 

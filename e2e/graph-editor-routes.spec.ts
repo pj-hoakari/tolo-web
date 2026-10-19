@@ -10,7 +10,10 @@ const routeFromEntrance = (page: Page) => page.getByTestId("rf__edge-ph_e1");
 test.beforeEach(async ({ page }) => {
   await page.goto("/event/test/management/graph/edit");
   await expect(
-    page.getByRole("heading", { level: 2, name: "test ルート図編集" }),
+    page.getByRole("heading", {
+      level: 2,
+      name: "0123456789abcdef ルート図編集",
+    }),
   ).toBeVisible();
   await expect(booth(page)).toBeVisible();
 });

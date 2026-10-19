@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
 
   output: "standalone",
 
-  allowedDevOrigins: process.env.TUNNEL_TENANT_ID
+  allowedDevOrigins: process.env.TUNNEL_SUBDOMAIN
     ? ["*.trycloudflare.com"]
     : [],
 };

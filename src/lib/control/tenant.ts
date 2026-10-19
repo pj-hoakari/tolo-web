@@ -11,7 +11,7 @@ export type TenantInvalidReason =
   | "nested-subdomain";
 
 export type TenantResolution =
-  | { type: "tenant"; tenantId: string }
+  | { type: "tenant"; subdomain: string }
   | { type: "root" }
   | { type: "invalid"; reason: TenantInvalidReason };
 
@@ -55,5 +55,5 @@ export function resolveTenant(
     return { type: "root" };
   }
 
-  return { type: "tenant", tenantId: subdomain };
+  return { type: "tenant", subdomain };
 }
