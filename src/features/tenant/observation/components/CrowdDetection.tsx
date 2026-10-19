@@ -43,6 +43,7 @@ export function CrowdDetection({
   const { settingsStore, resultStore, viewStateStore } = useDetectionStores();
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
+  const lineCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const { active, edgeId, sendDetectionFrame } = useVideoSender({
     tenantId,
@@ -55,6 +56,7 @@ export function CrowdDetection({
   useCrowdDetectionLoop({
     videoRef,
     overlayCanvasRef,
+    lineCanvasRef,
     status,
     settingsStore,
     viewStateStore,
@@ -98,6 +100,7 @@ export function CrowdDetection({
         error={error}
         videoRef={videoRef}
         overlayCanvasRef={overlayCanvasRef}
+        lineCanvasRef={lineCanvasRef}
         settingsStore={settingsStore}
         resultStore={resultStore}
         viewStateStore={viewStateStore}

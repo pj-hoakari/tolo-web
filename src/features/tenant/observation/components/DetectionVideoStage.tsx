@@ -13,6 +13,7 @@ export type DetectionVideoStageProps = {
   status: DetectCrowdStatus;
   videoRef: RefObject<HTMLVideoElement | null>;
   overlayCanvasRef: RefObject<HTMLCanvasElement | null>;
+  lineCanvasRef?: RefObject<HTMLCanvasElement | null>;
   settingsStore: DetectionSettingsStore;
   viewStateStore: DetectionViewStateStore;
 };
@@ -27,6 +28,7 @@ function DetectionVideoStageComponent({
   status,
   videoRef,
   overlayCanvasRef,
+  lineCanvasRef,
   settingsStore,
   viewStateStore,
 }: DetectionVideoStageProps) {
@@ -63,7 +65,7 @@ function DetectionVideoStageComponent({
   }, [videoSource, videoRef]);
 
   return (
-    <div className="relative w-full max-w-3xl">
+    <div className="relative isolate w-full max-w-3xl">
       <video
         ref={videoRef}
         autoPlay
@@ -78,6 +80,14 @@ function DetectionVideoStageComponent({
         {...lineEditorHandlers}
         className="absolute inset-0 h-full w-full cursor-crosshair touch-none rounded"
       />
+      {lineCanvasRef && (
+        <canvas
+          ref={lineCanvasRef}
+          aria-hidden="true"
+          tabIndex={-1}
+          className="pointer-events-none absolute inset-0 h-full w-full rounded mix-blend-difference"
+        />
+      )}
       {status === "loading" && (
         <div className="absolute inset-0 flex items-center justify-center rounded bg-black/40 text-white">
           {t("loading")}

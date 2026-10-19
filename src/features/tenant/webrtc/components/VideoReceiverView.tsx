@@ -40,6 +40,7 @@ export function VideoReceiverView({
 }: VideoReceiverViewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
+  const lineCanvasRef = useRef<HTMLCanvasElement>(null);
   const t = useTranslations("Webrtc.receiver");
 
   const editable = settingsStore !== undefined && viewStateStore !== undefined;
@@ -108,9 +109,16 @@ export function VideoReceiverView({
                     ),
                   }
                 : frame,
-              { highlightedLineId: editingLineId },
+              {
+                highlightedLineId: editingLineId,
+                lineCanvas: lineCanvasRef.current,
+              },
             );
           } else {
+            const lineCanvas = lineCanvasRef.current;
+            lineCanvas
+              ?.getContext("2d")
+              ?.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
             context.clearRect(0, 0, canvas.width, canvas.height);
           }
         }
@@ -124,7 +132,7 @@ export function VideoReceiverView({
 
   return (
     <div className="flex w-full flex-col items-center gap-2">
-      <div className="relative w-full max-w-3xl">
+      <div className="relative isolate w-full max-w-3xl">
         {stopped ? (
           <div className="flex aspect-video w-full flex-col items-center justify-center gap-1 rounded bg-muted text-muted-foreground">
             <span className="font-bold">{t("stoppedTitle")}</span>
@@ -150,6 +158,12 @@ export function VideoReceiverView({
                   ? "cursor-crosshair touch-none"
                   : "pointer-events-none",
               )}
+            />
+            <canvas
+              ref={lineCanvasRef}
+              aria-hidden="true"
+              tabIndex={-1}
+              className="pointer-events-none absolute inset-0 h-full w-full rounded mix-blend-difference"
             />
             {(status === "connecting" || status === "negotiating") && (
               <div className="absolute inset-0 flex items-center justify-center rounded bg-black/40 text-white">

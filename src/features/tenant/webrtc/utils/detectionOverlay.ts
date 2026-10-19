@@ -68,21 +68,17 @@ export function drawCountingLine(
   isHighlighted = false,
 ): void {
   context.save();
-  const lineWidth = Math.max(3, width / 320) * (isHighlighted ? 1.5 : 1);
-  const lineColor = isHighlighted ? "#fbbf24" : "#f8fafc";
+  const lineWidth = Math.max(5, width / 192) * (isHighlighted ? 1.5 : 1);
+  const lineColor = isHighlighted ? "#fbbf24" : "#22d3ee";
   context.lineCap = "round";
   context.lineJoin = "round";
   const strokeVisiblePath = () => {
-    // 明るい映像でも輪郭を保ち、色だけに頼らず編集対象を見分けられるようにする。
-    context.lineWidth = lineWidth + Math.max(3, width / 480);
-    context.strokeStyle = "rgba(15, 23, 42, 0.85)";
-    context.stroke();
     context.lineWidth = lineWidth;
     context.strokeStyle = lineColor;
     context.stroke();
   };
 
-  context.setLineDash(isHighlighted ? [] : [12, 8]);
+  context.setLineDash(isHighlighted ? [] : [12, 10]);
   context.beginPath();
   context.moveTo(countingLine.p1.x, countingLine.p1.y);
   context.lineTo(countingLine.p2.x, countingLine.p2.y);
@@ -150,9 +146,6 @@ export function drawCountingLine(
     context.beginPath();
     context.arc(point.x, point.y, handleRadius, 0, Math.PI * 2);
     context.fill();
-    context.lineWidth = Math.max(2, width / 480);
-    context.strokeStyle = "#0f172a";
-    context.stroke();
     if (isHighlighted) {
       context.beginPath();
       context.arc(point.x, point.y, handleRadius * 0.35, 0, Math.PI * 2);
@@ -167,21 +160,34 @@ export function drawCountingLine(
 export function drawDetectionOverlay(
   context: CanvasRenderingContext2D,
   frame: DetectionOverlayFrame,
-  options: { highlightedLineId?: string | null } = {},
+  options: {
+    highlightedLineId?: string | null;
+    lineCanvas?: HTMLCanvasElement | null;
+  } = {},
 ): void {
   const { width } = frame;
+  const lineCanvas = options.lineCanvas;
+  if (
+    lineCanvas &&
+    (lineCanvas.width !== width || lineCanvas.height !== frame.height)
+  ) {
+    lineCanvas.width = width;
+    lineCanvas.height = frame.height;
+  }
+  const lineContext = lineCanvas?.getContext("2d") ?? context;
+  if (lineContext !== context) lineContext.clearRect(0, 0, width, frame.height);
 
   // 編集対象を最後に描き、交差している他のラインにも埋もれないようにする。
   for (const countingLine of frame.countingLines) {
     if (countingLine.id !== options.highlightedLineId) {
-      drawCountingLine(context, countingLine, width);
+      drawCountingLine(lineContext, countingLine, width, false);
     }
   }
   const highlightedLine = frame.countingLines.find(
     (line) => line.id === options.highlightedLineId,
   );
   if (highlightedLine) {
-    drawCountingLine(context, highlightedLine, width, true);
+    drawCountingLine(lineContext, highlightedLine, width, true);
   }
 
   context.font = `${Math.max(16, width / 40)}px sans-serif`;
