@@ -251,7 +251,11 @@
       "disconnectLabel": "Desconectar de «{name}»",
       "close": "Cerrar",
       "closeLabel": "Cerrar el vídeo de «{name}»",
-      "loadError": "No se pudo cargar la lista de edges"
+      "loadError": "No se pudo cargar la lista de edges",
+      "openHere": "Abrir en este dispositivo",
+      "openHereLabel": "Abrir «{name}» en este dispositivo",
+      "unregister": "Dar de baja",
+      "unregisterLabel": "Dar de baja «{name}»"
     },
     "receiver": {
       "stoppedTitle": "La observación se detuvo",
@@ -262,6 +266,30 @@
     "broadcast": {
       "active": "Transmitiendo",
       "inactive": "Detenido"
+    },
+    "registerEdge": {
+      "title": "Registrar un dispositivo edge",
+      "nameLabel": "Nombre del dispositivo",
+      "pointsLabel": "Nombres de los puntos de observación",
+      "pointsDescription": "Escribe uno por línea",
+      "submit": "Registrar",
+      "registered": "Se registró «{name}». Abre esta URL en el dispositivo que se usará para observar.",
+      "points": "Puntos de observación: {names}",
+      "urlLabel": "URL emitida",
+      "copy": "Copiar URL",
+      "copied": "Copiada",
+      "open": "Abrir en este dispositivo",
+      "failed": "No se pudo registrar el dispositivo edge.",
+      "invalid": "Revisa el nombre del dispositivo y los nombres de los puntos de observación.",
+      "eventNotFound": "No se encontró el evento."
+    },
+    "unregisterEdge": {
+      "title": "Dar de baja el dispositivo edge",
+      "description": "¿Dar de baja «{name}»? Sus puntos de observación dejarán de observarse.",
+      "cancel": "Cancelar",
+      "confirm": "Dar de baja",
+      "failed": "No se pudo dar de baja el dispositivo edge.",
+      "stale": "No se encontró el dispositivo o ya está dado de baja. Actualiza la lista."
     }
   },
   "Detection": {

@@ -251,7 +251,11 @@
       "disconnectLabel": "「{name}」から切断",
       "close": "閉じる",
       "closeLabel": "「{name}」の映像を閉じる",
-      "loadError": "エッジ一覧の取得に失敗しました"
+      "loadError": "エッジ一覧の取得に失敗しました",
+      "openHere": "この端末で開く",
+      "openHereLabel": "「{name}」をこの端末で開く",
+      "unregister": "登録解除",
+      "unregisterLabel": "「{name}」の登録を解除"
     },
     "receiver": {
       "stoppedTitle": "観測が停止しました",
@@ -262,6 +266,30 @@
     "broadcast": {
       "active": "配信中",
       "inactive": "停止中"
+    },
+    "registerEdge": {
+      "title": "エッジ端末を登録",
+      "nameLabel": "端末名",
+      "pointsLabel": "観測点名",
+      "pointsDescription": "1 行に 1 つずつ入力してください",
+      "submit": "登録",
+      "registered": "「{name}」を登録しました。観測に使う端末でこの URL を開いてください。",
+      "points": "観測点: {names}",
+      "urlLabel": "発行 URL",
+      "copy": "URL をコピー",
+      "copied": "コピーしました",
+      "open": "この端末で開く",
+      "failed": "エッジ端末を登録できませんでした。",
+      "invalid": "端末名と観測点名を確認してください。",
+      "eventNotFound": "イベントが見つかりませんでした。"
+    },
+    "unregisterEdge": {
+      "title": "エッジ端末の登録を解除",
+      "description": "「{name}」の登録を解除します。この端末の観測点では観測できなくなります。",
+      "cancel": "キャンセル",
+      "confirm": "登録を解除する",
+      "failed": "登録を解除できませんでした。",
+      "stale": "端末が見つからないか、既に登録が解除されています。一覧を更新してください。"
     }
   },
   "Detection": {
