@@ -68,7 +68,7 @@ const row = (name: string) =>
     .find((item) => item.textContent?.includes(name));
 
 describe("AliveEdgeList", () => {
-  it("接続に失敗したエッジの行に接続状態を表示する", () => {
+  it("接続に失敗した観測デバイスの行に接続状態を表示する", () => {
     renderList("error");
 
     expect(
@@ -79,7 +79,7 @@ describe("AliveEdgeList", () => {
     ).toBeNull();
   });
 
-  it("接続済みのエッジの行に接続状態を表示する", () => {
+  it("接続済みの観測デバイスの行に接続状態を表示する", () => {
     renderList("connected");
 
     expect(
@@ -184,7 +184,7 @@ describe("AliveEdgeList", () => {
     },
   );
 
-  it("行ごとの接続と切断のボタンの名前にエッジ名を含める", () => {
+  it("行ごとの接続と切断のボタンの名前に観測デバイス名を含める", () => {
     renderList("connected");
 
     expect(
@@ -245,7 +245,7 @@ describe("AliveEdgeList", () => {
       (await within(screen.getByRole("alertdialog")).findByRole("alert"))
         .textContent,
     ).toBe(
-      "端末が見つからないか、既に登録が解除されています。一覧を更新してください。",
+      "観測デバイスが見つからないか、既に登録が解除されています。一覧を更新してください。",
     );
     expect(onUnregistered).not.toHaveBeenCalled();
   });

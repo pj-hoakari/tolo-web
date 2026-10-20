@@ -234,10 +234,10 @@
       "error": "连接失败"
     },
     "aliveEdges": {
-      "title": "边缘设备（{count}）",
+      "title": "观测设备（{count}）",
       "refresh": "刷新",
       "loading": "加载中…",
-      "empty": "没有边缘设备",
+      "empty": "没有观测设备",
       "lastSeen": "最后响应：{time}",
       "unknownTime": "未知",
       "offline": "离线",
@@ -247,7 +247,7 @@
       "disconnectLabel": "断开与“{name}”的连接",
       "close": "关闭",
       "closeLabel": "关闭“{name}”的视频",
-      "loadError": "获取边缘设备列表失败",
+      "loadError": "获取观测设备列表失败",
       "openHere": "在此设备上打开",
       "openHereLabel": "在此设备上打开“{name}”",
       "unregister": "取消注册",
@@ -264,7 +264,7 @@
       "inactive": "已停止"
     },
     "registerEdge": {
-      "title": "注册边缘设备",
+      "title": "注册观测设备",
       "nameLabel": "设备名称",
       "pointsLabel": "观测点名称",
       "pointsDescription": "每行输入一个",
@@ -275,17 +275,17 @@
       "copy": "复制 URL",
       "copied": "已复制",
       "open": "在此设备上打开",
-      "failed": "无法注册边缘设备。",
+      "failed": "无法注册观测设备。",
       "invalid": "请检查设备名称和观测点名称。",
       "eventNotFound": "未找到活动。"
     },
     "unregisterEdge": {
-      "title": "取消注册边缘设备",
-      "description": "将取消注册“{name}”。此设备的观测点将无法再进行观测。",
+      "title": "取消注册观测设备",
+      "description": "将取消注册“{name}”。此观测设备的观测点将无法再进行观测。",
       "cancel": "取消",
       "confirm": "取消注册",
       "failed": "无法取消注册。",
-      "stale": "未找到设备或设备已取消注册。请刷新列表。"
+      "stale": "未找到观测设备或该观测设备已取消注册。请刷新列表。"
     }
   },
   "Detection": {

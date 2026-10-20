@@ -317,7 +317,7 @@ test("英語でも複数選択件数を表示する", async ({ page, context }) 
     panel(page).getByText("Nodes: 2", { exact: true }),
   ).toBeVisible();
   await expect(
-    panel(page).getByText("Edges: 0", { exact: true }),
+    panel(page).getByText("Arrows: 0", { exact: true }),
   ).toBeVisible();
   await expect(
     panel(page).getByText("Groups: 0", { exact: true }),

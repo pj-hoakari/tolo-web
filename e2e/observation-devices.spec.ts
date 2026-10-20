@@ -15,7 +15,7 @@ const main = (page: Page) => page.getByRole("main");
 const edgeRow = (page: Page, name: string) =>
   main(page).getByRole("listitem").filter({ hasText: name });
 const registerEdge = async (page: Page, name: string, points: string) => {
-  await main(page).getByRole("textbox", { name: "端末名" }).fill(name);
+  await main(page).getByRole("textbox", { name: "デバイス名" }).fill(name);
   await main(page).getByRole("textbox", { name: "観測点名" }).fill(points);
   await main(page).getByRole("button", { name: "登録", exact: true }).click();
 };
@@ -39,7 +39,7 @@ test.beforeEach(async ({ page }) => {
 test("ID のない観測ページの URL を開くと観測デバイス管理ページが表示され画面ロックは出ない", async ({
   page,
 }) => {
-  await expect(main(page)).toContainText("エッジ（3）");
+  await expect(main(page)).toContainText("観測デバイス（3）");
   await expect(
     page.getByRole("heading", { level: 2, name: "解除コードを設定" }),
   ).toHaveCount(0);
@@ -70,7 +70,7 @@ test("観測デバイス管理ページを開くとオフラインのものを�
   page,
 }) => {
   const list = main(page);
-  await expect(list).toContainText("エッジ（3）");
+  await expect(list).toContainText("観測デバイス（3）");
   const items = list.getByRole("listitem");
   await expect(items).toHaveCount(3);
   await expect(items.nth(0)).toContainText(edgeA);
@@ -154,7 +154,7 @@ test("接続に失敗した観測デバイスがオフラインになっても�
   await row.getByRole("button", { name: `「${edgeA}」の映像を閉じる` }).click();
 
   await expect(list.getByRole("alert")).toHaveCount(0);
-  await expect(list).toContainText("エッジ（3）");
+  await expect(list).toContainText("観測デバイス（3）");
   await expect(row).toContainText("オフライン");
   await expect(row).not.toContainText("接続失敗");
   await expect(row.getByRole("button")).toHaveCount(2);
@@ -176,11 +176,11 @@ test("観測デバイスを登録すると一覧に加わり発行 URL とこの
   await expect(
     main(page).getByRole("button", { name: "URL をコピー" }),
   ).toBeVisible();
-  await expect(main(page)).toContainText("エッジ（4）");
+  await expect(main(page)).toContainText("観測デバイス（4）");
   await expect(edgeRow(page, "受付カメラ")).toContainText("オフライン");
-  await expect(main(page).getByRole("textbox", { name: "端末名" })).toHaveValue(
-    "",
-  );
+  await expect(
+    main(page).getByRole("textbox", { name: "デバイス名" }),
+  ).toHaveValue("");
 
   const path = new URL(await issuedUrl.inputValue()).pathname;
   await main(page)
@@ -202,12 +202,12 @@ test("観測デバイスの登録に失敗すると理由が表示され入力�
   await registerEdge(page, "受付カメラ", "受付");
 
   await expect(main(page).getByRole("alert")).toHaveText(
-    "端末名と観測点名を確認してください。",
+    "デバイス名と観測点名を確認してください。",
   );
-  await expect(main(page).getByRole("textbox", { name: "端末名" })).toHaveValue(
-    "受付カメラ",
-  );
-  await expect(main(page)).toContainText("エッジ（3）");
+  await expect(
+    main(page).getByRole("textbox", { name: "デバイス名" }),
+  ).toHaveValue("受付カメラ");
+  await expect(main(page)).toContainText("観測デバイス（3）");
 });
 
 test("デバイス名か観測点名が空のあいだは登録できない", async ({ page }) => {
@@ -217,7 +217,9 @@ test("デバイス名か観測点名が空のあいだは登録できない", as
   });
 
   await expect(submit).toBeDisabled();
-  await main(page).getByRole("textbox", { name: "端末名" }).fill("受付カメラ");
+  await main(page)
+    .getByRole("textbox", { name: "デバイス名" })
+    .fill("受付カメラ");
   await expect(submit).toBeDisabled();
   await main(page).getByRole("textbox", { name: "観測点名" }).fill(" \n ");
   await expect(submit).toBeDisabled();
@@ -255,7 +257,7 @@ test("登録解除を確認するとその観測デバイスが一覧から消�
   await dialog.getByRole("button", { name: "登録を解除する" }).click();
 
   await expect(dialog).toBeHidden();
-  await expect(main(page)).toContainText("エッジ（2）");
+  await expect(main(page)).toContainText("観測デバイス（2）");
   await expect(edgeRow(page, offlineEdge)).toHaveCount(0);
 });
 
@@ -271,7 +273,7 @@ test("登録解除の確認でキャンセルすると観測デバイスは一�
     .click();
 
   await expect(page.getByRole("alertdialog")).toBeHidden();
-  await expect(main(page)).toContainText("エッジ（3）");
+  await expect(main(page)).toContainText("観測デバイス（3）");
   await expect(edgeRow(page, offlineEdge)).toHaveCount(1);
 });
 
@@ -288,7 +290,7 @@ test("登録解除に失敗すると確認ダイアログに理由が表示さ�
   await dialog.getByRole("button", { name: "登録を解除する" }).click();
 
   await expect(dialog.getByRole("alert")).toHaveText(
-    "端末が見つからないか、既に登録が解除されています。一覧を更新してください。",
+    "観測デバイスが見つからないか、既に登録が解除されています。一覧を更新してください。",
   );
-  await expect(main(page)).toContainText("エッジ（3）");
+  await expect(main(page)).toContainText("観測デバイス（3）");
 });

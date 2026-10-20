@@ -74,6 +74,6 @@ export const ErrorState: Story = {
   args: {
     edges: [],
     status: "error",
-    error: "エッジ一覧の取得に失敗しました",
+    error: "観測デバイス一覧の取得に失敗しました",
   },
 };

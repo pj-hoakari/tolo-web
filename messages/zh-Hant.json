@@ -234,10 +234,10 @@
       "error": "連線失敗"
     },
     "aliveEdges": {
-      "title": "邊緣裝置（{count}）",
+      "title": "觀測裝置（{count}）",
       "refresh": "重新整理",
       "loading": "載入中…",
-      "empty": "沒有邊緣裝置",
+      "empty": "沒有觀測裝置",
       "lastSeen": "最後回應：{time}",
       "unknownTime": "未知",
       "offline": "離線",
@@ -247,7 +247,7 @@
       "disconnectLabel": "中斷與「{name}」的連線",
       "close": "關閉",
       "closeLabel": "關閉「{name}」的影像",
-      "loadError": "取得邊緣裝置清單失敗",
+      "loadError": "取得觀測裝置清單失敗",
       "openHere": "在此裝置上開啟",
       "openHereLabel": "在此裝置上開啟「{name}」",
       "unregister": "取消註冊",
@@ -264,7 +264,7 @@
       "inactive": "已停止"
     },
     "registerEdge": {
-      "title": "註冊邊緣裝置",
+      "title": "註冊觀測裝置",
       "nameLabel": "裝置名稱",
       "pointsLabel": "觀測點名稱",
       "pointsDescription": "每行輸入一個",
@@ -275,17 +275,17 @@
       "copy": "複製 URL",
       "copied": "已複製",
       "open": "在此裝置上開啟",
-      "failed": "無法註冊邊緣裝置。",
+      "failed": "無法註冊觀測裝置。",
       "invalid": "請檢查裝置名稱和觀測點名稱。",
       "eventNotFound": "找不到活動。"
     },
     "unregisterEdge": {
-      "title": "取消註冊邊緣裝置",
-      "description": "將取消註冊「{name}」。此裝置的觀測點將無法再進行觀測。",
+      "title": "取消註冊觀測裝置",
+      "description": "將取消註冊「{name}」。此觀測裝置的觀測點將無法再進行觀測。",
       "cancel": "取消",
       "confirm": "取消註冊",
       "failed": "無法取消註冊。",
-      "stale": "找不到裝置或裝置已取消註冊。請重新整理清單。"
+      "stale": "找不到觀測裝置或該觀測裝置已取消註冊。請重新整理清單。"
     }
   },
   "Detection": {
