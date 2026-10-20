@@ -454,6 +454,11 @@
       }
     },
     "guideMap": {
+      "swipeHint": "스와이프하여 방향 확인",
+      "aheadIs": "이 방향에 {name}이(가) 있습니다",
+      "noneAhead": "정면에 목적지가 없습니다 (돌려보세요)",
+      "faceHint": "방위 센서를 켜고 휴대폰을 향하면 목적지를 확인할 수 있어요",
+      "goHere": "여기로 가기",
       "title": "안내 지도",
       "hint": "목적지를 선택하면 경로가 표시됩니다",
       "currentLocation": "현재 위치",
@@ -468,7 +473,33 @@
       "collapse": "지도 축소",
       "search": "목적지 검색",
       "noResults": "결과 없음",
-      "reset": "초기화"
+      "reset": "초기화",
+      "compass": {
+        "open": "나침반 안내",
+        "title": "나침반",
+        "enable": "나침반 사용",
+        "denied": "나침반을 사용할 수 없습니다. 화살표는 북쪽을 위로 표시합니다.",
+        "unsupported": "이 기기에서는 방향을 가져올 수 없습니다. 화살표는 북쪽을 위로 표시합니다.",
+        "northUpNote": "북쪽을 위로 표시 (기기 방향 미반영)",
+        "next": "다음",
+        "back": "이전",
+        "finish": "안내 종료",
+        "close": "닫기",
+        "start": "여기서 출발",
+        "arrive": "도착",
+        "turnRight": "오른쪽으로",
+        "turnLeft": "왼쪽으로",
+        "straight": "직진",
+        "stepOf": "{current} / {total}",
+        "navTitle": "나침반 길안내",
+        "navHint": "현재 위치와 목적지를 선택하면 안내를 시작합니다",
+        "advanceHint": "화살표 방향으로 이동해 모퉁이에 도착하면 '다음'을 누르세요.",
+        "arrivedNext": "도착 · 다음",
+        "retrySensor": "다시 시도",
+        "distanceTotal": "전체 약 {m}m · 도보 약 {min}분",
+        "distanceNext": "다음까지 약 {m}m",
+        "overview": "경로 전체"
+      }
     },
     "floor": {
       "title": "현재 층",
