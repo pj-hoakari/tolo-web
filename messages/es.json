@@ -13,13 +13,9 @@
   },
   "Management": {
     "title": "{tenantId} Administración",
-    "tabsLabel": "Cambiar vista de administración",
-    "tabs": {
-      "graph": "Diagrama de rutas",
-      "edges": "Edges conectados"
-    },
     "graphEditTitle": "{tenantId} Editor del diagrama de rutas",
-    "backLink": "Volver a administración"
+    "backLink": "Volver a administración",
+    "observationDevicesLink": "Dispositivos de observación"
   },
   "TenantManagement": {
     "title": "{tenantId} Gestión de eventos",
@@ -238,10 +234,10 @@
       "error": "Error de conexión"
     },
     "aliveEdges": {
-      "title": "Edges ({count})",
+      "title": "Dispositivos de observación ({count})",
       "refresh": "Actualizar",
       "loading": "Cargando…",
-      "empty": "No hay edges",
+      "empty": "No hay dispositivos de observación",
       "lastSeen": "Última respuesta: {time}",
       "unknownTime": "Desconocida",
       "offline": "Sin conexión",
@@ -251,7 +247,7 @@
       "disconnectLabel": "Desconectar de «{name}»",
       "close": "Cerrar",
       "closeLabel": "Cerrar el vídeo de «{name}»",
-      "loadError": "No se pudo cargar la lista de edges",
+      "loadError": "No se pudo cargar la lista de dispositivos de observación",
       "openHere": "Abrir en este dispositivo",
       "openHereLabel": "Abrir «{name}» en este dispositivo",
       "unregister": "Dar de baja",
@@ -268,7 +264,7 @@
       "inactive": "Detenido"
     },
     "registerEdge": {
-      "title": "Registrar un dispositivo edge",
+      "title": "Registrar un dispositivo de observación",
       "nameLabel": "Nombre del dispositivo",
       "pointsLabel": "Nombres de los puntos de observación",
       "pointsDescription": "Escribe uno por línea",
@@ -279,17 +275,17 @@
       "copy": "Copiar URL",
       "copied": "Copiada",
       "open": "Abrir en este dispositivo",
-      "failed": "No se pudo registrar el dispositivo edge.",
+      "failed": "No se pudo registrar el dispositivo de observación.",
       "invalid": "Revisa el nombre del dispositivo y los nombres de los puntos de observación.",
       "eventNotFound": "No se encontró el evento."
     },
     "unregisterEdge": {
-      "title": "Dar de baja el dispositivo edge",
+      "title": "Dar de baja el dispositivo de observación",
       "description": "¿Dar de baja «{name}»? Sus puntos de observación dejarán de observarse.",
       "cancel": "Cancelar",
       "confirm": "Dar de baja",
-      "failed": "No se pudo dar de baja el dispositivo edge.",
-      "stale": "No se encontró el dispositivo o ya está dado de baja. Actualiza la lista."
+      "failed": "No se pudo dar de baja el dispositivo de observación.",
+      "stale": "No se encontró el dispositivo de observación o ya está dado de baja. Actualiza la lista."
     }
   },
   "Detection": {
@@ -393,11 +389,11 @@
       "activeHint": " (cambia tras detener)",
       "inactiveHint": " (se aplica al iniciar)",
       "hide": "Ocultar"
-    },
-    "missingEdgeDevice": {
-      "message": "Abre esta página desde la URL emitida al registrar un dispositivo en la página de administración. Con esta URL no se envían mediciones.",
-      "link": "Abrir la página de administración"
     }
+  },
+  "ObservationDevices": {
+    "title": "{tenantId} Dispositivos de observación",
+    "managementLink": "Administración"
   },
   "Guest": {
     "pageSubtitle": "Página del visitante",

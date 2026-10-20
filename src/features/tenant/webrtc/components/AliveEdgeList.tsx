@@ -1,6 +1,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
+import { observationDevicePath } from "@/features/tenant/observation/routes";
 import type { EdgeDevicesStatus } from "../hooks/useEdgeDevices";
 import type { ConnectionStatus, EdgeDeviceItem } from "../type";
 import { isActiveConnection } from "../utils/connectionStatus";
@@ -128,7 +129,7 @@ export function AliveEdgeList({
                   )}
                   {!edge.online && (
                     <Link
-                      href={`/event/${eventId}/observation/${edge.edgeDeviceId}`}
+                      href={observationDevicePath(eventId, edge.edgeDeviceId)}
                       variant="secondary"
                       size="sm"
                       aria-label={t("openHereLabel", { name })}

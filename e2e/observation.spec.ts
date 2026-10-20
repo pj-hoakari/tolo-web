@@ -83,7 +83,7 @@ const holdModelRequest = async (context: BrowserContext) => {
 };
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/event/test/observation");
+  await page.goto("/event/test/observation/8c1f0e2a5d4b3c6e");
   await expect(
     page.getByRole("heading", {
       level: 2,
@@ -240,7 +240,7 @@ test.describe("画面ロック", () => {
   test("解除コードはイベントごとに設定する", async ({ page }) => {
     await setUpUnlockCode(page, "1234");
 
-    await page.goto("/event/other/observation");
+    await page.goto("/event/other/observation/8c1f0e2a5d4b3c6e");
 
     await expect(
       page.getByRole("heading", { level: 2, name: "解除コードを設定" }),
@@ -655,33 +655,4 @@ test.describe("Screen Wake Lock に対応していないブラウザ", () => {
     );
     await expect(wakeToggle(page)).toHaveCount(0);
   });
-});
-
-const missingEdgeDeviceNotice =
-  "このページは、管理ページで端末を登録して発行した URL から開いてください。";
-
-test("エッジデバイス付きの URL でも観測ページが表示され発行 URL の案内は出ない", async ({
-  page,
-}) => {
-  await page.goto("/event/test/observation/0123456789abcdef");
-
-  await expect(
-    page.getByRole("heading", {
-      level: 2,
-      name: "0123456789abcdef 観測ページ",
-    }),
-  ).toBeVisible();
-  await setUpUnlockCode(page, "1234");
-  await expect(page.getByText(missingEdgeDeviceNotice)).toHaveCount(0);
-});
-
-test("エッジデバイスのない URL で開くと発行 URL から開くよう案内され管理ページへ移動できる", async ({
-  page,
-}) => {
-  await setUpUnlockCode(page, "1234");
-
-  await expect(page.getByText(missingEdgeDeviceNotice)).toBeVisible();
-  await page.getByRole("link", { name: "管理ページを開く" }).click();
-
-  await expect(page).toHaveURL("/event/test/management");
 });

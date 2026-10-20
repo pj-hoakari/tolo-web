@@ -13,13 +13,9 @@
   },
   "Management": {
     "title": "{tenantId} Management",
-    "tabsLabel": "Switch management view",
-    "tabs": {
-      "graph": "Route diagram",
-      "edges": "Connected edges"
-    },
     "graphEditTitle": "{tenantId} Route diagram editor",
-    "backLink": "Back to management"
+    "backLink": "Back to management",
+    "observationDevicesLink": "Observation devices"
   },
   "TenantManagement": {
     "title": "{tenantId} Event management",
@@ -179,13 +175,13 @@
     "properties": {
       "bulk": {
         "points": "Points ({count})",
-        "edges": "Edges ({count})",
+        "edges": "Arrows ({count})",
         "mixed": "Values are mixed",
         "result": "Changed {changed, plural, one {# element} other {# elements}}. Could not change {skipped, plural, one {# element} other {# elements}}.",
         "reasonCount": "{reason} ({count})",
         "reasons": {
           "requiresDwell": "Points that do not allow dwelling cannot be destinations.",
-          "bothNotReversed": "Bidirectional edges are excluded from reversal."
+          "bothNotReversed": "Bidirectional arrows are excluded from reversal."
         }
       },
       "groupSelected": "Group selected points",
@@ -197,7 +193,7 @@
         "differentParents": "Select points with the same parent."
       },
       "selectedNodes": "Nodes: {count}",
-      "selectedEdges": "Edges: {count}",
+      "selectedEdges": "Arrows: {count}",
       "selectedGroups": "Groups: {count}",
       "title": "Properties",
       "empty": "Select a point or a route.",
@@ -238,10 +234,10 @@
       "error": "Connection failed"
     },
     "aliveEdges": {
-      "title": "Edges ({count})",
+      "title": "Observation devices ({count})",
       "refresh": "Refresh",
       "loading": "Loading…",
-      "empty": "No edges",
+      "empty": "No observation devices",
       "lastSeen": "Last seen: {time}",
       "unknownTime": "Unknown",
       "offline": "Offline",
@@ -251,7 +247,7 @@
       "disconnectLabel": "Disconnect from “{name}”",
       "close": "Close",
       "closeLabel": "Close the video from “{name}”",
-      "loadError": "Failed to load the edge list",
+      "loadError": "Failed to load the observation device list",
       "openHere": "Open on this device",
       "openHereLabel": "Open “{name}” on this device",
       "unregister": "Unregister",
@@ -268,28 +264,28 @@
       "inactive": "Stopped"
     },
     "registerEdge": {
-      "title": "Register an edge device",
+      "title": "Register an observation device",
       "nameLabel": "Device name",
       "pointsLabel": "Observation point names",
       "pointsDescription": "Enter one per line",
       "submit": "Register",
-      "registered": "Registered “{name}”. Open this URL on the device used for observation.",
+      "registered": "Registered “{name}”. Open this URL on the device you will use as the observation device.",
       "points": "Observation points: {names}",
       "urlLabel": "Issued URL",
       "copy": "Copy URL",
       "copied": "Copied",
       "open": "Open on this device",
-      "failed": "Could not register the edge device.",
+      "failed": "Could not register the observation device.",
       "invalid": "Check the device name and observation point names.",
       "eventNotFound": "The event was not found."
     },
     "unregisterEdge": {
-      "title": "Unregister edge device",
+      "title": "Unregister observation device",
       "description": "Unregister “{name}”? Its observation points will no longer be observed.",
       "cancel": "Cancel",
       "confirm": "Unregister",
-      "failed": "Could not unregister the edge device.",
-      "stale": "The device was not found or is already unregistered. Refresh the list."
+      "failed": "Could not unregister the observation device.",
+      "stale": "The observation device was not found or is already unregistered. Refresh the list."
     }
   },
   "Detection": {
@@ -393,11 +389,11 @@
       "activeHint": " (switch after stopping)",
       "inactiveHint": " (applied on the next start)",
       "hide": "Hide"
-    },
-    "missingEdgeDevice": {
-      "message": "Open this page from the URL issued when you register a device on the management page. This URL does not send measurements.",
-      "link": "Open the management page"
     }
+  },
+  "ObservationDevices": {
+    "title": "{tenantId} Observation devices",
+    "managementLink": "Management"
   },
   "Guest": {
     "pageSubtitle": "Guest Page",
