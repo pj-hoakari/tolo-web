@@ -13,13 +13,9 @@
   },
   "Management": {
     "title": "{tenantId} 관리 페이지",
-    "tabsLabel": "관리 화면 전환",
-    "tabs": {
-      "graph": "경로도",
-      "edges": "연결된 엣지"
-    },
     "graphEditTitle": "{tenantId} 경로도 편집",
-    "backLink": "관리 페이지로 돌아가기"
+    "backLink": "관리 페이지로 돌아가기",
+    "observationDevicesLink": "관측 장치 관리"
   },
   "TenantManagement": {
     "title": "{tenantId} 이벤트 관리",
@@ -396,7 +392,8 @@
     }
   },
   "ObservationDevices": {
-    "title": "{tenantId} 관측 장치 관리"
+    "title": "{tenantId} 관측 장치 관리",
+    "managementLink": "관리 페이지"
   },
   "Guest": {
     "pageSubtitle": "게스트 페이지",

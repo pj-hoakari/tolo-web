@@ -13,13 +13,9 @@
   },
   "Management": {
     "title": "{tenantId} 管理ページ",
-    "tabsLabel": "管理ビュー切り替え",
-    "tabs": {
-      "graph": "ルート図",
-      "edges": "接続エッジ"
-    },
     "graphEditTitle": "{tenantId} ルート図編集",
-    "backLink": "管理ページへ戻る"
+    "backLink": "管理ページへ戻る",
+    "observationDevicesLink": "観測デバイス管理"
   },
   "TenantManagement": {
     "title": "{tenantId} イベント管理",
@@ -396,7 +392,8 @@
     }
   },
   "ObservationDevices": {
-    "title": "{tenantId} 観測デバイス管理"
+    "title": "{tenantId} 観測デバイス管理",
+    "managementLink": "管理ページ"
   },
   "Guest": {
     "pageSubtitle": "ゲストページ",

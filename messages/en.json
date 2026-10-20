@@ -13,13 +13,9 @@
   },
   "Management": {
     "title": "{tenantId} Management",
-    "tabsLabel": "Switch management view",
-    "tabs": {
-      "graph": "Route diagram",
-      "edges": "Connected edges"
-    },
     "graphEditTitle": "{tenantId} Route diagram editor",
-    "backLink": "Back to management"
+    "backLink": "Back to management",
+    "observationDevicesLink": "Observation devices"
   },
   "TenantManagement": {
     "title": "{tenantId} Event management",
@@ -396,7 +392,8 @@
     }
   },
   "ObservationDevices": {
-    "title": "{tenantId} Observation devices"
+    "title": "{tenantId} Observation devices",
+    "managementLink": "Management"
   },
   "Guest": {
     "pageSubtitle": "Guest Page",

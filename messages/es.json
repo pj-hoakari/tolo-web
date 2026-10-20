@@ -13,13 +13,9 @@
   },
   "Management": {
     "title": "{tenantId} Administración",
-    "tabsLabel": "Cambiar vista de administración",
-    "tabs": {
-      "graph": "Diagrama de rutas",
-      "edges": "Edges conectados"
-    },
     "graphEditTitle": "{tenantId} Editor del diagrama de rutas",
-    "backLink": "Volver a administración"
+    "backLink": "Volver a administración",
+    "observationDevicesLink": "Dispositivos de observación"
   },
   "TenantManagement": {
     "title": "{tenantId} Gestión de eventos",
@@ -396,7 +392,8 @@
     }
   },
   "ObservationDevices": {
-    "title": "{tenantId} Dispositivos de observación"
+    "title": "{tenantId} Dispositivos de observación",
+    "managementLink": "Administración"
   },
   "Guest": {
     "pageSubtitle": "Página del visitante",

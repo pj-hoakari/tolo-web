@@ -22,11 +22,11 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Docker Compose での開発環境
 
-`compose.yaml` は Firebase エミュレータ（Firestore と Auth）、開発用の偽 IdP（`fakeidp`）、tolo-edge-bridge、Next.js の開発サーバー（`web`）を起動します。tolo-edge-bridge はすべての RPC で `event_access` トークンを検証します。`web` は、管理ページからの呼び出しでは環境変数 `GRAPH_ACCESS_TOKEN`、観測ページからの呼び出しでは `OBSERVATION_ACCESS_TOKEN` のトークンを `Authorization: Bearer` で tolo-edge-bridge へ送ります。
+`compose.yaml` は Firebase エミュレータ（Firestore と Auth）、開発用の偽 IdP（`fakeidp`）、tolo-edge-bridge、Next.js の開発サーバー（`web`）を起動します。tolo-edge-bridge はすべての RPC で `event_access` トークンを検証します。`web` は、管理ページと観測デバイス管理ページからの呼び出しでは環境変数 `GRAPH_ACCESS_TOKEN`、観測ページからの呼び出しでは `OBSERVATION_ACCESS_TOKEN` のトークンを `Authorization: Bearer` で tolo-edge-bridge へ送ります。
 
 ブラウザは、tolo-edge-bridge が発行した Firebase のカスタムトークンで Auth エミュレータにサインインしてから、シグナリング文書を読み書きします。Firebase エミュレータは tolo-edge-bridge リポジトリの `firebase-emulator/` を固定したコミットからビルドし、同じディレクトリのセキュリティルールを適用します。ホストへは Firestore を `localhost:8080`、Auth を `localhost:9099`、Emulator UI を `http://localhost:4000` で公開します。
 
-Service Gateway と Observation は起動しません。代わりに、`web` は環境変数 `OBSERVATION_API_MOCKING` が `enabled` のとき、Observation の手続き（端末一覧、観測地点、ハートビート、計測値の送信）に Service Gateway を呼ばずに応答します。端末一覧は MSW のモックと同じサンプル（`src/mocks/fixtures/edges.ts`）で、「接続エッジ」タブには、稼働中の 2 台とオフラインの 1 台が表示されます。計測値は捨てます。シグナリングはこの切り替えの対象外で、tolo-edge-bridge を通ります。`compose.yaml` はこの変数を既定で `enabled` にします。この切り替えは `NODE_ENV` が `development` のときだけ働きます。
+Service Gateway と Observation は起動しません。代わりに、`web` は環境変数 `OBSERVATION_API_MOCKING` が `enabled` のとき、Observation の手続き（端末一覧、観測地点、ハートビート、計測値の送信）に Service Gateway を呼ばずに応答します。端末一覧は MSW のモックと同じサンプル（`src/mocks/fixtures/edges.ts`）で、観測デバイス管理ページには、稼働中の 2 台とオフラインの 1 台が表示されます。計測値は捨てます。シグナリングはこの切り替えの対象外で、tolo-edge-bridge を通ります。`compose.yaml` はこの変数を既定で `enabled` にします。この切り替えは `NODE_ENV` が `development` のときだけ働きます。
 
 ホストで起動する Next.js（`pnpm dev`）では、`.env.example` のとおりこの変数を `disabled` にし、`GATEWAY_URL` の Service Gateway を呼びます。
 
@@ -64,8 +64,9 @@ docker compose up -d --build
 
 テナントはサブドメイン名で決まります。サブドメイン名 `test` が上のトークンのテナント `0123456789abcdef` に対応します。上のトークンに対応する URL は次のとおりです。
 
-- 管理ページ: `http://test.localhost:3000/event/fedcba9876543210/management`（「接続エッジ」タブ）
-- エッジ端末の観測ページ: `http://test.localhost:3000/event/fedcba9876543210/observation/{edgeDeviceId}`
+- 管理ページ: `http://test.localhost:3000/event/fedcba9876543210/management`
+- 観測デバイス管理ページ: `http://test.localhost:3000/event/fedcba9876543210/observation`
+- 観測デバイスの観測ページ: `http://test.localhost:3000/event/fedcba9876543210/observation/{edgeDeviceId}`
 
 テナントの公開 ID をホストにした URL（`http://0123456789abcdef.localhost:3000/...`）は 404 になります。
 

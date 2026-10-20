@@ -13,13 +13,9 @@
   },
   "Management": {
     "title": "{tenantId} 管理頁面",
-    "tabsLabel": "切換管理檢視",
-    "tabs": {
-      "graph": "路徑圖",
-      "edges": "連線的邊緣裝置"
-    },
     "graphEditTitle": "{tenantId} 路徑圖編輯",
-    "backLink": "返回管理頁面"
+    "backLink": "返回管理頁面",
+    "observationDevicesLink": "觀測裝置管理"
   },
   "TenantManagement": {
     "title": "{tenantId} 活動管理",
@@ -396,7 +392,8 @@
     }
   },
   "ObservationDevices": {
-    "title": "{tenantId} 觀測裝置管理"
+    "title": "{tenantId} 觀測裝置管理",
+    "managementLink": "管理頁面"
   },
   "Guest": {
     "pageSubtitle": "訪客頁面",

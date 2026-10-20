@@ -13,13 +13,9 @@
   },
   "Management": {
     "title": "{tenantId} व्यवस्थापन पृष्ठ",
-    "tabsLabel": "व्यवस्थापन दृश्य बदल्नुहोस्",
-    "tabs": {
-      "graph": "मार्ग रेखाचित्र",
-      "edges": "जोडिएका एजहरू"
-    },
     "graphEditTitle": "{tenantId} मार्ग रेखाचित्र सम्पादन",
-    "backLink": "व्यवस्थापन पृष्ठमा फर्कनुहोस्"
+    "backLink": "व्यवस्थापन पृष्ठमा फर्कनुहोस्",
+    "observationDevicesLink": "अवलोकन उपकरण व्यवस्थापन"
   },
   "TenantManagement": {
     "title": "{tenantId} कार्यक्रम व्यवस्थापन",
@@ -396,7 +392,8 @@
     }
   },
   "ObservationDevices": {
-    "title": "{tenantId} अवलोकन उपकरण व्यवस्थापन"
+    "title": "{tenantId} अवलोकन उपकरण व्यवस्थापन",
+    "managementLink": "व्यवस्थापन पृष्ठ"
   },
   "Guest": {
     "pageSubtitle": "पाहुना पृष्ठ",
