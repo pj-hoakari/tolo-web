@@ -1,10 +1,13 @@
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/components/ui/link";
 import type { EdgeDevicesStatus } from "../hooks/useEdgeDevices";
 import type { ConnectionStatus, EdgeDeviceItem } from "../type";
 import { isActiveConnection } from "../utils/connectionStatus";
+import { UnregisterEdgeDeviceDialog } from "./UnregisterEdgeDeviceDialog";
 
 export type AliveEdgeListProps = {
+  eventId: string;
   edges: EdgeDeviceItem[];
   status: EdgeDevicesStatus;
   error: string | null;
@@ -13,9 +16,11 @@ export type AliveEdgeListProps = {
   receiveStatus: ConnectionStatus;
   onConnect: (edgeId: string) => void;
   onDisconnect: () => void;
+  onUnregistered: () => void;
 };
 
 export function AliveEdgeList({
+  eventId,
   edges,
   status,
   error,
@@ -24,6 +29,7 @@ export function AliveEdgeList({
   receiveStatus,
   onConnect,
   onDisconnect,
+  onUnregistered,
 }: AliveEdgeListProps) {
   const loading = status === "loading";
   const locale = useLocale();
@@ -79,7 +85,7 @@ export function AliveEdgeList({
                     })}
                   </span>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   {!edge.online && (
                     <span className="rounded-full border px-2 py-0.5 text-muted-foreground text-xs">
                       {t("offline")}
@@ -120,6 +126,22 @@ export function AliveEdgeList({
                       {t("close")}
                     </Button>
                   )}
+                  {!edge.online && (
+                    <Link
+                      href={`/event/${eventId}/observation/${edge.edgeDeviceId}`}
+                      variant="secondary"
+                      size="sm"
+                      aria-label={t("openHereLabel", { name })}
+                    >
+                      {t("openHere")}
+                    </Link>
+                  )}
+                  <UnregisterEdgeDeviceDialog
+                    eventId={eventId}
+                    edgeDeviceId={edge.edgeDeviceId}
+                    name={name}
+                    onUnregistered={onUnregistered}
+                  />
                 </div>
               </li>
             );

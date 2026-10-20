@@ -657,7 +657,10 @@ test.describe("Screen Wake Lock に対応していないブラウザ", () => {
   });
 });
 
-test("エッジデバイス付きの URL でも観測ページが表示される", async ({
+const missingEdgeDeviceNotice =
+  "このページは、管理ページで端末を登録して発行した URL から開いてください。";
+
+test("エッジデバイス付きの URL でも観測ページが表示され発行 URL の案内は出ない", async ({
   page,
 }) => {
   await page.goto("/event/test/observation/0123456789abcdef");
@@ -668,4 +671,17 @@ test("エッジデバイス付きの URL でも観測ページが表示される
       name: "0123456789abcdef 観測ページ",
     }),
   ).toBeVisible();
+  await setUpUnlockCode(page, "1234");
+  await expect(page.getByText(missingEdgeDeviceNotice)).toHaveCount(0);
+});
+
+test("エッジデバイスのない URL で開くと発行 URL から開くよう案内され管理ページへ移動できる", async ({
+  page,
+}) => {
+  await setUpUnlockCode(page, "1234");
+
+  await expect(page.getByText(missingEdgeDeviceNotice)).toBeVisible();
+  await page.getByRole("link", { name: "管理ページを開く" }).click();
+
+  await expect(page).toHaveURL("/event/test/management");
 });

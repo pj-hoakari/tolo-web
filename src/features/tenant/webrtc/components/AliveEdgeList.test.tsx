@@ -4,9 +4,12 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { createOrpcHandlers } from "@/mocks/handlers";
+import { server } from "@/mocks/server";
 import { IntlTestProvider } from "@/test/IntlTestProvider";
 import type { ConnectionStatus } from "../type";
 import { AliveEdgeList } from "./AliveEdgeList";
@@ -16,10 +19,14 @@ afterEach(cleanup);
 const renderList = (
   receiveStatus: ConnectionStatus,
   onDisconnect: () => void = vi.fn(),
-  { connectedOnline = true }: { connectedOnline?: boolean } = {},
+  {
+    connectedOnline = true,
+    onUnregistered = vi.fn(),
+  }: { connectedOnline?: boolean; onUnregistered?: () => void } = {},
 ) =>
   render(
     <AliveEdgeList
+      eventId="e"
       edges={[
         {
           edgeDeviceId: "edge-a",
@@ -50,6 +57,7 @@ const renderList = (
       receiveStatus={receiveStatus}
       onConnect={vi.fn()}
       onDisconnect={onDisconnect}
+      onUnregistered={onUnregistered}
     />,
     { wrapper: IntlTestProvider },
   );
@@ -185,5 +193,60 @@ describe("AliveEdgeList", () => {
     expect(
       screen.getByRole("button", { name: "「ホールカメラ」に接続" }),
     ).toBeTruthy();
+  });
+
+  it("オフラインの端末の行にだけ、その端末の観測ページを開くリンクを出す", () => {
+    renderList("idle");
+
+    expect(
+      within(row("倉庫カメラ") as HTMLElement)
+        .getByRole("link", { name: "「倉庫カメラ」をこの端末で開く" })
+        .getAttribute("href"),
+    ).toBe("/event/e/observation/edge-c");
+    expect(
+      within(row("ホールカメラ") as HTMLElement).queryByRole("link"),
+    ).toBeNull();
+  });
+
+  it("登録解除を確認すると端末の登録を解除し、一覧の更新を求める", async () => {
+    const onUnregistered = vi.fn();
+    renderList("idle", vi.fn(), { onUnregistered });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "「倉庫カメラ」の登録を解除" }),
+    );
+    const dialog = screen.getByRole("alertdialog");
+    expect(dialog.textContent).toContain("「倉庫カメラ」の登録を解除します。");
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "登録を解除する" }),
+    );
+
+    await waitFor(() => expect(onUnregistered).toHaveBeenCalledOnce());
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+  });
+
+  it("登録解除に失敗すると確認ダイアログに理由を表示し、一覧の更新を求めない", async () => {
+    server.use(
+      ...createOrpcHandlers({ unregisterEdgeDeviceError: "NOT_FOUND" }),
+    );
+    const onUnregistered = vi.fn();
+    renderList("idle", vi.fn(), { onUnregistered });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "「倉庫カメラ」の登録を解除" }),
+    );
+    fireEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "登録を解除する",
+      }),
+    );
+
+    expect(
+      (await within(screen.getByRole("alertdialog")).findByRole("alert"))
+        .textContent,
+    ).toBe(
+      "端末が見つからないか、既に登録が解除されています。一覧を更新してください。",
+    );
+    expect(onUnregistered).not.toHaveBeenCalled();
   });
 });

@@ -251,7 +251,11 @@
       "disconnectLabel": "断开与“{name}”的连接",
       "close": "关闭",
       "closeLabel": "关闭“{name}”的视频",
-      "loadError": "获取边缘设备列表失败"
+      "loadError": "获取边缘设备列表失败",
+      "openHere": "在此设备上打开",
+      "openHereLabel": "在此设备上打开“{name}”",
+      "unregister": "取消注册",
+      "unregisterLabel": "取消注册“{name}”"
     },
     "receiver": {
       "stoppedTitle": "观测已停止",
@@ -262,6 +266,30 @@
     "broadcast": {
       "active": "推流中",
       "inactive": "已停止"
+    },
+    "registerEdge": {
+      "title": "注册边缘设备",
+      "nameLabel": "设备名称",
+      "pointsLabel": "观测点名称",
+      "pointsDescription": "每行输入一个",
+      "submit": "注册",
+      "registered": "已注册“{name}”。请在用于观测的设备上打开此 URL。",
+      "points": "观测点：{names}",
+      "urlLabel": "签发的 URL",
+      "copy": "复制 URL",
+      "copied": "已复制",
+      "open": "在此设备上打开",
+      "failed": "无法注册边缘设备。",
+      "invalid": "请检查设备名称和观测点名称。",
+      "eventNotFound": "未找到活动。"
+    },
+    "unregisterEdge": {
+      "title": "取消注册边缘设备",
+      "description": "将取消注册“{name}”。此设备的观测点将无法再进行观测。",
+      "cancel": "取消",
+      "confirm": "取消注册",
+      "failed": "无法取消注册。",
+      "stale": "未找到设备或设备已取消注册。请刷新列表。"
     }
   },
   "Detection": {
@@ -365,6 +393,10 @@
       "activeHint": "（停止后才能切换）",
       "inactiveHint": "（选择后启动时生效）",
       "hide": "隐藏"
+    },
+    "missingEdgeDevice": {
+      "message": "请通过在管理页面注册设备时签发的 URL 打开此页面。使用此 URL 不会发送计测值。",
+      "link": "打开管理页面"
     }
   },
   "Guest": {

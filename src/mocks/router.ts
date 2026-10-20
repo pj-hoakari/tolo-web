@@ -12,14 +12,23 @@ import {
   type TenantEvent,
 } from "@/features/tenant/management/events/type";
 import type { GraphData } from "@/features/tenant/management/graph/type";
-import type { EdgeDevice, FirestoreToken } from "@/server/router";
-import { sampleEdgeDevicesWire } from "./fixtures/edges";
+import type {
+  EdgeDevice,
+  FirestoreToken,
+  RegisteredEdgeDevice,
+} from "@/server/router";
+import {
+  registeredEdgeDeviceWire,
+  sampleEdgeDevicesWire,
+} from "./fixtures/edges";
 
 export type MockRouterOverrides = {
   /** observation.listEdgeDevices が返すエッジ端末一覧（未指定なら sampleEdgeDevicesWire） */
   devices?: EdgeDevice[];
   /** observation.listEdgeDevices を失敗させる（status: error の確認用） */
   devicesError?: boolean;
+  registerEdgeDeviceError?: CommonORPCErrorCode;
+  unregisterEdgeDeviceError?: CommonORPCErrorCode;
   /** graph.getGraph が返すグラフ（未指定なら PLACEHOLDER_GRAPH） */
   graph?: GraphData;
   getGraphError?: boolean;
@@ -43,8 +52,10 @@ export const MOCK_SERVER_MESSAGE = "message from the mock server";
  */
 export function createMockRouter(overrides: MockRouterOverrides = {}) {
   const {
-    devices = sampleEdgeDevicesWire,
+    devices: initialDevices = sampleEdgeDevicesWire,
     devicesError = false,
+    registerEdgeDeviceError,
+    unregisterEdgeDeviceError,
     graph = PLACEHOLDER_GRAPH,
     getGraphError = false,
     saveGraphError,
@@ -62,6 +73,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     { eventId: "0000000000000005", name: "Event E", status: "archived" },
   ];
   let nextEventNumber = events.length + 1;
+  let devices = [...initialDevices];
 
   return {
     graph: {
@@ -95,6 +107,41 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             });
           }
           return { devices };
+        }),
+      registerEdgeDevice: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            name: z.string().trim().min(1),
+            observationPointNames: z.array(z.string().trim().min(1)).min(1),
+          }),
+        )
+        .handler(async ({ input }): Promise<RegisteredEdgeDevice> => {
+          if (registerEdgeDeviceError !== undefined) {
+            throw new ORPCError(registerEdgeDeviceError, {
+              message: MOCK_SERVER_MESSAGE,
+            });
+          }
+          const registered = registeredEdgeDeviceWire(input);
+          devices = [...devices, registered.device];
+          return registered;
+        }),
+      unregisterEdgeDevice: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            edgeDeviceId: z.string().min(1),
+          }),
+        )
+        .handler(async ({ input }): Promise<void> => {
+          if (unregisterEdgeDeviceError !== undefined) {
+            throw new ORPCError(unregisterEdgeDeviceError, {
+              message: MOCK_SERVER_MESSAGE,
+            });
+          }
+          devices = devices.filter(
+            (d) => d.edgeDeviceId !== input.edgeDeviceId,
+          );
         }),
     },
     tenant: {

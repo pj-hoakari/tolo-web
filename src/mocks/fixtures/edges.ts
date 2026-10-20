@@ -1,5 +1,5 @@
 import type { EdgeDeviceItem } from "@/features/tenant/webrtc/type";
-import type { EdgeDevice } from "@/server/router";
+import type { EdgeDevice, RegisteredEdgeDevice } from "@/server/router";
 
 export const SAMPLE_TENANT_ID = "test";
 export const SAMPLE_EVENT_ID = "test";
@@ -33,6 +33,34 @@ export const sampleEdgeDevicesWire: EdgeDevice[] = [
     ],
   },
 ];
+
+const randomPublicId = () =>
+  crypto.randomUUID().replaceAll("-", "").slice(0, 16);
+
+export function registeredEdgeDeviceWire({
+  eventId,
+  name,
+  observationPointNames,
+}: {
+  eventId: string;
+  name: string;
+  observationPointNames: string[];
+}): RegisteredEdgeDevice {
+  const edgeDeviceId = randomPublicId();
+  return {
+    device: {
+      edgeDeviceId,
+      name,
+      online: false,
+      lastHeartbeatAt: null,
+      observationPoints: observationPointNames.map((pointName) => ({
+        observationPointId: randomPublicId(),
+        name: pointName,
+      })),
+    },
+    observationPagePath: `/event/${eventId}/observation/${edgeDeviceId}`,
+  };
+}
 
 export const sampleEdgeDeviceItems: EdgeDeviceItem[] =
   sampleEdgeDevicesWire.map((device) => ({

@@ -5,6 +5,7 @@ import { DetectionSettingsPanel } from "@/features/tenant/detection/components/D
 import { useEdgeDevices } from "../hooks/useEdgeDevices";
 import { useVideoReceiver } from "../hooks/useVideoReceiver";
 import { AliveEdgeList } from "./AliveEdgeList";
+import { RegisterEdgeDeviceForm } from "./RegisterEdgeDeviceForm";
 import { VideoReceiverView } from "./VideoReceiverView";
 
 export type ConnectedEdgesProps = {
@@ -31,7 +32,9 @@ export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
 
   return (
     <div className="flex w-full flex-col items-center gap-4">
+      <RegisterEdgeDeviceForm eventId={eventId} onRegistered={refresh} />
       <AliveEdgeList
+        eventId={eventId}
         edges={edges}
         status={status}
         error={error}
@@ -40,6 +43,7 @@ export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
         receiveStatus={receiveStatus}
         onConnect={connect}
         onDisconnect={disconnect}
+        onUnregistered={refresh}
       />
       {connectedEdgeId && (
         <div className="flex w-full flex-col items-center gap-2">

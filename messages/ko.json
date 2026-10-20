@@ -251,7 +251,11 @@
       "disconnectLabel": "“{name}” 연결 끊기",
       "close": "닫기",
       "closeLabel": "“{name}” 영상 닫기",
-      "loadError": "엣지 목록을 불러오지 못했습니다"
+      "loadError": "엣지 목록을 불러오지 못했습니다",
+      "openHere": "이 단말에서 열기",
+      "openHereLabel": "“{name}”을(를) 이 단말에서 열기",
+      "unregister": "등록 해제",
+      "unregisterLabel": "“{name}” 등록 해제"
     },
     "receiver": {
       "stoppedTitle": "관측이 중지되었습니다",
@@ -262,6 +266,30 @@
     "broadcast": {
       "active": "송출 중",
       "inactive": "중지됨"
+    },
+    "registerEdge": {
+      "title": "엣지 단말 등록",
+      "nameLabel": "단말 이름",
+      "pointsLabel": "관측 지점 이름",
+      "pointsDescription": "한 줄에 하나씩 입력하세요",
+      "submit": "등록",
+      "registered": "“{name}”을(를) 등록했습니다. 관측에 사용할 단말에서 이 URL을 여세요.",
+      "points": "관측 지점: {names}",
+      "urlLabel": "발급 URL",
+      "copy": "URL 복사",
+      "copied": "복사했습니다",
+      "open": "이 단말에서 열기",
+      "failed": "엣지 단말을 등록할 수 없습니다.",
+      "invalid": "단말 이름과 관측 지점 이름을 확인하세요.",
+      "eventNotFound": "이벤트를 찾을 수 없습니다."
+    },
+    "unregisterEdge": {
+      "title": "엣지 단말 등록 해제",
+      "description": "“{name}”의 등록을 해제합니다. 이 단말의 관측 지점에서는 더 이상 관측할 수 없습니다.",
+      "cancel": "취소",
+      "confirm": "등록 해제하기",
+      "failed": "등록을 해제할 수 없습니다.",
+      "stale": "단말을 찾을 수 없거나 이미 등록이 해제되었습니다. 목록을 새로 고치세요."
     }
   },
   "Detection": {
@@ -365,6 +393,10 @@
       "activeHint": "(중지 후 전환)",
       "inactiveHint": "(선택 후 시작 시 반영)",
       "hide": "숨기기"
+    },
+    "missingEdgeDevice": {
+      "message": "이 페이지는 관리 페이지에서 단말을 등록하고 발급한 URL로 여세요. 이 URL로는 측정값을 보내지 않습니다.",
+      "link": "관리 페이지 열기"
     }
   },
   "Guest": {

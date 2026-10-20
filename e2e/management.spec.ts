@@ -2,7 +2,10 @@ import { expect, type Page, test } from "@playwright/test";
 import { sampleEdgeDevicesWire } from "@/mocks/fixtures/edges";
 import type { MockRouterOverrides } from "@/mocks/router";
 
-type MockOverrides = Pick<MockRouterOverrides, "devices">;
+type MockOverrides = Pick<
+  MockRouterOverrides,
+  "devices" | "registerEdgeDeviceError" | "unregisterEdgeDeviceError"
+>;
 
 const pointA = "入口";
 const pointB = "ブース前";
@@ -25,6 +28,19 @@ const edgeRow = (page: Page, name: string) =>
     .getByRole("tabpanel", { name: "接続エッジ" })
     .getByRole("listitem")
     .filter({ hasText: name });
+const edgesTab = (page: Page) =>
+  page.getByRole("tabpanel", { name: "接続エッジ" });
+const openEdgesTab = async (page: Page) => {
+  await page.getByRole("tab", { name: "接続エッジ" }).click();
+  await expect(edgesTab(page)).toContainText("エッジ（3）");
+};
+const registerEdge = async (page: Page, name: string, points: string) => {
+  await edgesTab(page).getByRole("textbox", { name: "端末名" }).fill(name);
+  await edgesTab(page).getByRole("textbox", { name: "観測点名" }).fill(points);
+  await edgesTab(page)
+    .getByRole("button", { name: "登録", exact: true })
+    .click();
+};
 const overrideMock = async (page: Page, overrides: MockOverrides) => {
   await page.evaluate((value) => {
     sessionStorage.setItem("msw:overrides", value);
@@ -297,13 +313,18 @@ test("接続エッジの一覧には各エッジの最終応答時刻が表示�
   );
 });
 
-test("未接続のエッジの行には接続ボタンだけが表示される", async ({ page }) => {
+test("未接続のエッジの行には接続ボタンと登録解除ボタンだけが表示される", async ({
+  page,
+}) => {
   await page.getByRole("tab", { name: "接続エッジ" }).click();
 
   const row = edgeRow(page, edgeA);
-  await expect(row.getByRole("button")).toHaveCount(1);
+  await expect(row.getByRole("button")).toHaveCount(2);
   await expect(
     row.getByRole("button", { name: `「${edgeA}」に接続` }),
+  ).toBeEnabled();
+  await expect(
+    row.getByRole("button", { name: `「${edgeA}」の登録を解除` }),
   ).toBeEnabled();
 });
 
@@ -315,7 +336,7 @@ test("エッジへの接続に失敗するとその行に接続失敗と表示�
   await row.getByRole("button", { name: `「${edgeA}」に接続` }).click();
 
   await expect(row).toContainText("接続失敗");
-  await expect(row.getByRole("button")).toHaveCount(2);
+  await expect(row.getByRole("button")).toHaveCount(3);
   await expect(
     row.getByRole("button", { name: `「${edgeA}」に接続` }),
   ).toBeEnabled();
@@ -355,8 +376,149 @@ test("接続に失敗したエッジがオフラインになっても行が残�
   await expect(tabpanel).toContainText("エッジ（3）");
   await expect(row).toContainText("オフライン");
   await expect(row).not.toContainText("接続失敗");
-  await expect(row.getByRole("button")).toHaveCount(1);
+  await expect(row.getByRole("button")).toHaveCount(2);
   await expect(
     row.getByRole("button", { name: `「${edgeA}」に接続` }),
   ).toBeDisabled();
+});
+
+test("エッジ端末を登録すると一覧に加わり発行 URL とこの端末で開くリンクが表示される", async ({
+  page,
+}) => {
+  await openEdgesTab(page);
+
+  await registerEdge(page, "受付カメラ", "受付\n\n 出口 \n受付");
+
+  const issuedUrl = edgesTab(page).getByRole("textbox", { name: "発行 URL" });
+  await expect(issuedUrl).toHaveValue(
+    /^http:\/\/test\.localhost:3100\/event\/test\/observation\/[0-9a-f]{16}$/,
+  );
+  await expect(edgesTab(page)).toContainText("観測点: 受付、出口");
+  await expect(
+    edgesTab(page).getByRole("button", { name: "URL をコピー" }),
+  ).toBeVisible();
+  await expect(edgesTab(page)).toContainText("エッジ（4）");
+  await expect(edgeRow(page, "受付カメラ")).toContainText("オフライン");
+  await expect(
+    edgesTab(page).getByRole("textbox", { name: "端末名" }),
+  ).toHaveValue("");
+
+  const path = new URL(await issuedUrl.inputValue()).pathname;
+  await edgesTab(page)
+    .getByRole("link", { name: "この端末で開く", exact: true })
+    .click();
+  await expect(page).toHaveURL(path);
+  await expect(
+    page.getByRole("heading", {
+      level: 2,
+      name: "0123456789abcdef 観測ページ",
+    }),
+  ).toBeVisible();
+});
+
+test("エッジ端末の登録に失敗すると理由が表示され入力は残る", async ({
+  page,
+}) => {
+  await overrideMock(page, { registerEdgeDeviceError: "BAD_REQUEST" });
+  await openEdgesTab(page);
+
+  await registerEdge(page, "受付カメラ", "受付");
+
+  await expect(edgesTab(page).getByRole("alert")).toHaveText(
+    "端末名と観測点名を確認してください。",
+  );
+  await expect(
+    edgesTab(page).getByRole("textbox", { name: "端末名" }),
+  ).toHaveValue("受付カメラ");
+  await expect(edgesTab(page)).toContainText("エッジ（3）");
+});
+
+test("端末名か観測点名が空のあいだは登録できない", async ({ page }) => {
+  await openEdgesTab(page);
+  const submit = edgesTab(page).getByRole("button", {
+    name: "登録",
+    exact: true,
+  });
+
+  await expect(submit).toBeDisabled();
+  await edgesTab(page)
+    .getByRole("textbox", { name: "端末名" })
+    .fill("受付カメラ");
+  await expect(submit).toBeDisabled();
+  await edgesTab(page).getByRole("textbox", { name: "観測点名" }).fill(" \n ");
+  await expect(submit).toBeDisabled();
+  await edgesTab(page).getByRole("textbox", { name: "観測点名" }).fill("受付");
+  await expect(submit).toBeEnabled();
+});
+
+test("オフラインの端末の行からその端末の観測ページを開ける", async ({
+  page,
+}) => {
+  await openEdgesTab(page);
+
+  await expect(
+    edgeRow(page, edgeA).getByRole("link", { name: /この端末で開く$/ }),
+  ).toHaveCount(0);
+  await edgeRow(page, offlineEdge)
+    .getByRole("link", { name: `「${offlineEdge}」をこの端末で開く` })
+    .click();
+
+  await expect(page).toHaveURL("/event/test/observation/5e6f708192a3b4c5");
+  await expect(
+    page.getByRole("heading", {
+      level: 2,
+      name: "0123456789abcdef 観測ページ",
+    }),
+  ).toBeVisible();
+});
+
+test("登録解除を確認するとその端末が一覧から消える", async ({ page }) => {
+  await openEdgesTab(page);
+
+  await edgeRow(page, offlineEdge)
+    .getByRole("button", { name: `「${offlineEdge}」の登録を解除` })
+    .click();
+  const dialog = page.getByRole("alertdialog");
+  await expect(dialog).toContainText(`「${offlineEdge}」の登録を解除します。`);
+  await dialog.getByRole("button", { name: "登録を解除する" }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect(edgesTab(page)).toContainText("エッジ（2）");
+  await expect(edgeRow(page, offlineEdge)).toHaveCount(0);
+});
+
+test("登録解除の確認でキャンセルすると端末は一覧に残る", async ({ page }) => {
+  await openEdgesTab(page);
+
+  await edgeRow(page, offlineEdge)
+    .getByRole("button", { name: `「${offlineEdge}」の登録を解除` })
+    .click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "キャンセル" })
+    .click();
+
+  await expect(page.getByRole("alertdialog")).toBeHidden();
+  await expect(edgesTab(page)).toContainText("エッジ（3）");
+  await expect(edgeRow(page, offlineEdge)).toHaveCount(1);
+});
+
+test("登録解除に失敗すると確認ダイアログに理由が表示され端末は一覧に残る", async ({
+  page,
+}) => {
+  await overrideMock(page, {
+    unregisterEdgeDeviceError: "PRECONDITION_FAILED",
+  });
+  await openEdgesTab(page);
+
+  await edgeRow(page, offlineEdge)
+    .getByRole("button", { name: `「${offlineEdge}」の登録を解除` })
+    .click();
+  const dialog = page.getByRole("alertdialog");
+  await dialog.getByRole("button", { name: "登録を解除する" }).click();
+
+  await expect(dialog.getByRole("alert")).toHaveText(
+    "端末が見つからないか、既に登録が解除されています。一覧を更新してください。",
+  );
+  await expect(edgesTab(page)).toContainText("エッジ（3）");
 });

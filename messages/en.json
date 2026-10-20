@@ -251,7 +251,11 @@
       "disconnectLabel": "Disconnect from “{name}”",
       "close": "Close",
       "closeLabel": "Close the video from “{name}”",
-      "loadError": "Failed to load the edge list"
+      "loadError": "Failed to load the edge list",
+      "openHere": "Open on this device",
+      "openHereLabel": "Open “{name}” on this device",
+      "unregister": "Unregister",
+      "unregisterLabel": "Unregister “{name}”"
     },
     "receiver": {
       "stoppedTitle": "Observation stopped",
@@ -262,6 +266,30 @@
     "broadcast": {
       "active": "Broadcasting",
       "inactive": "Stopped"
+    },
+    "registerEdge": {
+      "title": "Register an edge device",
+      "nameLabel": "Device name",
+      "pointsLabel": "Observation point names",
+      "pointsDescription": "Enter one per line",
+      "submit": "Register",
+      "registered": "Registered “{name}”. Open this URL on the device used for observation.",
+      "points": "Observation points: {names}",
+      "urlLabel": "Issued URL",
+      "copy": "Copy URL",
+      "copied": "Copied",
+      "open": "Open on this device",
+      "failed": "Could not register the edge device.",
+      "invalid": "Check the device name and observation point names.",
+      "eventNotFound": "The event was not found."
+    },
+    "unregisterEdge": {
+      "title": "Unregister edge device",
+      "description": "Unregister “{name}”? Its observation points will no longer be observed.",
+      "cancel": "Cancel",
+      "confirm": "Unregister",
+      "failed": "Could not unregister the edge device.",
+      "stale": "The device was not found or is already unregistered. Refresh the list."
     }
   },
   "Detection": {
@@ -365,6 +393,10 @@
       "activeHint": " (switch after stopping)",
       "inactiveHint": " (applied on the next start)",
       "hide": "Hide"
+    },
+    "missingEdgeDevice": {
+      "message": "Open this page from the URL issued when you register a device on the management page. This URL does not send measurements.",
+      "link": "Open the management page"
     }
   },
   "Guest": {
