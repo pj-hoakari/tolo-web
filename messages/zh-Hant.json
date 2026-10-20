@@ -393,11 +393,10 @@
       "activeHint": "（停止後才能切換）",
       "inactiveHint": "（選擇後啟動時生效）",
       "hide": "隱藏"
-    },
-    "missingEdgeDevice": {
-      "message": "請透過在管理頁面註冊裝置時核發的 URL 開啟此頁面。使用此 URL 不會傳送計測值。",
-      "link": "開啟管理頁面"
     }
+  },
+  "ObservationDevices": {
+    "title": "{tenantId} 觀測裝置管理"
   },
   "Guest": {
     "pageSubtitle": "訪客頁面",

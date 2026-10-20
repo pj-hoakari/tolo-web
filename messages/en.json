@@ -393,11 +393,10 @@
       "activeHint": " (switch after stopping)",
       "inactiveHint": " (applied on the next start)",
       "hide": "Hide"
-    },
-    "missingEdgeDevice": {
-      "message": "Open this page from the URL issued when you register a device on the management page. This URL does not send measurements.",
-      "link": "Open the management page"
     }
+  },
+  "ObservationDevices": {
+    "title": "{tenantId} Observation devices"
   },
   "Guest": {
     "pageSubtitle": "Guest Page",

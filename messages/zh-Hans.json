@@ -393,11 +393,10 @@
       "activeHint": "（停止后才能切换）",
       "inactiveHint": "（选择后启动时生效）",
       "hide": "隐藏"
-    },
-    "missingEdgeDevice": {
-      "message": "请通过在管理页面注册设备时签发的 URL 打开此页面。使用此 URL 不会发送计测值。",
-      "link": "打开管理页面"
     }
+  },
+  "ObservationDevices": {
+    "title": "{tenantId} 观测设备管理"
   },
   "Guest": {
     "pageSubtitle": "访客页面",

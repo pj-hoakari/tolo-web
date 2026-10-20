@@ -308,54 +308,50 @@ test.describe("online standalone app", () => {
     await expect(page).toHaveURL("/event/test/management");
   });
 
-  for (const devicePath of ["", "/device"]) {
-    test(`observation${devicePath} can be unlocked, configured, and locked again`, async ({
-      page,
+  test("observation/device can be unlocked, configured, and locked again", async ({
+    page,
+    request,
+  }) => {
+    const publicPath = "/event/test/observation/device";
+    await page.goto(publicPath);
+    await expect(
+      page.getByRole("heading", {
+        level: 2,
+        name: "0123456789abcdef 観測ページ",
+      }),
+    ).toBeVisible();
+    const manifestLink = page.locator('link[rel="manifest"]');
+    await expect(manifestLink).toHaveAttribute(
+      "href",
+      `/manifest.webmanifest?start=${encodeURIComponent(publicPath)}`,
+    );
+    const manifest = await getOriginAsset(
       request,
-    }) => {
-      const publicPath = `/event/test/observation${devicePath}`;
-      await page.goto(publicPath);
-      await expect(
-        page.getByRole("heading", {
-          level: 2,
-          name: "0123456789abcdef 観測ページ",
-        }),
-      ).toBeVisible();
-      const manifestLink = page.locator('link[rel="manifest"]');
-      await expect(manifestLink).toHaveAttribute(
-        "href",
-        `/manifest.webmanifest?start=${encodeURIComponent(publicPath)}`,
-      );
-      const manifest = await getOriginAsset(
-        request,
-        (await manifestLink.getAttribute("href")) ?? "",
-        tenantOrigin,
-      );
-      expect(manifest.status()).toBe(200);
-      expect(await manifest.json()).toMatchObject({
-        id: "/",
-        start_url: publicPath,
-        scope: "/",
-      });
-      await page
-        .getByRole("textbox", { name: "解除コード", exact: true })
-        .fill("1234");
-      await page
-        .getByRole("textbox", { name: "解除コード（確認）" })
-        .fill("1234");
-      await page.getByRole("button", { name: "設定して解除" }).click();
-      await expect(
-        page.getByRole("button", { name: "カメラを起動" }),
-      ).toBeEnabled();
-      await expect(installButton(page)).toHaveCount(0);
-      await page.getByRole("button", { name: "詳細調整", exact: true }).click();
-      await expect(page.getByRole("spinbutton")).toHaveCount(3);
-      await page
-        .getByRole("button", { name: "画面ロック", exact: true })
-        .click();
-      await expect(
-        page.getByRole("heading", { level: 2, name: "画面ロック中" }),
-      ).toBeVisible();
+      (await manifestLink.getAttribute("href")) ?? "",
+      tenantOrigin,
+    );
+    expect(manifest.status()).toBe(200);
+    expect(await manifest.json()).toMatchObject({
+      id: "/",
+      start_url: publicPath,
+      scope: "/",
     });
-  }
+    await page
+      .getByRole("textbox", { name: "解除コード", exact: true })
+      .fill("1234");
+    await page
+      .getByRole("textbox", { name: "解除コード（確認）" })
+      .fill("1234");
+    await page.getByRole("button", { name: "設定して解除" }).click();
+    await expect(
+      page.getByRole("button", { name: "カメラを起動" }),
+    ).toBeEnabled();
+    await expect(installButton(page)).toHaveCount(0);
+    await page.getByRole("button", { name: "詳細調整", exact: true }).click();
+    await expect(page.getByRole("spinbutton")).toHaveCount(3);
+    await page.getByRole("button", { name: "画面ロック", exact: true }).click();
+    await expect(
+      page.getByRole("heading", { level: 2, name: "画面ロック中" }),
+    ).toBeVisible();
+  });
 });

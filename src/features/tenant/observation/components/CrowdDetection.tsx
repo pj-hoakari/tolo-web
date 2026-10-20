@@ -22,7 +22,7 @@ const DEV_VIDEO_SOURCE_ENABLED = process.env.NODE_ENV === "development";
 export type CrowdDetectionProps = {
   tenantId: string;
   eventId: string;
-  edgeDeviceId?: string;
+  edgeDeviceId: string;
 };
 
 export function CrowdDetection({

@@ -20,11 +20,11 @@ vi.mock("@/lib/orpc", () => ({
 const { settingsStore, resultStore } = createDetectionStores();
 
 function renderReporting(initial: {
-  edgeDeviceId: string | undefined;
+  edgeDeviceId: string;
   listening: boolean;
 }) {
   return renderHook(
-    (props: { edgeDeviceId: string | undefined; listening: boolean }) =>
+    (props: { edgeDeviceId: string; listening: boolean }) =>
       useObservationReporting({
         eventId: "test",
         status: "idle",
@@ -49,14 +49,6 @@ afterEach(() => {
 describe("useObservationReporting", () => {
   it("待ち受けていない間は Heartbeat を送らない", async () => {
     renderReporting({ edgeDeviceId: "0123456789abcdef", listening: false });
-
-    await act(() => vi.advanceTimersByTimeAsync(60_000));
-
-    expect(heartbeat).not.toHaveBeenCalled();
-  });
-
-  it("エッジ端末 ID が無ければ Heartbeat を送らない", async () => {
-    renderReporting({ edgeDeviceId: undefined, listening: true });
 
     await act(() => vi.advanceTimersByTimeAsync(60_000));
 
