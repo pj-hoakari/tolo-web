@@ -393,6 +393,10 @@
       "activeHint": "(중지 후 전환)",
       "inactiveHint": "(선택 후 시작 시 반영)",
       "hide": "숨기기"
+    },
+    "missingEdgeDevice": {
+      "message": "이 페이지는 관리 페이지에서 단말을 등록하고 발급한 URL로 여세요. 이 URL로는 측정값을 보내지 않습니다.",
+      "link": "관리 페이지 열기"
     }
   },
   "Guest": {

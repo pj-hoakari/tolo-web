@@ -393,6 +393,10 @@
       "activeHint": "（切替は停止後）",
       "inactiveHint": "（選択後に起動で反映）",
       "hide": "非表示"
+    },
+    "missingEdgeDevice": {
+      "message": "このページは、管理ページで端末を登録して発行した URL から開いてください。この URL のままでは計測値を送信しません。",
+      "link": "管理ページを開く"
     }
   },
   "Guest": {

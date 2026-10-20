@@ -393,6 +393,10 @@
       "activeHint": " (cambia tras detener)",
       "inactiveHint": " (se aplica al iniciar)",
       "hide": "Ocultar"
+    },
+    "missingEdgeDevice": {
+      "message": "Abre esta página desde la URL emitida al registrar un dispositivo en la página de administración. Con esta URL no se envían mediciones.",
+      "link": "Abrir la página de administración"
     }
   },
   "Guest": {

@@ -2,6 +2,8 @@ import { getTranslations } from "next-intl/server";
 import { LocaleSelect } from "@/components/locale-select";
 import { PwaInstall } from "@/components/pwa/pwa-install";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Link } from "@/components/ui/link";
+import { managementPath } from "@/features/tenant/management/routes";
 import { CrowdDetection } from "@/features/tenant/observation/components/CrowdDetection";
 import { ObservationSoftLock } from "@/features/tenant/observation/components/ObservationSoftLock";
 import { ScreenWakeControl } from "@/features/tenant/observation/components/ScreenWakeControl";
@@ -42,6 +44,17 @@ export default async function TenantObservation({
           </header>
           <main className="flex w-full flex-col items-center gap-4">
             <ScreenWakeControl />
+            {!edgeDeviceId && (
+              <p className="w-full max-w-3xl rounded-md border px-4 py-3 text-sm">
+                {t("missingEdgeDevice.message")}{" "}
+                <Link
+                  href={managementPath(eventId)}
+                  className="underline underline-offset-4"
+                >
+                  {t("missingEdgeDevice.link")}
+                </Link>
+              </p>
+            )}
             <CrowdDetection
               tenantId={tenantId}
               eventId={eventId}
