@@ -1,27 +1,40 @@
 import "server-only";
 
-import { createClient, type Interceptor } from "@connectrpc/connect";
+import { createClient, type Transport } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-node";
 import {
   EdgeDeviceService,
   MeasurementIngestService,
 } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
 
-const authorize: Interceptor = (next) => (req) => {
-  const token = process.env.OBSERVATION_ACCESS_TOKEN;
-  if (token) req.header.set("Authorization", `Bearer ${token}`);
-  return next(req);
-};
+function transportWith(accessToken: () => string | undefined): Transport {
+  return createConnectTransport({
+    baseUrl: process.env.GATEWAY_URL ?? "http://127.0.0.1:8080",
+    httpVersion: "1.1",
+    interceptors: [
+      (next) => (req) => {
+        const token = accessToken();
+        if (token) req.header.set("Authorization", `Bearer ${token}`);
+        return next(req);
+      },
+    ],
+  });
+}
 
-const transport = createConnectTransport({
-  baseUrl: process.env.GATEWAY_URL ?? "http://127.0.0.1:8080",
-  httpVersion: "1.1",
-  interceptors: [authorize],
-});
+const consoleTransport = transportWith(() => process.env.GRAPH_ACCESS_TOKEN);
+const edgeTransport = transportWith(() => process.env.OBSERVATION_ACCESS_TOKEN);
 
-export const edgeDeviceClient = createClient(EdgeDeviceService, transport);
+export const consoleEdgeDeviceClient = createClient(
+  EdgeDeviceService,
+  consoleTransport,
+);
 
-export const measurementIngestClient = createClient(
+export const edgeEdgeDeviceClient = createClient(
+  EdgeDeviceService,
+  edgeTransport,
+);
+
+export const edgeMeasurementIngestClient = createClient(
   MeasurementIngestService,
-  transport,
+  edgeTransport,
 );

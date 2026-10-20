@@ -8,7 +8,10 @@ import {
   GraphViolationsSchema,
   ViolationKind,
 } from "@pj-hoakari/tolo-graph-authoring-client-es/tolo/graph/v1/graph_pb";
-import { MeasurementSource } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
+import {
+  MeasurementSource,
+  type EdgeDevice as ProtoEdgeDevice,
+} from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
 import {
   type Event,
   EventStatus as ProtoEventStatus,
@@ -23,10 +26,17 @@ import type {
   TenantEvent,
 } from "@/features/tenant/management/events/type";
 import type { GraphData } from "@/features/tenant/management/graph/type";
-import { sampleEdgeDevicesWire } from "@/mocks/fixtures/edges";
+import {
+  registeredEdgeDeviceWire,
+  sampleEdgeDevicesWire,
+} from "@/mocks/fixtures/edges";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
-import { edgeDeviceClient, measurementIngestClient } from "./observation";
+import {
+  consoleEdgeDeviceClient,
+  edgeEdgeDeviceClient,
+  edgeMeasurementIngestClient,
+} from "./observation";
 import { consoleSignalingClient, edgeSignalingClient } from "./signaling";
 import { tenantManagementClient } from "./tenantManagement";
 
@@ -50,9 +60,13 @@ export interface EdgeDevice {
   observationPoints: ObservationPoint[];
 }
 
-async function listEdgeDevices(eventId: string): Promise<EdgeDevice[]> {
-  const res = await edgeDeviceClient.listEdgeDevices({ eventId });
-  return res.devices.map((d) => ({
+export interface RegisteredEdgeDevice {
+  device: EdgeDevice;
+  observationPagePath: string;
+}
+
+function toEdgeDevice(d: ProtoEdgeDevice): EdgeDevice {
+  return {
     edgeDeviceId: d.edgeDeviceId,
     name: d.name,
     online: d.online,
@@ -63,7 +77,12 @@ async function listEdgeDevices(eventId: string): Promise<EdgeDevice[]> {
       observationPointId: p.observationPointId,
       name: p.name,
     })),
-  }));
+  };
+}
+
+async function listEdgeDevices(eventId: string): Promise<EdgeDevice[]> {
+  const res = await consoleEdgeDeviceClient.listEdgeDevices({ eventId });
+  return res.devices.map(toEdgeDevice);
 }
 
 function observationMocking(): boolean {
@@ -260,6 +279,46 @@ export const router = {
           : await listEdgeDevices(input.eventId),
       }),
     ),
+    registerEdgeDevice: os
+      .input(
+        z.object({
+          eventId: z.string().min(1),
+          name: z.string().trim().min(1),
+          observationPointNames: z
+            .array(z.string().trim().min(1))
+            .min(1)
+            .refine((names) => new Set(names).size === names.length),
+        }),
+      )
+      .handler(async ({ input }): Promise<RegisteredEdgeDevice> => {
+        if (observationMocking()) {
+          return registeredEdgeDeviceWire(input);
+        }
+        try {
+          const res = await consoleEdgeDeviceClient.registerEdgeDevice(input);
+          if (!res.device) {
+            throw new Error("RegisterEdgeDevice returned no device");
+          }
+          return {
+            device: toEdgeDevice(res.device),
+            observationPagePath: res.observationPagePath,
+          };
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    unregisterEdgeDevice: os
+      .input(edgeDeviceInput)
+      .handler(async ({ input }): Promise<void> => {
+        if (observationMocking()) {
+          return;
+        }
+        try {
+          await consoleEdgeDeviceClient.unregisterEdgeDevice(input);
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
     listObservationPoints: os
       .input(edgeDeviceInput)
       .handler(
@@ -285,7 +344,7 @@ export const router = {
         if (observationMocking()) {
           return;
         }
-        await edgeDeviceClient.heartbeat(input);
+        await edgeEdgeDeviceClient.heartbeat(input);
       }),
     reportMeasurements: os
       .input(
@@ -306,7 +365,7 @@ export const router = {
         if (observationMocking()) {
           return;
         }
-        await measurementIngestClient.reportMeasurements({
+        await edgeMeasurementIngestClient.reportMeasurements({
           eventId: input.eventId,
           edgeDeviceId: input.edgeDeviceId,
           measurements: input.measurements.map((m) => ({
