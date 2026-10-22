@@ -19,12 +19,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
 import { sampleEdgeDevicesWire } from "@/mocks/fixtures/edges";
 import { graphAuthoringClient } from "./graphAuthoring";
+import { issueRegistrationToken } from "./idp";
 import {
   consoleEdgeDeviceClient,
   edgeEdgeDeviceClient,
   edgeMeasurementIngestClient,
 } from "./observation";
 import { router } from "./router";
+import { tenantRegistrationClient } from "./tenantManagement";
 
 vi.hoisted(() => {
   process.env.GATEWAY_URL = "http://127.0.0.1:9";
@@ -34,6 +36,14 @@ vi.mock(
   "@pj-hoakari/tolo-tenant-management-connect-es/tolo/tenant/v1/tenant_pb",
   () => ({ EventStatus: {}, TenantService: { methods: [] } }),
 );
+
+vi.mock("./tenantManagement", () => ({
+  tenantRegistrationClient: {
+    startTenantRegistration: vi.fn(),
+    claimTenantOwnership: vi.fn(),
+  },
+}));
+vi.mock("./idp", () => ({ issueRegistrationToken: vi.fn() }));
 
 const eventId = "fedcba9876543210";
 const [device] = sampleEdgeDevicesWire;
@@ -143,6 +153,70 @@ describe("graph.saveGraph", () => {
     expect(error).toMatchObject({ code: "PRECONDITION_FAILED" });
     expect((error as ORPCError<string, unknown>).message).not.toContain(
       "event is archived",
+    );
+  });
+});
+
+describe("tenant.register", () => {
+  const tenantId = "0123456789abcdef";
+  const register = () =>
+    call(router.tenant.register, {
+      name: "Acme",
+      subdomain: "acme",
+      ownerEmail: "owner@example.com",
+    });
+
+  it("starts a registration with the standard plan, then claims it with a registration token issued to the owner", async () => {
+    const start = vi
+      .mocked(tenantRegistrationClient.startTenantRegistration)
+      .mockResolvedValue({
+        tenant: { tenantId },
+        ownershipClaimToken: "claim-token",
+      } as never);
+    const issue = vi
+      .mocked(issueRegistrationToken)
+      .mockResolvedValue("registration-token");
+    const claim = vi
+      .mocked(tenantRegistrationClient.claimTenantOwnership)
+      .mockResolvedValue({ tenant: { tenantId, subdomain: "acme" } } as never);
+
+    await expect(register()).resolves.toEqual({ tenantId, subdomain: "acme" });
+
+    expect(start).toHaveBeenCalledWith({
+      name: "Acme",
+      contractPlan: "standard",
+    });
+    expect(issue).toHaveBeenCalledWith("owner@example.com");
+    expect(claim).toHaveBeenCalledWith(
+      { tenantId, ownershipClaimToken: "claim-token", subdomain: "acme" },
+      { headers: { Authorization: "Bearer registration-token" } },
+    );
+    expect(start.mock.invocationCallOrder[0]).toBeLessThan(
+      issue.mock.invocationCallOrder[0],
+    );
+    expect(issue.mock.invocationCallOrder[0]).toBeLessThan(
+      claim.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("passes a taken subdomain to the browser as a conflict without the server message", async () => {
+    vi.mocked(
+      tenantRegistrationClient.startTenantRegistration,
+    ).mockResolvedValue({
+      tenant: { tenantId },
+      ownershipClaimToken: "claim-token",
+    } as never);
+    vi.mocked(issueRegistrationToken).mockResolvedValue("registration-token");
+    vi.mocked(tenantRegistrationClient.claimTenantOwnership).mockRejectedValue(
+      new ConnectError("subdomain is taken", Code.AlreadyExists),
+    );
+
+    const error = await register().catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ORPCError);
+    expect(error).toMatchObject({ code: "CONFLICT" });
+    expect((error as ORPCError<string, unknown>).message).not.toContain(
+      "subdomain is taken",
     );
   });
 });

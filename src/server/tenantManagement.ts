@@ -10,11 +10,18 @@ const authorize: Interceptor = (next) => (req) => {
   return next(req);
 };
 
+const baseUrl = process.env.GATEWAY_URL ?? "http://127.0.0.1:8080";
+
 export const tenantManagementClient = createClient(
   TenantService,
   createConnectTransport({
-    baseUrl: process.env.GATEWAY_URL ?? "http://127.0.0.1:8080",
+    baseUrl,
     httpVersion: "1.1",
     interceptors: [authorize],
   }),
+);
+
+export const tenantRegistrationClient = createClient(
+  TenantService,
+  createConnectTransport({ baseUrl, httpVersion: "1.1" }),
 );
