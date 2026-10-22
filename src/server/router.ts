@@ -32,13 +32,17 @@ import {
 } from "@/mocks/fixtures/edges";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
+import { issueRegistrationToken } from "./idp";
 import {
   consoleEdgeDeviceClient,
   edgeEdgeDeviceClient,
   edgeMeasurementIngestClient,
 } from "./observation";
 import { consoleSignalingClient, edgeSignalingClient } from "./signaling";
-import { tenantManagementClient } from "./tenantManagement";
+import {
+  tenantManagementClient,
+  tenantRegistrationClient,
+} from "./tenantManagement";
 
 const publicId = z.string().regex(/^[0-9a-f]{16}$/);
 
@@ -131,6 +135,7 @@ const ORPC_ERROR_CODES: Partial<Record<Code, string>> = {
   [Code.InvalidArgument]: "BAD_REQUEST",
   [Code.FailedPrecondition]: "PRECONDITION_FAILED",
   [Code.NotFound]: "NOT_FOUND",
+  [Code.AlreadyExists]: "CONFLICT",
 };
 
 function toORPCError(err: unknown): unknown {
@@ -202,6 +207,46 @@ export const router = {
       }),
   },
   tenant: {
+    register: os
+      .input(
+        z.object({
+          name: z.string().trim().min(1),
+          subdomain: z.string().trim().min(1),
+          ownerEmail: z.email(),
+        }),
+      )
+      .handler(
+        async ({ input }): Promise<{ tenantId: string; subdomain: string }> => {
+          try {
+            const started =
+              await tenantRegistrationClient.startTenantRegistration({
+                name: input.name,
+                contractPlan: "standard",
+              });
+            if (!started.tenant) {
+              throw new Error("StartTenantRegistration returned no tenant");
+            }
+            const token = await issueRegistrationToken(input.ownerEmail);
+            const claimed = await tenantRegistrationClient.claimTenantOwnership(
+              {
+                tenantId: started.tenant.tenantId,
+                ownershipClaimToken: started.ownershipClaimToken,
+                subdomain: input.subdomain,
+              },
+              { headers: { Authorization: `Bearer ${token}` } },
+            );
+            if (!claimed.tenant) {
+              throw new Error("ClaimTenantOwnership returned no tenant");
+            }
+            return {
+              tenantId: claimed.tenant.tenantId,
+              subdomain: claimed.tenant.subdomain,
+            };
+          } catch (err) {
+            throw toORPCError(err);
+          }
+        },
+      ),
     listEvents: os
       .input(
         z.object({

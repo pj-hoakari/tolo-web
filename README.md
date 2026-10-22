@@ -141,6 +141,12 @@ GATEWAY_URL=http://127.0.0.1:8080 NEXT_PUBLIC_API_MOCKING=disabled TENANT_SUBDOM
 
 `http://acme.localhost:3000/management` を開きます。`acme` は所有権の取得で決めたサブドメイン名です。
 
+### オンボーディングページでテナントを作る
+
+上の curl の手順の代わりに、ルートドメインのトップ（`http://localhost:3000/`）の「テナントを作成」から `/onboarding` を開いてもテナントを作れます。テナント名、サブドメイン名、オーナーのメールアドレスを入力すると、`web` がテナントの登録を始め、偽 IdP から `registration` トークンを発行し、所有権を取得します。オーナーはメールアドレスを `sub` とするユーザーになります。
+
+`web` は偽 IdP の URL を環境変数 `FAKEIDP_URL` から読みます。未設定のときは `http://127.0.0.1:8082` を使います。
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
