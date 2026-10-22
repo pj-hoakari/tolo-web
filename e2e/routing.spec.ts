@@ -7,7 +7,9 @@ test("ルートドメインにアクセスするとトップページが表示�
   page,
 }) => {
   await page.goto(`${rootURL}/`);
-  await expect(page.getByText("こんにちは、世界！")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "テナントを作成" }),
+  ).toBeVisible();
 });
 
 test("テナントとして解決できないホストにアクセスすると 404 になる", async ({
@@ -60,7 +62,9 @@ test("サブドメインで言語を切り替えてもルートドメインの�
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
 
   await page.goto(`${rootURL}/`);
-  await expect(page.getByText("こんにちは、世界！")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "テナントを作成" }),
+  ).toBeVisible();
 });
 
 test.describe("ブラウザの言語が英語のとき", () => {
@@ -68,7 +72,9 @@ test.describe("ブラウザの言語が英語のとき", () => {
 
   test("トップページを開くと英語で表示される", async ({ page }) => {
     await page.goto(`${rootURL}/`);
-    await expect(page.getByText("Hello world!")).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Create a tenant" }),
+    ).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
   });
 
@@ -80,7 +86,9 @@ test.describe("ブラウザの言語が英語のとき", () => {
       { name: "NEXT_LOCALE", value: "ja", url: rootURL },
     ]);
     await page.goto(`${rootURL}/`);
-    await expect(page.getByText("こんにちは、世界！")).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "テナントを作成" }),
+    ).toBeVisible();
   });
 });
 
@@ -107,7 +115,9 @@ test("www サブドメインにアクセスするとトップページが表示�
   page,
 }) => {
   await page.goto("http://www.localhost:3100/");
-  await expect(page.getByText("こんにちは、世界！")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "テナントを作成" }),
+  ).toBeVisible();
 });
 
 test("多段のサブドメインにアクセスすると 404 になる", async ({ page }) => {

@@ -1,6 +1,6 @@
 {
   "HomePage": {
-    "title": "你好，世界！"
+    "createTenant": "建立租戶"
   },
   "Onboarding": {
     "title": "建立租戶",

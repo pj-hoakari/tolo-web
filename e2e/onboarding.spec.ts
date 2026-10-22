@@ -26,6 +26,18 @@ const fillAndSubmit = async (page: Page) => {
   await page.getByRole("button", { name: "作成" }).click();
 };
 
+test("ルートドメインのトップで「テナントを作成」を押すとオンボーディングページへ移る", async ({
+  page,
+}) => {
+  await page.goto(`${rootURL}/`);
+  await page.getByRole("link", { name: "テナントを作成" }).click();
+
+  await expect(page).toHaveURL(`${rootURL}/onboarding`);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "テナントを作成" }),
+  ).toBeVisible();
+});
+
 test("テナント名・サブドメイン名・オーナーのメールアドレスを入力して作成すると、完了表示とそのサブドメインのテナントページへのリンクが出る", async ({
   page,
 }) => {

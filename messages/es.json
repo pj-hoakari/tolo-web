@@ -1,6 +1,6 @@
 {
   "HomePage": {
-    "title": "¡Hola, mundo!"
+    "createTenant": "Crear un inquilino"
   },
   "Onboarding": {
     "title": "Crear un inquilino",

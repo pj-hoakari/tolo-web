@@ -1,6 +1,6 @@
 {
   "HomePage": {
-    "title": "こんにちは、世界！"
+    "createTenant": "テナントを作成"
   },
   "Onboarding": {
     "title": "テナントを作成",

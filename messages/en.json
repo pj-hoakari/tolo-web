@@ -1,6 +1,6 @@
 {
   "HomePage": {
-    "title": "Hello world!"
+    "createTenant": "Create a tenant"
   },
   "Onboarding": {
     "title": "Create a tenant",
