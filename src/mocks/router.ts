@@ -36,6 +36,7 @@ export type MockRouterOverrides = {
     code: CommonORPCErrorCode;
     violations?: GraphViolation[];
   };
+  registerTenantError?: CommonORPCErrorCode;
   listEventsError?: boolean;
   createEventError?: CommonORPCErrorCode;
   archiveEventError?: CommonORPCErrorCode;
@@ -59,6 +60,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     graph = PLACEHOLDER_GRAPH,
     getGraphError = false,
     saveGraphError,
+    registerTenantError,
     listEventsError = false,
     createEventError,
     archiveEventError,
@@ -145,6 +147,26 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
         }),
     },
     tenant: {
+      register: os
+        .input(
+          z.object({
+            name: z.string().trim().min(1),
+            subdomain: z.string().trim().min(1),
+            ownerEmail: z.email(),
+          }),
+        )
+        .handler(
+          async ({
+            input,
+          }): Promise<{ tenantId: string; subdomain: string }> => {
+            if (registerTenantError !== undefined) {
+              throw new ORPCError(registerTenantError, {
+                message: MOCK_SERVER_MESSAGE,
+              });
+            }
+            return { tenantId: "00000000000000a1", subdomain: input.subdomain };
+          },
+        ),
       listEvents: os
         .input(
           z.object({

@@ -2,6 +2,18 @@
   "HomePage": {
     "title": "Hello world!"
   },
+  "Onboarding": {
+    "title": "Create a tenant",
+    "name": "Tenant name",
+    "subdomain": "Subdomain",
+    "ownerEmail": "Owner email address",
+    "submit": "Create",
+    "done": "Tenant created",
+    "openTenant": "Open the tenant page",
+    "subdomainTaken": "This subdomain is already in use. Choose another one.",
+    "invalid": "The input does not follow the rules. A subdomain uses lowercase letters, digits, and hyphens, is at most 63 characters long, and cannot start or end with a hyphen.",
+    "failed": "Could not create the tenant."
+  },
   "LocaleSelect": {
     "label": "Change language"
   },
