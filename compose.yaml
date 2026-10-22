@@ -66,6 +66,7 @@ services:
             OBSERVATION_API_MOCKING: ${OBSERVATION_API_MOCKING:-enabled}
             TENANT_SUBDOMAIN_MOCKING: ${TENANT_SUBDOMAIN_MOCKING:-enabled}
             TENANT_ACCESS_TOKEN: ${TENANT_ACCESS_TOKEN:-}
+            FAKEIDP_URL: http://fakeidp:8080
         depends_on:
             - firebase-emulator
             - tolo-edge-bridge
