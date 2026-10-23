@@ -444,22 +444,16 @@
         "right": "Derecha"
       }
     },
+    "queues": {
+      "title": "Tiempos de espera por fila",
+      "waitTime": "aprox. {minutes} min",
+      "recommendedGates": "Entrada recomendada: {gates}",
+      "empty": "Aún no hay información de tiempos de espera"
+    },
     "staffMessage": {
       "title": "Avisos del personal",
       "ariaOpen": "Avisos del personal",
-      "empty": "No hay avisos por ahora",
-      "samples": {
-        "msg-2": {
-          "body": "La zona de la puerta este está muy concurrida. Si tienes prisa, te recomendamos usar la puerta oeste.",
-          "staffName": "Taro Yamada",
-          "staffRole": "Personal del recinto"
-        },
-        "msg-1": {
-          "body": "La hora de inicio ha cambiado de las 15:00 a las 15:30. Gracias por tu comprensión.",
-          "staffName": "Hanako Sato",
-          "staffRole": "Responsable del evento"
-        }
-      }
+      "empty": "No hay avisos por ahora"
     },
     "guideMap": {
       "title": "Mapa de orientación",
@@ -489,13 +483,12 @@
         "mid": "Media",
         "high": "Alta"
       },
-      "areas": {
-        "entrance": "Puerta de entrada",
-        "hall": "Sala",
-        "cafe": "Cafetería",
-        "goods": "Tienda"
-      }
-    }
+      "danger": "Peligro",
+      "updatedAt": "Actualizado a las {time}",
+      "empty": "Aún no hay información de afluencia"
+    },
+    "loading": "Cargando…",
+    "loadError": "No se pudo obtener la información"
   },
   "PwaInstall": {
     "button": "Instalar aplicación",

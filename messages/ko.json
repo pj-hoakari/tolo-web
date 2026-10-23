@@ -444,22 +444,16 @@
         "right": "오른쪽"
       }
     },
+    "queues": {
+      "title": "줄별 대기 시간",
+      "waitTime": "약 {minutes}분",
+      "recommendedGates": "추천 입구: {gates}",
+      "empty": "아직 대기 시간 정보가 없습니다"
+    },
     "staffMessage": {
       "title": "스태프 공지",
       "ariaOpen": "스태프 공지",
-      "empty": "현재 공지가 없습니다",
-      "samples": {
-        "msg-2": {
-          "body": "동문 부근이 매우 혼잡합니다. 시간이 촉박하신 분은 서문 이용을 권장합니다.",
-          "staffName": "야마다 타로",
-          "staffRole": "행사장 스태프"
-        },
-        "msg-1": {
-          "body": "개연 시각이 15:00에서 15:30으로 변경되었습니다. 양해 부탁드립니다.",
-          "staffName": "사토 하나코",
-          "staffRole": "운영 책임자"
-        }
-      }
+      "empty": "현재 공지가 없습니다"
     },
     "guideMap": {
       "title": "안내 지도",
@@ -489,13 +483,12 @@
         "mid": "보통",
         "high": "높음"
       },
-      "areas": {
-        "entrance": "입장 게이트",
-        "hall": "홀",
-        "cafe": "카페",
-        "goods": "굿즈 매장"
-      }
-    }
+      "danger": "위험",
+      "updatedAt": "{time} 업데이트",
+      "empty": "아직 혼잡 정보가 없습니다"
+    },
+    "loading": "불러오는 중…",
+    "loadError": "정보를 불러오지 못했습니다"
   },
   "PwaInstall": {
     "button": "앱 설치",

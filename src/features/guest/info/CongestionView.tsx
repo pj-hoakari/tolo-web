@@ -7,6 +7,7 @@ export type CongestionArea = {
   /** エリア名（表示言語で解決済み） */
   name: string;
   level: CongestionLevel;
+  danger: boolean;
 };
 
 export type CongestionViewProps = {
@@ -14,6 +15,9 @@ export type CongestionViewProps = {
   title?: string;
   /** レベルの表示名（省略時は日本語） */
   levelLabels?: Record<CongestionLevel, string>;
+  dangerLabel?: string;
+  updatedAt?: string;
+  message?: string;
 };
 
 const LEVEL_DOT: Record<CongestionLevel, string> = {
@@ -32,13 +36,24 @@ export function CongestionView({
   areas,
   title = "混雑状況",
   levelLabels = DEFAULT_LEVEL_LABELS,
+  dangerLabel = "危険",
+  updatedAt,
+  message,
 }: CongestionViewProps) {
   return (
     <InfoCard title={title}>
+      {message && <p className="text-primary/55 text-sm">{message}</p>}
       <ul className="flex flex-col gap-2.5">
         {areas.map((area) => (
           <li key={area.id} className="flex items-center justify-between">
-            <span className="text-primary text-sm">{area.name}</span>
+            <span className="flex items-center gap-2 text-primary text-sm">
+              {area.name}
+              {area.danger && (
+                <span className="rounded-full bg-guest-notify px-2 py-0.5 font-bold text-secondary text-xs">
+                  {dangerLabel}
+                </span>
+              )}
+            </span>
             <span className="flex items-center gap-2">
               <span
                 className={`h-2.5 w-2.5 rounded-full ${LEVEL_DOT[area.level]}`}
@@ -50,6 +65,9 @@ export function CongestionView({
           </li>
         ))}
       </ul>
+      {updatedAt && (
+        <p className="mt-3 text-right text-primary/55 text-xs">{updatedAt}</p>
+      )}
     </InfoCard>
   );
 }

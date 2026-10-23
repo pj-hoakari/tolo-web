@@ -1,4 +1,8 @@
-import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
+import {
+  type Timestamp,
+  timestampDate,
+  timestampFromDate,
+} from "@bufbuild/protobuf/wkt";
 import { type Client, Code, ConnectError } from "@connectrpc/connect";
 import { ORPCError, os } from "@orpc/server";
 import type { SignalingService } from "@pj-hoakari/tolo-edge-bridge-client-es/tolo/edgebridge/v1/signaling_pb";
@@ -8,6 +12,10 @@ import {
   GraphViolationsSchema,
   ViolationKind,
 } from "@pj-hoakari/tolo-graph-authoring-client-es/tolo/graph/v1/graph_pb";
+import {
+  CrowdLevel,
+  GuestComponent,
+} from "@pj-hoakari/tolo-guest-client-es/tolo/guest/v1/guest_pb";
 import {
   MeasurementSource,
   type EdgeDevice as ProtoEdgeDevice,
@@ -21,6 +29,7 @@ import {
   type GraphViolation,
   graphDataSchema,
 } from "@/features/graph/graphDataSchema";
+import type { GuestPageComponent } from "@/features/guest/pageComponents";
 import type {
   EventStatus,
   TenantEvent,
@@ -32,6 +41,7 @@ import {
 } from "@/mocks/fixtures/edges";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
+import { guestPageClient } from "./guest";
 import { issueRegistrationToken } from "./idp";
 import {
   consoleEdgeDeviceClient,
@@ -143,6 +153,62 @@ function toORPCError(err: unknown): unknown {
   const code = ORPC_ERROR_CODES[err.code];
   return code ? new ORPCError(code) : err;
 }
+
+export type GuestCrowdLevel = "low" | "mid" | "high";
+
+export interface GuestCrowd {
+  id: string;
+  name: string;
+  level: GuestCrowdLevel;
+  danger: boolean;
+}
+
+export interface GuestCrowdSnapshot {
+  takenAt: string | null;
+  crowd: GuestCrowd[];
+}
+
+export interface GuestQueueGate {
+  pointId: string;
+  name: string;
+  recommended: boolean;
+}
+
+export interface GuestQueue {
+  queueId: string;
+  name: string;
+  waitTimeMinutes: number;
+  gates: GuestQueueGate[];
+}
+
+export interface GuestMessage {
+  messageId: string;
+  body: string;
+  sentAt: string | null;
+}
+
+const GUEST_PAGE_COMPONENTS: Partial<
+  Record<GuestComponent, GuestPageComponent>
+> = {
+  [GuestComponent.CROWD]: "crowd",
+  [GuestComponent.QUEUES]: "queues",
+  [GuestComponent.STAFF_MESSAGES]: "staffMessages",
+};
+
+const GUEST_CROWD_LEVELS: Partial<Record<CrowdLevel, GuestCrowdLevel>> = {
+  [CrowdLevel.LOW]: "low",
+  [CrowdLevel.MID]: "mid",
+  [CrowdLevel.HIGH]: "high",
+};
+
+function toISOString(timestamp: Timestamp | undefined): string | null {
+  return timestamp ? timestampDate(timestamp).toISOString() : null;
+}
+
+const guestContentInput = z.object({
+  eventId: z.string().min(1),
+  language: z.string(),
+});
 
 export interface FirestoreToken {
   customToken: string;
@@ -294,6 +360,91 @@ export const router = {
             to: ProtoEventStatus.CLOSED,
           });
           return toTenantEvent(res.event);
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+  },
+  guest: {
+    openGuestPage: os
+      .input(
+        z.object({
+          eventId: z.string().min(1),
+          qrLocationId: z.string(),
+          sessionId: z.string(),
+        }),
+      )
+      .handler(
+        async ({ input }): Promise<{ components: GuestPageComponent[] }> => {
+          try {
+            const res = await guestPageClient.openGuestPage(input);
+            return {
+              components: res.components.flatMap(
+                (c) => GUEST_PAGE_COMPONENTS[c] ?? [],
+              ),
+            };
+          } catch (err) {
+            throw toORPCError(err);
+          }
+        },
+      ),
+    getCrowd: os
+      .input(guestContentInput)
+      .handler(async ({ input }): Promise<GuestCrowdSnapshot> => {
+        try {
+          const res = await guestPageClient.getCrowd(input);
+          return {
+            takenAt: toISOString(res.takenAt),
+            crowd: res.crowd.flatMap((c) => {
+              const level = GUEST_CROWD_LEVELS[c.level];
+              if (!level || !c.target.case) return [];
+              return [
+                {
+                  id: `${c.target.case}:${c.target.value}`,
+                  name: c.displayName,
+                  level,
+                  danger: c.danger,
+                },
+              ];
+            }),
+          };
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    getQueues: os
+      .input(guestContentInput)
+      .handler(async ({ input }): Promise<{ queues: GuestQueue[] }> => {
+        try {
+          const res = await guestPageClient.getQueues(input);
+          return {
+            queues: res.queues.map((q) => ({
+              queueId: q.queueId,
+              name: q.displayName,
+              waitTimeMinutes: q.waitTimeMinutes,
+              gates: q.gates.map((g) => ({
+                pointId: g.pointId,
+                name: g.displayName,
+                recommended: g.recommended,
+              })),
+            })),
+          };
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    listGuestMessages: os
+      .input(z.object({ eventId: z.string().min(1) }))
+      .handler(async ({ input }): Promise<{ messages: GuestMessage[] }> => {
+        try {
+          const res = await guestPageClient.listGuestMessages(input);
+          return {
+            messages: res.messages.map((m) => ({
+              messageId: m.messageId,
+              body: m.body,
+              sentAt: toISOString(m.sentAt),
+            })),
+          };
         } catch (err) {
           throw toORPCError(err);
         }

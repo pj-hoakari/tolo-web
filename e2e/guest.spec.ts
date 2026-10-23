@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
+import type { MockRouterOverrides } from "@/mocks/router";
 
 const search = (page: Page) =>
   page.getByRole("textbox", { name: "目的地を検索" });
@@ -17,6 +18,26 @@ const staffMessageBell = (page: Page) =>
   page.getByRole("button", { name: "スタッフからのお知らせ" });
 const staffMessageDialog = (page: Page) =>
   page.getByRole("dialog", { name: "スタッフからのお知らせ" });
+const card = (page: Page, title: string) =>
+  page
+    .locator("section")
+    .filter({ has: page.getByRole("heading", { level: 2, name: title }) });
+const congestionCard = (page: Page) => card(page, "混雑状況");
+const queuesCard = (page: Page) => card(page, "行列の待ち時間");
+const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+const openGuestPage = async (
+  page: Page,
+  path: string,
+  overrides?: Pick<MockRouterOverrides, "guestComponents">,
+) => {
+  if (overrides) {
+    await page.addInitScript((value) => {
+      sessionStorage.setItem("msw:overrides", value);
+    }, JSON.stringify(overrides));
+  }
+  await page.goto(path);
+};
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/event/test/guest");
@@ -34,6 +55,7 @@ test("ゲストページを開くと各情報セクションの見出しが表�
     "現在の呼び出し番号",
     "推定待ち時間",
     "現在の待ち人数",
+    "行列の待ち時間",
     "行列の並び方",
     "混雑状況",
   ]) {
@@ -41,6 +63,114 @@ test("ゲストページを開くと各情報セクションの見出しが表�
       page.getByRole("heading", { level: 2, name: title }),
     ).toBeVisible();
   }
+});
+
+test("QR の URL からゲストページを開くと混雑状況と行列とお知らせに Guest Service の内容が表示される", async ({
+  page,
+}) => {
+  await openGuestPage(page, "/event/test/guest/gate-east");
+
+  const congestion = congestionCard(page);
+  await expect(
+    congestion.getByRole("listitem").filter({ hasText: "入場ゲート" }),
+  ).toContainText("危険");
+  await expect(
+    congestion.getByRole("listitem").filter({ hasText: "ホール" }),
+  ).not.toContainText("危険");
+  await expect(congestion).toContainText("14:28 更新");
+  await expect(queuesCard(page).getByRole("listitem")).toHaveCount(2);
+  await expect(staffMessageBell(page)).toHaveText("2");
+});
+
+test("QR の URL から開くと設置箇所 ID とセッション ID を添えてページを開いたことを Guest Service に伝える", async ({
+  page,
+}) => {
+  const path = `/event/test/guest/${encodeURIComponent("東 ゲート")}`;
+  const first = page.waitForRequest("**/rpc/guest/openGuestPage");
+  await openGuestPage(page, path);
+
+  const { json } = (await first).postDataJSON();
+  expect(json).toMatchObject({ eventId: "test", qrLocationId: "東 ゲート" });
+  expect(json.sessionId).toMatch(uuid);
+
+  const second = page.waitForRequest("**/rpc/guest/openGuestPage");
+  await page.reload();
+  expect((await second).postDataJSON().json.sessionId).toBe(json.sessionId);
+});
+
+test("QR のない URL から開くと設置箇所 ID を空にしてページを開いたことを Guest Service に伝える", async ({
+  page,
+}) => {
+  const request = page.waitForRequest("**/rpc/guest/openGuestPage");
+  await openGuestPage(page, "/event/test/guest");
+
+  expect((await request).postDataJSON().json).toMatchObject({
+    eventId: "test",
+    qrLocationId: "",
+  });
+});
+
+test("ページ構成に含まれない混雑状況とお知らせは表示されない", async ({
+  page,
+}) => {
+  await openGuestPage(page, "/event/test/guest/gate-east", {
+    guestComponents: ["queues"],
+  });
+
+  await expect(queuesCard(page)).toBeVisible();
+  await expect(congestionCard(page)).toHaveCount(0);
+  await expect(staffMessageBell(page)).toHaveCount(0);
+});
+
+test("行列ごとに切り上げた待ち時間とおすすめの入口だけが表示される", async ({
+  page,
+}) => {
+  const goods = queuesCard(page)
+    .getByRole("listitem")
+    .filter({ hasText: "グッズ売り場" });
+
+  await expect(goods).toContainText("約13分");
+  await expect(goods).toContainText("おすすめの入口: 西ゲート");
+  await expect(goods).not.toContainText("東ゲート");
+});
+
+test("言語を切り替えると混雑状況と行列の表示名を切り替えた言語で取り直す", async ({
+  page,
+}) => {
+  await expect(congestionCard(page)).toContainText("入場ゲート");
+
+  await localeButton(page).click();
+  await page.getByRole("menuitemradio", { name: "English" }).click();
+
+  await expect(card(page, "Congestion")).toContainText("Entrance gate");
+  await expect(card(page, "Queue wait times")).toContainText("Merchandise");
+});
+
+test("お知らせを開いて既読にすると再読み込みしても未読バッジは出ない", async ({
+  page,
+}) => {
+  const bell = staffMessageBell(page);
+  await expect(bell).toHaveText("2");
+  await bell.click();
+  await expect(staffMessageDialog(page)).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await page.reload();
+
+  await expect(queuesCard(page)).toBeVisible();
+  await expect(staffMessageBell(page)).toBeVisible();
+  await expect(staffMessageBell(page)).not.toHaveText("2");
+});
+
+test("QR の URL から開いたページをインストールすると QR のないゲストページから起動する", async ({
+  page,
+}) => {
+  await openGuestPage(page, "/event/test/guest/gate-east");
+
+  await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
+    "href",
+    `/manifest.webmanifest?start=${encodeURIComponent("/event/test/guest")}`,
+  );
 });
 
 test("お知らせボタンを押すとスタッフからのお知らせ一覧が開き未読バッジが消える", async ({

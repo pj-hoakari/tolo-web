@@ -7,15 +7,11 @@ const messages: StaffMessage[] = [
   {
     id: "msg-2",
     body: "東ゲート付近が大変混雑しています。お急ぎの方は西ゲートのご利用をおすすめします。",
-    staffName: "山田 太郎",
-    staffRole: "会場スタッフ",
     deliveredAt: "2026-06-15T14:30:00+09:00",
   },
   {
     id: "msg-1",
     body: "開演時刻が 15:00 から 15:30 に変更となりました。ご了承ください。",
-    staffName: "佐藤 花子",
-    staffRole: "運営責任者",
     deliveredAt: "2026-06-15T13:05:00+09:00",
   },
 ];

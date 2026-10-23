@@ -116,10 +116,10 @@ lastSeenAt.toLocaleTimeString(locale); // ✗ "ja-JP" 固定
 ```ts
 import type { Messages } from "next-intl";
 
-type AreaId = keyof Messages["Guest"]["congestion"]["areas"];
-type RawArea = { id: AreaId; level: CongestionLevel };
+type ShapeId = keyof Messages["Guest"]["queue"]["shapes"];
+type RawQueue = { shape: ShapeId; current: number };
 
-t(`areas.${area.id}`); // ✅ 型が通る
+t(`shapes.${queue.shape}`); // ✅ 型が通る
 ```
 
 外部データ由来で id を型に落とせない場合（例: マップ作成ツールが書き出す JSON）に限り、キー型へキャストし **`t.has()` で実在を確認**してから使う。理由をコメントで残すこと（`src/features/guest/info/GuideMap.tsx` が参照実装）。
@@ -160,7 +160,7 @@ renderHook(() => useGraphEditor(initial), { wrapper: IntlTestProvider });
 - `placeholderGraph.ts` のサンプルノード名
 - View コンポーネントの props 既定値、コード内のコメント
 
-将来 API から来るダミーデータの文言は、`Record<Lang, string>` のように**言語別フィールドで持たせない**。ロケールが増えたときに破綻する。`Guest.congestion.areas.<id>` のように **id をキーにしてメッセージ側へ寄せる**（`Congestion.tsx` / `StaffMessageBell.tsx` が参照実装）。
+将来 API から来るダミーデータの文言は、`Record<Lang, string>` のように**言語別フィールドで持たせない**。ロケールが増えたときに破綻する。`Guest.queue.shapes.<id>` のように **id をキーにしてメッセージ側へ寄せる**（`QueueLayout.tsx` が参照実装）。
 
 ## チェックリスト
 

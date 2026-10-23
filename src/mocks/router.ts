@@ -7,6 +7,10 @@ import {
 } from "@/features/graph/graphDataSchema";
 import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
 import {
+  DEFAULT_GUEST_PAGE_COMPONENTS,
+  type GuestPageComponent,
+} from "@/features/guest/pageComponents";
+import {
   ARCHIVABLE_STATUSES,
   RESTORABLE_STATUSES,
   type TenantEvent,
@@ -15,12 +19,20 @@ import type { GraphData } from "@/features/tenant/management/graph/type";
 import type {
   EdgeDevice,
   FirestoreToken,
+  GuestCrowdSnapshot,
+  GuestMessage,
+  GuestQueue,
   RegisteredEdgeDevice,
 } from "@/server/router";
 import {
   registeredEdgeDeviceWire,
   sampleEdgeDevicesWire,
 } from "./fixtures/edges";
+import {
+  sampleGuestCrowd,
+  sampleGuestMessages,
+  sampleGuestQueues,
+} from "./fixtures/guest";
 
 export type MockRouterOverrides = {
   /** observation.listEdgeDevices が返すエッジ端末一覧（未指定なら sampleEdgeDevicesWire） */
@@ -41,6 +53,7 @@ export type MockRouterOverrides = {
   createEventError?: CommonORPCErrorCode;
   archiveEventError?: CommonORPCErrorCode;
   restoreEventError?: CommonORPCErrorCode;
+  guestComponents?: GuestPageComponent[];
 };
 
 export const MOCK_SERVER_MESSAGE = "message from the mock server";
@@ -65,6 +78,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     createEventError,
     archiveEventError,
     restoreEventError,
+    guestComponents = [...DEFAULT_GUEST_PAGE_COMPONENTS],
   } = overrides;
 
   const events: TenantEvent[] = [
@@ -245,6 +259,41 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           event.status = "closed";
           return event;
         }),
+    },
+    guest: {
+      openGuestPage: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            qrLocationId: z.string(),
+            sessionId: z.string(),
+          }),
+        )
+        .handler(
+          async (): Promise<{ components: GuestPageComponent[] }> => ({
+            components: guestComponents,
+          }),
+        ),
+      getCrowd: os
+        .input(z.object({ eventId: z.string().min(1), language: z.string() }))
+        .handler(
+          async ({ input }): Promise<GuestCrowdSnapshot> =>
+            sampleGuestCrowd(input.language),
+        ),
+      getQueues: os
+        .input(z.object({ eventId: z.string().min(1), language: z.string() }))
+        .handler(
+          async ({ input }): Promise<{ queues: GuestQueue[] }> => ({
+            queues: sampleGuestQueues(input.language),
+          }),
+        ),
+      listGuestMessages: os
+        .input(z.object({ eventId: z.string().min(1) }))
+        .handler(
+          async (): Promise<{ messages: GuestMessage[] }> => ({
+            messages: sampleGuestMessages,
+          }),
+        ),
     },
     signaling: {
       // WebRTC はスコープ外。呼ばれてもエラーにならないよう、ダミーの sessionId を返す。

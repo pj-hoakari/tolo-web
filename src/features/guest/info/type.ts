@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import type { GuestPageComponent } from "../pageComponents";
 
 export type GuestInfoComponentProps = {
   tenantId: string;
@@ -14,11 +15,13 @@ export type GuestInfoComponentSpan = 1 | 2;
 
 export type GuestInfoComponentOptions = {
   span?: GuestInfoComponentSpan;
+  pageComponent?: GuestPageComponent;
 };
 
 type GuestInfoComponentMeta = {
   id: string;
   span: GuestInfoComponentSpan;
+  pageComponent?: GuestPageComponent;
 };
 
 const guestInfoSymbol: unique symbol = Symbol("guestInfoComponentId");
@@ -36,6 +39,7 @@ export function defineGuestInfoComponent(
     [guestInfoSymbol]: {
       id,
       span: options?.span ?? 2,
+      pageComponent: options?.pageComponent,
     } satisfies GuestInfoComponentMeta,
   }) as GuestInfoComponent;
 }
@@ -48,4 +52,12 @@ export function getGuestInfoComponentSpan(
   component: GuestInfoComponent,
 ): GuestInfoComponentSpan {
   return component[guestInfoSymbol].span;
+}
+
+export function isGuestInfoComponentShown(
+  component: GuestInfoComponent,
+  pageComponents: readonly GuestPageComponent[],
+): boolean {
+  const { pageComponent } = component[guestInfoSymbol];
+  return pageComponent === undefined || pageComponents.includes(pageComponent);
 }
