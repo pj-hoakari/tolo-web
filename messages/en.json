@@ -444,22 +444,16 @@
         "right": "Right"
       }
     },
+    "queues": {
+      "title": "Queue wait times",
+      "waitTime": "approx. {minutes} min",
+      "recommendedGates": "Recommended entrance: {gates}",
+      "empty": "No wait time information yet"
+    },
     "staffMessage": {
       "title": "Staff notices",
       "ariaOpen": "Staff notices",
-      "empty": "No notices at the moment",
-      "samples": {
-        "msg-2": {
-          "body": "The east gate area is very crowded. If you're in a hurry, we recommend using the west gate.",
-          "staffName": "Taro Yamada",
-          "staffRole": "Venue staff"
-        },
-        "msg-1": {
-          "body": "The start time has changed from 15:00 to 15:30. Thank you for your understanding.",
-          "staffName": "Hanako Sato",
-          "staffRole": "Event manager"
-        }
-      }
+      "empty": "No notices at the moment"
     },
     "guideMap": {
       "title": "Guide map",
@@ -489,13 +483,12 @@
         "mid": "Medium",
         "high": "High"
       },
-      "areas": {
-        "entrance": "Entrance gate",
-        "hall": "Hall",
-        "cafe": "Café",
-        "goods": "Merch"
-      }
-    }
+      "danger": "Danger",
+      "updatedAt": "Updated {time}",
+      "empty": "No crowd information yet"
+    },
+    "loading": "Loading…",
+    "loadError": "Couldn't load this information"
   },
   "PwaInstall": {
     "button": "Install app",

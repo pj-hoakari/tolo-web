@@ -444,22 +444,16 @@
         "right": "右"
       }
     },
+    "queues": {
+      "title": "行列の待ち時間",
+      "waitTime": "約{minutes}分",
+      "recommendedGates": "おすすめの入口: {gates}",
+      "empty": "待ち時間の情報はまだありません"
+    },
     "staffMessage": {
       "title": "スタッフからのお知らせ",
       "ariaOpen": "スタッフからのお知らせ",
-      "empty": "現在お知らせはありません",
-      "samples": {
-        "msg-2": {
-          "body": "東ゲート付近が大変混雑しています。お急ぎの方は西ゲートのご利用をおすすめします。",
-          "staffName": "山田 太郎",
-          "staffRole": "会場スタッフ"
-        },
-        "msg-1": {
-          "body": "開演時刻が 15:00 から 15:30 に変更となりました。ご了承ください。",
-          "staffName": "佐藤 花子",
-          "staffRole": "運営責任者"
-        }
-      }
+      "empty": "現在お知らせはありません"
     },
     "guideMap": {
       "title": "案内マップ",
@@ -489,13 +483,12 @@
         "mid": "中",
         "high": "高"
       },
-      "areas": {
-        "entrance": "入場ゲート",
-        "hall": "ホール",
-        "cafe": "カフェ",
-        "goods": "グッズ売り場"
-      }
-    }
+      "danger": "危険",
+      "updatedAt": "{time} 更新",
+      "empty": "混雑の情報はまだありません"
+    },
+    "loading": "読み込み中…",
+    "loadError": "情報を取得できませんでした"
   },
   "PwaInstall": {
     "button": "アプリをインストール",

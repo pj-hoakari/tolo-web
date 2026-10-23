@@ -11,11 +11,12 @@ const meta = {
   tags: ["autodocs"],
   args: {
     areas: [
-      { id: "entrance", name: "入場ゲート", level: "high" },
-      { id: "hall", name: "ホール", level: "mid" },
-      { id: "cafe", name: "カフェ", level: "low" },
-      { id: "goods", name: "グッズ売り場", level: "high" },
+      { id: "entrance", name: "入場ゲート", level: "high", danger: true },
+      { id: "hall", name: "ホール", level: "mid", danger: false },
+      { id: "cafe", name: "カフェ", level: "low", danger: false },
+      { id: "goods", name: "グッズ売り場", level: "high", danger: false },
     ],
+    updatedAt: "14:28 更新",
   },
 } satisfies Meta<typeof CongestionView>;
 
@@ -27,9 +28,25 @@ export const Default: Story = {};
 export const AllCalm: Story = {
   args: {
     areas: [
-      { id: "entrance", name: "入場ゲート", level: "low" },
-      { id: "hall", name: "ホール", level: "low" },
-      { id: "cafe", name: "カフェ", level: "low" },
+      { id: "entrance", name: "入場ゲート", level: "low", danger: false },
+      { id: "hall", name: "ホール", level: "low", danger: false },
+      { id: "cafe", name: "カフェ", level: "low", danger: false },
     ],
+  },
+};
+
+export const Empty: Story = {
+  args: {
+    areas: [],
+    updatedAt: undefined,
+    message: "混雑の情報はまだありません",
+  },
+};
+
+export const LoadError: Story = {
+  args: {
+    areas: [],
+    updatedAt: undefined,
+    message: "情報を取得できませんでした",
   },
 };

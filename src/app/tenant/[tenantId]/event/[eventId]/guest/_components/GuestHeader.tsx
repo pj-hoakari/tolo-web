@@ -10,12 +10,14 @@ export type GuestHeaderProps = {
   tenantName: string;
   tenantId: string;
   eventId: string;
+  showStaffMessages: boolean;
 };
 
 export function GuestHeader({
   tenantName,
   tenantId,
   eventId,
+  showStaffMessages,
 }: GuestHeaderProps) {
   const t = useTranslations("Guest");
 
@@ -32,7 +34,9 @@ export function GuestHeader({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <PwaInstall compact />
-          <StaffMessageBell tenantId={tenantId} eventId={eventId} />
+          {showStaffMessages && (
+            <StaffMessageBell tenantId={tenantId} eventId={eventId} />
+          )}
           <LocaleSelect className="bg-secondary" />
           <ThemeToggle className="bg-secondary" />
         </div>

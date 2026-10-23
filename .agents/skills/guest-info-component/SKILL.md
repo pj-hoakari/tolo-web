@@ -78,6 +78,7 @@ export default defineGuestInfoComponent("foo", Foo);
 - `defineGuestInfoComponent(id, component, options?)` の **第1引数 id は他のパーツと重複しないユニークな文字列**（一覧の `key` に使われる。kebab-case 推奨、例: `"waiting-number"`）。
 - default export は **必ず `defineGuestInfoComponent` の戻り値**にする。素のコンポーネントを export すると `GuestInfoComponent` 型として扱えず、並べる側で弾かれる。
 - **グリッド上の幅は `options.span` で宣言する**（並べる側は 2 列グリッド）。既定は `2`（`col-span-2` = 1 行全体）。横に 2 つ並べたい小さいパーツは `{ span: 1 }`（`col-span-1`）を指定する。例: `defineGuestInfoComponent("floor", Floor, { span: 1 })`。レイアウト幅はパーツ自身の責務として持たせ、並べる側（ページ）はフラットな `GuestInfoComponent[]` に並び順だけを書く。
+- **Guest Service のページ構成で表示を切り替えるパーツは `options.pageComponent` で宣言する**（`"crowd"` / `"queues"` / `"staffMessages"`）。ゲストページは OpenGuestPage が返すページ構成に含まれるパーツだけを表示し、`pageComponent` を宣言していないパーツは常に表示する。例: `defineGuestInfoComponent("queues", Queues, { pageComponent: "queues" })`。
 
 ### 3. Storybook（View の story）
 

@@ -444,22 +444,16 @@
         "right": "右"
       }
     },
+    "queues": {
+      "title": "各队列等待时间",
+      "waitTime": "约 {minutes} 分钟",
+      "recommendedGates": "推荐入口：{gates}",
+      "empty": "暂无等待时间信息"
+    },
     "staffMessage": {
       "title": "工作人员通知",
       "ariaOpen": "工作人员通知",
-      "empty": "暂无通知",
-      "samples": {
-        "msg-2": {
-          "body": "东门附近非常拥挤。赶时间的来宾建议使用西门。",
-          "staffName": "山田太郎",
-          "staffRole": "会场工作人员"
-        },
-        "msg-1": {
-          "body": "演出开始时间已从 15:00 改为 15:30，敬请谅解。",
-          "staffName": "佐藤花子",
-          "staffRole": "运营负责人"
-        }
-      }
+      "empty": "暂无通知"
     },
     "guideMap": {
       "title": "导览图",
@@ -489,13 +483,12 @@
         "mid": "中",
         "high": "高"
       },
-      "areas": {
-        "entrance": "入场口",
-        "hall": "大厅",
-        "cafe": "咖啡厅",
-        "goods": "商品区"
-      }
-    }
+      "danger": "危险",
+      "updatedAt": "{time} 更新",
+      "empty": "暂无拥挤信息"
+    },
+    "loading": "加载中…",
+    "loadError": "无法获取信息"
   },
   "PwaInstall": {
     "button": "安装应用",

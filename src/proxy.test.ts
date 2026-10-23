@@ -109,6 +109,17 @@ describe("tenant routing proxy", () => {
     url.pathname = "/tenant/0123456789abcdef/about";
     expect(response.headers.get("x-middleware-rewrite")).toBe(url.toString());
   });
+  test("percent-encoded QR location in the guest path should be preserved when rewriting", async () => {
+    const host = "tenant1.localhost";
+    const request = new NextRequest(
+      `http://${host}/event/e1/guest/%E6%9D%B1%20gate%2F1`,
+      { headers: { host } },
+    );
+    const response = await tenantProxy(request);
+    expect(
+      new URL(response.headers.get("x-middleware-rewrite") ?? "").pathname,
+    ).toBe("/tenant/0123456789abcdef/event/e1/guest/%E6%9D%B1%20gate%2F1");
+  });
   test("subdomain that resolves to no tenant should be denied with 404", async () => {
     const host = "unknown.localhost";
     const request = new NextRequest(`http://${host}`, { headers: { host } });
