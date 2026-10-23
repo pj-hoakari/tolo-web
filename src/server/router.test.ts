@@ -8,6 +8,14 @@ import {
   ViolationKind,
 } from "@pj-hoakari/tolo-graph-authoring-client-es/tolo/graph/v1/graph_pb";
 import {
+  CrowdLevel,
+  GetCrowdResponseSchema,
+  GetQueuesResponseSchema,
+  GuestComponent,
+  ListGuestMessagesResponseSchema,
+  OpenGuestPageResponseSchema,
+} from "@pj-hoakari/tolo-guest-client-es/tolo/guest/v1/guest_pb";
+import {
   EdgeDeviceSchema,
   HeartbeatResponseSchema,
   ListEdgeDevicesResponseSchema,
@@ -19,6 +27,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
 import { sampleEdgeDevicesWire } from "@/mocks/fixtures/edges";
 import { graphAuthoringClient } from "./graphAuthoring";
+import { guestPageClient } from "./guest";
 import { issueRegistrationToken } from "./idp";
 import {
   consoleEdgeDeviceClient,
@@ -235,6 +244,141 @@ const wireDevice = {
   lastHeartbeatAt: "2026-06-14T10:00:00.000Z",
   observationPoints: [{ observationPointId: "1111111111111111", name: "受付" }],
 };
+
+describe("guest", () => {
+  it("opens the guest page with the QR location and session and returns the known components in order", async () => {
+    const open = vi.spyOn(guestPageClient, "openGuestPage").mockResolvedValue(
+      create(OpenGuestPageResponseSchema, {
+        components: [
+          GuestComponent.STAFF_MESSAGES,
+          GuestComponent.UNSPECIFIED,
+          GuestComponent.CROWD,
+        ],
+      }),
+    );
+
+    await expect(
+      call(router.guest.openGuestPage, {
+        eventId,
+        qrLocationId: "gate east",
+        sessionId: "session-1",
+      }),
+    ).resolves.toEqual({ components: ["staffMessages", "crowd"] });
+    expect(open).toHaveBeenCalledWith({
+      eventId,
+      qrLocationId: "gate east",
+      sessionId: "session-1",
+    });
+  });
+
+  it("returns the crowd with its time as plain values and drops entries without a level or target", async () => {
+    const getCrowd = vi.spyOn(guestPageClient, "getCrowd").mockResolvedValue(
+      create(GetCrowdResponseSchema, {
+        takenAt: timestampFromDate(new Date("2026-06-15T05:28:00Z")),
+        crowd: [
+          {
+            target: { case: "pointId", value: "p1" },
+            displayName: "Entrance gate",
+            level: CrowdLevel.HIGH,
+            danger: true,
+          },
+          {
+            target: { case: "routeId", value: "r1" },
+            displayName: "Corridor",
+            level: CrowdLevel.LOW,
+          },
+          {
+            target: { case: "pointId", value: "p2" },
+            displayName: "Unknown",
+            level: CrowdLevel.UNSPECIFIED,
+          },
+          { displayName: "No target", level: CrowdLevel.MID },
+        ],
+      }),
+    );
+
+    await expect(
+      call(router.guest.getCrowd, { eventId, language: "en" }),
+    ).resolves.toEqual({
+      takenAt: "2026-06-15T05:28:00.000Z",
+      crowd: [
+        {
+          id: "pointId:p1",
+          name: "Entrance gate",
+          level: "high",
+          danger: true,
+        },
+        { id: "routeId:r1", name: "Corridor", level: "low", danger: false },
+      ],
+    });
+    expect(getCrowd).toHaveBeenCalledWith({ eventId, language: "en" });
+  });
+
+  it("returns the queues with their gates and without the turnaround count", async () => {
+    vi.spyOn(guestPageClient, "getQueues").mockResolvedValue(
+      create(GetQueuesResponseSchema, {
+        queues: [
+          {
+            queueId: "q1",
+            displayName: "Merch",
+            waitTimeMinutes: 12.2,
+            turnaroundCount: 3,
+            gates: [
+              { pointId: "g1", displayName: "West gate", recommended: true },
+            ],
+          },
+        ],
+      }),
+    );
+
+    await expect(
+      call(router.guest.getQueues, { eventId, language: "ja" }),
+    ).resolves.toEqual({
+      queues: [
+        {
+          queueId: "q1",
+          name: "Merch",
+          waitTimeMinutes: 12.2,
+          gates: [{ pointId: "g1", name: "West gate", recommended: true }],
+        },
+      ],
+    });
+  });
+
+  it("returns the guest messages with their sent time as plain values", async () => {
+    vi.spyOn(guestPageClient, "listGuestMessages").mockResolvedValue(
+      create(ListGuestMessagesResponseSchema, {
+        messages: [
+          {
+            messageId: "m1",
+            body: "Hello",
+            sentAt: timestampFromDate(new Date("2026-06-15T04:05:00Z")),
+          },
+          { messageId: "m2", body: "No time" },
+        ],
+      }),
+    );
+
+    await expect(
+      call(router.guest.listGuestMessages, { eventId }),
+    ).resolves.toEqual({
+      messages: [
+        { messageId: "m1", body: "Hello", sentAt: "2026-06-15T04:05:00.000Z" },
+        { messageId: "m2", body: "No time", sentAt: null },
+      ],
+    });
+  });
+
+  it("passes an argument rejected by the guest service to the browser as its code", async () => {
+    vi.spyOn(guestPageClient, "getQueues").mockRejectedValue(
+      new ConnectError("event_id is required", Code.InvalidArgument),
+    );
+
+    await expect(
+      call(router.guest.getQueues, { eventId, language: "ja" }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+});
 
 describe("observation.registerEdgeDevice", () => {
   const register = (input: { name: string; observationPointNames: string[] }) =>
