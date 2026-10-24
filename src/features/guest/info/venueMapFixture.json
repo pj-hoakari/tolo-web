@@ -1,0 +1,283 @@
+{
+  "version": 1,
+  "activeFloorId": "f-1",
+  "floors": [
+    {
+      "id": "f-1",
+      "name": "1F"
+    },
+    {
+      "id": "f-2",
+      "name": "2F"
+    }
+  ],
+  "north": 0,
+  "scale": 0,
+  "objects": [
+    {
+      "id": "a-building-1",
+      "kind": "area",
+      "floor": "f-1",
+      "color": "slate",
+      "points": [
+        {
+          "x": 120,
+          "y": 120
+        },
+        {
+          "x": 840,
+          "y": 120
+        },
+        {
+          "x": 840,
+          "y": 600
+        },
+        {
+          "x": 120,
+          "y": 600
+        }
+      ]
+    },
+    {
+      "id": "t-1",
+      "kind": "text",
+      "floor": "f-1",
+      "color": "slate",
+      "x": 480,
+      "y": 80,
+      "size": 22,
+      "title": "イベント会場 1F"
+    },
+    {
+      "id": "p-gate",
+      "kind": "place",
+      "floor": "f-1",
+      "color": "indigo",
+      "x": 480,
+      "y": 600,
+      "w": 120,
+      "h": 48,
+      "shape": "pin",
+      "title": "入場ゲート",
+      "description": "チケットを提示して入場してください。"
+    },
+    {
+      "id": "r-goods",
+      "kind": "place",
+      "floor": "f-1",
+      "color": "rose",
+      "x": 260,
+      "y": 220,
+      "w": 200,
+      "h": 120,
+      "shape": "rect",
+      "pin": true,
+      "title": "グッズ売り場",
+      "description": "公式グッズの販売。キャッシュレス対応。"
+    },
+    {
+      "id": "r-cafe",
+      "kind": "place",
+      "floor": "f-1",
+      "color": "amber",
+      "x": 700,
+      "y": 220,
+      "w": 200,
+      "h": 120,
+      "shape": "rect",
+      "pin": true,
+      "title": "カフェ",
+      "description": "ドリンク・軽食があります。"
+    },
+    {
+      "id": "r-reception",
+      "kind": "place",
+      "floor": "f-1",
+      "color": "emerald",
+      "x": 260,
+      "y": 520,
+      "w": 160,
+      "h": 80,
+      "shape": "rect",
+      "pin": true,
+      "title": "受付",
+      "description": "当日券・落とし物・お問い合わせ。"
+    },
+    {
+      "id": "r-toilet",
+      "kind": "place",
+      "floor": "f-1",
+      "color": "sky",
+      "x": 740,
+      "y": 520,
+      "w": 140,
+      "h": 80,
+      "shape": "rect",
+      "pin": true,
+      "title": "トイレ",
+      "description": "多目的トイレあり。"
+    },
+    {
+      "id": "a-queue",
+      "kind": "area",
+      "floor": "f-1",
+      "color": "rose",
+      "title": "物販待機列",
+      "description": "グッズ売り場の待機列です。",
+      "points": [
+        {
+          "x": 160,
+          "y": 300
+        },
+        {
+          "x": 360,
+          "y": 300
+        },
+        {
+          "x": 360,
+          "y": 380
+        },
+        {
+          "x": 160,
+          "y": 380
+        }
+      ]
+    },
+    {
+      "id": "a-building-2",
+      "kind": "area",
+      "floor": "f-2",
+      "color": "slate",
+      "points": [
+        {
+          "x": 120,
+          "y": 120
+        },
+        {
+          "x": 840,
+          "y": 120
+        },
+        {
+          "x": 840,
+          "y": 600
+        },
+        {
+          "x": 120,
+          "y": 600
+        }
+      ]
+    },
+    {
+      "id": "t-2",
+      "kind": "text",
+      "floor": "f-2",
+      "color": "slate",
+      "x": 480,
+      "y": 80,
+      "size": 22,
+      "title": "イベント会場 2F"
+    },
+    {
+      "id": "r2-hall",
+      "kind": "place",
+      "floor": "f-2",
+      "color": "violet",
+      "x": 480,
+      "y": 200,
+      "w": 520,
+      "h": 120,
+      "shape": "rect",
+      "pin": true,
+      "title": "ホール",
+      "description": "ステージ公演の会場。開演30分前に開場します。"
+    },
+    {
+      "id": "r2-rest",
+      "kind": "place",
+      "floor": "f-2",
+      "color": "emerald",
+      "x": 240,
+      "y": 440,
+      "w": 160,
+      "h": 120,
+      "shape": "rect",
+      "pin": true,
+      "title": "休憩スペース",
+      "description": "イス・自動販売機あり。"
+    },
+    {
+      "id": "r2-toilet",
+      "kind": "place",
+      "floor": "f-2",
+      "color": "sky",
+      "x": 740,
+      "y": 520,
+      "w": 140,
+      "h": 80,
+      "shape": "rect",
+      "pin": true,
+      "title": "トイレ",
+      "description": "多目的トイレあり。"
+    },
+    {
+      "id": "c-ev-f-1",
+      "kind": "place",
+      "floor": "f-1",
+      "color": "indigo",
+      "x": 480,
+      "y": 360,
+      "w": 80,
+      "h": 80,
+      "shape": "rect",
+      "title": "エレベーター",
+      "connector": "elevator",
+      "link": "l-ev",
+      "direction": "both"
+    },
+    {
+      "id": "c-ev-f-2",
+      "kind": "place",
+      "floor": "f-2",
+      "color": "indigo",
+      "x": 480,
+      "y": 360,
+      "w": 80,
+      "h": 80,
+      "shape": "rect",
+      "title": "エレベーター",
+      "connector": "elevator",
+      "link": "l-ev",
+      "direction": "both"
+    },
+    {
+      "id": "c-stairs-f-1",
+      "kind": "place",
+      "floor": "f-1",
+      "color": "slate",
+      "x": 600,
+      "y": 500,
+      "w": 120,
+      "h": 48,
+      "shape": "pin",
+      "title": "階段",
+      "connector": "stairs",
+      "link": "l-stairs",
+      "direction": "both"
+    },
+    {
+      "id": "c-stairs-f-2",
+      "kind": "place",
+      "floor": "f-2",
+      "color": "slate",
+      "x": 600,
+      "y": 500,
+      "w": 120,
+      "h": 48,
+      "shape": "pin",
+      "title": "階段",
+      "connector": "stairs",
+      "link": "l-stairs",
+      "direction": "both"
+    }
+  ]
+}

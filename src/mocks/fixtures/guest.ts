@@ -9,25 +9,26 @@ type Names = { ja: string; en: string };
 const name = (names: Names, language: string) =>
   language === "en" ? names.en : names.ja;
 
+// 場所の名前は案内マップの会場（KCG本館 1F〜6F）に合わせている
 export function sampleGuestCrowd(language: string): GuestCrowdSnapshot {
   return {
     takenAt: "2026-06-15T05:28:00.000Z",
     crowd: [
       {
-        id: "pointId:p-entrance",
-        name: name({ ja: "入場ゲート", en: "Entrance gate" }, language),
+        id: "pointId:p-elevator-1f",
+        name: name({ ja: "1F エレベーター前", en: "1F elevators" }, language),
         level: "high",
         danger: true,
       },
       {
-        id: "pointId:p-hall",
-        name: name({ ja: "ホール", en: "Hall" }, language),
+        id: "pointId:p-hall-6f",
+        name: name({ ja: "6F ホール", en: "6F Hall" }, language),
         level: "mid",
         danger: false,
       },
       {
-        id: "routeId:r-cafe",
-        name: name({ ja: "カフェ通路", en: "Café corridor" }, language),
+        id: "routeId:r-corridor-4f",
+        name: name({ ja: "4F 廊下", en: "4F corridor" }, language),
         level: "low",
         danger: false,
       },
@@ -38,30 +39,30 @@ export function sampleGuestCrowd(language: string): GuestCrowdSnapshot {
 export function sampleGuestQueues(language: string): GuestQueue[] {
   return [
     {
-      queueId: "q-goods",
-      name: name({ ja: "グッズ売り場", en: "Merchandise" }, language),
+      queueId: "q-hall-6f",
+      name: name({ ja: "6F ホール", en: "6F Hall" }, language),
       waitTimeMinutes: 12.2,
       gates: [
         {
-          pointId: "g-east",
-          name: name({ ja: "東ゲート", en: "East gate" }, language),
+          pointId: "g-elevator",
+          name: name({ ja: "エレベーター", en: "Elevators" }, language),
           recommended: false,
         },
         {
-          pointId: "g-west",
-          name: name({ ja: "西ゲート", en: "West gate" }, language),
+          pointId: "g-stairs",
+          name: name({ ja: "階段", en: "Stairs" }, language),
           recommended: true,
         },
       ],
     },
     {
-      queueId: "q-cafe",
-      name: name({ ja: "カフェ", en: "Café" }, language),
+      queueId: "q-lounge-4f",
+      name: name({ ja: "4F ラウンジ", en: "4F Lounge" }, language),
       waitTimeMinutes: 3,
       gates: [
         {
-          pointId: "g-cafe",
-          name: name({ ja: "カフェ入口", en: "Café entrance" }, language),
+          pointId: "g-lounge",
+          name: name({ ja: "ラウンジ入口", en: "Lounge entrance" }, language),
           recommended: true,
         },
       ],
@@ -72,12 +73,12 @@ export function sampleGuestQueues(language: string): GuestQueue[] {
 export const sampleGuestMessages: GuestMessage[] = [
   {
     messageId: "msg-1",
-    body: "開演時刻が 15:00 から 15:30 に変更となりました。ご了承ください。",
+    body: "6F ホールの開演時刻が 15:00 から 15:30 に変更となりました。ご了承ください。",
     sentAt: "2026-06-15T04:05:00.000Z",
   },
   {
     messageId: "msg-2",
-    body: "東ゲート付近が大変混雑しています。お急ぎの方は西ゲートのご利用をおすすめします。",
+    body: "1F エレベーター前が大変混雑しています。お急ぎの方は階段のご利用をおすすめします。",
     sentAt: "2026-06-15T05:30:00.000Z",
   },
 ];

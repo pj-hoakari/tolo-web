@@ -470,11 +470,30 @@
       "collapse": "Shrink the map",
       "search": "Search destination",
       "noResults": "No results",
-      "reset": "Reset"
+      "reset": "Reset",
+      "goal": "Destination",
+      "rideTo": "{via} to {floor}",
+      "arriveFrom": "Arrived from {floor}",
+      "connectors": {
+        "stairs": "Stairs",
+        "escalator": "Escalator",
+        "elevator": "Elevator"
+      },
+      "walkStep": "{floor}: {from} → {to}",
+      "rideStep": "{via}: {from} → {to}",
+      "noRoute": "No route to this destination was found",
+      "zoomInHint": "Tap the map to zoom in",
+      "zoomOutHint": "Drag to move · tap to see the whole map",
+      "closed": " (closed)",
+      "crowdAvoided": "This route avoids crowded areas",
+      "crowdRerouted": "The route was changed because crowd conditions changed",
+      "crowdThroughDanger": "This route passes through a dangerously crowded area. Please follow the staff's directions",
+      "crowdLegend": "Crowd"
     },
     "floor": {
       "title": "Current floor",
-      "placeholderName": "1F"
+      "placeholderName": "1F",
+      "selectLabel": "Floor to show"
     },
     "congestion": {
       "title": "Congestion",
