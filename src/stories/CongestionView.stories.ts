@@ -11,10 +11,15 @@ const meta = {
   tags: ["autodocs"],
   args: {
     areas: [
-      { id: "entrance", name: "入場ゲート", level: "high", danger: true },
-      { id: "hall", name: "ホール", level: "mid", danger: false },
-      { id: "cafe", name: "カフェ", level: "low", danger: false },
-      { id: "goods", name: "グッズ売り場", level: "high", danger: false },
+      {
+        id: "elevator-1f",
+        name: "1F エレベーター前",
+        level: "high",
+        danger: true,
+      },
+      { id: "hall-6f", name: "6F ホール", level: "mid", danger: false },
+      { id: "corridor-4f", name: "4F 廊下", level: "low", danger: false },
+      { id: "lounge-4f", name: "4F ラウンジ", level: "high", danger: false },
     ],
     updatedAt: "14:28 更新",
   },
@@ -28,9 +33,14 @@ export const Default: Story = {};
 export const AllCalm: Story = {
   args: {
     areas: [
-      { id: "entrance", name: "入場ゲート", level: "low", danger: false },
-      { id: "hall", name: "ホール", level: "low", danger: false },
-      { id: "cafe", name: "カフェ", level: "low", danger: false },
+      {
+        id: "elevator-1f",
+        name: "1F エレベーター前",
+        level: "low",
+        danger: false,
+      },
+      { id: "hall-6f", name: "6F ホール", level: "low", danger: false },
+      { id: "corridor-4f", name: "4F 廊下", level: "low", danger: false },
     ],
   },
 };

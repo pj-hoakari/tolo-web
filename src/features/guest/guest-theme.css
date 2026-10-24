@@ -8,49 +8,21 @@
   --accent: var(--guest-accent);
 }
 
-/* 案内マップの経路を進行方向へ流す破線アニメーション。
-   破線の長さごとに周期（＝破線 + 隙間）に合わせたキーフレームを用意し、
-   速さは animation-duration（インライン指定）で切り替える。 */
-@keyframes route-flow-24 {
+/* 案内マップの誘導線（点が進行方向へ流れるアニメーション）。
+   guide-map-poc の会場マップ・スタジオと同じ見た目（丸い点＋隙間）。
+   地図の拡大率に合わせて点の大きさを変えるため、1 周期の長さを --route-cycle で受け取る。 */
+@keyframes guide-route-flow {
   to {
-    stroke-dashoffset: -24;
+    stroke-dashoffset: calc(var(--route-cycle, 11px) * -2);
   }
 }
 
-@keyframes route-flow-40 {
-  to {
-    stroke-dashoffset: -40;
-  }
-}
-
-@keyframes route-flow-58 {
-  to {
-    stroke-dashoffset: -58;
-  }
-}
-
-.route-flow {
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-}
-
-.route-flow-short {
-  stroke-dasharray: 14 10;
-  animation-name: route-flow-24;
-}
-
-.route-flow-normal {
-  stroke-dasharray: 26 14;
-  animation-name: route-flow-40;
-}
-
-.route-flow-long {
-  stroke-dasharray: 40 18;
-  animation-name: route-flow-58;
+.route-anim {
+  animation: guide-route-flow 0.9s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .route-flow {
+  .route-anim {
     animation: none;
   }
 }

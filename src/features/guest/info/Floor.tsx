@@ -2,15 +2,27 @@
 
 import { useTranslations } from "next-intl";
 import { FloorView } from "./FloorView";
+import { setGuideMapActiveFloor, useGuideMapFloor } from "./guideMapFloorStore";
 import { defineGuestInfoComponent, type GuestInfoComponentProps } from "./type";
 
 function Floor(_props: GuestInfoComponentProps) {
-  // TODO: _props.tenantId / _props.eventId で現在のフロア番号・表示名を取得する。
-  //       案内マップと連動して表示フロアを切り替える。
-  //       それまでは placeholderName をフロア名として表示する。
+  // 案内マップが表示しているフロアをそのまま「現在のフロア」として出す（切り替えも共有）。
+  // 案内マップが無い・読み込み前は placeholderName を表示する。
+  // TODO: QR / API で現在地が分かるようになったら、その場所のフロアを初期表示にする。
   const t = useTranslations("Guest.floor");
+  const { floors, activeFloorId } = useGuideMapFloor();
+  const active = floors.find((f) => f.id === activeFloorId);
 
-  return <FloorView floorName={t("placeholderName")} title={t("title")} />;
+  return (
+    <FloorView
+      title={t("title")}
+      floorName={active?.name ?? t("placeholderName")}
+      floors={floors}
+      activeFloorId={activeFloorId}
+      onSelectFloor={setGuideMapActiveFloor}
+      selectLabel={t("selectLabel")}
+    />
+  );
 }
 
-export default defineGuestInfoComponent("floor", Floor, { span: 1 });
+export default defineGuestInfoComponent("floor", Floor);
