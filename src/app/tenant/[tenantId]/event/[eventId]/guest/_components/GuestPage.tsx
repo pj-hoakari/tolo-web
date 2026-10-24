@@ -2,18 +2,14 @@
 
 import "@/features/guest/guest-theme.css";
 import { useEffect, useState } from "react";
-import CallingNumber from "@/features/guest/info/CallingNumber";
 import Congestion from "@/features/guest/info/Congestion";
-import EstimatedWaitTime from "@/features/guest/info/EstimatedWaitTime";
 import Floor from "@/features/guest/info/Floor";
 import GuideMap from "@/features/guest/info/GuideMap";
-import QueueLayout from "@/features/guest/info/QueueLayout";
 import Queues from "@/features/guest/info/Queues";
 import {
   type GuestInfoComponent,
   isGuestInfoComponentShown,
 } from "@/features/guest/info/type";
-import WaitingNumber from "@/features/guest/info/WaitingNumber";
 import {
   DEFAULT_GUEST_PAGE_COMPONENTS,
   type GuestPageComponent,
@@ -26,14 +22,11 @@ const SESSION_ID_KEY = "tolo:guest-session";
 
 // 各コンポーネントが自身の span（col-span-1 / col-span-2）を宣言
 // フラットな配列で並び順だけを指定
+// 現在のフロアは案内マップの文脈なので、地図の直上に横長の帯として置く
 const infoComponents: GuestInfoComponent[] = [
-  GuideMap,
   Floor,
-  CallingNumber,
-  EstimatedWaitTime,
-  WaitingNumber,
+  GuideMap,
   Queues,
-  QueueLayout,
   Congestion,
 ];
 

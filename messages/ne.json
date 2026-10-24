@@ -470,11 +470,30 @@
       "collapse": "नक्सा सानो पार्नुहोस्",
       "search": "गन्तव्य खोज्नुहोस्",
       "noResults": "नतिजा छैन",
-      "reset": "रिसेट"
+      "reset": "रिसेट",
+      "goal": "गन्तव्य",
+      "rideTo": "{via} बाट {floor} सम्म",
+      "arriveFrom": "{floor} बाट आइपुग्नुभयो",
+      "connectors": {
+        "stairs": "भर्याङ",
+        "escalator": "एस्केलेटर",
+        "elevator": "लिफ्ट"
+      },
+      "walkStep": "{floor}: {from} → {to}",
+      "rideStep": "{via}: {from} → {to}",
+      "noRoute": "यो गन्तव्यसम्मको बाटो भेटिएन",
+      "zoomInHint": "ठूलो बनाउन नक्सा ट्याप गर्नुहोस्",
+      "zoomOutHint": "सार्न तान्नुहोस् · पूरै हेर्न ट्याप गर्नुहोस्",
+      "closed": " (बन्द)",
+      "crowdAvoided": "यो मार्गले भीडभाड भएका ठाउँहरू छल्छ",
+      "crowdRerouted": "भीडको अवस्था बदलिएकाले मार्ग परिवर्तन गरियो",
+      "crowdThroughDanger": "यो मार्ग खतरनाक रूपमा भीड भएको ठाउँबाट जान्छ। कृपया कर्मचारीको निर्देशन पालना गर्नुहोस्",
+      "crowdLegend": "भीड"
     },
     "floor": {
       "title": "हालको तल्ला",
-      "placeholderName": "१ तल्ला"
+      "placeholderName": "१ तल्ला",
+      "selectLabel": "देखाउने तल्ला"
     },
     "congestion": {
       "title": "भीडको अवस्था",
