@@ -10,7 +10,6 @@ import {
 } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { InfoCard } from "./InfoCard";
 import {
   bboxOf,
   type ConnectorType,
@@ -26,7 +25,8 @@ import {
   type Pt,
   type Rect,
   toPointsAttr,
-} from "./venueMapDoc";
+} from "./guideMapLayout";
+import { InfoCard } from "./InfoCard";
 
 /** 場所に付けるラベル（現在地・目的地・乗り換えなど） */
 export type GuideMapMarker = { objectId: string; label: string };

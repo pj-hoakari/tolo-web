@@ -10,32 +10,32 @@ import { orpc } from "@/lib/orpc";
 import { cn } from "@/lib/utils";
 import { useGuestPolling } from "../useGuestPolling";
 import { type GuideMapMarker, GuideMapView } from "./GuideMapView";
+import { computeFloorRoute, type FloorRouteResult } from "./guideMapFloorRoute";
 import {
   clearGuideMapFloors,
   setGuideMapActiveFloor,
   setGuideMapFloors,
   useGuideMapFloor,
 } from "./guideMapFloorStore";
-import { defineGuestInfoComponent, type GuestInfoComponentProps } from "./type";
-import { computeFloorRoute, type FloorRouteResult } from "./venueFloorRoute";
-import venueMapData from "./venueMapData.json";
 import {
   type CrowdEntry,
   type CrowdMap,
   contentBounds,
   crowdByObject,
+  type GuideMapLayout,
   isDestination,
   type MapObject,
   type PlaceObject,
-  type VenueMapDoc,
-} from "./venueMapDoc";
+} from "./guideMapLayout";
+import { defineGuestInfoComponent, type GuestInfoComponentProps } from "./type";
+import venueMapData from "./venueMapData.json";
 
 /** マップ JSON の id を Guest.guideMap.destinations のキーとして扱うための型 */
 type DestinationKey =
   `destinations.${keyof Messages["Guest"]["guideMap"]["destinations"] & string}`;
 
 /** guide-map-poc の会場マップ・スタジオで「書き出す」した JSON */
-const doc = venueMapData as unknown as VenueMapDoc;
+const doc = venueMapData as unknown as GuideMapLayout;
 
 const floorIndex = new Map(doc.floors.map((f, i) => [f.id, i]));
 const floorNameOf = (id: string) =>
@@ -88,7 +88,7 @@ const routeKey = (route: FloorRouteResult | null) =>
   route && "steps" in route ? JSON.stringify(route.steps) : null;
 
 function GuideMap({ eventId }: GuestInfoComponentProps) {
-  // TODO: tenantId / eventId で会場マップを API から取得する。
+  // TODO: tenantId / eventId で案内マップを API から取得する。
   //       いまはリポジトリ同梱の venueMapData.json を描画している。
   const t = useTranslations("Guest.guideMap");
   const tCongestion = useTranslations("Guest.congestion");

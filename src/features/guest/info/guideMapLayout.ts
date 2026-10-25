@@ -1,5 +1,5 @@
 /**
- * 会場マップの共通スキーマ（guide-map-poc の「会場マップ・スタジオ」が書き出す JSON）。
+ * 案内マップの共通スキーマ（guide-map-poc の「会場マップ・スタジオ」が書き出す JSON）。
  * 作成ツール側の lib/venue-map.ts と同じ形。座標はすべて px・左上原点。
  *
  * - 四角・丸の場所（部屋・屋台）は「壁」、そのすき間が「歩ける道」になる
@@ -28,9 +28,9 @@ type Base = {
   color: string;
   /** 通行止め。経路探索では通らない */
   closed?: boolean;
-  /** 会場グラフ（グラフ編集）のポイント ID。混雑状況と結び付けて混雑回避ルートに使う */
+  /** グラフ（グラフ編集）のポイント ID。混雑状況と結び付けて混雑回避ルートに使う */
   graphPointId?: string;
-  /** 会場グラフのルート（通路）ID。廊下などのエリア・線に付ける */
+  /** グラフのルート（通路）ID。廊下などのエリア・線に付ける */
   graphRouteId?: string;
 };
 
@@ -75,7 +75,7 @@ export type TextObject = Base & {
 };
 export type MapObject = PlaceObject | RouteObject | AreaObject | TextObject;
 
-export type VenueMapDoc = {
+export type GuideMapLayout = {
   version: 1;
   floors: Floor[];
   activeFloorId: string;

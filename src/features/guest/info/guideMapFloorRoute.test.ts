@@ -1,19 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { computeFloorRoute, type FloorRouteStep } from "./venueFloorRoute";
+import { computeFloorRoute, type FloorRouteStep } from "./guideMapFloorRoute";
 import {
   type CrowdState,
   crowdByObject,
+  type GuideMapLayout,
   type MapObject,
   type PlaceObject,
   type Pt,
-  type VenueMapDoc,
-} from "./venueMapDoc";
-import venueMapFixture from "./venueMapFixture.json";
-import { computeRoute } from "./venueRoute";
+} from "./guideMapLayout";
+import guideMapLayoutFixture from "./guideMapLayoutFixture.json";
+import { computeRoute } from "./guideMapRoute";
 
-// テスト用に固定した会場マップ（guide-map-poc の旧見本：イベント会場 1F・2F）。
+// テスト用に固定した案内マップ（guide-map-poc の旧見本：イベント会場 1F・2F）。
 // 表示用の venueMapData.json は差し替わるので、テストはこちらを使う
-const doc = venueMapFixture as unknown as VenueMapDoc;
+const doc = guideMapLayoutFixture as unknown as GuideMapLayout;
 
 const place = (id: string) =>
   doc.objects.find((o) => o.id === id) as PlaceObject;
@@ -39,7 +39,7 @@ function crossesRect(points: Pt[], r: PlaceObject) {
 }
 
 /** 2 フロアを上りのみのエスカレーター 1 本だけでつないだ会場 */
-function escalatorOnlyDoc(): VenueMapDoc {
+function escalatorOnlyDoc(): GuideMapLayout {
   const room = (id: string, floor: string, x: number): PlaceObject => ({
     id,
     kind: "place",
@@ -215,18 +215,18 @@ describe("computeFloorRoute（フロアをまたぐ）", () => {
   });
 
   it("上りのみのエスカレーターは上りに使え、下りには使わない", () => {
-    const venue = escalatorOnlyDoc();
+    const layout = escalatorOnlyDoc();
 
     expect(
-      steps(computeFloorRoute(venue, "a", "b")).map((s) => s.kind),
+      steps(computeFloorRoute(layout, "a", "b")).map((s) => s.kind),
     ).toEqual(["walk", "ride", "walk"]);
-    expect(computeFloorRoute(venue, "b", "a")).toEqual({
+    expect(computeFloorRoute(layout, "b", "a")).toEqual({
       error: "unreachable",
     });
   });
 
   it("出発階から別の階へ行ける階移動ポイントが無ければ no-connector", () => {
-    const noConnector: VenueMapDoc = {
+    const noConnector: GuideMapLayout = {
       ...doc,
       objects: doc.objects.filter((o) => !(o.kind === "place" && o.connector)),
     };

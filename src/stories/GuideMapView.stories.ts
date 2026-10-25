@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { GuideMapView } from "@/features/guest/info/GuideMapView";
-import { computeFloorRoute } from "@/features/guest/info/venueFloorRoute";
-import type { VenueMapDoc } from "@/features/guest/info/venueMapDoc";
-import venueMapFixture from "@/features/guest/info/venueMapFixture.json";
+import { computeFloorRoute } from "@/features/guest/info/guideMapFloorRoute";
+import type { GuideMapLayout } from "@/features/guest/info/guideMapLayout";
+import guideMapLayoutFixture from "@/features/guest/info/guideMapLayoutFixture.json";
 
 // guide-map-poc の会場マップ・スタジオが書き出す形式の固定見本（イベント会場 1F・2F）。
 // 表示用の venueMapData.json は差し替わるので、Story はこちらで状態を固定する
-const doc = venueMapFixture as unknown as VenueMapDoc;
+const doc = guideMapLayoutFixture as unknown as GuideMapLayout;
 const [f1, f2] = doc.floors;
 const onFloor = (floorId: string) =>
   doc.objects.filter((o) => o.floor === floorId);
