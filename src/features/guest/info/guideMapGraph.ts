@@ -23,7 +23,7 @@ export function toGuestGuideMapGraph(
   const groupIds = new Set(layout.groups.map((g) => g.groupId));
   return {
     points: graph.nodes.flatMap((n): GuestGuideMapPoint[] =>
-      isPointNode(n) && pointIds.has(n.id)
+      isPointNode(n) && n.data.nodeType !== "EXTERNAL" && pointIds.has(n.id)
         ? [{ pointId: n.id, labels: n.data.labels }]
         : [],
     ),

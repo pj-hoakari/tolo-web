@@ -101,4 +101,17 @@ describe("toGuestGuideMapGraph", () => {
       groups: [{ groupId: "g_1f000001", labels: { ja: "1F", en: "1F" } }],
     });
   });
+
+  it("レイアウトが外部ポイントを参照していても外部ポイントは渡さない", () => {
+    const withExternal = {
+      ...layout,
+      objects: [
+        ...layout.objects,
+        { ...layout.objects[0], id: "p-outside", pointId: "n_e0000001" },
+      ],
+    };
+    expect(
+      toGuestGuideMapGraph(graph, withExternal).points.map((p) => p.pointId),
+    ).toStrictEqual(["n_4a110001"]);
+  });
 });
