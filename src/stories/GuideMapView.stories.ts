@@ -6,7 +6,7 @@ import type { GuideMapLayout } from "@/features/guest/info/guideMapLayout";
 import guideMapLayoutFixture from "@/features/guest/info/guideMapLayoutFixture.json";
 
 // guide-map-poc の会場マップ・スタジオが書き出す形式の固定見本（イベント会場 1F・2F）。
-// 表示用の venueMapData.json は差し替わるので、Story はこちらで状態を固定する
+// 表示用の mocks/fixtures/guideMapLayout.json は差し替わるので、Story はこちらで状態を固定する
 const doc = guideMapLayoutFixture as unknown as GuideMapLayout;
 const [f1, f2] = doc.floors;
 const onFloor = (floorId: string) =>

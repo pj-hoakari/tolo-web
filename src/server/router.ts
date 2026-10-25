@@ -29,6 +29,8 @@ import {
   type GraphViolation,
   graphDataSchema,
 } from "@/features/graph/graphDataSchema";
+import type { GuestGuideMapGraph } from "@/features/guest/info/guideMapGraph";
+import type { GuideMapLayout } from "@/features/guest/info/guideMapLayout";
 import type { GuestPageComponent } from "@/features/guest/pageComponents";
 import type {
   EventStatus,
@@ -39,6 +41,7 @@ import {
   registeredEdgeDeviceWire,
   sampleEdgeDevicesWire,
 } from "@/mocks/fixtures/edges";
+import { sampleGuideMap } from "@/mocks/fixtures/guest";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
 import { guestPageClient } from "./guest";
@@ -179,6 +182,11 @@ export interface GuestQueue {
   name: string;
   waitTimeMinutes: number;
   gates: GuestQueueGate[];
+}
+
+export interface GuestGuideMap {
+  graph: GuestGuideMapGraph;
+  layout: GuideMapLayout;
 }
 
 export interface GuestMessage {
@@ -412,6 +420,9 @@ export const router = {
           throw toORPCError(err);
         }
       }),
+    getGuideMap: os
+      .input(z.object({ eventId: z.string().min(1) }))
+      .handler(async (): Promise<GuestGuideMap> => sampleGuideMap()),
     getQueues: os
       .input(guestContentInput)
       .handler(async ({ input }): Promise<{ queues: GuestQueue[] }> => {

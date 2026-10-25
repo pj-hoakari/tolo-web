@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
+import { GUEST_REFRESH_INTERVAL_MS } from "@/features/guest/useGuestPolling";
 import type { MockRouterOverrides } from "@/mocks/router";
 
 const search = (page: Page) =>
@@ -24,12 +25,13 @@ const card = (page: Page, title: string) =>
     .filter({ has: page.getByRole("heading", { level: 2, name: title }) });
 const congestionCard = (page: Page) => card(page, "混雑状況");
 const queuesCard = (page: Page) => card(page, "行列の待ち時間");
+const guideMapCard = (page: Page) => card(page, "案内マップ");
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 const openGuestPage = async (
   page: Page,
   path: string,
-  overrides?: Pick<MockRouterOverrides, "guestComponents">,
+  overrides?: Pick<MockRouterOverrides, "guestComponents" | "getGuideMapError">,
 ) => {
   if (overrides) {
     await page.addInitScript((value) => {
@@ -380,6 +382,47 @@ test("言語を English に切り替えると英語で表示され再読み込�
   await page.reload();
   await expect(page.getByText("Guest Page")).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
+});
+
+test("案内マップはページを開いたときに 1 回だけ取得し、混雑状況が更新されても取り直さない", async ({
+  page,
+}) => {
+  await page.clock.install();
+  const requests: string[] = [];
+  page.on("request", (request) => requests.push(request.url()));
+  const count = (procedure: string) =>
+    requests.filter((url) => url.includes(`/rpc/guest/${procedure}`)).length;
+  await openGuestPage(page, "/event/test/guest");
+  await expect(search(page)).toBeVisible();
+  const crowdBefore = count("getCrowd");
+
+  await page.clock.runFor(GUEST_REFRESH_INTERVAL_MS * 2 + 1_000);
+
+  await expect.poll(() => count("getCrowd")).toBeGreaterThan(crowdBefore);
+  expect(count("getGuideMap")).toBe(1);
+});
+
+test("案内マップを取得できないと案内マップのカードに情報を取得できなかったことが表示される", async ({
+  page,
+}) => {
+  await openGuestPage(page, "/event/test/guest", { getGuideMapError: true });
+
+  await expect(guideMapCard(page)).toContainText("情報を取得できませんでした");
+  await expect(search(page)).toHaveCount(0);
+  await expect(congestionCard(page).getByRole("listitem")).toHaveCount(3);
+});
+
+test("言語を English に切り替えると目的地の名前がグラフのポイントの英語のラベルで出る", async ({
+  page,
+}) => {
+  await localeButton(page).click();
+  await page.getByRole("menuitemradio", { name: "English" }).click();
+
+  await page
+    .getByRole("textbox", { name: "Search destination" })
+    .fill("Staff room");
+  await expect(page.getByRole("button", { name: /Staff room/ })).toHaveCount(2);
+  await expect(page.getByRole("button", { name: /職員室/ })).toHaveCount(0);
 });
 
 test("言語メニューを開くと 7 つの言語が並び現在の日本語が選ばれている", async ({

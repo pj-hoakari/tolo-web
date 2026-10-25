@@ -1,8 +1,14 @@
+import { toGuestGuideMapGraph } from "@/features/guest/info/guideMapGraph";
+import type { GuideMapLayout } from "@/features/guest/info/guideMapLayout";
+import type { GraphData } from "@/features/tenant/management/graph/type";
 import type {
   GuestCrowdSnapshot,
+  GuestGuideMap,
   GuestMessage,
   GuestQueue,
 } from "@/server/router";
+import guideMapGraph from "./guideMapGraph.json";
+import guideMapLayout from "./guideMapLayout.json";
 
 type Names = { ja: string; en: string };
 
@@ -15,24 +21,33 @@ export function sampleGuestCrowd(language: string): GuestCrowdSnapshot {
     takenAt: "2026-06-15T05:28:00.000Z",
     crowd: [
       {
-        id: "pointId:p-elevator-1f",
+        id: "pointId:n_fc14f2f4",
         name: name({ ja: "1F エレベーター前", en: "1F elevators" }, language),
         level: "high",
         danger: true,
       },
       {
-        id: "pointId:p-hall-6f",
+        id: "pointId:n_ca0bb1fc",
         name: name({ ja: "6F ホール", en: "6F Hall" }, language),
         level: "mid",
         danger: false,
       },
       {
-        id: "routeId:r-corridor-4f",
+        id: "pointId:n_12408172",
         name: name({ ja: "4F 廊下", en: "4F corridor" }, language),
         level: "low",
         danger: false,
       },
     ],
+  };
+}
+
+export const sampleGuideMapGraph = guideMapGraph as GraphData;
+
+export function sampleGuideMap(): GuestGuideMap {
+  return {
+    graph: toGuestGuideMapGraph(sampleGuideMapGraph),
+    layout: guideMapLayout as unknown as GuideMapLayout,
   };
 }
 
@@ -44,12 +59,12 @@ export function sampleGuestQueues(language: string): GuestQueue[] {
       waitTimeMinutes: 12.2,
       gates: [
         {
-          pointId: "g-elevator",
+          pointId: "n_0dfb7c9e",
           name: name({ ja: "エレベーター", en: "Elevators" }, language),
           recommended: false,
         },
         {
-          pointId: "g-stairs",
+          pointId: "n_99fe5704",
           name: name({ ja: "階段", en: "Stairs" }, language),
           recommended: true,
         },
@@ -61,7 +76,7 @@ export function sampleGuestQueues(language: string): GuestQueue[] {
       waitTimeMinutes: 3,
       gates: [
         {
-          pointId: "g-lounge",
+          pointId: "n_6f8f9cc6",
           name: name({ ja: "ラウンジ入口", en: "Lounge entrance" }, language),
           recommended: true,
         },

@@ -20,6 +20,7 @@ import type {
   EdgeDevice,
   FirestoreToken,
   GuestCrowdSnapshot,
+  GuestGuideMap,
   GuestMessage,
   GuestQueue,
   RegisteredEdgeDevice,
@@ -32,6 +33,7 @@ import {
   sampleGuestCrowd,
   sampleGuestMessages,
   sampleGuestQueues,
+  sampleGuideMap,
 } from "./fixtures/guest";
 
 export type MockRouterOverrides = {
@@ -54,6 +56,8 @@ export type MockRouterOverrides = {
   archiveEventError?: CommonORPCErrorCode;
   restoreEventError?: CommonORPCErrorCode;
   guestComponents?: GuestPageComponent[];
+  guideMap?: GuestGuideMap;
+  getGuideMapError?: boolean;
 };
 
 export const MOCK_SERVER_MESSAGE = "message from the mock server";
@@ -79,6 +83,8 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     archiveEventError,
     restoreEventError,
     guestComponents = [...DEFAULT_GUEST_PAGE_COMPONENTS],
+    guideMap = sampleGuideMap(),
+    getGuideMapError = false,
   } = overrides;
 
   const events: TenantEvent[] = [
@@ -280,6 +286,14 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           async ({ input }): Promise<GuestCrowdSnapshot> =>
             sampleGuestCrowd(input.language),
         ),
+      getGuideMap: os
+        .input(z.object({ eventId: z.string().min(1) }))
+        .handler(async (): Promise<GuestGuideMap> => {
+          if (getGuideMapError) {
+            throw new ORPCError("INTERNAL_SERVER_ERROR");
+          }
+          return structuredClone(guideMap);
+        }),
       getQueues: os
         .input(z.object({ eventId: z.string().min(1), language: z.string() }))
         .handler(

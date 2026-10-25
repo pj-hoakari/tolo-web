@@ -459,12 +459,6 @@
       "title": "Guide map",
       "hint": "Select a destination to see the route",
       "currentLocation": "You are here",
-      "destinations": {
-        "hall": "Hall",
-        "goods": "Merch",
-        "cafe": "Café",
-        "exit": "Exit"
-      },
       "destinationsLabel": "Destinations",
       "expand": "Enlarge the map",
       "collapse": "Shrink the map",

@@ -459,12 +459,6 @@
       "title": "Mapa de orientación",
       "hint": "Selecciona un destino para ver la ruta",
       "currentLocation": "Estás aquí",
-      "destinations": {
-        "hall": "Sala",
-        "goods": "Tienda",
-        "cafe": "Cafetería",
-        "exit": "Salida"
-      },
       "destinationsLabel": "Destinos",
       "expand": "Ampliar el mapa",
       "collapse": "Reducir el mapa",
