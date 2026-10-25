@@ -83,7 +83,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     archiveEventError,
     restoreEventError,
     guestComponents = [...DEFAULT_GUEST_PAGE_COMPONENTS],
-    guideMap = sampleGuideMap(),
+    guideMap,
     getGuideMapError = false,
   } = overrides;
 
@@ -287,12 +287,19 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             sampleGuestCrowd(input.language),
         ),
       getGuideMap: os
-        .input(z.object({ eventId: z.string().min(1) }))
-        .handler(async (): Promise<GuestGuideMap> => {
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            qrLocationId: z.string().optional(),
+          }),
+        )
+        .handler(async ({ input }): Promise<GuestGuideMap> => {
           if (getGuideMapError) {
             throw new ORPCError("INTERNAL_SERVER_ERROR");
           }
-          return structuredClone(guideMap);
+          return structuredClone(
+            guideMap ?? sampleGuideMap(input.qrLocationId),
+          );
         }),
       getQueues: os
         .input(z.object({ eventId: z.string().min(1), language: z.string() }))

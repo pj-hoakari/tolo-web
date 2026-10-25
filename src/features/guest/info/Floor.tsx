@@ -9,7 +9,6 @@ import { defineGuestInfoComponent, type GuestInfoComponentProps } from "./type";
 function Floor(_props: GuestInfoComponentProps) {
   // 案内マップが表示しているフロアをそのまま「現在のフロア」として出す（切り替えも共有）。
   // 案内マップが無い・読み込み前は placeholderName を表示する。
-  // TODO: QR / API で現在地が分かるようになったら、その場所のフロアを初期表示にする。
   const t = useTranslations("Guest.floor");
   const locale = useLocale();
   const { floors: options, activeFloorId } = useGuideMapFloor();

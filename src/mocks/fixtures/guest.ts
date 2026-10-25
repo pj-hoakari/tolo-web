@@ -44,11 +44,30 @@ export function sampleGuestCrowd(language: string): GuestCrowdSnapshot {
 
 export const sampleGuideMapGraph = guideMapGraph as GraphData;
 
-export function sampleGuideMap(): GuestGuideMap {
+export type SampleGraphAnchor =
+  | { pointId: string }
+  | { routeId: string; routePosition?: number };
+
+export const sampleQrLocations = new Map<string, SampleGraphAnchor>([
+  ["3f1c9a0b7d2e4a65", { pointId: "n_8b38f377" }],
+  ["a84d0e6c2b9f1735", { pointId: "n_6f8f9cc6" }],
+  ["5b2e8d0f4c7a1936", { routeId: "e_13f3dd5a", routePosition: 0.5 }],
+  ["c9d47e1a03b65f28", { pointId: "n_2f44fa0f" }],
+]);
+
+export function sampleGuideMap(qrLocationId?: string): GuestGuideMap {
   const layout = guideMapLayout as unknown as GuideMapLayout;
+  const anchor = qrLocationId ? sampleQrLocations.get(qrLocationId) : undefined;
+  const currentPointId =
+    anchor &&
+    "pointId" in anchor &&
+    layout.objects.some((o) => o.pointId === anchor.pointId)
+      ? anchor.pointId
+      : undefined;
   return {
     graph: toGuestGuideMapGraph(sampleGuideMapGraph, layout),
     layout,
+    ...(currentPointId ? { currentPointId } : {}),
   };
 }
 

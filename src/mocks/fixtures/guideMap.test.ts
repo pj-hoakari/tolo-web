@@ -13,6 +13,7 @@ import {
   sampleGuestQueues,
   sampleGuideMap,
   sampleGuideMapGraph,
+  sampleQrLocations,
 } from "./guest";
 
 const { graph, layout } = sampleGuideMap();
@@ -107,5 +108,35 @@ describe("案内マップのフィクスチャ（KCG本館）", () => {
   it("行列のモックの入口はゲスト向けのグラフにあるポイントを指す", () => {
     for (const q of sampleGuestQueues("ja"))
       for (const g of q.gates) expect(pointIds).toContain(g.pointId);
+  });
+
+  it("QR の設置箇所 ID はサーバーが採番する 16 桁の 16 進で、グラフのポイントかルートを指す", () => {
+    const graphIds = new Set(sampleGuideMapGraph.nodes.map((n) => n.id));
+    for (const [qrLocationId, anchor] of sampleQrLocations) {
+      expect(qrLocationId).toMatch(/^[0-9a-f]{16}$/);
+      if ("pointId" in anchor) expect(graphIds).toContain(anchor.pointId);
+      else expect(routeIds).toContain(anchor.routeId);
+    }
+  });
+
+  it("4F の QR から開くと現在地は 4F の場所に結び付いたポイントになる", () => {
+    const { currentPointId } = sampleGuideMap("a84d0e6c2b9f1735");
+    const place = layout.objects.find(
+      (o) => o.kind === "place" && o.pointId === currentPointId,
+    );
+    expect(
+      graph.groups.find((g) => g.groupId === place?.groupId)?.labels.ja,
+    ).toBe("4F");
+  });
+
+  it("ルートを指す QR、レイアウトが参照しないポイントを指す QR、登録のない QR、QR なしでは現在地を返さない", () => {
+    for (const qrLocationId of [
+      "5b2e8d0f4c7a1936",
+      "c9d47e1a03b65f28",
+      "gate-east",
+      "",
+      undefined,
+    ])
+      expect(sampleGuideMap(qrLocationId)).not.toHaveProperty("currentPointId");
   });
 });

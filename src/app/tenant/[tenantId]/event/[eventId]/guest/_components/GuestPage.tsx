@@ -85,6 +85,7 @@ export function GuestPage({ tenantId, eventId, qrLocationId }: GuestPageProps) {
         <GuestInfoContainer
           tenantId={tenantId}
           eventId={eventId}
+          qrLocationId={qrLocationId}
           components={infoComponents.filter((component) =>
             isGuestInfoComponentShown(component, pageComponents),
           )}

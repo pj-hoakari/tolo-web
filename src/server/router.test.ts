@@ -336,6 +336,15 @@ describe("guest", () => {
     for (const spy of guestCalls) expect(spy).not.toHaveBeenCalled();
   });
 
+  it("returns the current point of the QR location with the sample guide map", async () => {
+    const guideMap = await call(router.guest.getGuideMap, {
+      eventId,
+      qrLocationId: "a84d0e6c2b9f1735",
+    });
+
+    expect(guideMap.currentPointId).toBe("n_6f8f9cc6");
+  });
+
   it("returns the queues with their gates and without the turnaround count", async () => {
     vi.spyOn(guestPageClient, "getQueues").mockResolvedValue(
       create(GetQueuesResponseSchema, {

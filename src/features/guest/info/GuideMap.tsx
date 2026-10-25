@@ -41,14 +41,14 @@ const crowdKey = (crowd: CrowdMap) =>
 const routeKey = (route: FloorRouteResult | null) =>
   route && "steps" in route ? JSON.stringify(route.steps) : null;
 
-function GuideMap({ eventId }: GuestInfoComponentProps) {
+function GuideMap({ eventId, qrLocationId }: GuestInfoComponentProps) {
   const t = useTranslations("Guest");
   const [guideMap, setGuideMap] = useState<GuestPolling<GuestGuideMap>>({
     status: "loading",
   });
   useEffect(() => {
     let active = true;
-    orpc.guest.getGuideMap({ eventId }).then(
+    orpc.guest.getGuideMap({ eventId, qrLocationId }).then(
       (data) => {
         if (active) setGuideMap({ status: "ready", data });
       },
@@ -59,7 +59,7 @@ function GuideMap({ eventId }: GuestInfoComponentProps) {
     return () => {
       active = false;
     };
-  }, [eventId]);
+  }, [eventId, qrLocationId]);
   if (guideMap.status !== "ready")
     return (
       <InfoCard title={t("guideMap.title")}>
@@ -73,7 +73,7 @@ function GuideMap({ eventId }: GuestInfoComponentProps) {
 
 function GuideMapContent({
   eventId,
-  guideMap: { graph, layout: doc },
+  guideMap: { graph, layout: doc, currentPointId },
 }: {
   eventId: string;
   guideMap: GuestGuideMap;
@@ -94,15 +94,20 @@ function GuideMapContent({
 
   /**
    * 現在地とみなす場所。
-   * 案内マップエディタで指定した現在地（startId）を使う。指定が無ければ「現在地」「入口」「入場ゲート」などの名前の場所を、
+   * QR の設置箇所のポイントに結び付いた場所を使う。無ければ案内マップエディタで指定した既定の出発地（startId）を、それも無ければ「現在地」「入口」「入場ゲート」などの名前の場所を、
    * 無ければいちばん下の階の場所（目的地 → 階段・エレベーターの順）を、それも無ければ最初の目的地を使う。
-   * TODO: QR / API から現在地（場所 ID）を受け取る。
    */
   const groundPlaces = doc.objects.filter(
     (o): o is PlaceObject =>
       o.kind === "place" && o.groupId === doc.groups[0]?.groupId,
   );
   const start: PlaceObject | undefined =
+    (currentPointId
+      ? doc.objects.find(
+          (o): o is PlaceObject =>
+            o.kind === "place" && o.pointId === currentPointId,
+        )
+      : undefined) ??
     doc.objects.find(
       (o): o is PlaceObject => o.kind === "place" && o.id === doc.startId,
     ) ??

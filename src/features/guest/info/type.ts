@@ -4,6 +4,7 @@ import type { GuestPageComponent } from "../pageComponents";
 export type GuestInfoComponentProps = {
   tenantId: string;
   eventId: string;
+  qrLocationId: string;
 };
 
 /**
