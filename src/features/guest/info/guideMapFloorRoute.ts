@@ -1,8 +1,8 @@
 /**
  * 階をまたぐ経路探索（guide-map-poc の lib/venue-floor-route.ts と同じ挙動）。
  * - 各階の中は computeRoute（壁を避けた道なり）で歩く
- * - 階と階は階移動ポイント（階段・エスカレーター・エレベーター）でつなぐ。同じ link 同士が移動できる
- * - 出発・目的地・階移動ポイントを頂点にしたグラフで、歩く距離＋乗り換えの手間が最小の道を選ぶ
+ * - 階と階は階移動手段（階段・エスカレーター・エレベーター）でつなぐ。同じ link 同士が移動できる
+ * - 出発・目的地・階移動手段を頂点にしたグラフで、歩く距離＋乗り換えの手間が最小の道を選ぶ
  * - 混雑（crowd）を渡すと混雑回避ルートにする。混んだ階段・エレベーターは手間を重くし、危険の所は通らない。
  *   危険を避けると行けないときだけ、危険を通る道で引き直して throughDanger を立てる
  */
@@ -26,7 +26,7 @@ const TRANSFER_COST: Record<ConnectorType, { base: number; perFloor: number }> =
     escalator: { base: 40, perFloor: 140 },
     elevator: { base: 360, perFloor: 40 },
   };
-/** 混雑した階移動ポイントに足す手間（px 換算）。危険は avoidDanger のとき使わない、そうでなければ DANGER_RIDE_COST */
+/** 混雑した階移動手段に足す手間（px 換算）。危険は avoidDanger のとき使わない、そうでなければ DANGER_RIDE_COST */
 const CROWD_RIDE_COST: Record<CrowdLevel, number> = {
   low: 0,
   mid: 200,
@@ -56,9 +56,9 @@ export type FloorRouteOptions = {
 };
 
 /**
- * 頂点の役割。start＝出発、goal＝目的地、in＝歩いて階移動ポイントに着いた（次は乗るだけ）、
+ * 頂点の役割。start＝出発、goal＝目的地、in＝歩いて階移動手段に着いた（次は乗るだけ）、
  * out＝乗って着いた（次は歩くだけ）。in / out に分けることで、同じ階のまま
- * 階移動ポイントを「近道」として素通りする経路を作らない。
+ * 階移動手段を「近道」として素通りする経路を作らない。
  */
 type Node = {
   id: string;
@@ -76,7 +76,7 @@ const pathLength = (pts: Pt[]) =>
     0,
   );
 
-/** 出発（startId）→目的地（goalId）の経路。階が違えば階移動ポイントを経由する。混雑を渡せば混雑回避ルート */
+/** 出発（startId）→目的地（goalId）の経路。階が違えば階移動手段を経由する。混雑を渡せば混雑回避ルート */
 export function computeFloorRoute(
   doc: Pick<GuideMapLayout, "floors" | "objects">,
   startId: string,
@@ -116,7 +116,7 @@ function routeOnce(
     ]),
   ];
 
-  // 出発階から別の階へ行ける階移動ポイントが無ければ、階をまたげない
+  // 出発階から別の階へ行ける階移動手段が無ければ、階をまたげない
   if (start.floor !== goal.floor) {
     const usable = connectors.some(
       (c) =>
@@ -147,7 +147,7 @@ function routeOnce(
     walkCache.set(cacheKey, pts);
     return pts;
   };
-  // 階移動ポイント a → b に乗れるか（同じ link・別の階・エスカレーターの向き）と、その手間
+  // 階移動手段 a → b に乗れるか（同じ link・別の階・エスカレーターの向き）と、その手間
   const rideCost = (a: Node, b: Node): number | null => {
     if (
       !a.connector ||

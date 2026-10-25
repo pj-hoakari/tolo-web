@@ -37,7 +37,7 @@ export type GuideMapViewProps = {
   floor: Floor;
   /** 表示中のフロアにあるオブジェクト（title は表示名に解決済み） */
   objects: MapObject[];
-  /** 表示中のフロアで歩く誘導線（点列の配列） */
+  /** 表示中のフロアで歩く経路線（点列の配列） */
   routes: Pt[][];
   markers: GuideMapMarker[];
   /** 選択中の目的地 ID（強調表示する） */
@@ -71,7 +71,7 @@ const ZOOM = 2.5;
 const TAP_SLOP = 8;
 /** ズームのアニメーション時間（ms） */
 const ZOOM_MS = 220;
-/** 誘導線・ラベルの色（ゲスト画面のアクセント色にそろえる） */
+/** 経路線・ラベルの色（ゲスト画面のアクセント色にそろえる） */
 const ROUTE_COLOR = "var(--guest-accent)";
 /** ラベル（現在地・目的地など）の文字色 */
 const PILL_TEXT = "var(--guest-secondary)";
@@ -284,7 +284,7 @@ export function GuideMapView({
   const dim = (id: string) => searching && !highlightIds?.includes(id);
   const byId = new Map(objects.map((o) => [o.id, o]));
 
-  // 線と点の大きさ（作成ツールの太さ 5・点線 2 9 と同じ比率）
+  // 線と点の大きさ（案内マップエディタの太さ 5・点線 2 9 と同じ比率）
   const routeWidth = 10 * u;
   const routeCycle = 2.2 * routeWidth;
   const routeStyle = {
@@ -308,7 +308,7 @@ export function GuideMapView({
   const pillFont = 22 * u;
   const pinScale = 1.6 * u;
 
-  /** 階移動マークの大きさ。ピン型は作成ツールの指定があればそれ、無ければ押しやすい既定の正方形 */
+  /** 階移動マークの大きさ。ピン型は案内マップエディタの指定があればそれ、無ければ押しやすい既定の正方形 */
   const connectorBox = (o: PlaceObject) => {
     if (o.shape === "pin") return markBoxOf(o, 44 * u);
     const side = Math.min(o.w, o.h);
@@ -414,7 +414,7 @@ export function GuideMapView({
               );
             })}
 
-            {/* 混雑（混んでいる所を色で重ねる。誘導線はここを避ける） */}
+            {/* 混雑（混んでいる所を色で重ねる。経路線はここを避ける） */}
             {objects.map((o) => {
               const s = crowd?.get(o.id);
               if (!crowdShown(s)) return null;
@@ -434,7 +434,7 @@ export function GuideMapView({
                     style={outline}
                   />
                 );
-              if (o.kind === "route" && o.points.length >= 2)
+              if (o.kind === "line" && o.points.length >= 2)
                 return (
                   <polyline
                     key={`crowd-${o.id}`}
@@ -477,7 +477,7 @@ export function GuideMapView({
               );
             })}
 
-            {/* 誘導線（点が進行方向へ流れる） */}
+            {/* 経路線（点が進行方向へ流れる） */}
             {routes.map((points, i) =>
               points.length >= 2 ? (
                 <polyline
@@ -495,7 +495,7 @@ export function GuideMapView({
               ) : null,
             )}
 
-            {/* 場所（部屋・屋台・ピン・階移動ポイント） */}
+            {/* 場所（部屋・屋台・ピン・階移動手段） */}
             {objects.map((o) => {
               if (o.kind !== "place") return null;
               const pal = mapColorOf(o.color);

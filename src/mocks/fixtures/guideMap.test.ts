@@ -65,17 +65,17 @@ describe("案内マップのフィクスチャ（KCG本館）", () => {
     );
   });
 
-  it("目的地と階移動ポイントはすべてグラフのポイントに結び付いている", () => {
+  it("目的地と階移動手段はすべてグラフのポイントに結び付いている", () => {
     for (const o of layout.objects.filter(
       (o) => isDestination(o) || isConnector(o),
     ))
-      expect(o.graphPointId, o.title).toBeDefined();
+      expect(o.pointId, o.title).toBeDefined();
   });
 
   it("レイアウトが参照するグラフ ID はすべてゲスト向けのグラフにある", () => {
     for (const o of layout.objects) {
-      if (o.graphPointId) expect(pointIds).toContain(o.graphPointId);
-      if (o.graphRouteId) expect(routeIds).toContain(o.graphRouteId);
+      if (o.pointId) expect(pointIds).toContain(o.pointId);
+      if (o.routeId) expect(routeIds).toContain(o.routeId);
     }
   });
 

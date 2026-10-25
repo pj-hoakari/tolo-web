@@ -91,7 +91,7 @@ function GuideMapContent({
 
   /**
    * 現在地とみなす場所。
-   * 作成ツールで指定した現在地（startId）を使う。指定が無ければ「現在地」「入口」「入場ゲート」などの名前の場所を、
+   * 案内マップエディタで指定した現在地（startId）を使う。指定が無ければ「現在地」「入口」「入場ゲート」などの名前の場所を、
    * 無ければいちばん下の階の場所（目的地 → 階段・エレベーターの順）を、それも無ければ最初の目的地を使う。
    * TODO: QR / API から現在地（場所 ID）を受け取る。
    */
@@ -158,7 +158,7 @@ function GuideMapContent({
 
   // 表示名（グラフのポイントのラベルを表示言語で解決し、無ければレイアウトの名前を使う）
   const nameOf = (o: MapObject) => {
-    const labels = o.graphPointId && labelsByPointId.get(o.graphPointId);
+    const labels = o.pointId && labelsByPointId.get(o.pointId);
     return (labels && resolveLabel(labels, locale).text) || (o.title ?? "");
   };
 
@@ -206,7 +206,7 @@ function GuideMapContent({
     else if (last.id !== selectedId) setRerouted(false);
     lastRoute.current = { id: selectedId, key: currentRouteKey };
   }, [selectedId, currentRouteKey]);
-  // 現在地が階移動ポイントそのものだと「エレベーター → エレベーター」の歩かない区間ができるので省く
+  // 現在地が階移動手段そのものだと「エレベーター → エレベーター」の歩かない区間ができるので省く
   const steps = (route && "steps" in route ? route.steps : []).filter(
     (s) => !(s.kind === "walk" && s.fromId === s.toId),
   );
@@ -241,9 +241,9 @@ function GuideMapContent({
   // 表示中フロアのオブジェクト（名前は表示名に解決しておく）
   const floorObjects = doc.objects
     .filter((o) => o.floor === activeFloorId)
-    .map((o) => (o.kind === "route" ? o : { ...o, title: nameOf(o) }));
+    .map((o) => (o.kind === "line" ? o : { ...o, title: nameOf(o) }));
 
-  // 表示中フロアで歩く区間の誘導線
+  // 表示中フロアで歩く区間の経路線
   const routes = steps.flatMap((s) =>
     s.kind === "walk" && s.floor === activeFloorId ? [s.points] : [],
   );
