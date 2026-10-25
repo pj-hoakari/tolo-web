@@ -24,6 +24,12 @@
       "tailwindDirectives": true
     }
   },
+  "tailwind": {
+    "stylesheet": "src/app/globals.css",
+    "mergeFunctions": ["clsx", "cn", "twMerge"],
+    "variantFunctions": ["cva", "tv"],
+    "attributes": ["class", "className"]
+  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -37,12 +43,9 @@
         "noUnknownAtRules": "off"
       },
       "nursery": {
-        "useSortedClasses": {
+        "useTailwindSortedClasses": {
           "fix": "safe",
-          "level": "error",
-          "options": {
-            "functions": ["twMerge", "cn"]
-          }
+          "level": "error"
         }
       }
     },
