@@ -28,7 +28,7 @@ export default async function TenantGraphEdit({
   return (
     <div className="flex h-screen flex-col">
       <header className="flex w-full items-center justify-between gap-4 px-10 py-5">
-        <h2 className="truncate font-bold text-2xl">
+        <h2 className="truncate text-2xl font-bold">
           {t("graphEditTitle", { tenantId })}
         </h2>
         <div className="flex items-center gap-2">

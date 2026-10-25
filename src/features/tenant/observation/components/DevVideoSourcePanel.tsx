@@ -62,9 +62,9 @@ function DevVideoSourcePanelComponent({
   };
 
   return (
-    <section className="fixed right-4 bottom-4 z-50 flex w-72 flex-col gap-2 rounded border border-border border-dashed bg-background p-3 text-sm">
+    <section className="fixed right-4 bottom-4 z-50 flex w-72 flex-col gap-2 rounded border border-dashed border-border bg-background p-3 text-sm">
       <Disclosure defaultExpanded className="min-w-0">
-        <DisclosureHeader className="py-0 font-bold text-xs">
+        <DisclosureHeader className="py-0 text-xs font-bold">
           {t("title")}
         </DisclosureHeader>
 
@@ -105,7 +105,7 @@ function DevVideoSourcePanelComponent({
             </Button>
           </div>
 
-          <p className="break-all text-xs">
+          <p className="text-xs break-all">
             {t("current", {
               source: mode === "file" && file ? file.name : t("camera"),
             })}

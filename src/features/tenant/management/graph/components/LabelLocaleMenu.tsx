@@ -62,7 +62,7 @@ export function LabelLocaleMenu({
             <MenuItem key={item} id={item} textValue={localeLabels[item]}>
               <span className="flex w-full items-center justify-between gap-4">
                 <span lang={item}>{localeLabels[item]}</span>
-                <span className="text-muted-foreground text-xs">
+                <span className="text-xs text-muted-foreground">
                   {t("labeledPointCount", {
                     count: labelCounts[item] ?? 0,
                     total: labelTargetCount,

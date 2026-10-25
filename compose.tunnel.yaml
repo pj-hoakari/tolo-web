@@ -1,23 +1,23 @@
 services:
-    web:
-        environment:
-            TUNNEL_SUBDOMAIN: ${TUNNEL_SUBDOMAIN:-test}
+  web:
+    environment:
+      TUNNEL_SUBDOMAIN: ${TUNNEL_SUBDOMAIN:-test}
 
-    tunnel-proxy:
-        image: caddy:2.11.7-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f
-        environment:
-            TUNNEL_SUBDOMAIN: ${TUNNEL_SUBDOMAIN:-test}
-        volumes:
-            - type: bind
-              source: ./tunnel/Caddyfile
-              target: /etc/caddy/Caddyfile
-              read_only: true
-        depends_on:
-            - web
-            - firebase-emulator
+  tunnel-proxy:
+    image: caddy:2.11.7-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f
+    environment:
+      TUNNEL_SUBDOMAIN: ${TUNNEL_SUBDOMAIN:-test}
+    volumes:
+      - type: bind
+        source: ./tunnel/Caddyfile
+        target: /etc/caddy/Caddyfile
+        read_only: true
+    depends_on:
+      - web
+      - firebase-emulator
 
-    tunnel:
-        image: cloudflare/cloudflared:2026.10.1@sha256:a15a3b50b8dabd57ac2090e9484c0247dba9dfa1f0df4d298d4317f9d69eb2d5
-        command: tunnel --protocol http2 --url http://tunnel-proxy:8080 --allowed-mail ${TUNNEL_ALLOWED_MAIL:?set TUNNEL_ALLOWED_MAIL}
-        depends_on:
-            - tunnel-proxy
+  tunnel:
+    image: cloudflare/cloudflared:2026.10.1@sha256:a15a3b50b8dabd57ac2090e9484c0247dba9dfa1f0df4d298d4317f9d69eb2d5
+    command: tunnel --protocol http2 --url http://tunnel-proxy:8080 --allowed-mail ${TUNNEL_ALLOWED_MAIL:?set TUNNEL_ALLOWED_MAIL}
+    depends_on:
+      - tunnel-proxy

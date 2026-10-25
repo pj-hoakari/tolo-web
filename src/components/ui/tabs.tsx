@@ -51,7 +51,7 @@ const Tab = ({ className, ...props }: AriaTabProps) => (
   <AriaTab
     className={composeRenderProps(className, (className) =>
       cn(
-        "inline-flex cursor-pointer justify-center whitespace-nowrap rounded-sm px-3 py-1.5 font-medium text-sm outline-none ring-offset-background transition-all",
+        "inline-flex cursor-pointer justify-center rounded-sm px-3 py-1.5 text-sm font-medium whitespace-nowrap ring-offset-background transition-all outline-none",
         /* Focus Visible */
         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         /* Disabled */
@@ -73,7 +73,7 @@ const TabPanel = ({ className, ...props }: AriaTabPanelProps) => (
       cn(
         "mt-2 ring-offset-background",
         /* Focus Visible */
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none",
         className,
       ),
     )}

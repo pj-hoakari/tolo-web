@@ -58,7 +58,7 @@ export function StaffMessageBellView({
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-guest-notify px-1 font-bold text-secondary text-xs">
+          <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-guest-notify px-1 text-xs font-bold text-secondary">
             {unreadCount}
           </span>
         )}
@@ -71,7 +71,7 @@ export function StaffMessageBellView({
         <PopoverDialog aria-labelledby={titleId}>
           <h2
             id={titleId}
-            className="mb-3 font-medium text-primary/55 text-sm tracking-wide"
+            className="mb-3 text-sm font-medium tracking-wide text-primary/55"
           >
             {title}
           </h2>

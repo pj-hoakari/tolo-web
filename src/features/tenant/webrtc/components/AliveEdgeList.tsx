@@ -45,7 +45,7 @@ export function AliveEdgeList({
   return (
     <div className="flex w-full max-w-3xl flex-col gap-2">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-lg">
+        <h3 className="text-lg font-semibold">
           {t("title", { count: edges.length })}
         </h3>
         <Button
@@ -58,11 +58,11 @@ export function AliveEdgeList({
         </Button>
       </div>
       {status === "error" && error ? (
-        <p role="alert" className="text-destructive text-sm">
+        <p role="alert" className="text-sm text-destructive">
           {error}
         </p>
       ) : edges.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-muted-foreground">
           {loading ? t("loading") : t("empty")}
         </p>
       ) : (
@@ -79,8 +79,8 @@ export function AliveEdgeList({
                 className="flex items-center justify-between gap-4 px-4 py-3"
               >
                 <div className="flex flex-col">
-                  <span className="break-all font-medium">{name}</span>
-                  <span className="text-muted-foreground text-xs">
+                  <span className="font-medium break-all">{name}</span>
+                  <span className="text-xs text-muted-foreground">
                     {t("lastSeen", {
                       time: formatLastSeen(edge.lastHeartbeatAt),
                     })}
@@ -88,12 +88,12 @@ export function AliveEdgeList({
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">
                   {!edge.online && (
-                    <span className="rounded-full border px-2 py-0.5 text-muted-foreground text-xs">
+                    <span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
                       {t("offline")}
                     </span>
                   )}
                   {showStatus && (
-                    <span className="rounded-full border px-2 py-0.5 text-muted-foreground text-xs">
+                    <span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
                       {tStatus(receiveStatus)}
                     </span>
                   )}

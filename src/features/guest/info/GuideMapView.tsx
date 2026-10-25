@@ -167,7 +167,7 @@ export function GuideMapView({
               key={destination.id}
               id={destination.id}
               size="sm"
-              className="h-auto rounded-full border border-primary/12 selected:border-accent bg-secondary selected:bg-accent px-3 py-1 selected:font-medium selected:text-secondary text-primary/55 text-sm hover:bg-secondary hover:text-accent"
+              className="selected:border-accent selected:bg-accent selected:font-medium selected:text-secondary h-auto rounded-full border border-primary/12 bg-secondary px-3 py-1 text-sm text-primary/55 hover:bg-secondary hover:text-accent"
             >
               {destination.name}
             </Toggle>
@@ -203,7 +203,7 @@ export function GuideMapView({
             "rounded-xl border border-primary/15 bg-primary/12",
             // 拡大中は高さを伸ばし、はみ出す分は横スクロール／ドラッグで見る
             expanded &&
-              "cursor-grab select-none overflow-x-auto active:cursor-grabbing",
+              "cursor-grab overflow-x-auto select-none active:cursor-grabbing",
           )}
         >
           <svg
@@ -349,7 +349,7 @@ export function GuideMapView({
       </div>
 
       {destinations.length > 0 && selectedDestinationId === null && (
-        <p className="mt-3 text-primary/55 text-sm">{hint}</p>
+        <p className="mt-3 text-sm text-primary/55">{hint}</p>
       )}
     </InfoCard>
   );

@@ -45,7 +45,7 @@ export function ObservationPointPicker({
   return (
     <div>
       <div className="mb-1 flex items-center justify-between">
-        <p className="font-medium text-[11px] text-muted-foreground">
+        <p className="text-[11px] font-medium text-muted-foreground">
           {linkedIds.length > 0
             ? t("titleWithCount", { count: linkedIds.length })
             : t("title")}
@@ -84,7 +84,7 @@ export function ObservationPointPicker({
                 key={row.id}
                 value={row.id}
                 isDisabled={disabled}
-                className="w-full items-start rounded-md border border-border selected:border-primary selected:bg-accent px-2 py-1.5 font-normal hover:bg-accent"
+                className="selected:border-primary selected:bg-accent w-full items-start rounded-md border border-border px-2 py-1.5 font-normal hover:bg-accent"
               >
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1">
@@ -98,7 +98,7 @@ export function ObservationPointPicker({
                           : "bg-muted-foreground/40",
                       )}
                     />
-                    <span className="break-all font-mono text-[10px] text-muted-foreground">
+                    <span className="font-mono text-[10px] break-all text-muted-foreground">
                       {row.name || row.id}
                     </span>
                   </span>

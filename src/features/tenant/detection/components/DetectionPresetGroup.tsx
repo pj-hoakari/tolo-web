@@ -69,7 +69,7 @@ function DetectionPresetGroupComponent({
             id={String(index)}
             variant="outline"
             size="sm"
-            className="selected:border-primary selected:bg-primary px-3 selected:text-primary-foreground"
+            className="selected:border-primary selected:bg-primary selected:text-primary-foreground px-3"
           >
             {preset.label}
           </Toggle>

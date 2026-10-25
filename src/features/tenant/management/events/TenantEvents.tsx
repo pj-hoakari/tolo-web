@@ -25,23 +25,23 @@ export function TenantEvents({ tenantId }: Props) {
     <div className="flex w-full max-w-3xl flex-col gap-6">
       <CreateEventForm tenantId={tenantId} onCreated={list.refresh} />
       <section className="flex flex-col gap-2">
-        <h3 className="font-semibold text-lg">{t("list.heading")}</h3>
+        <h3 className="text-lg font-semibold">{t("list.heading")}</h3>
         <Checkbox isSelected={includeArchived} onChange={setIncludeArchived}>
           {t("list.showArchived")}
         </Checkbox>
         {list.status === "loading" && (
-          <p className="text-muted-foreground text-sm">{t("list.loading")}</p>
+          <p className="text-sm text-muted-foreground">{t("list.loading")}</p>
         )}
         {list.status === "error" && (
           <div role="alert" className="flex items-center gap-2">
-            <p className="text-destructive text-sm">{t("list.error")}</p>
+            <p className="text-sm text-destructive">{t("list.error")}</p>
             <Button variant="outline" size="sm" onPress={list.refresh}>
               {t("list.retry")}
             </Button>
           </div>
         )}
         {list.status === "ready" && list.events.length === 0 && (
-          <p className="text-muted-foreground text-sm">{t("list.empty")}</p>
+          <p className="text-sm text-muted-foreground">{t("list.empty")}</p>
         )}
         {list.status === "ready" && list.events.length > 0 && (
           <ul className="divide-y rounded-md border">
@@ -57,7 +57,7 @@ export function TenantEvents({ tenantId }: Props) {
                   >
                     {event.name}
                   </Link>
-                  <span className="rounded-full border px-2 py-0.5 text-muted-foreground text-xs">
+                  <span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
                     {t(`status.${event.status}`)}
                   </span>
                 </div>

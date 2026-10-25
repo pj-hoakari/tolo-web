@@ -11,7 +11,7 @@ export function ScreenWakeControl() {
 
   if (!isSupported) {
     return (
-      <p className="text-center text-muted-foreground text-sm" role="note">
+      <p className="text-center text-sm text-muted-foreground" role="note">
         {t("unsupported")}
       </p>
     );
@@ -34,7 +34,7 @@ export function ScreenWakeControl() {
         isSelected={enabled}
         onChange={handleChange}
         aria-label={t("label")}
-        className="border-2 selected:border-primary selected:bg-primary px-6 font-semibold selected:text-primary-foreground text-base shadow-sm"
+        className="selected:border-primary selected:bg-primary selected:text-primary-foreground border-2 px-6 text-base font-semibold shadow-sm"
       >
         {enabled ? (
           <MonitorCheck className="mr-2 size-5" aria-hidden="true" />
@@ -44,15 +44,15 @@ export function ScreenWakeControl() {
         {t("toggle", { state: enabled ? t("on") : t("off") })}
       </Toggle>
       {errorKey !== null ? (
-        <p className="text-destructive text-xs" role="alert">
+        <p className="text-xs text-destructive" role="alert">
           {t(errorKey)}
         </p>
       ) : (
         <p
           className={
             enabled
-              ? "text-muted-foreground text-sm"
-              : "font-medium text-destructive text-sm"
+              ? "text-sm text-muted-foreground"
+              : "text-sm font-medium text-destructive"
           }
         >
           {enabled ? t("enabledHint") : t("disabledHint")}

@@ -9,7 +9,7 @@ export default async function Onboarding() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="flex w-full items-center justify-between px-10 py-5">
-        <h1 className="font-bold text-2xl">{t("title")}</h1>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
         <div className="flex items-center gap-2">
           <LocaleSelect />
           <ThemeToggle />

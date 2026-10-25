@@ -26,7 +26,7 @@ export function NodeTypeSelector({
 
   return (
     <div>
-      <p className="mb-1 font-medium text-[11px] text-muted-foreground">
+      <p className="mb-1 text-[11px] font-medium text-muted-foreground">
         {t("type")}
       </p>
       <div className="space-y-1.5">
@@ -45,10 +45,10 @@ export function NodeTypeSelector({
               className="items-start"
             >
               <span className="flex flex-col gap-0.5">
-                <span className="font-medium text-foreground text-xs">
+                <span className="text-xs font-medium text-foreground">
                   {tFlag(option.flag)}
                 </span>
-                <span className="font-normal text-[10px] text-muted-foreground">
+                <span className="text-[10px] font-normal text-muted-foreground">
                   {tDescription(option.flag)}
                 </span>
               </span>

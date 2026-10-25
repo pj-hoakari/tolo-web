@@ -83,19 +83,19 @@ function BulkFlagField({
         className="items-start"
       >
         <span className="flex flex-col gap-0.5">
-          <span className="font-medium text-foreground text-xs">
+          <span className="text-xs font-medium text-foreground">
             {tFlag(flag)}
           </span>
-          <span className="font-normal text-[10px] text-muted-foreground">
+          <span className="text-[10px] font-normal text-muted-foreground">
             {tDescription(flag)}
           </span>
         </span>
       </Checkbox>
       {value === null ? (
-        <p className="text-muted-foreground text-xs">{t("mixed")}</p>
+        <p className="text-xs text-muted-foreground">{t("mixed")}</p>
       ) : null}
       {!availability.available ? (
-        <div id={reasonId} className="text-muted-foreground text-xs">
+        <div id={reasonId} className="text-xs text-muted-foreground">
           <BulkReasons reasons={availability.reasons} />
         </div>
       ) : null}
@@ -139,7 +139,7 @@ export function BulkProperties({
           aria-label={t("points", { count: points.length })}
           className="space-y-3 rounded-md border border-border p-3"
         >
-          <h3 className="font-semibold text-sm">
+          <h3 className="text-sm font-semibold">
             {t("points", { count: points.length })}
           </h3>
           {NODE_TYPE_FLAGS.map((flag) => (
@@ -160,11 +160,11 @@ export function BulkProperties({
           aria-label={t("edges", { count: edges.length })}
           className="space-y-3 rounded-md border border-border p-3"
         >
-          <h3 className="font-semibold text-sm">
+          <h3 className="text-sm font-semibold">
             {t("edges", { count: edges.length })}
           </h3>
           {direction === null ? (
-            <p className="text-muted-foreground text-xs">{t("mixed")}</p>
+            <p className="text-xs text-muted-foreground">{t("mixed")}</p>
           ) : null}
           <EdgeDirectionField
             value={direction}
@@ -173,7 +173,7 @@ export function BulkProperties({
             onChange={onSetSelectedEdgeDirection}
           />
           {!both.available || !oneway.available ? (
-            <div className="text-muted-foreground text-xs">
+            <div className="text-xs text-muted-foreground">
               <BulkReasons
                 reasons={[
                   ...(!both.available ? both.reasons : []),
@@ -187,7 +187,7 @@ export function BulkProperties({
             onPress={onReverseSelectedEdges}
           />
           {!reverse.available ? (
-            <div className="text-muted-foreground text-xs">
+            <div className="text-xs text-muted-foreground">
               <BulkReasons reasons={reverse.reasons} />
             </div>
           ) : null}
@@ -197,7 +197,7 @@ export function BulkProperties({
         role="status"
         aria-live="polite"
         aria-atomic="true"
-        className="space-y-1 text-muted-foreground text-xs"
+        className="space-y-1 text-xs text-muted-foreground"
       >
         {bulkResult ? (
           <>

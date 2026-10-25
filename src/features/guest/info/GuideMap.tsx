@@ -145,28 +145,28 @@ function GuideMap(_props: GuestInfoComponentProps) {
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-7 rounded-full border-primary/12 px-3 text-primary/70 text-sm hover:text-accent"
+                className="h-7 rounded-full border-primary/12 px-3 text-sm text-primary/70 hover:text-accent"
                 onPress={() => pickRoom(r.id)}
               >
                 {r.label}
               </Button>
             ))
           ) : (
-            <span className="text-primary/45 text-sm">{t("noResults")}</span>
+            <span className="text-sm text-primary/45">{t("noResults")}</span>
           )}
         </div>
       )}
 
       {selectedLabel && !q && (
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-accent px-3 py-1 font-medium text-secondary text-sm">
+          <span className="rounded-full bg-accent px-3 py-1 text-sm font-medium text-secondary">
             {selectedLabel}
           </span>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 gap-1 px-2 text-primary/55 text-xs"
+            className="h-7 gap-1 px-2 text-xs text-primary/55"
             onPress={resetRoute}
           >
             <X className="size-3.5" />

@@ -49,7 +49,7 @@ const ListBoxItem = <T extends object>({
       }
       className={composeRenderProps(className, (className) =>
         cn(
-          "relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
+          "relative flex w-full cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none",
           /* Disabled */
           "disabled:pointer-events-none disabled:opacity-50",
           /* Focused */
@@ -83,7 +83,7 @@ function ListBoxHeader({
 }: React.ComponentProps<typeof AriaHeader>) {
   return (
     <AriaHeader
-      className={cn("py-1.5 pr-2 pl-8 font-semibold text-sm", className)}
+      className={cn("py-1.5 pr-2 pl-8 text-sm font-semibold", className)}
       {...props}
     />
   );

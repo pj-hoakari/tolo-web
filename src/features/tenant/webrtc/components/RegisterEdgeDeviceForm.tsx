@@ -99,7 +99,7 @@ export function RegisterEdgeDeviceForm({ eventId, onRegistered }: Props) {
       onSubmit={handleSubmit}
       className="flex w-full max-w-3xl flex-col gap-3 rounded-md border p-4"
     >
-      <h3 className="font-semibold text-lg">{t("title")}</h3>
+      <h3 className="text-lg font-semibold">{t("title")}</h3>
       <JollyTextField
         label={t("nameLabel")}
         value={name}
@@ -124,7 +124,7 @@ export function RegisterEdgeDeviceForm({ eventId, onRegistered }: Props) {
         {t("submit")}
       </Button>
       {registration.kind === "failed" && (
-        <p role="alert" className="text-destructive text-sm">
+        <p role="alert" className="text-sm text-destructive">
           {registration.message}
         </p>
       )}
@@ -133,7 +133,7 @@ export function RegisterEdgeDeviceForm({ eventId, onRegistered }: Props) {
           <p className="text-sm">
             {t("registered", { name: registration.device.name })}
           </p>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             {t("points", {
               names: format.list(
                 registration.device.observationPoints.map((p) => p.name),

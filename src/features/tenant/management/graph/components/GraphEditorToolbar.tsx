@@ -33,8 +33,8 @@ export function GraphEditorToolbar({
   const tType = useTranslations("Graph.nodeType");
 
   return (
-    <div className="flex items-center justify-between gap-3 border-border border-b bg-card px-4 py-2">
-      <p className="shrink-0 font-semibold text-foreground text-sm">
+    <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-4 py-2">
+      <p className="shrink-0 text-sm font-semibold text-foreground">
         {t("title")}
       </p>
       <div className="flex flex-wrap items-center justify-end gap-2">
@@ -67,7 +67,7 @@ export function GraphEditorToolbar({
           <SquareDashed aria-hidden className="size-4 shrink-0" />
           {t("addGroup")}
         </Button>
-        <div className="ml-1 flex items-center gap-2 border-border border-l pl-2">
+        <div className="ml-1 flex items-center gap-2 border-l border-border pl-2">
           <LabelLocaleMenu
             labelLocale={labelLocale}
             onChangeLabelLocale={onChangeLabelLocale}
@@ -83,7 +83,7 @@ export function GraphEditorToolbar({
             <Network aria-hidden className="size-4 shrink-0" />
             {t("autoAlign")}
           </Button>
-          <span role="status" className="text-muted-foreground text-sm">
+          <span role="status" className="text-sm text-muted-foreground">
             {saveStatus === "saved" && t("saved")}
           </span>
           <Button

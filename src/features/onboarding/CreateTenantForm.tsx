@@ -29,7 +29,7 @@ export function CreateTenantForm() {
   if (state.status === "done") {
     return (
       <div className="flex flex-col items-start gap-4">
-        <h2 className="font-semibold text-xl">{t("done")}</h2>
+        <h2 className="text-xl font-semibold">{t("done")}</h2>
         <Link href={state.tenantUrl} variant="default">
           {t("openTenant")}
         </Link>
@@ -79,7 +79,7 @@ export function CreateTenantForm() {
         isDisabled={submitting}
       />
       {state.status === "editing" && state.error && (
-        <p role="alert" className="text-destructive text-sm">
+        <p role="alert" className="text-sm text-destructive">
           {state.error}
         </p>
       )}

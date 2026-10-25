@@ -76,10 +76,10 @@ export function PwaInstallView({
         >
           {({ close }) => (
             <div className="space-y-4">
-              <h2 id={titleId} className="font-semibold text-lg">
+              <h2 id={titleId} className="text-lg font-semibold">
                 {labels.title}
               </h2>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-sm text-muted-foreground">
                 {labels.description}
               </p>
               {!secure ? (
@@ -101,7 +101,7 @@ export function PwaInstallView({
                       </Button>
                     </div>
                   )}
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-sm text-muted-foreground">
                     {labels.otherIntro}
                   </p>
                   <DisclosureGroup

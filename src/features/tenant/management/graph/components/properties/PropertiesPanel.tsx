@@ -80,14 +80,14 @@ export function PropertiesPanel({
   const tNotice = useTranslations("Graph.notices");
 
   return (
-    <aside className="flex w-72 shrink-0 flex-col border-border border-l bg-card">
-      <div className="border-border border-b px-4 py-2">
-        <p className="font-semibold text-foreground text-sm">{t("title")}</p>
+    <aside className="flex w-72 shrink-0 flex-col border-l border-border bg-card">
+      <div className="border-b border-border px-4 py-2">
+        <p className="text-sm font-semibold text-foreground">{t("title")}</p>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {multiple && selectionCounts ? (
           <div className="space-y-3">
-            <div className="space-y-2 text-muted-foreground text-sm">
+            <div className="space-y-2 text-sm text-muted-foreground">
               <p>{t("selectedNodes", { count: selectionCounts.nodes })}</p>
               <p>{t("selectedEdges", { count: selectionCounts.edges })}</p>
               <p>{t("selectedGroups", { count: selectionCounts.groups })}</p>
@@ -154,11 +154,11 @@ export function PropertiesPanel({
             onReverse={() => onReverseEdge(selectedEdge.id)}
           />
         ) : (
-          <p className="text-muted-foreground text-xs">{t("empty")}</p>
+          <p className="text-xs text-muted-foreground">{t("empty")}</p>
         )}
       </div>
       {multiple ? (
-        <div className="space-y-2 border-border border-t p-3">
+        <div className="space-y-2 border-t border-border p-3">
           <Button
             key="group"
             size="sm"
@@ -173,7 +173,7 @@ export function PropertiesPanel({
             {t("groupSelected")}
           </Button>
           {groupSelectionError !== null ? (
-            <p id={groupReasonId} className="text-muted-foreground text-xs">
+            <p id={groupReasonId} className="text-xs text-muted-foreground">
               {t(`groupSelectionErrors.${groupSelectionError}`)}
             </p>
           ) : null}
@@ -188,13 +188,13 @@ export function PropertiesPanel({
             {t("deleteSelected")}
           </Button>
           {selectionCounts && selectionCounts.groups > 0 ? (
-            <p className="text-muted-foreground text-xs">
+            <p className="text-xs text-muted-foreground">
               {t("deleteSelectedGroupHint")}
             </p>
           ) : null}
         </div>
       ) : deletable ? (
-        <div className="border-border border-t p-3">
+        <div className="border-t border-border p-3">
           <Button
             key="delete"
             variant="destructive"

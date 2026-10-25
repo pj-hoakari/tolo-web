@@ -89,7 +89,7 @@ function DetectionLineCreationModeToggleComponent({
       <Toggle
         id="create"
         size="sm"
-        className="flex-1 gap-2 whitespace-nowrap selected:bg-primary px-3 selected:text-primary-foreground selected:shadow-sm"
+        className="selected:bg-primary selected:text-primary-foreground selected:shadow-sm flex-1 gap-2 px-3 whitespace-nowrap"
       >
         <Plus aria-hidden="true" className="size-4" />
         {t("create")}
@@ -97,7 +97,7 @@ function DetectionLineCreationModeToggleComponent({
       <Toggle
         id="edit"
         size="sm"
-        className="flex-1 gap-2 whitespace-nowrap selected:bg-primary px-3 selected:text-primary-foreground selected:shadow-sm"
+        className="selected:bg-primary selected:text-primary-foreground selected:shadow-sm flex-1 gap-2 px-3 whitespace-nowrap"
       >
         <Pencil aria-hidden="true" className="size-4" />
         {t("edit")}

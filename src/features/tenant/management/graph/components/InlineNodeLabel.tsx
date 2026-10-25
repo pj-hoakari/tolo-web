@@ -131,7 +131,7 @@ export function InlineNodeLabel({
         >
           <span
             aria-hidden
-            className="invisible col-start-1 row-start-1 whitespace-pre text-left font-semibold text-sm"
+            className="invisible col-start-1 row-start-1 text-left text-sm font-semibold whitespace-pre"
           >
             {draftLabel || " "}
           </span>
@@ -146,7 +146,7 @@ export function InlineNodeLabel({
               autoFocus
               // w-0 + min-w-full: 入力欄の既定の固有幅（20 文字分）をグリッドの
               // 幅計算から外し、幅をミラーだけで決めさせたうえでセルいっぱいに広げる
-              className="nodrag nowheel col-start-1 row-start-1 h-auto w-0 min-w-full rounded-none border-none bg-transparent p-0 text-left font-semibold text-sm focus:ring-0 focus:ring-offset-0"
+              className="nodrag nowheel col-start-1 row-start-1 h-auto w-0 min-w-full rounded-none border-none bg-transparent p-0 text-left text-sm font-semibold focus:ring-0 focus:ring-offset-0"
               onBlur={() => finishEditing(true)}
               onKeyDown={handleKeyDown}
               onPointerDown={stopPointerDown}
@@ -163,7 +163,7 @@ export function InlineNodeLabel({
         aria-label={t("editLabel", { label })}
         variant="ghost"
         isDisabled={isEditing}
-        className={`nodrag nowheel h-auto min-h-0 w-fit max-w-full whitespace-normal rounded-sm px-0 py-0 text-left text-sm ${boxClass} ${boxInteractiveClass} ${labelClass}`}
+        className={`nodrag nowheel h-auto min-h-0 w-fit max-w-full rounded-sm px-0 py-0 text-left text-sm whitespace-normal ${boxClass} ${boxInteractiveClass} ${labelClass}`}
         onPointerDown={(event) => event.stopPropagation()}
         onPress={startEditing}
       >
@@ -178,7 +178,7 @@ export function InlineNodeLabel({
           <Input
             aria-label={fieldAriaLabel}
             autoFocus
-            className="nodrag nowheel h-8 w-full border-none bg-popover px-2 text-left font-semibold text-sm"
+            className="nodrag nowheel h-8 w-full border-none bg-popover px-2 text-left text-sm font-semibold"
             onBlur={() => finishEditing(true)}
             onKeyDown={handleKeyDown}
             onPointerDown={stopPointerDown}
