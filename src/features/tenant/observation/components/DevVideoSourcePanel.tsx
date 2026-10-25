@@ -38,7 +38,7 @@ function DevVideoSourcePanelComponent({
 
   const isActive = status === "loading" || status === "detecting";
 
-  const useCamera = () => {
+  const handleCameraSelect = () => {
     setMode("camera");
     setFile(null);
     onSourceChange(createCameraVideoSource);
@@ -97,7 +97,7 @@ function DevVideoSourcePanelComponent({
               type="button"
               variant="link"
               size="sm"
-              onPress={useCamera}
+              onPress={handleCameraSelect}
               isDisabled={isActive || mode === "camera"}
               className="h-auto p-0"
             >
