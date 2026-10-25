@@ -1,5 +1,5 @@
 import { toGuestGuideMapGraph } from "@/features/guest/info/guideMapGraph";
-import type { GuideMapLayout } from "@/features/guest/info/guideMapLayout";
+import type { LocalizedGuideMapLayout } from "@/features/guest/info/guideMapLayout";
 import type { GraphData } from "@/features/tenant/management/graph/type";
 import type {
   GuestCrowdSnapshot,
@@ -56,7 +56,7 @@ export const sampleQrLocations = new Map<string, SampleGraphAnchor>([
 ]);
 
 export function sampleGuideMap(qrLocationId?: string): GuestGuideMap {
-  const layout = guideMapLayout as unknown as GuideMapLayout;
+  const layout = guideMapLayout as unknown as LocalizedGuideMapLayout;
   const anchor = qrLocationId ? sampleQrLocations.get(qrLocationId) : undefined;
   const currentPointId =
     anchor &&

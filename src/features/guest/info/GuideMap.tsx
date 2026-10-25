@@ -24,6 +24,7 @@ import {
   contentBounds,
   crowdByObject,
   isDestination,
+  localizeGuideMapLayout,
   type MapObject,
   type PlaceObject,
 } from "./guideMapLayout";
@@ -73,7 +74,7 @@ function GuideMap({ eventId, qrLocationId }: GuestInfoComponentProps) {
 
 function GuideMapContent({
   eventId,
-  guideMap: { graph, layout: doc, currentPointId },
+  guideMap: { graph, layout, currentPointId },
 }: {
   eventId: string;
   guideMap: GuestGuideMap;
@@ -81,6 +82,15 @@ function GuideMapContent({
   const t = useTranslations("Guest.guideMap");
   const tCongestion = useTranslations("Guest.congestion");
   const locale = useLocale();
+  const doc = useMemo(
+    () =>
+      localizeGuideMapLayout(
+        layout,
+        new Map(graph.points.map((p) => [p.pointId, p.labels])),
+        locale,
+      ),
+    [layout, graph, locale],
+  );
 
   const floorIndex = new Map(doc.groups.map((g, i) => [g.groupId, i]));
   const labelsByGroupId = new Map(
@@ -88,9 +98,6 @@ function GuideMapContent({
   );
   const floorNameOf = (id: string) =>
     resolveLabel(labelsByGroupId.get(id) ?? {}, locale).text;
-  const labelsByPointId = new Map(
-    graph.points.map((p) => [p.pointId, p.labels]),
-  );
 
   /**
    * 現在地とみなす場所。
@@ -168,10 +175,7 @@ function GuideMapContent({
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // 表示名（グラフのポイントのラベルを表示言語で解決し、無ければレイアウトの名前を使う）
-  const nameOf = (o: MapObject) => {
-    const labels = o.pointId && labelsByPointId.get(o.pointId);
-    return (labels && resolveLabel(labels, locale).text) || (o.title ?? "");
-  };
+  const nameOf = (o: MapObject) => o.title ?? "";
 
   // 現在地そのものは目的地の候補に出さない
   const destinations = doc.objects.filter(

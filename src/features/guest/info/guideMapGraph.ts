@@ -4,7 +4,7 @@ import {
   isPointNode,
   type LocalizedLabel,
 } from "@/features/tenant/management/graph/type";
-import type { GuideMapLayout } from "./guideMapLayout";
+import type { LocalizedGuideMapLayout } from "./guideMapLayout";
 
 export type GuestGuideMapPoint = { pointId: string; labels: LocalizedLabel };
 
@@ -17,7 +17,7 @@ export type GuestGuideMapGraph = {
 
 export function toGuestGuideMapGraph(
   graph: GraphData,
-  layout: Pick<GuideMapLayout, "groups" | "objects">,
+  layout: Pick<LocalizedGuideMapLayout, "groups" | "objects">,
 ): GuestGuideMapGraph {
   const pointIds = new Set(layout.objects.map((o) => o.pointId));
   const groupIds = new Set(layout.groups.map((g) => g.groupId));

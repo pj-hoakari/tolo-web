@@ -230,8 +230,8 @@ importers:
         specifier: 0.2.0-rc
         version: 0.2.0-rc(@connectrpc/connect@2.2.0(@bufbuild/protobuf@2.16.0))
       '@pj-hoakari/tolo-guest-client-es':
-        specifier: 0.1.0-rc
-        version: 0.1.0-rc(@connectrpc/connect@2.2.0(@bufbuild/protobuf@2.16.0))
+        specifier: 0.2.0-rc
+        version: 0.2.0-rc(@connectrpc/connect@2.2.0(@bufbuild/protobuf@2.16.0))
       '@pj-hoakari/tolo-observation-client-es':
         specifier: 0.3.0-rc
         version: 0.3.0-rc(@connectrpc/connect@2.2.0(@bufbuild/protobuf@2.16.0))
@@ -1856,8 +1856,8 @@ packages:
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
-  '@pj-hoakari/tolo-guest-client-es@0.1.0-rc':
-    resolution: {integrity: sha512-10H/MiSwubzJiC8f6P2PsYkcVvmrR5mqeU/v8WOVNQwJPO4C9Hb8MtH8immh8rtSTSKmArZMfv2yRgXItj3mUQ==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-guest-client-es/0.1.0-rc/3b648752899617e1f57cf99d31eadea386cb37ad}
+  '@pj-hoakari/tolo-guest-client-es@0.2.0-rc':
+    resolution: {integrity: sha512-W3FteA6xJEX00PxAw2ZRNcVK4yogLuYJ0PtX1CzRxBTai33WtXc1NFF40Zn3SKQDxmpbvegoYSYqMrKLdvjy2Q==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-guest-client-es/0.2.0-rc/c89a1b44a82d2cc3d1b89ee4d3e5170b5e4bacb2}
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
@@ -7055,7 +7055,7 @@ snapshots:
       '@bufbuild/protobuf': 2.16.0
       '@connectrpc/connect': 2.2.0(@bufbuild/protobuf@2.16.0)
 
-  '@pj-hoakari/tolo-guest-client-es@0.1.0-rc(@connectrpc/connect@2.2.0(@bufbuild/protobuf@2.16.0))':
+  '@pj-hoakari/tolo-guest-client-es@0.2.0-rc(@connectrpc/connect@2.2.0(@bufbuild/protobuf@2.16.0))':
     dependencies:
       '@bufbuild/protobuf': 2.16.0
       '@connectrpc/connect': 2.2.0(@bufbuild/protobuf@2.16.0)

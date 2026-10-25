@@ -30,7 +30,7 @@ import {
   graphDataSchema,
 } from "@/features/graph/graphDataSchema";
 import type { GuestGuideMapGraph } from "@/features/guest/info/guideMapGraph";
-import type { GuideMapLayout } from "@/features/guest/info/guideMapLayout";
+import type { LocalizedGuideMapLayout } from "@/features/guest/info/guideMapLayout";
 import type { GuestPageComponent } from "@/features/guest/pageComponents";
 import type {
   EventStatus,
@@ -41,10 +41,10 @@ import {
   registeredEdgeDeviceWire,
   sampleEdgeDevicesWire,
 } from "@/mocks/fixtures/edges";
-import { sampleGuideMap } from "@/mocks/fixtures/guest";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
 import { guestPageClient } from "./guest";
+import { fromGuideMapResponse } from "./guideMap";
 import { issueRegistrationToken } from "./idp";
 import {
   consoleEdgeDeviceClient,
@@ -186,7 +186,7 @@ export interface GuestQueue {
 
 export interface GuestGuideMap {
   graph: GuestGuideMapGraph;
-  layout: GuideMapLayout;
+  layout: LocalizedGuideMapLayout;
   currentPointId?: string;
 }
 
@@ -428,10 +428,18 @@ export const router = {
           qrLocationId: z.string().optional(),
         }),
       )
-      .handler(
-        async ({ input }): Promise<GuestGuideMap> =>
-          sampleGuideMap(input.qrLocationId),
-      ),
+      .handler(async ({ input }): Promise<GuestGuideMap> => {
+        try {
+          return fromGuideMapResponse(
+            await guestPageClient.getGuideMap({
+              eventId: input.eventId,
+              qrLocationId: input.qrLocationId ?? "",
+            }),
+          );
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
     getQueues: os
       .input(guestContentInput)
       .handler(async ({ input }): Promise<{ queues: GuestQueue[] }> => {

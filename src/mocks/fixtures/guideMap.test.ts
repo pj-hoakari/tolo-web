@@ -3,6 +3,7 @@ import { graphDataSchema } from "@/features/graph/graphDataSchema";
 import {
   isConnector,
   isDestination,
+  localizeGuideMapLayout,
 } from "@/features/guest/info/guideMapLayout";
 import {
   isGroupNode,
@@ -81,9 +82,11 @@ describe("案内マップのフィクスチャ（KCG本館）", () => {
   });
 
   it("目的地と階移動手段はすべてグラフのポイントに結び付いている", () => {
-    for (const o of layout.objects.filter(
-      (o) => isDestination(o) || isConnector(o),
-    ))
+    for (const o of localizeGuideMapLayout(
+      layout,
+      new Map(),
+      "ja",
+    ).objects.filter((o) => isDestination(o) || isConnector(o)))
       expect(o.pointId, o.title).toBeDefined();
   });
 

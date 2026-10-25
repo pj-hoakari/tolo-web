@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { GraphData } from "@/features/tenant/management/graph/type";
 import { toGuestGuideMapGraph } from "./guideMapGraph";
-import type { GuideMapLayout } from "./guideMapLayout";
+import type { LocalizedGuideMapLayout } from "./guideMapLayout";
 
 const graph: GraphData = {
   nodes: [
@@ -68,7 +68,7 @@ const graph: GraphData = {
   ],
 };
 
-const layout: Pick<GuideMapLayout, "groups" | "objects"> = {
+const layout: Pick<LocalizedGuideMapLayout, "groups" | "objects"> = {
   groups: [{ groupId: "g_1f000001" }],
   objects: [
     {
