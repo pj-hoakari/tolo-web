@@ -1,5 +1,5 @@
 /**
- * 会場マップの 1 フロア内の経路探索（guide-map-poc の lib/venue-route.ts と同じ挙動）。
+ * 案内マップの 1 フロア内の経路探索（guide-map-poc の lib/venue-route.ts と同じ挙動）。
  * - 四角・丸（部屋・区画）と、階段・エレベーターのマークは「壁」、そのすき間が「歩ける道」
  * - 壁を避けて、縦横だけの直角な線で出発→目的地をつなぐ（曲がる回数はできるだけ少なく）
  * - 通路の中央寄りを通るよう、壁に近い所ほど通りにくくする
@@ -18,7 +18,7 @@ import {
   markBoxOf,
   type Pt,
   pointInPolygon,
-} from "./venueMapDoc";
+} from "./guideMapLayout";
 
 /** 探索グリッドの刻み（px） */
 const CELL = 16;

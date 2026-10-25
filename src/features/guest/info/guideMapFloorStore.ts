@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 
 /**
  * 案内マップが表示しているフロアを、ゲストページ内の他のカード（現在のフロア）と共有する。
- * 案内マップが会場マップを読み込んだらフロア一覧を登録し、表示フロアが変わるたびに更新する。
+ * 案内マップがレイアウトを読み込んだらフロア一覧を登録し、表示フロアが変わるたびに更新する。
  */
 
 export type GuideMapFloorOption = { id: string; name: string };

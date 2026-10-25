@@ -13,11 +13,11 @@ import {
   type CrowdLevel,
   type CrowdMap,
   floorSize,
+  type GuideMapLayout,
   isConnector,
   type Pt,
-  type VenueMapDoc,
-} from "./venueMapDoc";
-import { computeRoute } from "./venueRoute";
+} from "./guideMapLayout";
+import { computeRoute } from "./guideMapRoute";
 
 /** 階移動の手間（px 換算）。base＝乗るまで、perFloor＝1 階分あたり */
 const TRANSFER_COST: Record<ConnectorType, { base: number; perFloor: number }> =
@@ -78,7 +78,7 @@ const pathLength = (pts: Pt[]) =>
 
 /** 出発（startId）→目的地（goalId）の経路。階が違えば階移動ポイントを経由する。混雑を渡せば混雑回避ルート */
 export function computeFloorRoute(
-  doc: Pick<VenueMapDoc, "floors" | "objects">,
+  doc: Pick<GuideMapLayout, "floors" | "objects">,
   startId: string,
   goalId: string,
   opts: FloorRouteOptions = {},
@@ -92,7 +92,7 @@ export function computeFloorRoute(
 }
 
 function routeOnce(
-  doc: Pick<VenueMapDoc, "floors" | "objects">,
+  doc: Pick<GuideMapLayout, "floors" | "objects">,
   startId: string,
   goalId: string,
   opts: FloorRouteOptions,
