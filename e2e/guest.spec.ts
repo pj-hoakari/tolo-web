@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
+import { GUEST_REFRESH_INTERVAL_MS } from "@/features/guest/useGuestPolling";
 import type { MockRouterOverrides } from "@/mocks/router";
 
 const search = (page: Page) =>
@@ -381,6 +382,24 @@ test("言語を English に切り替えると英語で表示され再読み込�
   await page.reload();
   await expect(page.getByText("Guest Page")).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
+});
+
+test("案内マップはページを開いたときに 1 回だけ取得し、混雑状況が更新されても取り直さない", async ({
+  page,
+}) => {
+  await page.clock.install();
+  const requests: string[] = [];
+  page.on("request", (request) => requests.push(request.url()));
+  const count = (procedure: string) =>
+    requests.filter((url) => url.includes(`/rpc/guest/${procedure}`)).length;
+  await openGuestPage(page, "/event/test/guest");
+  await expect(search(page)).toBeVisible();
+  const crowdBefore = count("getCrowd");
+
+  await page.clock.runFor(GUEST_REFRESH_INTERVAL_MS * 2 + 1_000);
+
+  await expect.poll(() => count("getCrowd")).toBeGreaterThan(crowdBefore);
+  expect(count("getGuideMap")).toBe(1);
 });
 
 test("案内マップを取得できないと案内マップのカードに情報を取得できなかったことが表示される", async ({

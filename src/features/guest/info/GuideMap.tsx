@@ -9,7 +9,7 @@ import { resolveLabel } from "@/features/tenant/management/graph/utils/labels";
 import { orpc } from "@/lib/orpc";
 import { cn } from "@/lib/utils";
 import type { GuestGuideMap } from "@/server/router";
-import { useGuestPolling } from "../useGuestPolling";
+import { type GuestPolling, useGuestPolling } from "../useGuestPolling";
 import { type GuideMapMarker, GuideMapView } from "./GuideMapView";
 import { computeFloorRoute, type FloorRouteResult } from "./guideMapFloorRoute";
 import {
@@ -43,9 +43,23 @@ const routeKey = (route: FloorRouteResult | null) =>
 
 function GuideMap({ eventId }: GuestInfoComponentProps) {
   const t = useTranslations("Guest");
-  const guideMap = useGuestPolling(
-    useCallback(() => orpc.guest.getGuideMap({ eventId }), [eventId]),
-  );
+  const [guideMap, setGuideMap] = useState<GuestPolling<GuestGuideMap>>({
+    status: "loading",
+  });
+  useEffect(() => {
+    let active = true;
+    orpc.guest.getGuideMap({ eventId }).then(
+      (data) => {
+        if (active) setGuideMap({ status: "ready", data });
+      },
+      () => {
+        if (active) setGuideMap({ status: "error" });
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [eventId]);
   if (guideMap.status !== "ready")
     return (
       <InfoCard title={t("guideMap.title")}>
@@ -129,13 +143,13 @@ function GuideMapContent({
 
   // 現在のフロア（別カード）と表示フロアを共有する
   const { activeFloorId: sharedFloorId } = useGuideMapFloor();
-  const floorOptions = doc.floors.map((f) => ({ id: f.id, name: f.name }));
-  const floorsKey = JSON.stringify(floorOptions);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: フロア構成（floorsKey）が変わったときだけ登録し直す
   useEffect(() => {
-    setGuideMapFloors(floorOptions, startFloor);
+    setGuideMapFloors(
+      doc.floors.map((f) => ({ id: f.id, name: f.name })),
+      startFloor,
+    );
     return () => clearGuideMapFloors();
-  }, [floorsKey, startFloor]);
+  }, [doc, startFloor]);
   const activeFloorId = sharedFloorId ?? startFloor;
 
   // 目的地検索の入力と、検索/一覧から選んだ目的地
