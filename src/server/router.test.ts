@@ -10,6 +10,7 @@ import {
 import {
   CrowdLevel,
   GetCrowdResponseSchema,
+  GetGuideMapResponseSchema,
   GetQueuesResponseSchema,
   GuestComponent,
   ListGuestMessagesResponseSchema,
@@ -26,7 +27,6 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
 import { sampleEdgeDevicesWire } from "@/mocks/fixtures/edges";
-import { sampleGuideMap } from "@/mocks/fixtures/guest";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { guestPageClient } from "./guest";
 import { issueRegistrationToken } from "./idp";
@@ -315,34 +315,53 @@ describe("guest", () => {
     expect(getCrowd).toHaveBeenCalledWith({ eventId, language: "en" });
   });
 
-  it("returns the sample guide map as a guest graph and a layout without reaching the guest service", async () => {
-    const guestCalls = (
-      Object.keys(guestPageClient) as (keyof typeof guestPageClient)[]
-    ).map((method) => vi.spyOn(guestPageClient, method));
+  it("asks the guest service for the guide map of the QR location and returns it as the layout of the guest page", async () => {
+    const getGuideMap = vi
+      .spyOn(guestPageClient, "getGuideMap")
+      .mockResolvedValue(
+        create(GetGuideMapResponseSchema, {
+          graph: {
+            points: [{ pointId: "n_6f8f9cc6", labels: { ja: "ラウンジ" } }],
+            groups: [{ groupId: "g_c6f20eff", labels: { ja: "4F" } }],
+          },
+          layout: { groups: [{ groupId: "g_c6f20eff" }] },
+          currentPointId: "n_6f8f9cc6",
+        }),
+      );
 
-    const guideMap = await call(router.guest.getGuideMap, { eventId });
-
-    expect(guideMap).toEqual(sampleGuideMap());
-    expect(guideMap.graph.points).toContainEqual({
-      pointId: "n_fc14f2f4",
-      labels: { ja: "エレベーター", en: "Elevator" },
+    await expect(
+      call(router.guest.getGuideMap, {
+        eventId,
+        qrLocationId: "a84d0e6c2b9f1735",
+      }),
+    ).resolves.toEqual({
+      graph: {
+        points: [{ pointId: "n_6f8f9cc6", labels: { ja: "ラウンジ" } }],
+        groups: [{ groupId: "g_c6f20eff", labels: { ja: "4F" } }],
+      },
+      layout: {
+        version: 1,
+        groups: [{ groupId: "g_c6f20eff" }],
+        objects: [],
+        north: 0,
+        scale: 0,
+      },
+      currentPointId: "n_6f8f9cc6",
     });
-    expect(
-      guideMap.layout.groups.map(
-        ({ groupId }) =>
-          guideMap.graph.groups.find((g) => g.groupId === groupId)?.labels.ja,
-      ),
-    ).toEqual(["1F", "2F", "3F", "4F", "5F", "6Fホール"]);
-    for (const spy of guestCalls) expect(spy).not.toHaveBeenCalled();
-  });
-
-  it("returns the current point of the QR location with the sample guide map", async () => {
-    const guideMap = await call(router.guest.getGuideMap, {
+    expect(getGuideMap).toHaveBeenCalledWith({
       eventId,
       qrLocationId: "a84d0e6c2b9f1735",
     });
+  });
 
-    expect(guideMap.currentPointId).toBe("n_6f8f9cc6");
+  it("passes an event without a guide map to the browser as not found", async () => {
+    vi.spyOn(guestPageClient, "getGuideMap").mockRejectedValue(
+      new ConnectError("guide map not found", Code.NotFound),
+    );
+
+    await expect(
+      call(router.guest.getGuideMap, { eventId }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
   it("returns the queues with their gates and without the turnaround count", async () => {

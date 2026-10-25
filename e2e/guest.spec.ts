@@ -425,6 +425,17 @@ test("言語を English に切り替えると目的地の名前がグラフの�
   await expect(page.getByRole("button", { name: /職員室/ })).toHaveCount(0);
 });
 
+test("言語を English に切り替えると地図の上の場所の名前もグラフのポイントの英語のラベルで出る", async ({
+  page,
+}) => {
+  await localeButton(page).click();
+  await page.getByRole("menuitemradio", { name: "English" }).click();
+
+  const map = page.getByRole("img", { name: "Guide map" });
+  await expect(map.getByText("Stairs")).toHaveCount(2);
+  await expect(map.getByText("階段")).toHaveCount(0);
+});
+
 test("言語を English に切り替えると現在のフロアの階の名前がグラフのグループの英語のラベルで出る", async ({
   page,
 }) => {

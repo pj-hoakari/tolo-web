@@ -31,7 +31,9 @@
       "x": 1040,
       "y": 60,
       "size": 22,
-      "title": "KCG本館１F"
+      "title": {
+        "ja": "KCG本館１F"
+      }
     },
     {
       "id": "c-b1279099-a43a-4f28-8390-6dbbbbcafbd9",
@@ -43,7 +45,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-d78ab481-e2f5-45a8-a01d-01e631c901cd",
       "direction": "both",
@@ -60,7 +64,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-9e0c7c01-e497-488f-bfe6-4d26a1aac6b8",
       "direction": "both",
@@ -77,7 +83,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-d40046bb-8d67-49aa-9c40-629593d2e34e",
       "direction": "both",
@@ -92,7 +100,9 @@
       "x": 1040,
       "y": 60,
       "size": 22,
-      "title": "KCG本館２F"
+      "title": {
+        "ja": "KCG本館２F"
+      }
     },
     {
       "id": "c-80970a7e-c0af-4a1e-b268-5ebf81d37f57",
@@ -104,7 +114,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-d78ab481-e2f5-45a8-a01d-01e631c901cd",
       "direction": "both",
@@ -121,7 +133,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-9e0c7c01-e497-488f-bfe6-4d26a1aac6b8",
       "direction": "both",
@@ -138,7 +152,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-d40046bb-8d67-49aa-9c40-629593d2e34e",
       "direction": "both",
@@ -155,7 +171,9 @@
       "shape": "rect",
       "w": 660,
       "h": 134,
-      "title": "204",
+      "title": {
+        "ja": "204"
+      },
       "pin": true,
       "pointId": "n_140c0d44"
     },
@@ -169,7 +187,9 @@
       "shape": "rect",
       "w": 680,
       "h": 160,
-      "title": "職員室",
+      "title": {
+        "ja": "職員室"
+      },
       "pin": true,
       "pointId": "n_c4db2e1b"
     },
@@ -183,7 +203,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "階段",
+      "title": {
+        "ja": "階段"
+      },
       "connector": "stairs",
       "link": "l-32c7e460-ccd3-4326-88b2-11c513222fd0",
       "direction": "both",
@@ -202,7 +224,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "階段",
+      "title": {
+        "ja": "階段"
+      },
       "connector": "stairs",
       "link": "l-32c7e460-ccd3-4326-88b2-11c513222fd0",
       "direction": "both",
@@ -219,7 +243,9 @@
       "x": 1040,
       "y": 60,
       "size": 22,
-      "title": "KCG本館３F"
+      "title": {
+        "ja": "KCG本館３F"
+      }
     },
     {
       "id": "a-45366d65-72cb-41be-b11a-38f9f957abaa",
@@ -244,7 +270,9 @@
           "y": 580
         }
       ],
-      "title": "本館"
+      "title": {
+        "ja": "本館"
+      }
     },
     {
       "id": "c-2abeb175-ebfe-438d-b258-9383db080d25",
@@ -256,7 +284,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-d78ab481-e2f5-45a8-a01d-01e631c901cd",
       "direction": "both",
@@ -273,7 +303,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-9e0c7c01-e497-488f-bfe6-4d26a1aac6b8",
       "direction": "both",
@@ -290,7 +322,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-d40046bb-8d67-49aa-9c40-629593d2e34e",
       "direction": "both",
@@ -307,7 +341,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "階段",
+      "title": {
+        "ja": "階段"
+      },
       "connector": "stairs",
       "link": "l-32c7e460-ccd3-4326-88b2-11c513222fd0",
       "direction": "both",
@@ -326,7 +362,9 @@
       "shape": "rect",
       "w": 101.15625,
       "h": 160,
-      "title": "男子トイレ",
+      "title": {
+        "ja": "男子トイレ"
+      },
       "pin": true,
       "pointId": "n_d731631f"
     },
@@ -340,7 +378,9 @@
       "shape": "rect",
       "w": 120,
       "h": 160,
-      "title": "教室",
+      "title": {
+        "ja": "教室"
+      },
       "pin": true,
       "pointId": "n_5d4632e6"
     },
@@ -354,7 +394,9 @@
       "shape": "rect",
       "w": 100,
       "h": 160,
-      "title": "女子トイレ",
+      "title": {
+        "ja": "女子トイレ"
+      },
       "pin": true,
       "pointId": "n_163538fe"
     },
@@ -368,7 +410,9 @@
       "shape": "rect",
       "w": 195.390625,
       "h": 180,
-      "title": "302",
+      "title": {
+        "ja": "302"
+      },
       "pin": true,
       "pointId": "n_8de0c98e"
     },
@@ -382,7 +426,9 @@
       "shape": "rect",
       "w": 346.5429687499999,
       "h": 180,
-      "title": "３０６",
+      "title": {
+        "ja": "３０６"
+      },
       "pin": true,
       "pointId": "n_f5331da5"
     },
@@ -396,7 +442,9 @@
       "shape": "rect",
       "w": 333.23828125,
       "h": 180,
-      "title": "３０８",
+      "title": {
+        "ja": "３０８"
+      },
       "pin": true,
       "pointId": "n_2d83951d"
     },
@@ -410,7 +458,9 @@
       "shape": "rect",
       "w": 245.74609375,
       "h": 160,
-      "title": "３０３",
+      "title": {
+        "ja": "３０３"
+      },
       "pin": true,
       "pointId": "n_f9954d5e"
     },
@@ -424,7 +474,9 @@
       "shape": "rect",
       "w": 158.2734375,
       "h": 160,
-      "title": "３０９",
+      "title": {
+        "ja": "３０９"
+      },
       "pin": true,
       "pointId": "n_b017642b"
     },
@@ -451,7 +503,9 @@
           "y": 580
         }
       ],
-      "title": "本館"
+      "title": {
+        "ja": "本館"
+      }
     },
     {
       "id": "a-78b51219-3594-4497-930b-d0d8f0e9fdf0",
@@ -476,7 +530,9 @@
           "y": 580
         }
       ],
-      "title": "本館"
+      "title": {
+        "ja": "本館"
+      }
     },
     {
       "id": "p-d05e11a5-2c15-495e-b5ef-5ecde65753e0",
@@ -488,7 +544,9 @@
       "shape": "rect",
       "w": 214.71875,
       "h": 160,
-      "title": "男子・女子トイレ",
+      "title": {
+        "ja": "男子・女子トイレ"
+      },
       "pin": true,
       "pointId": "n_f718bc8f"
     },
@@ -500,7 +558,9 @@
       "x": 1040,
       "y": 60,
       "size": 22,
-      "title": "KCG本館４F"
+      "title": {
+        "ja": "KCG本館４F"
+      }
     },
     {
       "id": "a-e2d80ab4-428d-498a-951a-a46e8f39fd40",
@@ -525,7 +585,9 @@
           "y": 580
         }
       ],
-      "title": "本館"
+      "title": {
+        "ja": "本館"
+      }
     },
     {
       "id": "c-0dcf414d-4249-4d3a-834a-56eca04efb81",
@@ -537,7 +599,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-d78ab481-e2f5-45a8-a01d-01e631c901cd",
       "direction": "both",
@@ -554,7 +618,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-9e0c7c01-e497-488f-bfe6-4d26a1aac6b8",
       "direction": "both",
@@ -571,7 +637,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-d40046bb-8d67-49aa-9c40-629593d2e34e",
       "direction": "both",
@@ -588,7 +656,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "階段",
+      "title": {
+        "ja": "階段"
+      },
       "connector": "stairs",
       "link": "l-32c7e460-ccd3-4326-88b2-11c513222fd0",
       "direction": "both",
@@ -607,7 +677,9 @@
       "shape": "rect",
       "w": 85.1875,
       "h": 160,
-      "title": "男子トイレ",
+      "title": {
+        "ja": "男子トイレ"
+      },
       "pin": true,
       "pointId": "n_fbaca13a"
     },
@@ -621,7 +693,9 @@
       "shape": "rect",
       "w": 120,
       "h": 160,
-      "title": "ラウンジ",
+      "title": {
+        "ja": "ラウンジ"
+      },
       "pin": true,
       "pointId": "n_6f8f9cc6"
     },
@@ -635,7 +709,9 @@
       "shape": "rect",
       "w": 100,
       "h": 160,
-      "title": "女子トイレ",
+      "title": {
+        "ja": "女子トイレ"
+      },
       "pin": true,
       "pointId": "n_8940056b"
     },
@@ -649,7 +725,9 @@
       "shape": "rect",
       "w": 195.390625,
       "h": 180,
-      "title": "ラウンジ",
+      "title": {
+        "ja": "ラウンジ"
+      },
       "pin": true,
       "pointId": "n_9e533cff"
     },
@@ -663,7 +741,9 @@
       "shape": "rect",
       "w": 158.2734375,
       "h": 179.99999999999997,
-      "title": "４０５",
+      "title": {
+        "ja": "４０５"
+      },
       "pin": true,
       "pointId": "n_ab649c4c"
     },
@@ -677,7 +757,9 @@
       "shape": "rect",
       "w": 158.2734375,
       "h": 180,
-      "title": "４０４",
+      "title": {
+        "ja": "４０４"
+      },
       "pin": true,
       "pointId": "n_6e4efc42"
     },
@@ -691,7 +773,9 @@
       "shape": "rect",
       "w": 158.2734375,
       "h": 180,
-      "title": "４０３",
+      "title": {
+        "ja": "４０３"
+      },
       "pin": true,
       "pointId": "n_a303869f"
     },
@@ -705,7 +789,9 @@
       "shape": "rect",
       "w": 173.271484375,
       "h": 180,
-      "title": "４０２",
+      "title": {
+        "ja": "４０２"
+      },
       "pin": true,
       "pointId": "n_68cb9111"
     },
@@ -719,7 +805,9 @@
       "shape": "rect",
       "w": 158.2734375,
       "h": 160,
-      "title": "４０８",
+      "title": {
+        "ja": "４０８"
+      },
       "pin": true,
       "pointId": "n_88246a63"
     },
@@ -733,7 +821,9 @@
       "shape": "rect",
       "w": 239.1171875,
       "h": 160,
-      "title": "４０７",
+      "title": {
+        "ja": "４０７"
+      },
       "pin": true,
       "pointId": "n_f64255d6"
     },
@@ -747,7 +837,9 @@
       "shape": "rect",
       "w": 158.2734375,
       "h": 160,
-      "title": "４０１",
+      "title": {
+        "ja": "４０１"
+      },
       "pin": true,
       "pointId": "n_c0db542e"
     },
@@ -761,7 +853,9 @@
       "shape": "rect",
       "w": 144.23828125,
       "h": 160,
-      "title": "職員室",
+      "title": {
+        "ja": "職員室"
+      },
       "pin": true,
       "pointId": "n_ab3f0346"
     },
@@ -773,7 +867,9 @@
       "x": 1040,
       "y": 60,
       "size": 22,
-      "title": "KCG本館５F"
+      "title": {
+        "ja": "KCG本館５F"
+      }
     },
     {
       "id": "a-e08ea405-e920-4aac-8f8a-70fbbfa29316",
@@ -798,7 +894,9 @@
           "y": 580
         }
       ],
-      "title": "本館"
+      "title": {
+        "ja": "本館"
+      }
     },
     {
       "id": "c-8390f93f-fec9-4768-a99c-b04bc3f06358",
@@ -810,7 +908,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-d78ab481-e2f5-45a8-a01d-01e631c901cd",
       "direction": "both",
@@ -827,7 +927,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-9e0c7c01-e497-488f-bfe6-4d26a1aac6b8",
       "direction": "both",
@@ -844,7 +946,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-d40046bb-8d67-49aa-9c40-629593d2e34e",
       "direction": "both",
@@ -861,7 +965,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "階段",
+      "title": {
+        "ja": "階段"
+      },
       "connector": "stairs",
       "link": "l-32c7e460-ccd3-4326-88b2-11c513222fd0",
       "direction": "both",
@@ -880,7 +986,9 @@
       "shape": "rect",
       "w": 101.15625,
       "h": 160,
-      "title": "男子トイレ",
+      "title": {
+        "ja": "男子トイレ"
+      },
       "pin": true,
       "pointId": "n_bb7519ad"
     },
@@ -894,7 +1002,9 @@
       "shape": "rect",
       "w": 120,
       "h": 160,
-      "title": "502",
+      "title": {
+        "ja": "502"
+      },
       "pin": true,
       "pointId": "n_0b5fa1c6"
     },
@@ -908,7 +1018,9 @@
       "shape": "rect",
       "w": 100,
       "h": 160,
-      "title": "女子トイレ",
+      "title": {
+        "ja": "女子トイレ"
+      },
       "pin": true,
       "pointId": "n_aad38edb"
     },
@@ -922,7 +1034,9 @@
       "shape": "rect",
       "w": 195.390625,
       "h": 180,
-      "title": "501",
+      "title": {
+        "ja": "501"
+      },
       "pin": true,
       "pointId": "n_eb2347b5"
     },
@@ -936,7 +1050,9 @@
       "shape": "rect",
       "w": 174.255859375,
       "h": 180,
-      "title": "５０８",
+      "title": {
+        "ja": "５０８"
+      },
       "pin": true,
       "pointId": "n_ef390073"
     },
@@ -950,7 +1066,9 @@
       "shape": "rect",
       "w": 391.59375,
       "h": 160,
-      "title": "５０３",
+      "title": {
+        "ja": "５０３"
+      },
       "pin": true,
       "pointId": "n_16dc054f"
     },
@@ -964,7 +1082,9 @@
       "shape": "rect",
       "w": 158.2734375,
       "h": 160,
-      "title": "５０４",
+      "title": {
+        "ja": "５０４"
+      },
       "pin": true,
       "pointId": "n_0194f3e2"
     },
@@ -978,7 +1098,9 @@
       "shape": "rect",
       "w": 174.255859375,
       "h": 180,
-      "title": "５０７",
+      "title": {
+        "ja": "５０７"
+      },
       "pin": true,
       "pointId": "n_7cd1a0c4"
     },
@@ -992,7 +1114,9 @@
       "shape": "rect",
       "w": 174.255859375,
       "h": 180,
-      "title": "５０６",
+      "title": {
+        "ja": "５０６"
+      },
       "pin": true,
       "pointId": "n_4473a893"
     },
@@ -1006,7 +1130,9 @@
       "shape": "rect",
       "w": 155.912109375,
       "h": 180,
-      "title": "５０５",
+      "title": {
+        "ja": "５０５"
+      },
       "pin": true,
       "pointId": "n_52e3cee1"
     },
@@ -1018,7 +1144,9 @@
       "x": 1040,
       "y": 60,
       "size": 22,
-      "title": "KCG本館５F"
+      "title": {
+        "ja": "KCG本館５F"
+      }
     },
     {
       "id": "a-9a6ef6aa-b85b-4b02-902c-d9ac76c60cf1",
@@ -1043,7 +1171,9 @@
           "y": 580
         }
       ],
-      "title": "本館"
+      "title": {
+        "ja": "本館"
+      }
     },
     {
       "id": "c-2c07f844-f15a-4658-b9f5-8969201f0247",
@@ -1055,7 +1185,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-d78ab481-e2f5-45a8-a01d-01e631c901cd",
       "direction": "both",
@@ -1072,7 +1204,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-9e0c7c01-e497-488f-bfe6-4d26a1aac6b8",
       "direction": "both",
@@ -1089,7 +1223,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "エレベーター",
+      "title": {
+        "ja": "エレベーター"
+      },
       "connector": "elevator",
       "link": "l-d40046bb-8d67-49aa-9c40-629593d2e34e",
       "direction": "both",
@@ -1106,7 +1242,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "階段",
+      "title": {
+        "ja": "階段"
+      },
       "connector": "stairs",
       "link": "l-32c7e460-ccd3-4326-88b2-11c513222fd0",
       "direction": "both",
@@ -1125,7 +1263,9 @@
       "shape": "rect",
       "w": 120,
       "h": 60,
-      "title": "男子トイレ",
+      "title": {
+        "ja": "男子トイレ"
+      },
       "pin": true,
       "pointId": "n_8a1af758"
     },
@@ -1139,7 +1279,9 @@
       "shape": "rect",
       "w": 120,
       "h": 60,
-      "title": "女子トイレ",
+      "title": {
+        "ja": "女子トイレ"
+      },
       "pin": true,
       "pointId": "n_39c750dd"
     },
@@ -1153,7 +1295,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "階段",
+      "title": {
+        "ja": "階段"
+      },
       "connector": "stairs",
       "link": "l-fa83f622-2a18-470d-961e-47cfd76140e9",
       "direction": "both",
@@ -1171,7 +1315,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "階段",
+      "title": {
+        "ja": "階段"
+      },
       "connector": "stairs",
       "link": "l-fa83f622-2a18-470d-961e-47cfd76140e9",
       "direction": "both",
@@ -1189,7 +1335,9 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "現在地",
+      "title": {
+        "ja": "現在地"
+      },
       "pointId": "n_8b38f377"
     },
     {
@@ -1202,7 +1350,9 @@
       "shape": "rect",
       "w": 520,
       "h": 482,
-      "title": "ホール",
+      "title": {
+        "ja": "ホール"
+      },
       "pin": true,
       "pointId": "n_ca0bb1fc"
     }

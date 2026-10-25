@@ -6,6 +6,9 @@
  * - 階段・エスカレーター・エレベーターは各階に 1 つずつ置き、同じ link 同士が階をまたいでつながる
  */
 
+import type { LocalizedLabel } from "@/features/tenant/management/graph/type";
+import { resolveLabel } from "@/features/tenant/management/graph/utils/labels";
+
 export type Pt = { x: number; y: number };
 
 export type PlaceShape = "pin" | "rect" | "circle";
@@ -86,6 +89,41 @@ export type GuideMapLayout = {
   /** 既定の出発地にする場所の id（QR の設置箇所から現在地が決まらないときに使う）。案内マップエディタの経路プレビューで「出発」に選んだ場所 */
   startId?: string;
 };
+
+type Localized<T> = T extends unknown
+  ? Omit<T, "title" | "description"> & {
+      title?: LocalizedLabel;
+      description?: LocalizedLabel;
+    }
+  : never;
+
+export type LocalizedMapObject = Localized<MapObject>;
+
+export type LocalizedGuideMapLayout = Omit<GuideMapLayout, "objects"> & {
+  objects: LocalizedMapObject[];
+};
+
+export function localizeGuideMapLayout(
+  layout: LocalizedGuideMapLayout,
+  pointLabels: ReadonlyMap<string, LocalizedLabel>,
+  locale: string,
+): GuideMapLayout {
+  const textOf = (labels: LocalizedLabel | undefined) =>
+    (labels && resolveLabel(labels, locale).text) || undefined;
+  return {
+    ...layout,
+    objects: layout.objects.map(
+      (o) =>
+        ({
+          ...o,
+          title:
+            textOf(o.pointId ? pointLabels.get(o.pointId) : undefined) ??
+            textOf(o.title),
+          description: textOf(o.description),
+        }) as MapObject,
+    ),
+  };
+}
 
 /** 混雑回避ルート用の混雑（Guest Service の混雑状況と同じ段階） */
 export type CrowdLevel = "low" | "mid" | "high";
