@@ -326,16 +326,13 @@ describe("guest", () => {
     expect(guideMap.graph.points).toContainEqual({
       pointId: "n_fc14f2f4",
       labels: { ja: "エレベーター", en: "Elevator" },
-      nodeType: "TRANSIT_ONLY",
     });
-    expect(guideMap.layout.floors.map((f) => f.name)).toEqual([
-      "1F",
-      "2F",
-      "3F",
-      "4F",
-      "5F",
-      "6Fホール",
-    ]);
+    expect(
+      guideMap.layout.groups.map(
+        ({ groupId }) =>
+          guideMap.graph.groups.find((g) => g.groupId === groupId)?.labels.ja,
+      ),
+    ).toEqual(["1F", "2F", "3F", "4F", "5F", "6Fホール"]);
     for (const spy of guestCalls) expect(spy).not.toHaveBeenCalled();
   });
 

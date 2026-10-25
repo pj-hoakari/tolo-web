@@ -43,7 +43,7 @@ function escalatorOnlyDoc(): GuideMapLayout {
   const room = (id: string, floor: string, x: number): PlaceObject => ({
     id,
     kind: "place",
-    floor,
+    groupId: floor,
     color: "sky",
     shape: "pin",
     x,
@@ -55,7 +55,7 @@ function escalatorOnlyDoc(): GuideMapLayout {
   const escalator = (floor: string): PlaceObject => ({
     id: `esc-${floor}`,
     kind: "place",
-    floor,
+    groupId: floor,
     color: "slate",
     shape: "pin",
     x: 600,
@@ -68,11 +68,7 @@ function escalatorOnlyDoc(): GuideMapLayout {
   });
   return {
     version: 1,
-    floors: [
-      { id: "low", name: "1F" },
-      { id: "high", name: "2F" },
-    ],
-    activeFloorId: "low",
+    groups: [{ groupId: "low" }, { groupId: "high" }],
     north: 0,
     scale: 0,
     objects: [
@@ -85,7 +81,7 @@ function escalatorOnlyDoc(): GuideMapLayout {
 }
 
 describe("computeRoute（1 フロア内）", () => {
-  const floor1 = doc.objects.filter((o) => o.floor === "f-1");
+  const floor1 = doc.objects.filter((o) => o.groupId === "f-1");
 
   it("出発から目的地までの点列を返し、始点と終点は指定どおり", () => {
     const gate = place("p-gate");
@@ -155,7 +151,7 @@ describe("computeRoute（1 フロア内）", () => {
       ({
         id,
         kind: "place",
-        floor: "x",
+        groupId: "x",
         color: "slate",
         shape: "rect",
         x,
@@ -257,7 +253,7 @@ describe("混雑回避ルート", () => {
       {
         id: "corridor",
         kind: "area",
-        floor: "f-1",
+        groupId: "f-1",
         color: "slate",
         points: [],
         routeId: "e1",
@@ -317,7 +313,7 @@ describe("混雑回避ルート", () => {
     const zone: MapObject = {
       id: "zone",
       kind: "area",
-      floor: "x",
+      groupId: "x",
       color: "rose",
       points: [
         { x: 500, y: 0 },

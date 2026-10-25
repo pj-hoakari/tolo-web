@@ -82,9 +82,12 @@ function GuideMapContent({
   const tCongestion = useTranslations("Guest.congestion");
   const locale = useLocale();
 
-  const floorIndex = new Map(doc.floors.map((f, i) => [f.id, i]));
+  const floorIndex = new Map(doc.groups.map((g, i) => [g.groupId, i]));
+  const labelsByGroupId = new Map(
+    graph.groups.map((g) => [g.groupId, g.labels]),
+  );
   const floorNameOf = (id: string) =>
-    doc.floors.find((f) => f.id === id)?.name ?? "";
+    resolveLabel(labelsByGroupId.get(id) ?? {}, locale).text;
   const labelsByPointId = new Map(
     graph.points.map((p) => [p.pointId, p.labels]),
   );
@@ -97,7 +100,7 @@ function GuideMapContent({
    */
   const groundPlaces = doc.objects.filter(
     (o): o is PlaceObject =>
-      o.kind === "place" && o.floor === doc.floors[0]?.id,
+      o.kind === "place" && o.groupId === doc.groups[0]?.groupId,
   );
   const start: PlaceObject | undefined =
     doc.objects.find(
@@ -120,12 +123,12 @@ function GuideMapContent({
   const blankFrame =
     contentBounds(
       doc.objects.filter(
-        (o) => !doc.floors.find((f) => f.id === o.floor)?.image,
+        (o) => !doc.groups.find((g) => g.groupId === o.groupId)?.image,
       ),
     ) ?? undefined;
 
   /** 起動時に表示するフロア（現在地のフロア） */
-  const startFloor = start?.floor ?? doc.activeFloorId ?? doc.floors[0]?.id;
+  const startFloor = start?.groupId ?? doc.groups[0]?.groupId;
 
   // 混雑状況（混雑状況カードと同じ Guest Service の GetCrowd）。グラフ ID で地図のオブジェクトに引き直す
   const crowdPolling = useGuestPolling(
@@ -145,11 +148,14 @@ function GuideMapContent({
   const { activeFloorId: sharedFloorId } = useGuideMapFloor();
   useEffect(() => {
     setGuideMapFloors(
-      doc.floors.map((f) => ({ id: f.id, name: f.name })),
+      doc.groups.map((g) => ({
+        id: g.groupId,
+        labels: graph.groups.find((x) => x.groupId === g.groupId)?.labels ?? {},
+      })),
       startFloor,
     );
     return () => clearGuideMapFloors();
-  }, [doc, startFloor]);
+  }, [doc, graph, startFloor]);
   const activeFloorId = sharedFloorId ?? startFloor;
 
   // 目的地検索の入力と、検索/一覧から選んだ目的地
@@ -240,7 +246,7 @@ function GuideMapContent({
 
   // 表示中フロアのオブジェクト（名前は表示名に解決しておく）
   const floorObjects = doc.objects
-    .filter((o) => o.floor === activeFloorId)
+    .filter((o) => o.groupId === activeFloorId)
     .map((o) => (o.kind === "line" ? o : { ...o, title: nameOf(o) }));
 
   // 表示中フロアで歩く区間の経路線
@@ -305,9 +311,9 @@ function GuideMapContent({
                 onPress={() => pickRoom(o.id)}
               >
                 {nameOf(o)}
-                {doc.floors.length > 1 && (
+                {doc.groups.length > 1 && (
                   <span className="text-xs text-primary/40">
-                    {floorNameOf(o.floor)}
+                    {floorNameOf(o.groupId)}
                   </span>
                 )}
               </Button>
@@ -411,12 +417,13 @@ function GuideMapContent({
     </>
   );
 
-  const floor = doc.floors.find((f) => f.id === activeFloorId) ?? doc.floors[0];
+  const floor =
+    doc.groups.find((g) => g.groupId === activeFloorId) ?? doc.groups[0];
 
   return (
     <GuideMapView
       // フロアを切り替えたら拡大を解いて全体から見せる
-      key={floor.id}
+      key={floor.groupId}
       title={t("title")}
       floor={floor}
       objects={floorObjects}

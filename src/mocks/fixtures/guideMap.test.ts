@@ -17,7 +17,7 @@ import {
 
 const { graph, layout } = sampleGuideMap();
 const pointIds = new Set(graph.points.map((p) => p.pointId));
-const routeIds = new Set(graph.routes.map((r) => r.routeId));
+const routeIds = new Set(sampleGuideMapGraph.edges.map((e) => e.id));
 
 describe("案内マップのフィクスチャ（KCG本館）", () => {
   it("グラフは保存時の規則を満たす", () => {
@@ -59,10 +59,24 @@ describe("案内マップのフィクスチャ（KCG本館）", () => {
       expect(e.id).toMatch(/^e_[0-9a-f]{8}$/);
   });
 
-  it("グラフのグループはレイアウトのフロアと同じ数だけある", () => {
-    expect(sampleGuideMapGraph.nodes.filter(isGroupNode)).toHaveLength(
-      layout.floors.length,
+  it("レイアウトの階はすべてグラフのグループで、日本語と英語のラベルがある", () => {
+    expect(graph.groups.map((g) => g.groupId).sort()).toEqual(
+      layout.groups.map((g) => g.groupId).sort(),
     );
+    for (const g of graph.groups) {
+      expect(g.labels.ja, g.groupId).toBeTruthy();
+      expect(g.labels.en, g.groupId).toBeTruthy();
+    }
+  });
+
+  it("レイアウトのオブジェクトはすべてレイアウトにある階に置かれている", () => {
+    const groupIds = new Set(layout.groups.map((g) => g.groupId));
+    for (const o of layout.objects) expect(groupIds).toContain(o.groupId);
+  });
+
+  it("ゲスト向けのグラフにはレイアウトが参照するポイントだけがある", () => {
+    const referenced = new Set(layout.objects.map((o) => o.pointId));
+    for (const p of graph.points) expect(referenced).toContain(p.pointId);
   });
 
   it("目的地と階移動手段はすべてグラフのポイントに結び付いている", () => {
@@ -72,17 +86,21 @@ describe("案内マップのフィクスチャ（KCG本館）", () => {
       expect(o.pointId, o.title).toBeDefined();
   });
 
-  it("レイアウトが参照するグラフ ID はすべてゲスト向けのグラフにある", () => {
+  it("レイアウトが参照するポイント ID はゲスト向けのグラフに、ルート ID は管理側のグラフにある", () => {
     for (const o of layout.objects) {
       if (o.pointId) expect(pointIds).toContain(o.pointId);
       if (o.routeId) expect(routeIds).toContain(o.routeId);
     }
   });
 
-  it("混雑状況のモックはゲスト向けのグラフにある ID を指す", () => {
+  it("混雑状況のモックはグラフにある ID を指す", () => {
     for (const { id } of sampleGuestCrowd("ja").crowd) {
       const [kind, value] = id.split(":");
-      expect(kind === "pointId" ? pointIds : routeIds).toContain(value);
+      expect(
+        kind === "pointId"
+          ? sampleGuideMapGraph.nodes.filter(isPointNode).map((n) => n.id)
+          : [...routeIds],
+      ).toContain(value);
     }
   });
 

@@ -11,16 +11,16 @@ export type Pt = { x: number; y: number };
 export type PlaceShape = "pin" | "rect" | "circle";
 /** 階をまたぐ移動手段 */
 export type ConnectorType = "stairs" | "escalator" | "elevator";
-/** 上り＝floors 配列の後ろの階へ。エスカレーターの一方通行に使う */
+/** 上り＝groups 配列の後ろの階へ。エスカレーターの一方通行に使う */
 export type ConnectorDirection = "both" | "up" | "down";
 
 /** 下敷きの会場画像（data URL で自己完結） */
 export type FloorImage = { src: string; w: number; h: number };
-export type Floor = { id: string; name: string; image?: FloorImage };
+export type GuideMapLayoutGroup = { groupId: string; image?: FloorImage };
 
 type Base = {
   id: string;
-  floor: string;
+  groupId: string;
   title?: string;
   description?: string;
   photo?: string;
@@ -77,8 +77,7 @@ export type MapObject = PlaceObject | LineObject | AreaObject | TextObject;
 
 export type GuideMapLayout = {
   version: 1;
-  floors: Floor[];
-  activeFloorId: string;
+  groups: GuideMapLayoutGroup[];
   objects: MapObject[];
   /** マップ上向きが指す方位角（度）。0=未設定 */
   north: number;
@@ -163,7 +162,7 @@ export function mapColorOf(key: string) {
 /** フロアの広さ（下敷き画像があればその大きさ、無ければ既定の白紙） */
 export const DEFAULT_FLOOR_W = 1200;
 export const DEFAULT_FLOOR_H = 800;
-export const floorSize = (f: Floor | undefined) => ({
+export const floorSize = (f: GuideMapLayoutGroup | undefined) => ({
   w: f?.image?.w ?? DEFAULT_FLOOR_W,
   h: f?.image?.h ?? DEFAULT_FLOOR_H,
 });

@@ -78,7 +78,7 @@ const pathLength = (pts: Pt[]) =>
 
 /** 出発（startId）→目的地（goalId）の経路。階が違えば階移動手段を経由する。混雑を渡せば混雑回避ルート */
 export function computeFloorRoute(
-  doc: Pick<GuideMapLayout, "floors" | "objects">,
+  doc: Pick<GuideMapLayout, "groups" | "objects">,
   startId: string,
   goalId: string,
   opts: FloorRouteOptions = {},
@@ -92,7 +92,7 @@ export function computeFloorRoute(
 }
 
 function routeOnce(
-  doc: Pick<GuideMapLayout, "floors" | "objects">,
+  doc: Pick<GuideMapLayout, "groups" | "objects">,
   startId: string,
   goalId: string,
   opts: FloorRouteOptions,
@@ -103,25 +103,31 @@ function routeOnce(
   if (!start || !goal || start.kind !== "place" || goal.kind !== "place")
     return { error: "unreachable" };
 
-  const floorIndex = new Map(doc.floors.map((f, i) => [f.id, i]));
+  const floorIndex = new Map(doc.groups.map((g, i) => [g.groupId, i]));
   const connectors = doc.objects
     .filter(isConnector)
-    .filter((c) => floorIndex.has(c.floor));
+    .filter((c) => floorIndex.has(c.groupId));
   const nodes: Node[] = [
-    { id: start.id, floor: start.floor, x: start.x, y: start.y, role: "start" },
-    { id: goal.id, floor: goal.floor, x: goal.x, y: goal.y, role: "goal" },
+    {
+      id: start.id,
+      floor: start.groupId,
+      x: start.x,
+      y: start.y,
+      role: "start",
+    },
+    { id: goal.id, floor: goal.groupId, x: goal.x, y: goal.y, role: "goal" },
     ...connectors.flatMap((c): Node[] => [
-      { id: c.id, floor: c.floor, x: c.x, y: c.y, role: "in", connector: c },
-      { id: c.id, floor: c.floor, x: c.x, y: c.y, role: "out", connector: c },
+      { id: c.id, floor: c.groupId, x: c.x, y: c.y, role: "in", connector: c },
+      { id: c.id, floor: c.groupId, x: c.x, y: c.y, role: "out", connector: c },
     ]),
   ];
 
   // 出発階から別の階へ行ける階移動手段が無ければ、階をまたげない
-  if (start.floor !== goal.floor) {
+  if (start.groupId !== goal.groupId) {
     const usable = connectors.some(
       (c) =>
-        c.floor === start.floor &&
-        connectors.some((d) => d.link === c.link && d.floor !== c.floor),
+        c.groupId === start.groupId &&
+        connectors.some((d) => d.link === c.link && d.groupId !== c.groupId),
     );
     if (!usable) return { error: "no-connector" };
   }
@@ -134,8 +140,8 @@ function routeOnce(
     if (cached !== undefined) return cached;
     const rev = walkCache.get(`${b.id}>${a.id}`);
     if (rev !== undefined) return rev && [...rev].reverse();
-    const { w, h } = floorSize(doc.floors.find((f) => f.id === a.floor));
-    const objects = doc.objects.filter((o) => o.floor === a.floor);
+    const { w, h } = floorSize(doc.groups.find((g) => g.groupId === a.floor));
+    const objects = doc.objects.filter((o) => o.groupId === a.floor);
     const pts = computeRoute(
       objects,
       { x: a.x, y: a.y },

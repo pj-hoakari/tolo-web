@@ -1,6 +1,7 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { resolveLabel } from "@/features/tenant/management/graph/utils/labels";
 import { FloorView } from "./FloorView";
 import { setGuideMapActiveFloor, useGuideMapFloor } from "./guideMapFloorStore";
 import { defineGuestInfoComponent, type GuestInfoComponentProps } from "./type";
@@ -10,7 +11,12 @@ function Floor(_props: GuestInfoComponentProps) {
   // 案内マップが無い・読み込み前は placeholderName を表示する。
   // TODO: QR / API で現在地が分かるようになったら、その場所のフロアを初期表示にする。
   const t = useTranslations("Guest.floor");
-  const { floors, activeFloorId } = useGuideMapFloor();
+  const locale = useLocale();
+  const { floors: options, activeFloorId } = useGuideMapFloor();
+  const floors = options.map((f) => ({
+    id: f.id,
+    name: resolveLabel(f.labels, locale).text,
+  }));
   const active = floors.find((f) => f.id === activeFloorId);
 
   return (

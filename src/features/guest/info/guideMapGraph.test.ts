@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { GraphData } from "@/features/tenant/management/graph/type";
 import { toGuestGuideMapGraph } from "./guideMapGraph";
+import type { GuideMapLayout } from "./guideMapLayout";
 
 const graph: GraphData = {
   nodes: [
@@ -10,7 +11,15 @@ const graph: GraphData = {
       position: { x: 0, y: 0 },
       width: 400,
       height: 300,
-      data: { labels: { ja: "1F" } },
+      data: { labels: { ja: "1F", en: "1F" }, minWidth: 400 },
+    },
+    {
+      id: "g_2f000002",
+      type: "graphGroup",
+      position: { x: 0, y: 400 },
+      width: 400,
+      height: 300,
+      data: { labels: { ja: "2F" } },
     },
     {
       id: "n_4a110001",
@@ -59,31 +68,37 @@ const graph: GraphData = {
   ],
 };
 
-describe("toGuestGuideMapGraph", () => {
-  it("ポイントは ID・ラベル・種別だけを渡し、位置・グループ・観測点は渡さない", () => {
-    expect(toGuestGuideMapGraph(graph).points).toEqual([
-      {
-        pointId: "n_4a110001",
-        labels: { ja: "ホール", en: "Hall" },
-        nodeType: "GOAL",
-      },
-      {
-        pointId: "n_c0001001",
-        labels: { ja: "廊下" },
-        nodeType: "TRANSIT_ONLY",
-      },
-    ]);
-  });
+const layout: Pick<GuideMapLayout, "groups" | "objects"> = {
+  groups: [{ groupId: "g_1f000001" }],
+  objects: [
+    {
+      id: "p-hall",
+      kind: "place",
+      groupId: "g_1f000001",
+      color: "indigo",
+      shape: "pin",
+      x: 0,
+      y: 0,
+      w: 0,
+      h: 0,
+      pointId: "n_4a110001",
+    },
+    {
+      id: "a-corridor",
+      kind: "area",
+      groupId: "g_1f000001",
+      color: "slate",
+      points: [],
+      routeId: "e_4a11c001",
+    },
+  ],
+};
 
-  it("ルートは端点・方向・ラベルだけを渡し、会場の外のポイントにつながるルートは渡さない", () => {
-    expect(toGuestGuideMapGraph(graph).routes).toEqual([
-      {
-        routeId: "e_4a11c001",
-        source: "n_4a110001",
-        target: "n_c0001001",
-        direction: "oneway",
-        label: "正面通路",
-      },
-    ]);
+describe("toGuestGuideMapGraph", () => {
+  it("レイアウトが参照するポイントとグループだけを ID とラベルだけで渡し、ルートは渡さない", () => {
+    expect(toGuestGuideMapGraph(graph, layout)).toStrictEqual({
+      points: [{ pointId: "n_4a110001", labels: { ja: "ホール", en: "Hall" } }],
+      groups: [{ groupId: "g_1f000001", labels: { ja: "1F", en: "1F" } }],
+    });
   });
 });

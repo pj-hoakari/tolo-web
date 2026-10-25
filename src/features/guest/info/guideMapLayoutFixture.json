@@ -1,14 +1,11 @@
 {
   "version": 1,
-  "activeFloorId": "f-1",
-  "floors": [
+  "groups": [
     {
-      "id": "f-1",
-      "name": "1F"
+      "groupId": "f-1"
     },
     {
-      "id": "f-2",
-      "name": "2F"
+      "groupId": "f-2"
     }
   ],
   "north": 0,
@@ -17,7 +14,7 @@
     {
       "id": "a-building-1",
       "kind": "area",
-      "floor": "f-1",
+      "groupId": "f-1",
       "color": "slate",
       "points": [
         {
@@ -41,7 +38,7 @@
     {
       "id": "t-1",
       "kind": "text",
-      "floor": "f-1",
+      "groupId": "f-1",
       "color": "slate",
       "x": 480,
       "y": 80,
@@ -51,7 +48,7 @@
     {
       "id": "p-gate",
       "kind": "place",
-      "floor": "f-1",
+      "groupId": "f-1",
       "color": "indigo",
       "x": 480,
       "y": 600,
@@ -64,7 +61,7 @@
     {
       "id": "r-goods",
       "kind": "place",
-      "floor": "f-1",
+      "groupId": "f-1",
       "color": "rose",
       "x": 260,
       "y": 220,
@@ -78,7 +75,7 @@
     {
       "id": "r-cafe",
       "kind": "place",
-      "floor": "f-1",
+      "groupId": "f-1",
       "color": "amber",
       "x": 700,
       "y": 220,
@@ -92,7 +89,7 @@
     {
       "id": "r-reception",
       "kind": "place",
-      "floor": "f-1",
+      "groupId": "f-1",
       "color": "emerald",
       "x": 260,
       "y": 520,
@@ -106,7 +103,7 @@
     {
       "id": "r-toilet",
       "kind": "place",
-      "floor": "f-1",
+      "groupId": "f-1",
       "color": "sky",
       "x": 740,
       "y": 520,
@@ -120,7 +117,7 @@
     {
       "id": "a-queue",
       "kind": "area",
-      "floor": "f-1",
+      "groupId": "f-1",
       "color": "rose",
       "title": "物販待機列",
       "description": "グッズ売り場の待機列です。",
@@ -146,7 +143,7 @@
     {
       "id": "a-building-2",
       "kind": "area",
-      "floor": "f-2",
+      "groupId": "f-2",
       "color": "slate",
       "points": [
         {
@@ -170,7 +167,7 @@
     {
       "id": "t-2",
       "kind": "text",
-      "floor": "f-2",
+      "groupId": "f-2",
       "color": "slate",
       "x": 480,
       "y": 80,
@@ -180,7 +177,7 @@
     {
       "id": "r2-hall",
       "kind": "place",
-      "floor": "f-2",
+      "groupId": "f-2",
       "color": "violet",
       "x": 480,
       "y": 200,
@@ -194,7 +191,7 @@
     {
       "id": "r2-rest",
       "kind": "place",
-      "floor": "f-2",
+      "groupId": "f-2",
       "color": "emerald",
       "x": 240,
       "y": 440,
@@ -208,7 +205,7 @@
     {
       "id": "r2-toilet",
       "kind": "place",
-      "floor": "f-2",
+      "groupId": "f-2",
       "color": "sky",
       "x": 740,
       "y": 520,
@@ -222,7 +219,7 @@
     {
       "id": "c-ev-f-1",
       "kind": "place",
-      "floor": "f-1",
+      "groupId": "f-1",
       "color": "indigo",
       "x": 480,
       "y": 360,
@@ -237,7 +234,7 @@
     {
       "id": "c-ev-f-2",
       "kind": "place",
-      "floor": "f-2",
+      "groupId": "f-2",
       "color": "indigo",
       "x": 480,
       "y": 360,
@@ -252,7 +249,7 @@
     {
       "id": "c-stairs-f-1",
       "kind": "place",
-      "floor": "f-1",
+      "groupId": "f-1",
       "color": "slate",
       "x": 600,
       "y": 500,
@@ -267,7 +264,7 @@
     {
       "id": "c-stairs-f-2",
       "kind": "place",
-      "floor": "f-2",
+      "groupId": "f-2",
       "color": "slate",
       "x": 600,
       "y": 500,

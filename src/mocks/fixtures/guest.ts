@@ -45,9 +45,10 @@ export function sampleGuestCrowd(language: string): GuestCrowdSnapshot {
 export const sampleGuideMapGraph = guideMapGraph as GraphData;
 
 export function sampleGuideMap(): GuestGuideMap {
+  const layout = guideMapLayout as unknown as GuideMapLayout;
   return {
-    graph: toGuestGuideMapGraph(sampleGuideMapGraph),
-    layout: guideMapLayout as unknown as GuideMapLayout,
+    graph: toGuestGuideMapGraph(sampleGuideMapGraph, layout),
+    layout,
   };
 }
 

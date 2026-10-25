@@ -16,8 +16,8 @@ import {
   type CrowdMap,
   type CrowdState,
   centroidOf,
-  type Floor,
   floorSize,
+  type GuideMapLayoutGroup,
   type MapObject,
   mapColorOf,
   markBoxOf,
@@ -34,7 +34,7 @@ export type GuideMapMarker = { objectId: string; label: string };
 export type GuideMapViewProps = {
   title: string;
   /** 表示中のフロア（広さと下敷き画像に使う） */
-  floor: Floor;
+  floor: GuideMapLayoutGroup;
   /** 表示中のフロアにあるオブジェクト（title は表示名に解決済み） */
   objects: MapObject[];
   /** 表示中のフロアで歩く経路線（点列の配列） */

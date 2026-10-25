@@ -1,49 +1,36 @@
 import {
-  type EdgeDirection,
   type GraphData,
+  isGroupNode,
   isPointNode,
   type LocalizedLabel,
-  type NodeType,
 } from "@/features/tenant/management/graph/type";
+import type { GuideMapLayout } from "./guideMapLayout";
 
-export type GuestGuideMapPoint = {
-  pointId: string;
-  labels: LocalizedLabel;
-  nodeType: Exclude<NodeType, "EXTERNAL">;
-};
+export type GuestGuideMapPoint = { pointId: string; labels: LocalizedLabel };
 
-export type GuestGuideMapRoute = {
-  routeId: string;
-  source: string;
-  target: string;
-  direction: EdgeDirection;
-  label?: string;
-};
+export type GuestGuideMapGroup = { groupId: string; labels: LocalizedLabel };
 
 export type GuestGuideMapGraph = {
   points: GuestGuideMapPoint[];
-  routes: GuestGuideMapRoute[];
+  groups: GuestGuideMapGroup[];
 };
 
-export function toGuestGuideMapGraph(graph: GraphData): GuestGuideMapGraph {
-  const points = graph.nodes.flatMap((n): GuestGuideMapPoint[] =>
-    isPointNode(n) && n.data.nodeType !== "EXTERNAL"
-      ? [{ pointId: n.id, labels: n.data.labels, nodeType: n.data.nodeType }]
-      : [],
-  );
-  const pointIds = new Set(points.map((p) => p.pointId));
-  const routes = graph.edges.flatMap((e): GuestGuideMapRoute[] =>
-    pointIds.has(e.source) && pointIds.has(e.target)
-      ? [
-          {
-            routeId: e.id,
-            source: e.source,
-            target: e.target,
-            direction: e.data?.direction ?? "both",
-            ...(e.data?.label ? { label: e.data.label } : {}),
-          },
-        ]
-      : [],
-  );
-  return { points, routes };
+export function toGuestGuideMapGraph(
+  graph: GraphData,
+  layout: Pick<GuideMapLayout, "groups" | "objects">,
+): GuestGuideMapGraph {
+  const pointIds = new Set(layout.objects.map((o) => o.pointId));
+  const groupIds = new Set(layout.groups.map((g) => g.groupId));
+  return {
+    points: graph.nodes.flatMap((n): GuestGuideMapPoint[] =>
+      isPointNode(n) && pointIds.has(n.id)
+        ? [{ pointId: n.id, labels: n.data.labels }]
+        : [],
+    ),
+    groups: graph.nodes.flatMap((n): GuestGuideMapGroup[] =>
+      isGroupNode(n) && groupIds.has(n.id)
+        ? [{ groupId: n.id, labels: n.data.labels }]
+        : [],
+    ),
+  };
 }
