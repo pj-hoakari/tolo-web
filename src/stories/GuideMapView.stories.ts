@@ -1,70 +1,77 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import {
-  type GuideMapRoom,
-  GuideMapView,
-  type GuideMapWaypoint,
-  type MapPoint,
-} from "@/features/guest/info/GuideMapView";
+import { GuideMapView } from "@/features/guest/info/GuideMapView";
+import { computeFloorRoute } from "@/features/guest/info/guideMapFloorRoute";
+import type { GuideMapLayout } from "@/features/guest/info/guideMapLayout";
+import guideMapLayoutFixture from "@/features/guest/info/guideMapLayoutFixture.json";
 
-const rooms: GuideMapRoom[] = [
-  { id: "hall", label: "ホール", x: 20, y: 20, width: 150, height: 90 },
-  { id: "goods", label: "グッズ売り場", x: 190, y: 20, width: 110, height: 70 },
-  { id: "cafe", label: "カフェ", x: 190, y: 110, width: 110, height: 70 },
-  { id: "exit", label: "出口", x: 20, y: 160, width: 90, height: 50 },
-];
+// guide-map-poc の案内マップエディタが書き出す形式の固定見本（イベント会場 1F・2F）。
+// 表示用の mocks/fixtures/guideMapLayout.json は差し替わるので、Story はこちらで状態を固定する
+const doc = guideMapLayoutFixture as unknown as GuideMapLayout;
+const [f1, f2] = doc.groups;
+const onFloor = (floorId: string) =>
+  doc.objects.filter((o) => o.groupId === floorId);
 
-const waypoints: GuideMapWaypoint[] = [
-  { id: "ev", label: "EV", point: { x: 160, y: 150 } },
-];
+// 1F の入場ゲート → 1F のカフェ
+const sameFloor = computeFloorRoute(doc, "p-gate", "r-cafe");
+// 1F の入場ゲート → 2F のホール（階段かエレベーターを経由）
+const otherFloor = computeFloorRoute(doc, "p-gate", "r2-hall");
 
-const start: MapPoint = { x: 160, y: 224 };
-
-const destinations = [
-  { id: "hall", name: "ホール" },
-  { id: "goods", name: "グッズ売り場" },
-  { id: "cafe", name: "カフェ" },
-  { id: "exit", name: "出口" },
-];
-
-const cafeRoute: MapPoint[] = [
-  start,
-  { x: 160, y: 150 },
-  { x: 245, y: 150 },
-  { x: 245, y: 110 },
-];
+const walkOn = (
+  result: ReturnType<typeof computeFloorRoute>,
+  floorId: string,
+) =>
+  "steps" in result
+    ? result.steps.flatMap((s) =>
+        s.kind === "walk" && s.floor === floorId ? [s.points] : [],
+      )
+    : [];
 
 const meta = {
   title: "Guest/Info/GuideMap",
   component: GuideMapView,
   parameters: {
-    layout: "centered",
+    layout: "padded",
   },
   tags: ["autodocs"],
   args: {
-    width: 320,
-    height: 240,
-    rooms,
-    waypoints,
-    start,
-    destinations,
-    onSelectDestination: () => {},
+    title: "案内マップ",
+    floor: f1,
+    objects: onFloor(f1.groupId),
+    routes: [],
+    markers: [{ objectId: "p-gate", label: "現在地" }],
   },
 } satisfies Meta<typeof GuideMapView>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Selected: Story = {
+export const Unselected: Story = {};
+
+export const RouteOnSameFloor: Story = {
   args: {
-    selectedDestinationId: "cafe",
-    route: cafeRoute,
+    routes: walkOn(sameFloor, f1.groupId),
+    activeId: "r-cafe",
+    markers: [
+      { objectId: "p-gate", label: "現在地" },
+      { objectId: "r-cafe", label: "目的地" },
+    ],
   },
 };
 
-export const Unselected: Story = {
+/** 別の階の目的地。到着階（2F）側の表示 */
+export const RouteArrivalFloor: Story = {
   args: {
-    selectedDestinationId: null,
-    route: [],
+    floor: f2,
+    objects: onFloor(f2.groupId),
+    routes: walkOn(otherFloor, f2.groupId),
+    activeId: "r2-hall",
+    markers: [{ objectId: "r2-hall", label: "目的地" }],
+  },
+};
+
+export const Searching: Story = {
+  args: {
+    highlightIds: ["r-goods"],
   },
 };

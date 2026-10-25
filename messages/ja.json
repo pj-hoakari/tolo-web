@@ -459,22 +459,35 @@
       "title": "案内マップ",
       "hint": "目的地を選択すると経路が表示されます",
       "currentLocation": "現在地",
-      "destinations": {
-        "hall": "ホール",
-        "goods": "グッズ売り場",
-        "cafe": "カフェ",
-        "exit": "出口"
-      },
       "destinationsLabel": "目的地",
       "expand": "地図を拡大",
       "collapse": "地図を縮小",
       "search": "目的地を検索",
       "noResults": "見つかりませんでした",
-      "reset": "リセット"
+      "reset": "リセット",
+      "goal": "目的地",
+      "rideTo": "{via}で{floor}へ",
+      "arriveFrom": "{floor}から到着",
+      "connectors": {
+        "stairs": "階段",
+        "escalator": "エスカレーター",
+        "elevator": "エレベーター"
+      },
+      "walkStep": "{floor}：{from} → {to}",
+      "rideStep": "{via}で {from} → {to}",
+      "noRoute": "この目的地への経路が見つかりませんでした",
+      "zoomInHint": "地図をタップで拡大",
+      "zoomOutHint": "ドラッグで移動・タップで全体表示",
+      "closed": "（通行止め）",
+      "crowdAvoided": "混雑している所を避けたルートです",
+      "crowdRerouted": "混雑状況が変わったため、ルートを変更しました",
+      "crowdThroughDanger": "混雑で危険な場所を通らないと行けません。スタッフの案内に従ってください",
+      "crowdLegend": "混雑"
     },
     "floor": {
       "title": "現在のフロア",
-      "placeholderName": "1F"
+      "placeholderName": "1F",
+      "selectLabel": "表示するフロア"
     },
     "congestion": {
       "title": "混雑状況",

@@ -452,3 +452,22 @@ test("グループを選んで Delete キーを押すとグループだけが解
   await expect(allNodes(page)).toHaveCount(14);
   await expect(allEdges(page)).toHaveCount(14);
 });
+
+test("案内マップのグラフを指定して開くと KCG本館の 1F から 6F のグループと各階のポイントが並ぶ", async ({
+  page,
+}) => {
+  await page.goto("/event/test/management/graph/edit?layoutFixture=guide-map");
+
+  for (const [id, label] of [
+    ["g_0eb36458", "1F"],
+    ["g_73abacb8", "2F"],
+    ["g_a3cd32be", "3F"],
+    ["g_c6f20eff", "4F"],
+    ["g_2ea28f93", "5F"],
+    ["g_6db0e5cb", "6Fホール"],
+  ])
+    await expect(node(page, id)).toContainText(label);
+  await expect(node(page, "n_ca0bb1fc")).toContainText("ホール");
+  await expect(node(page, "n_fc14f2f4")).toContainText("エレベーター");
+  await expect(node(page, "ph_booth")).toHaveCount(0);
+});

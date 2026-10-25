@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { layoutFixture } from "./fixtures/graphLayout";
+import { sampleGuideMapGraph } from "./fixtures/guest";
 import { readMockOverrides } from "./overrides";
 
 const storage = (values: Record<string, string> = {}) => ({
@@ -19,6 +20,11 @@ describe("readMockOverrides", () => {
   it("手動再現用URLのグラフをモック設定へ変換する", () => {
     expect(readMockOverrides(storage(), `?layoutFixture=${name}`)).toEqual({
       graph: layoutFixture(name),
+    });
+  });
+  it("案内マップのグラフを名前で指定すると KCG本館のグラフに差し替える", () => {
+    expect(readMockOverrides(storage(), "?layoutFixture=guide-map")).toEqual({
+      graph: sampleGuideMapGraph,
     });
   });
   it("既存のグラフ差し替えをURLより優先し、他の設定も保持する", () => {

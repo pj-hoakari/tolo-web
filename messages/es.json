@@ -459,22 +459,35 @@
       "title": "Mapa de orientación",
       "hint": "Selecciona un destino para ver la ruta",
       "currentLocation": "Estás aquí",
-      "destinations": {
-        "hall": "Sala",
-        "goods": "Tienda",
-        "cafe": "Cafetería",
-        "exit": "Salida"
-      },
       "destinationsLabel": "Destinos",
       "expand": "Ampliar el mapa",
       "collapse": "Reducir el mapa",
       "search": "Buscar destino",
       "noResults": "Sin resultados",
-      "reset": "Restablecer"
+      "reset": "Restablecer",
+      "goal": "Destino",
+      "rideTo": "{via} hasta {floor}",
+      "arriveFrom": "Llegada desde {floor}",
+      "connectors": {
+        "stairs": "Escaleras",
+        "escalator": "Escalera mecánica",
+        "elevator": "Ascensor"
+      },
+      "walkStep": "{floor}: {from} → {to}",
+      "rideStep": "{via}: {from} → {to}",
+      "noRoute": "No se encontró una ruta a este destino",
+      "zoomInHint": "Toca el mapa para ampliar",
+      "zoomOutHint": "Arrastra para mover · toca para ver todo",
+      "closed": " (cerrado)",
+      "crowdAvoided": "Esta ruta evita las zonas concurridas",
+      "crowdRerouted": "La ruta ha cambiado porque cambió el nivel de aglomeración",
+      "crowdThroughDanger": "Esta ruta pasa por una zona peligrosamente concurrida. Siga las indicaciones del personal",
+      "crowdLegend": "Aglomeración"
     },
     "floor": {
       "title": "Planta actual",
-      "placeholderName": "Planta 1"
+      "placeholderName": "Planta 1",
+      "selectLabel": "Planta a mostrar"
     },
     "congestion": {
       "title": "Nivel de afluencia",

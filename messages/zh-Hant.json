@@ -459,22 +459,35 @@
       "title": "導覽圖",
       "hint": "選擇目的地即可顯示路線",
       "currentLocation": "目前位置",
-      "destinations": {
-        "hall": "大廳",
-        "goods": "商品區",
-        "cafe": "咖啡廳",
-        "exit": "出口"
-      },
       "destinationsLabel": "目的地",
       "expand": "放大地圖",
       "collapse": "縮小地圖",
       "search": "搜尋目的地",
       "noResults": "無結果",
-      "reset": "重設"
+      "reset": "重設",
+      "goal": "目的地",
+      "rideTo": "搭{via}到{floor}",
+      "arriveFrom": "從{floor}抵達",
+      "connectors": {
+        "stairs": "樓梯",
+        "escalator": "手扶梯",
+        "elevator": "電梯"
+      },
+      "walkStep": "{floor}：{from} → {to}",
+      "rideStep": "{via}：{from} → {to}",
+      "noRoute": "找不到前往此目的地的路線",
+      "zoomInHint": "點按地圖放大",
+      "zoomOutHint": "拖曳移動 · 點按查看全圖",
+      "closed": "（禁止通行）",
+      "crowdAvoided": "這是避開擁擠區域的路線",
+      "crowdRerouted": "由於擁擠情況改變，已變更路線",
+      "crowdThroughDanger": "必須經過因擁擠而危險的區域才能到達。請依照工作人員的引導",
+      "crowdLegend": "擁擠"
     },
     "floor": {
       "title": "目前樓層",
-      "placeholderName": "1樓"
+      "placeholderName": "1樓",
+      "selectLabel": "顯示樓層"
     },
     "congestion": {
       "title": "擁擠狀況",

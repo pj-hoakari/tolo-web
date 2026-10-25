@@ -3,6 +3,7 @@ import type {
   GraphData,
 } from "@/features/tenant/management/graph/type";
 import reproductions from "./graphLayoutReproductions.json";
+import { sampleGuideMapGraph } from "./guest";
 
 export const LAYOUT_FIXTURE_KEY = "tolo-layout-fixture";
 export const layoutFixtureNames = [
@@ -16,6 +17,7 @@ export const layoutSearchSeeds = [
 ];
 
 export function layoutFixture(name: string): GraphData | undefined {
+  if (name === "guide-map") return structuredClone(sampleGuideMapGraph);
   const fixed = (reproductions as Record<string, GraphData>)[name];
   if (fixed) return structuredClone(fixed);
   const match = /^issue249-seed-(\d+)$/.exec(name);

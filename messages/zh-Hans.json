@@ -459,22 +459,35 @@
       "title": "导览图",
       "hint": "选择目的地以显示路线",
       "currentLocation": "当前位置",
-      "destinations": {
-        "hall": "大厅",
-        "goods": "商品区",
-        "cafe": "咖啡厅",
-        "exit": "出口"
-      },
       "destinationsLabel": "目的地",
       "expand": "放大地图",
       "collapse": "缩小地图",
       "search": "搜索目的地",
       "noResults": "无结果",
-      "reset": "重置"
+      "reset": "重置",
+      "goal": "目的地",
+      "rideTo": "乘{via}到{floor}",
+      "arriveFrom": "从{floor}到达",
+      "connectors": {
+        "stairs": "楼梯",
+        "escalator": "自动扶梯",
+        "elevator": "电梯"
+      },
+      "walkStep": "{floor}：{from} → {to}",
+      "rideStep": "{via}：{from} → {to}",
+      "noRoute": "未找到前往该目的地的路线",
+      "zoomInHint": "点按地图放大",
+      "zoomOutHint": "拖动移动 · 点按查看全图",
+      "closed": "（禁止通行）",
+      "crowdAvoided": "这是避开拥挤区域的路线",
+      "crowdRerouted": "由于拥挤情况发生变化，已更改路线",
+      "crowdThroughDanger": "必须经过因拥挤而危险的区域才能到达。请听从工作人员的引导",
+      "crowdLegend": "拥挤"
     },
     "floor": {
       "title": "当前楼层",
-      "placeholderName": "1层"
+      "placeholderName": "1层",
+      "selectLabel": "显示楼层"
     },
     "congestion": {
       "title": "拥挤状况",

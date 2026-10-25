@@ -88,6 +88,33 @@
   /* ページ背景グロー（中央→外側） */
   --guest-glow-from: oklch(0.96 0.013 82);
   --guest-glow-to: oklch(0.9 0.025 68);
+  /* 案内マップ：下地と、案内マップエディタの色キーごとの塗り・線・文字。
+     ゲスト画面の落ち着いた暖色に合わせ、原色ではなく淡い（ダークでは沈んだ）トーンにする */
+  --guest-map-ground: oklch(0.945 0.014 78);
+  --guest-map-indigo-fill: oklch(0.91 0.04 268);
+  --guest-map-indigo-stroke: oklch(0.7 0.07 268);
+  --guest-map-indigo-ink: oklch(0.36 0.06 268);
+  --guest-map-rose-fill: oklch(0.91 0.04 10);
+  --guest-map-rose-stroke: oklch(0.7 0.07 10);
+  --guest-map-rose-ink: oklch(0.36 0.06 10);
+  --guest-map-amber-fill: oklch(0.91 0.04 75);
+  --guest-map-amber-stroke: oklch(0.7 0.07 75);
+  --guest-map-amber-ink: oklch(0.36 0.06 75);
+  --guest-map-emerald-fill: oklch(0.91 0.04 155);
+  --guest-map-emerald-stroke: oklch(0.7 0.07 155);
+  --guest-map-emerald-ink: oklch(0.36 0.06 155);
+  --guest-map-sky-fill: oklch(0.91 0.04 235);
+  --guest-map-sky-stroke: oklch(0.7 0.07 235);
+  --guest-map-sky-ink: oklch(0.36 0.06 235);
+  --guest-map-violet-fill: oklch(0.91 0.04 300);
+  --guest-map-violet-stroke: oklch(0.7 0.07 300);
+  --guest-map-violet-ink: oklch(0.36 0.06 300);
+  --guest-map-slate-fill: oklch(0.91 0.012 70);
+  --guest-map-slate-stroke: oklch(0.7 0.02 70);
+  --guest-map-slate-ink: oklch(0.36 0.02 70);
+  /* 案内マップの混雑の重ね表示（中・高） */
+  --guest-map-crowd-mid: oklch(0.78 0.13 80);
+  --guest-map-crowd-high: oklch(0.6 0.19 28);
 }
 
 .dark {
@@ -105,6 +132,31 @@
   --guest-room-sky: oklch(0.4 0.045 238);
   --guest-glow-from: oklch(0.16 0.008 62);
   --guest-glow-to: oklch(0.1 0.004 60);
+  /* 案内マップ（ダーク）：下地はカードより少し明るく、部屋は沈んだトーン・文字は明るく */
+  --guest-map-ground: oklch(0.255 0.01 62);
+  --guest-map-indigo-fill: oklch(0.36 0.045 268);
+  --guest-map-indigo-stroke: oklch(0.52 0.06 268);
+  --guest-map-indigo-ink: oklch(0.92 0.02 268);
+  --guest-map-rose-fill: oklch(0.36 0.045 10);
+  --guest-map-rose-stroke: oklch(0.52 0.06 10);
+  --guest-map-rose-ink: oklch(0.92 0.02 10);
+  --guest-map-amber-fill: oklch(0.36 0.045 75);
+  --guest-map-amber-stroke: oklch(0.52 0.06 75);
+  --guest-map-amber-ink: oklch(0.92 0.02 75);
+  --guest-map-emerald-fill: oklch(0.36 0.045 155);
+  --guest-map-emerald-stroke: oklch(0.52 0.06 155);
+  --guest-map-emerald-ink: oklch(0.92 0.02 155);
+  --guest-map-sky-fill: oklch(0.36 0.045 235);
+  --guest-map-sky-stroke: oklch(0.52 0.06 235);
+  --guest-map-sky-ink: oklch(0.92 0.02 235);
+  --guest-map-violet-fill: oklch(0.36 0.045 300);
+  --guest-map-violet-stroke: oklch(0.52 0.06 300);
+  --guest-map-violet-ink: oklch(0.92 0.02 300);
+  --guest-map-slate-fill: oklch(0.36 0.012 70);
+  --guest-map-slate-stroke: oklch(0.52 0.016 70);
+  --guest-map-slate-ink: oklch(0.92 0.01 70);
+  --guest-map-crowd-mid: oklch(0.75 0.12 80);
+  --guest-map-crowd-high: oklch(0.65 0.18 28);
 }
 
 /* ゲストページ背景：灯篭のような暖かいグロー（中央が明るく外側ほど暗い）。

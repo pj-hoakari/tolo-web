@@ -23,16 +23,17 @@ export function GuestHeader({
 
   return (
     <header className="border-b border-primary/12 bg-secondary">
-      <div className="mx-auto flex w-full max-w-md items-start justify-between px-4 py-4">
-        <div className="min-w-0">
+      <div className="mx-auto flex w-full max-w-md items-center justify-between gap-3 px-4 py-3 sm:py-4">
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-medium tracking-wide text-primary/55">
             {t("pageSubtitle")}
           </p>
-          <h1 className="text-xl font-bold wrap-break-word text-primary">
+          {/* スマホでは右側のボタン群で幅が狭くなるため、長い名前は 2 行までで省略する */}
+          <h1 className="line-clamp-2 text-lg font-bold wrap-break-word text-primary sm:text-xl">
             {tenantName}
           </h1>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5">
           <PwaInstall compact />
           {showStaffMessages && (
             <StaffMessageBell tenantId={tenantId} eventId={eventId} />

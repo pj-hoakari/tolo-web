@@ -248,8 +248,8 @@ test.describe("online standalone app", () => {
     ).toBeVisible();
     await expect(installButton(page)).toHaveCount(0);
     const search = page.getByRole("textbox", { name: "目的地を検索" });
-    await search.fill("たこ");
-    await page.getByRole("button", { name: "たこ焼き", exact: true }).click();
+    await search.fill("204");
+    await page.getByRole("button", { name: /204/ }).click();
     await expect(search).toHaveValue("");
     await expect(
       page.getByRole("button", { name: "リセット", exact: true }),
