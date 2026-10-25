@@ -12,18 +12,18 @@ const meta = {
   args: {
     queues: [
       {
-        id: "q-goods",
-        name: "グッズ売り場",
+        id: "q-hall-6f",
+        name: "6F ホール",
         waitTime: "約13分",
-        recommendedGates: "おすすめの入口: 西ゲート",
+        recommendedGates: "おすすめの入口: 階段",
       },
       {
-        id: "q-cafe",
-        name: "カフェ",
+        id: "q-lounge-4f",
+        name: "4F ラウンジ",
         waitTime: "約3分",
-        recommendedGates: "おすすめの入口: カフェ入口、南口",
+        recommendedGates: "おすすめの入口: ラウンジ入口、エレベーター",
       },
-      { id: "q-hall", name: "ホール", waitTime: "約25分" },
+      { id: "q-office-3f", name: "3F 職員室", waitTime: "約25分" },
     ],
   },
 } satisfies Meta<typeof QueuesView>;
