@@ -251,7 +251,7 @@ importers:
         version: 2.1.1
       firebase:
         specifier: ^13.0.0
-        version: 13.0.0
+        version: 13.1.0
       lucide-react:
         specifier: ^1.21.0
         version: 1.61.0(@types/react@19.3.0)(react@19.3.1)
@@ -12132,7 +12132,7 @@ snapshots:
     dependencies:
       locate-path: 3.0.0
 
-  firebase@13.0.0:
+  firebase@13.1.0:
     dependencies:
       "@firebase/ai": 3.0.0(@firebase/app-types@0.9.6)(@firebase/app@0.16.3)
       "@firebase/analytics": 0.10.25(@firebase/app@0.16.3)
