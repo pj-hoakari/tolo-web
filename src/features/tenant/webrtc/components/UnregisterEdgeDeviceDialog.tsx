@@ -82,7 +82,7 @@ export function UnregisterEdgeDeviceDialog({
                 </DialogDescription>
               </DialogHeader>
               {unregistration.kind === "failed" && (
-                <p role="alert" className="text-destructive text-sm">
+                <p role="alert" className="text-sm text-destructive">
                   {unregistration.message}
                 </p>
               )}

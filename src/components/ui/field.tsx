@@ -16,7 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const labelVariants = cva([
-  "text-sm font-medium leading-none",
+  "text-sm leading-none font-medium",
   /* Disabled */
   "disabled:cursor-not-allowed disabled:opacity-70",
   /* Invalid */
@@ -30,7 +30,7 @@ const Label = ({ className, ...props }: AriaLabelProps) => (
 function FormDescription({ className, ...props }: AriaTextProps) {
   return (
     <AriaText
-      className={cn("text-muted-foreground text-sm", className)}
+      className={cn("text-sm text-muted-foreground", className)}
       {...props}
       slot="description"
     />
@@ -40,7 +40,7 @@ function FormDescription({ className, ...props }: AriaTextProps) {
 function FieldError({ className, ...props }: AriaFieldErrorProps) {
   return (
     <AriaFieldError
-      className={cn("font-medium text-destructive text-sm", className)}
+      className={cn("text-sm font-medium text-destructive", className)}
       {...props}
     />
   );
@@ -52,7 +52,7 @@ const fieldGroupVariants = cva("", {
       default: [
         "relative flex h-10 w-full items-center overflow-hidden rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background",
         /* Focus Within */
-        "focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+        "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:outline-none",
         /* Disabled */
         "disabled:opacity-50",
       ],

@@ -14,8 +14,8 @@ export function ExternalProperties({ node }: ExternalPropertiesProps) {
   return (
     <div className="space-y-3 rounded-md border border-border bg-card p-3">
       <SelectionHeader kind="node" id={node.id} />
-      <p className="font-semibold text-foreground text-sm">{node.data.label}</p>
-      <p className="text-muted-foreground text-xs">
+      <p className="text-sm font-semibold text-foreground">{node.data.label}</p>
+      <p className="text-xs text-muted-foreground">
         {tDescription("EXTERNAL")}
       </p>
       {node.data.notices?.map((notice) => (

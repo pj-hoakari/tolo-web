@@ -24,7 +24,7 @@ export function EdgeDirectionField({
 
   return (
     <div>
-      <p className="mb-1 font-medium text-[11px] text-muted-foreground">
+      <p className="mb-1 text-[11px] font-medium text-muted-foreground">
         {t("direction")}
       </p>
       <ToggleButtonGroup
@@ -40,14 +40,14 @@ export function EdgeDirectionField({
         <Toggle
           id="both"
           isDisabled={bothDisabled}
-          className="h-auto flex-1 rounded-sm selected:bg-background px-2 py-1 font-medium selected:text-foreground text-xs selected:shadow-sm"
+          className="selected:bg-background selected:text-foreground selected:shadow-sm h-auto flex-1 rounded-sm px-2 py-1 text-xs font-medium"
         >
           {t("both")}
         </Toggle>
         <Toggle
           id="oneway"
           isDisabled={onewayDisabled}
-          className="h-auto flex-1 rounded-sm selected:bg-background px-2 py-1 font-medium selected:text-foreground text-xs selected:shadow-sm"
+          className="selected:bg-background selected:text-foreground selected:shadow-sm h-auto flex-1 rounded-sm px-2 py-1 text-xs font-medium"
         >
           {t("oneway")}
         </Toggle>

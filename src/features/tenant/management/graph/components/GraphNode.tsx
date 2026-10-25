@@ -168,7 +168,7 @@ function NodeTypeBadge({
   return (
     <div className="graph-node-type-badge pointer-events-none absolute -top-1 -left-1 z-10 flex items-center gap-1 rounded-full border border-border bg-card px-2 py-1">
       <NodeTypeIcon type={type} className="size-4" />
-      <span className="font-medium text-[10px] text-muted-foreground">
+      <span className="text-[10px] font-medium text-muted-foreground">
         {label}
       </span>
     </div>

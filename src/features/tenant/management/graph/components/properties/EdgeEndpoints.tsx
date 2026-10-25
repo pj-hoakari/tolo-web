@@ -17,7 +17,7 @@ export function EdgeEndpoints({
   direction,
 }: EdgeEndpointsProps) {
   return (
-    <div className="rounded-md bg-muted p-2 text-foreground text-xs">
+    <div className="rounded-md bg-muted p-2 text-xs text-foreground">
       <div className="flex items-center gap-2">
         <span className="font-medium">{sourceLabel}</span>
         <span className="font-mono text-base text-muted-foreground">

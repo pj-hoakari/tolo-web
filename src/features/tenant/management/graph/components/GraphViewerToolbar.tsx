@@ -22,8 +22,8 @@ export function GraphViewerToolbar({
   const t = useTranslations("Graph.viewer");
 
   return (
-    <div className="flex items-center justify-between gap-3 border-border border-b bg-card px-4 py-2">
-      <p className="shrink-0 font-semibold text-foreground text-sm">
+    <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-4 py-2">
+      <p className="shrink-0 text-sm font-semibold text-foreground">
         {t("title")}
       </p>
       <div className="flex flex-wrap items-center justify-end gap-2">
@@ -39,7 +39,7 @@ export function GraphViewerToolbar({
             {t("edit")}
           </Link>
         ) : null}
-        <div className="ml-1 border-border border-l pl-2">
+        <div className="ml-1 border-l border-border pl-2">
           <Button size="sm" onPress={onSave}>
             {t("save")}
           </Button>

@@ -62,7 +62,7 @@ const SelectTrigger = ({ className, children, ...props }: AriaButtonProps) => (
         /* Disabled */
         "disabled:cursor-not-allowed disabled:opacity-50",
         /* Focused */
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none",
         className,
       ),
     )}
@@ -131,7 +131,7 @@ function JollySelect<T extends object>({
         <SelectValue />
       </SelectTrigger>
       {description && (
-        <Text className="text-muted-foreground text-sm" slot="description">
+        <Text className="text-sm text-muted-foreground" slot="description">
           {description}
         </Text>
       )}

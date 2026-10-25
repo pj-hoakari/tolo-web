@@ -28,7 +28,7 @@ export default async function TenantManagement({
   return (
     <div className="flex h-screen flex-col">
       <header className="flex w-full items-center justify-between px-10 py-5">
-        <h2 className="font-bold text-2xl">{t("title", { tenantId })}</h2>
+        <h2 className="text-2xl font-bold">{t("title", { tenantId })}</h2>
         <div className="flex items-center gap-2">
           <Link href={observationPath(eventId)} variant="ghost" size="sm">
             {t("observationDevicesLink")}

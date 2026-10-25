@@ -36,13 +36,13 @@ const Checkbox = ({ className, children, ...props }: AriaCheckboxProps) => (
           className={cn(
             "flex size-4 shrink-0 items-center justify-center rounded-sm border border-primary text-current ring-offset-background",
             /* Focus Visible */
-            "group-focus-visible/checkbox:outline-none group-focus-visible/checkbox:ring-2 group-focus-visible/checkbox:ring-ring group-focus-visible/checkbox:ring-offset-2",
+            "group-focus-visible/checkbox:ring-2 group-focus-visible/checkbox:ring-ring group-focus-visible/checkbox:ring-offset-2 group-focus-visible/checkbox:outline-none",
             /* Selected */
-            "group-indeterminate/checkbox:bg-primary group-indeterminate/checkbox:text-primary-foreground group-selected/checkbox:bg-primary group-selected/checkbox:text-primary-foreground",
+            "group-selected/checkbox:bg-primary group-selected/checkbox:text-primary-foreground group-indeterminate/checkbox:bg-primary group-indeterminate/checkbox:text-primary-foreground",
             /* Disabled */
             "group-disabled/checkbox:cursor-not-allowed group-disabled/checkbox:opacity-50",
             /* Invalid */
-            "group-invalid/checkbox:border-destructive group-invalid/checkbox:group-selected/checkbox:bg-destructive group-invalid/checkbox:group-selected/checkbox:text-destructive-foreground",
+            "group-invalid/checkbox:group-selected/checkbox:bg-destructive group-invalid/checkbox:group-selected/checkbox:text-destructive-foreground group-invalid/checkbox:border-destructive",
             /* Resets */
             "focus:outline-none focus-visible:outline-none",
           )}
@@ -85,7 +85,7 @@ function JollyCheckboxGroup({
           <Label>{label}</Label>
           {children}
           {description && (
-            <Text className="text-muted-foreground text-sm" slot="description">
+            <Text className="text-sm text-muted-foreground" slot="description">
               {description}
             </Text>
           )}

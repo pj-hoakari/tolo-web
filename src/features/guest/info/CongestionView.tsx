@@ -42,14 +42,14 @@ export function CongestionView({
 }: CongestionViewProps) {
   return (
     <InfoCard title={title}>
-      {message && <p className="text-primary/55 text-sm">{message}</p>}
+      {message && <p className="text-sm text-primary/55">{message}</p>}
       <ul className="flex flex-col gap-2.5">
         {areas.map((area) => (
           <li key={area.id} className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-primary text-sm">
+            <span className="flex items-center gap-2 text-sm text-primary">
               {area.name}
               {area.danger && (
-                <span className="rounded-full bg-guest-notify px-2 py-0.5 font-bold text-secondary text-xs">
+                <span className="rounded-full bg-guest-notify px-2 py-0.5 text-xs font-bold text-secondary">
                   {dangerLabel}
                 </span>
               )}
@@ -58,7 +58,7 @@ export function CongestionView({
               <span
                 className={`h-2.5 w-2.5 rounded-full ${LEVEL_DOT[area.level]}`}
               />
-              <span className="w-8 text-right font-medium text-primary/55 text-sm">
+              <span className="w-8 text-right text-sm font-medium text-primary/55">
                 {levelLabels[area.level]}
               </span>
             </span>
@@ -66,7 +66,7 @@ export function CongestionView({
         ))}
       </ul>
       {updatedAt && (
-        <p className="mt-3 text-right text-primary/55 text-xs">{updatedAt}</p>
+        <p className="mt-3 text-right text-xs text-primary/55">{updatedAt}</p>
       )}
     </InfoCard>
   );
