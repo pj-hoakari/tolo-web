@@ -21,19 +21,19 @@ export function sampleGuestCrowd(language: string): GuestCrowdSnapshot {
     takenAt: "2026-06-15T05:28:00.000Z",
     crowd: [
       {
-        id: "pointId:p-elevator-1f",
+        id: "pointId:n_fc14f2f4",
         name: name({ ja: "1F エレベーター前", en: "1F elevators" }, language),
         level: "high",
         danger: true,
       },
       {
-        id: "pointId:p-hall-6f",
+        id: "pointId:n_ca0bb1fc",
         name: name({ ja: "6F ホール", en: "6F Hall" }, language),
         level: "mid",
         danger: false,
       },
       {
-        id: "pointId:p-corridor-4f",
+        id: "pointId:n_12408172",
         name: name({ ja: "4F 廊下", en: "4F corridor" }, language),
         level: "low",
         danger: false,
@@ -59,12 +59,12 @@ export function sampleGuestQueues(language: string): GuestQueue[] {
       waitTimeMinutes: 12.2,
       gates: [
         {
-          pointId: "g-elevator",
+          pointId: "n_0dfb7c9e",
           name: name({ ja: "エレベーター", en: "Elevators" }, language),
           recommended: false,
         },
         {
-          pointId: "g-stairs",
+          pointId: "n_99fe5704",
           name: name({ ja: "階段", en: "Stairs" }, language),
           recommended: true,
         },
@@ -76,7 +76,7 @@ export function sampleGuestQueues(language: string): GuestQueue[] {
       waitTimeMinutes: 3,
       gates: [
         {
-          pointId: "g-lounge",
+          pointId: "n_6f8f9cc6",
           name: name({ ja: "ラウンジ入口", en: "Lounge entrance" }, language),
           recommended: true,
         },

@@ -459,15 +459,15 @@ test("案内マップのグラフを指定して開くと KCG本館の 1F から
   await page.goto("/event/test/management/graph/edit?layoutFixture=guide-map");
 
   for (const [id, label] of [
-    ["g-1f", "1F"],
-    ["g-2f", "2F"],
-    ["g-3f", "3F"],
-    ["g-4f", "4F"],
-    ["g-5f", "5F"],
-    ["g-6f", "6Fホール"],
+    ["g_0eb36458", "1F"],
+    ["g_73abacb8", "2F"],
+    ["g_a3cd32be", "3F"],
+    ["g_c6f20eff", "4F"],
+    ["g_2ea28f93", "5F"],
+    ["g_6db0e5cb", "6Fホール"],
   ])
     await expect(node(page, id)).toContainText(label);
-  await expect(node(page, "p-hall-6f")).toContainText("ホール");
-  await expect(node(page, "p-elevator-1f")).toContainText("エレベーター");
+  await expect(node(page, "n_ca0bb1fc")).toContainText("ホール");
+  await expect(node(page, "n_fc14f2f4")).toContainText("エレベーター");
   await expect(node(page, "ph_booth")).toHaveCount(0);
 });

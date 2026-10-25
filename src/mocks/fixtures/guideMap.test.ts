@@ -8,7 +8,12 @@ import {
   isGroupNode,
   isPointNode,
 } from "@/features/tenant/management/graph/type";
-import { sampleGuestCrowd, sampleGuideMap, sampleGuideMapGraph } from "./guest";
+import {
+  sampleGuestCrowd,
+  sampleGuestQueues,
+  sampleGuideMap,
+  sampleGuideMapGraph,
+} from "./guest";
 
 const { graph, layout } = sampleGuideMap();
 const pointIds = new Set(graph.points.map((p) => p.pointId));
@@ -45,6 +50,15 @@ describe("案内マップのフィクスチャ（KCG本館）", () => {
       expect(nodes.some((n) => n.parentId === g.id)).toBe(true);
   });
 
+  it("グラフの ID はエディタが採番する形式（種類の接頭辞と 8 桁の 16 進）になっている", () => {
+    for (const n of sampleGuideMapGraph.nodes)
+      expect(n.id).toMatch(
+        isGroupNode(n) ? /^g_[0-9a-f]{8}$/ : /^n_[0-9a-f]{8}$/,
+      );
+    for (const e of sampleGuideMapGraph.edges)
+      expect(e.id).toMatch(/^e_[0-9a-f]{8}$/);
+  });
+
   it("グラフのグループはレイアウトのフロアと同じ数だけある", () => {
     expect(sampleGuideMapGraph.nodes.filter(isGroupNode)).toHaveLength(
       layout.floors.length,
@@ -70,5 +84,10 @@ describe("案内マップのフィクスチャ（KCG本館）", () => {
       const [kind, value] = id.split(":");
       expect(kind === "pointId" ? pointIds : routeIds).toContain(value);
     }
+  });
+
+  it("行列のモックの入口はゲスト向けのグラフにあるポイントを指す", () => {
+    for (const q of sampleGuestQueues("ja"))
+      for (const g of q.gates) expect(pointIds).toContain(g.pointId);
   });
 });

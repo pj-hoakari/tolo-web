@@ -5,7 +5,7 @@ import { toGuestGuideMapGraph } from "./guideMapGraph";
 const graph: GraphData = {
   nodes: [
     {
-      id: "g-1f",
+      id: "g_1f000001",
       type: "graphGroup",
       position: { x: 0, y: 0 },
       width: 400,
@@ -13,9 +13,9 @@ const graph: GraphData = {
       data: { labels: { ja: "1F" } },
     },
     {
-      id: "p-hall",
+      id: "n_4a110001",
       type: "graph",
-      parentId: "g-1f",
+      parentId: "g_1f000001",
       position: { x: 40, y: 60 },
       data: {
         labels: { ja: "ホール", en: "Hall" },
@@ -24,14 +24,14 @@ const graph: GraphData = {
       },
     },
     {
-      id: "p-corridor",
+      id: "n_c0001001",
       type: "graph",
-      parentId: "g-1f",
+      parentId: "g_1f000001",
       position: { x: 200, y: 60 },
       data: { labels: { ja: "廊下" }, nodeType: "TRANSIT_ONLY" },
     },
     {
-      id: "external",
+      id: "n_e0000001",
       type: "graph",
       position: { x: 600, y: 60 },
       data: { labels: {}, nodeType: "EXTERNAL" },
@@ -39,10 +39,10 @@ const graph: GraphData = {
   ],
   edges: [
     {
-      id: "r-hall-corridor",
+      id: "e_4a11c001",
       type: "graph",
-      source: "p-hall",
-      target: "p-corridor",
+      source: "n_4a110001",
+      target: "n_c0001001",
       data: {
         direction: "oneway",
         label: "正面通路",
@@ -50,10 +50,10 @@ const graph: GraphData = {
       },
     },
     {
-      id: "r-corridor-external",
+      id: "e_c001e001",
       type: "graph",
-      source: "p-corridor",
-      target: "external",
+      source: "n_c0001001",
+      target: "n_e0000001",
       data: { direction: "both" },
     },
   ],
@@ -63,12 +63,12 @@ describe("toGuestGuideMapGraph", () => {
   it("ポイントは ID・ラベル・種別だけを渡し、位置・グループ・観測点は渡さない", () => {
     expect(toGuestGuideMapGraph(graph).points).toEqual([
       {
-        pointId: "p-hall",
+        pointId: "n_4a110001",
         labels: { ja: "ホール", en: "Hall" },
         nodeType: "GOAL",
       },
       {
-        pointId: "p-corridor",
+        pointId: "n_c0001001",
         labels: { ja: "廊下" },
         nodeType: "TRANSIT_ONLY",
       },
@@ -78,9 +78,9 @@ describe("toGuestGuideMapGraph", () => {
   it("ルートは端点・方向・ラベルだけを渡し、会場の外のポイントにつながるルートは渡さない", () => {
     expect(toGuestGuideMapGraph(graph).routes).toEqual([
       {
-        routeId: "r-hall-corridor",
-        source: "p-hall",
-        target: "p-corridor",
+        routeId: "e_4a11c001",
+        source: "n_4a110001",
+        target: "n_c0001001",
         direction: "oneway",
         label: "正面通路",
       },

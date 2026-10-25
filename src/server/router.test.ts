@@ -324,7 +324,7 @@ describe("guest", () => {
 
     expect(guideMap).toEqual(sampleGuideMap());
     expect(guideMap.graph.points).toContainEqual({
-      pointId: "p-elevator-1f",
+      pointId: "n_fc14f2f4",
       labels: { ja: "エレベーター", en: "Elevator" },
       nodeType: "TRANSIT_ONLY",
     });
