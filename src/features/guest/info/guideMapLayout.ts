@@ -1,6 +1,6 @@
 /**
- * 案内マップの共通スキーマ（guide-map-poc の「会場マップ・スタジオ」が書き出す JSON）。
- * 作成ツール側の lib/venue-map.ts と同じ形。座標はすべて px・左上原点。
+ * 案内マップの共通スキーマ（guide-map-poc の「案内マップエディタ」が書き出す JSON）。
+ * 案内マップエディタ側の lib/venue-map.ts と同じ形。座標はすべて px・左上原点。
  *
  * - 四角・丸の場所（部屋・屋台）は「壁」、そのすき間が「歩ける道」になる
  * - 階段・エスカレーター・エレベーターは各階に 1 つずつ置き、同じ link 同士が階をまたいでつながる
@@ -11,16 +11,16 @@ export type Pt = { x: number; y: number };
 export type PlaceShape = "pin" | "rect" | "circle";
 /** 階をまたぐ移動手段 */
 export type ConnectorType = "stairs" | "escalator" | "elevator";
-/** 上り＝floors 配列の後ろの階へ。エスカレーターの一方通行に使う */
+/** 上り＝groups 配列の後ろの階へ。エスカレーターの一方通行に使う */
 export type ConnectorDirection = "both" | "up" | "down";
 
 /** 下敷きの会場画像（data URL で自己完結） */
 export type FloorImage = { src: string; w: number; h: number };
-export type Floor = { id: string; name: string; image?: FloorImage };
+export type GuideMapLayoutGroup = { groupId: string; image?: FloorImage };
 
 type Base = {
   id: string;
-  floor: string;
+  groupId: string;
   title?: string;
   description?: string;
   photo?: string;
@@ -29,9 +29,9 @@ type Base = {
   /** 通行止め。経路探索では通らない */
   closed?: boolean;
   /** グラフ（グラフ編集）のポイント ID。混雑状況と結び付けて混雑回避ルートに使う */
-  graphPointId?: string;
+  pointId?: string;
   /** グラフのルート（通路）ID。廊下などのエリア・線に付ける */
-  graphRouteId?: string;
+  routeId?: string;
 };
 
 export type PlaceObject = Base & {
@@ -45,9 +45,9 @@ export type PlaceObject = Base & {
   h: number;
   /** rect / circle の中心にピンを付ける */
   pin?: boolean;
-  /** 階移動ポイントなら移動手段 */
+  /** 階移動手段ならその種類 */
   connector?: ConnectorType;
-  /** 同じ値の階移動ポイント同士が階をまたいでつながる */
+  /** 同じ値の階移動手段同士が階をまたいでつながる */
   link?: string;
   direction?: ConnectorDirection;
   /** ピン型の階移動マークの幅・高さ（px） */
@@ -60,8 +60,8 @@ export type ConnectorObject = PlaceObject & {
   connector: ConnectorType;
   link: string;
 };
-export type RouteObject = Base & {
-  kind: "route";
+export type LineObject = Base & {
+  kind: "line";
   points: Pt[];
   width: number;
   dash: boolean;
@@ -73,18 +73,17 @@ export type TextObject = Base & {
   y: number;
   size: number;
 };
-export type MapObject = PlaceObject | RouteObject | AreaObject | TextObject;
+export type MapObject = PlaceObject | LineObject | AreaObject | TextObject;
 
 export type GuideMapLayout = {
   version: 1;
-  floors: Floor[];
-  activeFloorId: string;
+  groups: GuideMapLayoutGroup[];
   objects: MapObject[];
   /** マップ上向きが指す方位角（度）。0=未設定 */
   north: number;
   /** 1px あたりのメートル（0=未設定） */
   scale: number;
-  /** 現在地（案内の出発点）にする場所の id。作成ツールの誘導プレビューで「出発」に選んだ場所 */
+  /** 既定の出発地にする場所の id（QR の設置箇所から現在地が決まらないときに使う）。案内マップエディタの経路プレビューで「出発」に選んだ場所 */
   startId?: string;
 };
 
@@ -107,8 +106,8 @@ export function crowdByObject(
   const out = new Map<string, CrowdState>();
   for (const o of objects) {
     const s =
-      (o.graphPointId && byGraph.get(`pointId:${o.graphPointId}`)) ||
-      (o.graphRouteId && byGraph.get(`routeId:${o.graphRouteId}`));
+      (o.pointId && byGraph.get(`pointId:${o.pointId}`)) ||
+      (o.routeId && byGraph.get(`routeId:${o.routeId}`));
     if (s) out.set(o.id, s);
   }
   return out;
@@ -117,23 +116,23 @@ export function crowdByObject(
 export const isConnector = (o: MapObject): o is ConnectorObject =>
   o.kind === "place" && Boolean(o.connector && o.link);
 
-/** 作成ツールでのピン型の階移動マークの既定の大きさ（px）。経路探索で壁として使う */
+/** 案内マップエディタでのピン型の階移動マークの既定の大きさ（px）。経路探索で壁として使う */
 export const MARKER_SIZE_DEFAULT = 28;
 
 /**
  * ピン型の階移動マークの大きさ（中心が x,y の矩形）。
- * 作成ツールで大きさを指定していなければ fallback（スマホで押せる既定の大きさ）を使う。
+ * 案内マップエディタで大きさを指定していなければ fallback（スマホで押せる既定の大きさ）を使う。
  */
 export const markBoxOf = (o: PlaceObject, fallback: number) => ({
   w: o.markW ?? o.markerSize ?? fallback,
   h: o.markH ?? o.markerSize ?? fallback,
 });
 
-/** 目的地として選べる場所（名前のある部屋・ピン。階移動ポイントは除く） */
+/** 目的地として選べる場所（名前のある部屋・ピン。階移動手段は除く） */
 export const isDestination = (o: MapObject): o is PlaceObject =>
   o.kind === "place" && !isConnector(o) && Boolean(o.title?.trim());
 
-/** 作成ツールの色キー（パレット）。データ側はこのいずれかを color に持つ */
+/** 案内マップエディタの色キー（パレット）。データ側はこのいずれかを color に持つ */
 export const PALETTE_KEYS = [
   "indigo",
   "rose",
@@ -147,7 +146,7 @@ export type PaletteKey = (typeof PALETTE_KEYS)[number];
 
 /**
  * 色キー → 地図の描画色（CSS 変数）。
- * 作成ツールの原色そのままだとゲスト画面の落ち着いた配色から浮くため、
+ * 案内マップエディタの原色そのままだとゲスト画面の落ち着いた配色から浮くため、
  * ゲストテーマ（ライト / ダーク）に合わせたトーンを globals.css の --guest-map-* で持つ。
  * 未知のキーは indigo 扱い。
  */
@@ -163,7 +162,7 @@ export function mapColorOf(key: string) {
 /** フロアの広さ（下敷き画像があればその大きさ、無ければ既定の白紙） */
 export const DEFAULT_FLOOR_W = 1200;
 export const DEFAULT_FLOOR_H = 800;
-export const floorSize = (f: Floor | undefined) => ({
+export const floorSize = (f: GuideMapLayoutGroup | undefined) => ({
   w: f?.image?.w ?? DEFAULT_FLOOR_W,
   h: f?.image?.h ?? DEFAULT_FLOOR_H,
 });
@@ -197,7 +196,7 @@ const CONTENT_MARGIN = 48;
 export function contentBounds(objects: MapObject[]): Rect | null {
   const pts: Pt[] = [];
   for (const o of objects) {
-    if (o.kind === "area" || o.kind === "route") pts.push(...o.points);
+    if (o.kind === "area" || o.kind === "line") pts.push(...o.points);
     else if (o.kind === "text") {
       const half = (o.title?.length ?? 0) * o.size * 0.6;
       pts.push(

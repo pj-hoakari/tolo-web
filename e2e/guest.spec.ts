@@ -425,6 +425,48 @@ test("言語を English に切り替えると目的地の名前がグラフの�
   await expect(page.getByRole("button", { name: /職員室/ })).toHaveCount(0);
 });
 
+test("言語を English に切り替えると現在のフロアの階の名前がグラフのグループの英語のラベルで出る", async ({
+  page,
+}) => {
+  await localeButton(page).click();
+  await page.getByRole("menuitemradio", { name: "English" }).click();
+
+  const floorCard = card(page, "Current floor");
+  await expect(floorCard.getByRole("radio", { name: "6F Hall" })).toBeVisible();
+  await expect(floorCard.getByRole("radio", { name: "6Fホール" })).toHaveCount(
+    0,
+  );
+});
+
+test("4F の QR の URL から開くと案内マップは 4F の現在地から始まる", async ({
+  page,
+}) => {
+  await openGuestPage(page, "/event/test/guest/a84d0e6c2b9f1735");
+
+  await expect(
+    card(page, "現在のフロア").getByRole("radio", { name: "4F" }),
+  ).toBeChecked();
+  await expect(
+    page.getByRole("img", { name: "案内マップ" }).getByText("現在地"),
+  ).toBeVisible();
+});
+
+test("登録のない QR の URL から開くと設置箇所 ID を添えて案内マップを取得し、既定の出発地から始まる", async ({
+  page,
+}) => {
+  const request = page.waitForRequest("**/rpc/guest/getGuideMap");
+  await openGuestPage(page, "/event/test/guest/gate-east");
+  const { json } = (await request).postDataJSON();
+  expect(json).toMatchObject({ eventId: "test", qrLocationId: "gate-east" });
+
+  await expect(
+    card(page, "現在のフロア").getByRole("radio", { name: "1F" }),
+  ).toBeChecked();
+  await expect(
+    page.getByRole("img", { name: "案内マップ" }).getByText("現在地"),
+  ).toBeVisible();
+});
+
 test("言語メニューを開くと 7 つの言語が並び現在の日本語が選ばれている", async ({
   page,
 }) => {

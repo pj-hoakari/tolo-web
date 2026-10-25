@@ -61,7 +61,7 @@ function buildCrowdZones(
     let inside: ((p: Pt) => boolean) | null = null;
     if (o.kind === "area" && o.points.length >= 3)
       inside = (p) => pointInPolygon(p, o.points);
-    else if (o.kind === "route" && o.points.length >= 2) {
+    else if (o.kind === "line" && o.points.length >= 2) {
       const reach = o.width / 2 + CROWD_PAD;
       inside = (p) =>
         o.points.some(

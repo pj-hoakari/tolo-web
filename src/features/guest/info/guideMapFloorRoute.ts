@@ -1,8 +1,8 @@
 /**
  * 階をまたぐ経路探索（guide-map-poc の lib/venue-floor-route.ts と同じ挙動）。
  * - 各階の中は computeRoute（壁を避けた道なり）で歩く
- * - 階と階は階移動ポイント（階段・エスカレーター・エレベーター）でつなぐ。同じ link 同士が移動できる
- * - 出発・目的地・階移動ポイントを頂点にしたグラフで、歩く距離＋乗り換えの手間が最小の道を選ぶ
+ * - 階と階は階移動手段（階段・エスカレーター・エレベーター）でつなぐ。同じ link 同士が移動できる
+ * - 出発・目的地・階移動手段を頂点にしたグラフで、歩く距離＋乗り換えの手間が最小の道を選ぶ
  * - 混雑（crowd）を渡すと混雑回避ルートにする。混んだ階段・エレベーターは手間を重くし、危険の所は通らない。
  *   危険を避けると行けないときだけ、危険を通る道で引き直して throughDanger を立てる
  */
@@ -26,7 +26,7 @@ const TRANSFER_COST: Record<ConnectorType, { base: number; perFloor: number }> =
     escalator: { base: 40, perFloor: 140 },
     elevator: { base: 360, perFloor: 40 },
   };
-/** 混雑した階移動ポイントに足す手間（px 換算）。危険は avoidDanger のとき使わない、そうでなければ DANGER_RIDE_COST */
+/** 混雑した階移動手段に足す手間（px 換算）。危険は avoidDanger のとき使わない、そうでなければ DANGER_RIDE_COST */
 const CROWD_RIDE_COST: Record<CrowdLevel, number> = {
   low: 0,
   mid: 200,
@@ -56,9 +56,9 @@ export type FloorRouteOptions = {
 };
 
 /**
- * 頂点の役割。start＝出発、goal＝目的地、in＝歩いて階移動ポイントに着いた（次は乗るだけ）、
+ * 頂点の役割。start＝出発、goal＝目的地、in＝歩いて階移動手段に着いた（次は乗るだけ）、
  * out＝乗って着いた（次は歩くだけ）。in / out に分けることで、同じ階のまま
- * 階移動ポイントを「近道」として素通りする経路を作らない。
+ * 階移動手段を「近道」として素通りする経路を作らない。
  */
 type Node = {
   id: string;
@@ -76,9 +76,9 @@ const pathLength = (pts: Pt[]) =>
     0,
   );
 
-/** 出発（startId）→目的地（goalId）の経路。階が違えば階移動ポイントを経由する。混雑を渡せば混雑回避ルート */
+/** 出発（startId）→目的地（goalId）の経路。階が違えば階移動手段を経由する。混雑を渡せば混雑回避ルート */
 export function computeFloorRoute(
-  doc: Pick<GuideMapLayout, "floors" | "objects">,
+  doc: Pick<GuideMapLayout, "groups" | "objects">,
   startId: string,
   goalId: string,
   opts: FloorRouteOptions = {},
@@ -92,7 +92,7 @@ export function computeFloorRoute(
 }
 
 function routeOnce(
-  doc: Pick<GuideMapLayout, "floors" | "objects">,
+  doc: Pick<GuideMapLayout, "groups" | "objects">,
   startId: string,
   goalId: string,
   opts: FloorRouteOptions,
@@ -103,25 +103,31 @@ function routeOnce(
   if (!start || !goal || start.kind !== "place" || goal.kind !== "place")
     return { error: "unreachable" };
 
-  const floorIndex = new Map(doc.floors.map((f, i) => [f.id, i]));
+  const floorIndex = new Map(doc.groups.map((g, i) => [g.groupId, i]));
   const connectors = doc.objects
     .filter(isConnector)
-    .filter((c) => floorIndex.has(c.floor));
+    .filter((c) => floorIndex.has(c.groupId));
   const nodes: Node[] = [
-    { id: start.id, floor: start.floor, x: start.x, y: start.y, role: "start" },
-    { id: goal.id, floor: goal.floor, x: goal.x, y: goal.y, role: "goal" },
+    {
+      id: start.id,
+      floor: start.groupId,
+      x: start.x,
+      y: start.y,
+      role: "start",
+    },
+    { id: goal.id, floor: goal.groupId, x: goal.x, y: goal.y, role: "goal" },
     ...connectors.flatMap((c): Node[] => [
-      { id: c.id, floor: c.floor, x: c.x, y: c.y, role: "in", connector: c },
-      { id: c.id, floor: c.floor, x: c.x, y: c.y, role: "out", connector: c },
+      { id: c.id, floor: c.groupId, x: c.x, y: c.y, role: "in", connector: c },
+      { id: c.id, floor: c.groupId, x: c.x, y: c.y, role: "out", connector: c },
     ]),
   ];
 
-  // 出発階から別の階へ行ける階移動ポイントが無ければ、階をまたげない
-  if (start.floor !== goal.floor) {
+  // 出発階から別の階へ行ける階移動手段が無ければ、階をまたげない
+  if (start.groupId !== goal.groupId) {
     const usable = connectors.some(
       (c) =>
-        c.floor === start.floor &&
-        connectors.some((d) => d.link === c.link && d.floor !== c.floor),
+        c.groupId === start.groupId &&
+        connectors.some((d) => d.link === c.link && d.groupId !== c.groupId),
     );
     if (!usable) return { error: "no-connector" };
   }
@@ -134,8 +140,8 @@ function routeOnce(
     if (cached !== undefined) return cached;
     const rev = walkCache.get(`${b.id}>${a.id}`);
     if (rev !== undefined) return rev && [...rev].reverse();
-    const { w, h } = floorSize(doc.floors.find((f) => f.id === a.floor));
-    const objects = doc.objects.filter((o) => o.floor === a.floor);
+    const { w, h } = floorSize(doc.groups.find((g) => g.groupId === a.floor));
+    const objects = doc.objects.filter((o) => o.groupId === a.floor);
     const pts = computeRoute(
       objects,
       { x: a.x, y: a.y },
@@ -147,7 +153,7 @@ function routeOnce(
     walkCache.set(cacheKey, pts);
     return pts;
   };
-  // 階移動ポイント a → b に乗れるか（同じ link・別の階・エスカレーターの向き）と、その手間
+  // 階移動手段 a → b に乗れるか（同じ link・別の階・エスカレーターの向き）と、その手間
   const rideCost = (a: Node, b: Node): number | null => {
     if (
       !a.connector ||

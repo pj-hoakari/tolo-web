@@ -326,17 +326,23 @@ describe("guest", () => {
     expect(guideMap.graph.points).toContainEqual({
       pointId: "n_fc14f2f4",
       labels: { ja: "エレベーター", en: "Elevator" },
-      nodeType: "TRANSIT_ONLY",
     });
-    expect(guideMap.layout.floors.map((f) => f.name)).toEqual([
-      "1F",
-      "2F",
-      "3F",
-      "4F",
-      "5F",
-      "6Fホール",
-    ]);
+    expect(
+      guideMap.layout.groups.map(
+        ({ groupId }) =>
+          guideMap.graph.groups.find((g) => g.groupId === groupId)?.labels.ja,
+      ),
+    ).toEqual(["1F", "2F", "3F", "4F", "5F", "6Fホール"]);
     for (const spy of guestCalls) expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("returns the current point of the QR location with the sample guide map", async () => {
+    const guideMap = await call(router.guest.getGuideMap, {
+      eventId,
+      qrLocationId: "a84d0e6c2b9f1735",
+    });
+
+    expect(guideMap.currentPointId).toBe("n_6f8f9cc6");
   });
 
   it("returns the queues with their gates and without the turnaround count", async () => {

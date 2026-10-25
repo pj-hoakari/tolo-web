@@ -9,12 +9,14 @@ import {
 export type GuestInfoContainerProps = {
   tenantId: string;
   eventId: string;
+  qrLocationId: string;
   components: GuestInfoComponent[];
 };
 
 export function GuestInfoContainer({
   tenantId,
   eventId,
+  qrLocationId,
   components,
 }: GuestInfoContainerProps) {
   return (
@@ -28,7 +30,11 @@ export function GuestInfoContainer({
               : "col-span-2"
           }
         >
-          <Component tenantId={tenantId} eventId={eventId} />
+          <Component
+            tenantId={tenantId}
+            eventId={eventId}
+            qrLocationId={qrLocationId}
+          />
         </div>
       ))}
     </div>

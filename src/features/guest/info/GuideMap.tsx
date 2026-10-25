@@ -41,14 +41,14 @@ const crowdKey = (crowd: CrowdMap) =>
 const routeKey = (route: FloorRouteResult | null) =>
   route && "steps" in route ? JSON.stringify(route.steps) : null;
 
-function GuideMap({ eventId }: GuestInfoComponentProps) {
+function GuideMap({ eventId, qrLocationId }: GuestInfoComponentProps) {
   const t = useTranslations("Guest");
   const [guideMap, setGuideMap] = useState<GuestPolling<GuestGuideMap>>({
     status: "loading",
   });
   useEffect(() => {
     let active = true;
-    orpc.guest.getGuideMap({ eventId }).then(
+    orpc.guest.getGuideMap({ eventId, qrLocationId }).then(
       (data) => {
         if (active) setGuideMap({ status: "ready", data });
       },
@@ -59,7 +59,7 @@ function GuideMap({ eventId }: GuestInfoComponentProps) {
     return () => {
       active = false;
     };
-  }, [eventId]);
+  }, [eventId, qrLocationId]);
   if (guideMap.status !== "ready")
     return (
       <InfoCard title={t("guideMap.title")}>
@@ -73,7 +73,7 @@ function GuideMap({ eventId }: GuestInfoComponentProps) {
 
 function GuideMapContent({
   eventId,
-  guideMap: { graph, layout: doc },
+  guideMap: { graph, layout: doc, currentPointId },
 }: {
   eventId: string;
   guideMap: GuestGuideMap;
@@ -82,24 +82,32 @@ function GuideMapContent({
   const tCongestion = useTranslations("Guest.congestion");
   const locale = useLocale();
 
-  const floorIndex = new Map(doc.floors.map((f, i) => [f.id, i]));
+  const floorIndex = new Map(doc.groups.map((g, i) => [g.groupId, i]));
+  const labelsByGroupId = new Map(
+    graph.groups.map((g) => [g.groupId, g.labels]),
+  );
   const floorNameOf = (id: string) =>
-    doc.floors.find((f) => f.id === id)?.name ?? "";
+    resolveLabel(labelsByGroupId.get(id) ?? {}, locale).text;
   const labelsByPointId = new Map(
     graph.points.map((p) => [p.pointId, p.labels]),
   );
 
   /**
    * 現在地とみなす場所。
-   * 作成ツールで指定した現在地（startId）を使う。指定が無ければ「現在地」「入口」「入場ゲート」などの名前の場所を、
+   * QR の設置箇所のポイントに結び付いた場所を使う。無ければ案内マップエディタで指定した既定の出発地（startId）を、それも無ければ「現在地」「入口」「入場ゲート」などの名前の場所を、
    * 無ければいちばん下の階の場所（目的地 → 階段・エレベーターの順）を、それも無ければ最初の目的地を使う。
-   * TODO: QR / API から現在地（場所 ID）を受け取る。
    */
   const groundPlaces = doc.objects.filter(
     (o): o is PlaceObject =>
-      o.kind === "place" && o.floor === doc.floors[0]?.id,
+      o.kind === "place" && o.groupId === doc.groups[0]?.groupId,
   );
   const start: PlaceObject | undefined =
+    (currentPointId
+      ? doc.objects.find(
+          (o): o is PlaceObject =>
+            o.kind === "place" && o.pointId === currentPointId,
+        )
+      : undefined) ??
     doc.objects.find(
       (o): o is PlaceObject => o.kind === "place" && o.id === doc.startId,
     ) ??
@@ -120,12 +128,12 @@ function GuideMapContent({
   const blankFrame =
     contentBounds(
       doc.objects.filter(
-        (o) => !doc.floors.find((f) => f.id === o.floor)?.image,
+        (o) => !doc.groups.find((g) => g.groupId === o.groupId)?.image,
       ),
     ) ?? undefined;
 
   /** 起動時に表示するフロア（現在地のフロア） */
-  const startFloor = start?.floor ?? doc.activeFloorId ?? doc.floors[0]?.id;
+  const startFloor = start?.groupId ?? doc.groups[0]?.groupId;
 
   // 混雑状況（混雑状況カードと同じ Guest Service の GetCrowd）。グラフ ID で地図のオブジェクトに引き直す
   const crowdPolling = useGuestPolling(
@@ -145,11 +153,14 @@ function GuideMapContent({
   const { activeFloorId: sharedFloorId } = useGuideMapFloor();
   useEffect(() => {
     setGuideMapFloors(
-      doc.floors.map((f) => ({ id: f.id, name: f.name })),
+      doc.groups.map((g) => ({
+        id: g.groupId,
+        labels: graph.groups.find((x) => x.groupId === g.groupId)?.labels ?? {},
+      })),
       startFloor,
     );
     return () => clearGuideMapFloors();
-  }, [doc, startFloor]);
+  }, [doc, graph, startFloor]);
   const activeFloorId = sharedFloorId ?? startFloor;
 
   // 目的地検索の入力と、検索/一覧から選んだ目的地
@@ -158,7 +169,7 @@ function GuideMapContent({
 
   // 表示名（グラフのポイントのラベルを表示言語で解決し、無ければレイアウトの名前を使う）
   const nameOf = (o: MapObject) => {
-    const labels = o.graphPointId && labelsByPointId.get(o.graphPointId);
+    const labels = o.pointId && labelsByPointId.get(o.pointId);
     return (labels && resolveLabel(labels, locale).text) || (o.title ?? "");
   };
 
@@ -206,7 +217,7 @@ function GuideMapContent({
     else if (last.id !== selectedId) setRerouted(false);
     lastRoute.current = { id: selectedId, key: currentRouteKey };
   }, [selectedId, currentRouteKey]);
-  // 現在地が階移動ポイントそのものだと「エレベーター → エレベーター」の歩かない区間ができるので省く
+  // 現在地が階移動手段そのものだと「エレベーター → エレベーター」の歩かない区間ができるので省く
   const steps = (route && "steps" in route ? route.steps : []).filter(
     (s) => !(s.kind === "walk" && s.fromId === s.toId),
   );
@@ -240,10 +251,10 @@ function GuideMapContent({
 
   // 表示中フロアのオブジェクト（名前は表示名に解決しておく）
   const floorObjects = doc.objects
-    .filter((o) => o.floor === activeFloorId)
-    .map((o) => (o.kind === "route" ? o : { ...o, title: nameOf(o) }));
+    .filter((o) => o.groupId === activeFloorId)
+    .map((o) => (o.kind === "line" ? o : { ...o, title: nameOf(o) }));
 
-  // 表示中フロアで歩く区間の誘導線
+  // 表示中フロアで歩く区間の経路線
   const routes = steps.flatMap((s) =>
     s.kind === "walk" && s.floor === activeFloorId ? [s.points] : [],
   );
@@ -305,9 +316,9 @@ function GuideMapContent({
                 onPress={() => pickRoom(o.id)}
               >
                 {nameOf(o)}
-                {doc.floors.length > 1 && (
+                {doc.groups.length > 1 && (
                   <span className="text-xs text-primary/40">
-                    {floorNameOf(o.floor)}
+                    {floorNameOf(o.groupId)}
                   </span>
                 )}
               </Button>
@@ -411,12 +422,13 @@ function GuideMapContent({
     </>
   );
 
-  const floor = doc.floors.find((f) => f.id === activeFloorId) ?? doc.floors[0];
+  const floor =
+    doc.groups.find((g) => g.groupId === activeFloorId) ?? doc.groups[0];
 
   return (
     <GuideMapView
       // フロアを切り替えたら拡大を解いて全体から見せる
-      key={floor.id}
+      key={floor.groupId}
       title={t("title")}
       floor={floor}
       objects={floorObjects}

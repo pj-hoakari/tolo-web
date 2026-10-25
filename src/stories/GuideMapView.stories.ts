@@ -5,12 +5,12 @@ import { computeFloorRoute } from "@/features/guest/info/guideMapFloorRoute";
 import type { GuideMapLayout } from "@/features/guest/info/guideMapLayout";
 import guideMapLayoutFixture from "@/features/guest/info/guideMapLayoutFixture.json";
 
-// guide-map-poc の会場マップ・スタジオが書き出す形式の固定見本（イベント会場 1F・2F）。
+// guide-map-poc の案内マップエディタが書き出す形式の固定見本（イベント会場 1F・2F）。
 // 表示用の mocks/fixtures/guideMapLayout.json は差し替わるので、Story はこちらで状態を固定する
 const doc = guideMapLayoutFixture as unknown as GuideMapLayout;
-const [f1, f2] = doc.floors;
+const [f1, f2] = doc.groups;
 const onFloor = (floorId: string) =>
-  doc.objects.filter((o) => o.floor === floorId);
+  doc.objects.filter((o) => o.groupId === floorId);
 
 // 1F の入場ゲート → 1F のカフェ
 const sameFloor = computeFloorRoute(doc, "p-gate", "r-cafe");
@@ -37,7 +37,7 @@ const meta = {
   args: {
     title: "案内マップ",
     floor: f1,
-    objects: onFloor(f1.id),
+    objects: onFloor(f1.groupId),
     routes: [],
     markers: [{ objectId: "p-gate", label: "現在地" }],
   },
@@ -50,7 +50,7 @@ export const Unselected: Story = {};
 
 export const RouteOnSameFloor: Story = {
   args: {
-    routes: walkOn(sameFloor, f1.id),
+    routes: walkOn(sameFloor, f1.groupId),
     activeId: "r-cafe",
     markers: [
       { objectId: "p-gate", label: "現在地" },
@@ -63,8 +63,8 @@ export const RouteOnSameFloor: Story = {
 export const RouteArrivalFloor: Story = {
   args: {
     floor: f2,
-    objects: onFloor(f2.id),
-    routes: walkOn(otherFloor, f2.id),
+    objects: onFloor(f2.groupId),
+    routes: walkOn(otherFloor, f2.groupId),
     activeId: "r2-hall",
     markers: [{ objectId: "r2-hall", label: "目的地" }],
   },

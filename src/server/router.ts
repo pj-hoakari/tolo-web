@@ -187,6 +187,7 @@ export interface GuestQueue {
 export interface GuestGuideMap {
   graph: GuestGuideMapGraph;
   layout: GuideMapLayout;
+  currentPointId?: string;
 }
 
 export interface GuestMessage {
@@ -421,8 +422,16 @@ export const router = {
         }
       }),
     getGuideMap: os
-      .input(z.object({ eventId: z.string().min(1) }))
-      .handler(async (): Promise<GuestGuideMap> => sampleGuideMap()),
+      .input(
+        z.object({
+          eventId: z.string().min(1),
+          qrLocationId: z.string().optional(),
+        }),
+      )
+      .handler(
+        async ({ input }): Promise<GuestGuideMap> =>
+          sampleGuideMap(input.qrLocationId),
+      ),
     getQueues: os
       .input(guestContentInput)
       .handler(async ({ input }): Promise<{ queues: GuestQueue[] }> => {

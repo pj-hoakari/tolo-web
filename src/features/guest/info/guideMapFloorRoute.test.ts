@@ -43,7 +43,7 @@ function escalatorOnlyDoc(): GuideMapLayout {
   const room = (id: string, floor: string, x: number): PlaceObject => ({
     id,
     kind: "place",
-    floor,
+    groupId: floor,
     color: "sky",
     shape: "pin",
     x,
@@ -55,7 +55,7 @@ function escalatorOnlyDoc(): GuideMapLayout {
   const escalator = (floor: string): PlaceObject => ({
     id: `esc-${floor}`,
     kind: "place",
-    floor,
+    groupId: floor,
     color: "slate",
     shape: "pin",
     x: 600,
@@ -68,11 +68,7 @@ function escalatorOnlyDoc(): GuideMapLayout {
   });
   return {
     version: 1,
-    floors: [
-      { id: "low", name: "1F" },
-      { id: "high", name: "2F" },
-    ],
-    activeFloorId: "low",
+    groups: [{ groupId: "low" }, { groupId: "high" }],
     north: 0,
     scale: 0,
     objects: [
@@ -85,7 +81,7 @@ function escalatorOnlyDoc(): GuideMapLayout {
 }
 
 describe("computeRoute（1 フロア内）", () => {
-  const floor1 = doc.objects.filter((o) => o.floor === "f-1");
+  const floor1 = doc.objects.filter((o) => o.groupId === "f-1");
 
   it("出発から目的地までの点列を返し、始点と終点は指定どおり", () => {
     const gate = place("p-gate");
@@ -110,7 +106,7 @@ describe("computeRoute（1 フロア内）", () => {
     for (const wall of walls) expect(crossesRect(pts, wall)).toBe(false);
   });
 
-  it("誘導線は縦横だけの直角な線になる", () => {
+  it("経路線は縦横だけの直角な線になる", () => {
     const pts =
       computeRoute(floor1, place("p-gate"), place("r-goods"), 1200, 800) ?? [];
 
@@ -155,7 +151,7 @@ describe("computeRoute（1 フロア内）", () => {
       ({
         id,
         kind: "place",
-        floor: "x",
+        groupId: "x",
         color: "slate",
         shape: "rect",
         x,
@@ -198,7 +194,7 @@ describe("computeFloorRoute（フロアをまたぐ）", () => {
     }
   });
 
-  it("別の階なら階移動ポイントで乗り換え、目的地の階を歩いて着く", () => {
+  it("別の階なら階移動手段で乗り換え、目的地の階を歩いて着く", () => {
     const result = steps(computeFloorRoute(doc, "p-gate", "r2-hall"));
     const ride = result.find(
       (s): s is Extract<FloorRouteStep, { kind: "ride" }> => s.kind === "ride",
@@ -225,7 +221,7 @@ describe("computeFloorRoute（フロアをまたぐ）", () => {
     });
   });
 
-  it("出発階から別の階へ行ける階移動ポイントが無ければ no-connector", () => {
+  it("出発階から別の階へ行ける階移動手段が無ければ no-connector", () => {
     const noConnector: GuideMapLayout = {
       ...doc,
       objects: doc.objects.filter((o) => !(o.kind === "place" && o.connector)),
@@ -252,15 +248,15 @@ describe("混雑回避ルート", () => {
 
   it("混雑状況をグラフ ID で地図のオブジェクトに引き直す（1 つの ID に複数のオブジェクト）", () => {
     const objects: MapObject[] = [
-      { ...place("c-ev-f-1"), graphPointId: "ev" },
-      { ...place("c-ev-f-2"), graphPointId: "ev" },
+      { ...place("c-ev-f-1"), pointId: "ev" },
+      { ...place("c-ev-f-2"), pointId: "ev" },
       {
         id: "corridor",
         kind: "area",
-        floor: "f-1",
+        groupId: "f-1",
         color: "slate",
         points: [],
-        graphRouteId: "e1",
+        routeId: "e1",
       },
       place("r-cafe"),
     ];
@@ -300,7 +296,7 @@ describe("混雑回避ルート", () => {
     ).toBe("elevator");
   });
 
-  it("どの階移動ポイントも危険なら、危険を通る道にして throughDanger を立てる", () => {
+  it("どの階移動手段も危険なら、危険を通る道にして throughDanger を立てる", () => {
     const crowd = new Map(
       ["c-ev-f-1", "c-ev-f-2", "c-stairs-f-1", "c-stairs-f-2"].map((id) => [
         id,
@@ -317,7 +313,7 @@ describe("混雑回避ルート", () => {
     const zone: MapObject = {
       id: "zone",
       kind: "area",
-      floor: "x",
+      groupId: "x",
       color: "rose",
       points: [
         { x: 500, y: 0 },

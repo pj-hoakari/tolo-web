@@ -1,30 +1,23 @@
 {
   "version": 1,
-  "activeFloorId": "f-6e7709cd-6f19-4b7b-9070-c7b715201338",
-  "floors": [
+  "groups": [
     {
-      "id": "f-daf09fe3-afbe-4db4-8036-9d0c69731e6e",
-      "name": "1F"
+      "groupId": "g_0eb36458"
     },
     {
-      "id": "f-d83a8f05-ad19-4647-82a9-a46483fe92f8",
-      "name": "2F"
+      "groupId": "g_73abacb8"
     },
     {
-      "id": "f-6e7709cd-6f19-4b7b-9070-c7b715201338",
-      "name": "3F"
+      "groupId": "g_a3cd32be"
     },
     {
-      "id": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
-      "name": "4F"
+      "groupId": "g_c6f20eff"
     },
     {
-      "id": "f-2e889487-f150-4d71-85bc-b50c68671e8f",
-      "name": "5F"
+      "groupId": "g_2ea28f93"
     },
     {
-      "id": "f-a7fb4ee0-d20b-4c96-bcf3-745ad12d9d24",
-      "name": "6Fホール"
+      "groupId": "g_6db0e5cb"
     }
   ],
   "north": 0,
@@ -33,7 +26,7 @@
     {
       "id": "t-95fb7e64-6ade-489f-a5eb-6a4b3a5ab807",
       "kind": "text",
-      "floor": "f-daf09fe3-afbe-4db4-8036-9d0c69731e6e",
+      "groupId": "g_0eb36458",
       "color": "slate",
       "x": 1040,
       "y": 60,
@@ -43,7 +36,7 @@
     {
       "id": "c-b1279099-a43a-4f28-8390-6dbbbbcafbd9",
       "kind": "place",
-      "floor": "f-daf09fe3-afbe-4db4-8036-9d0c69731e6e",
+      "groupId": "g_0eb36458",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 128,
@@ -55,12 +48,12 @@
       "link": "l-d78ab481-e2f5-45a8-a01d-01e631c901cd",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_fc14f2f4"
+      "pointId": "n_fc14f2f4"
     },
     {
       "id": "c-5425af4c-64eb-4cb4-9b54-7d72667707de",
       "kind": "place",
-      "floor": "f-daf09fe3-afbe-4db4-8036-9d0c69731e6e",
+      "groupId": "g_0eb36458",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 198,
@@ -72,12 +65,12 @@
       "link": "l-9e0c7c01-e497-488f-bfe6-4d26a1aac6b8",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_fc14f2f4"
+      "pointId": "n_fc14f2f4"
     },
     {
       "id": "c-a9ae77dc-7846-4357-8efd-af431bb2e894",
       "kind": "place",
-      "floor": "f-daf09fe3-afbe-4db4-8036-9d0c69731e6e",
+      "groupId": "g_0eb36458",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 268,
@@ -89,12 +82,12 @@
       "link": "l-d40046bb-8d67-49aa-9c40-629593d2e34e",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_fc14f2f4"
+      "pointId": "n_fc14f2f4"
     },
     {
       "id": "t-6cd661e5-096b-4d08-a751-f6b495061c5b",
       "kind": "text",
-      "floor": "f-d83a8f05-ad19-4647-82a9-a46483fe92f8",
+      "groupId": "g_73abacb8",
       "color": "slate",
       "x": 1040,
       "y": 60,
@@ -104,7 +97,7 @@
     {
       "id": "c-80970a7e-c0af-4a1e-b268-5ebf81d37f57",
       "kind": "place",
-      "floor": "f-d83a8f05-ad19-4647-82a9-a46483fe92f8",
+      "groupId": "g_73abacb8",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 128,
@@ -116,12 +109,12 @@
       "link": "l-d78ab481-e2f5-45a8-a01d-01e631c901cd",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_a55dd9ce"
+      "pointId": "n_a55dd9ce"
     },
     {
       "id": "c-5b0dfcfb-22f6-4a54-8c43-87fc3b83d4e4",
       "kind": "place",
-      "floor": "f-d83a8f05-ad19-4647-82a9-a46483fe92f8",
+      "groupId": "g_73abacb8",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 198,
@@ -133,12 +126,12 @@
       "link": "l-9e0c7c01-e497-488f-bfe6-4d26a1aac6b8",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_a55dd9ce"
+      "pointId": "n_a55dd9ce"
     },
     {
       "id": "c-43928b5e-338b-4e25-bf06-95b37be5bd23",
       "kind": "place",
-      "floor": "f-d83a8f05-ad19-4647-82a9-a46483fe92f8",
+      "groupId": "g_73abacb8",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 268,
@@ -150,12 +143,12 @@
       "link": "l-d40046bb-8d67-49aa-9c40-629593d2e34e",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_a55dd9ce"
+      "pointId": "n_a55dd9ce"
     },
     {
       "id": "s-6e91341f-ea22-4976-bf3b-4a11c3f095c3",
       "kind": "place",
-      "floor": "f-d83a8f05-ad19-4647-82a9-a46483fe92f8",
+      "groupId": "g_73abacb8",
       "color": "indigo",
       "x": 870,
       "y": 171,
@@ -164,12 +157,12 @@
       "h": 134,
       "title": "204",
       "pin": true,
-      "graphPointId": "n_140c0d44"
+      "pointId": "n_140c0d44"
     },
     {
       "id": "s-0171d677-85b8-4b2f-92e6-993c8e08b796",
       "kind": "place",
-      "floor": "f-d83a8f05-ad19-4647-82a9-a46483fe92f8",
+      "groupId": "g_73abacb8",
       "color": "emerald",
       "x": 880,
       "y": 500,
@@ -178,12 +171,12 @@
       "h": 160,
       "title": "職員室",
       "pin": true,
-      "graphPointId": "n_c4db2e1b"
+      "pointId": "n_c4db2e1b"
     },
     {
       "id": "c-3333c895-fe04-43e4-911f-6d6b0006309a",
       "kind": "place",
-      "floor": "f-daf09fe3-afbe-4db4-8036-9d0c69731e6e",
+      "groupId": "g_0eb36458",
       "color": "indigo",
       "x": 1282.640625,
       "y": 500,
@@ -197,12 +190,12 @@
       "markerSize": 64,
       "markW": 100,
       "markH": 160,
-      "graphPointId": "n_0b71bfbc"
+      "pointId": "n_0b71bfbc"
     },
     {
       "id": "c-be237d2e-96a2-4b7f-9bc9-8a3296ed318a",
       "kind": "place",
-      "floor": "f-d83a8f05-ad19-4647-82a9-a46483fe92f8",
+      "groupId": "g_73abacb8",
       "color": "indigo",
       "x": 1282.640625,
       "y": 500,
@@ -216,12 +209,12 @@
       "markerSize": 64,
       "markW": 100,
       "markH": 160,
-      "graphPointId": "n_da06017a"
+      "pointId": "n_da06017a"
     },
     {
       "id": "t-c3a06de8-543c-4fb5-97fb-4a4c133b218a",
       "kind": "text",
-      "floor": "f-6e7709cd-6f19-4b7b-9070-c7b715201338",
+      "groupId": "g_a3cd32be",
       "color": "slate",
       "x": 1040,
       "y": 60,
@@ -231,7 +224,7 @@
     {
       "id": "a-45366d65-72cb-41be-b11a-38f9f957abaa",
       "kind": "area",
-      "floor": "f-6e7709cd-6f19-4b7b-9070-c7b715201338",
+      "groupId": "g_a3cd32be",
       "color": "indigo",
       "points": [
         {
@@ -256,7 +249,7 @@
     {
       "id": "c-2abeb175-ebfe-438d-b258-9383db080d25",
       "kind": "place",
-      "floor": "f-6e7709cd-6f19-4b7b-9070-c7b715201338",
+      "groupId": "g_a3cd32be",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 128,
@@ -268,12 +261,12 @@
       "link": "l-d78ab481-e2f5-45a8-a01d-01e631c901cd",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_8922e3d4"
+      "pointId": "n_8922e3d4"
     },
     {
       "id": "c-0321b4bf-69d6-4263-b59d-216eac39a034",
       "kind": "place",
-      "floor": "f-6e7709cd-6f19-4b7b-9070-c7b715201338",
+      "groupId": "g_a3cd32be",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 198,
@@ -285,12 +278,12 @@
       "link": "l-9e0c7c01-e497-488f-bfe6-4d26a1aac6b8",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_8922e3d4"
+      "pointId": "n_8922e3d4"
     },
     {
       "id": "c-6832c9d9-d327-425f-99a5-22e85af9baa3",
       "kind": "place",
-      "floor": "f-6e7709cd-6f19-4b7b-9070-c7b715201338",
+      "groupId": "g_a3cd32be",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 268,
@@ -302,12 +295,12 @@
       "link": "l-d40046bb-8d67-49aa-9c40-629593d2e34e",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_8922e3d4"
+      "pointId": "n_8922e3d4"
     },
     {
       "id": "c-ff76566b-28dd-4aac-a9d3-4f2726eeff1e",
       "kind": "place",
-      "floor": "f-6e7709cd-6f19-4b7b-9070-c7b715201338",
+      "groupId": "g_a3cd32be",
       "color": "indigo",
       "x": 1282.640625,
       "y": 500,
@@ -321,12 +314,12 @@
       "markerSize": 64,
       "markW": 100,
       "markH": 160,
-      "graphPointId": "n_8500641a"
+      "pointId": "n_8500641a"
     },
     {
       "id": "p-d4558f22-c532-4172-96ed-d80310dea0d8",
       "kind": "place",
-      "floor": "f-6e7709cd-6f19-4b7b-9070-c7b715201338",
+      "groupId": "g_a3cd32be",
       "color": "sky",
       "x": 761.21875,
       "y": 500,
@@ -335,12 +328,12 @@
       "h": 160,
       "title": "男子トイレ",
       "pin": true,
-      "graphPointId": "n_d731631f"
+      "pointId": "n_d731631f"
     },
     {
       "id": "p-0940659b-5d99-49aa-8fac-fe962255a810",
       "kind": "place",
-      "floor": "f-6e7709cd-6f19-4b7b-9070-c7b715201338",
+      "groupId": "g_a3cd32be",
       "color": "indigo",
       "x": 1501.640625,
       "y": 500,
@@ -349,12 +342,12 @@
       "h": 160,
       "title": "教室",
       "pin": true,
-      "graphPointId": "n_5d4632e6"
+      "pointId": "n_5d4632e6"
     },
     {
       "id": "p-9f74ec93-6aae-4ab6-807d-2f873dac9cd2",
       "kind": "place",
-      "floor": "f-6e7709cd-6f19-4b7b-9070-c7b715201338",
+      "groupId": "g_a3cd32be",
       "color": "rose",
       "x": 1387.140625,
       "y": 500,
@@ -363,12 +356,12 @@
       "h": 160,
       "title": "女子トイレ",
       "pin": true,
-      "graphPointId": "n_163538fe"
+      "pointId": "n_163538fe"
     },
     {
       "id": "p-cf8119bd-95a4-49b1-af55-29cb65217637",
       "kind": "place",
-      "floor": "f-6e7709cd-6f19-4b7b-9070-c7b715201338",
+      "groupId": "g_a3cd32be",
       "color": "indigo",
       "x": 1457.6953125,
       "y": 198,
@@ -377,12 +370,12 @@
       "h": 180,
       "title": "302",
       "pin": true,
-      "graphPointId": "n_8de0c98e"
+      "pointId": "n_8de0c98e"
     },
     {
       "id": "p-0c024aef-4260-42f8-bf4b-e57344f6be82",
       "kind": "place",
-      "floor": "f-6e7709cd-6f19-4b7b-9070-c7b715201338",
+      "groupId": "g_a3cd32be",
       "color": "indigo",
       "x": 1066.576171875,
       "y": 198,
@@ -391,12 +384,12 @@
       "h": 180,
       "title": "３０６",
       "pin": true,
-      "graphPointId": "n_f5331da5"
+      "pointId": "n_f5331da5"
     },
     {
       "id": "p-0526a53c-d1e8-4724-9054-3b8e522175ef",
       "kind": "place",
-      "floor": "f-6e7709cd-6f19-4b7b-9070-c7b715201338",
+      "groupId": "g_a3cd32be",
       "color": "indigo",
       "x": 713.380859375,
       "y": 198,
@@ -405,12 +398,12 @@
       "h": 180,
       "title": "３０８",
       "pin": true,
-      "graphPointId": "n_2d83951d"
+      "pointId": "n_2d83951d"
     },
     {
       "id": "p-fcdd66e7-d248-455d-87c9-92a158ea9b06",
       "kind": "place",
-      "floor": "f-6e7709cd-6f19-4b7b-9070-c7b715201338",
+      "groupId": "g_a3cd32be",
       "color": "indigo",
       "x": 1095.314453125,
       "y": 500,
@@ -419,12 +412,12 @@
       "h": 160,
       "title": "３０３",
       "pin": true,
-      "graphPointId": "n_f9954d5e"
+      "pointId": "n_f9954d5e"
     },
     {
       "id": "p-e3f72c0f-d20b-4fc5-89cc-64bdab518c58",
       "kind": "place",
-      "floor": "f-6e7709cd-6f19-4b7b-9070-c7b715201338",
+      "groupId": "g_a3cd32be",
       "color": "indigo",
       "x": 623.30078125,
       "y": 500,
@@ -433,12 +426,12 @@
       "h": 160,
       "title": "３０９",
       "pin": true,
-      "graphPointId": "n_b017642b"
+      "pointId": "n_b017642b"
     },
     {
       "id": "a-d9ab47f4-5088-4779-a107-3ea1e518e05a",
       "kind": "area",
-      "floor": "f-d83a8f05-ad19-4647-82a9-a46483fe92f8",
+      "groupId": "g_73abacb8",
       "color": "indigo",
       "points": [
         {
@@ -463,7 +456,7 @@
     {
       "id": "a-78b51219-3594-4497-930b-d0d8f0e9fdf0",
       "kind": "area",
-      "floor": "f-daf09fe3-afbe-4db4-8036-9d0c69731e6e",
+      "groupId": "g_0eb36458",
       "color": "indigo",
       "points": [
         {
@@ -488,7 +481,7 @@
     {
       "id": "p-d05e11a5-2c15-495e-b5ef-5ecde65753e0",
       "kind": "place",
-      "floor": "f-d83a8f05-ad19-4647-82a9-a46483fe92f8",
+      "groupId": "g_73abacb8",
       "color": "violet",
       "x": 1452.640625,
       "y": 500,
@@ -497,12 +490,12 @@
       "h": 160,
       "title": "男子・女子トイレ",
       "pin": true,
-      "graphPointId": "n_f718bc8f"
+      "pointId": "n_f718bc8f"
     },
     {
       "id": "t-ac8738f8-5c40-445a-a510-9a4c3e283bb4",
       "kind": "text",
-      "floor": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
+      "groupId": "g_c6f20eff",
       "color": "slate",
       "x": 1040,
       "y": 60,
@@ -512,7 +505,7 @@
     {
       "id": "a-e2d80ab4-428d-498a-951a-a46e8f39fd40",
       "kind": "area",
-      "floor": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
+      "groupId": "g_c6f20eff",
       "color": "indigo",
       "points": [
         {
@@ -537,7 +530,7 @@
     {
       "id": "c-0dcf414d-4249-4d3a-834a-56eca04efb81",
       "kind": "place",
-      "floor": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
+      "groupId": "g_c6f20eff",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 128,
@@ -549,12 +542,12 @@
       "link": "l-d78ab481-e2f5-45a8-a01d-01e631c901cd",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_2785462e"
+      "pointId": "n_2785462e"
     },
     {
       "id": "c-56490709-521e-4e66-a967-5c8745f3df35",
       "kind": "place",
-      "floor": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
+      "groupId": "g_c6f20eff",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 198,
@@ -566,12 +559,12 @@
       "link": "l-9e0c7c01-e497-488f-bfe6-4d26a1aac6b8",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_2785462e"
+      "pointId": "n_2785462e"
     },
     {
       "id": "c-6c0782c7-4615-44ce-ad70-69fe86b34f2b",
       "kind": "place",
-      "floor": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
+      "groupId": "g_c6f20eff",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 268,
@@ -583,12 +576,12 @@
       "link": "l-d40046bb-8d67-49aa-9c40-629593d2e34e",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_2785462e"
+      "pointId": "n_2785462e"
     },
     {
       "id": "c-59a39951-e02a-47e3-a419-246e7c2667b2",
       "kind": "place",
-      "floor": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
+      "groupId": "g_c6f20eff",
       "color": "indigo",
       "x": 1282.640625,
       "y": 500,
@@ -602,12 +595,12 @@
       "markerSize": 64,
       "markW": 100,
       "markH": 160,
-      "graphPointId": "n_173ff218"
+      "pointId": "n_173ff218"
     },
     {
       "id": "p-5e6563d1-287c-467f-907a-05445363935a",
       "kind": "place",
-      "floor": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
+      "groupId": "g_c6f20eff",
       "color": "sky",
       "x": 1384.59375,
       "y": 500,
@@ -616,12 +609,12 @@
       "h": 160,
       "title": "男子トイレ",
       "pin": true,
-      "graphPointId": "n_fbaca13a"
+      "pointId": "n_fbaca13a"
     },
     {
       "id": "p-c73b81d7-c1db-458d-8ebf-ed84c759cabd",
       "kind": "place",
-      "floor": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
+      "groupId": "g_c6f20eff",
       "color": "amber",
       "x": 1495.390625,
       "y": 500,
@@ -630,12 +623,12 @@
       "h": 160,
       "title": "ラウンジ",
       "pin": true,
-      "graphPointId": "n_6f8f9cc6"
+      "pointId": "n_6f8f9cc6"
     },
     {
       "id": "p-33379bd7-0dd0-434d-b621-91b7b094d3b5",
       "kind": "place",
-      "floor": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
+      "groupId": "g_c6f20eff",
       "color": "rose",
       "x": 760.640625,
       "y": 500,
@@ -644,12 +637,12 @@
       "h": 160,
       "title": "女子トイレ",
       "pin": true,
-      "graphPointId": "n_8940056b"
+      "pointId": "n_8940056b"
     },
     {
       "id": "p-ff723c68-e3ac-4d44-ae9f-1d171d139978",
       "kind": "place",
-      "floor": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
+      "groupId": "g_c6f20eff",
       "color": "amber",
       "x": 1457.6953125,
       "y": 198,
@@ -658,12 +651,12 @@
       "h": 180,
       "title": "ラウンジ",
       "pin": true,
-      "graphPointId": "n_9e533cff"
+      "pointId": "n_9e533cff"
     },
     {
       "id": "p-d99ac63a-1cc7-4b3d-9860-7659fe5e8878",
       "kind": "place",
-      "floor": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
+      "groupId": "g_c6f20eff",
       "color": "indigo",
       "x": 1170.791015625,
       "y": 198,
@@ -672,12 +665,12 @@
       "h": 179.99999999999997,
       "title": "４０５",
       "pin": true,
-      "graphPointId": "n_ab649c4c"
+      "pointId": "n_ab649c4c"
     },
     {
       "id": "p-f2f9769d-0865-4163-8d45-f0131f9bae9e",
       "kind": "place",
-      "floor": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
+      "groupId": "g_c6f20eff",
       "color": "indigo",
       "x": 997.51953125,
       "y": 198,
@@ -686,12 +679,12 @@
       "h": 180,
       "title": "４０４",
       "pin": true,
-      "graphPointId": "n_6e4efc42"
+      "pointId": "n_6e4efc42"
     },
     {
       "id": "p-3d82f608-d3d1-41db-af42-8af2cc2d3740",
       "kind": "place",
-      "floor": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
+      "groupId": "g_c6f20eff",
       "color": "indigo",
       "x": 824.248046875,
       "y": 198,
@@ -700,12 +693,12 @@
       "h": 180,
       "title": "４０３",
       "pin": true,
-      "graphPointId": "n_a303869f"
+      "pointId": "n_a303869f"
     },
     {
       "id": "p-a34ac401-2c34-44f4-88b0-b03596264650",
       "kind": "place",
-      "floor": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
+      "groupId": "g_c6f20eff",
       "color": "indigo",
       "x": 643.4775390625,
       "y": 198,
@@ -714,12 +707,12 @@
       "h": 180,
       "title": "４０２",
       "pin": true,
-      "graphPointId": "n_68cb9111"
+      "pointId": "n_68cb9111"
     },
     {
       "id": "p-1b8f3644-fd54-462b-a375-311b2b1a52ee",
       "kind": "place",
-      "floor": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
+      "groupId": "g_c6f20eff",
       "color": "indigo",
       "x": 1146.45703125,
       "y": 500,
@@ -728,12 +721,12 @@
       "h": 160,
       "title": "４０８",
       "pin": true,
-      "graphPointId": "n_88246a63"
+      "pointId": "n_88246a63"
     },
     {
       "id": "p-f9f4a369-f4b3-4715-86ef-14dfc15fa329",
       "kind": "place",
-      "floor": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
+      "groupId": "g_c6f20eff",
       "color": "indigo",
       "x": 939.55859375,
       "y": 500,
@@ -742,12 +735,12 @@
       "h": 160,
       "title": "４０７",
       "pin": true,
-      "graphPointId": "n_f64255d6"
+      "pointId": "n_f64255d6"
     },
     {
       "id": "p-60a7b846-6f22-4e4c-8dd6-eedd1e7b9cfb",
       "kind": "place",
-      "floor": "f-41b10b69-6b53-412a-bc69-76f245d482a7",
+      "groupId": "g_c6f20eff",
       "color": "indigo",
       "x": 623.30078125,
       "y": 500,
@@ -756,12 +749,12 @@
       "h": 160,
       "title": "４０１",
       "pin": true,
-      "graphPointId": "n_c0db542e"
+      "pointId": "n_c0db542e"
     },
     {
       "id": "p-b0d8f522-d95b-451c-8c6b-330e7e5b076c",
       "kind": "place",
-      "floor": "f-6e7709cd-6f19-4b7b-9070-c7b715201338",
+      "groupId": "g_a3cd32be",
       "color": "emerald",
       "x": 892.119140625,
       "y": 500,
@@ -770,12 +763,12 @@
       "h": 160,
       "title": "職員室",
       "pin": true,
-      "graphPointId": "n_ab3f0346"
+      "pointId": "n_ab3f0346"
     },
     {
       "id": "t-2e3c272c-cb1a-4174-86b0-dc37c00a4eee",
       "kind": "text",
-      "floor": "f-2e889487-f150-4d71-85bc-b50c68671e8f",
+      "groupId": "g_2ea28f93",
       "color": "slate",
       "x": 1040,
       "y": 60,
@@ -785,7 +778,7 @@
     {
       "id": "a-e08ea405-e920-4aac-8f8a-70fbbfa29316",
       "kind": "area",
-      "floor": "f-2e889487-f150-4d71-85bc-b50c68671e8f",
+      "groupId": "g_2ea28f93",
       "color": "indigo",
       "points": [
         {
@@ -810,7 +803,7 @@
     {
       "id": "c-8390f93f-fec9-4768-a99c-b04bc3f06358",
       "kind": "place",
-      "floor": "f-2e889487-f150-4d71-85bc-b50c68671e8f",
+      "groupId": "g_2ea28f93",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 128,
@@ -822,12 +815,12 @@
       "link": "l-d78ab481-e2f5-45a8-a01d-01e631c901cd",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_341fadee"
+      "pointId": "n_341fadee"
     },
     {
       "id": "c-6b722670-d17c-47e1-8216-2c2cc2116ecc",
       "kind": "place",
-      "floor": "f-2e889487-f150-4d71-85bc-b50c68671e8f",
+      "groupId": "g_2ea28f93",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 198,
@@ -839,12 +832,12 @@
       "link": "l-9e0c7c01-e497-488f-bfe6-4d26a1aac6b8",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_341fadee"
+      "pointId": "n_341fadee"
     },
     {
       "id": "c-55edfe97-d978-4832-a7f7-6d9b6b1a518c",
       "kind": "place",
-      "floor": "f-2e889487-f150-4d71-85bc-b50c68671e8f",
+      "groupId": "g_2ea28f93",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 268,
@@ -856,12 +849,12 @@
       "link": "l-d40046bb-8d67-49aa-9c40-629593d2e34e",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_341fadee"
+      "pointId": "n_341fadee"
     },
     {
       "id": "c-70aebb9d-7e76-4528-a2e9-e87a63c17c5c",
       "kind": "place",
-      "floor": "f-2e889487-f150-4d71-85bc-b50c68671e8f",
+      "groupId": "g_2ea28f93",
       "color": "indigo",
       "x": 1282.640625,
       "y": 500,
@@ -875,12 +868,12 @@
       "markerSize": 64,
       "markW": 100,
       "markH": 160,
-      "graphPointId": "n_f64642b3"
+      "pointId": "n_f64642b3"
     },
     {
       "id": "p-dd2e1ecc-1d32-4e51-91b6-706349de3d8f",
       "kind": "place",
-      "floor": "f-2e889487-f150-4d71-85bc-b50c68671e8f",
+      "groupId": "g_2ea28f93",
       "color": "sky",
       "x": 1387.140625,
       "y": 500,
@@ -889,12 +882,12 @@
       "h": 160,
       "title": "男子トイレ",
       "pin": true,
-      "graphPointId": "n_bb7519ad"
+      "pointId": "n_bb7519ad"
     },
     {
       "id": "p-363a48df-9dbd-454b-8f62-9ddff82a34e4",
       "kind": "place",
-      "floor": "f-2e889487-f150-4d71-85bc-b50c68671e8f",
+      "groupId": "g_2ea28f93",
       "color": "indigo",
       "x": 1501.640625,
       "y": 500,
@@ -903,12 +896,12 @@
       "h": 160,
       "title": "502",
       "pin": true,
-      "graphPointId": "n_0b5fa1c6"
+      "pointId": "n_0b5fa1c6"
     },
     {
       "id": "p-949ecffa-f2bd-4dff-a226-cd3cebd252bb",
       "kind": "place",
-      "floor": "f-2e889487-f150-4d71-85bc-b50c68671e8f",
+      "groupId": "g_2ea28f93",
       "color": "rose",
       "x": 766.078125,
       "y": 500,
@@ -917,12 +910,12 @@
       "h": 160,
       "title": "女子トイレ",
       "pin": true,
-      "graphPointId": "n_aad38edb"
+      "pointId": "n_aad38edb"
     },
     {
       "id": "p-921a9bed-6883-4c9a-9336-6aa638d1ad9c",
       "kind": "place",
-      "floor": "f-2e889487-f150-4d71-85bc-b50c68671e8f",
+      "groupId": "g_2ea28f93",
       "color": "indigo",
       "x": 1457.6953125,
       "y": 198,
@@ -931,12 +924,12 @@
       "h": 180,
       "title": "501",
       "pin": true,
-      "graphPointId": "n_eb2347b5"
+      "pointId": "n_eb2347b5"
     },
     {
       "id": "p-9e2c71b9-a40f-4733-adf8-33ff04137a0c",
       "kind": "place",
-      "floor": "f-2e889487-f150-4d71-85bc-b50c68671e8f",
+      "groupId": "g_2ea28f93",
       "color": "indigo",
       "x": 1152.7197265625,
       "y": 198,
@@ -945,12 +938,12 @@
       "h": 180,
       "title": "５０８",
       "pin": true,
-      "graphPointId": "n_ef390073"
+      "pointId": "n_ef390073"
     },
     {
       "id": "p-6c2be06a-3c21-486f-bb97-490754e4ae4c",
       "kind": "place",
-      "floor": "f-2e889487-f150-4d71-85bc-b50c68671e8f",
+      "groupId": "g_2ea28f93",
       "color": "indigo",
       "x": 1025.515625,
       "y": 500,
@@ -959,12 +952,12 @@
       "h": 160,
       "title": "５０３",
       "pin": true,
-      "graphPointId": "n_16dc054f"
+      "pointId": "n_16dc054f"
     },
     {
       "id": "p-6c26d7e3-1f04-4add-9696-f6e7e56d897a",
       "kind": "place",
-      "floor": "f-2e889487-f150-4d71-85bc-b50c68671e8f",
+      "groupId": "g_2ea28f93",
       "color": "indigo",
       "x": 623.30078125,
       "y": 500,
@@ -973,12 +966,12 @@
       "h": 160,
       "title": "５０４",
       "pin": true,
-      "graphPointId": "n_0194f3e2"
+      "pointId": "n_0194f3e2"
     },
     {
       "id": "p-9762644c-01b4-44de-8bc4-af3d2b66bc0f",
       "kind": "place",
-      "floor": "f-2e889487-f150-4d71-85bc-b50c68671e8f",
+      "groupId": "g_2ea28f93",
       "color": "indigo",
       "x": 972.7958984375,
       "y": 198,
@@ -987,12 +980,12 @@
       "h": 180,
       "title": "５０７",
       "pin": true,
-      "graphPointId": "n_7cd1a0c4"
+      "pointId": "n_7cd1a0c4"
     },
     {
       "id": "p-2e92a788-a703-4587-8cdb-c2aa631881b5",
       "kind": "place",
-      "floor": "f-2e889487-f150-4d71-85bc-b50c68671e8f",
+      "groupId": "g_2ea28f93",
       "color": "indigo",
       "x": 792.8720703125,
       "y": 198,
@@ -1001,12 +994,12 @@
       "h": 180,
       "title": "５０６",
       "pin": true,
-      "graphPointId": "n_4473a893"
+      "pointId": "n_4473a893"
     },
     {
       "id": "p-baa7c426-b16d-45fa-9eb5-6ed7e1af9f09",
       "kind": "place",
-      "floor": "f-2e889487-f150-4d71-85bc-b50c68671e8f",
+      "groupId": "g_2ea28f93",
       "color": "indigo",
       "x": 622.1201171875,
       "y": 198,
@@ -1015,12 +1008,12 @@
       "h": 180,
       "title": "５０５",
       "pin": true,
-      "graphPointId": "n_52e3cee1"
+      "pointId": "n_52e3cee1"
     },
     {
       "id": "t-7c9b50c9-1803-467a-b8da-a03d2f77d808",
       "kind": "text",
-      "floor": "f-a7fb4ee0-d20b-4c96-bcf3-745ad12d9d24",
+      "groupId": "g_6db0e5cb",
       "color": "slate",
       "x": 1040,
       "y": 60,
@@ -1030,7 +1023,7 @@
     {
       "id": "a-9a6ef6aa-b85b-4b02-902c-d9ac76c60cf1",
       "kind": "area",
-      "floor": "f-a7fb4ee0-d20b-4c96-bcf3-745ad12d9d24",
+      "groupId": "g_6db0e5cb",
       "color": "indigo",
       "points": [
         {
@@ -1055,7 +1048,7 @@
     {
       "id": "c-2c07f844-f15a-4658-b9f5-8969201f0247",
       "kind": "place",
-      "floor": "f-a7fb4ee0-d20b-4c96-bcf3-745ad12d9d24",
+      "groupId": "g_6db0e5cb",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 128,
@@ -1067,12 +1060,12 @@
       "link": "l-d78ab481-e2f5-45a8-a01d-01e631c901cd",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_0dfb7c9e"
+      "pointId": "n_0dfb7c9e"
     },
     {
       "id": "c-a59d762c-c0e2-4d71-9c31-2927e9c3d5f8",
       "kind": "place",
-      "floor": "f-a7fb4ee0-d20b-4c96-bcf3-745ad12d9d24",
+      "groupId": "g_6db0e5cb",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 198,
@@ -1084,12 +1077,12 @@
       "link": "l-9e0c7c01-e497-488f-bfe6-4d26a1aac6b8",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_0dfb7c9e"
+      "pointId": "n_0dfb7c9e"
     },
     {
       "id": "c-c95cc349-74a5-40f3-86f3-b895ef5a7443",
       "kind": "place",
-      "floor": "f-a7fb4ee0-d20b-4c96-bcf3-745ad12d9d24",
+      "groupId": "g_6db0e5cb",
       "color": "indigo",
       "x": 1299.923828125,
       "y": 268,
@@ -1101,12 +1094,12 @@
       "link": "l-d40046bb-8d67-49aa-9c40-629593d2e34e",
       "direction": "both",
       "markerSize": 40,
-      "graphPointId": "n_0dfb7c9e"
+      "pointId": "n_0dfb7c9e"
     },
     {
       "id": "c-8680900e-50e6-4642-9866-66ee360992c9",
       "kind": "place",
-      "floor": "f-a7fb4ee0-d20b-4c96-bcf3-745ad12d9d24",
+      "groupId": "g_6db0e5cb",
       "color": "indigo",
       "x": 1282.640625,
       "y": 500,
@@ -1120,12 +1113,12 @@
       "markerSize": 64,
       "markW": 100,
       "markH": 160,
-      "graphPointId": "n_99fe5704"
+      "pointId": "n_99fe5704"
     },
     {
       "id": "p-89f17037-1a77-4a49-a890-51e45b30aa4b",
       "kind": "place",
-      "floor": "f-a7fb4ee0-d20b-4c96-bcf3-745ad12d9d24",
+      "groupId": "g_6db0e5cb",
       "color": "sky",
       "x": 1120,
       "y": 128,
@@ -1134,12 +1127,12 @@
       "h": 60,
       "title": "男子トイレ",
       "pin": true,
-      "graphPointId": "n_8a1af758"
+      "pointId": "n_8a1af758"
     },
     {
       "id": "p-02f74849-07ec-48e5-a8ba-3eab9f1ce867",
       "kind": "place",
-      "floor": "f-a7fb4ee0-d20b-4c96-bcf3-745ad12d9d24",
+      "groupId": "g_6db0e5cb",
       "color": "rose",
       "x": 1120,
       "y": 550,
@@ -1148,12 +1141,12 @@
       "h": 60,
       "title": "女子トイレ",
       "pin": true,
-      "graphPointId": "n_39c750dd"
+      "pointId": "n_39c750dd"
     },
     {
       "id": "c-2e81b8a7-041f-42be-9279-e31e60120bbe",
       "kind": "place",
-      "floor": "f-daf09fe3-afbe-4db4-8036-9d0c69731e6e",
+      "groupId": "g_0eb36458",
       "color": "indigo",
       "x": 870,
       "y": 329,
@@ -1166,12 +1159,12 @@
       "direction": "both",
       "markW": 230,
       "markH": 134,
-      "graphPointId": "n_a150fd44"
+      "pointId": "n_a150fd44"
     },
     {
       "id": "c-42f82a54-d305-4d7d-a201-c2e1bdf52c4e",
       "kind": "place",
-      "floor": "f-d83a8f05-ad19-4647-82a9-a46483fe92f8",
+      "groupId": "g_73abacb8",
       "color": "indigo",
       "x": 870,
       "y": 329,
@@ -1184,12 +1177,12 @@
       "direction": "both",
       "markW": 230,
       "markH": 134,
-      "graphPointId": "n_00f19cc9"
+      "pointId": "n_00f19cc9"
     },
     {
       "id": "p-b4e872bc-1e95-4cbe-bbbe-dd3f8e3a3a24",
       "kind": "place",
-      "floor": "f-daf09fe3-afbe-4db4-8036-9d0c69731e6e",
+      "groupId": "g_0eb36458",
       "color": "indigo",
       "x": 640,
       "y": 360,
@@ -1197,12 +1190,12 @@
       "w": 120,
       "h": 48,
       "title": "現在地",
-      "graphPointId": "n_8b38f377"
+      "pointId": "n_8b38f377"
     },
     {
       "id": "s-c2260944-e5cb-4dd7-b02a-0d46d92ef586",
       "kind": "place",
-      "floor": "f-a7fb4ee0-d20b-4c96-bcf3-745ad12d9d24",
+      "groupId": "g_6db0e5cb",
       "color": "slate",
       "x": 800,
       "y": 339,
@@ -1211,7 +1204,7 @@
       "h": 482,
       "title": "ホール",
       "pin": true,
-      "graphPointId": "n_ca0bb1fc"
+      "pointId": "n_ca0bb1fc"
     }
   ],
   "startId": "p-b4e872bc-1e95-4cbe-bbbe-dd3f8e3a3a24"
