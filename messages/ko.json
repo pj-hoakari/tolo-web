@@ -459,12 +459,6 @@
       "title": "안내 지도",
       "hint": "목적지를 선택하면 경로가 표시됩니다",
       "currentLocation": "현재 위치",
-      "destinations": {
-        "hall": "홀",
-        "goods": "굿즈 매장",
-        "cafe": "카페",
-        "exit": "출구"
-      },
       "destinationsLabel": "목적지",
       "expand": "지도 확대",
       "collapse": "지도 축소",

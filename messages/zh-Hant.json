@@ -459,12 +459,6 @@
       "title": "導覽圖",
       "hint": "選擇目的地即可顯示路線",
       "currentLocation": "目前位置",
-      "destinations": {
-        "hall": "大廳",
-        "goods": "商品區",
-        "cafe": "咖啡廳",
-        "exit": "出口"
-      },
       "destinationsLabel": "目的地",
       "expand": "放大地圖",
       "collapse": "縮小地圖",

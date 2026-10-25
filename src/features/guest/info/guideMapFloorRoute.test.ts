@@ -12,7 +12,7 @@ import guideMapLayoutFixture from "./guideMapLayoutFixture.json";
 import { computeRoute } from "./guideMapRoute";
 
 // テスト用に固定した案内マップ（guide-map-poc の旧見本：イベント会場 1F・2F）。
-// 表示用の venueMapData.json は差し替わるので、テストはこちらを使う
+// 表示用の mocks/fixtures/guideMapLayout.json は差し替わるので、テストはこちらを使う
 const doc = guideMapLayoutFixture as unknown as GuideMapLayout;
 
 const place = (id: string) =>

@@ -1,8 +1,14 @@
+import { toGuestGuideMapGraph } from "@/features/guest/info/guideMapGraph";
+import type { GuideMapLayout } from "@/features/guest/info/guideMapLayout";
+import type { GraphData } from "@/features/tenant/management/graph/type";
 import type {
   GuestCrowdSnapshot,
+  GuestGuideMap,
   GuestMessage,
   GuestQueue,
 } from "@/server/router";
+import guideMapGraph from "./guideMapGraph.json";
+import guideMapLayout from "./guideMapLayout.json";
 
 type Names = { ja: string; en: string };
 
@@ -27,12 +33,21 @@ export function sampleGuestCrowd(language: string): GuestCrowdSnapshot {
         danger: false,
       },
       {
-        id: "routeId:r-corridor-4f",
+        id: "pointId:p-corridor-4f",
         name: name({ ja: "4F 廊下", en: "4F corridor" }, language),
         level: "low",
         danger: false,
       },
     ],
+  };
+}
+
+export const sampleGuideMapGraph = guideMapGraph as GraphData;
+
+export function sampleGuideMap(): GuestGuideMap {
+  return {
+    graph: toGuestGuideMapGraph(sampleGuideMapGraph),
+    layout: guideMapLayout as unknown as GuideMapLayout,
   };
 }
 

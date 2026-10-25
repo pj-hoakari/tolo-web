@@ -1,0 +1,1572 @@
+{
+  "nodes": [
+    {
+      "id": "g-1f",
+      "type": "graphGroup",
+      "position": {
+        "x": 0,
+        "y": 1236
+      },
+      "width": 1391,
+      "height": 498,
+      "data": {
+        "labels": {
+          "ja": "1F",
+          "en": "1F"
+        }
+      }
+    },
+    {
+      "id": "g-2f",
+      "type": "graphGroup",
+      "position": {
+        "x": 1511,
+        "y": 1236
+      },
+      "width": 1391,
+      "height": 498,
+      "data": {
+        "labels": {
+          "ja": "2F",
+          "en": "2F"
+        }
+      }
+    },
+    {
+      "id": "g-3f",
+      "type": "graphGroup",
+      "position": {
+        "x": 0,
+        "y": 618
+      },
+      "width": 1391,
+      "height": 498,
+      "data": {
+        "labels": {
+          "ja": "3F",
+          "en": "3F"
+        }
+      }
+    },
+    {
+      "id": "g-4f",
+      "type": "graphGroup",
+      "position": {
+        "x": 1511,
+        "y": 618
+      },
+      "width": 1391,
+      "height": 498,
+      "data": {
+        "labels": {
+          "ja": "4F",
+          "en": "4F"
+        }
+      }
+    },
+    {
+      "id": "g-5f",
+      "type": "graphGroup",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "width": 1391,
+      "height": 498,
+      "data": {
+        "labels": {
+          "ja": "5F",
+          "en": "5F"
+        }
+      }
+    },
+    {
+      "id": "g-6f",
+      "type": "graphGroup",
+      "position": {
+        "x": 1511,
+        "y": 0
+      },
+      "width": 1391,
+      "height": 498,
+      "data": {
+        "labels": {
+          "ja": "6Fホール",
+          "en": "6F Hall"
+        }
+      }
+    },
+    {
+      "id": "p-corridor-1f",
+      "type": "graph",
+      "position": {
+        "x": 696,
+        "y": 249
+      },
+      "parentId": "g-1f",
+      "data": {
+        "labels": {
+          "ja": "廊下",
+          "en": "Corridor"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-current-location-1f",
+      "type": "graph",
+      "position": {
+        "x": 105,
+        "y": 266
+      },
+      "parentId": "g-1f",
+      "data": {
+        "labels": {
+          "ja": "現在地",
+          "en": "Current location"
+        },
+        "nodeType": "GOAL_TRANSIT_MIXED"
+      }
+    },
+    {
+      "id": "p-elevator-1f",
+      "type": "graph",
+      "position": {
+        "x": 1029,
+        "y": 136
+      },
+      "parentId": "g-1f",
+      "data": {
+        "labels": {
+          "ja": "エレベーター",
+          "en": "Elevator"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-stairs-east-1f",
+      "type": "graph",
+      "position": {
+        "x": 1005,
+        "y": 378
+      },
+      "parentId": "g-1f",
+      "data": {
+        "labels": {
+          "ja": "階段",
+          "en": "Stairs"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-stairs-west-1f",
+      "type": "graph",
+      "position": {
+        "x": 427,
+        "y": 241
+      },
+      "parentId": "g-1f",
+      "data": {
+        "labels": {
+          "ja": "階段",
+          "en": "Stairs"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-corridor-2f",
+      "type": "graph",
+      "position": {
+        "x": 696,
+        "y": 249
+      },
+      "parentId": "g-2f",
+      "data": {
+        "labels": {
+          "ja": "廊下",
+          "en": "Corridor"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-room-204-2f",
+      "type": "graph",
+      "position": {
+        "x": 427,
+        "y": 114
+      },
+      "parentId": "g-2f",
+      "data": {
+        "labels": {
+          "ja": "204",
+          "en": "Room 204"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-staff-room-2f",
+      "type": "graph",
+      "position": {
+        "x": 441,
+        "y": 378
+      },
+      "parentId": "g-2f",
+      "data": {
+        "labels": {
+          "ja": "職員室",
+          "en": "Staff room"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-restrooms-2f",
+      "type": "graph",
+      "position": {
+        "x": 1243,
+        "y": 378
+      },
+      "parentId": "g-2f",
+      "data": {
+        "labels": {
+          "ja": "男子・女子トイレ",
+          "en": "Restrooms"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-elevator-2f",
+      "type": "graph",
+      "position": {
+        "x": 1029,
+        "y": 136
+      },
+      "parentId": "g-2f",
+      "data": {
+        "labels": {
+          "ja": "エレベーター",
+          "en": "Elevator"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-stairs-east-2f",
+      "type": "graph",
+      "position": {
+        "x": 1005,
+        "y": 378
+      },
+      "parentId": "g-2f",
+      "data": {
+        "labels": {
+          "ja": "階段",
+          "en": "Stairs"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-stairs-west-2f",
+      "type": "graph",
+      "position": {
+        "x": 427,
+        "y": 241
+      },
+      "parentId": "g-2f",
+      "data": {
+        "labels": {
+          "ja": "階段",
+          "en": "Stairs"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-corridor-3f",
+      "type": "graph",
+      "position": {
+        "x": 696,
+        "y": 249
+      },
+      "parentId": "g-3f",
+      "data": {
+        "labels": {
+          "ja": "廊下",
+          "en": "Corridor"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-mens-restroom-3f",
+      "type": "graph",
+      "position": {
+        "x": 275,
+        "y": 378
+      },
+      "parentId": "g-3f",
+      "data": {
+        "labels": {
+          "ja": "男子トイレ",
+          "en": "Men's restroom"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-classroom-3f",
+      "type": "graph",
+      "position": {
+        "x": 1311,
+        "y": 378
+      },
+      "parentId": "g-3f",
+      "data": {
+        "labels": {
+          "ja": "教室",
+          "en": "Classroom"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-womens-restroom-3f",
+      "type": "graph",
+      "position": {
+        "x": 1151,
+        "y": 378
+      },
+      "parentId": "g-3f",
+      "data": {
+        "labels": {
+          "ja": "女子トイレ",
+          "en": "Women's restroom"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-302-3f",
+      "type": "graph",
+      "position": {
+        "x": 1250,
+        "y": 136
+      },
+      "parentId": "g-3f",
+      "data": {
+        "labels": {
+          "ja": "302",
+          "en": "Room 302"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-306-3f",
+      "type": "graph",
+      "position": {
+        "x": 702,
+        "y": 136
+      },
+      "parentId": "g-3f",
+      "data": {
+        "labels": {
+          "ja": "３０６",
+          "en": "Room 306"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-308-3f",
+      "type": "graph",
+      "position": {
+        "x": 208,
+        "y": 136
+      },
+      "parentId": "g-3f",
+      "data": {
+        "labels": {
+          "ja": "３０８",
+          "en": "Room 308"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-303-3f",
+      "type": "graph",
+      "position": {
+        "x": 742,
+        "y": 378
+      },
+      "parentId": "g-3f",
+      "data": {
+        "labels": {
+          "ja": "３０３",
+          "en": "Room 303"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-309-3f",
+      "type": "graph",
+      "position": {
+        "x": 82,
+        "y": 378
+      },
+      "parentId": "g-3f",
+      "data": {
+        "labels": {
+          "ja": "３０９",
+          "en": "Room 309"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-staff-room-3f",
+      "type": "graph",
+      "position": {
+        "x": 458,
+        "y": 378
+      },
+      "parentId": "g-3f",
+      "data": {
+        "labels": {
+          "ja": "職員室",
+          "en": "Staff room"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-elevator-3f",
+      "type": "graph",
+      "position": {
+        "x": 1029,
+        "y": 136
+      },
+      "parentId": "g-3f",
+      "data": {
+        "labels": {
+          "ja": "エレベーター",
+          "en": "Elevator"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-stairs-east-3f",
+      "type": "graph",
+      "position": {
+        "x": 1005,
+        "y": 378
+      },
+      "parentId": "g-3f",
+      "data": {
+        "labels": {
+          "ja": "階段",
+          "en": "Stairs"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-corridor-4f",
+      "type": "graph",
+      "position": {
+        "x": 696,
+        "y": 249
+      },
+      "parentId": "g-4f",
+      "data": {
+        "labels": {
+          "ja": "廊下",
+          "en": "Corridor"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-mens-restroom-4f",
+      "type": "graph",
+      "position": {
+        "x": 1147,
+        "y": 378
+      },
+      "parentId": "g-4f",
+      "data": {
+        "labels": {
+          "ja": "男子トイレ",
+          "en": "Men's restroom"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-lounge-4f",
+      "type": "graph",
+      "position": {
+        "x": 1303,
+        "y": 378
+      },
+      "parentId": "g-4f",
+      "data": {
+        "labels": {
+          "ja": "ラウンジ",
+          "en": "Lounge"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-womens-restroom-4f",
+      "type": "graph",
+      "position": {
+        "x": 274,
+        "y": 378
+      },
+      "parentId": "g-4f",
+      "data": {
+        "labels": {
+          "ja": "女子トイレ",
+          "en": "Women's restroom"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-lounge-2-4f",
+      "type": "graph",
+      "position": {
+        "x": 1250,
+        "y": 136
+      },
+      "parentId": "g-4f",
+      "data": {
+        "labels": {
+          "ja": "ラウンジ",
+          "en": "Lounge"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-405-4f",
+      "type": "graph",
+      "position": {
+        "x": 848,
+        "y": 136
+      },
+      "parentId": "g-4f",
+      "data": {
+        "labels": {
+          "ja": "４０５",
+          "en": "Room 405"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-404-4f",
+      "type": "graph",
+      "position": {
+        "x": 606,
+        "y": 136
+      },
+      "parentId": "g-4f",
+      "data": {
+        "labels": {
+          "ja": "４０４",
+          "en": "Room 404"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-403-4f",
+      "type": "graph",
+      "position": {
+        "x": 363,
+        "y": 136
+      },
+      "parentId": "g-4f",
+      "data": {
+        "labels": {
+          "ja": "４０３",
+          "en": "Room 403"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-402-4f",
+      "type": "graph",
+      "position": {
+        "x": 110,
+        "y": 136
+      },
+      "parentId": "g-4f",
+      "data": {
+        "labels": {
+          "ja": "４０２",
+          "en": "Room 402"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-408-4f",
+      "type": "graph",
+      "position": {
+        "x": 814,
+        "y": 378
+      },
+      "parentId": "g-4f",
+      "data": {
+        "labels": {
+          "ja": "４０８",
+          "en": "Room 408"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-407-4f",
+      "type": "graph",
+      "position": {
+        "x": 524,
+        "y": 378
+      },
+      "parentId": "g-4f",
+      "data": {
+        "labels": {
+          "ja": "４０７",
+          "en": "Room 407"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-401-4f",
+      "type": "graph",
+      "position": {
+        "x": 82,
+        "y": 378
+      },
+      "parentId": "g-4f",
+      "data": {
+        "labels": {
+          "ja": "４０１",
+          "en": "Room 401"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-elevator-4f",
+      "type": "graph",
+      "position": {
+        "x": 1029,
+        "y": 136
+      },
+      "parentId": "g-4f",
+      "data": {
+        "labels": {
+          "ja": "エレベーター",
+          "en": "Elevator"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-stairs-east-4f",
+      "type": "graph",
+      "position": {
+        "x": 1005,
+        "y": 378
+      },
+      "parentId": "g-4f",
+      "data": {
+        "labels": {
+          "ja": "階段",
+          "en": "Stairs"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-corridor-5f",
+      "type": "graph",
+      "position": {
+        "x": 696,
+        "y": 249
+      },
+      "parentId": "g-5f",
+      "data": {
+        "labels": {
+          "ja": "廊下",
+          "en": "Corridor"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-mens-restroom-5f",
+      "type": "graph",
+      "position": {
+        "x": 1151,
+        "y": 378
+      },
+      "parentId": "g-5f",
+      "data": {
+        "labels": {
+          "ja": "男子トイレ",
+          "en": "Men's restroom"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-502-5f",
+      "type": "graph",
+      "position": {
+        "x": 1311,
+        "y": 378
+      },
+      "parentId": "g-5f",
+      "data": {
+        "labels": {
+          "ja": "502",
+          "en": "Room 502"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-womens-restroom-5f",
+      "type": "graph",
+      "position": {
+        "x": 282,
+        "y": 378
+      },
+      "parentId": "g-5f",
+      "data": {
+        "labels": {
+          "ja": "女子トイレ",
+          "en": "Women's restroom"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-501-5f",
+      "type": "graph",
+      "position": {
+        "x": 1250,
+        "y": 136
+      },
+      "parentId": "g-5f",
+      "data": {
+        "labels": {
+          "ja": "501",
+          "en": "Room 501"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-508-5f",
+      "type": "graph",
+      "position": {
+        "x": 823,
+        "y": 136
+      },
+      "parentId": "g-5f",
+      "data": {
+        "labels": {
+          "ja": "５０８",
+          "en": "Room 508"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-503-5f",
+      "type": "graph",
+      "position": {
+        "x": 645,
+        "y": 378
+      },
+      "parentId": "g-5f",
+      "data": {
+        "labels": {
+          "ja": "５０３",
+          "en": "Room 503"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-504-5f",
+      "type": "graph",
+      "position": {
+        "x": 82,
+        "y": 378
+      },
+      "parentId": "g-5f",
+      "data": {
+        "labels": {
+          "ja": "５０４",
+          "en": "Room 504"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-507-5f",
+      "type": "graph",
+      "position": {
+        "x": 571,
+        "y": 136
+      },
+      "parentId": "g-5f",
+      "data": {
+        "labels": {
+          "ja": "５０７",
+          "en": "Room 507"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-506-5f",
+      "type": "graph",
+      "position": {
+        "x": 319,
+        "y": 136
+      },
+      "parentId": "g-5f",
+      "data": {
+        "labels": {
+          "ja": "５０６",
+          "en": "Room 506"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-room-505-5f",
+      "type": "graph",
+      "position": {
+        "x": 80,
+        "y": 136
+      },
+      "parentId": "g-5f",
+      "data": {
+        "labels": {
+          "ja": "５０５",
+          "en": "Room 505"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-elevator-5f",
+      "type": "graph",
+      "position": {
+        "x": 1029,
+        "y": 136
+      },
+      "parentId": "g-5f",
+      "data": {
+        "labels": {
+          "ja": "エレベーター",
+          "en": "Elevator"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-stairs-east-5f",
+      "type": "graph",
+      "position": {
+        "x": 1005,
+        "y": 378
+      },
+      "parentId": "g-5f",
+      "data": {
+        "labels": {
+          "ja": "階段",
+          "en": "Stairs"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-corridor-6f",
+      "type": "graph",
+      "position": {
+        "x": 696,
+        "y": 249
+      },
+      "parentId": "g-6f",
+      "data": {
+        "labels": {
+          "ja": "廊下",
+          "en": "Corridor"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-mens-restroom-6f",
+      "type": "graph",
+      "position": {
+        "x": 777,
+        "y": 80
+      },
+      "parentId": "g-6f",
+      "data": {
+        "labels": {
+          "ja": "男子トイレ",
+          "en": "Men's restroom"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-womens-restroom-6f",
+      "type": "graph",
+      "position": {
+        "x": 777,
+        "y": 418
+      },
+      "parentId": "g-6f",
+      "data": {
+        "labels": {
+          "ja": "女子トイレ",
+          "en": "Women's restroom"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-hall-6f",
+      "type": "graph",
+      "position": {
+        "x": 329,
+        "y": 249
+      },
+      "parentId": "g-6f",
+      "data": {
+        "labels": {
+          "ja": "ホール",
+          "en": "Hall"
+        },
+        "nodeType": "GOAL"
+      }
+    },
+    {
+      "id": "p-elevator-6f",
+      "type": "graph",
+      "position": {
+        "x": 1029,
+        "y": 136
+      },
+      "parentId": "g-6f",
+      "data": {
+        "labels": {
+          "ja": "エレベーター",
+          "en": "Elevator"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    },
+    {
+      "id": "p-stairs-east-6f",
+      "type": "graph",
+      "position": {
+        "x": 1005,
+        "y": 378
+      },
+      "parentId": "g-6f",
+      "data": {
+        "labels": {
+          "ja": "階段",
+          "en": "Stairs"
+        },
+        "nodeType": "TRANSIT_ONLY"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "r-current-location-1f--corridor-1f",
+      "type": "graph",
+      "source": "p-current-location-1f",
+      "target": "p-corridor-1f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-elevator-1f--corridor-1f",
+      "type": "graph",
+      "source": "p-elevator-1f",
+      "target": "p-corridor-1f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-stairs-east-1f--corridor-1f",
+      "type": "graph",
+      "source": "p-stairs-east-1f",
+      "target": "p-corridor-1f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-stairs-west-1f--corridor-1f",
+      "type": "graph",
+      "source": "p-stairs-west-1f",
+      "target": "p-corridor-1f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-204-2f--corridor-2f",
+      "type": "graph",
+      "source": "p-room-204-2f",
+      "target": "p-corridor-2f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-staff-room-2f--corridor-2f",
+      "type": "graph",
+      "source": "p-staff-room-2f",
+      "target": "p-corridor-2f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-restrooms-2f--corridor-2f",
+      "type": "graph",
+      "source": "p-restrooms-2f",
+      "target": "p-corridor-2f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-elevator-2f--corridor-2f",
+      "type": "graph",
+      "source": "p-elevator-2f",
+      "target": "p-corridor-2f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-stairs-east-2f--corridor-2f",
+      "type": "graph",
+      "source": "p-stairs-east-2f",
+      "target": "p-corridor-2f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-stairs-west-2f--corridor-2f",
+      "type": "graph",
+      "source": "p-stairs-west-2f",
+      "target": "p-corridor-2f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-mens-restroom-3f--corridor-3f",
+      "type": "graph",
+      "source": "p-mens-restroom-3f",
+      "target": "p-corridor-3f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-classroom-3f--corridor-3f",
+      "type": "graph",
+      "source": "p-classroom-3f",
+      "target": "p-corridor-3f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-womens-restroom-3f--corridor-3f",
+      "type": "graph",
+      "source": "p-womens-restroom-3f",
+      "target": "p-corridor-3f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-302-3f--corridor-3f",
+      "type": "graph",
+      "source": "p-room-302-3f",
+      "target": "p-corridor-3f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-306-3f--corridor-3f",
+      "type": "graph",
+      "source": "p-room-306-3f",
+      "target": "p-corridor-3f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-308-3f--corridor-3f",
+      "type": "graph",
+      "source": "p-room-308-3f",
+      "target": "p-corridor-3f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-303-3f--corridor-3f",
+      "type": "graph",
+      "source": "p-room-303-3f",
+      "target": "p-corridor-3f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-309-3f--corridor-3f",
+      "type": "graph",
+      "source": "p-room-309-3f",
+      "target": "p-corridor-3f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-staff-room-3f--corridor-3f",
+      "type": "graph",
+      "source": "p-staff-room-3f",
+      "target": "p-corridor-3f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-elevator-3f--corridor-3f",
+      "type": "graph",
+      "source": "p-elevator-3f",
+      "target": "p-corridor-3f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-stairs-east-3f--corridor-3f",
+      "type": "graph",
+      "source": "p-stairs-east-3f",
+      "target": "p-corridor-3f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-mens-restroom-4f--corridor-4f",
+      "type": "graph",
+      "source": "p-mens-restroom-4f",
+      "target": "p-corridor-4f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-lounge-4f--corridor-4f",
+      "type": "graph",
+      "source": "p-lounge-4f",
+      "target": "p-corridor-4f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-womens-restroom-4f--corridor-4f",
+      "type": "graph",
+      "source": "p-womens-restroom-4f",
+      "target": "p-corridor-4f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-lounge-2-4f--corridor-4f",
+      "type": "graph",
+      "source": "p-lounge-2-4f",
+      "target": "p-corridor-4f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-405-4f--corridor-4f",
+      "type": "graph",
+      "source": "p-room-405-4f",
+      "target": "p-corridor-4f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-404-4f--corridor-4f",
+      "type": "graph",
+      "source": "p-room-404-4f",
+      "target": "p-corridor-4f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-403-4f--corridor-4f",
+      "type": "graph",
+      "source": "p-room-403-4f",
+      "target": "p-corridor-4f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-402-4f--corridor-4f",
+      "type": "graph",
+      "source": "p-room-402-4f",
+      "target": "p-corridor-4f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-408-4f--corridor-4f",
+      "type": "graph",
+      "source": "p-room-408-4f",
+      "target": "p-corridor-4f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-407-4f--corridor-4f",
+      "type": "graph",
+      "source": "p-room-407-4f",
+      "target": "p-corridor-4f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-401-4f--corridor-4f",
+      "type": "graph",
+      "source": "p-room-401-4f",
+      "target": "p-corridor-4f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-elevator-4f--corridor-4f",
+      "type": "graph",
+      "source": "p-elevator-4f",
+      "target": "p-corridor-4f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-stairs-east-4f--corridor-4f",
+      "type": "graph",
+      "source": "p-stairs-east-4f",
+      "target": "p-corridor-4f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-mens-restroom-5f--corridor-5f",
+      "type": "graph",
+      "source": "p-mens-restroom-5f",
+      "target": "p-corridor-5f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-502-5f--corridor-5f",
+      "type": "graph",
+      "source": "p-room-502-5f",
+      "target": "p-corridor-5f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-womens-restroom-5f--corridor-5f",
+      "type": "graph",
+      "source": "p-womens-restroom-5f",
+      "target": "p-corridor-5f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-501-5f--corridor-5f",
+      "type": "graph",
+      "source": "p-room-501-5f",
+      "target": "p-corridor-5f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-508-5f--corridor-5f",
+      "type": "graph",
+      "source": "p-room-508-5f",
+      "target": "p-corridor-5f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-503-5f--corridor-5f",
+      "type": "graph",
+      "source": "p-room-503-5f",
+      "target": "p-corridor-5f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-504-5f--corridor-5f",
+      "type": "graph",
+      "source": "p-room-504-5f",
+      "target": "p-corridor-5f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-507-5f--corridor-5f",
+      "type": "graph",
+      "source": "p-room-507-5f",
+      "target": "p-corridor-5f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-506-5f--corridor-5f",
+      "type": "graph",
+      "source": "p-room-506-5f",
+      "target": "p-corridor-5f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-room-505-5f--corridor-5f",
+      "type": "graph",
+      "source": "p-room-505-5f",
+      "target": "p-corridor-5f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-elevator-5f--corridor-5f",
+      "type": "graph",
+      "source": "p-elevator-5f",
+      "target": "p-corridor-5f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-stairs-east-5f--corridor-5f",
+      "type": "graph",
+      "source": "p-stairs-east-5f",
+      "target": "p-corridor-5f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-mens-restroom-6f--corridor-6f",
+      "type": "graph",
+      "source": "p-mens-restroom-6f",
+      "target": "p-corridor-6f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-womens-restroom-6f--corridor-6f",
+      "type": "graph",
+      "source": "p-womens-restroom-6f",
+      "target": "p-corridor-6f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-hall-6f--corridor-6f",
+      "type": "graph",
+      "source": "p-hall-6f",
+      "target": "p-corridor-6f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-elevator-6f--corridor-6f",
+      "type": "graph",
+      "source": "p-elevator-6f",
+      "target": "p-corridor-6f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-stairs-east-6f--corridor-6f",
+      "type": "graph",
+      "source": "p-stairs-east-6f",
+      "target": "p-corridor-6f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-elevator-1f--elevator-2f",
+      "type": "graph",
+      "source": "p-elevator-1f",
+      "target": "p-elevator-2f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-elevator-2f--elevator-3f",
+      "type": "graph",
+      "source": "p-elevator-2f",
+      "target": "p-elevator-3f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-elevator-3f--elevator-4f",
+      "type": "graph",
+      "source": "p-elevator-3f",
+      "target": "p-elevator-4f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-elevator-4f--elevator-5f",
+      "type": "graph",
+      "source": "p-elevator-4f",
+      "target": "p-elevator-5f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-elevator-5f--elevator-6f",
+      "type": "graph",
+      "source": "p-elevator-5f",
+      "target": "p-elevator-6f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-stairs-east-1f--stairs-east-2f",
+      "type": "graph",
+      "source": "p-stairs-east-1f",
+      "target": "p-stairs-east-2f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-stairs-east-2f--stairs-east-3f",
+      "type": "graph",
+      "source": "p-stairs-east-2f",
+      "target": "p-stairs-east-3f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-stairs-east-3f--stairs-east-4f",
+      "type": "graph",
+      "source": "p-stairs-east-3f",
+      "target": "p-stairs-east-4f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-stairs-east-4f--stairs-east-5f",
+      "type": "graph",
+      "source": "p-stairs-east-4f",
+      "target": "p-stairs-east-5f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-stairs-east-5f--stairs-east-6f",
+      "type": "graph",
+      "source": "p-stairs-east-5f",
+      "target": "p-stairs-east-6f",
+      "data": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "r-stairs-west-1f--stairs-west-2f",
+      "type": "graph",
+      "source": "p-stairs-west-1f",
+      "target": "p-stairs-west-2f",
+      "data": {
+        "direction": "both"
+      }
+    }
+  ]
+}

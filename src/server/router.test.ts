@@ -26,6 +26,7 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
 import { sampleEdgeDevicesWire } from "@/mocks/fixtures/edges";
+import { sampleGuideMap } from "@/mocks/fixtures/guest";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { guestPageClient } from "./guest";
 import { issueRegistrationToken } from "./idp";
@@ -312,6 +313,30 @@ describe("guest", () => {
       ],
     });
     expect(getCrowd).toHaveBeenCalledWith({ eventId, language: "en" });
+  });
+
+  it("returns the sample guide map as a guest graph and a layout without reaching the guest service", async () => {
+    const guestCalls = (
+      Object.keys(guestPageClient) as (keyof typeof guestPageClient)[]
+    ).map((method) => vi.spyOn(guestPageClient, method));
+
+    const guideMap = await call(router.guest.getGuideMap, { eventId });
+
+    expect(guideMap).toEqual(sampleGuideMap());
+    expect(guideMap.graph.points).toContainEqual({
+      pointId: "p-elevator-1f",
+      labels: { ja: "エレベーター", en: "Elevator" },
+      nodeType: "TRANSIT_ONLY",
+    });
+    expect(guideMap.layout.floors.map((f) => f.name)).toEqual([
+      "1F",
+      "2F",
+      "3F",
+      "4F",
+      "5F",
+      "6Fホール",
+    ]);
+    for (const spy of guestCalls) expect(spy).not.toHaveBeenCalled();
   });
 
   it("returns the queues with their gates and without the turnaround count", async () => {

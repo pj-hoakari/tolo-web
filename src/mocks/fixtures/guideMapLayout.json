@@ -115,7 +115,8 @@
       "connector": "elevator",
       "link": "l-d78ab481-e2f5-45a8-a01d-01e631c901cd",
       "direction": "both",
-      "markerSize": 40
+      "markerSize": 40,
+      "graphPointId": "p-elevator-2f"
     },
     {
       "id": "c-5b0dfcfb-22f6-4a54-8c43-87fc3b83d4e4",
@@ -131,7 +132,8 @@
       "connector": "elevator",
       "link": "l-9e0c7c01-e497-488f-bfe6-4d26a1aac6b8",
       "direction": "both",
-      "markerSize": 40
+      "markerSize": 40,
+      "graphPointId": "p-elevator-2f"
     },
     {
       "id": "c-43928b5e-338b-4e25-bf06-95b37be5bd23",
@@ -147,7 +149,8 @@
       "connector": "elevator",
       "link": "l-d40046bb-8d67-49aa-9c40-629593d2e34e",
       "direction": "both",
-      "markerSize": 40
+      "markerSize": 40,
+      "graphPointId": "p-elevator-2f"
     },
     {
       "id": "s-6e91341f-ea22-4976-bf3b-4a11c3f095c3",
@@ -160,7 +163,8 @@
       "w": 660,
       "h": 134,
       "title": "204",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-204-2f"
     },
     {
       "id": "s-0171d677-85b8-4b2f-92e6-993c8e08b796",
@@ -173,7 +177,8 @@
       "w": 680,
       "h": 160,
       "title": "職員室",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-staff-room-2f"
     },
     {
       "id": "c-3333c895-fe04-43e4-911f-6d6b0006309a",
@@ -191,7 +196,8 @@
       "direction": "both",
       "markerSize": 64,
       "markW": 100,
-      "markH": 160
+      "markH": 160,
+      "graphPointId": "p-stairs-east-1f"
     },
     {
       "id": "c-be237d2e-96a2-4b7f-9bc9-8a3296ed318a",
@@ -209,7 +215,8 @@
       "direction": "both",
       "markerSize": 64,
       "markW": 100,
-      "markH": 160
+      "markH": 160,
+      "graphPointId": "p-stairs-east-2f"
     },
     {
       "id": "t-c3a06de8-543c-4fb5-97fb-4a4c133b218a",
@@ -260,7 +267,8 @@
       "connector": "elevator",
       "link": "l-d78ab481-e2f5-45a8-a01d-01e631c901cd",
       "direction": "both",
-      "markerSize": 40
+      "markerSize": 40,
+      "graphPointId": "p-elevator-3f"
     },
     {
       "id": "c-0321b4bf-69d6-4263-b59d-216eac39a034",
@@ -276,7 +284,8 @@
       "connector": "elevator",
       "link": "l-9e0c7c01-e497-488f-bfe6-4d26a1aac6b8",
       "direction": "both",
-      "markerSize": 40
+      "markerSize": 40,
+      "graphPointId": "p-elevator-3f"
     },
     {
       "id": "c-6832c9d9-d327-425f-99a5-22e85af9baa3",
@@ -292,7 +301,8 @@
       "connector": "elevator",
       "link": "l-d40046bb-8d67-49aa-9c40-629593d2e34e",
       "direction": "both",
-      "markerSize": 40
+      "markerSize": 40,
+      "graphPointId": "p-elevator-3f"
     },
     {
       "id": "c-ff76566b-28dd-4aac-a9d3-4f2726eeff1e",
@@ -310,7 +320,8 @@
       "direction": "both",
       "markerSize": 64,
       "markW": 100,
-      "markH": 160
+      "markH": 160,
+      "graphPointId": "p-stairs-east-3f"
     },
     {
       "id": "p-d4558f22-c532-4172-96ed-d80310dea0d8",
@@ -323,7 +334,8 @@
       "w": 101.15625,
       "h": 160,
       "title": "男子トイレ",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-mens-restroom-3f"
     },
     {
       "id": "p-0940659b-5d99-49aa-8fac-fe962255a810",
@@ -336,7 +348,8 @@
       "w": 120,
       "h": 160,
       "title": "教室",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-classroom-3f"
     },
     {
       "id": "p-9f74ec93-6aae-4ab6-807d-2f873dac9cd2",
@@ -349,7 +362,8 @@
       "w": 100,
       "h": 160,
       "title": "女子トイレ",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-womens-restroom-3f"
     },
     {
       "id": "p-cf8119bd-95a4-49b1-af55-29cb65217637",
@@ -362,7 +376,8 @@
       "w": 195.390625,
       "h": 180,
       "title": "302",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-302-3f"
     },
     {
       "id": "p-0c024aef-4260-42f8-bf4b-e57344f6be82",
@@ -375,7 +390,8 @@
       "w": 346.5429687499999,
       "h": 180,
       "title": "３０６",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-306-3f"
     },
     {
       "id": "p-0526a53c-d1e8-4724-9054-3b8e522175ef",
@@ -388,7 +404,8 @@
       "w": 333.23828125,
       "h": 180,
       "title": "３０８",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-308-3f"
     },
     {
       "id": "p-fcdd66e7-d248-455d-87c9-92a158ea9b06",
@@ -401,7 +418,8 @@
       "w": 245.74609375,
       "h": 160,
       "title": "３０３",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-303-3f"
     },
     {
       "id": "p-e3f72c0f-d20b-4fc5-89cc-64bdab518c58",
@@ -414,7 +432,8 @@
       "w": 158.2734375,
       "h": 160,
       "title": "３０９",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-309-3f"
     },
     {
       "id": "a-d9ab47f4-5088-4779-a107-3ea1e518e05a",
@@ -477,7 +496,8 @@
       "w": 214.71875,
       "h": 160,
       "title": "男子・女子トイレ",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-restrooms-2f"
     },
     {
       "id": "t-ac8738f8-5c40-445a-a510-9a4c3e283bb4",
@@ -528,7 +548,8 @@
       "connector": "elevator",
       "link": "l-d78ab481-e2f5-45a8-a01d-01e631c901cd",
       "direction": "both",
-      "markerSize": 40
+      "markerSize": 40,
+      "graphPointId": "p-elevator-4f"
     },
     {
       "id": "c-56490709-521e-4e66-a967-5c8745f3df35",
@@ -544,7 +565,8 @@
       "connector": "elevator",
       "link": "l-9e0c7c01-e497-488f-bfe6-4d26a1aac6b8",
       "direction": "both",
-      "markerSize": 40
+      "markerSize": 40,
+      "graphPointId": "p-elevator-4f"
     },
     {
       "id": "c-6c0782c7-4615-44ce-ad70-69fe86b34f2b",
@@ -560,7 +582,8 @@
       "connector": "elevator",
       "link": "l-d40046bb-8d67-49aa-9c40-629593d2e34e",
       "direction": "both",
-      "markerSize": 40
+      "markerSize": 40,
+      "graphPointId": "p-elevator-4f"
     },
     {
       "id": "c-59a39951-e02a-47e3-a419-246e7c2667b2",
@@ -578,7 +601,8 @@
       "direction": "both",
       "markerSize": 64,
       "markW": 100,
-      "markH": 160
+      "markH": 160,
+      "graphPointId": "p-stairs-east-4f"
     },
     {
       "id": "p-5e6563d1-287c-467f-907a-05445363935a",
@@ -591,7 +615,8 @@
       "w": 85.1875,
       "h": 160,
       "title": "男子トイレ",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-mens-restroom-4f"
     },
     {
       "id": "p-c73b81d7-c1db-458d-8ebf-ed84c759cabd",
@@ -604,7 +629,8 @@
       "w": 120,
       "h": 160,
       "title": "ラウンジ",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-lounge-4f"
     },
     {
       "id": "p-33379bd7-0dd0-434d-b621-91b7b094d3b5",
@@ -617,7 +643,8 @@
       "w": 100,
       "h": 160,
       "title": "女子トイレ",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-womens-restroom-4f"
     },
     {
       "id": "p-ff723c68-e3ac-4d44-ae9f-1d171d139978",
@@ -630,7 +657,8 @@
       "w": 195.390625,
       "h": 180,
       "title": "ラウンジ",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-lounge-2-4f"
     },
     {
       "id": "p-d99ac63a-1cc7-4b3d-9860-7659fe5e8878",
@@ -643,7 +671,8 @@
       "w": 158.2734375,
       "h": 179.99999999999997,
       "title": "４０５",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-405-4f"
     },
     {
       "id": "p-f2f9769d-0865-4163-8d45-f0131f9bae9e",
@@ -656,7 +685,8 @@
       "w": 158.2734375,
       "h": 180,
       "title": "４０４",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-404-4f"
     },
     {
       "id": "p-3d82f608-d3d1-41db-af42-8af2cc2d3740",
@@ -669,7 +699,8 @@
       "w": 158.2734375,
       "h": 180,
       "title": "４０３",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-403-4f"
     },
     {
       "id": "p-a34ac401-2c34-44f4-88b0-b03596264650",
@@ -682,7 +713,8 @@
       "w": 173.271484375,
       "h": 180,
       "title": "４０２",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-402-4f"
     },
     {
       "id": "p-1b8f3644-fd54-462b-a375-311b2b1a52ee",
@@ -695,7 +727,8 @@
       "w": 158.2734375,
       "h": 160,
       "title": "４０８",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-408-4f"
     },
     {
       "id": "p-f9f4a369-f4b3-4715-86ef-14dfc15fa329",
@@ -708,7 +741,8 @@
       "w": 239.1171875,
       "h": 160,
       "title": "４０７",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-407-4f"
     },
     {
       "id": "p-60a7b846-6f22-4e4c-8dd6-eedd1e7b9cfb",
@@ -721,7 +755,8 @@
       "w": 158.2734375,
       "h": 160,
       "title": "４０１",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-401-4f"
     },
     {
       "id": "p-b0d8f522-d95b-451c-8c6b-330e7e5b076c",
@@ -734,7 +769,8 @@
       "w": 144.23828125,
       "h": 160,
       "title": "職員室",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-staff-room-3f"
     },
     {
       "id": "t-2e3c272c-cb1a-4174-86b0-dc37c00a4eee",
@@ -785,7 +821,8 @@
       "connector": "elevator",
       "link": "l-d78ab481-e2f5-45a8-a01d-01e631c901cd",
       "direction": "both",
-      "markerSize": 40
+      "markerSize": 40,
+      "graphPointId": "p-elevator-5f"
     },
     {
       "id": "c-6b722670-d17c-47e1-8216-2c2cc2116ecc",
@@ -801,7 +838,8 @@
       "connector": "elevator",
       "link": "l-9e0c7c01-e497-488f-bfe6-4d26a1aac6b8",
       "direction": "both",
-      "markerSize": 40
+      "markerSize": 40,
+      "graphPointId": "p-elevator-5f"
     },
     {
       "id": "c-55edfe97-d978-4832-a7f7-6d9b6b1a518c",
@@ -817,7 +855,8 @@
       "connector": "elevator",
       "link": "l-d40046bb-8d67-49aa-9c40-629593d2e34e",
       "direction": "both",
-      "markerSize": 40
+      "markerSize": 40,
+      "graphPointId": "p-elevator-5f"
     },
     {
       "id": "c-70aebb9d-7e76-4528-a2e9-e87a63c17c5c",
@@ -835,7 +874,8 @@
       "direction": "both",
       "markerSize": 64,
       "markW": 100,
-      "markH": 160
+      "markH": 160,
+      "graphPointId": "p-stairs-east-5f"
     },
     {
       "id": "p-dd2e1ecc-1d32-4e51-91b6-706349de3d8f",
@@ -848,7 +888,8 @@
       "w": 101.15625,
       "h": 160,
       "title": "男子トイレ",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-mens-restroom-5f"
     },
     {
       "id": "p-363a48df-9dbd-454b-8f62-9ddff82a34e4",
@@ -861,7 +902,8 @@
       "w": 120,
       "h": 160,
       "title": "502",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-502-5f"
     },
     {
       "id": "p-949ecffa-f2bd-4dff-a226-cd3cebd252bb",
@@ -874,7 +916,8 @@
       "w": 100,
       "h": 160,
       "title": "女子トイレ",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-womens-restroom-5f"
     },
     {
       "id": "p-921a9bed-6883-4c9a-9336-6aa638d1ad9c",
@@ -887,7 +930,8 @@
       "w": 195.390625,
       "h": 180,
       "title": "501",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-501-5f"
     },
     {
       "id": "p-9e2c71b9-a40f-4733-adf8-33ff04137a0c",
@@ -900,7 +944,8 @@
       "w": 174.255859375,
       "h": 180,
       "title": "５０８",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-508-5f"
     },
     {
       "id": "p-6c2be06a-3c21-486f-bb97-490754e4ae4c",
@@ -913,7 +958,8 @@
       "w": 391.59375,
       "h": 160,
       "title": "５０３",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-503-5f"
     },
     {
       "id": "p-6c26d7e3-1f04-4add-9696-f6e7e56d897a",
@@ -926,7 +972,8 @@
       "w": 158.2734375,
       "h": 160,
       "title": "５０４",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-504-5f"
     },
     {
       "id": "p-9762644c-01b4-44de-8bc4-af3d2b66bc0f",
@@ -939,7 +986,8 @@
       "w": 174.255859375,
       "h": 180,
       "title": "５０７",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-507-5f"
     },
     {
       "id": "p-2e92a788-a703-4587-8cdb-c2aa631881b5",
@@ -952,7 +1000,8 @@
       "w": 174.255859375,
       "h": 180,
       "title": "５０６",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-506-5f"
     },
     {
       "id": "p-baa7c426-b16d-45fa-9eb5-6ed7e1af9f09",
@@ -965,7 +1014,8 @@
       "w": 155.912109375,
       "h": 180,
       "title": "５０５",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-room-505-5f"
     },
     {
       "id": "t-7c9b50c9-1803-467a-b8da-a03d2f77d808",
@@ -1016,7 +1066,8 @@
       "connector": "elevator",
       "link": "l-d78ab481-e2f5-45a8-a01d-01e631c901cd",
       "direction": "both",
-      "markerSize": 40
+      "markerSize": 40,
+      "graphPointId": "p-elevator-6f"
     },
     {
       "id": "c-a59d762c-c0e2-4d71-9c31-2927e9c3d5f8",
@@ -1032,7 +1083,8 @@
       "connector": "elevator",
       "link": "l-9e0c7c01-e497-488f-bfe6-4d26a1aac6b8",
       "direction": "both",
-      "markerSize": 40
+      "markerSize": 40,
+      "graphPointId": "p-elevator-6f"
     },
     {
       "id": "c-c95cc349-74a5-40f3-86f3-b895ef5a7443",
@@ -1048,7 +1100,8 @@
       "connector": "elevator",
       "link": "l-d40046bb-8d67-49aa-9c40-629593d2e34e",
       "direction": "both",
-      "markerSize": 40
+      "markerSize": 40,
+      "graphPointId": "p-elevator-6f"
     },
     {
       "id": "c-8680900e-50e6-4642-9866-66ee360992c9",
@@ -1066,7 +1119,8 @@
       "direction": "both",
       "markerSize": 64,
       "markW": 100,
-      "markH": 160
+      "markH": 160,
+      "graphPointId": "p-stairs-east-6f"
     },
     {
       "id": "p-89f17037-1a77-4a49-a890-51e45b30aa4b",
@@ -1079,7 +1133,8 @@
       "w": 120,
       "h": 60,
       "title": "男子トイレ",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-mens-restroom-6f"
     },
     {
       "id": "p-02f74849-07ec-48e5-a8ba-3eab9f1ce867",
@@ -1092,7 +1147,8 @@
       "w": 120,
       "h": 60,
       "title": "女子トイレ",
-      "pin": true
+      "pin": true,
+      "graphPointId": "p-womens-restroom-6f"
     },
     {
       "id": "c-2e81b8a7-041f-42be-9279-e31e60120bbe",
@@ -1109,7 +1165,8 @@
       "link": "l-fa83f622-2a18-470d-961e-47cfd76140e9",
       "direction": "both",
       "markW": 230,
-      "markH": 134
+      "markH": 134,
+      "graphPointId": "p-stairs-west-1f"
     },
     {
       "id": "c-42f82a54-d305-4d7d-a201-c2e1bdf52c4e",
@@ -1126,7 +1183,8 @@
       "link": "l-fa83f622-2a18-470d-961e-47cfd76140e9",
       "direction": "both",
       "markW": 230,
-      "markH": 134
+      "markH": 134,
+      "graphPointId": "p-stairs-west-2f"
     },
     {
       "id": "p-b4e872bc-1e95-4cbe-bbbe-dd3f8e3a3a24",
@@ -1138,7 +1196,8 @@
       "shape": "pin",
       "w": 120,
       "h": 48,
-      "title": "現在地"
+      "title": "現在地",
+      "graphPointId": "p-current-location-1f"
     },
     {
       "id": "s-c2260944-e5cb-4dd7-b02a-0d46d92ef586",
