@@ -1,5 +1,24 @@
 # 人検出モデルセットアップ
 
+## モデルなしでテストする
+
+`pnpm test --run` と `pnpm test:e2e` は ONNX モデルを配置せずに実行できます。
+Playwright では `NEXT_PUBLIC_CROWD_DETECTION_MOCKING=enabled` で推論を「検出なし」を返すモックに切り替え、モデル取得への応答もテストで置き換えます。取得失敗・待機・再試行のテストは引き続き実際の取得処理を使います。
+
+この環境変数はビルド時に反映されます。実モデルを使う環境では未設定にしてください。既存サーバーを Playwright で再利用する場合も、同じモック設定でビルドされている必要があります。
+
+Docker Compose の `e2e` サービスは Playwright 用イメージを使うため、ホストへの Chromium やシステム依存パッケージのインストールは不要です。ビルドには非公開パッケージの取得用に `NPM_TOKEN` が必要です。
+
+```bash
+# 観測ページの E2E
+docker compose --profile e2e run --build --rm e2e pnpm test:e2e e2e/observation.spec.ts
+
+# E2E 全体
+docker compose --profile e2e run --build --rm e2e
+```
+
+Docker のビルド対象から `public/models/` は除外されているため、モデルファイルがない環境で検証できます。
+
 ## YOLOモデルのセットアップ
 
 デフォルトではYOLO26nを使用

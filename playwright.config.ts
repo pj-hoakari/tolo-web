@@ -20,6 +20,8 @@ export default defineConfig({
     url: `http://localhost:${port}`,
     env: {
       NEXT_PUBLIC_API_MOCKING: "enabled",
+      NEXT_PUBLIC_CROWD_DETECTION_MOCKING: "enabled",
+      NEXT_PUBLIC_CROWD_DETECTION_MODEL_PATH: "/models/yolo26n.onnx",
       TENANT_SUBDOMAIN_MOCKING: "enabled",
       FIREBASE_PROJECT_ID: "e2e-tolo-signaling",
     },
