@@ -19,7 +19,12 @@
       "edges": "接続エッジ"
     },
     "graphEditTitle": "{tenantId} ルート図編集",
-    "backLink": "管理ページへ戻る"
+    "backLink": "管理ページへ戻る",
+    "tenantId": "テナントID: {id}",
+    "filters": {
+      "reset": "条件をリセット",
+      "results": "{shown} / {total}件を表示"
+    }
   },
   "TenantManagement": {
     "title": "{tenantId} イベント管理",
@@ -28,7 +33,10 @@
       "submit": "作成",
       "failed": "イベントを作成できませんでした。",
       "tenantUnavailable": "このテナントではイベントを作成できません。テナントがアーカイブされている可能性があります。",
-      "tenantNotFound": "テナントが見つかりませんでした。"
+      "tenantNotFound": "テナントが見つかりませんでした。",
+      "open": "イベントを作成",
+      "cancel": "キャンセル",
+      "success": "イベントを作成しました。"
     },
     "list": {
       "heading": "イベント",
@@ -36,7 +44,21 @@
       "empty": "イベントはまだありません。",
       "error": "イベント一覧を取得できませんでした。",
       "retry": "再読み込み",
-      "showArchived": "アーカイブ済みも表示"
+      "showArchived": "アーカイブ済みも表示",
+      "count": "{count}件",
+      "state": "状態",
+      "actions": "操作",
+      "open": "管理する",
+      "openLabel": "「{name}」を管理",
+      "search": "イベント名・IDで検索",
+      "allStatuses": "すべての状態",
+      "noResults": "条件に一致するイベントがありません。",
+      "moreActions": "「{name}」のその他の操作",
+      "idLabel": "イベントID",
+      "copyId": "「{name}」のイベントIDをコピー",
+      "idCopied": "「{name}」のイベントIDをコピーしました。",
+      "copyFailed": "コピーできませんでした。IDを選択してコピーしてください。",
+      "results": "{total}件中{shown}件を表示"
     },
     "status": {
       "draft": "下書き",
@@ -51,15 +73,30 @@
       "description": "「{name}」をアーカイブします。アーカイブしたイベントは、「アーカイブ済みも表示」をオンにすると一覧に表示され、そこから復元できます。",
       "cancel": "キャンセル",
       "confirm": "アーカイブする",
-      "failed": "イベントをアーカイブできませんでした。"
+      "failed": "イベントをアーカイブできませんでした。",
+      "success": "「{name}」をアーカイブしました。"
     },
     "restore": {
       "button": "復元",
-      "failed": "イベントを復元できませんでした。"
+      "failed": "イベントを復元できませんでした。",
+      "success": "「{name}」を復元しました。"
     },
     "transition": {
       "stale": "イベントまたはテナントの状態が変わったため、操作できませんでした。一覧を再読み込みしてください。",
-      "eventNotFound": "イベントが見つかりませんでした。一覧を再読み込みしてください。"
+      "eventNotFound": "イベントが見つかりませんでした。一覧を再読み込みしてください。",
+      "button": "「{name}」の状態を変更（{status}）",
+      "title": "イベントの状態を変更",
+      "description": "「{name}」の状態を「{from}」から「{to}」に変更します。",
+      "confirm": "変更する",
+      "cancel": "キャンセル",
+      "failed": "イベントの状態を変更できませんでした。",
+      "success": "「{name}」の状態を「{status}」に変更しました。"
+    },
+    "pageTitle": "イベント管理",
+    "workspace": {
+      "brand": "Tolo",
+      "allEvents": "すべてのイベント",
+      "navigation": "イベントの表示切り替え"
     }
   },
   "Graph": {

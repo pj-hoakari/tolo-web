@@ -19,7 +19,12 @@
       "edges": "連線的邊緣裝置"
     },
     "graphEditTitle": "{tenantId} 路徑圖編輯",
-    "backLink": "返回管理頁面"
+    "backLink": "返回管理頁面",
+    "tenantId": "租戶 ID: {id}",
+    "filters": {
+      "reset": "重設篩選",
+      "results": "顯示 {shown} / {total} 項"
+    }
   },
   "TenantManagement": {
     "title": "{tenantId} 活動管理",
@@ -28,7 +33,10 @@
       "submit": "建立",
       "failed": "無法建立活動。",
       "tenantUnavailable": "無法在此租戶下建立活動。該租戶可能已被封存。",
-      "tenantNotFound": "找不到該租戶。"
+      "tenantNotFound": "找不到該租戶。",
+      "open": "建立活動",
+      "cancel": "取消",
+      "success": "活動已建立。"
     },
     "list": {
       "heading": "活動",
@@ -36,7 +44,21 @@
       "empty": "尚無活動。",
       "error": "無法取得活動清單。",
       "retry": "重新載入",
-      "showArchived": "同時顯示已封存"
+      "showArchived": "同時顯示已封存",
+      "count": "{count} 項",
+      "state": "狀態",
+      "actions": "操作",
+      "open": "管理",
+      "openLabel": "管理{name}",
+      "search": "依活動名稱或 ID 搜尋",
+      "allStatuses": "所有狀態",
+      "noResults": "沒有符合篩選條件的活動。",
+      "moreActions": "{name}的更多操作",
+      "idLabel": "活動ID",
+      "copyId": "複製{name}的活動ID",
+      "idCopied": "已複製{name}的活動ID。",
+      "copyFailed": "無法複製。請選取ID並手動複製。",
+      "results": "共{total}項，顯示{shown}項"
     },
     "status": {
       "draft": "草稿",
@@ -51,15 +73,30 @@
       "description": "將封存「{name}」。封存後的活動僅在開啟「同時顯示已封存」時顯示於清單中，並可在那裡還原。",
       "cancel": "取消",
       "confirm": "封存",
-      "failed": "無法封存活動。"
+      "failed": "無法封存活動。",
+      "success": "已封存「{name}」。"
     },
     "restore": {
       "button": "還原",
-      "failed": "無法還原活動。"
+      "failed": "無法還原活動。",
+      "success": "已還原「{name}」。"
     },
     "transition": {
       "stale": "活動或租戶的狀態已變更，無法完成操作。請重新載入列表。",
-      "eventNotFound": "找不到該活動。請重新載入列表。"
+      "eventNotFound": "找不到該活動。請重新載入列表。",
+      "button": "變更{name}的狀態（{status}）",
+      "title": "變更活動狀態",
+      "description": "將{name}的狀態從{from}變更為{to}。",
+      "confirm": "變更",
+      "cancel": "取消",
+      "failed": "無法變更活動狀態。",
+      "success": "已將{name}的狀態變更為{status}。"
+    },
+    "pageTitle": "活動管理",
+    "workspace": {
+      "brand": "Tolo",
+      "allEvents": "所有活動",
+      "navigation": "活動檢視"
     }
   },
   "Graph": {

@@ -11,13 +11,20 @@ import { sampleEdgeDevicesWire } from "@/mocks/fixtures/edges";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { router } from "./router";
 
-vi.hoisted(() => {
+const { transitionEventStatus } = vi.hoisted(() => {
   process.env.GATEWAY_URL = "http://127.0.0.1:9";
+  return { transitionEventStatus: vi.fn() };
 });
+vi.mock("./tenantManagement", () => ({
+  tenantManagementClient: { transitionEventStatus },
+}));
 vi.mock("server-only", () => ({}));
 vi.mock(
   "@pj-hoakari/tolo-tenant-management-connect-es/tolo/tenant/v1/tenant_pb",
-  () => ({ EventStatus: {}, TenantService: { methods: [] } }),
+  () => ({
+    EventStatus: { DRAFT: 1, OPEN: 2, LOCKED: 3, CLOSED: 4, ARCHIVED: 5 },
+    TenantService: { methods: [] },
+  }),
 );
 
 const eventId = "fedcba9876543210";
@@ -26,6 +33,55 @@ const [device] = sampleEdgeDevicesWire;
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
+  transitionEventStatus.mockReset();
+});
+
+describe("tenant.transitionEventStatus", () => {
+  it.each([
+    ["draft", 1],
+    ["open", 2],
+    ["locked", 3],
+    ["closed", 4],
+    ["archived", 5],
+  ] as const)(
+    "maps %s to the backend enum and returns the updated event",
+    async (to, protoStatus) => {
+      transitionEventStatus.mockResolvedValue({
+        event: { eventId, name: "Event A", status: protoStatus },
+      });
+      const result = await call(router.tenant.transitionEventStatus, {
+        eventId,
+        to,
+      });
+      expect(transitionEventStatus).toHaveBeenCalledWith({
+        eventId,
+        to: protoStatus,
+      });
+      expect(result).toEqual({ eventId, name: "Event A", status: to });
+    },
+  );
+
+  it("passes a rejected transition back as a precondition error without the backend message", async () => {
+    transitionEventStatus.mockRejectedValue(
+      new ConnectError("private backend detail", Code.FailedPrecondition),
+    );
+    const error = await call(router.tenant.transitionEventStatus, {
+      eventId,
+      to: "open",
+    }).catch((err: unknown) => err);
+    expect(error).toMatchObject({ code: "PRECONDITION_FAILED" });
+    expect((error as Error).message).not.toContain("private backend detail");
+  });
+
+  it("rejects unknown target states before calling the backend", async () => {
+    await expect(
+      call(router.tenant.transitionEventStatus, {
+        eventId,
+        to: "unknown" as never,
+      }),
+    ).rejects.toThrow();
+    expect(transitionEventStatus).not.toHaveBeenCalled();
+  });
 });
 
 describe("graph.saveGraph", () => {

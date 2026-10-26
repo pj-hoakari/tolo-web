@@ -19,7 +19,12 @@
       "edges": "Edges conectados"
     },
     "graphEditTitle": "{tenantId} Editor del diagrama de rutas",
-    "backLink": "Volver a administración"
+    "backLink": "Volver a administración",
+    "tenantId": "ID del inquilino: {id}",
+    "filters": {
+      "reset": "Restablecer filtros",
+      "results": "Mostrando {shown} de {total}"
+    }
   },
   "TenantManagement": {
     "title": "{tenantId} Gestión de eventos",
@@ -28,7 +33,10 @@
       "submit": "Crear",
       "failed": "No se pudo crear el evento.",
       "tenantUnavailable": "No se pueden crear eventos en este inquilino. Es posible que el inquilino esté archivado.",
-      "tenantNotFound": "No se encontró el inquilino."
+      "tenantNotFound": "No se encontró el inquilino.",
+      "open": "Crear evento",
+      "cancel": "Cancelar",
+      "success": "Evento creado."
     },
     "list": {
       "heading": "Eventos",
@@ -36,7 +44,21 @@
       "empty": "Todavía no hay eventos.",
       "error": "No se pudieron cargar los eventos.",
       "retry": "Volver a cargar",
-      "showArchived": "Mostrar también archivados"
+      "showArchived": "Mostrar también archivados",
+      "count": "{count, plural, one {# evento} other {# eventos}}",
+      "state": "Estado",
+      "actions": "Acciones",
+      "open": "Gestionar",
+      "openLabel": "Gestionar {name}",
+      "search": "Buscar por nombre o ID del evento",
+      "allStatuses": "Todos los estados",
+      "noResults": "Ningún evento coincide con estos filtros.",
+      "moreActions": "Más acciones para {name}",
+      "idLabel": "ID del evento",
+      "copyId": "Copiar el ID del evento {name}",
+      "idCopied": "Se ha copiado el ID del evento {name}.",
+      "copyFailed": "No se pudo copiar. Selecciona el ID y cópialo manualmente.",
+      "results": "Mostrando {shown} de {total} eventos"
     },
     "status": {
       "draft": "Borrador",
@@ -51,15 +73,30 @@
       "description": "¿Archivar «{name}»? Los eventos archivados solo aparecen en esta lista con «Mostrar también archivados» activado, y desde ahí se pueden restaurar.",
       "cancel": "Cancelar",
       "confirm": "Archivar",
-      "failed": "No se pudo archivar el evento."
+      "failed": "No se pudo archivar el evento.",
+      "success": "Se archivó «{name}»."
     },
     "restore": {
       "button": "Restaurar",
-      "failed": "No se pudo restaurar el evento."
+      "failed": "No se pudo restaurar el evento.",
+      "success": "Se restauró «{name}»."
     },
     "transition": {
       "stale": "No se pudo completar la operación porque el estado del evento o del inquilino cambió. Vuelve a cargar la lista.",
-      "eventNotFound": "No se encontró el evento. Vuelve a cargar la lista."
+      "eventNotFound": "No se encontró el evento. Vuelve a cargar la lista.",
+      "button": "Cambiar estado de {name} ({status})",
+      "title": "Cambiar estado del evento",
+      "description": "Cambiar el estado de {name} de {from} a {to}.",
+      "confirm": "Cambiar estado",
+      "cancel": "Cancelar",
+      "failed": "No se pudo cambiar el estado del evento.",
+      "success": "Se cambió el estado de {name} a {status}."
+    },
+    "pageTitle": "Gestión de eventos",
+    "workspace": {
+      "brand": "Tolo",
+      "allEvents": "Todos los eventos",
+      "navigation": "Vistas de eventos"
     }
   },
   "Graph": {
