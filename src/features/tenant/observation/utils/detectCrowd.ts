@@ -31,7 +31,9 @@ const ONNX_RUNTIME_PATH = "/onnxruntime/";
 const INPUT_SIZE = 640;
 const STATIC_SUPPRESS_FACTOR = 0.3;
 
-let detectorPromise: Promise<YoloDetector> | null = null;
+type CrowdDetector = Pick<YoloDetector, "detect">;
+
+let detectorPromise: Promise<CrowdDetector> | null = null;
 let capturer: ReturnType<typeof createLetterboxCapturer> | null = null;
 const tracker = new BYTETracker();
 const lineCrossingCounter = new LineCrossingCounter();
@@ -82,8 +84,14 @@ async function fetchModel(): Promise<ArrayBuffer> {
   return response.arrayBuffer();
 }
 
-async function createPersonDetector(): Promise<YoloDetector> {
+async function createPersonDetector(): Promise<CrowdDetector> {
   const modelBuffer = await fetchModel();
+  // 取得失敗・待機・再試行は実際の処理を通し、推論だけを置き換える。
+  if (process.env.NEXT_PUBLIC_CROWD_DETECTION_MOCKING === "enabled") {
+    const { createMockCrowdDetector } = await import("@/mocks/crowdDetector");
+    return createMockCrowdDetector();
+  }
+
   const preferredBackend = isWebGpuAvailable() ? "webgpu" : "wasm";
   const options = {
     modelPath: modelBuffer,
@@ -121,7 +129,7 @@ async function createPersonDetector(): Promise<YoloDetector> {
   }
 }
 
-export function initializeCrowdDetector(): Promise<YoloDetector> {
+export function initializeCrowdDetector(): Promise<CrowdDetector> {
   detectorPromise ??= createPersonDetector().catch((error) => {
     detectorPromise = null;
     throw error;

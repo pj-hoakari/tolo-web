@@ -84,7 +84,15 @@ const holdModelRequest = async (context: BrowserContext) => {
   return () => held.promise;
 };
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, context }) => {
+  // 推論はモックに置き換えるため、有効な ONNX バイナリは不要。
+  // 各テストの context.route で取得失敗や待機状態に上書きできる。
+  await context.route("**/models/*.onnx", (route) =>
+    route.fulfill({
+      contentType: "application/octet-stream",
+      body: "mock-model",
+    }),
+  );
   await page.goto("/event/test/observation");
   await expect(
     page.getByRole("heading", { level: 2, name: "test 観測ページ" }),
@@ -420,6 +428,23 @@ test.describe("カウントライン", () => {
 
 test.describe("検出の開始", () => {
   test.use({ permissions: ["camera"] });
+
+  test("モデルファイルなしで検出を開始し、停止・再起動できる", async ({
+    page,
+  }) => {
+    await setUpUnlockCode(page, "1234");
+
+    await startButton(page).click();
+    await expect(page.getByText("検出状態: 検出中")).toBeVisible();
+    await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
+
+    await stopButton(page).click();
+    await expect(page.getByText("検出状態: 停止中")).toBeVisible();
+
+    await startButton(page).click();
+    await expect(page.getByText("検出状態: 検出中")).toBeVisible();
+    await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
+  });
 
   test("検出モデルを取得できないときにカメラを起動すると検出状態がエラーになり理由が表示される", async ({
     page,
