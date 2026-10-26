@@ -34,7 +34,10 @@ const openCanvasMenu = async (
 test.beforeEach(async ({ page }) => {
   await page.goto("/event/test/management/graph/edit");
   await expect(
-    page.getByRole("heading", { level: 2, name: "test ルート図編集" }),
+    page.getByRole("heading", {
+      level: 2,
+      name: "0123456789abcdef ルート図編集",
+    }),
   ).toBeVisible();
   await expect(booth(page)).toBeVisible();
 });
@@ -43,7 +46,10 @@ test("管理ページへ戻るリンクを押すと管理ページに移動す�
   await page.getByRole("link", { name: "管理ページへ戻る" }).click();
   await expect(page).toHaveURL("/event/test/management");
   await expect(
-    page.getByRole("heading", { level: 2, name: "test 管理ページ" }),
+    page.getByRole("heading", {
+      level: 2,
+      name: "0123456789abcdef 管理ページ",
+    }),
   ).toBeVisible();
 });
 
@@ -445,4 +451,23 @@ test("グループを選んで Delete キーを押すとグループだけが解
   await expect(node(page, "ph_floor1")).toHaveCount(0);
   await expect(allNodes(page)).toHaveCount(14);
   await expect(allEdges(page)).toHaveCount(14);
+});
+
+test("案内マップのグラフを指定して開くと KCG本館の 1F から 6F のグループと各階のポイントが並ぶ", async ({
+  page,
+}) => {
+  await page.goto("/event/test/management/graph/edit?layoutFixture=guide-map");
+
+  for (const [id, label] of [
+    ["g_0eb36458", "1F"],
+    ["g_73abacb8", "2F"],
+    ["g_a3cd32be", "3F"],
+    ["g_c6f20eff", "4F"],
+    ["g_2ea28f93", "5F"],
+    ["g_6db0e5cb", "6Fホール"],
+  ])
+    await expect(node(page, id)).toContainText(label);
+  await expect(node(page, "n_ca0bb1fc")).toContainText("ホール");
+  await expect(node(page, "n_fc14f2f4")).toContainText("エレベーター");
+  await expect(node(page, "ph_booth")).toHaveCount(0);
 });

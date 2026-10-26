@@ -15,10 +15,10 @@ export function EasyConnectPanel({
 
   return (
     <Panel position="top-center">
-      <div className="flex items-center rounded-md border border-primary bg-card px-3 py-2 text-foreground text-sm shadow-sm">
+      <div className="flex items-center rounded-md border border-primary bg-card px-3 py-2 text-sm text-foreground shadow-sm">
         <div>
           {fromNode ? t("fromNode") : t("fromCanvas")}
-          <span className="ml-2 text-muted-foreground text-xs">
+          <span className="ml-2 text-xs text-muted-foreground">
             {t("cancelHint")}
           </span>
         </div>

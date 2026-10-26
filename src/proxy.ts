@@ -6,6 +6,7 @@ import {
   NextResponse,
 } from "next/server";
 import { resolveTenant } from "./lib/control/tenant";
+import { resolveTenantSubdomain } from "./server/tenantSubdomain";
 
 const REWRITE_MARKER_HEADER = "tolo-tenant-rewritten";
 const REWRITE_TOKEN = randomUUID();
@@ -18,7 +19,7 @@ function isInternalTenantPath(pathname: string): boolean {
   );
 }
 
-export function tenantProxy(
+export async function tenantProxy(
   request: NextRequest,
   rewriteToken: string = REWRITE_TOKEN,
 ) {
@@ -40,8 +41,18 @@ export function tenantProxy(
     case "root":
       return NextResponse.next();
     case "tenant": {
+      let tenantId: string | undefined;
+      try {
+        tenantId = await resolveTenantSubdomain(resolution.subdomain);
+      } catch (err) {
+        console.error("failed to resolve the tenant subdomain", err);
+        return new NextResponse(null, { status: 503 });
+      }
+      if (!tenantId) {
+        return NextResponse.rewrite(new URL("/not-found", request.url));
+      }
       const url = request.nextUrl.clone();
-      url.pathname = `${TENANT_PATH_BASE}/${resolution.tenantId}${pathname === "/" ? "" : pathname}`;
+      url.pathname = `${TENANT_PATH_BASE}/${tenantId}${pathname === "/" ? "" : pathname}`;
       const headers = new Headers(request.headers);
       headers.set(REWRITE_MARKER_HEADER, rewriteToken);
       return NextResponse.rewrite(url, { request: { headers } });

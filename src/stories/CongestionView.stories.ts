@@ -11,11 +11,17 @@ const meta = {
   tags: ["autodocs"],
   args: {
     areas: [
-      { id: "entrance", name: "入場ゲート", level: "high" },
-      { id: "hall", name: "ホール", level: "mid" },
-      { id: "cafe", name: "カフェ", level: "low" },
-      { id: "goods", name: "グッズ売り場", level: "high" },
+      {
+        id: "elevator-1f",
+        name: "1F エレベーター前",
+        level: "high",
+        danger: true,
+      },
+      { id: "hall-6f", name: "6F ホール", level: "mid", danger: false },
+      { id: "corridor-4f", name: "4F 廊下", level: "low", danger: false },
+      { id: "lounge-4f", name: "4F ラウンジ", level: "high", danger: false },
     ],
+    updatedAt: "14:28 更新",
   },
 } satisfies Meta<typeof CongestionView>;
 
@@ -27,9 +33,30 @@ export const Default: Story = {};
 export const AllCalm: Story = {
   args: {
     areas: [
-      { id: "entrance", name: "入場ゲート", level: "low" },
-      { id: "hall", name: "ホール", level: "low" },
-      { id: "cafe", name: "カフェ", level: "low" },
+      {
+        id: "elevator-1f",
+        name: "1F エレベーター前",
+        level: "low",
+        danger: false,
+      },
+      { id: "hall-6f", name: "6F ホール", level: "low", danger: false },
+      { id: "corridor-4f", name: "4F 廊下", level: "low", danger: false },
     ],
+  },
+};
+
+export const Empty: Story = {
+  args: {
+    areas: [],
+    updatedAt: undefined,
+    message: "混雑の情報はまだありません",
+  },
+};
+
+export const LoadError: Story = {
+  args: {
+    areas: [],
+    updatedAt: undefined,
+    message: "情報を取得できませんでした",
   },
 };

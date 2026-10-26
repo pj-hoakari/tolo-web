@@ -1,4 +1,5 @@
 ---
+
 name: i18n-messages
 description: 画面に出る文言（ラベル・見出し・ボタン・aria-label・エラーメッセージ等）を追加・変更するときの next-intl の手順とルール。messages/*.json への 7 ロケール追加、useTranslations / getTranslations の使い分け、View とラッパーの文言の持ち方、ロジック層がメッセージキーだけを持つ設計、動的キーの型付け、テスト・Storybook での Provider、対応ロケールの増減を扱う。新しいテキストを画面に出すとき、日本語がハードコードされている箇所を直すときに使う。
 ---
@@ -9,16 +10,16 @@ description: 画面に出る文言（ラベル・見出し・ボタン・aria-la
 
 ## 現在の構成
 
-| 場所 | 役割 |
-|---|---|
-| `messages/<locale>.json` | ロケールごとのメッセージ。**7 ファイル**（`ja` / `en` / `ko` / `zh-Hans` / `zh-Hant` / `es` / `ne`） |
-| `src/i18n/locale.ts` | `locales` / `defaultLocale`（`ja`）/ `Locale` 型 / `localeLabels` / `isLocale` / `resolveLocaleFromAcceptLanguage` |
-| `src/i18n/request.ts` | ロケール解決。**Cookie（ユーザーの明示選択）→ Accept-Language → 既定ロケール** の順 |
-| `src/i18n/cookie.ts` / `actions.ts` | `NEXT_LOCALE` Cookie の定数と保存用 Server Action（host-only Cookie） |
-| `src/components/locale-select.tsx` / `locale-select-view.tsx` | 言語セレクタ（ラッパー + View） |
-| `global.d.ts` | `messages/ja.json` を基準にした型宣言（`AppConfig`） |
-| `src/test/IntlTestProvider.tsx` | ユニットテスト用の Provider ラッパー |
-| `.storybook/preview.tsx` / `messages.ts` | Storybook の Provider と Locale ツールバー |
+| 場所                                                          | 役割                                                                                                               |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `messages/<locale>.json`                                      | ロケールごとのメッセージ。**7 ファイル**（`ja` / `en` / `ko` / `zh-Hans` / `zh-Hant` / `es` / `ne`）               |
+| `src/i18n/locale.ts`                                          | `locales` / `defaultLocale`（`ja`）/ `Locale` 型 / `localeLabels` / `isLocale` / `resolveLocaleFromAcceptLanguage` |
+| `src/i18n/request.ts`                                         | ロケール解決。**Cookie（ユーザーの明示選択）→ Accept-Language → 既定ロケール** の順                                |
+| `src/i18n/cookie.ts` / `actions.ts`                           | `NEXT_LOCALE` Cookie の定数と保存用 Server Action（host-only Cookie）                                              |
+| `src/components/locale-select.tsx` / `locale-select-view.tsx` | 言語セレクタ（ラッパー + View）                                                                                    |
+| `global.d.ts`                                                 | `messages/ja.json` を基準にした型宣言（`AppConfig`）                                                               |
+| `src/test/IntlTestProvider.tsx`                               | ユニットテスト用の Provider ラッパー                                                                               |
+| `.storybook/preview.tsx` / `messages.ts`                      | Storybook の Provider と Locale ツールバー                                                                         |
 
 **`messages/ja.json` が型の基準**。新しいキーは ja に足してから他ロケールへ展開する。
 
@@ -86,9 +87,9 @@ return <FooView label={t("title")} />;
 ユーティリティ・純粋関数・ストア・型定義に表示文字列を置かない。**メッセージキーを返し、描画境界で翻訳する。**
 
 参考実装:
-
 - `src/features/tenant/management/graph/nodeTypes.ts`
   検証結果・通知が `messageKey` を持ち、`NoticeTranslator`（`useTranslations("Graph.notices")` をそのまま渡せる関数型）を引数で注入する。
+
   ```ts
   export type NoticeMessageKey = keyof Messages["Graph"]["notices"];
   export type NoticeTranslator = (messageKey: NoticeMessageKey) => string;
@@ -116,10 +117,10 @@ lastSeenAt.toLocaleTimeString(locale); // ✗ "ja-JP" 固定
 ```ts
 import type { Messages } from "next-intl";
 
-type AreaId = keyof Messages["Guest"]["congestion"]["areas"];
-type RawArea = { id: AreaId; level: CongestionLevel };
+type ShapeId = keyof Messages["Guest"]["queue"]["shapes"];
+type RawQueue = { shape: ShapeId; current: number };
 
-t(`areas.${area.id}`); // ✅ 型が通る
+t(`shapes.${queue.shape}`); // ✅ 型が通る
 ```
 
 外部データ由来で id を型に落とせない場合（例: マップ作成ツールが書き出す JSON）に限り、キー型へキャストし **`t.has()` で実在を確認**してから使う。理由をコメントで残すこと（`src/features/guest/info/GuideMap.tsx` が参照実装）。
@@ -143,7 +144,6 @@ renderHook(() => useGraphEditor(initial), { wrapper: IntlTestProvider });
 ## Storybook
 
 `.storybook/preview.tsx` の decorator が `NextIntlClientProvider` を張るので、story 側の対応は不要。ツールバーの **Locale** で全ロケールを切り替えて確認できる。
-
 - 特定 story だけロケールを変えたいときは `globals: { locale: "ko" }` を指定する。
 - 新しいロケールを増やしたら `.storybook/messages.ts` の import とマップにも追加する（漏れは `satisfies` で型エラーになる）。
 
@@ -160,7 +160,7 @@ renderHook(() => useGraphEditor(initial), { wrapper: IntlTestProvider });
 - `placeholderGraph.ts` のサンプルノード名
 - View コンポーネントの props 既定値、コード内のコメント
 
-将来 API から来るダミーデータの文言は、`Record<Lang, string>` のように**言語別フィールドで持たせない**。ロケールが増えたときに破綻する。`Guest.congestion.areas.<id>` のように **id をキーにしてメッセージ側へ寄せる**（`Congestion.tsx` / `StaffMessageBell.tsx` が参照実装）。
+将来 API から来るダミーデータの文言は、`Record<Lang, string>` のように**言語別フィールドで持たせない**。ロケールが増えたときに破綻する。`Guest.queue.shapes.<id>` のように **id をキーにしてメッセージ側へ寄せる**（`QueueLayout.tsx` が参照実装）。
 
 ## チェックリスト
 

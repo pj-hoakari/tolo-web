@@ -1,6 +1,18 @@
 {
   "HomePage": {
-    "title": "¡Hola, mundo!"
+    "createTenant": "Crear un inquilino"
+  },
+  "Onboarding": {
+    "title": "Crear un inquilino",
+    "name": "Nombre del inquilino",
+    "subdomain": "Subdominio",
+    "ownerEmail": "Correo electrónico del propietario",
+    "submit": "Crear",
+    "done": "Inquilino creado",
+    "openTenant": "Abrir la página del inquilino",
+    "subdomainTaken": "Este subdominio ya está en uso. Elige otro.",
+    "invalid": "Los datos no cumplen las reglas. Un subdominio usa letras minúsculas, dígitos y guiones, tiene como máximo 63 caracteres y no puede empezar ni terminar con un guion.",
+    "failed": "No se pudo crear el inquilino."
   },
   "LocaleSelect": {
     "label": "Cambiar idioma"
@@ -13,13 +25,9 @@
   },
   "Management": {
     "title": "{tenantId} Administración",
-    "tabsLabel": "Cambiar vista de administración",
-    "tabs": {
-      "graph": "Diagrama de rutas",
-      "edges": "Edges conectados"
-    },
     "graphEditTitle": "{tenantId} Editor del diagrama de rutas",
-    "backLink": "Volver a administración"
+    "backLink": "Volver a administración",
+    "observationDevicesLink": "Dispositivos de observación"
   },
   "TenantManagement": {
     "title": "{tenantId} Gestión de eventos",
@@ -238,10 +246,10 @@
       "error": "Error de conexión"
     },
     "aliveEdges": {
-      "title": "Edges ({count})",
+      "title": "Dispositivos de observación ({count})",
       "refresh": "Actualizar",
       "loading": "Cargando…",
-      "empty": "No hay edges",
+      "empty": "No hay dispositivos de observación",
       "lastSeen": "Última respuesta: {time}",
       "unknownTime": "Desconocida",
       "offline": "Sin conexión",
@@ -251,7 +259,11 @@
       "disconnectLabel": "Desconectar de «{name}»",
       "close": "Cerrar",
       "closeLabel": "Cerrar el vídeo de «{name}»",
-      "loadError": "No se pudo cargar la lista de edges"
+      "loadError": "No se pudo cargar la lista de dispositivos de observación",
+      "openHere": "Abrir en este dispositivo",
+      "openHereLabel": "Abrir «{name}» en este dispositivo",
+      "unregister": "Dar de baja",
+      "unregisterLabel": "Dar de baja «{name}»"
     },
     "receiver": {
       "stoppedTitle": "La observación se detuvo",
@@ -262,6 +274,30 @@
     "broadcast": {
       "active": "Transmitiendo",
       "inactive": "Detenido"
+    },
+    "registerEdge": {
+      "title": "Registrar un dispositivo de observación",
+      "nameLabel": "Nombre del dispositivo",
+      "pointsLabel": "Nombres de los puntos de observación",
+      "pointsDescription": "Escribe uno por línea",
+      "submit": "Registrar",
+      "registered": "Se registró «{name}». Abre esta URL en el dispositivo que se usará para observar.",
+      "points": "Puntos de observación: {names}",
+      "urlLabel": "URL emitida",
+      "copy": "Copiar URL",
+      "copied": "Copiada",
+      "open": "Abrir en este dispositivo",
+      "failed": "No se pudo registrar el dispositivo de observación.",
+      "invalid": "Revisa el nombre del dispositivo y los nombres de los puntos de observación.",
+      "eventNotFound": "No se encontró el evento."
+    },
+    "unregisterEdge": {
+      "title": "Dar de baja el dispositivo de observación",
+      "description": "¿Dar de baja «{name}»? Sus puntos de observación dejarán de observarse.",
+      "cancel": "Cancelar",
+      "confirm": "Dar de baja",
+      "failed": "No se pudo dar de baja el dispositivo de observación.",
+      "stale": "No se encontró el dispositivo de observación o ya está dado de baja. Actualiza la lista."
     }
   },
   "Detection": {
@@ -286,7 +322,12 @@
       "close": "Cerrar ajustes avanzados"
     },
     "lines": {
+      "modeLabel": "Modo de interacción con líneas",
+      "defaultName": "Línea {index}",
+      "editLine": "Editar {name}",
+      "stopEditingLine": "Dejar de editar {name}",
       "create": "Crear línea",
+      "edit": "Modo de edición",
       "listLabel": "Líneas",
       "reverseForward": "Invertir dirección forward",
       "deleteSelected": "Eliminar la línea seleccionada",
@@ -362,6 +403,10 @@
       "hide": "Ocultar"
     }
   },
+  "ObservationDevices": {
+    "title": "{tenantId} Dispositivos de observación",
+    "managementLink": "Administración"
+  },
   "Guest": {
     "pageSubtitle": "Página del visitante",
     "waitingNumber": {
@@ -399,43 +444,50 @@
         "right": "Derecha"
       }
     },
+    "queues": {
+      "title": "Tiempos de espera por fila",
+      "waitTime": "aprox. {minutes} min",
+      "recommendedGates": "Entrada recomendada: {gates}",
+      "empty": "Aún no hay información de tiempos de espera"
+    },
     "staffMessage": {
       "title": "Avisos del personal",
       "ariaOpen": "Avisos del personal",
-      "empty": "No hay avisos por ahora",
-      "samples": {
-        "msg-2": {
-          "body": "La zona de la puerta este está muy concurrida. Si tienes prisa, te recomendamos usar la puerta oeste.",
-          "staffName": "Taro Yamada",
-          "staffRole": "Personal del recinto"
-        },
-        "msg-1": {
-          "body": "La hora de inicio ha cambiado de las 15:00 a las 15:30. Gracias por tu comprensión.",
-          "staffName": "Hanako Sato",
-          "staffRole": "Responsable del evento"
-        }
-      }
+      "empty": "No hay avisos por ahora"
     },
     "guideMap": {
       "title": "Mapa de orientación",
       "hint": "Selecciona un destino para ver la ruta",
       "currentLocation": "Estás aquí",
-      "destinations": {
-        "hall": "Sala",
-        "goods": "Tienda",
-        "cafe": "Cafetería",
-        "exit": "Salida"
-      },
       "destinationsLabel": "Destinos",
       "expand": "Ampliar el mapa",
       "collapse": "Reducir el mapa",
       "search": "Buscar destino",
       "noResults": "Sin resultados",
-      "reset": "Restablecer"
+      "reset": "Restablecer",
+      "goal": "Destino",
+      "rideTo": "{via} hasta {floor}",
+      "arriveFrom": "Llegada desde {floor}",
+      "connectors": {
+        "stairs": "Escaleras",
+        "escalator": "Escalera mecánica",
+        "elevator": "Ascensor"
+      },
+      "walkStep": "{floor}: {from} → {to}",
+      "rideStep": "{via}: {from} → {to}",
+      "noRoute": "No se encontró una ruta a este destino",
+      "zoomInHint": "Toca el mapa para ampliar",
+      "zoomOutHint": "Arrastra para mover · toca para ver todo",
+      "closed": " (cerrado)",
+      "crowdAvoided": "Esta ruta evita las zonas concurridas",
+      "crowdRerouted": "La ruta ha cambiado porque cambió el nivel de aglomeración",
+      "crowdThroughDanger": "Esta ruta pasa por una zona peligrosamente concurrida. Siga las indicaciones del personal",
+      "crowdLegend": "Aglomeración"
     },
     "floor": {
       "title": "Planta actual",
-      "placeholderName": "Planta 1"
+      "placeholderName": "Planta 1",
+      "selectLabel": "Planta a mostrar"
     },
     "congestion": {
       "title": "Nivel de afluencia",
@@ -444,13 +496,12 @@
         "mid": "Media",
         "high": "Alta"
       },
-      "areas": {
-        "entrance": "Puerta de entrada",
-        "hall": "Sala",
-        "cafe": "Cafetería",
-        "goods": "Tienda"
-      }
-    }
+      "danger": "Peligro",
+      "updatedAt": "Actualizado a las {time}",
+      "empty": "Aún no hay información de afluencia"
+    },
+    "loading": "Cargando…",
+    "loadError": "No se pudo obtener la información"
   },
   "PwaInstall": {
     "button": "Instalar aplicación",

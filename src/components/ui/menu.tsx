@@ -64,7 +64,7 @@ const MenuItem = ({ children, className, ...props }: AriaMenuItemProps) => (
     }
     className={composeRenderProps(className, (className) =>
       cn(
-        "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",
+        "relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors outline-none select-none",
         /* Disabled */
         "disabled:pointer-events-none disabled:opacity-50",
         /* Focused */
@@ -112,7 +112,7 @@ const MenuHeader = ({
 }: MenuHeaderProps) => (
   <AriaHeader
     className={cn(
-      "px-3 py-1.5 font-semibold text-sm",
+      "px-3 py-1.5 text-sm font-semibold",
       inset && "pl-8",
       separator && "-mx-1 mb-1 border-b border-b-border pb-2.5",
       className,

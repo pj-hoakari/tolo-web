@@ -10,7 +10,10 @@ const routeFromEntrance = (page: Page) => page.getByTestId("rf__edge-ph_e1");
 test.beforeEach(async ({ page }) => {
   await page.goto("/event/test/management/graph/edit");
   await expect(
-    page.getByRole("heading", { level: 2, name: "test ルート図編集" }),
+    page.getByRole("heading", {
+      level: 2,
+      name: "0123456789abcdef ルート図編集",
+    }),
   ).toBeVisible();
   await expect(booth(page)).toBeVisible();
 });
@@ -111,7 +114,17 @@ test("ルートの操作メニューで両方向通行にするとプロパテ�
   await routeFromEntrance(page).click({ button: "right", force: true });
   await page.getByRole("menuitem", { name: "両方向通行にする" }).click();
 
-  await routeFromEntrance(page).click({ force: true });
+  const path = routeFromEntrance(page).locator("path.react-flow__edge-path");
+  await expect(path).toHaveAttribute("marker-start", /^url\(/);
+  // SVG グループの矩形中心は曲線上とは限らないため、実際の線上をクリックする。
+  const point = await path.evaluate((element: SVGPathElement) => {
+    const local = element.getPointAtLength(element.getTotalLength() / 2);
+    const matrix = element.getScreenCTM();
+    if (!matrix) throw new Error("route has no screen transform");
+    const screen = new DOMPoint(local.x, local.y).matrixTransform(matrix);
+    return { x: screen.x, y: screen.y };
+  });
+  await page.mouse.click(point.x, point.y);
   await expect(
     panel(page).getByRole("radio", { name: "両通行可 ⇌" }),
   ).toBeChecked();

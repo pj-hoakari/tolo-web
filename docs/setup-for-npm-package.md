@@ -13,18 +13,18 @@ cp .env.example .env
 ### GitHubトークンの作成
 
 1. GitHubのトークンページを開く  
-  [Personal Access Tokens (Classic)](https://github.com/settings/tokens)
+   [Personal Access Tokens (Classic)](https://github.com/settings/tokens)
 2. 「Generate new token」をクリック
 3. 「Generate new token (classic)」を選択  
-  ⚠「(clssic)」であることを確認
+   ⚠「(clssic)」であることを確認
 4. 「Note」に任意の名前を入力
 5. 「Expiration」を選択
-6. 「Select scopes」で以下の権限を選択  
-    - `read:packages`（パッケージの読み取り）  
+6. 「Select scopes」で以下の権限を選択
+   - `read:packages`（パッケージの読み取り）
 7. 「Generate token」をクリック  
-  ⚠次の画面でトークンが表示される，コピーを忘れずに閉じることがないように注意
+   ⚠次の画面でトークンが表示される，コピーを忘れずに閉じることがないように注意
 8. 生成されたトークンをコピー  
-  ⚠コピーを忘れて閉じないように注意
+   ⚠コピーを忘れて閉じないように注意
 
 
 トークンの「Select scopes」については以下の画像を参照
@@ -40,11 +40,13 @@ NPM_TOKEN=ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 ## direnvのセットアップ
+
 任意，direnvを使用する場合のみ
 
 [direnv – unclutter your .profile | direnv](https://direnv.net/)
 
 ### direnvのインストール
+
 [Installation | direnv](https://direnv.net/docs/installation.html)
 
 Ubuntuの場合
@@ -58,6 +60,7 @@ brew install direnv
 ```
 
 ### direnvとシェルの連携
+
 [Setup | direnv](https://direnv.net/docs/hook.html)
 
 Ubuntuの場合（bashを使用している場合）
@@ -85,6 +88,7 @@ direnv allow
 ```
 
 ## pnpmの設定
+
 pnpmにGitHub Packages用のトークンを設定する
 
 pnpm v11.6.0以降，projectの`.npmrc`では環境変数が展開されなくなったため，user/globalレベルでの設定が必要　　

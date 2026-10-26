@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { __test__, config, tenantProxy } from "./proxy";
+import { resolveTenantSubdomain } from "./server/tenantSubdomain";
+
+vi.mock("./server/tenantSubdomain", () => ({
+  resolveTenantSubdomain: vi.fn(),
+}));
+
+const tenantIds: Record<string, string> = { tenant1: "0123456789abcdef" };
 
 describe("proxy matcher", () => {
   test("PWA manifest and icons bypass tenant routing on every host", () => {
@@ -53,17 +60,27 @@ describe("internal tenant path routing detection", () => {
 });
 
 describe("tenant routing proxy", () => {
-  test("request has tolo-tenant-rewritten header should be skipped", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+  beforeEach(() => {
+    vi.mocked(resolveTenantSubdomain).mockReset();
+    vi.mocked(resolveTenantSubdomain).mockImplementation(
+      async (subdomain) => tenantIds[subdomain],
+    );
+  });
+
+  test("request has tolo-tenant-rewritten header should be skipped", async () => {
     const rewriteToken = "test-token";
     const request = new NextRequest("http://localhost/tenant/example", {
       headers: {
         "tolo-tenant-rewritten": rewriteToken,
       },
     });
-    const response = tenantProxy(request, rewriteToken);
+    const response = await tenantProxy(request, rewriteToken);
     expect(response).toEqual(NextResponse.next());
   });
-  test("request with tenant subdomain should be rewritten to internal tenant path", () => {
+  test("request with tenant subdomain should be rewritten to the internal path of the tenant it resolves to", async () => {
     const host = "tenant1.localhost";
     const rewriteToken = "test-token";
     const request = new NextRequest(`http://${host}`, {
@@ -71,73 +88,101 @@ describe("tenant routing proxy", () => {
         host: host,
       },
     });
-    const response = tenantProxy(request, rewriteToken);
+    const response = await tenantProxy(request, rewriteToken);
     const url = request.nextUrl.clone();
-    url.pathname = "/tenant/tenant1";
+    url.pathname = "/tenant/0123456789abcdef";
     expect(response.headers.get("x-middleware-rewrite")).toBe(url.toString());
     expect(
       response.headers.get("x-middleware-request-tolo-tenant-rewritten"),
     ).toBe(rewriteToken);
     expect(response.status).toBe(200);
   });
-  test("subpath should be preserved when rewriting to the internal tenant path", () => {
+  test("subpath should be preserved when rewriting to the internal tenant path", async () => {
     const host = "tenant1.localhost";
     const request = new NextRequest(`http://${host}/about`, {
       headers: {
         host: host,
       },
     });
-    const response = tenantProxy(request);
+    const response = await tenantProxy(request);
     const url = request.nextUrl.clone();
-    url.pathname = "/tenant/tenant1/about";
+    url.pathname = "/tenant/0123456789abcdef/about";
     expect(response.headers.get("x-middleware-rewrite")).toBe(url.toString());
   });
-  test("invalid host should be denied with 404", () => {
+  test("percent-encoded QR location in the guest path should be preserved when rewriting", async () => {
+    const host = "tenant1.localhost";
+    const request = new NextRequest(
+      `http://${host}/event/e1/guest/%E6%9D%B1%20gate%2F1`,
+      { headers: { host } },
+    );
+    const response = await tenantProxy(request);
+    expect(
+      new URL(response.headers.get("x-middleware-rewrite") ?? "").pathname,
+    ).toBe("/tenant/0123456789abcdef/event/e1/guest/%E6%9D%B1%20gate%2F1");
+  });
+  test("subdomain that resolves to no tenant should be denied with 404", async () => {
+    const host = "unknown.localhost";
+    const request = new NextRequest(`http://${host}`, { headers: { host } });
+    const response = await tenantProxy(request);
+    expect(response).toEqual(
+      NextResponse.rewrite(new URL("/not-found", request.url)),
+    );
+  });
+  test("subdomain lookup failure should answer 503", async () => {
+    vi.mocked(resolveTenantSubdomain).mockRejectedValue(new Error("down"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const host = "tenant1.localhost";
+    const request = new NextRequest(`http://${host}`, { headers: { host } });
+    const response = await tenantProxy(request);
+    expect(response.status).toBe(503);
+    expect(response.headers.get("x-middleware-rewrite")).toBeNull();
+  });
+  test("invalid host should be denied with 404", async () => {
     const host = "tenant1.example.com";
     const request = new NextRequest(`http://${host}`, {
       headers: {
         host: host,
       },
     });
-    const response = tenantProxy(request);
+    const response = await tenantProxy(request);
     expect(response).toEqual(
       NextResponse.rewrite(new URL("/not-found", request.url)),
     );
   });
-  test("direct internal tenant path request should be denied with 404", () => {
+  test("direct internal tenant path request should be denied with 404", async () => {
     const urlString = "http://localhost/tenant/example";
     const request = new NextRequest(urlString);
-    const response = tenantProxy(request);
+    const response = await tenantProxy(request);
     expect(response).toEqual(
       NextResponse.rewrite(new URL("/not-found", request.url)),
     );
   });
-  test("multiple subdomains should be denied with 404", () => {
+  test("multiple subdomains should be denied with 404", async () => {
     const urlString = "http://tenant1.tenant2.tenant3.localhost/tenant/example";
     const request = new NextRequest(urlString);
-    const response = tenantProxy(request);
+    const response = await tenantProxy(request);
     expect(response).toEqual(
       NextResponse.rewrite(new URL("/not-found", request.url)),
     );
   });
-  test("non-tenant path should be allowed to proceed", () => {
+  test("non-tenant path should be allowed to proceed", async () => {
     const host = "localhost";
     const request = new NextRequest(`http://${host}`, {
       headers: {
         host: host,
       },
     });
-    const response = tenantProxy(request);
+    const response = await tenantProxy(request);
     expect(response).toEqual(NextResponse.next());
   });
-  test("www prefix non-tenant path should be allowed to proceed", () => {
+  test("www prefix non-tenant path should be allowed to proceed", async () => {
     const host = "www.localhost";
     const request = new NextRequest(`http://${host}`, {
       headers: {
         host: host,
       },
     });
-    const response = tenantProxy(request);
+    const response = await tenantProxy(request);
     expect(response).toEqual(NextResponse.next());
   });
 });

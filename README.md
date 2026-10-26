@@ -22,13 +22,15 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Docker Compose での開発環境
 
-`compose.yaml` は Firebase エミュレータ（Firestore と Auth）、開発用の偽 IdP（`fakeidp`）、tolo-edge-bridge、Next.js の開発サーバー（`web`）を起動します。tolo-edge-bridge はすべての RPC で `event_access` トークンを検証します。`web` は、管理ページからの呼び出しでは環境変数 `GRAPH_ACCESS_TOKEN`、観測ページからの呼び出しでは `OBSERVATION_ACCESS_TOKEN` のトークンを `Authorization: Bearer` で tolo-edge-bridge へ送ります。
+`compose.yaml` は Firebase エミュレータ（Firestore と Auth）、開発用の偽 IdP（`fakeidp`）、tolo-edge-bridge、Next.js の開発サーバー（`web`）を起動します。tolo-edge-bridge はすべての RPC で `event_access` トークンを検証します。`web` は、管理ページと観測デバイス管理ページからの呼び出しでは環境変数 `GRAPH_ACCESS_TOKEN`、観測ページからの呼び出しでは `OBSERVATION_ACCESS_TOKEN` のトークンを `Authorization: Bearer` で tolo-edge-bridge へ送ります。
 
-ブラウザは、tolo-edge-bridge が発行した Firebase のカスタムトークンで Auth エミュレータにサインインしてから、シグナリング文書を読み書きします。Firebase エミュレータは tolo-edge-bridge リポジトリの `firebase-emulator/` を固定したコミットからビルドし、同じディレクトリのセキュリティルールを適用します。ホストへは Firestore を `localhost:8080`、Auth を `localhost:9099`、Emulator UI を `http://localhost:4000` で公開します。
+ブラウザは、tolo-edge-bridge が発行した Firebase のカスタムトークンで Auth エミュレータにサインインしてから、シグナリング文書を読み書きします。Firebase エミュレータはこのリポジトリの `firebase-emulator/` からビルドし、同じディレクトリのセキュリティルール（tolo-edge-bridge のシグナリング文書のルールと同じもの）を適用します。ホストへは Firestore を `localhost:8080`、Auth を `localhost:9099`、Emulator UI を `http://localhost:4000` で公開します。
 
-Service Gateway と Observation は起動しません。代わりに、`web` は環境変数 `OBSERVATION_API_MOCKING` が `enabled` のとき、Observation の手続き（端末一覧、観測地点、ハートビート、計測値の送信）に Service Gateway を呼ばずに応答します。端末一覧は MSW のモックと同じサンプル（`src/mocks/fixtures/edges.ts`）で、「接続エッジ」タブには、稼働中の 2 台とオフラインの 1 台が表示されます。計測値は捨てます。シグナリングはこの切り替えの対象外で、tolo-edge-bridge を通ります。`compose.yaml` はこの変数を既定で `enabled` にします。この切り替えは `NODE_ENV` が `development` のときだけ働きます。
+Service Gateway と Observation は起動しません。代わりに、`web` は環境変数 `OBSERVATION_API_MOCKING` が `enabled` のとき、Observation の手続き（端末一覧、観測地点、ハートビート、計測値の送信）に Service Gateway を呼ばずに応答します。端末一覧は MSW のモックと同じサンプル（`src/mocks/fixtures/edges.ts`）で、観測デバイス管理ページには、稼働中の 2 台とオフラインの 1 台が表示されます。計測値は捨てます。シグナリングはこの切り替えの対象外で、tolo-edge-bridge を通ります。`compose.yaml` はこの変数を既定で `enabled` にします。この切り替えは `NODE_ENV` が `development` のときだけ働きます。
 
 ホストで起動する Next.js（`pnpm dev`）では、`.env.example` のとおりこの変数を `disabled` にし、`GATEWAY_URL` の Service Gateway を呼びます。
+
+`web` はホスト名のサブドメイン名を Service Gateway に問い合わせて、テナントの公開 ID を得ます。環境変数 `TENANT_SUBDOMAIN_MOCKING` が `enabled` のときは問い合わせず、サブドメイン名 `test` だけをテナント `0123456789abcdef` に対応させます。ほかのサブドメイン名のページは見つからない扱いになります。`compose.yaml` はこの変数を既定で `enabled` にします。`.env.example` と、e2e の `playwright.config.ts` も `enabled` にします。e2e は本番ビルドで動くので、この切り替えは `NODE_ENV` によらず働きます。
 
 ### トークンの発行
 
@@ -60,10 +62,12 @@ docker compose up -d --build
 
 ### 開く URL
 
-テナントはサブドメインで決まります。上のトークンに対応する URL は次のとおりです。
+テナントはサブドメイン名で決まります。サブドメイン名 `test` が上のトークンのテナント `0123456789abcdef` に対応します。上のトークンに対応する URL は次のとおりです。
+- 管理ページ: `http://test.localhost:3000/event/fedcba9876543210/management`
+- 観測デバイス管理ページ: `http://test.localhost:3000/event/fedcba9876543210/observation`
+- 観測デバイスの観測ページ: `http://test.localhost:3000/event/fedcba9876543210/observation/{edgeDeviceId}`
 
-- 管理ページ: `http://0123456789abcdef.localhost:3000/event/fedcba9876543210/management`（「接続エッジ」タブ）
-- エッジ端末の観測ページ: `http://0123456789abcdef.localhost:3000/event/fedcba9876543210/observation/{edgeDeviceId}`
+テナントの公開 ID をホストにした URL（`http://0123456789abcdef.localhost:3000/...`）は 404 になります。
 
 観測ページから映像を配信するには、`public/models` に人検出モデルが必要です（[人検出モデルセットアップ](docs/setup-for-detection-model.md)）。
 
@@ -73,14 +77,13 @@ docker compose up -d --build
 
 Quick Tunnel はローカルの環境をインターネットに公開します。そのため、メール認証を必須にしています。ページを開いた人は `TUNNEL_ALLOWED_MAIL` に指定したアドレスで届くワンタイム PIN を入力して入ります。開く人にもトンネルを立てる人にも、Cloudflare のアカウントは要りません。
 
-`.env` に次の 2 つを設定します。
+`.env` に次を設定します。
 
 ```bash
-TUNNEL_TENANT_ID=0123456789abcdef
 TUNNEL_ALLOWED_MAIL=alice@example.com,bob@example.com
 ```
 
-`TUNNEL_TENANT_ID` は、トンネルの URL で開くテナントです。トンネルの URL にはテナントのサブドメインを付けられないので、テナントを 1 つに固定します。トークンの `tenant_id` と同じ値にします。`TUNNEL_ALLOWED_MAIL` には、許可するアドレスをカンマで区切って並べます。`*@example.com` と書くと、そのドメインのアドレスをすべて許可します。
+トンネルの URL にはテナントのサブドメイン名を付けられないので、トンネルで開くテナントを 1 つに固定します。そのテナントのサブドメイン名を `TUNNEL_SUBDOMAIN` に指定します。既定は `test` で、上のトークンのテナントに対応します。`TUNNEL_ALLOWED_MAIL` には、許可するアドレスをカンマで区切って並べます。`*@example.com` と書くと、そのドメインのアドレスをすべて許可します。
 
 `task tunnel` で、`compose.tunnel.yaml` を重ねて起動します。トンネルがつながると、URL を表示します。起動したあとで URL を確かめるときは、`task tunnel:url` を実行します。`task` は mise で入ります。
 
@@ -116,29 +119,36 @@ CLAIM=$(printf '%s' "$TENANT" | jq -r .ownershipClaimToken)
 
 REG=$(./scripts/dev/fakeidp-token.sh -k registration -b user-owner -s "tenant.claim")
 curl -sS -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $REG" \
-  -d "{\"tenantId\":\"$TID\",\"ownershipClaimToken\":\"$CLAIM\"}" \
+  -d "{\"tenantId\":\"$TID\",\"ownershipClaimToken\":\"$CLAIM\",\"subdomain\":\"acme\"}" \
   http://localhost:8080/tolo.tenant.v1.TenantService/ClaimTenantOwnership
 
 export TENANT_ACCESS_TOKEN=$(./scripts/dev/fakeidp-token.sh -k tenant_access -b user-owner -t "$TID" -s "events.read events.manage" -l 86400)
 echo "$TID"
 ```
 
+所有権の取得で、テナントのサブドメイン名が `acme` に決まります。サブドメイン名は後から変えられません。
+
 トークンの `tenant_id` は、開くページのテナント ID と同じでなければなりません。違う場合は Tenant Management が呼び出しを拒否し、一覧は取得に失敗します。
 
 ### 起動と開く URL
 
-同じシェルで、このリポジトリのディレクトリから Next.js を起動します。`NEXT_PUBLIC_API_MOCKING` が `enabled` だと API がモックに置き換わるので、ここでは `disabled` にします。
+同じシェルで、このリポジトリのディレクトリから Next.js を起動します。`NEXT_PUBLIC_API_MOCKING` が `enabled` だと API がモックに置き換わるので、ここでは `disabled` にします。サブドメイン名を Service Gateway に問い合わせるため、`TENANT_SUBDOMAIN_MOCKING` も `disabled` にします。
 
 ```bash
-GATEWAY_URL=http://127.0.0.1:8080 NEXT_PUBLIC_API_MOCKING=disabled pnpm dev
+GATEWAY_URL=http://127.0.0.1:8080 NEXT_PUBLIC_API_MOCKING=disabled TENANT_SUBDOMAIN_MOCKING=disabled pnpm dev
 ```
 
-`http://{TID}.localhost:3000/management` を開きます。`{TID}` は上で表示したテナント ID です。
+`http://acme.localhost:3000/management` を開きます。`acme` は所有権の取得で決めたサブドメイン名です。
+
+### オンボーディングページでテナントを作る
+
+上の curl の手順の代わりに、ルートドメインのトップ（`http://localhost:3000/`）の「テナントを作成」から `/onboarding` を開いてもテナントを作れます。テナント名、サブドメイン名、オーナーのメールアドレスを入力すると、`web` がテナントの登録を始め、偽 IdP から `registration` トークンを発行し、所有権を取得します。オーナーはメールアドレスを `sub` とするユーザーになります。
+
+`web` は偽 IdP の URL を環境変数 `FAKEIDP_URL` から読みます。未設定のときは `http://127.0.0.1:8082` を使います。
 
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
-
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
@@ -158,7 +168,7 @@ Tolo はオンライン専用の PWA としてインストールできます。N
 
 - 本番環境は HTTPS で配信してください。開発時は `http://localhost:3000` で確認できます。スマートフォンなど別端末から確認する場合は、その端末が信頼する HTTPS URL が必要です。
 - 本番ビルドでは `NEXT_PUBLIC_API_MOCKING` を `enabled` に設定しないでください。既存の MSW Service Worker は開発・テスト用の API モックで、PWA のオフライン機能ではありません。
-- Manifest の `id`・`scope` は `/` です。各テナントのサブドメインでは、そのサブドメインの全ページが同じアプリ内で開きます。ルートドメインと異なるテナントは別の origin なので、それぞれの URL でインストールしてください。
+- Manifest の `id`・`scope` は `/` です。テナントのページはサブドメイン名のホストでだけ開けるので、テナントの origin は 1 つです。その origin の全ページが同じアプリ内で開きます。ルートドメインと異なるテナントは別の origin なので、それぞれの URL でインストールしてください。
 - 各ページの Metadata は `/manifest.webmanifest?start={公開ページのパス}` を参照し、Manifest の `start_url` にインストールしたページを指定します。初回起動はブラウザの Cookie / localStorage の引き継ぎに依存しません。起動したいページを開いてからインストールしてください。
 - 同じ origin の最後の閲覧パスも保存し、アプリが `/` から起動した場合の復帰を補助します。サイトデータを消去すると保存した復帰先は消去されますが、Manifest の起動先は維持されます。
 - `/manifest.webmanifest` と PNG アイコンはテナントの内部パスへ書き換えず配信します。公開 URL は引き続き `/event/{eventId}/...` で、`/tenant/{tenantId}/...` は内部ルーティング用です。
@@ -166,7 +176,6 @@ Tolo はオンライン専用の PWA としてインストールできます。N
 ### インストール
 
 各ページの「アプリをインストール」ボタンから、端末とブラウザに応じた案内を開けます。
-
 - Chrome / Edge: インストール確認画面を開ける場合は、案内内のボタンでブラウザの確認画面を開き、インストールを確定します。確認画面を開けない場合は表示されたブラウザメニューの手順に従ってください。
 - iPhone / iPad: Safari の共有メニューから「ホーム画面に追加」を選び、「追加」で確定します。
 - macOS Safari: 「ファイル」メニューの「Dock に追加」から追加します（対応する macOS / Safari が必要です）。
@@ -178,12 +187,12 @@ Tolo はオンライン専用の PWA としてインストールできます。N
 
 暫定アイコンは既存の `src/app/favicon.ico` に含まれるデフォルト画像から生成しています。ブランドアイコンを用意したら、次のファイルを差し替えてください。PNG は記載の寸法を維持します。
 
-| ファイル | 用途 / 寸法 |
-| --- | --- |
-| `public/icon-192x192.png` | Manifest / 192 × 192 |
-| `public/icon-512x512.png` | Manifest / 512 × 512 |
+| ファイル                      | 用途 / 寸法                  |
+| ----------------------------- | ---------------------------- |
+| `public/icon-192x192.png`     | Manifest / 192 × 192         |
+| `public/icon-512x512.png`     | Manifest / 512 × 512         |
 | `public/apple-touch-icon.png` | Apple ホーム画面 / 180 × 180 |
-| `src/app/favicon.ico` | ブラウザタブ |
+| `src/app/favicon.ico`         | ブラウザタブ                 |
 
 現在のアイコンは `purpose: "any"` です。Android 用の maskable アイコンを追加する場合は、専用のセーフエリアを確保した別画像を用意して Manifest に追加してください。インストール済みのアイコン更新はブラウザ・OS の更新タイミングに依存するので、差し替え確認は再インストールでも行ってください。
 
@@ -196,7 +205,6 @@ pnpm start
 ```
 
 自動テストではインストール案内・ブラウザイベント・起動先復帰、Manifest の必須項目、PNG の実寸と宣言寸法、テナントのルーティングを確認します。OS が管理するインストール確認画面は実機で確認してください。
-
 1. Chrome / Edge と Android Chrome、iPhone / iPad Safari で対象テナントのゲストページを開き、インストールボタンの案内に従って追加できることを確認します。
 2. ホーム画面やアプリ一覧から起動し、ブラウザのアドレスバーがないアプリ表示と、インストールしたページからの初回起動を確認します。Cookie / localStorage が引き継がれない環境でも起動先が保たれることを確認します。
 3. ゲスト、管理、グラフ編集、観測、端末別観測の各公開 URL をアプリ内で開き、画面表示・ページ遷移・オンライン API・既存操作が動作することを確認します。観測はカメラ権限と既存のモデル / API 設定も必要です。

@@ -1,4 +1,8 @@
-import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
+import {
+  type Timestamp,
+  timestampDate,
+  timestampFromDate,
+} from "@bufbuild/protobuf/wkt";
 import { type Client, Code, ConnectError } from "@connectrpc/connect";
 import { ORPCError, os } from "@orpc/server";
 import type { SignalingService } from "@pj-hoakari/tolo-edge-bridge-client-es/tolo/edgebridge/v1/signaling_pb";
@@ -8,7 +12,14 @@ import {
   GraphViolationsSchema,
   ViolationKind,
 } from "@pj-hoakari/tolo-graph-authoring-client-es/tolo/graph/v1/graph_pb";
-import { MeasurementSource } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
+import {
+  CrowdLevel,
+  GuestComponent,
+} from "@pj-hoakari/tolo-guest-client-es/tolo/guest/v1/guest_pb";
+import {
+  MeasurementSource,
+  type EdgeDevice as ProtoEdgeDevice,
+} from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
 import {
   type Event,
   EventStatus as ProtoEventStatus,
@@ -18,17 +29,33 @@ import {
   type GraphViolation,
   graphDataSchema,
 } from "@/features/graph/graphDataSchema";
+import type { GuestGuideMapGraph } from "@/features/guest/info/guideMapGraph";
+import type { LocalizedGuideMapLayout } from "@/features/guest/info/guideMapLayout";
+import type { GuestPageComponent } from "@/features/guest/pageComponents";
 import type {
   EventStatus,
   TenantEvent,
 } from "@/features/tenant/management/events/type";
 import type { GraphData } from "@/features/tenant/management/graph/type";
-import { sampleEdgeDevicesWire } from "@/mocks/fixtures/edges";
+import {
+  registeredEdgeDeviceWire,
+  sampleEdgeDevicesWire,
+} from "@/mocks/fixtures/edges";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
-import { edgeDeviceClient, measurementIngestClient } from "./observation";
+import { guestPageClient } from "./guest";
+import { fromGuideMapResponse } from "./guideMap";
+import { issueRegistrationToken } from "./idp";
+import {
+  consoleEdgeDeviceClient,
+  edgeEdgeDeviceClient,
+  edgeMeasurementIngestClient,
+} from "./observation";
 import { consoleSignalingClient, edgeSignalingClient } from "./signaling";
-import { tenantManagementClient } from "./tenantManagement";
+import {
+  tenantManagementClient,
+  tenantRegistrationClient,
+} from "./tenantManagement";
 
 const publicId = z.string().regex(/^[0-9a-f]{16}$/);
 
@@ -50,9 +77,13 @@ export interface EdgeDevice {
   observationPoints: ObservationPoint[];
 }
 
-async function listEdgeDevices(eventId: string): Promise<EdgeDevice[]> {
-  const res = await edgeDeviceClient.listEdgeDevices({ eventId });
-  return res.devices.map((d) => ({
+export interface RegisteredEdgeDevice {
+  device: EdgeDevice;
+  observationPagePath: string;
+}
+
+function toEdgeDevice(d: ProtoEdgeDevice): EdgeDevice {
+  return {
     edgeDeviceId: d.edgeDeviceId,
     name: d.name,
     online: d.online,
@@ -63,7 +94,12 @@ async function listEdgeDevices(eventId: string): Promise<EdgeDevice[]> {
       observationPointId: p.observationPointId,
       name: p.name,
     })),
-  }));
+  };
+}
+
+async function listEdgeDevices(eventId: string): Promise<EdgeDevice[]> {
+  const res = await consoleEdgeDeviceClient.listEdgeDevices({ eventId });
+  return res.devices.map(toEdgeDevice);
 }
 
 function observationMocking(): boolean {
@@ -112,6 +148,7 @@ const ORPC_ERROR_CODES: Partial<Record<Code, string>> = {
   [Code.InvalidArgument]: "BAD_REQUEST",
   [Code.FailedPrecondition]: "PRECONDITION_FAILED",
   [Code.NotFound]: "NOT_FOUND",
+  [Code.AlreadyExists]: "CONFLICT",
 };
 
 function toORPCError(err: unknown): unknown {
@@ -119,6 +156,68 @@ function toORPCError(err: unknown): unknown {
   const code = ORPC_ERROR_CODES[err.code];
   return code ? new ORPCError(code) : err;
 }
+
+export type GuestCrowdLevel = "low" | "mid" | "high";
+
+export interface GuestCrowd {
+  id: string;
+  name: string;
+  level: GuestCrowdLevel;
+  danger: boolean;
+}
+
+export interface GuestCrowdSnapshot {
+  takenAt: string | null;
+  crowd: GuestCrowd[];
+}
+
+export interface GuestQueueGate {
+  pointId: string;
+  name: string;
+  recommended: boolean;
+}
+
+export interface GuestQueue {
+  queueId: string;
+  name: string;
+  waitTimeMinutes: number;
+  gates: GuestQueueGate[];
+}
+
+export interface GuestGuideMap {
+  graph: GuestGuideMapGraph;
+  layout: LocalizedGuideMapLayout;
+  currentPointId?: string;
+}
+
+export interface GuestMessage {
+  messageId: string;
+  body: string;
+  sentAt: string | null;
+}
+
+const GUEST_PAGE_COMPONENTS: Partial<
+  Record<GuestComponent, GuestPageComponent>
+> = {
+  [GuestComponent.CROWD]: "crowd",
+  [GuestComponent.QUEUES]: "queues",
+  [GuestComponent.STAFF_MESSAGES]: "staffMessages",
+};
+
+const GUEST_CROWD_LEVELS: Partial<Record<CrowdLevel, GuestCrowdLevel>> = {
+  [CrowdLevel.LOW]: "low",
+  [CrowdLevel.MID]: "mid",
+  [CrowdLevel.HIGH]: "high",
+};
+
+function toISOString(timestamp: Timestamp | undefined): string | null {
+  return timestamp ? timestampDate(timestamp).toISOString() : null;
+}
+
+const guestContentInput = z.object({
+  eventId: z.string().min(1),
+  language: z.string(),
+});
 
 export interface FirestoreToken {
   customToken: string;
@@ -183,6 +282,46 @@ export const router = {
       }),
   },
   tenant: {
+    register: os
+      .input(
+        z.object({
+          name: z.string().trim().min(1),
+          subdomain: z.string().trim().min(1),
+          ownerEmail: z.email(),
+        }),
+      )
+      .handler(
+        async ({ input }): Promise<{ tenantId: string; subdomain: string }> => {
+          try {
+            const started =
+              await tenantRegistrationClient.startTenantRegistration({
+                name: input.name,
+                contractPlan: "standard",
+              });
+            if (!started.tenant) {
+              throw new Error("StartTenantRegistration returned no tenant");
+            }
+            const token = await issueRegistrationToken(input.ownerEmail);
+            const claimed = await tenantRegistrationClient.claimTenantOwnership(
+              {
+                tenantId: started.tenant.tenantId,
+                ownershipClaimToken: started.ownershipClaimToken,
+                subdomain: input.subdomain,
+              },
+              { headers: { Authorization: `Bearer ${token}` } },
+            );
+            if (!claimed.tenant) {
+              throw new Error("ClaimTenantOwnership returned no tenant");
+            }
+            return {
+              tenantId: claimed.tenant.tenantId,
+              subdomain: claimed.tenant.subdomain,
+            };
+          } catch (err) {
+            throw toORPCError(err);
+          }
+        },
+      ),
     listEvents: os
       .input(
         z.object({
@@ -235,6 +374,110 @@ export const router = {
         }
       }),
   },
+  guest: {
+    openGuestPage: os
+      .input(
+        z.object({
+          eventId: z.string().min(1),
+          qrLocationId: z.string(),
+          sessionId: z.string(),
+        }),
+      )
+      .handler(
+        async ({ input }): Promise<{ components: GuestPageComponent[] }> => {
+          try {
+            const res = await guestPageClient.openGuestPage(input);
+            return {
+              components: res.components.flatMap(
+                (c) => GUEST_PAGE_COMPONENTS[c] ?? [],
+              ),
+            };
+          } catch (err) {
+            throw toORPCError(err);
+          }
+        },
+      ),
+    getCrowd: os
+      .input(guestContentInput)
+      .handler(async ({ input }): Promise<GuestCrowdSnapshot> => {
+        try {
+          const res = await guestPageClient.getCrowd(input);
+          return {
+            takenAt: toISOString(res.takenAt),
+            crowd: res.crowd.flatMap((c) => {
+              const level = GUEST_CROWD_LEVELS[c.level];
+              if (!level || !c.target.case) return [];
+              return [
+                {
+                  id: `${c.target.case}:${c.target.value}`,
+                  name: c.displayName,
+                  level,
+                  danger: c.danger,
+                },
+              ];
+            }),
+          };
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    getGuideMap: os
+      .input(
+        z.object({
+          eventId: z.string().min(1),
+          qrLocationId: z.string().optional(),
+        }),
+      )
+      .handler(async ({ input }): Promise<GuestGuideMap> => {
+        try {
+          return fromGuideMapResponse(
+            await guestPageClient.getGuideMap({
+              eventId: input.eventId,
+              qrLocationId: input.qrLocationId ?? "",
+            }),
+          );
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    getQueues: os
+      .input(guestContentInput)
+      .handler(async ({ input }): Promise<{ queues: GuestQueue[] }> => {
+        try {
+          const res = await guestPageClient.getQueues(input);
+          return {
+            queues: res.queues.map((q) => ({
+              queueId: q.queueId,
+              name: q.displayName,
+              waitTimeMinutes: q.waitTimeMinutes,
+              gates: q.gates.map((g) => ({
+                pointId: g.pointId,
+                name: g.displayName,
+                recommended: g.recommended,
+              })),
+            })),
+          };
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    listGuestMessages: os
+      .input(z.object({ eventId: z.string().min(1) }))
+      .handler(async ({ input }): Promise<{ messages: GuestMessage[] }> => {
+        try {
+          const res = await guestPageClient.listGuestMessages(input);
+          return {
+            messages: res.messages.map((m) => ({
+              messageId: m.messageId,
+              body: m.body,
+              sentAt: toISOString(m.sentAt),
+            })),
+          };
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+  },
   signaling: {
     // edge への接続を要求する。tolo-edge-bridge が Firestore にセッションを作成し session_id を返す。
     requestConnection: os
@@ -260,6 +503,46 @@ export const router = {
           : await listEdgeDevices(input.eventId),
       }),
     ),
+    registerEdgeDevice: os
+      .input(
+        z.object({
+          eventId: z.string().min(1),
+          name: z.string().trim().min(1),
+          observationPointNames: z
+            .array(z.string().trim().min(1))
+            .min(1)
+            .refine((names) => new Set(names).size === names.length),
+        }),
+      )
+      .handler(async ({ input }): Promise<RegisteredEdgeDevice> => {
+        if (observationMocking()) {
+          return registeredEdgeDeviceWire(input);
+        }
+        try {
+          const res = await consoleEdgeDeviceClient.registerEdgeDevice(input);
+          if (!res.device) {
+            throw new Error("RegisterEdgeDevice returned no device");
+          }
+          return {
+            device: toEdgeDevice(res.device),
+            observationPagePath: res.observationPagePath,
+          };
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    unregisterEdgeDevice: os
+      .input(edgeDeviceInput)
+      .handler(async ({ input }): Promise<void> => {
+        if (observationMocking()) {
+          return;
+        }
+        try {
+          await consoleEdgeDeviceClient.unregisterEdgeDevice(input);
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
     listObservationPoints: os
       .input(edgeDeviceInput)
       .handler(
@@ -285,7 +568,7 @@ export const router = {
         if (observationMocking()) {
           return;
         }
-        await edgeDeviceClient.heartbeat(input);
+        await edgeEdgeDeviceClient.heartbeat(input);
       }),
     reportMeasurements: os
       .input(
@@ -306,7 +589,7 @@ export const router = {
         if (observationMocking()) {
           return;
         }
-        await measurementIngestClient.reportMeasurements({
+        await edgeMeasurementIngestClient.reportMeasurements({
           eventId: input.eventId,
           edgeDeviceId: input.edgeDeviceId,
           measurements: input.measurements.map((m) => ({

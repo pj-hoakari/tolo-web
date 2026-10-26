@@ -36,9 +36,9 @@ export function ObservationLinkPanel({
   const t = useTranslations("Graph.observationLink");
 
   return (
-    <aside className="flex w-72 shrink-0 flex-col border-border border-l bg-card">
-      <div className="border-border border-b px-4 py-2">
-        <p className="font-semibold text-foreground text-sm">{t("title")}</p>
+    <aside className="flex w-72 shrink-0 flex-col border-l border-border bg-card">
+      <div className="border-b border-border px-4 py-2">
+        <p className="text-sm font-semibold text-foreground">{t("title")}</p>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {selectedNode ? (
@@ -72,10 +72,10 @@ export function ObservationLinkPanel({
             />
           </div>
         ) : (
-          <p className="text-muted-foreground text-xs">{t("empty")}</p>
+          <p className="text-xs text-muted-foreground">{t("empty")}</p>
         )}
       </div>
-      <div className="border-border border-t px-4 py-3">
+      <div className="border-t border-border px-4 py-3">
         <p className="text-[10px] text-muted-foreground">{t("editHint")}</p>
       </div>
     </aside>
@@ -93,7 +93,7 @@ function NodeSummary({ node }: { node: GraphNodeType }) {
         <NodeTypeIcon type={nodeType} />
         {t(nodeType)}
       </p>
-      <p className="font-medium text-foreground text-xs">{node.data.label}</p>
+      <p className="text-xs font-medium text-foreground">{node.data.label}</p>
     </div>
   );
 }

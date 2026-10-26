@@ -12,7 +12,8 @@ import {
   parseDetectionSettings,
   reverseCountingLineDirection,
   selectLine,
-  toggleLineCreationMode,
+  setEditingLine,
+  setLineCreationMode,
 } from "./detectionStore";
 
 describe("カウントラインの forward 方向", () => {
@@ -288,13 +289,39 @@ describe("画面操作の状態", () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
-  it("ライン生成モードを切り替える", () => {
+  it("ライン操作モードを明示的に設定する", () => {
+    const { viewStateStore } = createDetectionStores();
+    const listener = vi.fn();
+    viewStateStore.subscribe(listener);
+
+    setLineCreationMode(viewStateStore, true);
+    expect(viewStateStore.getState().lineCreationMode).toBe(true);
+    expect(viewStateStore.getState().editingLineId).toBeNull();
+
+    setLineCreationMode(viewStateStore, true);
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    setLineCreationMode(viewStateStore, false);
+    expect(viewStateStore.getState().lineCreationMode).toBe(false);
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+
+  it("編集対象をラインID単位で切り替える", () => {
     const { viewStateStore } = createDetectionStores();
 
-    toggleLineCreationMode(viewStateStore);
-    expect(viewStateStore.getState().lineCreationMode).toBe(true);
+    setLineCreationMode(viewStateStore, true);
+    setEditingLine(viewStateStore, "line-2");
+    expect(viewStateStore.getState()).toEqual({
+      selectedLineId: "line-2",
+      editingLineId: "line-2",
+      lineCreationMode: false,
+    });
 
-    toggleLineCreationMode(viewStateStore);
-    expect(viewStateStore.getState().lineCreationMode).toBe(false);
+    setEditingLine(viewStateStore, null);
+    expect(viewStateStore.getState()).toEqual({
+      selectedLineId: "line-2",
+      editingLineId: null,
+      lineCreationMode: false,
+    });
   });
 });

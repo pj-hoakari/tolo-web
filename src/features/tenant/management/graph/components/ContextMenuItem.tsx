@@ -52,7 +52,7 @@ export function ContextMenuItem({
       <div className="flex min-w-0 flex-col gap-0.5">
         <Text slot="label">{label}</Text>
         {description ? (
-          <Text slot="description" className="text-muted-foreground text-xs">
+          <Text slot="description" className="text-xs text-muted-foreground">
             {description}
           </Text>
         ) : null}

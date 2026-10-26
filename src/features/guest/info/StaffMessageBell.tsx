@@ -1,8 +1,9 @@
 "use client";
 
-import type { Messages } from "next-intl";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { orpc } from "@/lib/orpc";
+import { useGuestPolling } from "../useGuestPolling";
 import { StaffMessageBellView } from "./StaffMessageBellView";
 import type { StaffMessage } from "./StaffMessageView";
 
@@ -11,40 +12,49 @@ export type StaffMessageBellProps = {
   eventId: string;
 };
 
-/** 本文・氏名・役職を解決できるお知らせ id */
-type SampleId = keyof Messages["Guest"]["staffMessage"]["samples"];
+function readIdsKey(eventId: string): string {
+  return `tolo:guest-read:${eventId}`;
+}
 
-/** 本文・氏名・役職は Guest.staffMessage.samples から id をキーに解決する（本来は API レスポンス） */
-type RawStaffMessage = {
-  id: SampleId;
-  deliveredAt: string;
-};
+function loadReadIds(eventId: string): string[] {
+  try {
+    const ids: unknown = JSON.parse(
+      localStorage.getItem(readIdsKey(eventId)) ?? "[]",
+    );
+    return Array.isArray(ids) ? ids : [];
+  } catch {
+    return [];
+  }
+}
 
-// --- ダミーのお知らせ（本来は API から取得する） ---
-const rawMessages: RawStaffMessage[] = [
-  { id: "msg-2", deliveredAt: "2026-06-15T14:30:00+09:00" },
-  { id: "msg-1", deliveredAt: "2026-06-15T13:05:00+09:00" },
-];
+function saveReadIds(eventId: string, ids: string[]) {
+  try {
+    localStorage.setItem(readIdsKey(eventId), JSON.stringify(ids));
+  } catch {}
+}
 
-export function StaffMessageBell(_props: StaffMessageBellProps) {
-  // TODO: _props.tenantId / _props.eventId でスタッフメッセージ API を購読する。
-  //       新着が配信されたら自動更新し、未読件数（id ベースで既読判定）をバッジに反映する。
+export function StaffMessageBell({ eventId }: StaffMessageBellProps) {
   const t = useTranslations("Guest.staffMessage");
   const locale = useLocale();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [readIds, setReadIds] = useState<readonly string[]>([]);
+  const [readIds, setReadIds] = useState(() => loadReadIds(eventId));
+  const result = useGuestPolling(
+    useCallback(() => orpc.guest.listGuestMessages({ eventId }), [eventId]),
+  );
 
-  // 表示言語に応じて各フィールドを解決する
-  const localizedMessages: StaffMessage[] = rawMessages.map((message) => ({
-    id: message.id,
-    deliveredAt: message.deliveredAt,
-    body: t(`samples.${message.id}.body`),
-    staffName: t(`samples.${message.id}.staffName`),
-    staffRole: t(`samples.${message.id}.staffRole`),
-  }));
+  const messages: StaffMessage[] =
+    result.status === "ready"
+      ? result.data.messages
+          .map((message) => ({
+            id: message.messageId,
+            body: message.body,
+            deliveredAt: message.sentAt,
+          }))
+          .reverse()
+      : [];
 
-  const unreadCount = rawMessages.filter(
+  const unreadCount = messages.filter(
     (message) => !readIds.includes(message.id),
   ).length;
 
@@ -52,13 +62,15 @@ export function StaffMessageBell(_props: StaffMessageBellProps) {
     setIsOpen(next);
     // 開いたタイミングで既読にする
     if (next) {
-      setReadIds(rawMessages.map((message) => message.id));
+      const ids = messages.map((message) => message.id);
+      setReadIds(ids);
+      saveReadIds(eventId, ids);
     }
   };
 
   return (
     <StaffMessageBellView
-      messages={localizedMessages}
+      messages={messages}
       unreadCount={unreadCount}
       isOpen={isOpen}
       onOpenChange={handleOpenChange}

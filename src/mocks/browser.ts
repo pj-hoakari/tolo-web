@@ -1,15 +1,9 @@
 import { setupWorker } from "msw/browser";
 import { createOrpcHandlers } from "./handlers";
-import type { MockRouterOverrides } from "./router";
+import { readMockOverrides } from "./overrides";
 
-function storedOverrides(): MockRouterOverrides | undefined {
-  try {
-    const stored = sessionStorage.getItem("msw:overrides");
-    return stored ? JSON.parse(stored) : undefined;
-  } catch {
-    return undefined;
-  }
-}
+const storedOverrides = () =>
+  readMockOverrides(sessionStorage, window.location.search);
 
 /**
  * next dev でモック API を有効化するための Service Worker

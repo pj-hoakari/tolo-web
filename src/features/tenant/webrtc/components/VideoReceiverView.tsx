@@ -40,6 +40,7 @@ export function VideoReceiverView({
 }: VideoReceiverViewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
+  const lineCanvasRef = useRef<HTMLCanvasElement>(null);
   const t = useTranslations("Webrtc.receiver");
 
   const editable = settingsStore !== undefined && viewStateStore !== undefined;
@@ -66,6 +67,7 @@ export function VideoReceiverView({
     let rafId = 0;
     let lastDrawnFrame: DetectionOverlayFrame | null = null;
     let lastDrawnLines: DetectionCountingLineSetting[] | null = null;
+    let lastDrawnEditingLineId: string | null | undefined;
 
     const draw = () => {
       const canvas = overlayCanvasRef.current;
@@ -73,13 +75,17 @@ export function VideoReceiverView({
       const countingLines = settingsStore
         ? settingsStore.getState().countingLines
         : null;
+      const editingLineId = viewStateStore?.getState().editingLineId;
 
       if (
         canvas &&
-        (frame !== lastDrawnFrame || countingLines !== lastDrawnLines)
+        (frame !== lastDrawnFrame ||
+          countingLines !== lastDrawnLines ||
+          editingLineId !== lastDrawnEditingLineId)
       ) {
         lastDrawnFrame = frame;
         lastDrawnLines = countingLines;
+        lastDrawnEditingLineId = editingLineId;
         const context = canvas.getContext("2d");
         if (context) {
           if (frame && frame.width > 0 && frame.height > 0) {
@@ -103,8 +109,16 @@ export function VideoReceiverView({
                     ),
                   }
                 : frame,
+              {
+                highlightedLineId: editingLineId,
+                lineCanvas: lineCanvasRef.current,
+              },
             );
           } else {
+            const lineCanvas = lineCanvasRef.current;
+            lineCanvas
+              ?.getContext("2d")
+              ?.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
             context.clearRect(0, 0, canvas.width, canvas.height);
           }
         }
@@ -114,11 +128,11 @@ export function VideoReceiverView({
 
     rafId = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(rafId);
-  }, [detectionFrameRef, stopped, settingsStore]);
+  }, [detectionFrameRef, stopped, settingsStore, viewStateStore]);
 
   return (
     <div className="flex w-full flex-col items-center gap-2">
-      <div className="relative w-full max-w-3xl">
+      <div className="relative isolate w-full max-w-3xl">
         {stopped ? (
           <div className="flex aspect-video w-full flex-col items-center justify-center gap-1 rounded bg-muted text-muted-foreground">
             <span className="font-bold">{t("stoppedTitle")}</span>
@@ -145,6 +159,12 @@ export function VideoReceiverView({
                   : "pointer-events-none",
               )}
             />
+            <canvas
+              ref={lineCanvasRef}
+              aria-hidden="true"
+              tabIndex={-1}
+              className="pointer-events-none absolute inset-0 h-full w-full rounded mix-blend-difference"
+            />
             {(status === "connecting" || status === "negotiating") && (
               <div className="absolute inset-0 flex items-center justify-center rounded bg-black/40 text-white">
                 {t("connecting")}
@@ -154,7 +174,7 @@ export function VideoReceiverView({
         )}
       </div>
       {status === "error" && error && (
-        <p role="alert" className="text-destructive text-sm">
+        <p role="alert" className="text-sm text-destructive">
           {error}
         </p>
       )}

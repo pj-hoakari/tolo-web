@@ -1,3 +1,4 @@
+import path from "node:path";
 import {
   type BrowserContext,
   expect,
@@ -36,7 +37,7 @@ const stopButton = (page: Page) =>
 const lineName = (page: Page) =>
   page.getByRole("textbox", { name: "選択ラインの名前" });
 const lineButtons = (page: Page) =>
-  page.getByRole("radio", { name: /: forward \d+ \/ backward \d+$/ });
+  page.getByRole("button", { name: /(?:を編集|の編集を終了)$/ });
 const wakeToggle = (page: Page) =>
   page.getByRole("button", { name: "画面の常時点灯" });
 const wakeAlert = (page: Page) => page.getByRole("main").getByRole("alert");
@@ -46,10 +47,12 @@ const presetGroup = (page: Page, title: string) =>
     .filter({ has: page.getByRole("radiogroup", { name: title }) })
     .last();
 const lineCreationToggle = (page: Page) =>
-  page.getByRole("button", { name: "ライン生成" });
+  page.getByRole("radio", { name: "ライン生成" });
 
 const canvasPoint = async (page: Page, u: number, v: number) => {
-  const box = await page.locator("canvas").boundingBox();
+  const canvas = page.locator("canvas").first();
+  await canvas.scrollIntoViewIfNeeded();
+  const box = await canvas.boundingBox();
   if (!box) throw new Error("canvas is not visible");
   return { x: box.x + box.width * u, y: box.y + box.height * v };
 };
@@ -67,15 +70,10 @@ const dragOnCanvas = async (
   await page.mouse.up();
 };
 
-const clickOnCanvas = async (page: Page, u: number, v: number) => {
-  const point = await canvasPoint(page, u, v);
-  await page.mouse.click(point.x, point.y);
-};
-
 const addLine = async (page: Page) => {
   await lineCreationToggle(page).click();
   await dragOnCanvas(page, [0.2, 0.2], [0.5, 0.3]);
-  await lineCreationToggle(page).click();
+  await expect(page.getByRole("radio", { name: "編集モード" })).toBeChecked();
 };
 
 const holdModelRequest = async (context: BrowserContext) => {
@@ -93,9 +91,12 @@ test.beforeEach(async ({ page, context }) => {
       body: "mock-model",
     }),
   );
-  await page.goto("/event/test/observation");
+  await page.goto("/event/test/observation/8c1f0e2a5d4b3c6e");
   await expect(
-    page.getByRole("heading", { level: 2, name: "test 観測ページ" }),
+    page.getByRole("heading", {
+      level: 2,
+      name: "0123456789abcdef 観測ページ",
+    }),
   ).toBeVisible();
 });
 
@@ -247,7 +248,7 @@ test.describe("画面ロック", () => {
   test("解除コードはイベントごとに設定する", async ({ page }) => {
     await setUpUnlockCode(page, "1234");
 
-    await page.goto("/event/other/observation");
+    await page.goto("/event/other/observation/8c1f0e2a5d4b3c6e");
 
     await expect(
       page.getByRole("heading", { level: 2, name: "解除コードを設定" }),
@@ -266,7 +267,7 @@ test.describe("検出設定", () => {
       .fill("ホールA入口");
 
     await expect(
-      page.getByRole("radio", { name: "ホールA入口: forward 0 / backward 0" }),
+      page.getByRole("button", { name: "ホールA入口の編集を終了" }),
     ).toBeVisible();
   });
 
@@ -342,8 +343,24 @@ test.describe("検出設定", () => {
 });
 
 test.describe("カウントライン", () => {
-  test.beforeEach(async ({ page }) => {
+  test.use({ permissions: ["camera"] });
+
+  test.beforeEach(async ({ page, context }) => {
+    await context.route("**/models/*.onnx", (route) =>
+      route.fulfill({
+        path: path.resolve("e2e/fixtures/line-editor.onnx"),
+        contentType: "application/octet-stream",
+      }),
+    );
     await setUpUnlockCode(page, "1234");
+    await expect(stopButton(page)).toHaveCount(0);
+    await expect(lineCreationToggle(page)).toHaveCount(0);
+    await startButton(page).click();
+    await expect(page.getByText("検出状態: 検出中")).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(stopButton(page)).toBeVisible();
+    await expect(page.getByRole("radio", { name: "編集モード" })).toBeChecked();
   });
 
   test("ライン生成モードで映像上をドラッグすると新しいラインが追加され選択される", async ({
@@ -351,34 +368,45 @@ test.describe("カウントライン", () => {
   }) => {
     await lineName(page).fill("ホールA入口");
     await lineCreationToggle(page).click();
-    await expect(lineCreationToggle(page)).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    await expect(lineCreationToggle(page)).toBeChecked();
 
     await dragOnCanvas(page, [0.2, 0.2], [0.5, 0.3]);
 
     await expect(
-      page.getByRole("radio", { name: "ライン 2: forward 0 / backward 0" }),
+      page.getByRole("button", { name: "ライン 2の編集を終了" }),
     ).toBeVisible();
     await expect(lineName(page)).toHaveValue("");
   });
 
-  test("編集モードでラインをドラッグすると移動し移動先を押すとそのラインが選択される", async ({
+  test("生成ラインの微調整後に生成モードへ戻り、既存ラインは編集モードを維持する", async ({
     page,
   }) => {
     await lineName(page).fill("ホールA入口");
     await addLine(page);
-    await dragOnCanvas(page, [0.7, 0.6], [0.7, 0.9]);
-    await page
-      .getByRole("radio", { name: "ライン 2: forward 0 / backward 0" })
-      .click();
+    await dragOnCanvas(page, [0.2, 0.2], [0.2, 0.35]);
+    await expect(lineCreationToggle(page)).toBeChecked();
 
-    await clickOnCanvas(page, 0.7, 0.6);
-    await expect(lineName(page)).toHaveValue("");
-
-    await clickOnCanvas(page, 0.7, 0.9);
+    await page.getByRole("button", { name: "ホールA入口を編集" }).click();
+    await expect(page.getByRole("radio", { name: "編集モード" })).toBeChecked();
+    await dragOnCanvas(page, [0.7, 0.6], [0.7, 0.8]);
+    await expect(page.getByRole("radio", { name: "編集モード" })).toBeChecked();
     await expect(lineName(page)).toHaveValue("ホールA入口");
+    await page.getByRole("button", { name: "ホールA入口の編集を終了" }).click();
+    await expect(
+      page.getByRole("button", { name: "ホールA入口を編集" }),
+    ).toBeVisible();
+  });
+
+  test("停止すると停止ボタンとラインのモード切り替えを非表示にする", async ({
+    page,
+  }) => {
+    await stopButton(page).click();
+    await expect(page.getByText("検出状態: 停止中")).toBeVisible();
+    await expect(stopButton(page)).toHaveCount(0);
+    await expect(lineCreationToggle(page)).toHaveCount(0);
+    await expect(page.getByRole("radio", { name: "編集モード" })).toHaveCount(
+      0,
+    );
   });
 
   test("ラインが 1 本のときは選択ラインを削除できず 2 本あれば削除できる", async ({
@@ -392,7 +420,7 @@ test.describe("カウントライン", () => {
     await deleteButton.click();
 
     await expect(
-      page.getByRole("radio", { name: "ライン 2: forward 0 / backward 0" }),
+      page.getByRole("button", { name: "ライン 2の編集を終了" }),
     ).toHaveCount(0);
     await expect(lineButtons(page)).toHaveCount(1);
     await expect(deleteButton).toBeDisabled();
@@ -408,7 +436,7 @@ test.describe("カウントライン", () => {
 
     await expect(lineButtons(page)).toHaveCount(1);
     await expect(
-      page.getByRole("radio", { name: "ライン 1: forward 0 / backward 0" }),
+      page.getByRole("button", { name: "ライン 1の編集を終了" }),
     ).toBeVisible();
     await expect(lineName(page)).toHaveValue("");
   });
@@ -418,9 +446,7 @@ test.describe("カウントライン", () => {
     await addLine(page);
     await expect(lineName(page)).toHaveValue("");
 
-    await page
-      .getByRole("radio", { name: "ホールA入口: forward 0 / backward 0" })
-      .click();
+    await page.getByRole("button", { name: "ホールA入口を編集" }).click();
 
     await expect(lineName(page)).toHaveValue("ホールA入口");
   });
@@ -508,11 +534,11 @@ test.describe("検出の開始", () => {
       return route.fulfill({ status: 404 });
     });
     await expect(page.getByText("検出状態: 停止中")).toBeVisible();
-    await expect(stopButton(page)).toBeDisabled();
+    await expect(stopButton(page)).toHaveCount(0);
 
     await startButton(page).click();
     await expect(page.getByText("検出状態: エラー")).toBeVisible();
-    await expect(stopButton(page)).toBeDisabled();
+    await expect(stopButton(page)).toHaveCount(0);
     await expect(startButton(page)).toBeEnabled();
 
     await startButton(page).click();
@@ -654,14 +680,4 @@ test.describe("Screen Wake Lock に対応していないブラウザ", () => {
     );
     await expect(wakeToggle(page)).toHaveCount(0);
   });
-});
-
-test("エッジデバイス付きの URL でも観測ページが表示される", async ({
-  page,
-}) => {
-  await page.goto("/event/test/observation/0123456789abcdef");
-
-  await expect(
-    page.getByRole("heading", { level: 2, name: "test 観測ページ" }),
-  ).toBeVisible();
 });

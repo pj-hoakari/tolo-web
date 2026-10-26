@@ -1,107 +1,245 @@
 "use client";
 
-import { Search, X } from "lucide-react";
-import type { Messages } from "next-intl";
-import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { ArrowRight, Info, Search, TriangleAlert, X } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, TextField } from "@/components/ui/textfield";
-import { GuideMapView } from "./GuideMapView";
+import { resolveLabel } from "@/features/tenant/management/graph/utils/labels";
+import { orpc } from "@/lib/orpc";
+import { cn } from "@/lib/utils";
+import type { GuestGuideMap } from "@/server/router";
+import { type GuestPolling, useGuestPolling } from "../useGuestPolling";
+import { type GuideMapMarker, GuideMapView } from "./GuideMapView";
+import { computeFloorRoute, type FloorRouteResult } from "./guideMapFloorRoute";
 import {
-  buildGuideMapSource,
-  buildRoute,
-  buildRouteToRoom,
-  resolveMarkers,
-  resolveRouteFlow,
-} from "./guideMapAdapter";
-import guideMapData from "./guideMapData.json";
-import type { GuideMapSnapshot } from "./guideMapSchema";
+  clearGuideMapFloors,
+  setGuideMapActiveFloor,
+  setGuideMapFloors,
+  useGuideMapFloor,
+} from "./guideMapFloorStore";
+import {
+  type CrowdEntry,
+  type CrowdMap,
+  contentBounds,
+  crowdByObject,
+  isDestination,
+  localizeGuideMapLayout,
+  type MapObject,
+  type PlaceObject,
+} from "./guideMapLayout";
+import { InfoCard } from "./InfoCard";
 import { defineGuestInfoComponent, type GuestInfoComponentProps } from "./type";
 
-/** マップ JSON の id を Guest.guideMap.destinations のキーとして扱うための型 */
-type DestinationKey =
-  `destinations.${keyof Messages["Guest"]["guideMap"]["destinations"] & string}`;
+/** 混雑の中身が同じかを比べるための文字列（定期取得のたびに経路を引き直さないため） */
+const crowdKey = (crowd: CrowdMap) =>
+  [...crowd]
+    .map(([id, s]) => `${id}:${s.level}:${s.danger ? 1 : 0}`)
+    .sort()
+    .join("|");
 
-/** マップ作成ツール（guide-map-poc）から書き出した JSON */
-const snapshot = guideMapData as GuideMapSnapshot;
+/** 経路が同じかを比べるための文字列 */
+const routeKey = (route: FloorRouteResult | null) =>
+  route && "steps" in route ? JSON.stringify(route.steps) : null;
 
-/** 表示するフロア。TODO: 複数フロア対応時は選択できるようにする */
-const FLOOR_ID = snapshot.activeFloorId;
+function GuideMap({ eventId, qrLocationId }: GuestInfoComponentProps) {
+  const t = useTranslations("Guest");
+  const [guideMap, setGuideMap] = useState<GuestPolling<GuestGuideMap>>({
+    status: "loading",
+  });
+  useEffect(() => {
+    let active = true;
+    orpc.guest.getGuideMap({ eventId, qrLocationId }).then(
+      (data) => {
+        if (active) setGuideMap({ status: "ready", data });
+      },
+      () => {
+        if (active) setGuideMap({ status: "error" });
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [eventId, qrLocationId]);
+  if (guideMap.status !== "ready")
+    return (
+      <InfoCard title={t("guideMap.title")}>
+        <p className="text-sm text-primary/55">
+          {guideMap.status === "loading" ? t("loading") : t("loadError")}
+        </p>
+      </InfoCard>
+    );
+  return <GuideMapContent eventId={eventId} guideMap={guideMap.data} />;
+}
 
-/** 出発が未設定の JSON 用のフォールバック。TODO: QR / API から現在地を受け取る */
-const FALLBACK_START = { x: 432, y: 192 };
-
-/** 現在地・目的地マーカー（JSON にあればその座標、無ければカードから算出） */
-const MARKERS = resolveMarkers(snapshot, FALLBACK_START);
-
-/** 線の見た目（流れる破線）も作成ツールの設定に合わせる */
-const ROUTE_FLOW = resolveRouteFlow(snapshot);
-
-function GuideMap(_props: GuestInfoComponentProps) {
-  // TODO: _props.tenantId / _props.eventId でマップ JSON と現在地を API から取得する。
-  //       いまはリポジトリ同梱の JSON を読み込んで表示している。
+function GuideMapContent({
+  eventId,
+  guideMap: { graph, layout, currentPointId },
+}: {
+  eventId: string;
+  guideMap: GuestGuideMap;
+}) {
   const t = useTranslations("Guest.guideMap");
+  const tCongestion = useTranslations("Guest.congestion");
+  const locale = useLocale();
+  const doc = useMemo(
+    () =>
+      localizeGuideMapLayout(
+        layout,
+        new Map(graph.points.map((p) => [p.pointId, p.labels])),
+        locale,
+      ),
+    [layout, graph, locale],
+  );
+
+  const floorIndex = new Map(doc.groups.map((g, i) => [g.groupId, i]));
+  const labelsByGroupId = new Map(
+    graph.groups.map((g) => [g.groupId, g.labels]),
+  );
+  const floorNameOf = (id: string) =>
+    resolveLabel(labelsByGroupId.get(id) ?? {}, locale).text;
+
+  /**
+   * 現在地とみなす場所。
+   * QR の設置箇所のポイントに結び付いた場所を使う。無ければ案内マップエディタで指定した既定の出発地（startId）を、それも無ければ「現在地」「入口」「入場ゲート」などの名前の場所を、
+   * 無ければいちばん下の階の場所（目的地 → 階段・エレベーターの順）を、それも無ければ最初の目的地を使う。
+   */
+  const groundPlaces = doc.objects.filter(
+    (o): o is PlaceObject =>
+      o.kind === "place" && o.groupId === doc.groups[0]?.groupId,
+  );
+  const start: PlaceObject | undefined =
+    (currentPointId
+      ? doc.objects.find(
+          (o): o is PlaceObject =>
+            o.kind === "place" && o.pointId === currentPointId,
+        )
+      : undefined) ??
+    doc.objects.find(
+      (o): o is PlaceObject => o.kind === "place" && o.id === doc.startId,
+    ) ??
+    doc.objects
+      .filter(isDestination)
+      .find((o) =>
+        /現在地|入口|入場|ゲート|entrance|gate/i.test(o.title ?? ""),
+      ) ??
+    groundPlaces.find(isDestination) ??
+    groundPlaces[0] ??
+    doc.objects.filter(isDestination)[0];
+
+  /**
+   * 下敷き画像の無いフロアで地図として見せる範囲。
+   * 白紙の広さは仮の値なので中身の範囲だけを切り出す。階を切り替えても位置がずれないよう、
+   * 画像の無い全フロアの中身を合わせた範囲にする。
+   */
+  const blankFrame =
+    contentBounds(
+      doc.objects.filter(
+        (o) => !doc.groups.find((g) => g.groupId === o.groupId)?.image,
+      ),
+    ) ?? undefined;
+
+  /** 起動時に表示するフロア（現在地のフロア） */
+  const startFloor = start?.groupId ?? doc.groups[0]?.groupId;
+
+  // 混雑状況（混雑状況カードと同じ Guest Service の GetCrowd）。グラフ ID で地図のオブジェクトに引き直す
+  const crowdPolling = useGuestPolling(
+    useCallback(
+      () => orpc.guest.getCrowd({ eventId, language: locale }),
+      [eventId, locale],
+    ),
+  );
+  const crowdEntries: CrowdEntry[] =
+    crowdPolling.status === "ready" ? crowdPolling.data.crowd : [];
+  const liveCrowd = crowdByObject(doc.objects, crowdEntries);
+  const liveCrowdKey = crowdKey(liveCrowd);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 中身（liveCrowdKey）が変わったときだけ作り直す
+  const crowd = useMemo(() => liveCrowd, [liveCrowdKey]);
+
+  // 現在のフロア（別カード）と表示フロアを共有する
+  const { activeFloorId: sharedFloorId } = useGuideMapFloor();
+  useEffect(() => {
+    setGuideMapFloors(
+      doc.groups.map((g) => ({
+        id: g.groupId,
+        labels: graph.groups.find((x) => x.groupId === g.groupId)?.labels ?? {},
+      })),
+      startFloor,
+    );
+    return () => clearGuideMapFloors();
+  }, [doc, graph, startFloor]);
+  const activeFloorId = sharedFloorId ?? startFloor;
 
   // 目的地検索の入力と、検索/一覧から選んだ目的地
   const [query, setQuery] = useState("");
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  // 部屋・経由地点を JSON から組み立てる（名称は i18n があれば優先）
-  const source = useMemo(
-    () =>
-      buildGuideMapSource(snapshot, FLOOR_ID, (id, fallback) => {
-        // JSON 側の id は任意の文字列なので、メッセージに定義があるときだけ上書きする
-        const key = `destinations.${id}` as DestinationKey;
-        return t.has(key) ? t(key) : fallback;
-      }),
-    [t],
+  // 表示名（グラフのポイントのラベルを表示言語で解決し、無ければレイアウトの名前を使う）
+  const nameOf = (o: MapObject) => o.title ?? "";
+
+  // 現在地そのものは目的地の候補に出さない
+  const destinations = doc.objects.filter(
+    (o): o is PlaceObject => isDestination(o) && o.id !== start?.id,
   );
 
-  // 作成ツールで指定した既定ルート
-  const defaultRoute = useMemo(
+  // 現在地→目的地の経路（階が違えば階段・エスカレーター・エレベーターを経由する）。混雑している所は避ける
+  const route = useMemo(
     () =>
-      buildRoute(
-        snapshot,
-        FLOOR_ID,
-        MARKERS.start,
-        MARKERS.end,
-        source.width,
-        source.height,
-      ),
-    [source.width, source.height],
-  );
-
-  // 選択した目的地への経路（未選択なら既定ルート）
-  const selected = useMemo(
-    () =>
-      selectedRoomId
-        ? buildRouteToRoom(
-            snapshot,
-            FLOOR_ID,
-            MARKERS.start,
-            selectedRoomId,
-            source.width,
-            source.height,
-          )
+      selectedId && start
+        ? computeFloorRoute(doc, start.id, selectedId, { crowd })
         : null,
-    [selectedRoomId, source.width, source.height],
+    [doc, start, selectedId, crowd],
+  );
+  // 混雑を考えないときの経路（混雑を避けたかどうかの表示に使う）
+  const plainRoute = useMemo(
+    () =>
+      selectedId && start && crowd.size > 0
+        ? computeFloorRoute(doc, start.id, selectedId)
+        : null,
+    [doc, start, selectedId, crowd],
+  );
+  const throughDanger = Boolean(
+    route && "steps" in route && route.throughDanger,
+  );
+  const avoided =
+    !throughDanger &&
+    plainRoute !== null &&
+    routeKey(route) !== null &&
+    routeKey(route) !== routeKey(plainRoute);
+
+  // 同じ目的地のまま、混雑状況が変わって経路が変わったら知らせる
+  const currentRouteKey = routeKey(route);
+  const lastRoute = useRef<{ id: string | null; key: string | null }>({
+    id: null,
+    key: null,
+  });
+  const [rerouted, setRerouted] = useState(false);
+  useEffect(() => {
+    const last = lastRoute.current;
+    if (selectedId && last.id === selectedId && last.key !== currentRouteKey)
+      setRerouted(true);
+    else if (last.id !== selectedId) setRerouted(false);
+    lastRoute.current = { id: selectedId, key: currentRouteKey };
+  }, [selectedId, currentRouteKey]);
+  // 現在地が階移動手段そのものだと「エレベーター → エレベーター」の歩かない区間ができるので省く
+  const steps = (route && "steps" in route ? route.steps : []).filter(
+    (s) => !(s.kind === "walk" && s.fromId === s.toId),
   );
 
-  const route = selected ? selected.points : defaultRoute;
-
-  // 検索一致する部屋（名称の部分一致・大文字小文字を無視）
+  // 検索一致する目的地（名称の部分一致・大文字小文字を無視）
   const q = query.trim().toLowerCase();
   const matches = q
-    ? source.rooms.filter((r) => r.label.toLowerCase().includes(q))
+    ? destinations.filter((o) => nameOf(o).toLowerCase().includes(q))
     : [];
-  const highlightIds = matches.map((r) => r.id);
 
   const pickRoom = (id: string) => {
-    setSelectedRoomId(id);
+    setSelectedId(id);
     setQuery("");
+    // 経路は現在地から始まるので、現在地のフロアを表示する
+    setGuideMapActiveFloor(startFloor);
   };
   const resetRoute = () => {
-    setSelectedRoomId(null);
+    setSelectedId(null);
     setQuery("");
   };
   // Enter で、候補があれば先頭を選ぶ（クリックと同じ挙動）
@@ -109,14 +247,47 @@ function GuideMap(_props: GuestInfoComponentProps) {
     if (matches.length > 0) pickRoom(matches[0].id);
   };
 
-  const selectedLabel = selectedRoomId
-    ? source.rooms.find((r) => r.id === selectedRoomId)?.label
-    : null;
+  const selected = destinations.find((o) => o.id === selectedId);
+  const objectName = (id: string) => {
+    const o = doc.objects.find((x) => x.id === id);
+    return o ? nameOf(o) : "";
+  };
+
+  // 表示中フロアのオブジェクト（名前は表示名に解決しておく）
+  const floorObjects = doc.objects
+    .filter((o) => o.groupId === activeFloorId)
+    .map((o) => (o.kind === "line" ? o : { ...o, title: nameOf(o) }));
+
+  // 表示中フロアで歩く区間の経路線
+  const routes = steps.flatMap((s) =>
+    s.kind === "walk" && s.floor === activeFloorId ? [s.points] : [],
+  );
+
+  // 現在地・目的地・乗り換えのラベル
+  const markers: GuideMapMarker[] = [];
+  // 場所の名前がすでに「現在地」なら、同じ文言の目印は重ねない
+  if (start && nameOf(start) !== t("currentLocation"))
+    markers.push({ objectId: start.id, label: t("currentLocation") });
+  for (const s of steps) {
+    if (s.kind !== "ride") continue;
+    const up =
+      (floorIndex.get(s.toFloor) ?? 0) > (floorIndex.get(s.fromFloor) ?? 0);
+    const via = t(`connectors.${s.via}`);
+    markers.push({
+      objectId: s.fromId,
+      label: `${up ? "▲" : "▼"} ${t("rideTo", { via, floor: floorNameOf(s.toFloor) })}`,
+    });
+    markers.push({
+      objectId: s.toId,
+      label: t("arriveFrom", { floor: floorNameOf(s.fromFloor) }),
+    });
+  }
+  if (selected) markers.push({ objectId: selected.id, label: t("goal") });
 
   const toolbar = (
     <div className="mb-3 space-y-2">
       <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-primary/40" />
+        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-primary/40" />
         <TextField
           aria-label={t("search")}
           value={query}
@@ -125,7 +296,7 @@ function GuideMap(_props: GuestInfoComponentProps) {
         >
           <Input
             placeholder={t("search")}
-            className="h-9 pl-8"
+            className="h-11 pl-9 text-base"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -139,34 +310,39 @@ function GuideMap(_props: GuestInfoComponentProps) {
       {q && (
         <div className="flex flex-wrap gap-1.5">
           {matches.length > 0 ? (
-            matches.slice(0, 8).map((r) => (
+            matches.slice(0, 8).map((o) => (
               <Button
-                key={r.id}
+                key={o.id}
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-7 rounded-full border-primary/12 px-3 text-primary/70 text-sm hover:text-accent"
-                onPress={() => pickRoom(r.id)}
+                className="h-9 gap-1.5 rounded-full border-primary/12 px-3.5 text-sm text-primary/70 hover:text-accent"
+                onPress={() => pickRoom(o.id)}
               >
-                {r.label}
+                {nameOf(o)}
+                {doc.groups.length > 1 && (
+                  <span className="text-xs text-primary/40">
+                    {floorNameOf(o.groupId)}
+                  </span>
+                )}
               </Button>
             ))
           ) : (
-            <span className="text-primary/45 text-sm">{t("noResults")}</span>
+            <span className="text-sm text-primary/45">{t("noResults")}</span>
           )}
         </div>
       )}
 
-      {selectedLabel && !q && (
+      {selected && !q && (
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-accent px-3 py-1 font-medium text-secondary text-sm">
-            {selectedLabel}
+          <span className="rounded-full bg-accent px-3 py-1 text-sm font-medium text-secondary">
+            {nameOf(selected)}
           </span>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 gap-1 px-2 text-primary/55 text-xs"
+            className="h-9 gap-1 px-3 text-sm text-primary/55"
             onPress={resetRoute}
           >
             <X className="size-3.5" />
@@ -177,25 +353,108 @@ function GuideMap(_props: GuestInfoComponentProps) {
     </div>
   );
 
+  // 道順（歩く区間はタップでそのフロアを表示）
+  const crowdNotice = throughDanger
+    ? t("crowdThroughDanger")
+    : rerouted
+      ? t("crowdRerouted")
+      : avoided
+        ? t("crowdAvoided")
+        : null;
+  const footer = !selected ? (
+    <p className="mt-3 text-sm text-primary/55">{t("hint")}</p>
+  ) : route && "error" in route ? (
+    <p className="mt-3 text-sm text-primary/55">{t("noRoute")}</p>
+  ) : (
+    <>
+      {crowdNotice && (
+        <p
+          role="status"
+          className={cn(
+            "mt-3 flex items-start gap-2 rounded-lg px-3 py-2 text-sm",
+            throughDanger
+              ? "bg-guest-notify/10 text-guest-notify"
+              : "bg-accent/10 text-primary/75",
+          )}
+        >
+          {throughDanger ? (
+            <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+          ) : (
+            <Info className="mt-0.5 size-4 shrink-0" />
+          )}
+          {crowdNotice}
+        </p>
+      )}
+      <ol className="mt-3 space-y-1.5">
+        {steps.map((s) =>
+          s.kind === "walk" ? (
+            <li key={`${s.fromId}-${s.toId}`}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onPress={() => setGuideMapActiveFloor(s.floor)}
+                className={cn(
+                  "h-auto min-h-10 w-full justify-start gap-2 rounded-lg px-3 py-2 text-left text-sm",
+                  s.floor === activeFloorId
+                    ? "bg-accent/10 text-primary"
+                    : "text-primary/60",
+                )}
+              >
+                {t("walkStep", {
+                  floor: floorNameOf(s.floor),
+                  from: objectName(s.fromId),
+                  to: objectName(s.toId),
+                })}
+              </Button>
+            </li>
+          ) : (
+            <li
+              key={`${s.fromId}-${s.toId}`}
+              className="flex items-center gap-2 px-3 py-1 text-sm text-primary/55"
+            >
+              <ArrowRight className="size-4 shrink-0" />
+              {t("rideStep", {
+                via: t(`connectors.${s.via}`),
+                from: floorNameOf(s.fromFloor),
+                to: floorNameOf(s.toFloor),
+              })}
+            </li>
+          ),
+        )}
+      </ol>
+    </>
+  );
+
+  const floor =
+    doc.groups.find((g) => g.groupId === activeFloorId) ?? doc.groups[0];
+
   return (
     <GuideMapView
-      width={source.width}
-      height={source.height}
-      rooms={source.rooms}
-      waypoints={source.waypoints}
-      start={MARKERS.start}
-      route={route}
+      // フロアを切り替えたら拡大を解いて全体から見せる
+      key={floor.groupId}
       title={t("title")}
-      hint={t("hint")}
-      currentLocationLabel={t("currentLocation")}
-      destinationsLabel={t("destinationsLabel")}
-      expandLabel={t("expand")}
-      collapseLabel={t("collapse")}
-      routeFlowClassName={ROUTE_FLOW.className}
-      routeFlowDuration={ROUTE_FLOW.duration}
-      highlightIds={q ? highlightIds : undefined}
-      activeRoomId={selectedRoomId}
+      floor={floor}
+      objects={floorObjects}
+      routes={routes}
+      markers={markers}
+      activeId={selectedId}
+      highlightIds={q ? matches.map((o) => o.id) : undefined}
       toolbar={toolbar}
+      footer={footer}
+      zoomInLabel={t("expand")}
+      zoomOutLabel={t("collapse")}
+      zoomInHint={t("zoomInHint")}
+      zoomOutHint={t("zoomOutHint")}
+      closedLabel={t("closed")}
+      frame={floor.image ? undefined : blankFrame}
+      crowd={crowd}
+      crowdLegend={{
+        title: t("crowdLegend"),
+        mid: tCongestion("levels.mid"),
+        high: tCongestion("levels.high"),
+        danger: tCongestion("danger"),
+      }}
     />
   );
 }

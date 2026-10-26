@@ -1,6 +1,18 @@
 {
   "HomePage": {
-    "title": "こんにちは、世界！"
+    "createTenant": "テナントを作成"
+  },
+  "Onboarding": {
+    "title": "テナントを作成",
+    "name": "テナント名",
+    "subdomain": "サブドメイン名",
+    "ownerEmail": "オーナーのメールアドレス",
+    "submit": "作成",
+    "done": "テナントを作成しました",
+    "openTenant": "テナントのページを開く",
+    "subdomainTaken": "このサブドメイン名は既に使われています。別の名前を指定してください。",
+    "invalid": "入力内容が規則に合いません。サブドメイン名は英小文字・数字・ハイフンで 63 文字以内とし、先頭と末尾にハイフンは使えません。",
+    "failed": "テナントを作成できませんでした。"
   },
   "LocaleSelect": {
     "label": "言語を切り替え"
@@ -13,13 +25,9 @@
   },
   "Management": {
     "title": "{tenantId} 管理ページ",
-    "tabsLabel": "管理ビュー切り替え",
-    "tabs": {
-      "graph": "ルート図",
-      "edges": "接続エッジ"
-    },
     "graphEditTitle": "{tenantId} ルート図編集",
-    "backLink": "管理ページへ戻る"
+    "backLink": "管理ページへ戻る",
+    "observationDevicesLink": "観測デバイス管理"
   },
   "TenantManagement": {
     "title": "{tenantId} イベント管理",
@@ -238,10 +246,10 @@
       "error": "接続失敗"
     },
     "aliveEdges": {
-      "title": "エッジ（{count}）",
+      "title": "観測デバイス（{count}）",
       "refresh": "更新",
       "loading": "読み込み中…",
-      "empty": "エッジがありません",
+      "empty": "観測デバイスがありません",
       "lastSeen": "最終応答: {time}",
       "unknownTime": "不明",
       "offline": "オフライン",
@@ -251,7 +259,11 @@
       "disconnectLabel": "「{name}」から切断",
       "close": "閉じる",
       "closeLabel": "「{name}」の映像を閉じる",
-      "loadError": "エッジ一覧の取得に失敗しました"
+      "loadError": "観測デバイス一覧の取得に失敗しました",
+      "openHere": "この端末で開く",
+      "openHereLabel": "「{name}」をこの端末で開く",
+      "unregister": "登録解除",
+      "unregisterLabel": "「{name}」の登録を解除"
     },
     "receiver": {
       "stoppedTitle": "観測が停止しました",
@@ -262,6 +274,30 @@
     "broadcast": {
       "active": "配信中",
       "inactive": "停止中"
+    },
+    "registerEdge": {
+      "title": "観測デバイスを登録",
+      "nameLabel": "デバイス名",
+      "pointsLabel": "観測点名",
+      "pointsDescription": "1 行に 1 つずつ入力してください",
+      "submit": "登録",
+      "registered": "「{name}」を登録しました。観測デバイスとして使う端末でこの URL を開いてください。",
+      "points": "観測点: {names}",
+      "urlLabel": "発行 URL",
+      "copy": "URL をコピー",
+      "copied": "コピーしました",
+      "open": "この端末で開く",
+      "failed": "観測デバイスを登録できませんでした。",
+      "invalid": "デバイス名と観測点名を確認してください。",
+      "eventNotFound": "イベントが見つかりませんでした。"
+    },
+    "unregisterEdge": {
+      "title": "観測デバイスの登録を解除",
+      "description": "「{name}」の登録を解除します。この観測デバイスの観測点では観測できなくなります。",
+      "cancel": "キャンセル",
+      "confirm": "登録を解除する",
+      "failed": "登録を解除できませんでした。",
+      "stale": "観測デバイスが見つからないか、既に登録が解除されています。一覧を更新してください。"
     }
   },
   "Detection": {
@@ -286,7 +322,12 @@
       "close": "詳細調整を閉じる"
     },
     "lines": {
+      "modeLabel": "ライン操作モード",
+      "defaultName": "ライン {index}",
+      "editLine": "{name}を編集",
+      "stopEditingLine": "{name}の編集を終了",
       "create": "ライン生成",
+      "edit": "編集モード",
       "listLabel": "ライン一覧",
       "reverseForward": "forward方向を反転",
       "deleteSelected": "選択ラインを削除",
@@ -362,6 +403,10 @@
       "hide": "非表示"
     }
   },
+  "ObservationDevices": {
+    "title": "{tenantId} 観測デバイス管理",
+    "managementLink": "管理ページ"
+  },
   "Guest": {
     "pageSubtitle": "ゲストページ",
     "waitingNumber": {
@@ -399,43 +444,50 @@
         "right": "右"
       }
     },
+    "queues": {
+      "title": "行列の待ち時間",
+      "waitTime": "約{minutes}分",
+      "recommendedGates": "おすすめの入口: {gates}",
+      "empty": "待ち時間の情報はまだありません"
+    },
     "staffMessage": {
       "title": "スタッフからのお知らせ",
       "ariaOpen": "スタッフからのお知らせ",
-      "empty": "現在お知らせはありません",
-      "samples": {
-        "msg-2": {
-          "body": "東ゲート付近が大変混雑しています。お急ぎの方は西ゲートのご利用をおすすめします。",
-          "staffName": "山田 太郎",
-          "staffRole": "会場スタッフ"
-        },
-        "msg-1": {
-          "body": "開演時刻が 15:00 から 15:30 に変更となりました。ご了承ください。",
-          "staffName": "佐藤 花子",
-          "staffRole": "運営責任者"
-        }
-      }
+      "empty": "現在お知らせはありません"
     },
     "guideMap": {
       "title": "案内マップ",
       "hint": "目的地を選択すると経路が表示されます",
       "currentLocation": "現在地",
-      "destinations": {
-        "hall": "ホール",
-        "goods": "グッズ売り場",
-        "cafe": "カフェ",
-        "exit": "出口"
-      },
       "destinationsLabel": "目的地",
       "expand": "地図を拡大",
       "collapse": "地図を縮小",
       "search": "目的地を検索",
       "noResults": "見つかりませんでした",
-      "reset": "リセット"
+      "reset": "リセット",
+      "goal": "目的地",
+      "rideTo": "{via}で{floor}へ",
+      "arriveFrom": "{floor}から到着",
+      "connectors": {
+        "stairs": "階段",
+        "escalator": "エスカレーター",
+        "elevator": "エレベーター"
+      },
+      "walkStep": "{floor}：{from} → {to}",
+      "rideStep": "{via}で {from} → {to}",
+      "noRoute": "この目的地への経路が見つかりませんでした",
+      "zoomInHint": "地図をタップで拡大",
+      "zoomOutHint": "ドラッグで移動・タップで全体表示",
+      "closed": "（通行止め）",
+      "crowdAvoided": "混雑している所を避けたルートです",
+      "crowdRerouted": "混雑状況が変わったため、ルートを変更しました",
+      "crowdThroughDanger": "混雑で危険な場所を通らないと行けません。スタッフの案内に従ってください",
+      "crowdLegend": "混雑"
     },
     "floor": {
       "title": "現在のフロア",
-      "placeholderName": "1F"
+      "placeholderName": "1F",
+      "selectLabel": "表示するフロア"
     },
     "congestion": {
       "title": "混雑状況",
@@ -444,13 +496,12 @@
         "mid": "中",
         "high": "高"
       },
-      "areas": {
-        "entrance": "入場ゲート",
-        "hall": "ホール",
-        "cafe": "カフェ",
-        "goods": "グッズ売り場"
-      }
-    }
+      "danger": "危険",
+      "updatedAt": "{time} 更新",
+      "empty": "混雑の情報はまだありません"
+    },
+    "loading": "読み込み中…",
+    "loadError": "情報を取得できませんでした"
   },
   "PwaInstall": {
     "button": "アプリをインストール",

@@ -20,9 +20,11 @@ docker compose --profile e2e run --build --rm e2e
 Docker のビルド対象から `public/models/` は除外されているため、モデルファイルがない環境で検証できます。
 
 ## YOLOモデルのセットアップ
+
 デフォルトではYOLO26nを使用
 
 ### uvセットアップ
+
 [uv](https://docs.astral.sh/uv/)
 
 ```bash
@@ -39,6 +41,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 ### YOLOモデル（ONNX形式）の作成
+
 `public/models`ディレクトリ内にONNX形式のYOLOモデルを配置
 
 #### 1. `public/models`ディレクトリに移動

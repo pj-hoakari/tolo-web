@@ -14,7 +14,7 @@ export function WaitingNumberView({
   return (
     <InfoCard title={label}>
       <p className="flex items-baseline gap-1 text-primary">
-        <span className="font-bold text-4xl tabular-nums">{waitingNumber}</span>
+        <span className="text-4xl font-bold tabular-nums">{waitingNumber}</span>
         <span className="text-base text-primary/55">{unit}</span>
       </p>
     </InfoCard>

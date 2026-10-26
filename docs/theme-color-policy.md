@@ -16,14 +16,14 @@
 
 ## 固定色を残す理由
 
-| 対象 | 理由 |
-| --- | --- |
-| `DetectionVideoStage` / `VideoReceiverView` の黒背景・半透明黒と白文字 | 映像表示面と、映像上に重ねる案内として使用する。 |
-| `BroadcastIndicator` の赤 | 配信中を示す意味色。エラー色とは区別し、状態は文字でも表示する。 |
-| `ObservationPointPicker` の緑 | オンラインを示す意味色。オフラインは文字でも表示する。 |
-| `SelectionHeader` の sky / amber / violet | 種類名を補助するバッジ色。各色にダーク用の配色がある。 |
-| `PropertyNotice` / `ObservationPointPicker` の amber | 警告色。ダーク用の配色があり、アイコンや文言を併用する。 |
-| ロゴの `dark:invert` | 単色ロゴの視認性を保つ。 |
+| 対象                                                                   | 理由                                                             |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `DetectionVideoStage` / `VideoReceiverView` の黒背景・半透明黒と白文字 | 映像表示面と、映像上に重ねる案内として使用する。                 |
+| `BroadcastIndicator` の赤                                              | 配信中を示す意味色。エラー色とは区別し、状態は文字でも表示する。 |
+| `ObservationPointPicker` の緑                                          | オンラインを示す意味色。オフラインは文字でも表示する。           |
+| `SelectionHeader` の sky / amber / violet                              | 種類名を補助するバッジ色。各色にダーク用の配色がある。           |
+| `PropertyNotice` / `ObservationPointPicker` の amber                   | 警告色。ダーク用の配色があり、アイコンや文言を併用する。         |
+| ロゴの `dark:invert`                                                   | 単色ロゴの視認性を保つ。                                         |
 
 配信・オンライン専用の管理 UI トークンがないため、状態の赤・緑を維持する。
 ゲスト専用トークンは流用しない。

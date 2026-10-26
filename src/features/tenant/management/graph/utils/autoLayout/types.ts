@@ -43,6 +43,8 @@ export type PlannedComponent = {
 /** コンテナごとの整列計画 */
 export type ContainerPlan = {
   axis: Axis;
+  /** 飛び越しレーンの側。手動配置から選び、整列済み形状の照合でも使う。 */
+  laneSide: -1 | 1;
   components: PlannedComponent[];
   /** メンバー ID → 列番号（成分内で 0 始まり。バンド行きは含まない） */
   columnOf: Map<string, number>;

@@ -39,6 +39,7 @@ const formatMilliseconds = (value: number) => `${value}ms`;
 export type DetectionSettingsPanelProps = {
   settingsStore: DetectionSettingsStore;
   viewStateStore: DetectionViewStateStore;
+  showLineCreationModeToggle?: boolean;
 };
 
 /**
@@ -47,6 +48,7 @@ export type DetectionSettingsPanelProps = {
 function DetectionSettingsPanelComponent({
   settingsStore,
   viewStateStore,
+  showLineCreationModeToggle,
 }: DetectionSettingsPanelProps) {
   const t = useTranslations("Detection");
 
@@ -63,6 +65,7 @@ function DetectionSettingsPanelComponent({
         <DetectionLineActions
           settingsStore={settingsStore}
           viewStateStore={viewStateStore}
+          showLineCreationModeToggle={showLineCreationModeToggle}
         />
       </div>
       <DetectionPresetGroup

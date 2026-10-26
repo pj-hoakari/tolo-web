@@ -57,14 +57,14 @@ function applyStream(pc: RTCPeerConnection, stream: MediaStream | null): void {
 export function useVideoSender(params: {
   tenantId: string;
   eventId: string;
-  edgeDeviceId: string | undefined;
+  edgeDeviceId: string;
   stream: MediaStream | null;
   /** management 側と共有する検出設定 */
   settingsStore: DetectionSettingsStore;
 }): VideoSenderController {
   const { tenantId, eventId, edgeDeviceId, stream, settingsStore } = params;
   const active = stream !== null;
-  const edgeId = active && edgeDeviceId ? edgeDeviceId : null;
+  const edgeId = active ? edgeDeviceId : null;
   const firebaseConfig = useFirebaseConfig();
 
   const streamRef = useRef<MediaStream | null>(stream);

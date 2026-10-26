@@ -21,7 +21,7 @@ const toggleVariants = cva(
     /* Selected */
     "selected:bg-accent selected:text-accent-foreground",
     /* Focus Visible */
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+    "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none",
   ],
   {
     variants: {
@@ -71,7 +71,7 @@ const ToggleButtonGroup = ({
   <AriaToggleButtonGroup
     className={composeRenderProps(className, (className) =>
       cn(
-        "group/togglegroup flex orientation-vertical:flex-col items-center justify-center gap-1",
+        "group/togglegroup orientation-vertical:flex-col flex items-center justify-center gap-1",
         className,
       ),
     )}

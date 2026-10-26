@@ -1,6 +1,18 @@
 {
   "HomePage": {
-    "title": "Hello world!"
+    "createTenant": "Create a tenant"
+  },
+  "Onboarding": {
+    "title": "Create a tenant",
+    "name": "Tenant name",
+    "subdomain": "Subdomain",
+    "ownerEmail": "Owner email address",
+    "submit": "Create",
+    "done": "Tenant created",
+    "openTenant": "Open the tenant page",
+    "subdomainTaken": "This subdomain is already in use. Choose another one.",
+    "invalid": "The input does not follow the rules. A subdomain uses lowercase letters, digits, and hyphens, is at most 63 characters long, and cannot start or end with a hyphen.",
+    "failed": "Could not create the tenant."
   },
   "LocaleSelect": {
     "label": "Change language"
@@ -13,13 +25,9 @@
   },
   "Management": {
     "title": "{tenantId} Management",
-    "tabsLabel": "Switch management view",
-    "tabs": {
-      "graph": "Route diagram",
-      "edges": "Connected edges"
-    },
     "graphEditTitle": "{tenantId} Route diagram editor",
-    "backLink": "Back to management"
+    "backLink": "Back to management",
+    "observationDevicesLink": "Observation devices"
   },
   "TenantManagement": {
     "title": "{tenantId} Event management",
@@ -179,13 +187,13 @@
     "properties": {
       "bulk": {
         "points": "Points ({count})",
-        "edges": "Edges ({count})",
+        "edges": "Arrows ({count})",
         "mixed": "Values are mixed",
         "result": "Changed {changed, plural, one {# element} other {# elements}}. Could not change {skipped, plural, one {# element} other {# elements}}.",
         "reasonCount": "{reason} ({count})",
         "reasons": {
           "requiresDwell": "Points that do not allow dwelling cannot be destinations.",
-          "bothNotReversed": "Bidirectional edges are excluded from reversal."
+          "bothNotReversed": "Bidirectional arrows are excluded from reversal."
         }
       },
       "groupSelected": "Group selected points",
@@ -197,7 +205,7 @@
         "differentParents": "Select points with the same parent."
       },
       "selectedNodes": "Nodes: {count}",
-      "selectedEdges": "Edges: {count}",
+      "selectedEdges": "Arrows: {count}",
       "selectedGroups": "Groups: {count}",
       "title": "Properties",
       "empty": "Select a point or a route.",
@@ -238,10 +246,10 @@
       "error": "Connection failed"
     },
     "aliveEdges": {
-      "title": "Edges ({count})",
+      "title": "Observation devices ({count})",
       "refresh": "Refresh",
       "loading": "Loading…",
-      "empty": "No edges",
+      "empty": "No observation devices",
       "lastSeen": "Last seen: {time}",
       "unknownTime": "Unknown",
       "offline": "Offline",
@@ -251,7 +259,11 @@
       "disconnectLabel": "Disconnect from “{name}”",
       "close": "Close",
       "closeLabel": "Close the video from “{name}”",
-      "loadError": "Failed to load the edge list"
+      "loadError": "Failed to load the observation device list",
+      "openHere": "Open on this device",
+      "openHereLabel": "Open “{name}” on this device",
+      "unregister": "Unregister",
+      "unregisterLabel": "Unregister “{name}”"
     },
     "receiver": {
       "stoppedTitle": "Observation stopped",
@@ -262,6 +274,30 @@
     "broadcast": {
       "active": "Broadcasting",
       "inactive": "Stopped"
+    },
+    "registerEdge": {
+      "title": "Register an observation device",
+      "nameLabel": "Device name",
+      "pointsLabel": "Observation point names",
+      "pointsDescription": "Enter one per line",
+      "submit": "Register",
+      "registered": "Registered “{name}”. Open this URL on the device you will use as the observation device.",
+      "points": "Observation points: {names}",
+      "urlLabel": "Issued URL",
+      "copy": "Copy URL",
+      "copied": "Copied",
+      "open": "Open on this device",
+      "failed": "Could not register the observation device.",
+      "invalid": "Check the device name and observation point names.",
+      "eventNotFound": "The event was not found."
+    },
+    "unregisterEdge": {
+      "title": "Unregister observation device",
+      "description": "Unregister “{name}”? Its observation points will no longer be observed.",
+      "cancel": "Cancel",
+      "confirm": "Unregister",
+      "failed": "Could not unregister the observation device.",
+      "stale": "The observation device was not found or is already unregistered. Refresh the list."
     }
   },
   "Detection": {
@@ -286,7 +322,12 @@
       "close": "Close advanced settings"
     },
     "lines": {
+      "modeLabel": "Line interaction mode",
+      "defaultName": "Line {index}",
+      "editLine": "Edit {name}",
+      "stopEditingLine": "Stop editing {name}",
       "create": "Add line",
+      "edit": "Edit mode",
       "listLabel": "Lines",
       "reverseForward": "Reverse forward direction",
       "deleteSelected": "Delete selected line",
@@ -362,6 +403,10 @@
       "hide": "Hide"
     }
   },
+  "ObservationDevices": {
+    "title": "{tenantId} Observation devices",
+    "managementLink": "Management"
+  },
   "Guest": {
     "pageSubtitle": "Guest Page",
     "waitingNumber": {
@@ -399,43 +444,50 @@
         "right": "Right"
       }
     },
+    "queues": {
+      "title": "Queue wait times",
+      "waitTime": "approx. {minutes} min",
+      "recommendedGates": "Recommended entrance: {gates}",
+      "empty": "No wait time information yet"
+    },
     "staffMessage": {
       "title": "Staff notices",
       "ariaOpen": "Staff notices",
-      "empty": "No notices at the moment",
-      "samples": {
-        "msg-2": {
-          "body": "The east gate area is very crowded. If you're in a hurry, we recommend using the west gate.",
-          "staffName": "Taro Yamada",
-          "staffRole": "Venue staff"
-        },
-        "msg-1": {
-          "body": "The start time has changed from 15:00 to 15:30. Thank you for your understanding.",
-          "staffName": "Hanako Sato",
-          "staffRole": "Event manager"
-        }
-      }
+      "empty": "No notices at the moment"
     },
     "guideMap": {
       "title": "Guide map",
       "hint": "Select a destination to see the route",
       "currentLocation": "You are here",
-      "destinations": {
-        "hall": "Hall",
-        "goods": "Merch",
-        "cafe": "Café",
-        "exit": "Exit"
-      },
       "destinationsLabel": "Destinations",
       "expand": "Enlarge the map",
       "collapse": "Shrink the map",
       "search": "Search destination",
       "noResults": "No results",
-      "reset": "Reset"
+      "reset": "Reset",
+      "goal": "Destination",
+      "rideTo": "{via} to {floor}",
+      "arriveFrom": "Arrived from {floor}",
+      "connectors": {
+        "stairs": "Stairs",
+        "escalator": "Escalator",
+        "elevator": "Elevator"
+      },
+      "walkStep": "{floor}: {from} → {to}",
+      "rideStep": "{via}: {from} → {to}",
+      "noRoute": "No route to this destination was found",
+      "zoomInHint": "Tap the map to zoom in",
+      "zoomOutHint": "Drag to move · tap to see the whole map",
+      "closed": " (closed)",
+      "crowdAvoided": "This route avoids crowded areas",
+      "crowdRerouted": "The route was changed because crowd conditions changed",
+      "crowdThroughDanger": "This route passes through a dangerously crowded area. Please follow the staff's directions",
+      "crowdLegend": "Crowd"
     },
     "floor": {
       "title": "Current floor",
-      "placeholderName": "1F"
+      "placeholderName": "1F",
+      "selectLabel": "Floor to show"
     },
     "congestion": {
       "title": "Congestion",
@@ -444,13 +496,12 @@
         "mid": "Medium",
         "high": "High"
       },
-      "areas": {
-        "entrance": "Entrance gate",
-        "hall": "Hall",
-        "cafe": "Café",
-        "goods": "Merch"
-      }
-    }
+      "danger": "Danger",
+      "updatedAt": "Updated {time}",
+      "empty": "No crowd information yet"
+    },
+    "loading": "Loading…",
+    "loadError": "Couldn't load this information"
   },
   "PwaInstall": {
     "button": "Install app",

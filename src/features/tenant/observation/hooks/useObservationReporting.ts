@@ -22,7 +22,7 @@ export function useObservationReporting({
   resultStore,
 }: {
   eventId: string;
-  edgeDeviceId: string | undefined;
+  edgeDeviceId: string;
   listening: boolean;
   status: DetectCrowdStatus;
   settingsStore: DetectionSettingsStore;
@@ -34,9 +34,6 @@ export function useObservationReporting({
   > | null>(null);
 
   useEffect(() => {
-    if (!edgeDeviceId) {
-      return;
-    }
     let cancelled = false;
     orpc.observation
       .listObservationPoints({ eventId, edgeDeviceId })
@@ -58,7 +55,7 @@ export function useObservationReporting({
   }, [eventId, edgeDeviceId]);
 
   useEffect(() => {
-    if (!edgeDeviceId || !listening) {
+    if (!listening) {
       return;
     }
     const detecting = status === "detecting";
@@ -88,7 +85,7 @@ export function useObservationReporting({
   }, [eventId, edgeDeviceId, listening, pointIdByName, status, settingsStore]);
 
   useEffect(() => {
-    if (!edgeDeviceId || !pointIdByName || status !== "detecting") {
+    if (!pointIdByName || status !== "detecting") {
       return;
     }
     let windowStart = new Date();

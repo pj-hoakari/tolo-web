@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 
-version: '3'
+version: "3"
 
 vars:
   TUNNEL_COMPOSE: docker compose -f compose.yaml -f compose.tunnel.yaml
@@ -53,13 +53,13 @@ tasks:
   tunnel:
     desc: Quick Tunnel で開発環境を公開し、URL を表示する
     cmds:
-      - '{{.TUNNEL_COMPOSE}} up -d --build'
+      - "{{.TUNNEL_COMPOSE}} up -d --build"
       - task: tunnel:url
 
   tunnel:stop:
     desc: Quick Tunnel を止めて公開を終える
     cmds:
-      - '{{.TUNNEL_COMPOSE}} stop tunnel tunnel-proxy'
+      - "{{.TUNNEL_COMPOSE}} stop tunnel tunnel-proxy"
 
   tunnel:url:
     desc: Quick Tunnel の URL を表示する

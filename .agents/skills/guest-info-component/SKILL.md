@@ -1,4 +1,5 @@
 ---
+
 name: guest-info-component
 description: src/features/guest/info に新しい GuestInfoComponent（ゲストページに並べる情報ウィジェット）を追加するときの手順とルール。View とラッパー（API 呼び出し）の分割、defineGuestInfoComponent による id 付き宣言、GuestInfoComponent 型による呼び出し制限、src/stories への Storybook ファイル追加を扱う。「待ち人数」のような情報パーツを増やすときに使う。
 ---
@@ -12,7 +13,6 @@ description: src/features/guest/info に新しい GuestInfoComponent（ゲスト
 ゲストページでは「待ち人数」などの情報パーツを縦に並べて表示する。これらのパーツを受け取って並べる側のコンポーネント（コンテナなど）では、**`src/features/guest/info` 内で正しく定義されたコンポーネントだけ**を受け取れるように制限したい。
 
 ただしこれは「`src/features/guest/info` ディレクトリにあるか」というパスベースの制限ではなく、**型による制限**で実現する。具体的には、非公開の `unique symbol`（ブランド）を使った nominal typing を用いる。
-
 - `src/features/guest/info/type.ts` の `guestInfoBrand` は **export していない** `unique symbol`。
 - `GuestInfoComponent` 型はこのブランドキーを持つ必要があるため、外部モジュールからは構築できず、**必ず `defineGuestInfoComponent` を経由**しないとこの型の値を作れない。
 - 同じ `props`（`{ tenantId, eventId }`）を取る素のコンポーネントを書いても、ブランドが無いので `GuestInfoComponent` には代入できない（型エラー）。
@@ -78,6 +78,7 @@ export default defineGuestInfoComponent("foo", Foo);
 - `defineGuestInfoComponent(id, component, options?)` の **第1引数 id は他のパーツと重複しないユニークな文字列**（一覧の `key` に使われる。kebab-case 推奨、例: `"waiting-number"`）。
 - default export は **必ず `defineGuestInfoComponent` の戻り値**にする。素のコンポーネントを export すると `GuestInfoComponent` 型として扱えず、並べる側で弾かれる。
 - **グリッド上の幅は `options.span` で宣言する**（並べる側は 2 列グリッド）。既定は `2`（`col-span-2` = 1 行全体）。横に 2 つ並べたい小さいパーツは `{ span: 1 }`（`col-span-1`）を指定する。例: `defineGuestInfoComponent("floor", Floor, { span: 1 })`。レイアウト幅はパーツ自身の責務として持たせ、並べる側（ページ）はフラットな `GuestInfoComponent[]` に並び順だけを書く。
+- **Guest Service のページ構成で表示を切り替えるパーツは `options.pageComponent` で宣言する**（`"crowd"` / `"queues"` / `"staffMessages"`）。ゲストページは OpenGuestPage が返すページ構成に含まれるパーツだけを表示し、`pageComponent` を宣言していないパーツは常に表示する。例: `defineGuestInfoComponent("queues", Queues, { pageComponent: "queues" })`。
 
 ### 3. Storybook（View の story）
 
@@ -130,7 +131,11 @@ const components: GuestInfoComponent[] = [Foo /*, ...他のパーツ */];
 
 // 描画側では key を getGuestInfoComponentId で取り出す
 components.map((Component) => (
-  <Component key={getGuestInfoComponentId(Component)} tenantId={tenantId} eventId={eventId} />
+  <Component
+    key={getGuestInfoComponentId(Component)}
+    tenantId={tenantId}
+    eventId={eventId}
+  />
 ));
 ```
 

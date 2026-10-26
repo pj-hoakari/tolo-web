@@ -163,7 +163,7 @@ function connectedComponents(
  * 判定する。相手が同じ階層に現れるまで祖先コンテナを遡り、その階層の
  * 計画（列番号・列内順序・バンド所属）から軸と符号を割り出す。
  */
-function externalDirection(
+export function externalDirection(
   containerId: string,
   outsideNodeId: string,
   index: GraphIndex,
@@ -218,11 +218,13 @@ function externalDirection(
 
 /**
  * フロー軸と向き: 現在の配置でルートがどちらへ流れているかを、
- * 両端の変位の合計で多数決する（ユーザーの配置の尊重）
+ * 層の進行に対する両端の変位で決める（ユーザーの配置の尊重）。
+ * 循環の逆流ルートは層の向きへ折り返し、整列のたびに符号が反転するのを防ぐ。
  */
 function detectFlowOrientation(
   flowEdges: LiftedEdge[],
   currentCenters: Map<string, XYPosition>,
+  layerOf: Map<string, number>,
 ): { axis: Axis; flip: boolean } {
   let horizontalSpan = 0;
   let verticalSpan = 0;
@@ -232,10 +234,12 @@ function detectFlowOrientation(
     const a = currentCenters.get(from);
     const b = currentCenters.get(to);
     if (!a || !b) continue;
+    const step = Math.sign((layerOf.get(to) ?? 0) - (layerOf.get(from) ?? 0));
+    if (step === 0) continue;
     horizontalSpan += Math.abs(b.x - a.x);
     verticalSpan += Math.abs(b.y - a.y);
-    signedX += b.x - a.x;
-    signedY += b.y - a.y;
+    signedX += (b.x - a.x) * step;
+    signedY += (b.y - a.y) * step;
   }
   const axis: Axis = verticalSpan > horizontalSpan ? "y" : "x";
   return { axis, flip: (axis === "x" ? signedX : signedY) < 0 };
@@ -316,13 +320,14 @@ function relaxCrossPositions(
 }
 
 /** コンテナ 1 つ分の整列計画（フロー軸・列の割り当て・列内順序）を立てる */
-function planContainer(
+export function planContainer(
   container: ContainerId,
   members: GraphCanvasNode[],
   index: GraphIndex,
   edges: GraphEdgeType[],
   currentCenters: Map<string, XYPosition>,
   plans: Map<ContainerId, ContainerPlan>,
+  orientation?: { axis: Axis; flip: boolean; laneSide?: -1 | 1 },
 ): ContainerPlan {
   const memberIds = members.map((n) => n.id);
   const { internal, external } = liftEdges(container, edges, index);
@@ -331,7 +336,9 @@ function planContainer(
   const siblingEdges = findSiblingEdgeIndexes(internal);
   const flowEdges = internal.filter((_, i) => !siblingEdges.has(i));
 
-  const { axis, flip } = detectFlowOrientation(flowEdges, currentCenters);
+  const layerOf = assignLayers(memberIds, flowEdges);
+  const { axis, flip } =
+    orientation ?? detectFlowOrientation(flowEdges, currentCenters, layerOf);
   const mainOfCurrent = (id: string): number => {
     const center = currentCenters.get(id);
     return center ? (axis === "x" ? center.x : center.y) : 0;
@@ -341,7 +348,6 @@ function planContainer(
     return center ? (axis === "x" ? center.y : center.x) : 0;
   };
 
-  const layerOf = assignLayers(memberIds, flowEdges);
   const { layerSide, crossBias } = classifyExternalPulls(
     container,
     external,
@@ -390,7 +396,15 @@ function planContainer(
       const base = layerOf.get(id) ?? 0;
       const visual = flip ? maxLayer - base : base;
       const side = layerSide.get(id) ?? 0;
-      effectiveLayer.set(id, side < 0 ? -1 : side > 0 ? maxLayer + 1 : visual);
+      // 同じ境界側へ寄せる端点も、内部の列間順序は失わない。
+      effectiveLayer.set(
+        id,
+        side < 0
+          ? visual - maxLayer - 1
+          : side > 0
+            ? maxLayer + 1 + visual
+            : visual,
+      );
     }
     const used = [...new Set(effectiveLayer.values())].sort((a, b) => a - b);
     const rankOf = new Map(used.map((value, i) => [value, i]));
@@ -427,8 +441,32 @@ function planContainer(
     (a, b) => a.minSeedCross - b.minSeedCross || a.minIndex - b.minIndex,
   );
 
+  // 手動配置で最初の飛び越しルートが通る側を、このコンテナのレーン側にする。
+  // レーン自体の整列後の位置から、列ごとの挿し込み先を推定し直さない。
+  let laneSide: -1 | 1 = 1;
+  for (const edge of internal) {
+    const from = columnOf.get(edge.from),
+      to = columnOf.get(edge.to);
+    if (from === undefined || to === undefined || Math.abs(from - to) < 2)
+      continue;
+    const component = built.find(({ component }) =>
+      component.columns.flat().includes(edge.from),
+    )?.component;
+    if (!component?.columns.flat().includes(edge.to)) continue;
+    const skipped = component.columns
+      .slice(Math.min(from, to) + 1, Math.max(from, to))
+      .flat();
+    const seed =
+      (crossOfCurrent(edge.sourceId) + crossOfCurrent(edge.targetId)) / 2;
+    const middle =
+      skipped.reduce((sum, id) => sum + crossOfCurrent(id), 0) / skipped.length;
+    laneSide = seed < middle ? -1 : 1;
+    break;
+  }
+
   return {
     axis,
+    laneSide: orientation?.laneSide ?? laneSide,
     components: built.map((entry) => entry.component),
     columnOf,
     orderOf,

@@ -197,7 +197,7 @@ export function ObservationSoftLock({
         inert={blocksOperation ? true : undefined}
         className={cn(
           "flex w-full flex-col items-center gap-4",
-          blocksOperation && "select-none opacity-30",
+          blocksOperation && "opacity-30 select-none",
         )}
       >
         {children}
@@ -214,10 +214,10 @@ export function ObservationSoftLock({
                 <ShieldCheck className="size-5" aria-hidden="true" />
               </div>
               <div>
-                <h2 className="font-bold text-lg">
+                <h2 className="text-lg font-bold">
                   {needsSetup ? t("setupTitle") : t("lockedTitle")}
                 </h2>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-sm text-muted-foreground">
                   {needsSetup ? t("setupDescription") : t("lockedDescription")}
                 </p>
               </div>

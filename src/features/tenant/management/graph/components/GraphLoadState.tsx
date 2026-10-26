@@ -14,7 +14,7 @@ export function GraphLoadState({ status, onRetry }: GraphLoadStateProps) {
   return (
     <div
       role="status"
-      className="flex h-full w-full flex-col items-center justify-center gap-3 text-muted-foreground text-sm"
+      className="flex h-full w-full flex-col items-center justify-center gap-3 text-sm text-muted-foreground"
     >
       <p>{t(status)}</p>
       {status === "error" && (

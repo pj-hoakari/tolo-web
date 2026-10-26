@@ -46,7 +46,7 @@ function SaveErrorAlert({ error }: { error: unknown }) {
   return (
     <div
       role="alert"
-      className="border-destructive/50 border-b bg-destructive/10 px-4 py-2 text-destructive text-sm"
+      className="border-b border-destructive/50 bg-destructive/10 px-4 py-2 text-sm text-destructive"
     >
       {error instanceof GraphValidationError ? (
         <>

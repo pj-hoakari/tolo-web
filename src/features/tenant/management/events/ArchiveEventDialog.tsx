@@ -58,7 +58,7 @@ export function ArchiveEventDialog({ event, onArchived }: Props) {
                 </DialogDescription>
               </DialogHeader>
               {error && (
-                <p role="alert" className="text-destructive text-sm">
+                <p role="alert" className="text-sm text-destructive">
                   {error}
                 </p>
               )}

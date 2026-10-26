@@ -24,7 +24,7 @@ export function SelectionHeader({ kind, id }: SelectionHeaderProps) {
     <div className="flex items-center justify-between">
       <span
         className={cn(
-          "rounded-full px-2 py-0.5 font-semibold text-[10px]",
+          "rounded-full px-2 py-0.5 text-[10px] font-semibold",
           KIND_BADGE[kind],
         )}
       >

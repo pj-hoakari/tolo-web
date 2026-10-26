@@ -46,7 +46,7 @@ export function GroupProperties({
         />
       </TextField>
 
-      <p className="text-muted-foreground text-xs">{t("groupHint")}</p>
+      <p className="text-xs text-muted-foreground">{t("groupHint")}</p>
     </div>
   );
 }

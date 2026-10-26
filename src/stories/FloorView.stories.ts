@@ -24,3 +24,17 @@ export const Basement: Story = {
     floorName: "B1",
   },
 };
+
+/** 案内マップに複数フロアがあるときは、ここで表示フロアを切り替えられる */
+export const MultipleFloors: Story = {
+  args: {
+    floorName: "2F",
+    floors: [
+      { id: "f-1", name: "1F" },
+      { id: "f-2", name: "2F" },
+      { id: "f-3", name: "3F" },
+    ],
+    activeFloorId: "f-2",
+    onSelectFloor: () => {},
+  },
+};

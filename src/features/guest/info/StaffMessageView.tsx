@@ -1,14 +1,10 @@
 export type StaffMessage = {
   /** クライアントが既読・重複を判定するための識別子 */
   id: string;
-  /** メッセージ本文（表示言語で解決済み） */
+  /** メッセージ本文 */
   body: string;
-  /** 送信スタッフの名前（表示言語で解決済み） */
-  staffName: string;
-  /** 送信スタッフの役職（表示言語で解決済み） */
-  staffRole: string;
   /** 配信日時（ISO 8601） */
-  deliveredAt: string;
+  deliveredAt: string | null;
 };
 
 export type StaffMessageViewProps = {
@@ -33,7 +29,7 @@ export function StaffMessageView({
   });
 
   if (messages.length === 0) {
-    return <p className="text-primary/55 text-sm">{emptyText}</p>;
+    return <p className="text-sm text-primary/55">{emptyText}</p>;
   }
 
   return (
@@ -43,18 +39,17 @@ export function StaffMessageView({
           key={message.id}
           className="rounded-xl border border-primary/12 bg-primary/15 p-4"
         >
-          <p className="whitespace-pre-wrap text-primary text-sm leading-relaxed">
+          <p className="text-sm leading-relaxed whitespace-pre-wrap text-primary">
             {message.body}
           </p>
-          <div className="mt-3 flex items-center justify-between text-primary/55 text-xs">
-            <span>
-              {message.staffName}
-              <span className="ml-1 text-primary/55">{message.staffRole}</span>
-            </span>
-            <time dateTime={message.deliveredAt}>
+          {message.deliveredAt && (
+            <time
+              dateTime={message.deliveredAt}
+              className="mt-3 block text-right text-xs text-primary/55"
+            >
               {dateFormatter.format(new Date(message.deliveredAt))}
             </time>
-          </div>
+          )}
         </li>
       ))}
     </ul>

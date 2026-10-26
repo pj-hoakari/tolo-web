@@ -1,0 +1,395 @@
+{
+  "issue249-group-movement": {
+    "nodes": [
+      {
+        "id": "g0",
+        "type": "graphGroup",
+        "position": {
+          "x": 771,
+          "y": 81
+        },
+        "width": 480,
+        "height": 320,
+        "data": {
+          "labels": {
+            "ja": "グループ 1"
+          }
+        }
+      },
+      {
+        "id": "g1",
+        "type": "graphGroup",
+        "position": {
+          "x": 503,
+          "y": 104
+        },
+        "width": 480,
+        "height": 320,
+        "data": {
+          "labels": {
+            "ja": "グループ 2"
+          }
+        }
+      },
+      {
+        "id": "n0",
+        "type": "graph",
+        "parentId": "g0",
+        "position": {
+          "x": 669,
+          "y": 585
+        },
+        "data": {
+          "nodeType": "GOAL_TRANSIT_MIXED",
+          "labels": {
+            "ja": "ポイント 1"
+          }
+        }
+      },
+      {
+        "id": "n2",
+        "type": "graph",
+        "parentId": "g1",
+        "position": {
+          "x": 324,
+          "y": 162
+        },
+        "data": {
+          "nodeType": "GOAL_TRANSIT_MIXED",
+          "labels": {
+            "ja": "ポイント 3"
+          }
+        }
+      },
+      {
+        "id": "n3",
+        "type": "graph",
+        "parentId": "g1",
+        "position": {
+          "x": 544,
+          "y": 622
+        },
+        "data": {
+          "nodeType": "GOAL_TRANSIT_MIXED",
+          "labels": {
+            "ja": "ポイント 4"
+          }
+        }
+      },
+      {
+        "id": "n4",
+        "type": "graph",
+        "parentId": "g0",
+        "position": {
+          "x": 649,
+          "y": 142
+        },
+        "data": {
+          "nodeType": "GOAL_TRANSIT_MIXED",
+          "labels": {
+            "ja": "ポイント 5"
+          }
+        }
+      },
+      {
+        "id": "n5",
+        "type": "graph",
+        "parentId": "g0",
+        "position": {
+          "x": 297,
+          "y": 242
+        },
+        "data": {
+          "nodeType": "GOAL_TRANSIT_MIXED",
+          "labels": {
+            "ja": "ポイント 6"
+          }
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e5",
+        "type": "graph",
+        "source": "n0",
+        "target": "n3",
+        "data": {
+          "direction": "both"
+        }
+      },
+      {
+        "id": "e6",
+        "type": "graph",
+        "source": "n2",
+        "target": "n5",
+        "data": {
+          "direction": "both"
+        }
+      },
+      {
+        "id": "e7",
+        "type": "graph",
+        "source": "n3",
+        "target": "n4",
+        "data": {
+          "direction": "both"
+        }
+      }
+    ]
+  },
+  "issue249-order-swap-a": {
+    "nodes": [
+      {
+        "id": "g0",
+        "type": "graphGroup",
+        "position": {
+          "x": 722,
+          "y": 495
+        },
+        "width": 480,
+        "height": 320,
+        "data": {
+          "labels": {
+            "ja": "グループ 1"
+          }
+        }
+      },
+      {
+        "id": "g1",
+        "type": "graphGroup",
+        "position": {
+          "x": 621,
+          "y": 587
+        },
+        "width": 480,
+        "height": 320,
+        "data": {
+          "labels": {
+            "ja": "グループ 2"
+          }
+        }
+      },
+      {
+        "id": "n0",
+        "type": "graph",
+        "parentId": "g1",
+        "position": {
+          "x": 254,
+          "y": 165
+        },
+        "data": {
+          "nodeType": "GOAL_TRANSIT_MIXED",
+          "labels": {
+            "ja": "ポイント 1"
+          }
+        }
+      },
+      {
+        "id": "n2",
+        "type": "graph",
+        "parentId": "g1",
+        "position": {
+          "x": 617,
+          "y": 220
+        },
+        "data": {
+          "nodeType": "GOAL_TRANSIT_MIXED",
+          "labels": {
+            "ja": "ポイント 3"
+          }
+        }
+      },
+      {
+        "id": "n3",
+        "type": "graph",
+        "parentId": "g0",
+        "position": {
+          "x": 563,
+          "y": 358
+        },
+        "data": {
+          "nodeType": "GOAL_TRANSIT_MIXED",
+          "labels": {
+            "ja": "ポイント 4"
+          }
+        }
+      },
+      {
+        "id": "n4",
+        "type": "graph",
+        "parentId": "g1",
+        "position": {
+          "x": 211,
+          "y": 469
+        },
+        "data": {
+          "nodeType": "GOAL_TRANSIT_MIXED",
+          "labels": {
+            "ja": "ポイント 5"
+          }
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e2",
+        "type": "graph",
+        "source": "n2",
+        "target": "n3",
+        "data": {
+          "direction": "both"
+        }
+      },
+      {
+        "id": "e4",
+        "type": "graph",
+        "source": "n0",
+        "target": "n2",
+        "data": {
+          "direction": "oneway"
+        }
+      },
+      {
+        "id": "e6",
+        "type": "graph",
+        "source": "n3",
+        "target": "n4",
+        "data": {
+          "direction": "oneway"
+        }
+      },
+      {
+        "id": "e7",
+        "type": "graph",
+        "source": "n4",
+        "target": "n3",
+        "data": {
+          "direction": "both"
+        }
+      }
+    ]
+  },
+  "issue249-order-swap-b": {
+    "nodes": [
+      {
+        "id": "g0",
+        "type": "graphGroup",
+        "position": {
+          "x": 673,
+          "y": 909
+        },
+        "width": 480,
+        "height": 320,
+        "data": {
+          "labels": {
+            "ja": "グループ 1"
+          }
+        }
+      },
+      {
+        "id": "g1",
+        "type": "graphGroup",
+        "position": {
+          "x": 740,
+          "y": 69
+        },
+        "width": 480,
+        "height": 320,
+        "data": {
+          "labels": {
+            "ja": "グループ 2"
+          }
+        }
+      },
+      {
+        "id": "n6",
+        "type": "graph",
+        "parentId": "g1",
+        "position": {
+          "x": 598,
+          "y": 474
+        },
+        "data": {
+          "nodeType": "GOAL_TRANSIT_MIXED",
+          "labels": {
+            "ja": "ポイント 7"
+          }
+        }
+      },
+      {
+        "id": "n7",
+        "type": "graph",
+        "parentId": "g0",
+        "position": {
+          "x": 471,
+          "y": 235
+        },
+        "data": {
+          "nodeType": "GOAL_TRANSIT_MIXED",
+          "labels": {
+            "ja": "ポイント 8"
+          }
+        }
+      },
+      {
+        "id": "n8",
+        "type": "graph",
+        "parentId": "g0",
+        "position": {
+          "x": 246,
+          "y": 529
+        },
+        "data": {
+          "nodeType": "GOAL_TRANSIT_MIXED",
+          "labels": {
+            "ja": "ポイント 9"
+          }
+        }
+      },
+      {
+        "id": "n12",
+        "type": "graph",
+        "parentId": "g0",
+        "position": {
+          "x": 532,
+          "y": 354
+        },
+        "data": {
+          "nodeType": "GOAL_TRANSIT_MIXED",
+          "labels": {
+            "ja": "ポイント 13"
+          }
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e17",
+        "type": "graph",
+        "source": "n6",
+        "target": "n7",
+        "data": {
+          "direction": "oneway"
+        }
+      },
+      {
+        "id": "e18",
+        "type": "graph",
+        "source": "n7",
+        "target": "n8",
+        "data": {
+          "direction": "both"
+        }
+      },
+      {
+        "id": "e19",
+        "type": "graph",
+        "source": "n8",
+        "target": "n6",
+        "data": {
+          "direction": "both"
+        }
+      }
+    ]
+  }
+}

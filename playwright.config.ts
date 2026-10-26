@@ -12,6 +12,7 @@ export default defineConfig({
     locale: "ja-JP",
     timezoneId: "Asia/Tokyo",
     trace: "retain-on-failure",
+    screenshot: "only-on-failure",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
@@ -21,6 +22,7 @@ export default defineConfig({
       NEXT_PUBLIC_API_MOCKING: "enabled",
       NEXT_PUBLIC_CROWD_DETECTION_MOCKING: "enabled",
       NEXT_PUBLIC_CROWD_DETECTION_MODEL_PATH: "/models/yolo26n.onnx",
+      TENANT_SUBDOMAIN_MOCKING: "enabled",
       FIREBASE_PROJECT_ID: "e2e-tolo-signaling",
     },
     reuseExistingServer: !process.env.CI,

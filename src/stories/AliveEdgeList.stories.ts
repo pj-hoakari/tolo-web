@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { AliveEdgeList } from "@/features/tenant/webrtc/components/AliveEdgeList";
-import { sampleEdgeDeviceItems } from "@/mocks/fixtures/edges";
+import { SAMPLE_EVENT_ID, sampleEdgeDeviceItems } from "@/mocks/fixtures/edges";
 
 const meta = {
   title: "Tenant/WebRTC/AliveEdgeList",
@@ -11,9 +11,11 @@ const meta = {
   },
   tags: ["autodocs"],
   args: {
+    eventId: SAMPLE_EVENT_ID,
     onRefresh: () => {},
     onConnect: () => {},
     onDisconnect: () => {},
+    onUnregistered: () => {},
     connectedEdgeId: null,
     receiveStatus: "idle",
   },
@@ -72,6 +74,6 @@ export const ErrorState: Story = {
   args: {
     edges: [],
     status: "error",
-    error: "エッジ一覧の取得に失敗しました",
+    error: "観測デバイス一覧の取得に失敗しました",
   },
 };
