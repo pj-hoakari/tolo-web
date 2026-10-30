@@ -866,6 +866,31 @@ test("グループの開閉ボタンで中の要素を隠して戻せ、その�
   await expect(selectedNodes(page)).toHaveCount(0);
 });
 
+test("木の行は、ラベルが長く折り返しても隣の行と重ならない", async ({
+  page,
+}) => {
+  const longLabel = "国際会議場メインエントランス東側ブースA（特別展示エリア）";
+  await selectNode(page, "ph_booth");
+  await panel(page)
+    .getByRole("textbox", { name: "ラベル（日本語）" })
+    .fill(longLabel);
+  await panel(page).getByRole("button", { name: "一覧に戻る" }).click();
+
+  await expect(outlineRow(page, longLabel)).toBeVisible();
+  const boxes = await outline(page)
+    .getByRole("row")
+    .evaluateAll((rows) =>
+      rows.map((row) => {
+        const { top, bottom } = row.getBoundingClientRect();
+        return { top, bottom };
+      }),
+    );
+  for (const [above, below] of boxes
+    .slice(0, -1)
+    .map((box, i) => [box, boxes[i + 1]]))
+    expect(above.bottom).toBeLessThanOrEqual(below.top);
+});
+
 test("木からグループ内のポイント・グループ・ルートを選ぶと、キャンバスでその要素だけが選択されプロパティを表示する", async ({
   page,
 }) => {

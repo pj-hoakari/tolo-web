@@ -53,7 +53,11 @@ export function ElementOutline({
   return (
     <Virtualizer
       layout={ListLayout}
-      layoutOptions={{ rowHeight: 28, headingHeight: 32, gap: 4 }}
+      layoutOptions={{
+        estimatedRowHeight: 28,
+        estimatedHeadingHeight: 32,
+        gap: 4,
+      }}
     >
       <Tree
         aria-labelledby={labelledBy}
