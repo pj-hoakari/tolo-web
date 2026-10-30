@@ -30,7 +30,7 @@
     "@pj-hoakari/tolo-graph-authoring-client-es": "0.4.0-rc",
     "@pj-hoakari/tolo-guest-client-es": "0.2.0-rc",
     "@pj-hoakari/tolo-observation-client-es": "0.3.0-rc",
-    "@pj-hoakari/tolo-tenant-management-connect-es": "0.4.0-dev",
+    "@pj-hoakari/tolo-tenant-management-connect-es": "0.6.0-dev",
     "@pj-hoakari/web-crowd-detection-utils": "^0.7.0",
     "@xyflow/react": "^12.11.0",
     "class-variance-authority": "^0.7.1",
