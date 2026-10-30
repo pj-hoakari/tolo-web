@@ -184,6 +184,14 @@
       "groupLabel": "Actions for group “{label}”",
       "dissolveGroup": "Ungroup (keep contents)"
     },
+    "sidePanel": {
+      "outline": "Elements",
+      "sections": {
+        "groups": "Groups",
+        "points": "Points",
+        "routes": "Routes"
+      }
+    },
     "properties": {
       "bulk": {
         "points": "Points ({count})",
@@ -208,7 +216,6 @@
       "selectedEdges": "Arrows: {count}",
       "selectedGroups": "Groups: {count}",
       "title": "Properties",
-      "empty": "Select a point or a route.",
       "deleteNode": "Delete this point",
       "deleteEdge": "Delete this route",
       "labelWithLanguage": "Label ({language})",

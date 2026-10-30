@@ -786,3 +786,93 @@ test("キーボードでリンクを選ぶと、フォーカスがパネル内�
   await page.keyboard.press("Tab");
   await expect(labelField(page)).toBeFocused();
 });
+
+const outline = (page: Page) =>
+  panel(page).getByRole("listbox", { name: "要素" });
+const outlineSection = (page: Page, name: string) =>
+  outline(page).getByRole("group", { name });
+const clearSelection = (page: Page) =>
+  page.locator(".react-flow__pane").click({ position: { x: 10, y: 10 } });
+
+test("何も選択していないとき、サイドパネルはグループ・ポイント・ルートを分けて一覧する", async ({
+  page,
+}) => {
+  await expect(outlineSection(page, "グループ").getByRole("option")).toHaveText(
+    ["2F", "1F"],
+  );
+  await expect(outlineSection(page, "ポイント").getByRole("option")).toHaveText(
+    [
+      "2F 階段",
+      "2F ホール",
+      "2F エレベーター",
+      "展示室B",
+      "1F 階段",
+      "1F エレベーター",
+      "入口",
+      "エントランスホール",
+      "ブースA",
+      "壁展示",
+      "出口",
+      "外部",
+      "外部",
+    ],
+  );
+  await expect(outlineSection(page, "ルート").getByRole("option")).toHaveText([
+    "入口 → エントランスホール",
+    "エントランスホール ⇌ ブースA",
+    "エントランスホール ⇌ 壁展示",
+    "ブースA → 出口",
+    "壁展示 → 出口",
+    "エントランスホール ⇌ 1F 階段",
+    "エントランスホール ⇌ 1F エレベーター",
+    "1F 階段 ⇌ 2F 階段",
+    "1F エレベーター ⇌ 2F エレベーター",
+    "2F 階段 ⇌ 2F ホール",
+    "2F エレベーター ⇌ 2F ホール",
+    "2F ホール ⇌ 展示室B",
+    "外部 → 入口",
+    "出口 → 外部",
+  ]);
+});
+
+test("一覧からポイント・グループ・ルートを選ぶと、キャンバスでその要素だけが選択されプロパティを表示する", async ({
+  page,
+}) => {
+  await outline(page)
+    .getByRole("option", { name: "ブースA", exact: true })
+    .click();
+  await expect(selectedNodes(page)).toHaveCount(1);
+  await expect(node(page, "ph_booth")).toHaveClass(/selected/);
+  await expect(labelField(page)).toHaveValue("ブースA");
+  await expect(outline(page)).toHaveCount(0);
+
+  await clearSelection(page);
+  await outline(page).getByRole("option", { name: "1F", exact: true }).click();
+  await expect(selectedNodes(page)).toHaveCount(1);
+  await expect(node(page, "ph_floor1")).toHaveClass(/selected/);
+  await expect(labelField(page)).toHaveValue("1F");
+
+  await clearSelection(page);
+  await outline(page).getByRole("option", { name: "ブースA → 出口" }).click();
+  await expect(selectedNodes(page)).toHaveCount(0);
+  await expect(selectedEdges(page)).toHaveCount(1);
+  await expect(edge(page, "ph_e4")).toHaveClass(/selected/);
+  await expect(panel(page).getByRole("code")).toHaveText("ph_e4");
+});
+
+test("一覧を矢印キーと Enter で選ぶと、フォーカスが選んだ要素の見出しへ移る", async ({
+  page,
+}) => {
+  await outlineSection(page, "グループ")
+    .getByRole("option", { name: "1F" })
+    .focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(
+    outline(page).getByRole("option", { name: "2F 階段", exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(node(page, "ph_stairs2f")).toHaveClass(/selected/);
+  const focused = panel(page).locator(":focus");
+  await expect(focused).toHaveCount(1);
+  await expect(focused).toContainText("ph_stairs2f");
+});

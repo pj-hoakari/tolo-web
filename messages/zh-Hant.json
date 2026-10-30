@@ -184,6 +184,14 @@
       "groupLabel": "群組「{label}」的操作",
       "dissolveGroup": "取消群組（保留內容）"
     },
+    "sidePanel": {
+      "outline": "元素",
+      "sections": {
+        "groups": "群組",
+        "points": "節點",
+        "routes": "路徑"
+      }
+    },
     "properties": {
       "bulk": {
         "points": "點（{count} 個）",
@@ -208,7 +216,6 @@
       "selectedEdges": "箭頭：{count} 個",
       "selectedGroups": "群組：{count} 個",
       "title": "屬性",
-      "empty": "請選擇節點或路徑。",
       "deleteNode": "刪除此節點",
       "deleteEdge": "刪除此路徑",
       "labelWithLanguage": "標籤（{language}）",

@@ -184,6 +184,14 @@
       "groupLabel": "समूह “{label}” का कार्यहरू",
       "dissolveGroup": "समूह हटाउनुहोस् (सामग्री राख्नुहोस्)"
     },
+    "sidePanel": {
+      "outline": "तत्वहरू",
+      "sections": {
+        "groups": "समूहहरू",
+        "points": "बिन्दुहरू",
+        "routes": "मार्गहरू"
+      }
+    },
     "properties": {
       "bulk": {
         "points": "बिन्दुहरू ({count})",
@@ -208,7 +216,6 @@
       "selectedEdges": "तीर: {count}",
       "selectedGroups": "समूह: {count}",
       "title": "गुणहरू",
-      "empty": "बिन्दु वा मार्ग छान्नुहोस्।",
       "deleteNode": "यो बिन्दु मेट्नुहोस्",
       "deleteEdge": "यो मार्ग मेट्नुहोस्",
       "labelWithLanguage": "लेबल ({language})",

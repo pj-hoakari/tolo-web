@@ -11,7 +11,8 @@ const node = (page: Page, id: string) => page.getByTestId(`rf__node-${id}`);
 const allNodes = (page: Page) => page.locator(".react-flow__node");
 const allEdges = (page: Page) => page.locator(".react-flow__edge");
 const pane = (page: Page) => page.locator(".react-flow__pane");
-const emptyNotice = "ポイントまたはルートを選択してください。";
+const outline = (page: Page) =>
+  panel(page).getByRole("listbox", { name: "要素" });
 const labelField = (page: Page) =>
   panel(page).getByRole("textbox", { name: "ラベル（日本語）" });
 const selectFloor1 = async (page: Page) => {
@@ -289,7 +290,7 @@ test("プロパティの削除ボタンを押すとポイントとそのルー�
 
   await expect(booth(page)).toHaveCount(0);
   await expect(routeToBooth(page)).toHaveCount(0);
-  await expect(panel(page)).toContainText(emptyNotice);
+  await expect(outline(page)).toBeVisible();
 });
 
 test("プロパティのラベル欄で Backspace を押してもポイントは削除されない", async ({
@@ -318,7 +319,7 @@ test("何もない所をクリックすると選択が解除される", async ({
 
   await pane(page).click({ position: { x: 20, y: 20 } });
 
-  await expect(panel(page)).toContainText(emptyNotice);
+  await expect(outline(page)).toBeVisible();
 });
 
 test("ラベルの言語を 한국어 にして入力するとその言語のラベルだけが設定され日本語に戻すと元のラベルになる", async ({
