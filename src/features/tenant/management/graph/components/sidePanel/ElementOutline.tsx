@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { ListLayout, Virtualizer } from "react-aria-components";
 import {
   Tree,
   TreeHeader,
@@ -50,24 +51,29 @@ export function ElementOutline({
   );
 
   return (
-    <Tree
-      aria-labelledby={labelledBy}
-      selectionMode="none"
-      autoFocus={focusFirstOnMount && "first"}
-      defaultExpandedKeys={graph.nodes
-        .filter(isGroupNode)
-        .map((group) => entryKey(nodeEntry(group)))}
-      className="-m-1"
+    <Virtualizer
+      layout={ListLayout}
+      layoutOptions={{ rowHeight: 28, headingHeight: 32, gap: 4 }}
     >
-      {elements.map(renderItem)}
-      {routes.length > 0 ? (
-        <TreeSection id="routes" className="pt-2">
-          <TreeHeader className="px-1 py-1 text-xs font-medium text-muted-foreground">
-            {t("routes")}
-          </TreeHeader>
-          {routes.map((route) => renderItem({ ...route, children: [] }))}
-        </TreeSection>
-      ) : null}
-    </Tree>
+      <Tree
+        aria-labelledby={labelledBy}
+        selectionMode="none"
+        autoFocus={focusFirstOnMount && "first"}
+        defaultExpandedKeys={graph.nodes
+          .filter(isGroupNode)
+          .map((group) => entryKey(nodeEntry(group)))}
+        className="h-full"
+      >
+        {elements.map(renderItem)}
+        {routes.length > 0 ? (
+          <TreeSection id="routes" className="pt-2">
+            <TreeHeader className="px-1 py-1 text-xs font-medium text-muted-foreground">
+              {t("routes")}
+            </TreeHeader>
+            {routes.map((route) => renderItem({ ...route, children: [] }))}
+          </TreeSection>
+        ) : null}
+      </Tree>
+    </Virtualizer>
   );
 }
