@@ -160,7 +160,7 @@
       }
     },
     "easyConnect": {
-      "fromNode": "ルートを追加: 終点にするポイントをクリック",
+      "fromNode": "ルートを追加: 接続先のポイントをクリック",
       "fromCanvas": "ルートを追加: ポイントから別のポイントへドラッグ",
       "cancelHint": "Esc でキャンセル",
       "end": "ルート追加を終了"
@@ -219,8 +219,8 @@
       "reverse": "向きを反転（始点↔終点）",
       "dissolveGroup": "グループを解除",
       "groupHint": "階や建物などの管理用のくくりです。ポイントをドラッグして出し入れできます。解除しても中のポイントは残ります。",
-      "edgeTarget": "終点",
-      "edgeTargetPlaceholder": "終点のポイントを選択",
+      "edgeTarget": "接続先",
+      "edgeTargetPlaceholder": "接続先のポイントを選択",
       "addEdge": "このポイントからルートを追加",
       "related": {
         "parent": "所属グループ",

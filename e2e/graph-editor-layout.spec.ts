@@ -12,7 +12,7 @@ const panel = (page: Page) => page.getByRole("complementary");
 const easyConnectPanel = (page: Page) =>
   page.getByText("ルートを追加: ポイントから別のポイントへドラッグ");
 const fromNodePanel = (page: Page) =>
-  page.getByText("ルートを追加: 終点にするポイントをクリック");
+  page.getByText("ルートを追加: 接続先のポイントをクリック");
 
 const floor1Points = [
   "ph_stairs1f",
@@ -270,11 +270,13 @@ test.describe("ドラッグでの接続", () => {
 });
 
 test.describe("プロパティパネルからの接続", () => {
-  test("選択したポイントの終点を選んで追加するとルートが追加され選択される", async ({
+  test("選択したポイントの接続先を選んで追加するとルートが追加され選択される", async ({
     page,
   }) => {
     await node(page, "ph_booth").click({ position: { x: 8, y: 8 } });
-    await panel(page).getByRole("button", { name: /終点/ }).click();
+    await panel(page)
+      .getByRole("button", { name: /接続先/ })
+      .click();
     await page.getByRole("option", { name: /壁展示/ }).click();
     await panel(page)
       .getByRole("button", { name: "このポイントからルートを追加" })
@@ -285,9 +287,11 @@ test.describe("プロパティパネルからの接続", () => {
     await expect(panel(page)).toContainText("ブースA⇌壁展示");
   });
 
-  test("外部ポイントの終点の候補に外部ポイントは出ない", async ({ page }) => {
+  test("外部ポイントの接続先の候補に外部ポイントは出ない", async ({ page }) => {
     await node(page, "external").click();
-    await panel(page).getByRole("button", { name: /終点/ }).click();
+    await panel(page)
+      .getByRole("button", { name: /接続先/ })
+      .click();
 
     await expect(page.getByRole("option", { name: /ブースA/ })).toBeVisible();
     await expect(
@@ -325,7 +329,7 @@ test.describe("ルート追加モード", () => {
     await expect(easyConnectPanel(page)).toBeHidden();
   });
 
-  test("このポイントからルートを追加では終点を押すだけでルートができモードが終わる", async ({
+  test("このポイントからルートを追加では接続先を押すだけでルートができモードが終わる", async ({
     page,
   }) => {
     await node(page, "ph_booth").click({ button: "right" });

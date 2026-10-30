@@ -160,7 +160,7 @@
       }
     },
     "easyConnect": {
-      "fromNode": "Añadir ruta: haz clic en el punto final",
+      "fromNode": "Añadir ruta: haz clic en el punto al que conectar",
       "fromCanvas": "Añadir ruta: arrastra de un punto a otro",
       "cancelHint": "Pulsa Esc para cancelar",
       "end": "Terminar de añadir rutas"
@@ -219,8 +219,8 @@
       "reverse": "Invertir el sentido (inicio ↔ fin)",
       "dissolveGroup": "Desagrupar",
       "groupHint": "Una agrupación lógica para la gestión, como una planta o un edificio. Arrastra los puntos para meterlos o sacarlos. Al desagrupar, los puntos se conservan.",
-      "edgeTarget": "Punto final",
-      "edgeTargetPlaceholder": "Selecciona el punto final",
+      "edgeTarget": "Conectar con",
+      "edgeTargetPlaceholder": "Selecciona el punto al que conectar",
       "addEdge": "Añadir una ruta desde este punto",
       "related": {
         "parent": "Grupo superior",

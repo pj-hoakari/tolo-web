@@ -160,7 +160,7 @@
       }
     },
     "easyConnect": {
-      "fromNode": "Add route: click the point to use as the end",
+      "fromNode": "Add route: click the point to connect to",
       "fromCanvas": "Add route: drag from one point to another",
       "cancelHint": "Press Esc to cancel",
       "end": "Finish adding routes"
@@ -219,8 +219,8 @@
       "reverse": "Reverse direction (start ↔ end)",
       "dissolveGroup": "Ungroup",
       "groupHint": "A logical grouping for management, such as a floor or a building. Drag points in or out to change membership. Ungrouping keeps the points inside.",
-      "edgeTarget": "End point",
-      "edgeTargetPlaceholder": "Select an end point",
+      "edgeTarget": "Connect to",
+      "edgeTargetPlaceholder": "Select a point to connect to",
       "addEdge": "Add a route from this point",
       "related": {
         "parent": "Parent group",

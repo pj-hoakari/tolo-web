@@ -160,7 +160,7 @@
       }
     },
     "easyConnect": {
-      "fromNode": "添加路径：点击作为终点的节点",
+      "fromNode": "添加路径：点击要连接的节点",
       "fromCanvas": "添加路径：从一个节点拖动到另一个节点",
       "cancelHint": "按 Esc 取消",
       "end": "结束添加路径"
@@ -219,8 +219,8 @@
       "reverse": "反转方向（起点 ↔ 终点）",
       "dissolveGroup": "取消分组",
       "groupHint": "用于管理的逻辑分组，例如楼层或建筑。拖动点即可移入或移出。取消分组后其中的点会保留。",
-      "edgeTarget": "终点",
-      "edgeTargetPlaceholder": "选择作为终点的节点",
+      "edgeTarget": "连接目标",
+      "edgeTargetPlaceholder": "选择要连接的节点",
       "addEdge": "从此节点添加路径",
       "related": {
         "parent": "所属分组",
