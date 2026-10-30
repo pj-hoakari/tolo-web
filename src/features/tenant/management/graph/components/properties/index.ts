@@ -26,10 +26,6 @@ export {
   buildNodeTypeOptions,
   type NodeTypeOption,
 } from "./nodeTypeOptions";
-export {
-  PropertiesPanel,
-  type PropertiesPanelProps,
-} from "./PropertiesPanel";
 export { PropertyNotice, type PropertyNoticeProps } from "./PropertyNotice";
 export {
   SelectionHeader,

@@ -184,6 +184,15 @@
       "groupLabel": "Acciones del grupo «{label}»",
       "dissolveGroup": "Desagrupar (mantener contenido)"
     },
+    "sidePanel": {
+      "outline": "Elementos",
+      "backToOutline": "Volver a la lista",
+      "sections": {
+        "groups": "Grupos",
+        "points": "Puntos",
+        "routes": "Rutas"
+      }
+    },
     "properties": {
       "bulk": {
         "points": "Puntos ({count})",
@@ -208,7 +217,6 @@
       "selectedEdges": "Flechas: {count}",
       "selectedGroups": "Grupos: {count}",
       "title": "Propiedades",
-      "empty": "Selecciona un punto o una ruta.",
       "deleteNode": "Eliminar este punto",
       "deleteEdge": "Eliminar esta ruta",
       "labelWithLanguage": "Etiqueta ({language})",

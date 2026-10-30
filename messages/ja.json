@@ -184,6 +184,15 @@
       "groupLabel": "グループ「{label}」の操作",
       "dissolveGroup": "グループを解除（中身は残す）"
     },
+    "sidePanel": {
+      "outline": "要素",
+      "backToOutline": "一覧に戻る",
+      "sections": {
+        "groups": "グループ",
+        "points": "ポイント",
+        "routes": "ルート"
+      }
+    },
     "properties": {
       "bulk": {
         "points": "ポイント（{count}件）",
@@ -208,7 +217,6 @@
       "selectedEdges": "矢印: {count}件",
       "selectedGroups": "グループ: {count}件",
       "title": "プロパティ",
-      "empty": "ポイントまたはルートを選択してください。",
       "deleteNode": "このポイントを削除",
       "deleteEdge": "このルートを削除",
       "labelWithLanguage": "ラベル（{language}）",

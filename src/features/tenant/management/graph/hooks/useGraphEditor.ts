@@ -8,7 +8,7 @@ import type {
   GraphCanvasProps,
 } from "../components/GraphCanvas";
 import type { LabelLocaleBindings } from "../components/LabelLocaleMenu";
-import type { PropertiesPanelProps } from "../components/properties";
+import type { SidePanelProps } from "../components/sidePanel/SidePanel";
 import {
   DEFAULT_NODE_TYPE,
   type NodeTypeFlag,
@@ -51,8 +51,8 @@ export type GraphToolbarBindings = LabelLocaleBindings & {
   onAutoAlign: () => void;
 };
 
-/** プロパティパネルに渡す props のうち、編集状態から決まるもの */
-export type PropertiesPanelBindings = Omit<PropertiesPanelProps, "graph">;
+/** サイドパネルに渡す props のうち、編集状態から決まるもの */
+export type SidePanelBindings = Omit<SidePanelProps, "graph">;
 
 export type GraphEditorApi = {
   /** 描画用のグラフ（ハンドル・通知を注入済み） */
@@ -62,7 +62,7 @@ export type GraphEditorApi = {
   /** 構造編集を有効にしたキャンバスの props */
   canvas: GraphCanvasProps & { editing: GraphCanvasEditing };
   toolbar: GraphToolbarBindings;
-  properties: PropertiesPanelBindings;
+  properties: SidePanelBindings;
   /** 送信・永続化用のグラフデータを取り出す */
   getGraphData: () => GraphData;
 };
@@ -474,6 +474,7 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
       groupSelectionError,
       onSelectNode: selectNode,
       onSelectEdge: selectEdge,
+      onClearSelection: clearSelection,
     },
     getGraphData,
   };

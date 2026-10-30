@@ -184,6 +184,15 @@
       "groupLabel": "分组“{label}”的操作",
       "dissolveGroup": "取消分组（保留内容）"
     },
+    "sidePanel": {
+      "outline": "元素",
+      "backToOutline": "返回列表",
+      "sections": {
+        "groups": "分组",
+        "points": "节点",
+        "routes": "路径"
+      }
+    },
     "properties": {
       "bulk": {
         "points": "点（{count} 个）",
@@ -208,7 +217,6 @@
       "selectedEdges": "箭头：{count} 个",
       "selectedGroups": "分组：{count} 个",
       "title": "属性",
-      "empty": "请选择节点或路径。",
       "deleteNode": "删除此节点",
       "deleteEdge": "删除此路径",
       "labelWithLanguage": "标签（{language}）",
