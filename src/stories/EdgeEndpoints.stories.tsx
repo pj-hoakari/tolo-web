@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
+import { fn } from "storybook/test";
+
 import { EdgeEndpoints } from "@/features/tenant/management/graph/components/properties";
 import { PanelFrame } from "./_helpers/propertiesFixtures";
 
@@ -24,8 +26,8 @@ const meta = {
     },
   },
   args: {
-    sourceLabel: "エントランスホール",
-    targetLabel: "ブースA",
+    source: { kind: "node", id: "ph_junction", label: "エントランスホール" },
+    target: { kind: "node", id: "ph_booth", label: "ブースA" },
     direction: "both",
   },
 } satisfies Meta<typeof EdgeEndpoints>;
@@ -44,7 +46,15 @@ export const Oneway: Story = {
 /** ラベルが長い場合 */
 export const LongLabels: Story = {
   args: {
-    sourceLabel: "第2展示ホール北側エントランス",
-    targetLabel: "特設ステージ前ブース",
+    source: {
+      kind: "node",
+      id: "north",
+      label: "第2展示ホール北側エントランス",
+    },
+    target: { kind: "node", id: "stage", label: "特設ステージ前ブース" },
   },
+};
+
+export const Linked: Story = {
+  args: { onSelect: fn() },
 };

@@ -21,7 +21,11 @@ export function SelectionHeader({ kind, id }: SelectionHeaderProps) {
   const t = useTranslations("Graph.selectionKind");
 
   return (
-    <div className="flex items-center justify-between">
+    <div
+      data-selection-header
+      tabIndex={-1}
+      className="flex items-center justify-between"
+    >
       <span
         className={cn(
           "rounded-full px-2 py-0.5 text-[10px] font-semibold",

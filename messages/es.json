@@ -221,7 +221,12 @@
       "groupHint": "Una agrupación lógica para la gestión, como una planta o un edificio. Arrastra los puntos para meterlos o sacarlos. Al desagrupar, los puntos se conservan.",
       "edgeTarget": "Punto final",
       "edgeTargetPlaceholder": "Selecciona el punto final",
-      "addEdge": "Añadir una ruta desde este punto"
+      "addEdge": "Añadir una ruta desde este punto",
+      "related": {
+        "parent": "Grupo superior",
+        "routes": "Rutas conectadas",
+        "children": "Contenido"
+      }
     },
     "node": {
       "editLabel": "Editar la etiqueta de «{label}»",

@@ -2,11 +2,7 @@ export {
   EdgeDirectionField,
   type EdgeDirectionFieldProps,
 } from "./EdgeDirectionField";
-export {
-  type EdgeEndpointLabels,
-  EdgeEndpoints,
-  type EdgeEndpointsProps,
-} from "./EdgeEndpoints";
+export { EdgeEndpoints, type EdgeEndpointsProps } from "./EdgeEndpoints";
 export { EdgeProperties, type EdgePropertiesProps } from "./EdgeProperties";
 export {
   EdgeReverseButton,

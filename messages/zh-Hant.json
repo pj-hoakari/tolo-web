@@ -221,7 +221,12 @@
       "groupHint": "用於管理的邏輯群組，例如樓層或建築。拖曳點即可移入或移出。取消群組後其中的點會保留。",
       "edgeTarget": "終點",
       "edgeTargetPlaceholder": "選擇作為終點的節點",
-      "addEdge": "從此節點新增路徑"
+      "addEdge": "從此節點新增路徑",
+      "related": {
+        "parent": "所屬群組",
+        "routes": "相連的路徑",
+        "children": "包含的元素"
+      }
     },
     "node": {
       "editLabel": "編輯「{label}」的標籤",

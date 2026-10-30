@@ -221,7 +221,12 @@
       "groupHint": "층이나 건물 같은 관리용 묶음입니다. 포인트를 드래그하여 넣거나 뺄 수 있습니다. 해제해도 안의 포인트는 남습니다.",
       "edgeTarget": "끝점",
       "edgeTargetPlaceholder": "끝점으로 사용할 지점을 선택하세요",
-      "addEdge": "이 지점에서 경로 추가"
+      "addEdge": "이 지점에서 경로 추가",
+      "related": {
+        "parent": "상위 그룹",
+        "routes": "연결된 경로",
+        "children": "포함된 요소"
+      }
     },
     "node": {
       "editLabel": "「{label}」의 라벨 편집",

@@ -221,7 +221,12 @@
       "groupHint": "用于管理的逻辑分组，例如楼层或建筑。拖动点即可移入或移出。取消分组后其中的点会保留。",
       "edgeTarget": "终点",
       "edgeTargetPlaceholder": "选择作为终点的节点",
-      "addEdge": "从此节点添加路径"
+      "addEdge": "从此节点添加路径",
+      "related": {
+        "parent": "所属分组",
+        "routes": "相连的路径",
+        "children": "包含的元素"
+      }
     },
     "node": {
       "editLabel": "编辑“{label}”的标签",

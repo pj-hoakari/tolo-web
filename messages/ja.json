@@ -221,7 +221,12 @@
       "groupHint": "階や建物などの管理用のくくりです。ポイントをドラッグして出し入れできます。解除しても中のポイントは残ります。",
       "edgeTarget": "終点",
       "edgeTargetPlaceholder": "終点のポイントを選択",
-      "addEdge": "このポイントからルートを追加"
+      "addEdge": "このポイントからルートを追加",
+      "related": {
+        "parent": "所属グループ",
+        "routes": "接続しているルート",
+        "children": "含まれる要素"
+      }
     },
     "node": {
       "editLabel": "「{label}」のラベルを編集",

@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 import type { GraphData, GraphEdgeType, GraphNodeType } from "../../type";
+import { relatedElementsOf } from "../../utils/relatedElements";
 import { NodeTypeIcon } from "../NodeTypeIcon";
 import { EdgeEndpoints } from "../properties/EdgeEndpoints";
 import { SelectionHeader } from "../properties/SelectionHeader";
@@ -32,7 +33,6 @@ export function ObservationLinkPanel({
   onLinkNode,
   onLinkEdge,
 }: ObservationLinkPanelProps) {
-  const { nodes } = graph;
   const t = useTranslations("Graph.observationLink");
 
   return (
@@ -55,14 +55,7 @@ export function ObservationLinkPanel({
           <div className="space-y-3 rounded-md border border-border bg-card p-3">
             <SelectionHeader kind="edge" id={selectedEdge.id} />
             <EdgeEndpoints
-              sourceLabel={
-                nodes.find((n) => n.id === selectedEdge.source)?.data.label ??
-                selectedEdge.source
-              }
-              targetLabel={
-                nodes.find((n) => n.id === selectedEdge.target)?.data.label ??
-                selectedEdge.target
-              }
+              {...relatedElementsOf(graph, selectedEdge)}
               direction={selectedEdge.data?.direction ?? "both"}
             />
             <ObservationPointPicker
