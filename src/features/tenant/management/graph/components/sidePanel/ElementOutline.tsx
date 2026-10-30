@@ -1,14 +1,17 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { ListLayout, Virtualizer } from "react-aria-components";
 import {
-  ListBox,
-  ListBoxHeader,
-  ListBoxItem,
-  ListBoxSection,
-} from "@/components/ui/list-box";
-import type { GraphData } from "../../type";
-import { outlineSections } from "../../utils/elementOutline";
-import type { GraphElementEntry } from "../../utils/relatedElements";
+  Tree,
+  TreeHeader,
+  TreeItem,
+  TreeItemContent,
+  TreeItemExpandButton,
+  TreeSection,
+} from "@/components/ui/tree";
+import { type GraphData, isGroupNode } from "../../type";
+import { elementOutline, type OutlineItem } from "../../utils/elementOutline";
+import { type GraphElementEntry, nodeEntry } from "../../utils/relatedElements";
 
 const entryKey = (entry: GraphElementEntry) => `${entry.kind}:${entry.id}`;
 
@@ -24,37 +27,53 @@ export function ElementOutline({
   "aria-labelledby": string;
 }) {
   const [focusFirstOnMount] = useState(autoFocus);
-  const t = useTranslations("Graph.sidePanel.sections");
-  const sections = outlineSections(graph);
-  const entries = new Map(
-    sections.flatMap((section) =>
-      section.entries.map((entry) => [entryKey(entry), entry] as const),
-    ),
+  const t = useTranslations("Graph.sidePanel");
+  const { elements, routes } = elementOutline(graph);
+
+  const renderItem = (item: OutlineItem) => (
+    <TreeItem
+      key={entryKey(item)}
+      id={entryKey(item)}
+      textValue={item.label}
+      onAction={() => onSelect(item)}
+      className="cursor-default text-sm hover:bg-accent hover:text-accent-foreground"
+    >
+      <TreeItemContent>
+        {({ hasChildItems }) => (
+          <>
+            {hasChildItems ? <TreeItemExpandButton /> : null}
+            {item.label}
+          </>
+        )}
+      </TreeItemContent>
+      {item.children.map(renderItem)}
+    </TreeItem>
   );
 
   return (
-    <ListBox
-      aria-labelledby={labelledBy}
-      selectionMode="none"
-      autoFocus={focusFirstOnMount && "first"}
-      onAction={(key) => {
-        const entry = entries.get(String(key));
-        if (entry) onSelect(entry);
-      }}
-      className="-mx-2 rounded-none border-0 bg-transparent p-0 shadow-none"
+    <Virtualizer
+      layout={ListLayout}
+      layoutOptions={{ rowHeight: 28, headingHeight: 32, gap: 4 }}
     >
-      {sections.map((section) => (
-        <ListBoxSection key={section.id} id={section.id} className="pb-2">
-          <ListBoxHeader className="px-2 py-1 text-xs font-medium text-muted-foreground">
-            {t(section.id)}
-          </ListBoxHeader>
-          {section.entries.map((entry) => (
-            <ListBoxItem key={entryKey(entry)} id={entryKey(entry)}>
-              {entry.label}
-            </ListBoxItem>
-          ))}
-        </ListBoxSection>
-      ))}
-    </ListBox>
+      <Tree
+        aria-labelledby={labelledBy}
+        selectionMode="none"
+        autoFocus={focusFirstOnMount && "first"}
+        defaultExpandedKeys={graph.nodes
+          .filter(isGroupNode)
+          .map((group) => entryKey(nodeEntry(group)))}
+        className="h-full"
+      >
+        {elements.map(renderItem)}
+        {routes.length > 0 ? (
+          <TreeSection id="routes" className="pt-2">
+            <TreeHeader className="px-1 py-1 text-xs font-medium text-muted-foreground">
+              {t("routes")}
+            </TreeHeader>
+            {routes.map((route) => renderItem({ ...route, children: [] }))}
+          </TreeSection>
+        ) : null}
+      </Tree>
+    </Virtualizer>
   );
 }

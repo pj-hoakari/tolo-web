@@ -187,11 +187,7 @@
     "sidePanel": {
       "outline": "元素",
       "backToOutline": "返回列表",
-      "sections": {
-        "groups": "群組",
-        "points": "節點",
-        "routes": "路徑"
-      }
+      "routes": "路徑"
     },
     "properties": {
       "bulk": {

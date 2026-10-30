@@ -92,7 +92,7 @@ test("保存が構造検証で弾かれると違反の種類ごとの理由を�
     },
   });
   await expect(
-    panel(page).getByRole("listbox", { name: "要素" }),
+    panel(page).getByRole("treegrid", { name: "要素" }),
   ).toBeVisible();
 
   await saveButton(page).click();

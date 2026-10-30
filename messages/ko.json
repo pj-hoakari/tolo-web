@@ -187,11 +187,7 @@
     "sidePanel": {
       "outline": "요소",
       "backToOutline": "목록으로 돌아가기",
-      "sections": {
-        "groups": "그룹",
-        "points": "지점",
-        "routes": "경로"
-      }
+      "routes": "경로"
     },
     "properties": {
       "bulk": {
