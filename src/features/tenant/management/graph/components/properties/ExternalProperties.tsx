@@ -1,13 +1,18 @@
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 import type { GraphNodeType } from "../../type";
 import { PropertyNotice } from "./PropertyNotice";
 import { SelectionHeader } from "./SelectionHeader";
 
 export type ExternalPropertiesProps = {
   node: GraphNodeType;
+  children?: ReactNode;
 };
 
-export function ExternalProperties({ node }: ExternalPropertiesProps) {
+export function ExternalProperties({
+  node,
+  children,
+}: ExternalPropertiesProps) {
   const tDescription = useTranslations("Graph.nodeTypeDescription");
   const tNotice = useTranslations("Graph.notices");
 
@@ -25,6 +30,7 @@ export function ExternalProperties({ node }: ExternalPropertiesProps) {
           message={tNotice(notice.messageKey)}
         />
       ))}
+      {children}
     </div>
   );
 }

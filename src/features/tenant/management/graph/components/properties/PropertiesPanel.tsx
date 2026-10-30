@@ -1,5 +1,5 @@
 import { useTranslations } from "next-intl";
-import { useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/i18n/locale";
 import type {
@@ -11,6 +11,10 @@ import type {
 } from "../../type";
 import { isExternalNode, isGroupNode } from "../../type";
 import { isLastExternal } from "../../utils/graphMutations";
+import {
+  type GraphElementEntry,
+  relatedElementsOf,
+} from "../../utils/relatedElements";
 import type { getGroupSelectionError } from "../../utils/selectionActions";
 import { BulkProperties, type BulkPropertiesBindings } from "./BulkProperties";
 import { EdgeCreationField, type EdgeTarget } from "./EdgeCreationField";
@@ -20,6 +24,7 @@ import { resolveEdgeDirectionState } from "./edgeDirectionState";
 import { GroupProperties } from "./GroupProperties";
 import { NodeProperties } from "./NodeProperties";
 import { buildNodeTypeOptions } from "./nodeTypeOptions";
+import { RelatedElementLinks } from "./RelatedElementLinks";
 
 export type PropertiesPanelProps = BulkPropertiesBindings & {
   selectedNode: GraphCanvasNode | undefined;
@@ -41,6 +46,8 @@ export type PropertiesPanelProps = BulkPropertiesBindings & {
   canDeleteSelected: boolean;
   onGroupSelected: () => void;
   groupSelectionError: ReturnType<typeof getGroupSelectionError>;
+  onSelectNode: (id: string) => void;
+  onSelectEdge: (id: string) => void;
 };
 
 /** グラフ構造（ポイント・ルート）を編集するプロパティパネル */
@@ -61,6 +68,8 @@ export function PropertiesPanel({
   canDeleteSelected,
   onGroupSelected,
   groupSelectionError,
+  onSelectNode,
+  onSelectEdge,
   onSetSelectedNodeFlag,
   onSetSelectedEdgeDirection,
   onReverseSelectedEdges,
@@ -78,13 +87,32 @@ export function PropertiesPanel({
       : Boolean(selectedEdge));
   const t = useTranslations("Graph.properties");
   const tNotice = useTranslations("Graph.notices");
+  const contentRef = useRef<HTMLDivElement>(null);
+  const pendingFocusId = useRef<string | null>(null);
+  const singleSelectionId = multiple
+    ? undefined
+    : (selectedNode ?? selectedEdge)?.id;
+  useEffect(() => {
+    if (pendingFocusId.current === null) return;
+    if (pendingFocusId.current === singleSelectionId) {
+      contentRef.current
+        ?.querySelector<HTMLElement>("[data-selection-header]")
+        ?.focus();
+    }
+    pendingFocusId.current = null;
+  }, [singleSelectionId]);
+  const selectRelated = (entry: GraphElementEntry) => {
+    pendingFocusId.current = entry.id;
+    if (entry.kind === "edge") onSelectEdge(entry.id);
+    else onSelectNode(entry.id);
+  };
 
   return (
     <aside className="flex w-72 shrink-0 flex-col border-l border-border bg-card">
       <div className="border-b border-border px-4 py-2">
         <p className="text-sm font-semibold text-foreground">{t("title")}</p>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+      <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto p-4">
         {multiple && selectionCounts ? (
           <div className="space-y-3">
             <div className="space-y-2 text-sm text-muted-foreground">
@@ -105,11 +133,21 @@ export function PropertiesPanel({
             group={selectedNode}
             labelLocale={labelLocale}
             onChangeLabel={(label) => onSetNodeLabel(selectedNode.id, label)}
-          />
+          >
+            <RelatedElementLinks
+              related={relatedElementsOf(graph, selectedNode)}
+              onSelect={selectRelated}
+            />
+          </GroupProperties>
         ) : selectedNode ? (
           <div className="space-y-3">
             {isExternalNode(selectedNode) ? (
-              <ExternalProperties node={selectedNode} />
+              <ExternalProperties node={selectedNode}>
+                <RelatedElementLinks
+                  related={relatedElementsOf(graph, selectedNode)}
+                  onSelect={selectRelated}
+                />
+              </ExternalProperties>
             ) : (
               <NodeProperties
                 node={selectedNode}
@@ -125,7 +163,12 @@ export function PropertiesPanel({
                 onChangeLabel={(label) =>
                   onSetNodeLabel(selectedNode.id, label)
                 }
-              />
+              >
+                <RelatedElementLinks
+                  related={relatedElementsOf(graph, selectedNode)}
+                  onSelect={selectRelated}
+                />
+              </NodeProperties>
             )}
             <EdgeCreationField
               key={selectedNode.id}
@@ -143,12 +186,8 @@ export function PropertiesPanel({
               tNotice,
             )}
             endpoints={{
-              sourceLabel:
-                nodes.find((n) => n.id === selectedEdge.source)?.data.label ??
-                selectedEdge.source,
-              targetLabel:
-                nodes.find((n) => n.id === selectedEdge.target)?.data.label ??
-                selectedEdge.target,
+              ...relatedElementsOf(graph, selectedEdge),
+              onSelect: selectRelated,
             }}
             onChange={(patch) => onUpdateEdge(selectedEdge.id, patch)}
             onReverse={() => onReverseEdge(selectedEdge.id)}

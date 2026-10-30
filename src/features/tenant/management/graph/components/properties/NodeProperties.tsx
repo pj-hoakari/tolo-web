@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 import { Label } from "@/components/ui/field";
 import { Input, TextField } from "@/components/ui/textfield";
 import { type Locale, localeLabels } from "@/i18n/locale";
@@ -17,6 +18,7 @@ export type NodePropertiesProps = {
   onChange: (patch: Partial<GraphNodeData>) => void;
   /** 編集言語のラベルを更新する（空文字はその言語のラベル削除） */
   onChangeLabel: (label: string) => void;
+  children?: ReactNode;
 };
 
 /**
@@ -30,6 +32,7 @@ export function NodeProperties({
   labelLocale,
   onChange,
   onChangeLabel,
+  children,
 }: NodePropertiesProps) {
   const t = useTranslations("Graph.properties");
 
@@ -59,6 +62,8 @@ export function NodeProperties({
         notices={node.data.notices}
         onChange={(nodeType) => onChange({ nodeType })}
       />
+
+      {children}
     </div>
   );
 }

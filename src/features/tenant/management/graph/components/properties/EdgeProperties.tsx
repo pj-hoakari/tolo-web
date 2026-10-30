@@ -1,6 +1,6 @@
 import type { GraphEdgeData, GraphEdgeType } from "../../type";
 import { EdgeDirectionField } from "./EdgeDirectionField";
-import { type EdgeEndpointLabels, EdgeEndpoints } from "./EdgeEndpoints";
+import { EdgeEndpoints, type EdgeEndpointsProps } from "./EdgeEndpoints";
 import { EdgeReverseButton } from "./EdgeReverseButton";
 import type { EdgeDirectionState } from "./edgeDirectionState";
 import { SelectionHeader } from "./SelectionHeader";
@@ -9,7 +9,7 @@ export type EdgePropertiesProps = {
   edge: GraphEdgeType;
   /** 方向・反転操作の可否（`resolveEdgeDirectionState` の結果） */
   directionState: EdgeDirectionState;
-  endpoints: EdgeEndpointLabels;
+  endpoints: Omit<EdgeEndpointsProps, "direction">;
   onChange: (patch: Partial<GraphEdgeData>) => void;
   onReverse: () => void;
 };

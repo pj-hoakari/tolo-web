@@ -705,3 +705,84 @@ test("英語でも混在値と編集結果を表示する", async ({ page, conte
     "Changed 1 element. Could not change 0 elements.",
   );
 });
+
+const panelLink = (page: Page, name: string) =>
+  panel(page).getByRole("button", { name, exact: true });
+const labelField = (page: Page) =>
+  panel(page).getByRole("textbox", { name: "ラベル（日本語）" });
+
+test("ルートのパネルで始点を押すと、そのポイントがキャンバスとパネルで選択される", async ({
+  page,
+}) => {
+  await selectEdge(page);
+  await expect(panel(page).locator(":focus")).toHaveCount(0);
+  await panelLink(page, "エントランスホール").click();
+  await expect(selectedEdges(page)).toHaveCount(0);
+  await expect(selectedNodes(page)).toHaveCount(1);
+  await expect(node(page, "ph_junction")).toHaveClass(/selected/);
+  await expect(labelField(page)).toHaveValue("エントランスホール");
+});
+
+test("ポイントのパネルに接続しているルートと所属グループを表示し、ルートを押すとそのルートを選択する", async ({
+  page,
+}) => {
+  await selectNode(page, "ph_booth");
+  const routes = panel(page).getByRole("list", { name: "接続しているルート" });
+  await expect(routes.getByRole("button")).toHaveText([
+    "エントランスホール ⇌ ブースA",
+    "ブースA → 出口",
+  ]);
+  await expect(
+    panel(page).getByRole("list", { name: "所属グループ" }).getByRole("button"),
+  ).toHaveText(["1F"]);
+  await routes.getByRole("button", { name: "ブースA → 出口" }).click();
+  await expect(selectedNodes(page)).toHaveCount(0);
+  await expect(selectedEdges(page)).toHaveCount(1);
+  await expect(edge(page, "ph_e4")).toHaveClass(/selected/);
+  await expect(panelLink(page, "ブースA")).toBeVisible();
+  await expect(panelLink(page, "出口")).toBeVisible();
+});
+
+test("グループのパネルで含まれる要素を押すとその要素を選択し、所属グループのリンクで戻れる", async ({
+  page,
+}) => {
+  await selectGroup(page, "ph_floor1");
+  await expect(
+    panel(page).getByRole("list", { name: "含まれる要素" }).getByRole("button"),
+  ).toHaveText([
+    "1F 階段",
+    "1F エレベーター",
+    "入口",
+    "エントランスホール",
+    "ブースA",
+    "壁展示",
+    "出口",
+  ]);
+  await expect(
+    panel(page).getByRole("list", { name: "所属グループ" }),
+  ).toHaveCount(0);
+  await panelLink(page, "ブースA").click();
+  await expect(selectedNodes(page)).toHaveCount(1);
+  await expect(node(page, "ph_booth")).toHaveClass(/selected/);
+  await expect(labelField(page)).toHaveValue("ブースA");
+  await panelLink(page, "1F").click();
+  await expect(selectedNodes(page)).toHaveCount(1);
+  await expect(node(page, "ph_floor1")).toHaveClass(/selected/);
+  await expect(labelField(page)).toHaveValue("1F");
+});
+
+test("キーボードでリンクを選ぶと、フォーカスがパネル内の新しい要素の見出しへ移る", async ({
+  page,
+}) => {
+  await selectEdge(page);
+  await panelLink(page, "エントランスホール").focus();
+  await page.keyboard.press("Tab");
+  await expect(panelLink(page, "ブースA")).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(node(page, "ph_booth")).toHaveClass(/selected/);
+  const focused = panel(page).locator(":focus");
+  await expect(focused).toHaveCount(1);
+  await expect(focused).toContainText("ph_booth");
+  await page.keyboard.press("Tab");
+  await expect(labelField(page)).toBeFocused();
+});

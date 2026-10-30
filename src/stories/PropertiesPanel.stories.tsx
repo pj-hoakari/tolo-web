@@ -46,6 +46,8 @@ const meta = {
     canDeleteSelected: false,
     onGroupSelected: fn(),
     groupSelectionError: "tooFewPoints",
+    onSelectNode: fn(),
+    onSelectEdge: fn(),
   },
 } satisfies Meta<typeof PropertiesPanel>;
 
@@ -65,6 +67,12 @@ export const EdgeSelected: Story = {
   args: {
     // junction → booth（両通行）を選択した状態
     selectedEdge: graphEdge("ph_e2"),
+  },
+};
+
+export const GroupSelected: Story = {
+  args: {
+    selectedNode: GRAPH_NODES.find((node) => node.id === "ph_floor1"),
   },
 };
 

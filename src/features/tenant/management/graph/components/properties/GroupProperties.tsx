@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 import { Label } from "@/components/ui/field";
 import { Input, TextField } from "@/components/ui/textfield";
 import { type Locale, localeLabels } from "@/i18n/locale";
@@ -12,6 +13,7 @@ export type GroupPropertiesProps = {
   labelLocale: Locale;
   /** 編集言語のラベルを更新する（空文字はその言語のラベル削除） */
   onChangeLabel: (label: string) => void;
+  children?: ReactNode;
 };
 
 /**
@@ -22,6 +24,7 @@ export function GroupProperties({
   group,
   labelLocale,
   onChangeLabel,
+  children,
 }: GroupPropertiesProps) {
   const t = useTranslations("Graph.properties");
 
@@ -45,6 +48,8 @@ export function GroupProperties({
           placeholder={fallback.isFallback ? fallback.text : undefined}
         />
       </TextField>
+
+      {children}
 
       <p className="text-xs text-muted-foreground">{t("groupHint")}</p>
     </div>

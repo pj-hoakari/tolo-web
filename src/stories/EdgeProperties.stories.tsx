@@ -5,6 +5,7 @@ import {
   EdgeProperties,
   resolveEdgeDirectionState,
 } from "@/features/tenant/management/graph/components/properties";
+import { relatedElementsOf } from "@/features/tenant/management/graph/utils/relatedElements";
 import {
   GRAPH_EDGES,
   GRAPH_NODES,
@@ -20,6 +21,16 @@ function directionStateOf(edgeId: string) {
     GRAPH_EDGES,
     passThroughNotice,
   );
+}
+
+function endpointsOf(edgeId: string) {
+  return {
+    ...relatedElementsOf(
+      { nodes: GRAPH_NODES, edges: GRAPH_EDGES },
+      graphEdge(edgeId),
+    ),
+    onSelect: fn(),
+  };
 }
 
 const meta = {
@@ -39,10 +50,7 @@ const meta = {
   args: {
     edge: graphEdge("ph_e2"),
     directionState: directionStateOf("ph_e2"),
-    endpoints: {
-      sourceLabel: "エントランスホール",
-      targetLabel: "ブースA",
-    },
+    endpoints: endpointsOf("ph_e2"),
     onChange: fn(),
     onReverse: fn(),
   },
@@ -59,10 +67,7 @@ export const Oneway: Story = {
   args: {
     edge: graphEdge("ph_e1"),
     directionState: directionStateOf("ph_e1"),
-    endpoints: {
-      sourceLabel: "入口",
-      targetLabel: "エントランスホール",
-    },
+    endpoints: endpointsOf("ph_e1"),
   },
 };
 

@@ -472,6 +472,8 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
       canDeleteSelected: canDeleteSelection,
       onGroupSelected: groupSelected,
       groupSelectionError,
+      onSelectNode: selectNode,
+      onSelectEdge: selectEdge,
     },
     getGraphData,
   };
