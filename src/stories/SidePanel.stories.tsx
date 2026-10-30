@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
-import { PropertiesPanel } from "@/features/tenant/management/graph/components/properties";
+import { SidePanel } from "@/features/tenant/management/graph/components/sidePanel/SidePanel";
 import {
   BOUNDARY_EDGES,
   BOUNDARY_NODES,
@@ -13,8 +13,8 @@ import {
 } from "./_helpers/propertiesFixtures";
 
 const meta = {
-  title: "Tenant/Management/Graph/PropertiesPanel",
-  component: PropertiesPanel,
+  title: "Tenant/Management/Graph/SidePanel",
+  component: SidePanel,
   parameters: {
     layout: "fullscreen",
   },
@@ -49,7 +49,7 @@ const meta = {
     onSelectNode: fn(),
     onSelectEdge: fn(),
   },
-} satisfies Meta<typeof PropertiesPanel>;
+} satisfies Meta<typeof SidePanel>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

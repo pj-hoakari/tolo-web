@@ -15,7 +15,7 @@ import type { GraphData } from "../type";
 import { FIT_VIEW_OPTIONS, GraphCanvas } from "./GraphCanvas";
 import { GraphEditorToolbar } from "./GraphEditorToolbar";
 import { GraphLoadState } from "./GraphLoadState";
-import { PropertiesPanel } from "./properties";
+import { SidePanel } from "./sidePanel/SidePanel";
 
 export type GraphEditorHandle = {
   getGraphData: () => GraphData;
@@ -138,7 +138,7 @@ function GraphEditorInner({
       )}
       <div className="flex min-h-0 flex-1">
         <GraphCanvas {...canvas} />
-        <PropertiesPanel {...properties} graph={graph} />
+        <SidePanel {...properties} graph={graph} />
       </div>
     </div>
   );
