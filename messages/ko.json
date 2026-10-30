@@ -186,6 +186,7 @@
     },
     "sidePanel": {
       "outline": "요소",
+      "backToOutline": "목록으로 돌아가기",
       "sections": {
         "groups": "그룹",
         "points": "지점",

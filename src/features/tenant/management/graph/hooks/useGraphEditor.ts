@@ -474,6 +474,7 @@ export function useGraphEditor(initial: GraphData): GraphEditorApi {
       groupSelectionError,
       onSelectNode: selectNode,
       onSelectEdge: selectEdge,
+      onClearSelection: clearSelection,
     },
     getGraphData,
   };

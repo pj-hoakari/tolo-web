@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 import {
   ListBox,
   ListBoxHeader,
@@ -14,12 +15,15 @@ const entryKey = (entry: GraphElementEntry) => `${entry.kind}:${entry.id}`;
 export function ElementOutline({
   graph,
   onSelect,
+  autoFocus,
   "aria-labelledby": labelledBy,
 }: {
   graph: GraphData;
   onSelect: (entry: GraphElementEntry) => void;
+  autoFocus: boolean;
   "aria-labelledby": string;
 }) {
+  const [focusFirstOnMount] = useState(autoFocus);
   const t = useTranslations("Graph.sidePanel.sections");
   const sections = outlineSections(graph);
   const entries = new Map(
@@ -32,6 +36,7 @@ export function ElementOutline({
     <ListBox
       aria-labelledby={labelledBy}
       selectionMode="none"
+      autoFocus={focusFirstOnMount && "first"}
       onAction={(key) => {
         const entry = entries.get(String(key));
         if (entry) onSelect(entry);

@@ -48,6 +48,7 @@ const meta = {
     groupSelectionError: "tooFewPoints",
     onSelectNode: fn(),
     onSelectEdge: fn(),
+    onClearSelection: fn(),
   },
 } satisfies Meta<typeof SidePanel>;
 

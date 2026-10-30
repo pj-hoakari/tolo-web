@@ -847,6 +847,8 @@ test("一覧からポイント・グループ・ルートを選ぶと、キャ�
   await expect(outline(page)).toHaveCount(0);
 
   await clearSelection(page);
+  await expect(outline(page)).toBeVisible();
+  await expect(panel(page).locator(":focus")).toHaveCount(0);
   await outline(page).getByRole("option", { name: "1F", exact: true }).click();
   await expect(selectedNodes(page)).toHaveCount(1);
   await expect(node(page, "ph_floor1")).toHaveClass(/selected/);
@@ -875,4 +877,52 @@ test("一覧を矢印キーと Enter で選ぶと、フォーカスが選んだ�
   const focused = panel(page).locator(":focus");
   await expect(focused).toHaveCount(1);
   await expect(focused).toContainText("ph_stairs2f");
+});
+
+const backToOutline = (page: Page) =>
+  panel(page).getByRole("button", { name: "一覧に戻る" });
+
+test("「一覧に戻る」を押すと選択が解除され、サイドパネルが一覧に戻る", async ({
+  page,
+}) => {
+  await expect(backToOutline(page)).toHaveCount(0);
+  await selectNode(page, "ph_booth");
+  await backToOutline(page).click();
+  await expect(selectedNodes(page)).toHaveCount(0);
+  await expect(outline(page)).toBeVisible();
+  await expect(backToOutline(page)).toHaveCount(0);
+
+  await selectNode(page, "ph_booth");
+  await clearSelection(page);
+  await expect(outline(page)).toBeVisible();
+  await expect(panel(page).locator(":focus")).toHaveCount(0);
+
+  await selectNode(page, "ph_booth");
+  await selectEdge(page, "Shift");
+  await backToOutline(page).click();
+  await expect(selectedNodes(page)).toHaveCount(0);
+  await expect(selectedEdges(page)).toHaveCount(0);
+  await expect(outline(page)).toBeVisible();
+});
+
+test("キーボードだけで一覧から要素を選び、「一覧に戻る」で一覧へフォーカスが戻る", async ({
+  page,
+}) => {
+  await outline(page)
+    .getByRole("option", { name: "ブースA", exact: true })
+    .focus();
+  await page.keyboard.press("Enter");
+  await expect(node(page, "ph_booth")).toHaveClass(/selected/);
+  await expect(panel(page).locator(":focus")).toContainText("ph_booth");
+
+  await backToOutline(page).focus();
+  await page.keyboard.press("Enter");
+  await expect(selectedNodes(page)).toHaveCount(0);
+  await expect(
+    outline(page).getByRole("option", { name: "2F", exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect(node(page, "ph_floor1")).toHaveClass(/selected/);
+  await expect(panel(page).locator(":focus")).toContainText("ph_floor1");
 });
