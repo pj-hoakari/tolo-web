@@ -187,11 +187,7 @@
     "sidePanel": {
       "outline": "Elementos",
       "backToOutline": "Volver a la lista",
-      "sections": {
-        "groups": "Grupos",
-        "points": "Puntos",
-        "routes": "Rutas"
-      }
+      "routes": "Rutas"
     },
     "properties": {
       "bulk": {

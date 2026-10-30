@@ -12,7 +12,7 @@ const allNodes = (page: Page) => page.locator(".react-flow__node");
 const allEdges = (page: Page) => page.locator(".react-flow__edge");
 const pane = (page: Page) => page.locator(".react-flow__pane");
 const outline = (page: Page) =>
-  panel(page).getByRole("listbox", { name: "要素" });
+  panel(page).getByRole("treegrid", { name: "要素" });
 const labelField = (page: Page) =>
   panel(page).getByRole("textbox", { name: "ラベル（日本語）" });
 const selectFloor1 = async (page: Page) => {

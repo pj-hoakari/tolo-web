@@ -187,11 +187,7 @@
     "sidePanel": {
       "outline": "तत्वहरू",
       "backToOutline": "सूचीमा फर्कनुहोस्",
-      "sections": {
-        "groups": "समूहहरू",
-        "points": "बिन्दुहरू",
-        "routes": "मार्गहरू"
-      }
+      "routes": "मार्गहरू"
     },
     "properties": {
       "bulk": {

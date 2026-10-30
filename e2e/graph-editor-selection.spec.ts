@@ -788,59 +788,89 @@ test("キーボードでリンクを選ぶと、フォーカスがパネル内�
 });
 
 const outline = (page: Page) =>
-  panel(page).getByRole("listbox", { name: "要素" });
-const outlineSection = (page: Page, name: string) =>
-  outline(page).getByRole("group", { name });
+  panel(page).getByRole("treegrid", { name: "要素" });
+const outlineRow = (page: Page, name: string) =>
+  outline(page).getByRole("row", { name, exact: true });
+const outlineRows = (page: Page) =>
+  outline(page)
+    .getByRole("row")
+    .evaluateAll((rows) =>
+      rows.map((row) => {
+        const level = Number(row.getAttribute("aria-level") ?? 1);
+        return `${"  ".repeat(level - 1)}${row.textContent}`;
+      }),
+    );
 const clearSelection = (page: Page) =>
   page.locator(".react-flow__pane").click({ position: { x: 10, y: 10 } });
 
-test("何も選択していないとき、サイドパネルはグループ・ポイント・ルートを分けて一覧する", async ({
+test("何も選択していないとき、サイドパネルはグループの中にポイントを入れ子にした木と、ルートの一覧を表示する", async ({
   page,
 }) => {
-  await expect(outlineSection(page, "グループ").getByRole("option")).toHaveText(
-    ["2F", "1F"],
-  );
-  await expect(outlineSection(page, "ポイント").getByRole("option")).toHaveText(
-    [
-      "2F 階段",
-      "2F ホール",
-      "2F エレベーター",
-      "展示室B",
-      "1F 階段",
-      "1F エレベーター",
-      "入口",
-      "エントランスホール",
-      "ブースA",
-      "壁展示",
-      "出口",
+  await expect
+    .poll(() => outlineRows(page))
+    .toEqual([
+      "2F",
+      "  2F 階段",
+      "  2F ホール",
+      "  2F エレベーター",
+      "  展示室B",
+      "1F",
+      "  1F 階段",
+      "  1F エレベーター",
+      "  入口",
+      "  エントランスホール",
+      "  ブースA",
+      "  壁展示",
+      "  出口",
       "外部",
       "外部",
-    ],
-  );
-  await expect(outlineSection(page, "ルート").getByRole("option")).toHaveText([
-    "入口 → エントランスホール",
-    "エントランスホール ⇌ ブースA",
-    "エントランスホール ⇌ 壁展示",
-    "ブースA → 出口",
-    "壁展示 → 出口",
-    "エントランスホール ⇌ 1F 階段",
-    "エントランスホール ⇌ 1F エレベーター",
-    "1F 階段 ⇌ 2F 階段",
-    "1F エレベーター ⇌ 2F エレベーター",
-    "2F 階段 ⇌ 2F ホール",
-    "2F エレベーター ⇌ 2F ホール",
-    "2F ホール ⇌ 展示室B",
-    "外部 → 入口",
-    "出口 → 外部",
-  ]);
+      "ルート",
+      "入口 → エントランスホール",
+      "エントランスホール ⇌ ブースA",
+      "エントランスホール ⇌ 壁展示",
+      "ブースA → 出口",
+      "壁展示 → 出口",
+      "エントランスホール ⇌ 1F 階段",
+      "エントランスホール ⇌ 1F エレベーター",
+      "1F 階段 ⇌ 2F 階段",
+      "1F エレベーター ⇌ 2F エレベーター",
+      "2F 階段 ⇌ 2F ホール",
+      "2F エレベーター ⇌ 2F ホール",
+      "2F ホール ⇌ 展示室B",
+      "外部 → 入口",
+      "出口 → 外部",
+    ]);
+  await expect(outline(page).getByRole("rowheader")).toHaveText(["ルート"]);
+  await expect(outlineRow(page, "2F")).toHaveAttribute("aria-expanded", "true");
+  await expect(outlineRow(page, "1F")).toHaveAttribute("aria-expanded", "true");
 });
 
-test("一覧からポイント・グループ・ルートを選ぶと、キャンバスでその要素だけが選択されプロパティを表示する", async ({
+test("グループの開閉ボタンで中の要素を隠して戻せ、そのグループは選択されない", async ({
   page,
 }) => {
-  await outline(page)
-    .getByRole("option", { name: "ブースA", exact: true })
+  await outlineRow(page, "1F")
+    .getByRole("button", { name: "折りたたむ" })
     .click();
+  await expect(outlineRow(page, "1F")).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  await expect(outlineRow(page, "ブースA")).toHaveCount(0);
+  await expect(outlineRow(page, "2F 階段")).toBeVisible();
+  await expect(selectedNodes(page)).toHaveCount(0);
+  await expect(outline(page)).toBeVisible();
+
+  await outlineRow(page, "1F").getByRole("button", { name: "展開" }).click();
+  await expect(outlineRow(page, "1F")).toHaveAttribute("aria-expanded", "true");
+  await expect(outlineRow(page, "ブースA")).toBeVisible();
+  await expect(selectedNodes(page)).toHaveCount(0);
+});
+
+test("木からグループ内のポイント・グループ・ルートを選ぶと、キャンバスでその要素だけが選択されプロパティを表示する", async ({
+  page,
+}) => {
+  await expect(outlineRow(page, "ブースA")).toHaveAttribute("aria-level", "2");
+  await outlineRow(page, "ブースA").click();
   await expect(selectedNodes(page)).toHaveCount(1);
   await expect(node(page, "ph_booth")).toHaveClass(/selected/);
   await expect(labelField(page)).toHaveValue("ブースA");
@@ -849,34 +879,54 @@ test("一覧からポイント・グループ・ルートを選ぶと、キャ�
   await clearSelection(page);
   await expect(outline(page)).toBeVisible();
   await expect(panel(page).locator(":focus")).toHaveCount(0);
-  await outline(page).getByRole("option", { name: "1F", exact: true }).click();
+  await outlineRow(page, "1F").click();
   await expect(selectedNodes(page)).toHaveCount(1);
   await expect(node(page, "ph_floor1")).toHaveClass(/selected/);
   await expect(labelField(page)).toHaveValue("1F");
 
   await clearSelection(page);
-  await outline(page).getByRole("option", { name: "ブースA → 出口" }).click();
+  await outlineRow(page, "ブースA → 出口").click();
   await expect(selectedNodes(page)).toHaveCount(0);
   await expect(selectedEdges(page)).toHaveCount(1);
   await expect(edge(page, "ph_e4")).toHaveClass(/selected/);
   await expect(panel(page).getByRole("code")).toHaveText("ph_e4");
 });
 
-test("一覧を矢印キーと Enter で選ぶと、フォーカスが選んだ要素の見出しへ移る", async ({
+test("木を矢印キーで移動し、左右キーでグループを畳んで開き、Enter で選ぶとフォーカスが選んだ要素の見出しへ移る", async ({
   page,
 }) => {
-  await outlineSection(page, "グループ")
-    .getByRole("option", { name: "1F" })
-    .focus();
+  await outlineRow(page, "2F").focus();
+  await page.keyboard.press("ArrowLeft");
+  await expect(outlineRow(page, "2F")).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  await expect(outlineRow(page, "2F 階段")).toHaveCount(0);
   await page.keyboard.press("ArrowDown");
-  await expect(
-    outline(page).getByRole("option", { name: "2F 階段", exact: true }),
-  ).toBeFocused();
+  await expect(outlineRow(page, "1F")).toBeFocused();
+  await page.keyboard.press("ArrowLeft");
+  await expect(outlineRow(page, "ブースA")).toHaveCount(0);
+  await expect(selectedNodes(page)).toHaveCount(0);
+
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await expect(outlineRow(page, "入口 → エントランスホール")).toBeFocused();
+  await page.keyboard.press("ArrowUp");
+  await page.keyboard.press("ArrowUp");
+  await page.keyboard.press("ArrowUp");
+  await expect(outlineRow(page, "1F")).toBeFocused();
+
+  await page.keyboard.press("ArrowRight");
+  await expect(outlineRow(page, "1F")).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("ArrowDown");
+  await expect(outlineRow(page, "1F 階段")).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(node(page, "ph_stairs2f")).toHaveClass(/selected/);
+  await expect(selectedNodes(page)).toHaveCount(1);
+  await expect(node(page, "ph_stairs1f")).toHaveClass(/selected/);
   const focused = panel(page).locator(":focus");
   await expect(focused).toHaveCount(1);
-  await expect(focused).toContainText("ph_stairs2f");
+  await expect(focused).toContainText("ph_stairs1f");
 });
 
 const backToOutline = (page: Page) =>
@@ -905,12 +955,10 @@ test("「一覧に戻る」を押すと選択が解除され、サイドパネ�
   await expect(outline(page)).toBeVisible();
 });
 
-test("キーボードだけで一覧から要素を選び、「一覧に戻る」で一覧へフォーカスが戻る", async ({
+test("キーボードだけで木から要素を選び、「一覧に戻る」で木の先頭の行へフォーカスが戻る", async ({
   page,
 }) => {
-  await outline(page)
-    .getByRole("option", { name: "ブースA", exact: true })
-    .focus();
+  await outlineRow(page, "ブースA").focus();
   await page.keyboard.press("Enter");
   await expect(node(page, "ph_booth")).toHaveClass(/selected/);
   await expect(panel(page).locator(":focus")).toContainText("ph_booth");
@@ -918,11 +966,19 @@ test("キーボードだけで一覧から要素を選び、「一覧に戻る�
   await backToOutline(page).focus();
   await page.keyboard.press("Enter");
   await expect(selectedNodes(page)).toHaveCount(0);
-  await expect(
-    outline(page).getByRole("option", { name: "2F", exact: true }),
-  ).toBeFocused();
-  await page.keyboard.press("ArrowDown");
+  await expect(outlineRow(page, "2F")).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(node(page, "ph_floor1")).toHaveClass(/selected/);
-  await expect(panel(page).locator(":focus")).toContainText("ph_floor1");
+  await expect(selectedNodes(page)).toHaveCount(1);
+  await expect(node(page, "ph_floor2")).toHaveClass(/selected/);
+  await expect(panel(page).locator(":focus")).toContainText("ph_floor2");
+
+  await backToOutline(page).focus();
+  await page.keyboard.press("Enter");
+  await expect(outlineRow(page, "2F")).toBeFocused();
+  await expect(outlineRow(page, "2F")).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("ArrowDown");
+  await expect(outlineRow(page, "2F 階段")).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(node(page, "ph_stairs2f")).toHaveClass(/selected/);
+  await expect(panel(page).locator(":focus")).toContainText("ph_stairs2f");
 });

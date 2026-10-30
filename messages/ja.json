@@ -187,11 +187,7 @@
     "sidePanel": {
       "outline": "要素",
       "backToOutline": "一覧に戻る",
-      "sections": {
-        "groups": "グループ",
-        "points": "ポイント",
-        "routes": "ルート"
-      }
+      "routes": "ルート"
     },
     "properties": {
       "bulk": {

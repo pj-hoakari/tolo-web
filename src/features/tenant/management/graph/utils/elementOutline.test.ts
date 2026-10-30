@@ -1,20 +1,29 @@
 import { describe, expect, it } from "vitest";
 import type { GraphEdgeType, GraphNodeType, GroupNodeType } from "../type";
-import { outlineSections } from "./elementOutline";
+import { elementOutline } from "./elementOutline";
 
-const floor: GroupNodeType = {
-  id: "floor",
+const group = (
+  id: string,
+  label: string,
+  parentId?: string,
+): GroupNodeType => ({
+  id,
   type: "graphGroup",
   position: { x: 0, y: 0 },
-  data: { labels: { ja: "1F" }, label: "1F" },
-};
-const hall: GraphNodeType = {
-  id: "hall",
+  parentId,
+  data: { labels: { ja: label }, label },
+});
+const point = (
+  id: string,
+  label: string,
+  parentId?: string,
+): GraphNodeType => ({
+  id,
   type: "graph",
   position: { x: 0, y: 0 },
-  parentId: "floor",
-  data: { labels: { ja: "ホール" }, label: "ホール", nodeType: "TRANSIT_ONLY" },
-};
+  parentId,
+  data: { labels: { ja: label }, label, nodeType: "TRANSIT_ONLY" },
+});
 const outside: GraphNodeType = {
   id: "outside",
   type: "graph",
@@ -29,32 +38,54 @@ const exit: GraphEdgeType = {
   data: { direction: "oneway" },
 };
 
-describe("outlineSections", () => {
-  it("lists groups, points including external ones, and routes in that order", () => {
+describe("elementOutline", () => {
+  it("nests points and groups under their group and keeps top-level points and routes apart", () => {
     expect(
-      outlineSections({ nodes: [hall, floor, outside], edges: [exit] }),
-    ).toEqual([
-      { id: "groups", entries: [{ kind: "group", id: "floor", label: "1F" }] },
-      {
-        id: "points",
-        entries: [
-          { kind: "node", id: "hall", label: "ホール" },
-          { kind: "node", id: "outside", label: "外部" },
+      elementOutline({
+        nodes: [
+          group("floor", "1F"),
+          group("wing", "東棟", "floor"),
+          point("hall", "ホール", "floor"),
+          point("booth", "ブース", "wing"),
+          outside,
         ],
-      },
-      {
-        id: "routes",
-        entries: [{ kind: "edge", id: "e1", label: "ホール → 外部" }],
-      },
-    ]);
+        edges: [exit],
+      }),
+    ).toEqual({
+      elements: [
+        {
+          kind: "group",
+          id: "floor",
+          label: "1F",
+          children: [
+            {
+              kind: "group",
+              id: "wing",
+              label: "東棟",
+              children: [
+                { kind: "node", id: "booth", label: "ブース", children: [] },
+              ],
+            },
+            { kind: "node", id: "hall", label: "ホール", children: [] },
+          ],
+        },
+        { kind: "node", id: "outside", label: "外部", children: [] },
+      ],
+      routes: [{ kind: "edge", id: "e1", label: "ホール → 外部" }],
+    });
   });
 
-  it("omits sections that have no elements", () => {
-    expect(outlineSections({ nodes: [outside], edges: [] })).toEqual([
-      {
-        id: "points",
-        entries: [{ kind: "node", id: "outside", label: "外部" }],
-      },
-    ]);
+  it("puts an element whose parent is missing at the top level", () => {
+    expect(
+      elementOutline({ nodes: [point("hall", "ホール", "gone")], edges: [] })
+        .elements,
+    ).toEqual([{ kind: "node", id: "hall", label: "ホール", children: [] }]);
+  });
+
+  it("is empty for an empty graph", () => {
+    expect(elementOutline({ nodes: [], edges: [] })).toEqual({
+      elements: [],
+      routes: [],
+    });
   });
 });
