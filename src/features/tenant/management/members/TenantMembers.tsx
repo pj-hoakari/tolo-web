@@ -5,7 +5,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { errorMessageKey } from "@/lib/errorMessageKey";
 import { orpc } from "@/lib/orpc";
+import { useTenantEvents } from "../events/useTenantEvents";
 import { CreateInvitationForm } from "./CreateInvitationForm";
+import { EventRolesDialog } from "./EventRolesDialog";
 import { MEMBER_ERROR_MESSAGES } from "./errorMessages";
 import { formatDateTime } from "./formatDateTime";
 import { MEMBER_ACTIONS, MemberActionDialog } from "./MemberActionDialog";
@@ -20,6 +22,10 @@ export function TenantMembers({ tenantId }: Props) {
   const t = useTranslations("TenantMembers");
   const locale = useLocale();
   const { members, invitations, refresh } = useTenantMembers(tenantId);
+  const tenantEvents = useTenantEvents(tenantId, true);
+  const events = tenantEvents.status === "ready" ? tenantEvents.events : [];
+  const eventName = (eventId: string) =>
+    events.find((e) => e.eventId === eventId)?.name ?? eventId;
 
   return (
     <div className="flex w-full max-w-3xl flex-col gap-8">
@@ -88,8 +94,22 @@ export function TenantMembers({ tenantId }: Props) {
                       : t("members.joinedAtUnknown"),
                   })}
                 </span>
+                <span className="text-sm text-muted-foreground">
+                  {member.eventRoles.length === 0
+                    ? t("members.noEvents")
+                    : t("members.events", {
+                        events: member.eventRoles
+                          .map((r) => eventName(r.eventId))
+                          .join(t("members.eventSeparator")),
+                      })}
+                </span>
               </div>
               <div className="flex items-center gap-2">
+                <EventRolesDialog
+                  member={member}
+                  events={events}
+                  onChanged={refresh}
+                />
                 {MEMBER_ACTIONS[member.role].map((action) => (
                   <MemberActionDialog
                     key={action}

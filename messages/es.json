@@ -608,7 +608,10 @@
       "empty": "No hay miembros.",
       "error": "No se pudieron cargar los miembros.",
       "joinedAt": "Se unió: {joinedAt}",
-      "joinedAtUnknown": "desconocido"
+      "joinedAtUnknown": "desconocido",
+      "noEvents": "Eventos: ninguno",
+      "events": "Eventos: {events}",
+      "eventSeparator": ", "
     },
     "actions": {
       "cancel": "Cancelar",
@@ -638,6 +641,22 @@
       "lastOwner": "Un inquilino necesita al menos un propietario. Primero haz propietario a otro miembro.",
       "memberNotFound": "No se encontró al miembro. Vuelve a cargar la lista.",
       "stale": "El inquilino cambió y no se pudo realizar la operación. Vuelve a cargar la lista."
+    },
+    "eventRoles": {
+      "button": "Roles de evento",
+      "title": "Roles de evento de {name}",
+      "description": "Este miembro solo puede usar las páginas de un evento si tiene un rol en ese evento. El rol de evento que asignas es el mismo que su rol en el inquilino: {role}.",
+      "empty": "No hay eventos asignados.",
+      "assigned": "Eventos asignados",
+      "revoke": "Quitar",
+      "event": "Evento",
+      "choose": "Elige un evento",
+      "grant": "Asignar",
+      "close": "Cerrar",
+      "unavailable": "No se puede asignar este evento. Puede que el evento se haya archivado o que el miembro ya no pertenezca al inquilino.",
+      "notFound": "No se encontró el evento o el miembro. Vuelve a cargar la lista.",
+      "grantFailed": "No se pudo asignar el rol de evento.",
+      "revokeFailed": "No se pudo quitar el rol de evento."
     }
   },
   "Invitation": {

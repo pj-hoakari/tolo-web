@@ -29,6 +29,17 @@ export const MEMBER_ERROR_MESSAGES = {
     },
     fallback: "invite.failed",
   },
+  grantEventRole: {
+    byCode: {
+      PRECONDITION_FAILED: "eventRoles.unavailable",
+      NOT_FOUND: "eventRoles.notFound",
+    },
+    fallback: "eventRoles.grantFailed",
+  },
+  revokeEventRole: {
+    byCode: { NOT_FOUND: "eventRoles.notFound" },
+    fallback: "eventRoles.revokeFailed",
+  },
   revokeInvitation: {
     byCode: { PRECONDITION_FAILED: "invitations.alreadyUsed" },
     fallback: "invitations.revokeFailed",
