@@ -7,7 +7,7 @@ const storedOverrides = () =>
 
 /**
  * next dev でモック API を有効化するための Service Worker
- * MswBootstrap（NEXT_PUBLIC_API_MOCKING=enabled のとき）から startWorker で起動
+ * instrumentation-client（NEXT_PUBLIC_API_MOCKING=enabled のとき）から startWorker で起動
  */
 export const worker = setupWorker(...createOrpcHandlers(storedOverrides()));
 

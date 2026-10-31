@@ -6,7 +6,6 @@ import {
   NextResponse,
 } from "next/server";
 import { resolveTenant } from "./lib/control/tenant";
-import { authMockingEnabled } from "./server/auth/mocking";
 import { resolveTenantSubdomain } from "./server/tenantSubdomain";
 
 const REWRITE_MARKER_HEADER = "tolo-tenant-rewritten";
@@ -40,9 +39,6 @@ export async function tenantProxy(
     case "invalid":
       return NextResponse.rewrite(new URL("/not-found", request.url));
     case "root":
-      if (pathname === "/login" && authMockingEnabled()) {
-        return NextResponse.rewrite(new URL("/not-found", request.url));
-      }
       return NextResponse.next();
     case "tenant": {
       let tenantId: string | undefined;
