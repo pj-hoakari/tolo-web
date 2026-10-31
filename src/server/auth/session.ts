@@ -15,6 +15,7 @@ const tokenExchangeResponse = z.object({
 });
 const refreshResponse = tokenExchangeResponse.extend({
   refresh_token: z.string(),
+  id_token: z.string().optional(),
 });
 
 type TenantAccessToken = {
@@ -125,9 +126,8 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
         `refreshing tenant_access failed with ${response.status}: ${failure}`,
       );
     }
-    const { access_token, refresh_token, expires_in } = refreshResponse.parse(
-      await response.json(),
-    );
+    const { access_token, refresh_token, expires_in, id_token } =
+      refreshResponse.parse(await response.json());
     await adapter.update({
       model: TENANT_ACCESS_TOKEN,
       where,
@@ -135,6 +135,7 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
         accessToken: access_token,
         refreshToken: refresh_token,
         accessTokenExpiresAt: new Date(Date.now() + expires_in * 1000),
+        ...(id_token && { idToken: id_token }),
       },
     });
     return access_token;
