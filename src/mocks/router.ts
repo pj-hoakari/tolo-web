@@ -173,6 +173,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             name: z.string().trim().min(1),
             subdomain: z.string().trim().min(1),
             ownerEmail: z.email(),
+            ownerDisplayName: z.string().trim().min(1).max(64),
           }),
         )
         .handler(

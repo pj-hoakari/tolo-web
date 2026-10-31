@@ -7,11 +7,13 @@
     "name": "租户名称",
     "subdomain": "子域名",
     "ownerEmail": "所有者的电子邮件地址",
+    "ownerDisplayName": "所有者的显示名称",
+    "ownerDisplayNameDescription": "向租户成员显示的名称，最多 64 个字符。",
     "submit": "创建",
     "done": "已创建租户",
     "openTenant": "打开租户页面",
     "subdomainTaken": "该子域名已被使用，请指定其他名称。",
-    "invalid": "输入不符合规则。子域名只能使用小写英文字母、数字和连字符，长度不超过 63 个字符，且不能以连字符开头或结尾。",
+    "invalid": "输入不符合规则。子域名只能使用小写英文字母、数字和连字符，长度不超过 63 个字符，且不能以连字符开头或结尾。显示名称不超过 64 个字符。",
     "failed": "无法创建租户。"
   },
   "LocaleSelect": {

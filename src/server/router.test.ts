@@ -174,9 +174,10 @@ describe("tenant.register", () => {
       name: "Acme",
       subdomain: "acme",
       ownerEmail: "owner@example.com",
+      ownerDisplayName: " Owner ",
     });
 
-  it("starts a registration with the standard plan, then claims it with a registration token issued to the owner", async () => {
+  it("starts a registration with the standard plan, then claims it with a registration token issued to the owner and the owner's trimmed display name", async () => {
     const start = vi
       .mocked(tenantRegistrationClient.startTenantRegistration)
       .mockResolvedValue({
@@ -198,7 +199,12 @@ describe("tenant.register", () => {
     });
     expect(issue).toHaveBeenCalledWith("owner@example.com");
     expect(claim).toHaveBeenCalledWith(
-      { tenantId, ownershipClaimToken: "claim-token", subdomain: "acme" },
+      {
+        tenantId,
+        ownershipClaimToken: "claim-token",
+        subdomain: "acme",
+        displayName: "Owner",
+      },
       { headers: { Authorization: "Bearer registration-token" } },
     );
     expect(start.mock.invocationCallOrder[0]).toBeLessThan(

@@ -64,6 +64,7 @@ import {
 } from "./tenantManagement";
 
 const publicId = z.string().regex(/^[0-9a-f]{16}$/);
+const displayName = z.string().trim().min(1).max(64);
 
 const edgeDeviceInput = z.object({
   eventId: z.string().min(1),
@@ -299,6 +300,7 @@ export const router = {
           name: z.string().trim().min(1),
           subdomain: z.string().trim().min(1),
           ownerEmail: z.email(),
+          ownerDisplayName: displayName,
         }),
       )
       .handler(
@@ -318,6 +320,7 @@ export const router = {
                 tenantId: started.tenant.tenantId,
                 ownershipClaimToken: started.ownershipClaimToken,
                 subdomain: input.subdomain,
+                displayName: input.ownerDisplayName,
               },
               { headers: { Authorization: `Bearer ${token}` } },
             );
