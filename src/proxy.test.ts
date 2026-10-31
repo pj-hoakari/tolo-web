@@ -176,24 +176,6 @@ describe("tenant routing proxy", () => {
     const response = await tenantProxy(request);
     expect(response).toEqual(NextResponse.next());
   });
-  test.each([
-    [
-      "enabled",
-      NextResponse.rewrite(new URL("/not-found", "http://localhost/login")),
-    ],
-    ["", NextResponse.next()],
-  ])(
-    "the root-domain login page with AUTH_MOCKING=%j",
-    async (mocking, expected) => {
-      vi.stubEnv("AUTH_MOCKING", mocking);
-      vi.stubEnv("ROOT_DOMAIN", "");
-      const request = new NextRequest("http://localhost/login?challenge=x", {
-        headers: { host: "localhost" },
-      });
-      const response = await tenantProxy(request);
-      expect(response).toEqual(expected);
-    },
-  );
   test("www prefix non-tenant path should be allowed to proceed", async () => {
     const host = "www.localhost";
     const request = new NextRequest(`http://${host}`, {

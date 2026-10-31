@@ -22,6 +22,7 @@ test("AUTH_MOCKING では、ログインの開始と引き渡しの経路とル�
     "/auth/handoff?code=x",
     "http://localhost:3100/auth/begin?login=x",
     "http://localhost:3100/login?challenge=x",
+    "http://localhost:3100/login",
   ]) {
     const response = await request.get(path, { maxRedirects: 0 });
     expect(response.status(), path).toBe(404);
