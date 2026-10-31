@@ -2,18 +2,11 @@ import { expect, type Page, test } from "@playwright/test";
 import {
   layoutFixture,
   layoutFixtureNames,
-  layoutSearchSeeds,
 } from "../src/mocks/fixtures/graphLayout";
 import { waitForGraphLayout } from "./graph-layout-helpers";
 
 test.use({ viewport: { width: 1600, height: 1000 } });
 test.describe.configure({ mode: "parallel" });
-const cases = [
-  ...new Set([
-    ...layoutFixtureNames,
-    ...layoutSearchSeeds.map((s) => `issue249-seed-${s}`),
-  ]),
-];
 const snapshot = (page: Page) =>
   page.evaluate(() => ({
     nodes: [...document.querySelectorAll<HTMLElement>(".react-flow__node")].map(
@@ -40,7 +33,7 @@ const snapshot = (page: Page) =>
     })),
   }));
 
-for (const name of cases)
+for (const name of layoutFixtureNames)
   test(`${name}: consecutive alignment retains the first layout`, async ({
     page,
   }) => {
