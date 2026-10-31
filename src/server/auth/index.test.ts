@@ -1,7 +1,9 @@
+import { headers } from "next/headers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getAccessToken } from ".";
+import { getAccessToken, requireStaff } from ".";
 
 vi.mock("server-only", () => ({}));
+vi.mock("next/headers", () => ({ headers: vi.fn() }));
 
 describe("getAccessToken with AUTH_MOCKING", () => {
   beforeEach(() => {
@@ -54,5 +56,22 @@ describe("getAccessToken with AUTH_MOCKING", () => {
     await expect(getAccessToken({ type: "tenant_access" })).rejects.toThrow(
       "AUTH_DATABASE_URL",
     );
+  });
+});
+
+describe("requireStaff with AUTH_MOCKING", () => {
+  beforeEach(() => {
+    vi.stubEnv("AUTH_MOCKING", "enabled");
+    vi.stubEnv("ROOT_DOMAIN", "");
+    vi.stubEnv("TENANT_SUBDOMAIN_MOCKING", "enabled");
+  });
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("lets the mock staff through on a tenant host", async () => {
+    vi.mocked(headers).mockResolvedValue(
+      new Headers({ host: "test.localhost:3000" }),
+    );
+
+    await expect(requireStaff("/management")).resolves.toBeUndefined();
   });
 });
