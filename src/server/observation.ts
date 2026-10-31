@@ -6,23 +6,18 @@ import {
   EdgeDeviceService,
   MeasurementIngestService,
 } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
+import { eventAccess } from "./authorize";
 
-function transportWith(accessToken: () => string | undefined): Transport {
+function transportWith(client: "console" | "edge"): Transport {
   return createConnectTransport({
     baseUrl: process.env.GATEWAY_URL ?? "http://127.0.0.1:8080",
     httpVersion: "1.1",
-    interceptors: [
-      (next) => (req) => {
-        const token = accessToken();
-        if (token) req.header.set("Authorization", `Bearer ${token}`);
-        return next(req);
-      },
-    ],
+    interceptors: [eventAccess(client)],
   });
 }
 
-const consoleTransport = transportWith(() => process.env.GRAPH_ACCESS_TOKEN);
-const edgeTransport = transportWith(() => process.env.OBSERVATION_ACCESS_TOKEN);
+const consoleTransport = transportWith("console");
+const edgeTransport = transportWith("edge");
 
 export const consoleEdgeDeviceClient = createClient(
   EdgeDeviceService,

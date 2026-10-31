@@ -319,24 +319,30 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     signaling: {
       // WebRTC はスコープ外。呼ばれてもエラーにならないよう、ダミーの sessionId を返す。
       requestConnection: os
-        .input(z.object({ edgeId: z.string().min(1) }))
+        .input(
+          z.object({ eventId: z.string().min(1), edgeId: z.string().min(1) }),
+        )
         .handler(
           async ({ input }): Promise<{ sessionId: string }> => ({
             sessionId: `mock-session_${input.edgeId}`,
           }),
         ),
-      issueConsoleFirestoreToken: os.handler(
-        async (): Promise<FirestoreToken> => ({
-          customToken: "mock-console-token",
-          expiresAt: new Date(Date.now() + 60 * 60 * 1000),
-        }),
-      ),
-      issueEdgeFirestoreToken: os.handler(
-        async (): Promise<FirestoreToken> => ({
-          customToken: "mock-edge-token",
-          expiresAt: new Date(Date.now() + 60 * 60 * 1000),
-        }),
-      ),
+      issueConsoleFirestoreToken: os
+        .input(z.object({ eventId: z.string().min(1) }))
+        .handler(
+          async (): Promise<FirestoreToken> => ({
+            customToken: "mock-console-token",
+            expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+          }),
+        ),
+      issueEdgeFirestoreToken: os
+        .input(z.object({ eventId: z.string().min(1) }))
+        .handler(
+          async (): Promise<FirestoreToken> => ({
+            customToken: "mock-edge-token",
+            expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+          }),
+        ),
     },
   };
 }

@@ -3,7 +3,12 @@ import {
   timestampDate,
   timestampFromDate,
 } from "@bufbuild/protobuf/wkt";
-import { type Client, Code, ConnectError } from "@connectrpc/connect";
+import {
+  type Client,
+  Code,
+  ConnectError,
+  createContextValues,
+} from "@connectrpc/connect";
 import { ORPCError, os } from "@orpc/server";
 import type { SignalingService } from "@pj-hoakari/tolo-edge-bridge-client-es/tolo/edgebridge/v1/signaling_pb";
 import {
@@ -41,6 +46,7 @@ import {
   registeredEdgeDeviceWire,
   sampleEdgeDevicesWire,
 } from "@/mocks/fixtures/edges";
+import { eventIdKey } from "./authorize";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
 import { guestPageClient } from "./guest";
@@ -224,10 +230,15 @@ export interface FirestoreToken {
   expiresAt: Date;
 }
 
+function eventContext(eventId: string) {
+  return { contextValues: createContextValues().set(eventIdKey, eventId) };
+}
+
 async function issueFirestoreToken(
   client: Client<typeof SignalingService>,
+  eventId: string,
 ): Promise<FirestoreToken> {
-  const res = await client.issueFirestoreToken({});
+  const res = await client.issueFirestoreToken({}, eventContext(eventId));
   if (!res.expiresAt) {
     throw new Error("IssueFirestoreToken returned no expires_at");
   }
@@ -481,19 +492,26 @@ export const router = {
   signaling: {
     // edge への接続を要求する。tolo-edge-bridge が Firestore にセッションを作成し session_id を返す。
     requestConnection: os
-      .input(z.object({ edgeId: z.string().min(1) }))
+      .input(
+        z.object({ eventId: z.string().min(1), edgeId: z.string().min(1) }),
+      )
       .handler(async ({ input }): Promise<{ sessionId: string }> => {
-        const res = await consoleSignalingClient.requestConnection({
-          edgeDeviceId: input.edgeId,
-        });
+        const res = await consoleSignalingClient.requestConnection(
+          { edgeDeviceId: input.edgeId },
+          eventContext(input.eventId),
+        );
         return { sessionId: res.sessionId };
       }),
-    issueConsoleFirestoreToken: os.handler(() =>
-      issueFirestoreToken(consoleSignalingClient),
-    ),
-    issueEdgeFirestoreToken: os.handler(() =>
-      issueFirestoreToken(edgeSignalingClient),
-    ),
+    issueConsoleFirestoreToken: os
+      .input(z.object({ eventId: z.string().min(1) }))
+      .handler(({ input }) =>
+        issueFirestoreToken(consoleSignalingClient, input.eventId),
+      ),
+    issueEdgeFirestoreToken: os
+      .input(z.object({ eventId: z.string().min(1) }))
+      .handler(({ input }) =>
+        issueFirestoreToken(edgeSignalingClient, input.eventId),
+      ),
   },
   observation: {
     listEdgeDevices: os.input(z.object({ eventId: z.string().min(1) })).handler(
