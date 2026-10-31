@@ -3,7 +3,9 @@ import "server-only";
 import { headers } from "next/headers";
 import { resolveTenant } from "@/lib/control/tenant";
 import { resolveTenantSubdomain } from "../tenantSubdomain";
+import { getRealAuth } from "./betterAuth";
 import { authMockingEnabled } from "./mocking";
+import { createSessionAuth } from "./session";
 
 export type Viewer =
   | { type: "anonymous" }
@@ -20,19 +22,24 @@ export type AccessTokenRequest =
   | { type: "tenant_access" }
   | { type: "event_access"; eventId: string; client: "console" | "edge" };
 
-function requireAuthMocking(): void {
-  if (!authMockingEnabled()) {
-    throw new Error(
-      "no authentication is configured; set AUTH_MOCKING=enabled to use the local mock",
-    );
-  }
+let sessionAuth: ReturnType<typeof createSessionAuth> | undefined;
+
+function realAuth() {
+  sessionAuth ??= createSessionAuth(getRealAuth());
+  return sessionAuth;
+}
+
+async function requestTenantId(): Promise<string | undefined> {
+  const resolution = resolveTenant((await headers()).get("host") ?? "");
+  if (resolution.type !== "tenant") return undefined;
+  return resolveTenantSubdomain(resolution.subdomain);
 }
 
 export async function getViewer(): Promise<Viewer> {
-  requireAuthMocking();
-  const resolution = resolveTenant((await headers()).get("host") ?? "");
-  if (resolution.type !== "tenant") return { type: "anonymous" };
-  const tenantId = await resolveTenantSubdomain(resolution.subdomain);
+  if (!authMockingEnabled()) {
+    return realAuth().viewer(await headers(), await requestTenantId());
+  }
+  const tenantId = await requestTenantId();
   if (!tenantId) return { type: "anonymous" };
   return {
     type: "staff",
@@ -50,7 +57,13 @@ const MOCK_TOKEN_ENV = {
 export async function getAccessToken(
   request: AccessTokenRequest,
 ): Promise<string> {
-  requireAuthMocking();
+  if (!authMockingEnabled()) {
+    return realAuth().accessToken(
+      await headers(),
+      await requestTenantId(),
+      request,
+    );
+  }
   const name =
     MOCK_TOKEN_ENV[
       request.type === "tenant_access" ? request.type : request.client
