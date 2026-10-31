@@ -1,13 +1,7 @@
 "use client";
 
 import { useStoreApi, type XYPosition } from "@xyflow/react";
-import {
-  type RefObject,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { GraphCanvasNode, GraphEdgeType } from "../type";
 import {
   EASY_CONNECT_HANDLE_ID,
@@ -31,9 +25,7 @@ export type EasyConnectApi = {
  * - 始点固定モードでの接続ドラッグ自動開始（ユーザーは終点を選ぶだけでよい）
  * 呼び出し側で ReactFlowProvider の内側に置くこと。
  */
-export function useEasyConnect(
-  wrapperRef: RefObject<HTMLDivElement | null>,
-): EasyConnectApi {
+export function useEasyConnect(): EasyConnectApi {
   const storeApi = useStoreApi<GraphCanvasNode, GraphEdgeType>();
   const [mode, setMode] = useState<EasyConnectMode | null>(null);
   const active = mode !== null;
@@ -79,9 +71,11 @@ export function useEasyConnect(
       const handleRegistered = node?.internals.handleBounds?.source?.some(
         (handle) => handle.id === EASY_CONNECT_HANDLE_ID,
       );
-      const handleElement = wrapperRef.current?.querySelector<HTMLElement>(
-        `.react-flow__handle[data-handleid="${EASY_CONNECT_HANDLE_ID}"][data-nodeid="${CSS.escape(sourceNodeId)}"]`,
-      );
+      const handleElement = storeApi
+        .getState()
+        .domNode?.querySelector<HTMLElement>(
+          `.react-flow__handle[data-handleid="${EASY_CONNECT_HANDLE_ID}"][data-nodeid="${CSS.escape(sourceNodeId)}"]`,
+        );
       if (!handleRegistered || !handleElement) {
         // updateNodeInternals は rAF 遅延のため、ハンドル登録を待って再試行する。
         if (attempts < 10) {
@@ -109,7 +103,7 @@ export function useEasyConnect(
     };
     rafId = requestAnimationFrame(startConnectionDrag);
     return () => cancelAnimationFrame(rafId);
-  }, [mode, storeApi, wrapperRef]);
+  }, [mode, storeApi]);
 
   return useMemo(
     () => ({ mode, active: mode !== null, startGlobal, startFromNode, end }),

@@ -3,6 +3,7 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { fn } from "storybook/test";
 import { PLACEHOLDER_GRAPH } from "@/features/graph";
 import { GraphCanvas } from "@/features/tenant/management/graph/components/GraphCanvas";
+import { useEasyConnect } from "@/features/tenant/management/graph/hooks/useEasyConnect";
 import { useGraphEditor } from "@/features/tenant/management/graph/hooks/useGraphEditor";
 import { useGraphViewer } from "@/features/tenant/management/graph/hooks/useGraphViewer";
 import { deriveNodeNotices } from "@/features/tenant/management/graph/nodeTypes";
@@ -28,7 +29,10 @@ const derivedNodes = deriveNodeNotices(
 /** 実際の編集操作（移動・接続・選択）が効く状態のキャンバス */
 function EditableCanvas() {
   const { canvas } = useGraphEditor(PLACEHOLDER_GRAPH);
-  return <GraphCanvas {...canvas} />;
+  const easyConnect = useEasyConnect();
+  return (
+    <GraphCanvas {...canvas} editing={{ ...canvas.editing, easyConnect }} />
+  );
 }
 
 /** 表示専用（移動・接続ができない）状態のキャンバス */
@@ -98,6 +102,13 @@ export const Editing: Story = {
       onBeforeDelete: fn(async () => true),
       onNodeDragStop: fn(),
       onGroupResizeEnd: fn(),
+      easyConnect: {
+        mode: null,
+        active: false,
+        startGlobal: fn(),
+        startFromNode: fn(),
+        end: fn(),
+      },
     },
   },
 };

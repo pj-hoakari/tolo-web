@@ -10,6 +10,7 @@ import {
   useGraph,
 } from "@/features/graph";
 import { errorMessageKey } from "@/lib/errorMessageKey";
+import { useEasyConnect } from "../hooks/useEasyConnect";
 import { useGraphEditor } from "../hooks/useGraphEditor";
 import type { GraphData } from "../type";
 import { FIT_VIEW_OPTIONS, GraphCanvas } from "./GraphCanvas";
@@ -77,6 +78,7 @@ function GraphEditorInner({
 }) {
   const { graph, canvas, toolbar, properties, getGraphData, setSelection } =
     useGraphEditor(initialGraph);
+  const easyConnect = useEasyConnect();
   const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
 
   // 親から ref 経由で編集済みデータを取得できるように
@@ -137,7 +139,7 @@ function GraphEditorInner({
         <SaveErrorAlert error={saveState.error} />
       )}
       <div className="flex min-h-0 flex-1">
-        <GraphCanvas {...canvas} />
+        <GraphCanvas {...canvas} editing={{ ...canvas.editing, easyConnect }} />
         <SidePanel {...properties} graph={graph} />
       </div>
     </div>
