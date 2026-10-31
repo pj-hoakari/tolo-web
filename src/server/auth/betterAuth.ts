@@ -5,8 +5,9 @@ import {
 } from "better-auth";
 import { genericOAuth } from "better-auth/plugins/generic-oauth";
 import { Pool } from "pg";
+import { getRootDomain } from "@/lib/control/tenant";
+import { loginHandoff, PROVIDER_ID } from "./login";
 
-const PROVIDER_ID = "tolo-idp";
 export const SESSION_COOKIE = "__Host-tolo.session_token";
 
 const AUTH_ENV = {
@@ -30,6 +31,11 @@ export function readAuthEnv(): AuthEnv {
   return Object.fromEntries(
     Object.entries(AUTH_ENV).map(([key, name]) => [key, process.env[name]]),
   ) as AuthEnv;
+}
+
+export function rootOrigin(rootDomain = getRootDomain()): string {
+  const local = rootDomain === "localhost" || rootDomain.endsWith(".localhost");
+  return `${local ? "http" : "https"}://${rootDomain}`;
 }
 
 export function discoveryUrl(issuer: string): string {
@@ -57,6 +63,7 @@ const toloSession = {
         accessToken: { type: "string", required: true },
         refreshToken: { type: "string", required: true },
         accessTokenExpiresAt: { type: "date", required: true },
+        idToken: { type: "string", required: false },
       },
     },
     eventAccessToken: {
@@ -93,6 +100,8 @@ const toloSession = {
 export function authOptions(env: AuthEnv) {
   return {
     secret: env.secret,
+    baseURL: rootOrigin(),
+    trustedOrigins: [rootOrigin()],
     session: {
       expiresIn: 60 * 60,
       updateAge: 0,
@@ -127,10 +136,30 @@ export function authOptions(env: AuthEnv) {
             tokenEndpointAuth: { method: "client_secret_basic" },
             pkce: true,
             requireIdTokenVerification: true,
+            scopes: [
+              "openid",
+              "tenant.read",
+              "tenant.write",
+              "events.read",
+              "events.manage",
+              "events.operate",
+              "events.report",
+            ],
+            mapProfileToUser: (profile) => {
+              if (typeof profile.sub !== "string" || !profile.sub) {
+                throw new Error("the IdP profile has no sub");
+              }
+              return {
+                email: `${profile.sub}@tolo-idp.local`,
+                emailVerified: false,
+                name: profile.sub,
+              };
+            },
           },
         ],
       }),
       toloSession,
+      loginHandoff,
     ],
   } satisfies BetterAuthOptions;
 }

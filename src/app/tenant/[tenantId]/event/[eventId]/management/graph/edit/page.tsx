@@ -4,7 +4,9 @@ import { PwaInstall } from "@/components/pwa/pwa-install";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ManagementBackLink } from "@/features/tenant/management/components/ManagementBackLink";
 import { GraphEditor } from "@/features/tenant/management/graph";
+import { graphEditPath } from "@/features/tenant/management/routes";
 import { getPwaMetadata } from "@/lib/pwa/manifest";
+import { requireStaff } from "@/server/auth";
 
 export async function generateMetadata({
   params,
@@ -23,6 +25,7 @@ export default async function TenantGraphEdit({
   params: Promise<{ tenantId: string; eventId: string }>;
 }) {
   const { tenantId, eventId } = await params;
+  await requireStaff(graphEditPath(eventId));
   const t = await getTranslations("Management");
 
   return (

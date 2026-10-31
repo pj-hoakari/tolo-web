@@ -1,9 +1,11 @@
 import "server-only";
 
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { resolveTenant } from "@/lib/control/tenant";
 import { resolveTenantSubdomain } from "../tenantSubdomain";
 import { getRealAuth } from "./betterAuth";
+import { createLoginFlow } from "./login";
 import { authMockingEnabled } from "./mocking";
 import { createSessionAuth } from "./session";
 
@@ -23,10 +25,16 @@ export type AccessTokenRequest =
   | { type: "event_access"; eventId: string; client: "console" | "edge" };
 
 let sessionAuth: ReturnType<typeof createSessionAuth> | undefined;
+let login: ReturnType<typeof createLoginFlow> | undefined;
 
 function realAuth() {
   sessionAuth ??= createSessionAuth(getRealAuth());
   return sessionAuth;
+}
+
+export function loginFlow() {
+  login ??= createLoginFlow(getRealAuth());
+  return login;
 }
 
 async function requestTenantId(): Promise<string | undefined> {
@@ -46,6 +54,12 @@ export async function getViewer(): Promise<Viewer> {
     userId: process.env.AUTH_MOCK_USER_ID || "user-owner",
     tenantId,
   };
+}
+
+export async function requireStaff(returnPath: string): Promise<void> {
+  if ((await getViewer()).type !== "staff") {
+    redirect(`/auth/login?return=${encodeURIComponent(returnPath)}`);
+  }
 }
 
 const MOCK_TOKEN_ENV = {

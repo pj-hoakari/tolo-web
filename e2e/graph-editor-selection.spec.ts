@@ -895,7 +895,7 @@ test("木からグループ内のポイント・グループ・ルートを選�
   page,
 }) => {
   await expect(outlineRow(page, "ブースA")).toHaveAttribute("aria-level", "2");
-  await outlineRow(page, "ブースA").click();
+  await outlineRow(page, "ブースA").press("Enter");
   await expect(selectedNodes(page)).toHaveCount(1);
   await expect(node(page, "ph_booth")).toHaveClass(/selected/);
   await expect(labelField(page)).toHaveValue("ブースA");
@@ -904,13 +904,13 @@ test("木からグループ内のポイント・グループ・ルートを選�
   await clearSelection(page);
   await expect(outline(page)).toBeVisible();
   await expect(panel(page).locator(":focus")).toHaveCount(0);
-  await outlineRow(page, "1F").click();
+  await outlineRow(page, "1F").press("Enter");
   await expect(selectedNodes(page)).toHaveCount(1);
   await expect(node(page, "ph_floor1")).toHaveClass(/selected/);
   await expect(labelField(page)).toHaveValue("1F");
 
   await clearSelection(page);
-  await outlineRow(page, "ブースA → 出口").click();
+  await outlineRow(page, "ブースA → 出口").press("Enter");
   await expect(selectedNodes(page)).toHaveCount(0);
   await expect(selectedEdges(page)).toHaveCount(1);
   await expect(edge(page, "ph_e4")).toHaveClass(/selected/);

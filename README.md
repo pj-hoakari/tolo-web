@@ -45,7 +45,20 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 AUTH_DATABASE_URL=postgres://... pnpm db:auth:migrate
 ```
 
-ログインと、ルートドメインからテナントのホストへのセッションの引き渡しは、まだありません。
+### ログインとセッションの引き渡し
+
+管理ページを開いたホストにスタッフのセッションがなければ、そのテナントのホストの `/auth/login` へ移ります。ログインは次の順に進みます。
+
+1. テナントのホストがログインを結び付ける値をそのホストに限る Cookie（`SameSite=Lax`、10 分）に置きます。そのあと、ルートドメインの `/auth/begin` へ移ります。
+2. ルートドメインが `resource` にテナントの URI、`audience` に `backend-api` を付けて、tolo-idp の認可へ進みます。
+3. callback を受けたルートドメインは、ルートドメインのセッションを消し、Better Auth の account の行にも外部トークンを残しません。外部トークンは引き渡しのために保ち、一回限りの引き渡しコード（1 分）を付けて、テナントのホストの `/auth/handoff` へ移ります。
+4. テナントのホストは、コードがそのホストのもので期限内であり、1 の Cookie と合うときだけ、そのホストのセッションを作ります。コードは 1 回しか使えません。そのあと、コードを含まない元のページへ移ります。
+
+Better Auth の `baseURL` はルートドメインの origin です。`ROOT_DOMAIN` が `localhost` か `localhost` の下のドメインなら `http`、それ以外なら `https` で、ポートは付けません。tolo-idp の `console-ui` には `redirect_uri` として `<baseURL>/api/auth/callback/tolo-idp` を登録します。認可で求める scope は `openid` と、`tenant.read`、`tenant.write`、`events.read`、`events.manage`、`events.operate`、`events.report` です。tolo-idp は、このうちロールに許された scope だけを発行します。
+
+`/rpc` への要求には、ヘッダ `x-csrf-token: orpc` が必要です。このヘッダのない要求は 403 で拒否します。ブラウザの oRPC のクライアントは、このヘッダを付けて送ります。
+
+ルートドメインのログイン画面とログアウトは、まだありません。
 
 ## Docker Compose での開発環境
 

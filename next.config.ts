@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
 
   output: "standalone",
 
+  logging: { incomingRequests: { ignore: [/[?&]code=/] } },
+
   allowedDevOrigins: process.env.TUNNEL_SUBDOMAIN
     ? ["*.trycloudflare.com"]
     : [],
