@@ -64,6 +64,7 @@ function idp() {
         token_endpoint: "https://idp.test/oauth2/token",
         userinfo_endpoint: "https://idp.test/userinfo",
         jwks_uri: "https://idp.test/oauth2/jwks",
+        end_session_endpoint: "https://idp.test/connect/logout",
         id_token_signing_alg_values_supported: ["RS256"],
       }),
     ),
@@ -255,6 +256,30 @@ function loginErrorPage(response: Response) {
     page: `${location.origin}${location.pathname}`,
     ...Object.fromEntries(location.searchParams),
   };
+}
+
+async function logOut(
+  { flow }: TestAuth,
+  jar: ReturnType<typeof cookieJar>,
+  { host = HOST, origin = `https://${host}` as string | null } = {},
+) {
+  const headers = new Headers({ host, cookie: jar.header() });
+  if (origin) headers.set("origin", origin);
+  const response = await flow.logout(
+    new Request(`https://${host}/auth/logout`, { method: "POST", headers }),
+  );
+  jar.store(response);
+  return response;
+}
+
+async function logInOn(
+  testAuth: TestAuth,
+  provider: ReturnType<typeof idp>,
+  options: Parameters<typeof authorizeAtIdp>[2] = {},
+) {
+  const login = await logInUntilHandoff(testAuth, provider, options);
+  await handOff(testAuth, login.handoffUrl, login.tenantJar, options.host);
+  return login.tenantJar;
 }
 
 function sessionHeaders(jar: ReturnType<typeof cookieJar>) {
@@ -681,6 +706,93 @@ describe("login handoff", () => {
   });
 });
 
+describe("logout", () => {
+  it("ends only this host's session and its tokens, then sends the browser to the IdP's end_session with that session's ID token", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const jar = await logInOn(testAuth, provider);
+    const otherJar = await logInOn(testAuth, provider, {
+      tenantId: OTHER_TENANT,
+      host: OTHER_HOST,
+    });
+    const ctx = await testAuth.auth.$context;
+    const sessions = await ctx.adapter.findMany<{
+      id: string;
+      tenantId: string;
+    }>({ model: "session" });
+    const sessionOf = (tenantId: string) =>
+      sessions.find((session) => session.tenantId === tenantId)?.id;
+    for (const tenantId of [TENANT, OTHER_TENANT]) {
+      await ctx.adapter.create({
+        model: "eventAccessToken",
+        data: {
+          sessionId: sessionOf(tenantId),
+          eventId: "e1",
+          accessToken: `event-access-${tenantId}`,
+          expiresAt: new Date(Date.now() + 60_000),
+        },
+      });
+    }
+
+    const loggedOut = await logOut(testAuth, jar);
+
+    expect(loggedOut.status).toBe(303);
+    const location = new URL(loggedOut.headers.get("location") ?? "");
+    expect(`${location.origin}${location.pathname}`).toBe(
+      "https://idp.test/connect/logout",
+    );
+    expect(Object.fromEntries(location.searchParams)).toEqual({
+      id_token_hint: provider.issued.get(TENANT)?.idToken,
+      post_logout_redirect_uri: "https://tolo.test/auth/logged-out",
+      state: HOST,
+    });
+    expect(jar.cookies.has(SESSION_COOKIE)).toBe(false);
+    await expect(
+      testAuth.sessionAuth.viewer(sessionHeaders(otherJar), OTHER_TENANT),
+    ).resolves.toMatchObject({ type: "staff" });
+    for (const model of ["session", "tenantAccessToken", "eventAccessToken"]) {
+      const rows = await ctx.adapter.findMany<{
+        id: string;
+        sessionId?: string;
+      }>({ model });
+      expect(
+        rows.map((row) => (model === "session" ? row.id : row.sessionId)),
+        model,
+      ).toEqual([sessionOf(OTHER_TENANT)]);
+    }
+  });
+
+  it("sends a host that has no session straight to the logged-out page", async () => {
+    const testAuth = await createTestAuth();
+
+    const loggedOut = await logOut(testAuth, cookieJar());
+
+    expect(loggedOut.status).toBe(303);
+    expect(loggedOut.headers.get("location")).toBe(
+      `https://tolo.test/auth/logged-out?state=${HOST}`,
+    );
+  });
+
+  it.each([
+    ["no origin", null],
+    ["another site", "https://evil.example"],
+    ["another tenant host", `https://${OTHER_HOST}`],
+    ["the same host over http", `http://${HOST}`],
+    ["an opaque origin", "null"],
+  ])("refuses a logout from %s and keeps the session", async (_, origin) => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const jar = await logInOn(testAuth, provider);
+
+    const refused = await logOut(testAuth, jar, { origin });
+
+    expect(refused.status).toBe(403);
+    await expect(
+      testAuth.sessionAuth.viewer(sessionHeaders(jar), TENANT),
+    ).resolves.toMatchObject({ type: "staff" });
+  });
+});
+
 describe("login page", () => {
   it("posts the credentials to the IdP's login API and resumes the authorization with the challenge", async () => {
     idp();
@@ -717,6 +829,44 @@ describe.skipIf(!process.env.AUTH_TEST_DATABASE_URL)("on PostgreSQL", () => {
   afterAll(async () => {
     await pools[0]?.query(`DROP SCHEMA ${schema} CASCADE`);
     await Promise.all(pools.map((created) => created.end()));
+  });
+
+  it("logs a host out together with its token rows", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth(pool());
+    const jar = await logInOn(testAuth, provider);
+    const ctx = await testAuth.auth.$context;
+    const current = await testAuth.auth.api.getSession({
+      headers: sessionHeaders(jar),
+    });
+    const sessionId = current?.session.id ?? "";
+    await ctx.adapter.create({
+      model: "eventAccessToken",
+      data: {
+        sessionId,
+        eventId: "e1",
+        accessToken: "event-access",
+        expiresAt: new Date(Date.now() + 60_000),
+      },
+    });
+
+    expect((await logOut(testAuth, jar)).status).toBe(303);
+
+    expect(
+      await ctx.adapter.findMany({
+        model: "session",
+        where: [{ field: "id", value: sessionId }],
+      }),
+    ).toEqual([]);
+    for (const model of ["tenantAccessToken", "eventAccessToken"]) {
+      expect(
+        await ctx.adapter.findMany({
+          model,
+          where: [{ field: "sessionId", value: sessionId }],
+        }),
+        model,
+      ).toEqual([]);
+    }
   });
 
   it("hands a login over once", async () => {

@@ -3,6 +3,7 @@ import { LocaleSelect } from "@/components/locale-select";
 import { PwaInstall } from "@/components/pwa/pwa-install";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Link } from "@/components/ui/link";
+import { LogoutButton } from "@/features/auth/LogoutButton";
 import { GraphViewer } from "@/features/tenant/management/graph";
 import {
   graphEditPath,
@@ -41,6 +42,7 @@ export default async function TenantManagement({
           <PwaInstall compact />
           <LocaleSelect />
           <ThemeToggle />
+          <LogoutButton />
         </div>
       </header>
       <main className="flex min-h-0 w-full flex-1 p-2">

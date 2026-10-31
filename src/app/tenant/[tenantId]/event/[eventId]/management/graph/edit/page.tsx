@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { LocaleSelect } from "@/components/locale-select";
 import { PwaInstall } from "@/components/pwa/pwa-install";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LogoutButton } from "@/features/auth/LogoutButton";
 import { ManagementBackLink } from "@/features/tenant/management/components/ManagementBackLink";
 import { GraphEditor } from "@/features/tenant/management/graph";
 import { graphEditPath } from "@/features/tenant/management/routes";
@@ -38,6 +39,7 @@ export default async function TenantGraphEdit({
           <PwaInstall compact />
           <LocaleSelect />
           <ThemeToggle />
+          <LogoutButton />
         </div>
       </header>
       <main className="flex min-h-0 w-full flex-1 flex-col items-start gap-1 px-2 pb-2">

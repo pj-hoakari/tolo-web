@@ -94,3 +94,59 @@ test("ログインに失敗した画面は、テナントのホストでない�
     ).toHaveCount(0);
   }
 });
+
+test("AUTH_MOCKING では、管理ページにログアウトのボタンはなく、ログアウトの経路は 404 になる", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/management");
+
+  await expect(
+    page.getByRole("heading", {
+      level: 2,
+      name: "0123456789abcdef イベント管理",
+    }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "ログアウト" })).toHaveCount(0);
+  const response = await request.post("/auth/logout", {
+    headers: { origin: "http://test.localhost:3100" },
+    maxRedirects: 0,
+  });
+  expect(response.status()).toBe(404);
+});
+
+test("ログアウトした後の画面から、ログアウトしたテナントのホストの管理ページへ戻れる", async ({
+  page,
+}) => {
+  await page.goto(
+    "http://localhost:3100/auth/logged-out?state=test.localhost:3100",
+  );
+
+  await expect(
+    page.getByRole("heading", { level: 1, name: "ログアウトしました" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "もう一度ログインする" }).click();
+
+  await expect(
+    page.getByRole("heading", {
+      level: 2,
+      name: "0123456789abcdef イベント管理",
+    }),
+  ).toBeVisible();
+  expect(page.url()).toBe("http://test.localhost:3100/management");
+});
+
+test("ログアウトした後の画面は、テナントのホストでない戻り先へのリンクを出さない", async ({
+  page,
+}) => {
+  await page.goto(
+    `http://localhost:3100/auth/logged-out?state=${encodeURIComponent("test.localhost:3100@evil.example")}`,
+  );
+
+  await expect(
+    page.getByRole("heading", { level: 1, name: "ログアウトしました" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "もう一度ログインする" }),
+  ).toHaveCount(0);
+});

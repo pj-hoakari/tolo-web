@@ -563,6 +563,11 @@
       "submit": "Log in",
       "invalidCredentials": "The ID or password is incorrect.",
       "failed": "Could not log in. If this keeps happening, start again from your tenant's page."
-    }
+    },
+    "loggedOut": {
+      "title": "You have logged out",
+      "login": "Log in again"
+    },
+    "logout": "Log out"
   }
 }

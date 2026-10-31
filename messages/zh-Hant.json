@@ -563,6 +563,11 @@
       "submit": "登入",
       "invalidCredentials": "ID 或密碼不正確。",
       "failed": "無法登入。如果再次嘗試仍然失敗，請從你使用的租戶頁面重新開始。"
-    }
+    },
+    "loggedOut": {
+      "title": "已登出",
+      "login": "再次登入"
+    },
+    "logout": "登出"
   }
 }

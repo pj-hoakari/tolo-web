@@ -563,6 +563,11 @@
       "submit": "Iniciar sesión",
       "invalidCredentials": "El ID o la contraseña no son correctos.",
       "failed": "No se pudo iniciar sesión. Si vuelve a ocurrir, empieza de nuevo desde la página de tu inquilino."
-    }
+    },
+    "loggedOut": {
+      "title": "Has cerrado la sesión",
+      "login": "Volver a iniciar sesión"
+    },
+    "logout": "Cerrar sesión"
   }
 }

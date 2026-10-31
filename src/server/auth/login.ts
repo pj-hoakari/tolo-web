@@ -12,7 +12,7 @@ import {
 } from "better-auth/cookies";
 import { z } from "zod";
 import { challengeLogin } from "@/features/auth/idpLogin";
-import { rootOrigin } from "@/lib/control/tenant";
+import { rootOrigin, tenantOrigin } from "@/lib/control/tenant";
 import type { RealAuth } from "./betterAuth";
 import { idpDiscovery } from "./discovery";
 
@@ -41,6 +41,9 @@ type ReceivedTokens = Pick<
   PendingLogin,
   "accessToken" | "refreshToken" | "accessTokenExpiresAt" | "idToken"
 >;
+
+const TENANT_ACCESS_TOKEN = "tenantAccessToken";
+const EVENT_ACCESS_TOKEN = "eventAccessToken";
 
 const sha256 = (value: string) =>
   createHash("sha256").update(value).digest("base64url");
@@ -259,7 +262,7 @@ export const loginHandoff = {
           kind: "staff",
         });
         await adapter.create({
-          model: "tenantAccessToken",
+          model: TENANT_ACCESS_TOKEN,
           data: {
             sessionId: session.id,
             subject: login.subject,
@@ -282,6 +285,30 @@ export const loginHandoff = {
         );
       },
     ),
+    logOut: createAuthEndpoint.serverOnly({ method: "POST" }, async (ctx) => {
+      const { adapter, internalAdapter, authCookies, secret } = ctx.context;
+      const token = await ctx.getSignedCookie(
+        authCookies.sessionToken.name,
+        secret,
+      );
+      const current = token ? await internalAdapter.findSession(token) : null;
+      let idToken: string | null = null;
+      if (current) {
+        const where = [{ field: "sessionId", value: current.session.id }];
+        idToken =
+          (
+            await adapter.findOne<{ idToken?: string | null }>({
+              model: TENANT_ACCESS_TOKEN,
+              where,
+            })
+          )?.idToken ?? null;
+        await adapter.deleteMany({ model: EVENT_ACCESS_TOKEN, where });
+        await adapter.deleteMany({ model: TENANT_ACCESS_TOKEN, where });
+        await internalAdapter.deleteSession(current.session.token);
+      }
+      deleteSessionCookie(ctx);
+      return { idToken };
+    }),
   },
 } satisfies BetterAuthPlugin;
 
@@ -300,6 +327,14 @@ async function keepForLogin(
 
 export function createLoginFlow({ auth, env }: RealAuth) {
   const discovery = idpDiscovery(env.issuer);
+
+  async function endSessionEndpoint() {
+    const { end_session_endpoint } = await discovery();
+    if (!end_session_endpoint) {
+      throw new Error("the IdP publishes no end_session_endpoint");
+    }
+    return end_session_endpoint;
+  }
 
   return {
     async challengeLogin(challenge: string) {
@@ -354,6 +389,28 @@ export function createLoginFlow({ auth, env }: RealAuth) {
         returnHeaders: true,
       });
       return new Response(null, { status: 302, headers });
+    },
+
+    async logout(request: Request): Promise<Response> {
+      const host = request.headers.get("host") ?? "";
+      const origin = tenantOrigin(host);
+      if (!origin || request.headers.get("origin") !== origin) {
+        return new Response(null, { status: 403 });
+      }
+      const { headers, response } = await auth.api.logOut({
+        headers: request.headers,
+        returnHeaders: true,
+      });
+      const { idToken } = response;
+      const loggedOut = `${rootOrigin()}/auth/logged-out`;
+      const target = new URL(idToken ? await endSessionEndpoint() : loggedOut);
+      if (idToken) {
+        target.searchParams.set("id_token_hint", idToken);
+        target.searchParams.set("post_logout_redirect_uri", loggedOut);
+      }
+      target.searchParams.set("state", host);
+      headers.set("location", target.href);
+      return new Response(null, { status: 303, headers });
     },
 
     handoff(request: Request): Promise<Response> {
