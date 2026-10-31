@@ -64,6 +64,7 @@ function idp() {
         token_endpoint: "https://idp.test/oauth2/token",
         userinfo_endpoint: "https://idp.test/userinfo",
         jwks_uri: "https://idp.test/oauth2/jwks",
+        end_session_endpoint: "https://idp.test/connect/logout",
         id_token_signing_alg_values_supported: ["RS256"],
       }),
     ),
@@ -246,6 +247,39 @@ async function handOff(
   const response = await flow.handoff(onHost(url, host, jar.header()));
   jar.store(response);
   return response;
+}
+
+function loginErrorPage(response: Response) {
+  const location = new URL(response.headers.get("location") ?? "");
+  return {
+    status: response.status,
+    page: `${location.origin}${location.pathname}`,
+    ...Object.fromEntries(location.searchParams),
+  };
+}
+
+async function logOut(
+  { flow }: TestAuth,
+  jar: ReturnType<typeof cookieJar>,
+  { host = HOST, origin = `https://${host}` as string | null } = {},
+) {
+  const headers = new Headers({ host, cookie: jar.header() });
+  if (origin) headers.set("origin", origin);
+  const response = await flow.logout(
+    new Request(`https://${host}/auth/logout`, { method: "POST", headers }),
+  );
+  jar.store(response);
+  return response;
+}
+
+async function logInOn(
+  testAuth: TestAuth,
+  provider: ReturnType<typeof idp>,
+  options: Parameters<typeof authorizeAtIdp>[2] = {},
+) {
+  const login = await logInUntilHandoff(testAuth, provider, options);
+  await handOff(testAuth, login.handoffUrl, login.tenantJar, options.host);
+  return login.tenantJar;
 }
 
 function sessionHeaders(jar: ReturnType<typeof cookieJar>) {
@@ -490,7 +524,12 @@ describe("login handoff", () => {
     ).toBe(200);
     const replayed = await handOff(testAuth, login.handoffUrl, replayJar);
 
-    expect(replayed.status).toBe(400);
+    expect(loginErrorPage(replayed)).toEqual({
+      status: 302,
+      page: "https://tolo.test/auth/error",
+      host: HOST,
+      error: "invalid_handoff",
+    });
     expect(replayed.headers.get("referrer-policy")).toBe("no-referrer");
     const ctx = await testAuth.auth.$context;
     expect(await ctx.adapter.findMany({ model: "session" })).toHaveLength(1);
@@ -508,7 +547,10 @@ describe("login handoff", () => {
       login.tenantJar,
     );
 
-    expect(handedOff.status).toBe(400);
+    expect(loginErrorPage(handedOff)).toMatchObject({
+      page: "https://tolo.test/auth/error",
+      error: "invalid_handoff",
+    });
     await expect(
       testAuth.sessionAuth.viewer(sessionHeaders(login.tenantJar), TENANT),
     ).resolves.toEqual({ type: "anonymous" });
@@ -522,12 +564,15 @@ describe("login handoff", () => {
     onOtherHost.host = OTHER_HOST;
 
     expect(
-      (await handOff(testAuth, onOtherHost.href, login.tenantJar, OTHER_HOST))
-        .status,
-    ).toBe(400);
+      loginErrorPage(
+        await handOff(testAuth, onOtherHost.href, login.tenantJar, OTHER_HOST),
+      ),
+    ).toMatchObject({ host: OTHER_HOST, error: "invalid_handoff" });
     expect(
-      (await handOff(testAuth, login.handoffUrl, login.tenantJar)).status,
-    ).toBe(400);
+      loginErrorPage(
+        await handOff(testAuth, login.handoffUrl, login.tenantJar),
+      ),
+    ).toMatchObject({ host: HOST, error: "invalid_handoff" });
   });
 
   it.each([
@@ -549,7 +594,9 @@ describe("login handoff", () => {
       login.tenantJar,
     );
 
-    expect(handedOff.status).toBe(400);
+    expect(loginErrorPage(handedOff)).toMatchObject({
+      error: "invalid_handoff",
+    });
     const ctx = await testAuth.auth.$context;
     expect(await ctx.adapter.findMany({ model: "session" })).toEqual([]);
   });
@@ -573,7 +620,12 @@ describe("login handoff", () => {
       TENANT,
     );
 
-    expect(started.status).toBe(400);
+    expect(loginErrorPage(started)).toEqual({
+      status: 302,
+      page: "https://tolo.test/auth/error",
+      host: HOST,
+      error: "invalid_return",
+    });
     expect(started.headers.getSetCookie()).toEqual([]);
   });
 
@@ -585,7 +637,172 @@ describe("login handoff", () => {
       onHost("https://tolo.test/auth/begin?login=unknown", "tolo.test", ""),
     );
 
-    expect(begun.status).toBe(400);
+    expect(loginErrorPage(begun)).toEqual({
+      status: 302,
+      page: "https://tolo.test/auth/error",
+      error: "login_expired",
+    });
+  });
+
+  it("sends a callback that arrives after its login expired to the error page with the tenant host", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const authorized = await authorizeAtIdp(testAuth, provider);
+    const ctx = await testAuth.auth.$context;
+    await ctx.adapter.update({
+      model: "pendingLogin",
+      where: [{ field: "host", value: HOST }],
+      update: { expiresAt: new Date(Date.now() - 1000) },
+    });
+
+    const completed = await callback(testAuth, authorized);
+
+    expect(loginErrorPage(completed)).toEqual({
+      status: 302,
+      page: "https://tolo.test/auth/error",
+      host: HOST,
+      error: "login_expired",
+    });
+    expect(await ctx.adapter.findMany({ model: "session" })).toEqual([]);
+  });
+
+  it("sends an error the IdP returns to the callback to the error page with the tenant host", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const { authorizeUrl, rootJar } = await authorizeAtIdp(testAuth, provider);
+
+    const answered = await testAuth.auth.handler(
+      onHost(
+        `https://tolo.test/api/auth/callback/tolo-idp?error=access_denied&state=${authorizeUrl.searchParams.get("state")}`,
+        "tolo.test",
+        rootJar.header(),
+      ),
+    );
+
+    expect(loginErrorPage(answered)).toEqual({
+      status: 302,
+      page: "https://tolo.test/auth/error",
+      host: HOST,
+      error: "access_denied",
+    });
+  });
+
+  it("sends a callback without a state to the error page", async () => {
+    idp();
+    const testAuth = await createTestAuth();
+
+    const answered = await testAuth.auth.handler(
+      onHost(
+        "https://tolo.test/api/auth/callback/tolo-idp?code=x",
+        "tolo.test",
+        "",
+      ),
+    );
+
+    expect(loginErrorPage(answered)).toMatchObject({
+      status: 302,
+      page: "https://tolo.test/auth/error",
+    });
+  });
+});
+
+describe("logout", () => {
+  it("ends only this host's session and its tokens, then sends the browser to the IdP's end_session with that session's ID token", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const jar = await logInOn(testAuth, provider);
+    const otherJar = await logInOn(testAuth, provider, {
+      tenantId: OTHER_TENANT,
+      host: OTHER_HOST,
+    });
+    const ctx = await testAuth.auth.$context;
+    const sessions = await ctx.adapter.findMany<{
+      id: string;
+      tenantId: string;
+    }>({ model: "session" });
+    const sessionOf = (tenantId: string) =>
+      sessions.find((session) => session.tenantId === tenantId)?.id;
+    for (const tenantId of [TENANT, OTHER_TENANT]) {
+      await ctx.adapter.create({
+        model: "eventAccessToken",
+        data: {
+          sessionId: sessionOf(tenantId),
+          eventId: "e1",
+          accessToken: `event-access-${tenantId}`,
+          expiresAt: new Date(Date.now() + 60_000),
+        },
+      });
+    }
+
+    const loggedOut = await logOut(testAuth, jar);
+
+    expect(loggedOut.status).toBe(303);
+    const location = new URL(loggedOut.headers.get("location") ?? "");
+    expect(`${location.origin}${location.pathname}`).toBe(
+      "https://idp.test/connect/logout",
+    );
+    expect(Object.fromEntries(location.searchParams)).toEqual({
+      id_token_hint: provider.issued.get(TENANT)?.idToken,
+      post_logout_redirect_uri: "https://tolo.test/auth/logged-out",
+      state: HOST,
+    });
+    expect(jar.cookies.has(SESSION_COOKIE)).toBe(false);
+    await expect(
+      testAuth.sessionAuth.viewer(sessionHeaders(otherJar), OTHER_TENANT),
+    ).resolves.toMatchObject({ type: "staff" });
+    for (const model of ["session", "tenantAccessToken", "eventAccessToken"]) {
+      const rows = await ctx.adapter.findMany<{
+        id: string;
+        sessionId?: string;
+      }>({ model });
+      expect(
+        rows.map((row) => (model === "session" ? row.id : row.sessionId)),
+        model,
+      ).toEqual([sessionOf(OTHER_TENANT)]);
+    }
+  });
+
+  it("sends a host that has no session straight to the logged-out page", async () => {
+    const testAuth = await createTestAuth();
+
+    const loggedOut = await logOut(testAuth, cookieJar());
+
+    expect(loggedOut.status).toBe(303);
+    expect(loggedOut.headers.get("location")).toBe(
+      `https://tolo.test/auth/logged-out?state=${HOST}`,
+    );
+  });
+
+  it.each([
+    ["no origin", null],
+    ["another site", "https://evil.example"],
+    ["another tenant host", `https://${OTHER_HOST}`],
+    ["the same host over http", `http://${HOST}`],
+    ["an opaque origin", "null"],
+  ])("refuses a logout from %s and keeps the session", async (_, origin) => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const jar = await logInOn(testAuth, provider);
+
+    const refused = await logOut(testAuth, jar, { origin });
+
+    expect(refused.status).toBe(403);
+    await expect(
+      testAuth.sessionAuth.viewer(sessionHeaders(jar), TENANT),
+    ).resolves.toMatchObject({ type: "staff" });
+  });
+});
+
+describe("login page", () => {
+  it("posts the credentials to the IdP's login API and resumes the authorization with the challenge", async () => {
+    idp();
+    const testAuth = await createTestAuth();
+
+    await expect(testAuth.flow.challengeLogin("challenge-1")).resolves.toEqual({
+      endpoint: "https://idp.test/api/login",
+      challenge: "challenge-1",
+      resumeUrl: "https://idp.test/oauth2/authorize?challenge=challenge-1",
+    });
   });
 });
 
@@ -614,6 +831,44 @@ describe.skipIf(!process.env.AUTH_TEST_DATABASE_URL)("on PostgreSQL", () => {
     await Promise.all(pools.map((created) => created.end()));
   });
 
+  it("logs a host out together with its token rows", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth(pool());
+    const jar = await logInOn(testAuth, provider);
+    const ctx = await testAuth.auth.$context;
+    const current = await testAuth.auth.api.getSession({
+      headers: sessionHeaders(jar),
+    });
+    const sessionId = current?.session.id ?? "";
+    await ctx.adapter.create({
+      model: "eventAccessToken",
+      data: {
+        sessionId,
+        eventId: "e1",
+        accessToken: "event-access",
+        expiresAt: new Date(Date.now() + 60_000),
+      },
+    });
+
+    expect((await logOut(testAuth, jar)).status).toBe(303);
+
+    expect(
+      await ctx.adapter.findMany({
+        model: "session",
+        where: [{ field: "id", value: sessionId }],
+      }),
+    ).toEqual([]);
+    for (const model of ["tenantAccessToken", "eventAccessToken"]) {
+      expect(
+        await ctx.adapter.findMany({
+          model,
+          where: [{ field: "sessionId", value: sessionId }],
+        }),
+        model,
+      ).toEqual([]);
+    }
+  });
+
   it("hands a login over once", async () => {
     const provider = idp();
     const testAuth = await createTestAuth(pool());
@@ -628,7 +883,7 @@ describe.skipIf(!process.env.AUTH_TEST_DATABASE_URL)("on PostgreSQL", () => {
       handOff(testAuth, login.handoffUrl, replayJar),
     ]);
 
-    expect([handedOff.status, replayed.status].sort()).toEqual([200, 400]);
+    expect([handedOff.status, replayed.status].sort()).toEqual([200, 302]);
     const ctx = await testAuth.auth.$context;
     expect(await ctx.adapter.findMany({ model: "session" })).toHaveLength(1);
     expect(await ctx.adapter.findMany({ model: "account" })).toEqual([

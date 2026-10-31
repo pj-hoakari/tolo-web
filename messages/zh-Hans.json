@@ -549,5 +549,25 @@
     "otherIntro": "不同浏览器和设备的操作步骤有所不同。请选择适合你设备的步骤。如果没有相应选项，请使用下方支持的浏览器打开此页面。",
     "insecure": "安装需要 HTTPS 连接。请使用公开网站的 HTTPS URL 打开。",
     "close": "关闭"
+  },
+  "Auth": {
+    "error": {
+      "title": "无法登录",
+      "retry": "重新登录",
+      "reopen": "请重新打开你使用的租户页面并重新登录。"
+    },
+    "login": {
+      "title": "登录",
+      "usernameLabel": "ID",
+      "passwordLabel": "密码",
+      "submit": "登录",
+      "invalidCredentials": "ID 或密码不正确。",
+      "failed": "无法登录。如果再次尝试仍然失败，请从你使用的租户页面重新开始。"
+    },
+    "loggedOut": {
+      "title": "已退出登录",
+      "login": "再次登录"
+    },
+    "logout": "退出登录"
   }
 }

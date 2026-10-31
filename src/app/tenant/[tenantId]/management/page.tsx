@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { LocaleSelect } from "@/components/locale-select";
 import { PwaInstall } from "@/components/pwa/pwa-install";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LogoutButton } from "@/features/auth/LogoutButton";
 import { TenantEvents } from "@/features/tenant/management/events/TenantEvents";
 import { getPwaMetadata } from "@/lib/pwa/manifest";
 import { requireStaff } from "@/server/auth";
@@ -27,6 +28,7 @@ export default async function TenantEventManagement({
           <PwaInstall compact />
           <LocaleSelect />
           <ThemeToggle />
+          <LogoutButton />
         </div>
       </header>
       <main className="flex w-full flex-1 justify-center px-10 py-5">

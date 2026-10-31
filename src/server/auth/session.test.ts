@@ -103,7 +103,11 @@ async function signIn(
 
 async function storedTenantAccess(auth: TestAuth, sessionId: string) {
   const ctx = await auth.$context;
-  return ctx.adapter.findOne<{ accessToken: string; refreshToken: string }>({
+  return ctx.adapter.findOne<{
+    accessToken: string;
+    refreshToken: string;
+    idToken?: string;
+  }>({
     model: "tenantAccessToken",
     where: [{ field: "sessionId", value: sessionId }],
   });
@@ -141,6 +145,7 @@ function idpTokenEndpoint() {
         return HttpResponse.json({
           access_token: `access-from-${refreshToken}`,
           refresh_token: `${refreshToken}-next`,
+          id_token: `id-from-${refreshToken}`,
           token_type: "Bearer",
           expires_in: 900,
         });
@@ -184,7 +189,7 @@ describe("tenant_access", () => {
     expect(idp).toHaveLength(0);
   });
 
-  it("refreshes an expired token once for concurrent requests and keeps the rotated refresh token", async () => {
+  it("refreshes an expired token once for concurrent requests and keeps the rotated refresh token and the reissued ID token", async () => {
     const { auth, sessionAuth } = createTestAuth();
     const idp = idpTokenEndpoint();
     const { headers, session } = await signIn(auth, {
@@ -208,6 +213,7 @@ describe("tenant_access", () => {
     expect(await storedTenantAccess(auth, session.id)).toMatchObject({
       accessToken: "access-from-refresh-1",
       refreshToken: "refresh-1-next",
+      idToken: "id-from-refresh-1",
     });
   });
 

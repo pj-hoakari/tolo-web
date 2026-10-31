@@ -58,7 +58,31 @@ Better Auth の `baseURL` はルートドメインの origin です。`ROOT_DOMA
 
 `/rpc` への要求には、ヘッダ `x-csrf-token: orpc` が必要です。このヘッダのない要求は 403 で拒否します。ブラウザの oRPC のクライアントは、このヘッダを付けて送ります。
 
-ルートドメインのログイン画面とログアウトは、まだありません。
+### ログイン画面
+
+tolo-idp は、ログイン状態のない認可要求を受けると、login challenge を付けてルートドメインの `/login` へ移します。`/login` は ID とパスワードを受け取り、challenge と一緒にブラウザから tolo-idp の `POST /api/login` へ送ります。tolo-idp が受け付けたら、challenge を付けて認可エンドポイントへ戻り、tolo-idp が元の認可要求を続けます。ID かパスワードが違うときは、同じ画面で入力し直せます。
+
+`/login` の応答には `Content-Security-Policy: frame-ancestors 'none'` を付けて、ほかのサイトに埋め込ませません。`AUTH_MOCKING` が `enabled` のときは、`/login` は 404 を返します。
+
+tolo-idp には login challenge がまだありません（MER-338）。それまでは、次の約束事を仮に置いています。約束事は `src/features/auth/idpLogin.ts` にまとめています。
+
+- tolo-idp は、ログイン画面を `/login?challenge=<challenge>` で開きます。
+- `POST /api/login` は issuer と同じ origin にあり、JSON の `username`、`password`、`challenge` を受け取ります。ID かパスワードが違うときは 401 を返します。
+- 受け付けた後に、Discovery の `authorization_endpoint` を `challenge=<challenge>` を付けて開くと、tolo-idp は元の認可要求を続けます。
+
+tolo-idp の `POST /api/login` の CORS では、ルートドメインの origin から Cookie を付けて送る要求を許可します。
+
+### ログインに失敗したとき
+
+ログインの途中で失敗すると、ルートドメインの `/auth/error` へ移ります。たとえば、ログインの開始から 10 分を過ぎたとき、引き渡しのコードが使えないとき、tolo-idp が callback にエラーを返したときです。ログインを始めたテナントのホストが分かるときは、そのホストの管理ページへのリンクを出します。リンク先は、ルートドメインの 1 階層下のホストに限ります。
+
+### ログアウト
+
+管理ページのヘッダの「ログアウト」は、そのテナントのホストの `/auth/logout` へ POST します。`/auth/logout` は、`Origin` ヘッダがそのホストの origin でない要求を 403 で拒否します。受け付けると、そのホストのセッションと外部トークンを消し、tolo-idp の `end_session_endpoint` へ移ります。ほかのテナントのホストのセッションは残ります。
+
+`end_session_endpoint` には、`id_token_hint` にセッションの ID Token を、`post_logout_redirect_uri` に `<baseURL>/auth/logged-out` を付けます。ID Token は、Refresh で tolo-idp が発行し直すたびに新しいものへ入れ替えます。tolo-idp の `console-ui` には、この URL を `post_logout_redirect_uri` として登録します。ログアウトしたテナントのホストは `state` で渡し、`/auth/logged-out` はそのホストの管理ページへのリンクを出します。
+
+セッションがすでに切れているホストでは ID Token がないので、tolo-idp を通らずに `/auth/logged-out` へ移ります。このとき tolo-idp のログイン状態は残ります。`AUTH_MOCKING` が `enabled` のときは、ボタンを出さず、`/auth/logout` は 404 を返します。
 
 ## Docker Compose での開発環境
 

@@ -549,5 +549,25 @@
     "otherIntro": "Steps vary by browser and device. Choose the instructions for your device. If an option is missing, open this page in one of the supported browsers below.",
     "insecure": "Installation requires HTTPS. Open the public site using its HTTPS URL.",
     "close": "Close"
+  },
+  "Auth": {
+    "error": {
+      "title": "Could not log in",
+      "retry": "Log in again",
+      "reopen": "Open your tenant's page again and log in."
+    },
+    "login": {
+      "title": "Log in",
+      "usernameLabel": "ID",
+      "passwordLabel": "Password",
+      "submit": "Log in",
+      "invalidCredentials": "The ID or password is incorrect.",
+      "failed": "Could not log in. If this keeps happening, start again from your tenant's page."
+    },
+    "loggedOut": {
+      "title": "You have logged out",
+      "login": "Log in again"
+    },
+    "logout": "Log out"
   }
 }

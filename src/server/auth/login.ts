@@ -1,7 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import type { BetterAuthPlugin, GenericEndpointContext } from "better-auth";
 import {
-  APIError,
   createAuthEndpoint,
   createAuthMiddleware,
   getOAuthState,
@@ -12,7 +11,10 @@ import {
   setSessionCookie,
 } from "better-auth/cookies";
 import { z } from "zod";
+import { challengeLogin } from "@/features/auth/idpLogin";
+import { rootOrigin, tenantOrigin } from "@/lib/control/tenant";
 import type { RealAuth } from "./betterAuth";
+import { idpDiscovery } from "./discovery";
 
 export const PROVIDER_ID = "tolo-idp";
 const PENDING_LOGIN = "pendingLogin";
@@ -39,6 +41,9 @@ type ReceivedTokens = Pick<
   PendingLogin,
   "accessToken" | "refreshToken" | "accessTokenExpiresAt" | "idToken"
 >;
+
+const TENANT_ACCESS_TOKEN = "tenantAccessToken";
+const EVENT_ACCESS_TOKEN = "eventAccessToken";
 
 const sha256 = (value: string) =>
   createHash("sha256").update(value).digest("base64url");
@@ -69,6 +74,13 @@ const oauthLoginId = async () => {
   const loginId = (await getOAuthState())?.loginId;
   return typeof loginId === "string" ? loginId : undefined;
 };
+
+export function loginErrorUrl(host?: string, error?: string): string {
+  const url = new URL("/auth/error", rootOrigin());
+  if (host) url.searchParams.set("host", host);
+  if (error) url.searchParams.set("error", error);
+  return url.href;
+}
 
 export function sameHostPath(value: string): string | undefined {
   const base = "http://host.invalid";
@@ -153,7 +165,7 @@ export const loginHandoff = {
             !login.refreshToken ||
             !login.accessTokenExpiresAt
           ) {
-            throw ctx.redirect(`${baseURL}/error?error=login_expired`);
+            throw ctx.redirect(loginErrorUrl(login?.host, "login_expired"));
           }
           const code = randomToken();
           await adapter.update({
@@ -238,9 +250,7 @@ export const loginHandoff = {
           !presented ||
           sha256(presented) !== login.bindingHash
         ) {
-          throw new APIError("BAD_REQUEST", {
-            message: "this login link is invalid or expired; sign in again",
-          });
+          throw ctx.redirect(loginErrorUrl(ctx.body.host, "invalid_handoff"));
         }
         const previous = await ctx.getSignedCookie(
           authCookies.sessionToken.name,
@@ -252,7 +262,7 @@ export const loginHandoff = {
           kind: "staff",
         });
         await adapter.create({
-          model: "tenantAccessToken",
+          model: TENANT_ACCESS_TOKEN,
           data: {
             sessionId: session.id,
             subject: login.subject,
@@ -275,6 +285,30 @@ export const loginHandoff = {
         );
       },
     ),
+    logOut: createAuthEndpoint.serverOnly({ method: "POST" }, async (ctx) => {
+      const { adapter, internalAdapter, authCookies, secret } = ctx.context;
+      const token = await ctx.getSignedCookie(
+        authCookies.sessionToken.name,
+        secret,
+      );
+      const current = token ? await internalAdapter.findSession(token) : null;
+      let idToken: string | null = null;
+      if (current) {
+        const where = [{ field: "sessionId", value: current.session.id }];
+        idToken =
+          (
+            await adapter.findOne<{ idToken?: string | null }>({
+              model: TENANT_ACCESS_TOKEN,
+              where,
+            })
+          )?.idToken ?? null;
+        await adapter.deleteMany({ model: EVENT_ACCESS_TOKEN, where });
+        await adapter.deleteMany({ model: TENANT_ACCESS_TOKEN, where });
+        await internalAdapter.deleteSession(current.session.token);
+      }
+      deleteSessionCookie(ctx);
+      return { idToken };
+    }),
   },
 } satisfies BetterAuthPlugin;
 
@@ -292,18 +326,35 @@ async function keepForLogin(
 }
 
 export function createLoginFlow({ auth, env }: RealAuth) {
+  const discovery = idpDiscovery(env.issuer);
+
+  async function endSessionEndpoint() {
+    const { end_session_endpoint } = await discovery();
+    if (!end_session_endpoint) {
+      throw new Error("the IdP publishes no end_session_endpoint");
+    }
+    return end_session_endpoint;
+  }
+
   return {
+    async challengeLogin(challenge: string) {
+      return challengeLogin(
+        env.issuer,
+        (await discovery()).authorization_endpoint,
+        challenge,
+      );
+    },
+
     async start(request: Request, tenantId: string): Promise<Response> {
       const returnPath = sameHostPath(
         new URL(request.url).searchParams.get("return") ?? "/",
       );
+      const host = request.headers.get("host") ?? "";
       if (!returnPath) {
-        return new Response("return must be a path on this host", {
-          status: 400,
-        });
+        return Response.redirect(loginErrorUrl(host, "invalid_return"), 302);
       }
       return auth.api.startLogin({
-        body: { tenantId, host: request.headers.get("host") ?? "", returnPath },
+        body: { tenantId, host, returnPath },
         asResponse: true,
       });
     },
@@ -318,14 +369,16 @@ export function createLoginFlow({ auth, env }: RealAuth) {
           })
         : null;
       if (!login || login.codeHash || login.expiresAt <= new Date()) {
-        return new Response("this login has expired; sign in again", {
-          status: 400,
-        });
+        return Response.redirect(
+          loginErrorUrl(login?.host, "login_expired"),
+          302,
+        );
       }
       const { headers } = await auth.api.signInSocial({
         body: {
           provider: PROVIDER_ID,
           callbackURL: "/",
+          errorCallbackURL: loginErrorUrl(login.host),
           additionalData: { loginId: login.id },
           additionalParams: {
             resource: `https://${env.resourceHost}/tenants/${login.tenantId}`,
@@ -336,6 +389,28 @@ export function createLoginFlow({ auth, env }: RealAuth) {
         returnHeaders: true,
       });
       return new Response(null, { status: 302, headers });
+    },
+
+    async logout(request: Request): Promise<Response> {
+      const host = request.headers.get("host") ?? "";
+      const origin = tenantOrigin(host);
+      if (!origin || request.headers.get("origin") !== origin) {
+        return new Response(null, { status: 403 });
+      }
+      const { headers, response } = await auth.api.logOut({
+        headers: request.headers,
+        returnHeaders: true,
+      });
+      const { idToken } = response;
+      const loggedOut = `${rootOrigin()}/auth/logged-out`;
+      const target = new URL(idToken ? await endSessionEndpoint() : loggedOut);
+      if (idToken) {
+        target.searchParams.set("id_token_hint", idToken);
+        target.searchParams.set("post_logout_redirect_uri", loggedOut);
+      }
+      target.searchParams.set("state", host);
+      headers.set("location", target.href);
+      return new Response(null, { status: 303, headers });
     },
 
     handoff(request: Request): Promise<Response> {

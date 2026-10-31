@@ -1,20 +1,21 @@
 import { encodeBasicCredentials } from "better-auth/oauth2";
 import { z } from "zod";
 import type { AccessTokenRequest, Viewer } from ".";
-import { discoveryUrl, type RealAuth } from "./betterAuth";
+import type { RealAuth } from "./betterAuth";
+import { idpDiscovery } from "./discovery";
 
 const ABSOLUTE_LIFETIME_MS = 12 * 60 * 60 * 1000;
 const EXPIRY_MARGIN_MS = 5_000;
 const TENANT_ACCESS_TOKEN = "tenantAccessToken";
 const EVENT_ACCESS_TOKEN = "eventAccessToken";
 
-const discoveryDocument = z.object({ token_endpoint: z.string() });
 const tokenExchangeResponse = z.object({
   access_token: z.string(),
   expires_in: z.number(),
 });
 const refreshResponse = tokenExchangeResponse.extend({
   refresh_token: z.string(),
+  id_token: z.string().optional(),
 });
 
 type TenantAccessToken = {
@@ -43,25 +44,10 @@ function oauthError(body: string): unknown {
 }
 
 export function createSessionAuth({ auth, env, lock }: RealAuth) {
-  let tokenEndpoint: Promise<string> | undefined;
-
-  function resolveTokenEndpoint(): Promise<string> {
-    tokenEndpoint ??= fetch(discoveryUrl(env.issuer))
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`IdP discovery failed with ${response.status}`);
-        }
-        return discoveryDocument.parse(await response.json()).token_endpoint;
-      })
-      .catch((err) => {
-        tokenEndpoint = undefined;
-        throw err;
-      });
-    return tokenEndpoint;
-  }
+  const discovery = idpDiscovery(env.issuer);
 
   async function postToTokenEndpoint(params: Record<string, string>) {
-    return fetch(await resolveTokenEndpoint(), {
+    return fetch((await discovery()).token_endpoint, {
       method: "POST",
       headers: {
         authorization: encodeBasicCredentials(env.clientId, env.clientSecret),
@@ -125,9 +111,8 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
         `refreshing tenant_access failed with ${response.status}: ${failure}`,
       );
     }
-    const { access_token, refresh_token, expires_in } = refreshResponse.parse(
-      await response.json(),
-    );
+    const { access_token, refresh_token, expires_in, id_token } =
+      refreshResponse.parse(await response.json());
     await adapter.update({
       model: TENANT_ACCESS_TOKEN,
       where,
@@ -135,6 +120,7 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
         accessToken: access_token,
         refreshToken: refresh_token,
         accessTokenExpiresAt: new Date(Date.now() + expires_in * 1000),
+        ...(id_token && { idToken: id_token }),
       },
     });
     return access_token;

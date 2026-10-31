@@ -549,5 +549,25 @@
     "otherIntro": "不同瀏覽器和裝置的操作步驟有所不同。請選擇適合你裝置的步驟。如果沒有相應選項，請使用下方支援的瀏覽器開啟此頁面。",
     "insecure": "安裝需要 HTTPS 連線。請使用公開網站的 HTTPS URL 開啟。",
     "close": "關閉"
+  },
+  "Auth": {
+    "error": {
+      "title": "無法登入",
+      "retry": "重新登入",
+      "reopen": "請重新開啟你使用的租戶頁面並重新登入。"
+    },
+    "login": {
+      "title": "登入",
+      "usernameLabel": "ID",
+      "passwordLabel": "密碼",
+      "submit": "登入",
+      "invalidCredentials": "ID 或密碼不正確。",
+      "failed": "無法登入。如果再次嘗試仍然失敗，請從你使用的租戶頁面重新開始。"
+    },
+    "loggedOut": {
+      "title": "已登出",
+      "login": "再次登入"
+    },
+    "logout": "登出"
   }
 }

@@ -9,6 +9,15 @@ const nextConfig: NextConfig = {
 
   logging: { incomingRequests: { ignore: [/[?&]code=/] } },
 
+  headers: async () => [
+    {
+      source: "/login",
+      headers: [
+        { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+      ],
+    },
+  ],
+
   allowedDevOrigins: process.env.TUNNEL_SUBDOMAIN
     ? ["*.trycloudflare.com"]
     : [],
