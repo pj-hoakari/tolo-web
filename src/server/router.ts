@@ -26,6 +26,11 @@ import {
   type EdgeDevice as ProtoEdgeDevice,
 } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
 import {
+  type Membership,
+  type TenantInvitation as ProtoTenantInvitation,
+  Role,
+} from "@pj-hoakari/tolo-tenant-management-connect-es/tolo/relation/v1/relation_pb";
+import {
   type Event,
   EventStatus as ProtoEventStatus,
 } from "@pj-hoakari/tolo-tenant-management-connect-es/tolo/tenant/v1/tenant_pb";
@@ -42,6 +47,12 @@ import type {
   TenantEvent,
 } from "@/features/tenant/management/events/type";
 import type { GraphData } from "@/features/tenant/management/graph/type";
+import type {
+  CreatedInvitation,
+  TenantInvitation,
+  TenantMember,
+  TenantRole,
+} from "@/features/tenant/management/members/type";
 import {
   registeredEdgeDeviceWire,
   sampleEdgeDevicesWire,
@@ -59,6 +70,7 @@ import {
 } from "./observation";
 import { consoleSignalingClient, edgeSignalingClient } from "./signaling";
 import {
+  relationAdminClient,
   tenantManagementClient,
   tenantRegistrationClient,
 } from "./tenantManagement";
@@ -133,6 +145,49 @@ function toTenantEvent(event: Event | undefined): TenantEvent {
   }
   return { eventId: event.eventId, name: event.name, status };
 }
+
+const TENANT_ROLES: Partial<Record<Role, TenantRole>> = {
+  [Role.OWNER]: "owner",
+  [Role.STAFF]: "staff",
+};
+
+const PROTO_ROLES: Record<TenantRole, Role> = {
+  owner: Role.OWNER,
+  staff: Role.STAFF,
+};
+
+function toTenantMember(membership: Membership | undefined): TenantMember {
+  const role = membership && TENANT_ROLES[membership.tenantRole];
+  if (!membership || !role) {
+    throw new Error(
+      `unexpected membership from tenant-management: ${membership?.tenantRole}`,
+    );
+  }
+  return {
+    userId: membership.userId,
+    displayName: membership.displayName,
+    role,
+    joinedAt: toISOString(membership.joinedAt),
+  };
+}
+
+function toTenantInvitation(
+  invitation: ProtoTenantInvitation | undefined,
+): TenantInvitation {
+  if (!invitation) {
+    throw new Error("tenant-management returned no invitation");
+  }
+  return {
+    invitationId: invitation.invitationId,
+    displayName: invitation.displayName,
+    expiresAt: toISOString(invitation.expiresAt),
+  };
+}
+
+const memberInput = z.object({
+  tenantId: publicId,
+  userId: z.string().min(1),
+});
 
 const ELEMENT_KINDS: Partial<
   Record<ElementKind, GraphViolation["elementKind"]>
@@ -383,6 +438,82 @@ export const router = {
             to: ProtoEventStatus.CLOSED,
           });
           return toTenantEvent(res.event);
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    listMembers: os
+      .input(z.object({ tenantId: publicId }))
+      .handler(async ({ input }): Promise<{ members: TenantMember[] }> => {
+        try {
+          const res = await relationAdminClient.listMemberships({
+            filter: { case: "tenantId", value: input.tenantId },
+          });
+          return { members: res.memberships.map(toTenantMember) };
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    changeMemberRole: os
+      .input(memberInput.extend({ role: z.enum(["owner", "staff"]) }))
+      .handler(async ({ input }): Promise<TenantMember> => {
+        try {
+          const res = await relationAdminClient.changeTenantRole({
+            tenantId: input.tenantId,
+            userId: input.userId,
+            tenantRole: PROTO_ROLES[input.role],
+          });
+          return toTenantMember(res.membership);
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    removeMember: os
+      .input(memberInput)
+      .handler(async ({ input }): Promise<void> => {
+        try {
+          await relationAdminClient.revokeRole({
+            userId: input.userId,
+            scope: { case: "tenantId", value: input.tenantId },
+          });
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    listInvitations: os
+      .input(z.object({ tenantId: publicId }))
+      .handler(
+        async ({ input }): Promise<{ invitations: TenantInvitation[] }> => {
+          try {
+            const res = await relationAdminClient.listTenantInvitations(input);
+            return { invitations: res.invitations.map(toTenantInvitation) };
+          } catch (err) {
+            throw toORPCError(err);
+          }
+        },
+      ),
+    createInvitation: os
+      .input(z.object({ tenantId: publicId, displayName }))
+      .handler(async ({ input }): Promise<CreatedInvitation> => {
+        try {
+          const res = await relationAdminClient.createTenantInvitation({
+            tenantId: input.tenantId,
+            tenantRole: Role.STAFF,
+            displayName: input.displayName,
+          });
+          return {
+            invitation: toTenantInvitation(res.invitation),
+            invitationToken: res.invitationToken,
+          };
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    revokeInvitation: os
+      .input(z.object({ tenantId: publicId, invitationId: z.string().min(1) }))
+      .handler(async ({ input }): Promise<void> => {
+        try {
+          await relationAdminClient.revokeTenantInvitation(input);
         } catch (err) {
           throw toORPCError(err);
         }

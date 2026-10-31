@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { LocaleSelect } from "@/components/locale-select";
 import { PwaInstall } from "@/components/pwa/pwa-install";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Link } from "@/components/ui/link";
 import { LogoutButton } from "@/features/auth/LogoutButton";
 import { TenantEvents } from "@/features/tenant/management/events/TenantEvents";
 import { getPwaMetadata } from "@/lib/pwa/manifest";
@@ -25,6 +26,9 @@ export default async function TenantEventManagement({
       <header className="flex w-full items-center justify-between px-10 py-5">
         <h2 className="text-2xl font-bold">{t("title", { tenantId })}</h2>
         <div className="flex items-center gap-2">
+          <Link href="/management/members" variant="ghost" size="sm">
+            {t("membersLink")}
+          </Link>
           <PwaInstall compact />
           <LocaleSelect />
           <ThemeToggle />

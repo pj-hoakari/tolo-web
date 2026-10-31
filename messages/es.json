@@ -33,6 +33,7 @@
   },
   "TenantManagement": {
     "title": "{tenantId} Gestión de eventos",
+    "membersLink": "Miembros",
     "create": {
       "label": "Nombre del evento",
       "submit": "Crear",
@@ -571,5 +572,72 @@
       "login": "Volver a iniciar sesión"
     },
     "logout": "Cerrar sesión"
+  },
+  "TenantMembers": {
+    "title": "Miembros de {tenantId}",
+    "eventsLink": "Eventos",
+    "loading": "Cargando…",
+    "retry": "Volver a cargar",
+    "roles": {
+      "owner": "Propietario",
+      "staff": "Personal"
+    },
+    "invite": {
+      "heading": "Invitar a un miembro",
+      "label": "Nombre visible de la persona invitada",
+      "submit": "Crear URL de invitación",
+      "staffOnly": "La persona invitada se une como personal con este nombre visible. Para hacerla propietaria, cambia su rol en la lista de miembros después de que se una.",
+      "url": "URL de invitación",
+      "urlOnce": "Esta URL no se puede volver a mostrar al salir de esta pantalla. Entrégala solo a la persona invitada.",
+      "copy": "Copiar",
+      "copied": "Copiado",
+      "invalid": "Escribe un nombre visible de 64 caracteres como máximo.",
+      "failed": "No se pudo crear la invitación."
+    },
+    "invitations": {
+      "heading": "Invitaciones sin usar",
+      "empty": "No hay invitaciones sin usar.",
+      "error": "No se pudieron cargar las invitaciones.",
+      "expiresAt": "Caduca: {expiresAt}",
+      "revoke": "Revocar",
+      "alreadyUsed": "Esta invitación ya se usó, caducó o se revocó. Vuelve a cargar la lista.",
+      "revokeFailed": "No se pudo revocar la invitación."
+    },
+    "members": {
+      "heading": "Miembros",
+      "empty": "No hay miembros.",
+      "error": "No se pudieron cargar los miembros.",
+      "joinedAt": "Se unió: {joinedAt}",
+      "joinedAtUnknown": "desconocido"
+    },
+    "actions": {
+      "cancel": "Cancelar",
+      "promote": {
+        "button": "Hacer propietario",
+        "title": "Hacer propietario a este miembro",
+        "description": "“{name}” pasará a ser propietario. Los propietarios pueden cambiar el contrato, archivar el inquilino y gestionar los miembros. El nombre visible por sí solo no demuestra que sea la persona que invitaste. Antes de continuar, confírmalo con esa persona por otro medio, como una llamada o en persona. Se unió el {joinedAt}.",
+        "confirm": "Hacer propietario",
+        "failed": "No se pudo hacer propietario a este miembro."
+      },
+      "demote": {
+        "button": "Hacer personal",
+        "title": "Hacer personal a este propietario",
+        "description": "“{name}” pasará a ser personal y ya no podrá cambiar el contrato, archivar el inquilino ni gestionar los miembros.",
+        "confirm": "Hacer personal",
+        "failed": "No se pudo hacer personal a este propietario."
+      },
+      "remove": {
+        "button": "Quitar",
+        "title": "Quitar a este miembro",
+        "description": "“{name}” dejará de pertenecer a este inquilino. Para que vuelva a unirse, envía una nueva invitación.",
+        "confirm": "Quitar",
+        "failed": "No se pudo quitar a este miembro."
+      }
+    },
+    "errors": {
+      "lastOwner": "Un inquilino necesita al menos un propietario. Primero haz propietario a otro miembro.",
+      "memberNotFound": "No se encontró al miembro. Vuelve a cargar la lista.",
+      "stale": "El inquilino cambió y no se pudo realizar la operación. Vuelve a cargar la lista."
+    }
   }
 }

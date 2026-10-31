@@ -17,6 +17,11 @@ import {
 } from "@/features/tenant/management/events/type";
 import type { GraphData } from "@/features/tenant/management/graph/type";
 import type {
+  CreatedInvitation,
+  TenantInvitation,
+  TenantMember,
+} from "@/features/tenant/management/members/type";
+import type {
   EdgeDevice,
   FirestoreToken,
   GuestCrowdSnapshot,
@@ -55,12 +60,30 @@ export type MockRouterOverrides = {
   createEventError?: CommonORPCErrorCode;
   archiveEventError?: CommonORPCErrorCode;
   restoreEventError?: CommonORPCErrorCode;
+  members?: TenantMember[];
+  listMembersError?: boolean;
+  createInvitationError?: CommonORPCErrorCode;
   guestComponents?: GuestPageComponent[];
   guideMap?: GuestGuideMap;
   getGuideMapError?: boolean;
 };
 
 export const MOCK_SERVER_MESSAGE = "message from the mock server";
+
+export const SAMPLE_MEMBERS: TenantMember[] = [
+  {
+    userId: "user-owner",
+    displayName: "山田 太郎",
+    role: "owner",
+    joinedAt: "2026-10-01T00:00:00.000Z",
+  },
+  {
+    userId: "user-staff",
+    displayName: "佐藤 花子",
+    role: "staff",
+    joinedAt: "2026-10-29T01:30:00.000Z",
+  },
+];
 
 /**
  * 本物の `@/server/router` と同じ shape のモック router。
@@ -82,6 +105,9 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     createEventError,
     archiveEventError,
     restoreEventError,
+    members: initialMembers = SAMPLE_MEMBERS,
+    listMembersError = false,
+    createInvitationError,
     guestComponents = [...DEFAULT_GUEST_PAGE_COMPONENTS],
     guideMap,
     getGuideMapError = false,
@@ -96,6 +122,28 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
   ];
   let nextEventNumber = events.length + 1;
   let devices = [...initialDevices];
+  let members = structuredClone(initialMembers);
+  let invitations: TenantInvitation[] = [
+    {
+      invitationId: "invitation-1",
+      displayName: "鈴木 一郎",
+      expiresAt: "2026-11-05T01:00:00.000Z",
+    },
+  ];
+  let nextInvitationNumber = invitations.length + 1;
+
+  const findMember = (userId: string) => {
+    const member = members.find((m) => m.userId === userId);
+    if (!member) throw new ORPCError("NOT_FOUND");
+    return member;
+  };
+  const keepAnotherOwner = (userId: string) => {
+    if (!members.some((m) => m.role === "owner" && m.userId !== userId)) {
+      throw new ORPCError("PRECONDITION_FAILED", {
+        message: "the tenant must keep at least one owner",
+      });
+    }
+  };
 
   return {
     graph: {
@@ -265,6 +313,86 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           }
           event.status = "closed";
           return event;
+        }),
+      listMembers: os
+        .input(z.object({ tenantId: z.string().min(1) }))
+        .handler(async (): Promise<{ members: TenantMember[] }> => {
+          if (listMembersError) {
+            throw new ORPCError("INTERNAL_SERVER_ERROR");
+          }
+          return { members: structuredClone(members) };
+        }),
+      changeMemberRole: os
+        .input(
+          z.object({
+            tenantId: z.string().min(1),
+            userId: z.string().min(1),
+            role: z.enum(["owner", "staff"]),
+          }),
+        )
+        .handler(async ({ input }): Promise<TenantMember> => {
+          const member = findMember(input.userId);
+          if (input.role !== "owner") keepAnotherOwner(input.userId);
+          member.role = input.role;
+          return structuredClone(member);
+        }),
+      removeMember: os
+        .input(
+          z.object({ tenantId: z.string().min(1), userId: z.string().min(1) }),
+        )
+        .handler(async ({ input }): Promise<void> => {
+          findMember(input.userId);
+          keepAnotherOwner(input.userId);
+          members = members.filter((m) => m.userId !== input.userId);
+        }),
+      listInvitations: os
+        .input(z.object({ tenantId: z.string().min(1) }))
+        .handler(
+          async (): Promise<{ invitations: TenantInvitation[] }> => ({
+            invitations: structuredClone(invitations),
+          }),
+        ),
+      createInvitation: os
+        .input(
+          z.object({
+            tenantId: z.string().min(1),
+            displayName: z.string().trim().min(1).max(64),
+          }),
+        )
+        .handler(async ({ input }): Promise<CreatedInvitation> => {
+          if (createInvitationError !== undefined) {
+            throw new ORPCError(createInvitationError, {
+              message: MOCK_SERVER_MESSAGE,
+            });
+          }
+          const number = nextInvitationNumber++;
+          const invitation: TenantInvitation = {
+            invitationId: `invitation-${number}`,
+            displayName: input.displayName,
+            expiresAt: new Date(
+              Date.now() + 7 * 24 * 60 * 60 * 1000,
+            ).toISOString(),
+          };
+          invitations.push(invitation);
+          return {
+            invitation,
+            invitationToken: `mock-invitation-token-${number}`,
+          };
+        }),
+      revokeInvitation: os
+        .input(
+          z.object({
+            tenantId: z.string().min(1),
+            invitationId: z.string().min(1),
+          }),
+        )
+        .handler(async ({ input }): Promise<void> => {
+          if (!invitations.some((i) => i.invitationId === input.invitationId)) {
+            throw new ORPCError("PRECONDITION_FAILED");
+          }
+          invitations = invitations.filter(
+            (i) => i.invitationId !== input.invitationId,
+          );
         }),
     },
     guest: {

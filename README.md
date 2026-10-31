@@ -186,7 +186,7 @@ curl -sS -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $
   -d "{\"tenantId\":\"$TID\",\"ownershipClaimToken\":\"$CLAIM\",\"subdomain\":\"acme\",\"displayName\":\"Owner\"}" \
   http://localhost:8080/tolo.tenant.v1.TenantService/ClaimTenantOwnership
 
-export TENANT_ACCESS_TOKEN=$(./scripts/dev/fakeidp-token.sh -k tenant_access -b user-owner -t "$TID" -s "events.read events.manage" -l 86400)
+export TENANT_ACCESS_TOKEN=$(./scripts/dev/fakeidp-token.sh -k tenant_access -b user-owner -t "$TID" -s "tenant.read tenant.write events.read events.manage" -l 86400)
 echo "$TID"
 ```
 
@@ -209,6 +209,14 @@ GATEWAY_URL=http://127.0.0.1:8080 NEXT_PUBLIC_API_MOCKING=disabled TENANT_SUBDOM
 上の curl の手順の代わりに、ルートドメインのトップ（`http://localhost:3000/`）の「テナントを作成」から `/onboarding` を開いてもテナントを作れます。テナント名、サブドメイン名、オーナーのメールアドレス、オーナーの表示名を入力すると、`web` がテナントの登録を始め、偽 IdP から scope が `tenant.join` の `registration` トークンを発行し、所有権を取得します。オーナーはメールアドレスを `sub` とするユーザーになり、入力した表示名でテナントに所属します。表示名は 64 文字までです。
 
 `web` は偽 IdP の URL を環境変数 `FAKEIDP_URL` から読みます。未設定のときは `http://127.0.0.1:8082` を使います。
+
+## テナントのメンバー管理ページ
+
+`/management/members` は、テナントのメンバーと招待を管理するページです。イベント管理ページのヘッダの「メンバー管理」から開きます。`web` はこのページからの呼び出しでも `tenant_access` トークンを Service Gateway へ送り、Service Gateway は呼び出しを Tenant Management の RelationAdminService へ転送します。メンバーの一覧は `tenant.read` を、招待の作成・一覧・取り消し、テナントロールの変更、メンバーの削除は `tenant.write` を求めます。上の手順の `TENANT_ACCESS_TOKEN` はこの 2 つの scope も持ちます。
+
+招待を作るときは、招待する人の表示名を決めます。招待で付けるテナントロールはスタッフだけです。オーナーを加えるときは、スタッフとして参加した人をメンバーの一覧からオーナーにします。画面はオーナーにする前に電話や対面など別の経路で本人に確かめるよう促し、その手がかりとして参加日時を出します。最後のオーナーをスタッフにする操作と削除する操作は Tenant Management が拒否し、画面はオーナーが 1 人以上必要であることを表示します。
+
+招待を作ると、画面は招待 URL を一度だけ表示します。招待 URL はページを開いているテナントのホストの `/invitation` に招待トークンを付けたもので、テナントの公開 ID を含みません。
 
 ## Learn More
 
