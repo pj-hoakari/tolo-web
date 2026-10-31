@@ -20,9 +20,36 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## 認証
+
+`web` のサーバーはブラウザのセッションに対応する外部トークンを、Service Gateway と tolo-edge-bridge への呼び出しに付けます。トークンの得かたは環境変数 `AUTH_MOCKING` で切り替えます。
+
+`AUTH_MOCKING` が `enabled` のときは、ログインのないモックを使います。テナントのサブドメインのホストへの要求は、そのテナントのスタッフからの要求として扱います。スタッフのユーザー ID は `AUTH_MOCK_USER_ID` の値で、既定は `user-owner` です。呼び出しには環境変数に設定した固定のトークンを付けます。`tenant_access` には `TENANT_ACCESS_TOKEN`、管理ページの `event_access` には `GRAPH_ACCESS_TOKEN`、観測ページの `event_access` には `OBSERVATION_ACCESS_TOKEN` を使います。`compose.yaml`、`.env.example`、e2e の `playwright.config.ts` は、この変数を `enabled` にします。
+
+モックを使えるのは、`ROOT_DOMAIN` が `localhost` か `localhost` の下のドメインのときです。`ROOT_DOMAIN` を設定しないときは `localhost` になります。ほかのルートドメインでモックを使うときは、そのドメインを `AUTH_MOCKING_ALLOWED_ROOT_DOMAINS` にカンマで区切って並べます。許可されていないルートドメインで `AUTH_MOCKING` を `enabled` にすると、サーバーは起動時に終了します。
+
+`AUTH_MOCKING` が `enabled` でないときは、Better Auth のセッションを使います。セッションと外部トークンは BFF 専用の PostgreSQL に置きます。次の環境変数がすべて必要です。1 つでも欠けていると、サーバーは起動時に終了します。
+
+| 環境変数                 | 内容                                                           |
+| ------------------------ | -------------------------------------------------------------- |
+| `AUTH_DATABASE_URL`      | BFF 専用の PostgreSQL の接続 URL                               |
+| `AUTH_SECRET`            | Better Auth の秘密鍵（32 文字以上）                            |
+| `AUTH_IDP_ISSUER`        | tolo-idp の issuer。エンドポイントは Discovery で解決します    |
+| `AUTH_IDP_CLIENT_ID`     | BFF の client ID（`console-ui`）                               |
+| `AUTH_IDP_CLIENT_SECRET` | BFF の client secret                                           |
+| `AUTH_RESOURCE_HOST`     | `resource` の URI に使う論理ホスト。このホストへは通信しません |
+
+データベースのテーブルは、空のデータベースに `db/auth.sql` を 1 回だけ適用して作ります。
+
+```bash
+AUTH_DATABASE_URL=postgres://... pnpm db:auth:migrate
+```
+
+ログインと、ルートドメインからテナントのホストへのセッションの引き渡しは、まだありません。
+
 ## Docker Compose での開発環境
 
-`compose.yaml` は Firebase エミュレータ（Firestore と Auth）、開発用の偽 IdP（`fakeidp`）、tolo-edge-bridge、Next.js の開発サーバー（`web`）を起動します。tolo-edge-bridge はすべての RPC で `event_access` トークンを検証します。`web` は、管理ページと観測デバイス管理ページからの呼び出しでは環境変数 `GRAPH_ACCESS_TOKEN`、観測ページからの呼び出しでは `OBSERVATION_ACCESS_TOKEN` のトークンを `Authorization: Bearer` で tolo-edge-bridge へ送ります。
+`compose.yaml` は Firebase エミュレータ（Firestore と Auth）、開発用の偽 IdP（`fakeidp`）、tolo-edge-bridge、Next.js の開発サーバー（`web`）を起動します。tolo-edge-bridge はすべての RPC で `event_access` トークンを検証します。`compose.yaml` は `AUTH_MOCKING` を `enabled` にするので、`web` は「認証」の節のモックで動きます。このとき `web` は、管理ページと観測デバイス管理ページからの呼び出しでは環境変数 `GRAPH_ACCESS_TOKEN`、観測ページからの呼び出しでは `OBSERVATION_ACCESS_TOKEN` のトークンを `Authorization: Bearer` で tolo-edge-bridge へ送ります。
 
 ブラウザは、tolo-edge-bridge が発行した Firebase のカスタムトークンで Auth エミュレータにサインインしてから、シグナリング文書を読み書きします。Firebase エミュレータはこのリポジトリの `firebase-emulator/` からビルドし、同じディレクトリのセキュリティルール（tolo-edge-bridge のシグナリング文書のルールと同じもの）を適用します。ホストへは Firestore を `localhost:8080`、Auth を `localhost:9099`、Emulator UI を `http://localhost:4000` で公開します。
 
@@ -101,7 +128,7 @@ task tunnel:stop
 
 ## テナントのイベント管理ページ
 
-`/management` は、テナントのイベントを一覧し、作成し、アーカイブするページです。`web` はこのページからの呼び出しで、環境変数 `TENANT_ACCESS_TOKEN` の `tenant_access` トークンを Service Gateway（`GATEWAY_URL`）へ送ります。Service Gateway はその呼び出しを Tenant Management へ転送します。
+`/management` は、テナントのイベントを一覧し、作成し、アーカイブするページです。`AUTH_MOCKING` が `enabled` のとき、`web` はこのページからの呼び出しで、環境変数 `TENANT_ACCESS_TOKEN` の `tenant_access` トークンを Service Gateway（`GATEWAY_URL`）へ送ります。Service Gateway はその呼び出しを Tenant Management へ転送します。
 
 `compose.yaml` は Service Gateway と Tenant Management を起動しません。開発では、tolo-service-gateway の compose で Service Gateway、偽 IdP、Tenant Management を起動し、Next.js はホストで起動します。tolo-service-gateway の Service Gateway は、この compose の Firestore エミュレータと同じポート 8080 を使います。そのため、2 つの compose は同時に起動できません。
 
@@ -132,10 +159,10 @@ echo "$TID"
 
 ### 起動と開く URL
 
-同じシェルで、このリポジトリのディレクトリから Next.js を起動します。`NEXT_PUBLIC_API_MOCKING` が `enabled` だと API がモックに置き換わるので、ここでは `disabled` にします。サブドメイン名を Service Gateway に問い合わせるため、`TENANT_SUBDOMAIN_MOCKING` も `disabled` にします。
+同じシェルで、このリポジトリのディレクトリから Next.js を起動します。`NEXT_PUBLIC_API_MOCKING` が `enabled` だと API がモックに置き換わるので、ここでは `disabled` にします。サブドメイン名を Service Gateway に問い合わせるため、`TENANT_SUBDOMAIN_MOCKING` も `disabled` にします。`TENANT_ACCESS_TOKEN` を使うため、`AUTH_MOCKING` は `enabled` にします。
 
 ```bash
-GATEWAY_URL=http://127.0.0.1:8080 NEXT_PUBLIC_API_MOCKING=disabled TENANT_SUBDOMAIN_MOCKING=disabled pnpm dev
+GATEWAY_URL=http://127.0.0.1:8080 NEXT_PUBLIC_API_MOCKING=disabled TENANT_SUBDOMAIN_MOCKING=disabled AUTH_MOCKING=enabled pnpm dev
 ```
 
 `http://acme.localhost:3000/management` を開きます。`acme` は所有権の取得で決めたサブドメイン名です。
