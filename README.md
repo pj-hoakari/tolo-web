@@ -54,7 +54,7 @@ AUTH_DATABASE_URL=postgres://... pnpm db:auth:migrate
 3. callback を受けたルートドメインは、ルートドメインのセッションを消し、Better Auth の account の行にも外部トークンを残しません。外部トークンは引き渡しのために保ち、一回限りの引き渡しコード（1 分）を付けて、テナントのホストの `/auth/handoff` へ移ります。
 4. テナントのホストは、コードがそのホストのもので期限内であり、1 の Cookie と合うときだけ、そのホストのセッションを作ります。コードは 1 回しか使えません。そのあと、コードを含まない元のページへ移ります。
 
-Better Auth の `baseURL` はルートドメインの origin です。`ROOT_DOMAIN` が `localhost` か `localhost` の下のドメインなら `http`、それ以外なら `https` で、ポートは付けません。tolo-idp の `console-ui` には `redirect_uri` として `<baseURL>/api/auth/callback/tolo-idp` を登録します。認可で求める scope は `openid`、`tenant.read`、`events.read`、`events.operate`、`events.report` です。
+Better Auth の `baseURL` はルートドメインの origin です。`ROOT_DOMAIN` が `localhost` か `localhost` の下のドメインなら `http`、それ以外なら `https` で、ポートは付けません。tolo-idp の `console-ui` には `redirect_uri` として `<baseURL>/api/auth/callback/tolo-idp` を登録します。認可で求める scope は `openid` と、`tenant.read`、`tenant.write`、`events.read`、`events.manage`、`events.operate`、`events.report` です。tolo-idp は、このうちロールに許された scope だけを発行します。
 
 `/rpc` への要求には、ヘッダ `x-csrf-token: orpc` が必要です。このヘッダのない要求は 403 で拒否します。ブラウザの oRPC のクライアントは、このヘッダを付けて送ります。
 

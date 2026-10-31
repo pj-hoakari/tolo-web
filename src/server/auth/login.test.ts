@@ -346,7 +346,8 @@ describe("login handoff", () => {
       client_id: "console-ui",
       redirect_uri: "https://tolo.test/api/auth/callback/tolo-idp",
       response_type: "code",
-      scope: "openid tenant.read events.read events.operate events.report",
+      scope:
+        "openid tenant.read tenant.write events.read events.manage events.operate events.report",
       resource: `https://api.tolo.test/tenants/${TENANT}`,
       audience: "backend-api",
       code_challenge_method: "S256",

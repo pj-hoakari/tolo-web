@@ -139,7 +139,9 @@ export function authOptions(env: AuthEnv) {
             scopes: [
               "openid",
               "tenant.read",
+              "tenant.write",
               "events.read",
+              "events.manage",
               "events.operate",
               "events.report",
             ],
