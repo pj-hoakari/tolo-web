@@ -3,6 +3,7 @@ import "server-only";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { resolveTenant } from "@/lib/control/tenant";
+import { issueRegistrationToken } from "../idp";
 import { resolveTenantSubdomain } from "../tenantSubdomain";
 import { getRealAuth } from "./betterAuth";
 import { createLoginFlow } from "./login";
@@ -37,7 +38,7 @@ export function loginFlow() {
   return login;
 }
 
-async function requestTenantId(): Promise<string | undefined> {
+export async function requestTenantId(): Promise<string | undefined> {
   const resolution = resolveTenant((await headers()).get("host") ?? "");
   if (resolution.type !== "tenant") return undefined;
   return resolveTenantSubdomain(resolution.subdomain);
@@ -49,11 +50,26 @@ export async function getViewer(): Promise<Viewer> {
   }
   const tenantId = await requestTenantId();
   if (!tenantId) return { type: "anonymous" };
-  return {
-    type: "staff",
-    userId: process.env.AUTH_MOCK_USER_ID || "user-owner",
-    tenantId,
-  };
+  return { type: "staff", userId: mockUserId(), tenantId };
+}
+
+function mockUserId(): string {
+  return process.env.AUTH_MOCK_USER_ID || "user-owner";
+}
+
+export async function getRegistrationToken(): Promise<string> {
+  if (!authMockingEnabled()) {
+    throw new Error(
+      "registration tokens for accepting an invitation are not supported yet: the root domain does not hand one over to the tenant host",
+    );
+  }
+  return issueRegistrationToken(mockUserId());
+}
+
+export function afterJoinPath(): string {
+  return authMockingEnabled()
+    ? "/management"
+    : `/auth/login?return=${encodeURIComponent("/management")}`;
 }
 
 export async function requireStaff(returnPath: string): Promise<void> {

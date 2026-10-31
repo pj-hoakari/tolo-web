@@ -24,7 +24,17 @@ export const relationAdminClient = createClient(
   tenantAccessTransport,
 );
 
+const registrationTransport = createConnectTransport({
+  baseUrl,
+  httpVersion: "1.1",
+});
+
 export const tenantRegistrationClient = createClient(
   TenantService,
-  createConnectTransport({ baseUrl, httpVersion: "1.1" }),
+  registrationTransport,
+);
+
+export const relationRegistrationClient = createClient(
+  RelationAdminService,
+  registrationTransport,
 );

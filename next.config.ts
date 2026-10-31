@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
 
   output: "standalone",
 
-  logging: { incomingRequests: { ignore: [/[?&]code=/] } },
+  logging: { incomingRequests: { ignore: [/[?&](?:code|token)=/] } },
 
   headers: async () => [
     {
