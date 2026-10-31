@@ -24,6 +24,7 @@ import {
   ReportMeasurementsResponseSchema,
   UnregisterEdgeDeviceResponseSchema,
 } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
+import { Role } from "@pj-hoakari/tolo-tenant-management-connect-es/tolo/relation/v1/relation_pb";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
 import { sampleEdgeDevicesWire } from "@/mocks/fixtures/edges";
@@ -36,7 +37,10 @@ import {
   edgeMeasurementIngestClient,
 } from "./observation";
 import { router } from "./router";
-import { tenantRegistrationClient } from "./tenantManagement";
+import {
+  relationAdminClient,
+  tenantRegistrationClient,
+} from "./tenantManagement";
 
 vi.hoisted(() => {
   process.env.GATEWAY_URL = "http://127.0.0.1:9";
@@ -51,6 +55,14 @@ vi.mock("./tenantManagement", () => ({
   tenantRegistrationClient: {
     startTenantRegistration: vi.fn(),
     claimTenantOwnership: vi.fn(),
+  },
+  relationAdminClient: {
+    listMemberships: vi.fn(),
+    changeTenantRole: vi.fn(),
+    revokeRole: vi.fn(),
+    listTenantInvitations: vi.fn(),
+    createTenantInvitation: vi.fn(),
+    revokeTenantInvitation: vi.fn(),
   },
 }));
 vi.mock("./idp", () => ({ issueRegistrationToken: vi.fn() }));
@@ -234,6 +246,202 @@ describe("tenant.register", () => {
     expect((error as ORPCError<string, unknown>).message).not.toContain(
       "subdomain is taken",
     );
+  });
+});
+
+describe("tenant members and invitations", () => {
+  const tenantId = "0123456789abcdef";
+  const owner = {
+    userId: "user-owner",
+    tenantId,
+    tenantRole: Role.OWNER,
+    displayName: "山田",
+    joinedAt: timestampFromDate(new Date("2026-10-01T00:00:00.000Z")),
+    eventRoles: [],
+  };
+
+  it("lists the tenant's members with their display name, role, and the time they joined", async () => {
+    const list = vi
+      .mocked(relationAdminClient.listMemberships)
+      .mockResolvedValue({
+        memberships: [
+          owner,
+          {
+            ...owner,
+            userId: "user-staff",
+            tenantRole: Role.STAFF,
+            displayName: "佐藤",
+            joinedAt: undefined,
+          },
+        ],
+      } as never);
+
+    await expect(
+      call(router.tenant.listMembers, { tenantId }),
+    ).resolves.toEqual({
+      members: [
+        {
+          userId: "user-owner",
+          displayName: "山田",
+          role: "owner",
+          joinedAt: "2026-10-01T00:00:00.000Z",
+        },
+        {
+          userId: "user-staff",
+          displayName: "佐藤",
+          role: "staff",
+          joinedAt: null,
+        },
+      ],
+    });
+    expect(list).toHaveBeenCalledWith({
+      filter: { case: "tenantId", value: tenantId },
+    });
+  });
+
+  it("creates every invitation with the staff role and the trimmed display name, and returns the token once", async () => {
+    const create = vi
+      .mocked(relationAdminClient.createTenantInvitation)
+      .mockResolvedValue({
+        invitation: {
+          invitationId: "inv-1",
+          tenantId,
+          tenantRole: Role.STAFF,
+          displayName: "鈴木",
+          expiresAt: timestampFromDate(new Date("2026-11-07T00:00:00.000Z")),
+        },
+        invitationToken: "invitation-token",
+      } as never);
+
+    await expect(
+      call(router.tenant.createInvitation, {
+        tenantId,
+        displayName: " 鈴木 ",
+      }),
+    ).resolves.toEqual({
+      invitation: {
+        invitationId: "inv-1",
+        displayName: "鈴木",
+        expiresAt: "2026-11-07T00:00:00.000Z",
+      },
+      invitationToken: "invitation-token",
+    });
+    expect(create).toHaveBeenCalledWith({
+      tenantId,
+      tenantRole: Role.STAFF,
+      displayName: "鈴木",
+    });
+  });
+
+  it("refuses a display name longer than 64 characters before calling the gateway", async () => {
+    const error = await call(router.tenant.createInvitation, {
+      tenantId,
+      displayName: "a".repeat(65),
+    }).catch((e: unknown) => e);
+
+    expect(error).toMatchObject({ code: "BAD_REQUEST" });
+    expect(relationAdminClient.createTenantInvitation).not.toHaveBeenCalled();
+  });
+
+  it("changes a member's tenant role", async () => {
+    const change = vi
+      .mocked(relationAdminClient.changeTenantRole)
+      .mockResolvedValue({
+        membership: { ...owner, userId: "user-staff" },
+      } as never);
+
+    await expect(
+      call(router.tenant.changeMemberRole, {
+        tenantId,
+        userId: "user-staff",
+        role: "owner",
+      }),
+    ).resolves.toMatchObject({ userId: "user-staff", role: "owner" });
+    expect(change).toHaveBeenCalledWith({
+      tenantId,
+      userId: "user-staff",
+      tenantRole: Role.OWNER,
+    });
+  });
+
+  it("removes a member by revoking the tenant membership", async () => {
+    const revoke = vi
+      .mocked(relationAdminClient.revokeRole)
+      .mockResolvedValue({} as never);
+
+    await call(router.tenant.removeMember, { tenantId, userId: "user-staff" });
+
+    expect(revoke).toHaveBeenCalledWith({
+      userId: "user-staff",
+      scope: { case: "tenantId", value: tenantId },
+    });
+  });
+
+  it.each([
+    [
+      "demoting",
+      () =>
+        call(router.tenant.changeMemberRole, {
+          tenantId,
+          userId: "user-owner",
+          role: "staff",
+        }),
+    ],
+    [
+      "removing",
+      () =>
+        call(router.tenant.removeMember, { tenantId, userId: "user-owner" }),
+    ],
+  ])(
+    "passes the refusal of %s the last owner to the browser as a rejected precondition without the server message",
+    async (_, run) => {
+      const refusal = new ConnectError(
+        "the tenant must keep at least one owner",
+        Code.FailedPrecondition,
+      );
+      vi.mocked(relationAdminClient.changeTenantRole).mockRejectedValue(
+        refusal,
+      );
+      vi.mocked(relationAdminClient.revokeRole).mockRejectedValue(refusal);
+
+      const error = await run().catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ORPCError);
+      expect(error).toMatchObject({ code: "PRECONDITION_FAILED" });
+      expect((error as ORPCError<string, unknown>).message).not.toContain(
+        "owner",
+      );
+    },
+  );
+
+  it("lists the unused invitations without their tokens and revokes one by its ID", async () => {
+    vi.mocked(relationAdminClient.listTenantInvitations).mockResolvedValue({
+      invitations: [
+        {
+          invitationId: "inv-1",
+          tenantId,
+          tenantRole: Role.STAFF,
+          displayName: "鈴木",
+          expiresAt: undefined,
+        },
+      ],
+    } as never);
+    const revoke = vi
+      .mocked(relationAdminClient.revokeTenantInvitation)
+      .mockResolvedValue({} as never);
+
+    await expect(
+      call(router.tenant.listInvitations, { tenantId }),
+    ).resolves.toEqual({
+      invitations: [
+        { invitationId: "inv-1", displayName: "鈴木", expiresAt: null },
+      ],
+    });
+    await call(router.tenant.revokeInvitation, {
+      tenantId,
+      invitationId: "inv-1",
+    });
+    expect(revoke).toHaveBeenCalledWith({ tenantId, invitationId: "inv-1" });
   });
 });
 
