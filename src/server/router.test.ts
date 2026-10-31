@@ -28,6 +28,8 @@ import { Role } from "@pj-hoakari/tolo-tenant-management-connect-es/tolo/relatio
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
 import { sampleEdgeDevicesWire } from "@/mocks/fixtures/edges";
+import { afterJoinPath, getRegistrationToken, requestTenantId } from "./auth";
+import { forgetInvitation, pendingInvitationToken } from "./auth/invitation";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { guestPageClient } from "./guest";
 import { issueRegistrationToken } from "./idp";
@@ -39,6 +41,7 @@ import {
 import { router } from "./router";
 import {
   relationAdminClient,
+  relationRegistrationClient,
   tenantRegistrationClient,
 } from "./tenantManagement";
 
@@ -64,6 +67,16 @@ vi.mock("./tenantManagement", () => ({
     createTenantInvitation: vi.fn(),
     revokeTenantInvitation: vi.fn(),
   },
+  relationRegistrationClient: { acceptTenantInvitation: vi.fn() },
+}));
+vi.mock("./auth", () => ({
+  afterJoinPath: vi.fn(),
+  getRegistrationToken: vi.fn(),
+  requestTenantId: vi.fn(),
+}));
+vi.mock("./auth/invitation", () => ({
+  forgetInvitation: vi.fn(),
+  pendingInvitationToken: vi.fn(),
 }));
 vi.mock("./idp", () => ({ issueRegistrationToken: vi.fn() }));
 
@@ -443,6 +456,71 @@ describe("tenant members and invitations", () => {
     });
     expect(revoke).toHaveBeenCalledWith({ tenantId, invitationId: "inv-1" });
   });
+});
+
+describe("tenant.acceptInvitation", () => {
+  const accept = () => call(router.tenant.acceptInvitation, undefined);
+  const pending = () => {
+    vi.mocked(pendingInvitationToken).mockResolvedValue("invitation-token");
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(getRegistrationToken).mockResolvedValue("registration-token");
+    vi.mocked(afterJoinPath).mockReturnValue("/management");
+  };
+
+  it("accepts the kept invitation for the tenant of the host with a registration token, forgets it, and returns where to go next", async () => {
+    pending();
+    const acceptTenantInvitation = vi
+      .mocked(relationRegistrationClient.acceptTenantInvitation)
+      .mockResolvedValue({} as never);
+
+    await expect(accept()).resolves.toEqual({ next: "/management" });
+    expect(acceptTenantInvitation).toHaveBeenCalledWith(
+      { tenantId: "0123456789abcdef", invitationToken: "invitation-token" },
+      { headers: { Authorization: "Bearer registration-token" } },
+    );
+    expect(forgetInvitation).toHaveBeenCalled();
+  });
+
+  it.each<[string, string | undefined, string | undefined]>([
+    ["no invitation is kept", undefined, "0123456789abcdef"],
+    ["the host is not a tenant", "invitation-token", undefined],
+  ])(
+    "answers not found without calling the gateway when %s",
+    async (_, token, tenantId) => {
+      vi.mocked(pendingInvitationToken).mockResolvedValue(token);
+      vi.mocked(requestTenantId).mockResolvedValue(tenantId);
+
+      await expect(accept()).rejects.toMatchObject({ code: "NOT_FOUND" });
+      expect(getRegistrationToken).not.toHaveBeenCalled();
+      expect(
+        relationRegistrationClient.acceptTenantInvitation,
+      ).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    ["an unusable invitation", Code.Unauthenticated, "UNAUTHORIZED"],
+    ["an existing membership", Code.FailedPrecondition, "PRECONDITION_FAILED"],
+  ])(
+    "passes the refusal of %s to the browser by its code without the server message and keeps the invitation",
+    async (_, code, expected) => {
+      pending();
+      vi.mocked(
+        relationRegistrationClient.acceptTenantInvitation,
+      ).mockRejectedValue(
+        new ConnectError("invitation token is invalid", code),
+      );
+
+      const error = await accept().catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ORPCError);
+      expect(error).toMatchObject({ code: expected });
+      expect((error as ORPCError<string, unknown>).message).not.toContain(
+        "invitation token",
+      );
+      expect(forgetInvitation).not.toHaveBeenCalled();
+    },
+  );
 });
 
 const protoDevice = create(EdgeDeviceSchema, {

@@ -218,6 +218,16 @@ GATEWAY_URL=http://127.0.0.1:8080 NEXT_PUBLIC_API_MOCKING=disabled TENANT_SUBDOM
 
 招待を作ると、画面は招待 URL を一度だけ表示します。招待 URL はページを開いているテナントのホストの `/invitation` に招待トークンを付けたもので、テナントの公開 ID を含みません。
 
+### 招待の受諾
+
+招待 URL（`/invitation?token=<招待トークン>`）を開くと、`web` は招待トークンを、そのホストにだけ送る Cookie（`__Host-tolo.invitation`、`HttpOnly`、`Secure`、`SameSite=Lax`、30 分）に移し、招待トークンを含まない `/invitation/accept` へリダイレクトします。このリダイレクトの応答には `Referrer-Policy: no-referrer` を付けます。開発サーバーは `token=` を含む URL への要求をログに出しません。ルートドメインには招待 URL がなく、404 を返します。
+
+`/invitation/accept` は、Cookie に招待トークンがあれば参加のボタンを出し、なければ招待 URL を開き直すよう案内します。参加のボタンを押すと、`web` はホスト名から照会したテナントの公開 ID と Cookie の招待トークンで AcceptTenantInvitation を呼びます。受諾できたら Cookie を消し、同じホストで tenantId を指定した認可をやり直すために `/auth/login?return=/management` へ移ります。`AUTH_MOCKING` が `enabled` のときはログインがないので、`/management` へ移ります。招待トークンが使用済み、期限切れ、取り消し済みのときは、招待したオーナーに連絡するよう案内します。
+
+受諾には `registration` トークンが要ります。`AUTH_MOCKING` が `enabled` のときは、オンボーディングと同じく偽 IdP から、`sub` が `AUTH_MOCK_USER_ID`（既定は `user-owner`）で scope が `tenant.join` のトークンを発行します。オーナーはすでにテナントに所属しているので、受諾を試すときは `AUTH_MOCK_USER_ID` にほかの値を設定します。
+
+`AUTH_MOCKING` が `enabled` でないときの受諾はまだ使えず、参加のボタンはエラーになります。テナント未指定の認可で受け取った `registration` トークンをルートドメインからテナントのホストへ引き渡す流れは、tolo-idp の対応（MER-337）を待っています。
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

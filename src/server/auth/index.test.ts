@@ -1,9 +1,16 @@
 import { headers } from "next/headers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getAccessToken, requireStaff } from ".";
+import { issueRegistrationToken } from "../idp";
+import {
+  afterJoinPath,
+  getAccessToken,
+  getRegistrationToken,
+  requireStaff,
+} from ".";
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/headers", () => ({ headers: vi.fn() }));
+vi.mock("../idp", () => ({ issueRegistrationToken: vi.fn() }));
 
 describe("getAccessToken with AUTH_MOCKING", () => {
   beforeEach(() => {
@@ -73,5 +80,28 @@ describe("requireStaff with AUTH_MOCKING", () => {
     );
 
     await expect(requireStaff("/management")).resolves.toBeUndefined();
+  });
+});
+
+describe("joining a tenant through an invitation", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("issues a registration token for the mock user from the fake IdP and continues on the management page with AUTH_MOCKING", async () => {
+    vi.stubEnv("AUTH_MOCKING", "enabled");
+    vi.stubEnv("ROOT_DOMAIN", "");
+    vi.stubEnv("AUTH_MOCK_USER_ID", "user-invitee");
+    vi.mocked(issueRegistrationToken).mockResolvedValue("registration-token");
+
+    await expect(getRegistrationToken()).resolves.toBe("registration-token");
+    expect(issueRegistrationToken).toHaveBeenCalledWith("user-invitee");
+    expect(afterJoinPath()).toBe("/management");
+  });
+
+  it("refuses to get a registration token without AUTH_MOCKING because the root-domain handoff is not built yet, and would log in again on the tenant host", async () => {
+    vi.stubEnv("AUTH_MOCKING", "");
+
+    await expect(getRegistrationToken()).rejects.toThrow("not supported yet");
+    expect(issueRegistrationToken).not.toHaveBeenCalled();
+    expect(afterJoinPath()).toBe("/auth/login?return=%2Fmanagement");
   });
 });

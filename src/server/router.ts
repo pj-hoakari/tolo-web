@@ -57,6 +57,8 @@ import {
   registeredEdgeDeviceWire,
   sampleEdgeDevicesWire,
 } from "@/mocks/fixtures/edges";
+import { afterJoinPath, getRegistrationToken, requestTenantId } from "./auth";
+import { forgetInvitation, pendingInvitationToken } from "./auth/invitation";
 import { eventIdKey } from "./authorize";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
@@ -71,6 +73,7 @@ import {
 import { consoleSignalingClient, edgeSignalingClient } from "./signaling";
 import {
   relationAdminClient,
+  relationRegistrationClient,
   tenantManagementClient,
   tenantRegistrationClient,
 } from "./tenantManagement";
@@ -509,6 +512,25 @@ export const router = {
           throw toORPCError(err);
         }
       }),
+    acceptInvitation: os.handler(async (): Promise<{ next: string }> => {
+      const invitationToken = await pendingInvitationToken();
+      const tenantId = await requestTenantId();
+      if (!invitationToken || !tenantId) throw new ORPCError("NOT_FOUND");
+      const registrationToken = await getRegistrationToken();
+      try {
+        await relationRegistrationClient.acceptTenantInvitation(
+          { tenantId, invitationToken },
+          { headers: { Authorization: `Bearer ${registrationToken}` } },
+        );
+      } catch (err) {
+        if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
+          throw new ORPCError("UNAUTHORIZED");
+        }
+        throw toORPCError(err);
+      }
+      await forgetInvitation();
+      return { next: afterJoinPath() };
+    }),
     revokeInvitation: os
       .input(z.object({ tenantId: publicId, invitationId: z.string().min(1) }))
       .handler(async ({ input }): Promise<void> => {

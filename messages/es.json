@@ -639,5 +639,15 @@
       "memberNotFound": "No se encontró al miembro. Vuelve a cargar la lista.",
       "stale": "El inquilino cambió y no se pudo realizar la operación. Vuelve a cargar la lista."
     }
+  },
+  "Invitation": {
+    "title": "Unirse a un inquilino",
+    "description": "Te invitaron al inquilino de {host}. ¿Quieres unirte como personal?",
+    "accept": "Unirse",
+    "notFound": "No se encontró la invitación. Vuelve a abrir la URL de invitación que recibiste.",
+    "unusable": "No se puede usar esta invitación. Puede que ya se haya usado, que haya caducado o que se haya revocado. Ponte en contacto con el propietario que te invitó y pídele una nueva URL de invitación.",
+    "cannotJoin": "No puedes unirte a este inquilino. Puede que ya seas miembro o que el inquilino se haya archivado.",
+    "openManagement": "Abrir la página de administración",
+    "failed": "No se pudo unir al inquilino. Inténtalo de nuevo."
   }
 }
