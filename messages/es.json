@@ -555,6 +555,14 @@
       "title": "No se pudo iniciar sesión",
       "retry": "Volver a iniciar sesión",
       "reopen": "Abre de nuevo la página de tu inquilino y vuelve a iniciar sesión."
+    },
+    "login": {
+      "title": "Iniciar sesión",
+      "usernameLabel": "ID",
+      "passwordLabel": "Contraseña",
+      "submit": "Iniciar sesión",
+      "invalidCredentials": "El ID o la contraseña no son correctos.",
+      "failed": "No se pudo iniciar sesión. Si vuelve a ocurrir, empieza de nuevo desde la página de tu inquilino."
     }
   }
 }

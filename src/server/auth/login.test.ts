@@ -681,6 +681,19 @@ describe("login handoff", () => {
   });
 });
 
+describe("login page", () => {
+  it("posts the credentials to the IdP's login API and resumes the authorization with the challenge", async () => {
+    idp();
+    const testAuth = await createTestAuth();
+
+    await expect(testAuth.flow.challengeLogin("challenge-1")).resolves.toEqual({
+      endpoint: "https://idp.test/api/login",
+      challenge: "challenge-1",
+      resumeUrl: "https://idp.test/oauth2/authorize?challenge=challenge-1",
+    });
+  });
+});
+
 describe.skipIf(!process.env.AUTH_TEST_DATABASE_URL)("on PostgreSQL", () => {
   const schema = `login_test_${process.pid}_${Date.now()}`;
   const pools: Pool[] = [];

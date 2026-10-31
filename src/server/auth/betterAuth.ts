@@ -6,6 +6,7 @@ import {
 import { genericOAuth } from "better-auth/plugins/generic-oauth";
 import { Pool } from "pg";
 import { rootOrigin } from "@/lib/control/tenant";
+import { discoveryUrl } from "./discovery";
 import { loginErrorUrl, loginHandoff, PROVIDER_ID } from "./login";
 
 export const SESSION_COOKIE = "__Host-tolo.session_token";
@@ -31,10 +32,6 @@ export function readAuthEnv(): AuthEnv {
   return Object.fromEntries(
     Object.entries(AUTH_ENV).map(([key, name]) => [key, process.env[name]]),
   ) as AuthEnv;
-}
-
-export function discoveryUrl(issuer: string): string {
-  return `${issuer.replace(/\/+$/, "")}/.well-known/openid-configuration`;
 }
 
 function withoutMaxAge(cookie: string): string {

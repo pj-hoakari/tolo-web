@@ -555,6 +555,14 @@
       "title": "로그인하지 못했습니다",
       "retry": "다시 로그인",
       "reopen": "사용하던 테넌트 페이지를 다시 열고 로그인하세요."
+    },
+    "login": {
+      "title": "로그인",
+      "usernameLabel": "ID",
+      "passwordLabel": "비밀번호",
+      "submit": "로그인",
+      "invalidCredentials": "ID 또는 비밀번호가 올바르지 않습니다.",
+      "failed": "로그인하지 못했습니다. 다시 시도해도 계속되면 사용하던 테넌트 페이지에서 다시 시작하세요."
     }
   }
 }

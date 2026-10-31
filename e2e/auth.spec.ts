@@ -14,17 +14,28 @@ test("AUTH_MOCKING では、管理ページはログインなしでモックの�
   expect(new URL(page.url()).pathname).toBe("/management");
 });
 
-test("AUTH_MOCKING では、ログインの開始と引き渡しの経路は 404 になる", async ({
+test("AUTH_MOCKING では、ログインの開始と引き渡しの経路とルートドメインのログイン画面は 404 になる", async ({
   request,
 }) => {
   for (const path of [
     "/auth/login?return=/management",
     "/auth/handoff?code=x",
     "http://localhost:3100/auth/begin?login=x",
+    "http://localhost:3100/login?challenge=x",
   ]) {
     const response = await request.get(path, { maxRedirects: 0 });
     expect(response.status(), path).toBe(404);
   }
+});
+
+test("ルートドメインのログイン画面は、ほかのサイトに埋め込ませない", async ({
+  request,
+}) => {
+  const response = await request.get("http://localhost:3100/login?challenge=x");
+
+  expect(response.headers()["content-security-policy"]).toBe(
+    "frame-ancestors 'none'",
+  );
 });
 
 test("/rpc は、CSRF 対策の独自ヘッダのない要求を 403 で拒否する", async ({

@@ -555,6 +555,14 @@
       "title": "无法登录",
       "retry": "重新登录",
       "reopen": "请重新打开你使用的租户页面并重新登录。"
+    },
+    "login": {
+      "title": "登录",
+      "usernameLabel": "ID",
+      "passwordLabel": "密码",
+      "submit": "登录",
+      "invalidCredentials": "ID 或密码不正确。",
+      "failed": "无法登录。如果再次尝试仍然失败，请从你使用的租户页面重新开始。"
     }
   }
 }

@@ -555,6 +555,14 @@
       "title": "Could not log in",
       "retry": "Log in again",
       "reopen": "Open your tenant's page again and log in."
+    },
+    "login": {
+      "title": "Log in",
+      "usernameLabel": "ID",
+      "passwordLabel": "Password",
+      "submit": "Log in",
+      "invalidCredentials": "The ID or password is incorrect.",
+      "failed": "Could not log in. If this keeps happening, start again from your tenant's page."
     }
   }
 }

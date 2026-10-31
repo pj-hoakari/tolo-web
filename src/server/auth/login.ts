@@ -11,8 +11,10 @@ import {
   setSessionCookie,
 } from "better-auth/cookies";
 import { z } from "zod";
+import { challengeLogin } from "@/features/auth/idpLogin";
 import { rootOrigin } from "@/lib/control/tenant";
 import type { RealAuth } from "./betterAuth";
+import { idpDiscovery } from "./discovery";
 
 export const PROVIDER_ID = "tolo-idp";
 const PENDING_LOGIN = "pendingLogin";
@@ -297,7 +299,17 @@ async function keepForLogin(
 }
 
 export function createLoginFlow({ auth, env }: RealAuth) {
+  const discovery = idpDiscovery(env.issuer);
+
   return {
+    async challengeLogin(challenge: string) {
+      return challengeLogin(
+        env.issuer,
+        (await discovery()).authorization_endpoint,
+        challenge,
+      );
+    },
+
     async start(request: Request, tenantId: string): Promise<Response> {
       const returnPath = sameHostPath(
         new URL(request.url).searchParams.get("return") ?? "/",
