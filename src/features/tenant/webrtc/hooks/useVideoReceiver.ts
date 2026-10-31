@@ -179,10 +179,11 @@ export function useVideoReceiver({
 
       const run = async () => {
         stopSignInRef.current = await signInForSignaling(
-          orpc.signaling.issueConsoleFirestoreToken,
+          () => orpc.signaling.issueConsoleFirestoreToken({ eventId }),
           getAuth(firebaseConfig),
         );
         const { sessionId } = await orpc.signaling.requestConnection({
+          eventId,
           edgeId,
         });
         const db = getDb(firebaseConfig);
