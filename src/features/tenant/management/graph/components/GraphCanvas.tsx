@@ -22,7 +22,7 @@ import {
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { Locale } from "@/i18n/locale";
 import { useCanvasContextMenu } from "../hooks/useCanvasContextMenu";
-import { useEasyConnect } from "../hooks/useEasyConnect";
+import type { EasyConnectApi } from "../hooks/useEasyConnect";
 import { DEFAULT_NODE_TYPE, getNodeTypeDef } from "../nodeTypes";
 import type { GraphCanvasNode, GraphEdgeType, NodeType } from "../type";
 import { isGroupNode, isPointNode } from "../type";
@@ -97,6 +97,7 @@ export type GraphCanvasEditing = {
     id: string,
     size: { width: number; height: number },
   ) => void;
+  easyConnect: EasyConnectApi;
 };
 
 export type GraphCanvasProps = {
@@ -134,13 +135,12 @@ export function GraphCanvas({
 }: GraphCanvasProps) {
   const editable = editing !== undefined;
   const viewport = useViewport();
-  const wrapperRef = useRef<HTMLDivElement>(null);
   const nativeConnectionHandled = useRef(false);
   const [virtualHandle, setVirtualHandle] = useState<VirtualHandle | null>(
     null,
   );
 
-  const easyConnect = useEasyConnect(wrapperRef);
+  const easyConnect = editing?.easyConnect;
   const contextMenu = useCanvasContextMenu({
     nodes,
     edges,
@@ -169,10 +169,11 @@ export function GraphCanvas({
       // React Flow がハンドル上へのドロップを先に確定した場合は、
       // onConnectEnd のフォールバックで重ねて追加しない。
       nativeConnectionHandled.current = true;
-      if (isStaleEasyConnection(connection, easyConnect.active)) return;
+      if (isStaleEasyConnection(connection, easyConnect?.active ?? false))
+        return;
       editing?.onConnect(connection);
       // 始点固定モードはルートを1本作ったら完了
-      if (easyConnect.mode?.kind === "from-node") easyConnect.end();
+      if (easyConnect?.mode?.kind === "from-node") easyConnect.end();
     },
     [easyConnect, editing],
   );
@@ -187,7 +188,7 @@ export function GraphCanvas({
       }
       // 始点固定モードで終点を確定できなかったときは、リリース位置に応じて
       // ドラッグの自動再開かモード終了かを選ぶ。
-      if (easyConnect.mode?.kind === "from-node") {
+      if (easyConnect?.mode?.kind === "from-node") {
         const plan = planFromNodeRelease({
           pointer: connectionState.pointer ?? null,
           releasePoint:
@@ -204,7 +205,7 @@ export function GraphCanvas({
         return;
       }
       if (
-        easyConnect.active ||
+        easyConnect?.active ||
         connectionState.fromHandle?.id === EASY_CONNECT_HANDLE_ID
       )
         return;
@@ -237,7 +238,7 @@ export function GraphCanvas({
 
   const connectionLineComponent = useCallback(
     (props: ConnectionLineComponentProps<GraphCanvasNode>) =>
-      (virtualHandle || easyConnect.active) && editing ? (
+      (virtualHandle || easyConnect?.active) && editing ? (
         <VirtualConnectionLine
           {...props}
           virtualHandle={virtualHandle}
@@ -246,7 +247,7 @@ export function GraphCanvas({
           isValidConnection={editing.isValidConnection}
         />
       ) : null,
-    [easyConnect.active, editing, nodes, viewport, virtualHandle],
+    [easyConnect, editing, nodes, viewport, virtualHandle],
   );
 
   const startEasyConnectFromNode = useCallback(
@@ -255,13 +256,13 @@ export function GraphCanvas({
       const origin = contextMenu.menu
         ? { x: contextMenu.menu.x, y: contextMenu.menu.y }
         : { x: 0, y: 0 };
-      easyConnect.startFromNode(sourceNodeId, origin);
+      easyConnect?.startFromNode(sourceNodeId, origin);
     },
     [contextMenu.menu, easyConnect],
   );
 
   const handlePaneClick = useCallback(() => {
-    easyConnect.end();
+    easyConnect?.end();
     onClearSelection();
   }, [easyConnect, onClearSelection]);
 
@@ -291,7 +292,7 @@ export function GraphCanvas({
   );
 
   return (
-    <div ref={wrapperRef} className="relative min-h-0 flex-1 bg-secondary">
+    <div className="relative min-h-0 flex-1 bg-secondary">
       <GraphEdgeMarkers />
       {contextMenu.canvasMenu && editing ? (
         <GraphCanvasContextMenu
@@ -300,9 +301,9 @@ export function GraphCanvas({
           nodeType={DEFAULT_NODE_TYPE}
           onAddNode={editing.onAddNodeAtPosition}
           onAddGroup={editing.onAddGroupAtPosition}
-          isEdgeCreationActive={easyConnect.active}
-          onStartEdgeCreation={easyConnect.startGlobal}
-          onEndEdgeCreation={easyConnect.end}
+          isEdgeCreationActive={editing.easyConnect.active}
+          onStartEdgeCreation={editing.easyConnect.startGlobal}
+          onEndEdgeCreation={editing.easyConnect.end}
           onClose={contextMenu.close}
         />
       ) : null}
@@ -327,9 +328,9 @@ export function GraphCanvas({
             nodeType={DEFAULT_NODE_TYPE}
             onAddNode={editing.onAddNodeAtPosition}
             onAddGroup={editing.onAddGroupAtPosition}
-            isEdgeCreationActive={easyConnect.active}
-            onStartEdgeCreation={easyConnect.startGlobal}
-            onEndEdgeCreation={easyConnect.end}
+            isEdgeCreationActive={editing.easyConnect.active}
+            onStartEdgeCreation={editing.easyConnect.startGlobal}
+            onEndEdgeCreation={editing.easyConnect.end}
             onDissolve={editing.onDeleteNode}
             onClose={contextMenu.close}
           />
@@ -346,7 +347,7 @@ export function GraphCanvas({
           />
         )
       ) : null}
-      <GraphNodeEasyConnectContext.Provider value={easyConnect.mode}>
+      <GraphNodeEasyConnectContext.Provider value={easyConnect?.mode ?? null}>
         <GroupResizeCommitContext.Provider value={editing?.onGroupResizeEnd}>
           <GraphNodeLabelEditingContext.Provider value={labelEditing}>
             <ReactFlow
@@ -382,13 +383,13 @@ export function GraphCanvas({
                   : undefined
               }
               connectionLineComponent={
-                virtualHandle || easyConnect.active
+                virtualHandle || easyConnect?.active
                   ? connectionLineComponent
                   : undefined
               }
               isValidConnection={editing?.isValidConnection}
               // 表示専用のときは選択だけを許し、構造を変える操作は塞ぐ
-              nodesDraggable={editable && !easyConnect.active}
+              nodesDraggable={editable && !easyConnect?.active}
               nodesConnectable={editable}
               deleteKeyCode={editable ? ["Delete", "Backspace"] : null}
               onBeforeDelete={editing?.onBeforeDelete}
@@ -458,7 +459,7 @@ export function GraphCanvas({
                 hasNodes={nodes.length > 0}
                 options={FIT_VIEW_OPTIONS}
               />
-              {easyConnect.active ? (
+              {easyConnect?.active ? (
                 <EasyConnectPanel
                   fromNode={easyConnect.mode?.kind === "from-node"}
                   onEnd={easyConnect.end}

@@ -2,7 +2,6 @@
 
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { ReactFlowProvider } from "@xyflow/react";
-import { createRef } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { useEasyConnect } from "./useEasyConnect";
 
@@ -11,8 +10,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 function renderEasyConnect() {
-  const wrapperRef = createRef<HTMLDivElement>();
-  return renderHook(() => useEasyConnect(wrapperRef), { wrapper });
+  return renderHook(() => useEasyConnect(), { wrapper });
 }
 
 afterEach(cleanup);

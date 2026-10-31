@@ -60,7 +60,9 @@ export type GraphEditorApi = {
   selection: { nodeIds: string[]; edgeIds: string[] };
   setSelection: (nodeIds: string[], edgeIds: string[]) => void;
   /** 構造編集を有効にしたキャンバスの props */
-  canvas: GraphCanvasProps & { editing: GraphCanvasEditing };
+  canvas: Omit<GraphCanvasProps, "editing"> & {
+    editing: Omit<GraphCanvasEditing, "easyConnect">;
+  };
   toolbar: GraphToolbarBindings;
   properties: SidePanelBindings;
   /** 送信・永続化用のグラフデータを取り出す */
