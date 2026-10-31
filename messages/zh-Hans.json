@@ -33,6 +33,7 @@
   },
   "TenantManagement": {
     "title": "{tenantId} 活动管理",
+    "membersLink": "成员管理",
     "create": {
       "label": "活动名称",
       "submit": "创建",
@@ -571,5 +572,72 @@
       "login": "再次登录"
     },
     "logout": "退出登录"
+  },
+  "TenantMembers": {
+    "title": "{tenantId} 成员管理",
+    "eventsLink": "活动管理",
+    "loading": "正在加载…",
+    "retry": "重新加载",
+    "roles": {
+      "owner": "所有者",
+      "staff": "员工"
+    },
+    "invite": {
+      "heading": "邀请成员",
+      "label": "受邀人的显示名称",
+      "submit": "创建邀请 URL",
+      "staffOnly": "受邀人将以此显示名称作为员工加入。如需设为所有者，请在其加入后于成员列表中更改。",
+      "url": "邀请 URL",
+      "urlOnce": "离开此页面后将无法再次显示此 URL。请只交给受邀人。",
+      "copy": "复制",
+      "copied": "已复制",
+      "invalid": "请输入不超过 64 个字符的显示名称。",
+      "failed": "无法创建邀请。"
+    },
+    "invitations": {
+      "heading": "未使用的邀请",
+      "empty": "没有未使用的邀请。",
+      "error": "无法获取邀请列表。",
+      "expiresAt": "有效期至: {expiresAt}",
+      "revoke": "撤销",
+      "alreadyUsed": "此邀请已被使用、已过期或已撤销。请重新加载列表。",
+      "revokeFailed": "无法撤销邀请。"
+    },
+    "members": {
+      "heading": "成员",
+      "empty": "没有成员。",
+      "error": "无法获取成员列表。",
+      "joinedAt": "加入时间: {joinedAt}",
+      "joinedAtUnknown": "未知"
+    },
+    "actions": {
+      "cancel": "取消",
+      "promote": {
+        "button": "设为所有者",
+        "title": "将成员设为所有者",
+        "description": "将“{name}”设为所有者。所有者可以变更合同、归档租户和管理成员。仅凭显示名称无法确认是否为受邀本人。设为所有者之前，请通过电话或当面等其他途径向本人确认。此人的加入时间为 {joinedAt}。",
+        "confirm": "设为所有者",
+        "failed": "无法设为所有者。"
+      },
+      "demote": {
+        "button": "设为员工",
+        "title": "将所有者设为员工",
+        "description": "将“{name}”设为员工。设为员工后将无法变更合同、归档租户或管理成员。",
+        "confirm": "设为员工",
+        "failed": "无法设为员工。"
+      },
+      "remove": {
+        "button": "移除",
+        "title": "移除成员",
+        "description": "将“{name}”从此租户中移除。如需让其再次加入，请重新邀请。",
+        "confirm": "移除",
+        "failed": "无法移除成员。"
+      }
+    },
+    "errors": {
+      "lastOwner": "租户至少需要一名所有者。请先将其他成员设为所有者。",
+      "memberNotFound": "未找到该成员。请重新加载列表。",
+      "stale": "租户状态已变更，无法执行操作。请重新加载列表。"
+    }
   }
 }

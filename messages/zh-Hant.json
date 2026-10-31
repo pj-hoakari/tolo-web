@@ -33,6 +33,7 @@
   },
   "TenantManagement": {
     "title": "{tenantId} 活動管理",
+    "membersLink": "成員管理",
     "create": {
       "label": "活動名稱",
       "submit": "建立",
@@ -571,5 +572,72 @@
       "login": "再次登入"
     },
     "logout": "登出"
+  },
+  "TenantMembers": {
+    "title": "{tenantId} 成員管理",
+    "eventsLink": "活動管理",
+    "loading": "載入中…",
+    "retry": "重新載入",
+    "roles": {
+      "owner": "擁有者",
+      "staff": "員工"
+    },
+    "invite": {
+      "heading": "邀請成員",
+      "label": "受邀人的顯示名稱",
+      "submit": "建立邀請 URL",
+      "staffOnly": "受邀人將以此顯示名稱作為員工加入。如需設為擁有者，請在其加入後於成員列表中變更。",
+      "url": "邀請 URL",
+      "urlOnce": "離開此畫面後將無法再次顯示此 URL。請只交給受邀人。",
+      "copy": "複製",
+      "copied": "已複製",
+      "invalid": "請輸入不超過 64 個字元的顯示名稱。",
+      "failed": "無法建立邀請。"
+    },
+    "invitations": {
+      "heading": "未使用的邀請",
+      "empty": "沒有未使用的邀請。",
+      "error": "無法取得邀請列表。",
+      "expiresAt": "有效期限: {expiresAt}",
+      "revoke": "撤銷",
+      "alreadyUsed": "此邀請已被使用、已過期或已撤銷。請重新載入列表。",
+      "revokeFailed": "無法撤銷邀請。"
+    },
+    "members": {
+      "heading": "成員",
+      "empty": "沒有成員。",
+      "error": "無法取得成員列表。",
+      "joinedAt": "加入時間: {joinedAt}",
+      "joinedAtUnknown": "未知"
+    },
+    "actions": {
+      "cancel": "取消",
+      "promote": {
+        "button": "設為擁有者",
+        "title": "將成員設為擁有者",
+        "description": "將「{name}」設為擁有者。擁有者可以變更合約、封存租戶和管理成員。僅憑顯示名稱無法確認是否為受邀本人。設為擁有者之前，請透過電話或當面等其他途徑向本人確認。此人的加入時間為 {joinedAt}。",
+        "confirm": "設為擁有者",
+        "failed": "無法設為擁有者。"
+      },
+      "demote": {
+        "button": "設為員工",
+        "title": "將擁有者設為員工",
+        "description": "將「{name}」設為員工。設為員工後將無法變更合約、封存租戶或管理成員。",
+        "confirm": "設為員工",
+        "failed": "無法設為員工。"
+      },
+      "remove": {
+        "button": "移除",
+        "title": "移除成員",
+        "description": "將「{name}」從此租戶中移除。如需讓其再次加入，請重新邀請。",
+        "confirm": "移除",
+        "failed": "無法移除成員。"
+      }
+    },
+    "errors": {
+      "lastOwner": "租戶至少需要一名擁有者。請先將其他成員設為擁有者。",
+      "memberNotFound": "找不到該成員。請重新載入列表。",
+      "stale": "租戶狀態已變更，無法執行操作。請重新載入列表。"
+    }
   }
 }

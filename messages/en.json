@@ -33,6 +33,7 @@
   },
   "TenantManagement": {
     "title": "{tenantId} Event management",
+    "membersLink": "Members",
     "create": {
       "label": "Event name",
       "submit": "Create",
@@ -571,5 +572,72 @@
       "login": "Log in again"
     },
     "logout": "Log out"
+  },
+  "TenantMembers": {
+    "title": "{tenantId} members",
+    "eventsLink": "Events",
+    "loading": "Loading…",
+    "retry": "Reload",
+    "roles": {
+      "owner": "Owner",
+      "staff": "Staff"
+    },
+    "invite": {
+      "heading": "Invite a member",
+      "label": "Display name of the person you invite",
+      "submit": "Create invitation URL",
+      "staffOnly": "The person you invite joins as staff with this display name. To make them an owner, change their role in the member list after they join.",
+      "url": "Invitation URL",
+      "urlOnce": "This URL cannot be shown again after you leave this screen. Give it only to the person you invite.",
+      "copy": "Copy",
+      "copied": "Copied",
+      "invalid": "Enter a display name of at most 64 characters.",
+      "failed": "Could not create the invitation."
+    },
+    "invitations": {
+      "heading": "Unused invitations",
+      "empty": "There are no unused invitations.",
+      "error": "Could not load the invitations.",
+      "expiresAt": "Expires: {expiresAt}",
+      "revoke": "Revoke",
+      "alreadyUsed": "This invitation has been used, has expired, or was revoked. Reload the list.",
+      "revokeFailed": "Could not revoke the invitation."
+    },
+    "members": {
+      "heading": "Members",
+      "empty": "There are no members.",
+      "error": "Could not load the members.",
+      "joinedAt": "Joined: {joinedAt}",
+      "joinedAtUnknown": "unknown"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "promote": {
+        "button": "Make owner",
+        "title": "Make this member an owner",
+        "description": "“{name}” becomes an owner. Owners can change the contract, archive the tenant, and manage members. A display name alone does not prove that this is the person you invited. Before you continue, confirm it with them through another channel, such as a phone call or in person. They joined on {joinedAt}.",
+        "confirm": "Make owner",
+        "failed": "Could not make this member an owner."
+      },
+      "demote": {
+        "button": "Make staff",
+        "title": "Make this owner staff",
+        "description": "“{name}” becomes staff and can no longer change the contract, archive the tenant, or manage members.",
+        "confirm": "Make staff",
+        "failed": "Could not make this owner staff."
+      },
+      "remove": {
+        "button": "Remove",
+        "title": "Remove this member",
+        "description": "“{name}” is removed from this tenant. To let them join again, send a new invitation.",
+        "confirm": "Remove",
+        "failed": "Could not remove this member."
+      }
+    },
+    "errors": {
+      "lastOwner": "A tenant needs at least one owner. Make another member an owner first.",
+      "memberNotFound": "The member was not found. Reload the list.",
+      "stale": "The tenant changed, so the operation could not be done. Reload the list."
+    }
   }
 }

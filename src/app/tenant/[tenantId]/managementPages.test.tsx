@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import TenantGraphEdit from "./event/[eventId]/management/graph/edit/page";
 import TenantManagement from "./event/[eventId]/management/page";
+import TenantMemberManagement from "./management/members/page";
 import TenantEventManagement from "./management/page";
 
 vi.mock("server-only", () => ({}));
@@ -19,6 +20,7 @@ const params = Promise.resolve({ tenantId: "0123456789abcdef", eventId: "e1" });
 
 it.each([
   ["/management", () => TenantEventManagement({ params })],
+  ["/management/members", () => TenantMemberManagement({ params })],
   ["/event/e1/management", () => TenantManagement({ params })],
   ["/event/e1/management/graph/edit", () => TenantGraphEdit({ params })],
 ])(
