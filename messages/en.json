@@ -7,11 +7,13 @@
     "name": "Tenant name",
     "subdomain": "Subdomain",
     "ownerEmail": "Owner email address",
+    "ownerDisplayName": "Owner display name",
+    "ownerDisplayNameDescription": "The name shown to the tenant's members. Up to 64 characters.",
     "submit": "Create",
     "done": "Tenant created",
     "openTenant": "Open the tenant page",
     "subdomainTaken": "This subdomain is already in use. Choose another one.",
-    "invalid": "The input does not follow the rules. A subdomain uses lowercase letters, digits, and hyphens, is at most 63 characters long, and cannot start or end with a hyphen.",
+    "invalid": "The input does not follow the rules. A subdomain uses lowercase letters, digits, and hyphens, is at most 63 characters long, and cannot start or end with a hyphen. A display name is at most 64 characters long.",
     "failed": "Could not create the tenant."
   },
   "LocaleSelect": {

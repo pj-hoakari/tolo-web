@@ -24,6 +24,7 @@ export function CreateTenantForm() {
   const [name, setName] = useState("");
   const [subdomain, setSubdomain] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
+  const [ownerDisplayName, setOwnerDisplayName] = useState("");
   const [state, setState] = useState<State>({ status: "editing", error: null });
 
   if (state.status === "done") {
@@ -47,6 +48,7 @@ export function CreateTenantForm() {
         name,
         subdomain,
         ownerEmail,
+        ownerDisplayName,
       });
       setState({ status: "done", tenantUrl: tenantUrl(tenant.subdomain) });
     } catch (err) {
@@ -78,6 +80,14 @@ export function CreateTenantForm() {
         onChange={setOwnerEmail}
         isDisabled={submitting}
       />
+      <JollyTextField
+        label={t("ownerDisplayName")}
+        description={t("ownerDisplayNameDescription")}
+        value={ownerDisplayName}
+        onChange={setOwnerDisplayName}
+        maxLength={64}
+        isDisabled={submitting}
+      />
       {state.status === "editing" && state.error && (
         <p role="alert" className="text-sm text-destructive">
           {state.error}
@@ -87,7 +97,11 @@ export function CreateTenantForm() {
         type="submit"
         className="self-start"
         isDisabled={
-          submitting || !name.trim() || !subdomain.trim() || !ownerEmail.trim()
+          submitting ||
+          !name.trim() ||
+          !subdomain.trim() ||
+          !ownerEmail.trim() ||
+          !ownerDisplayName.trim()
         }
       >
         {t("submit")}

@@ -10,7 +10,7 @@ export async function issueRegistrationToken(sub: string): Promise<string> {
         token_use: "registration",
         sub,
         client_id: "console-ui",
-        scope: "tenant.claim",
+        scope: "tenant.join",
       }),
     },
   );

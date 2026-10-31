@@ -181,16 +181,16 @@ TENANT=$(curl -sS -X POST -H 'Content-Type: application/json' -d '{"name":"acme"
 TID=$(printf '%s' "$TENANT" | jq -r .tenant.tenantId)
 CLAIM=$(printf '%s' "$TENANT" | jq -r .ownershipClaimToken)
 
-REG=$(./scripts/dev/fakeidp-token.sh -k registration -b user-owner -s "tenant.claim")
+REG=$(./scripts/dev/fakeidp-token.sh -k registration -b user-owner -s "tenant.join")
 curl -sS -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $REG" \
-  -d "{\"tenantId\":\"$TID\",\"ownershipClaimToken\":\"$CLAIM\",\"subdomain\":\"acme\"}" \
+  -d "{\"tenantId\":\"$TID\",\"ownershipClaimToken\":\"$CLAIM\",\"subdomain\":\"acme\",\"displayName\":\"Owner\"}" \
   http://localhost:8080/tolo.tenant.v1.TenantService/ClaimTenantOwnership
 
 export TENANT_ACCESS_TOKEN=$(./scripts/dev/fakeidp-token.sh -k tenant_access -b user-owner -t "$TID" -s "events.read events.manage" -l 86400)
 echo "$TID"
 ```
 
-所有権の取得で、テナントのサブドメイン名が `acme` に決まります。サブドメイン名は後から変えられません。
+所有権の取得で、テナントのサブドメイン名が `acme` に、オーナーの表示名が `Owner` に決まります。サブドメイン名は後から変えられません。
 
 トークンの `tenant_id` は、開くページのテナント ID と同じでなければなりません。違う場合は Tenant Management が呼び出しを拒否し、一覧は取得に失敗します。
 
@@ -206,7 +206,7 @@ GATEWAY_URL=http://127.0.0.1:8080 NEXT_PUBLIC_API_MOCKING=disabled TENANT_SUBDOM
 
 ### オンボーディングページでテナントを作る
 
-上の curl の手順の代わりに、ルートドメインのトップ（`http://localhost:3000/`）の「テナントを作成」から `/onboarding` を開いてもテナントを作れます。テナント名、サブドメイン名、オーナーのメールアドレスを入力すると、`web` がテナントの登録を始め、偽 IdP から `registration` トークンを発行し、所有権を取得します。オーナーはメールアドレスを `sub` とするユーザーになります。
+上の curl の手順の代わりに、ルートドメインのトップ（`http://localhost:3000/`）の「テナントを作成」から `/onboarding` を開いてもテナントを作れます。テナント名、サブドメイン名、オーナーのメールアドレス、オーナーの表示名を入力すると、`web` がテナントの登録を始め、偽 IdP から scope が `tenant.join` の `registration` トークンを発行し、所有権を取得します。オーナーはメールアドレスを `sub` とするユーザーになり、入力した表示名でテナントに所属します。表示名は 64 文字までです。
 
 `web` は偽 IdP の URL を環境変数 `FAKEIDP_URL` から読みます。未設定のときは `http://127.0.0.1:8082` を使います。
 
