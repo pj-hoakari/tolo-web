@@ -57,6 +57,7 @@ export function ElementOutline({
         estimatedRowHeight: 28,
         estimatedHeadingHeight: 32,
         gap: 4,
+        padding: 4,
       }}
     >
       <Tree
@@ -66,7 +67,7 @@ export function ElementOutline({
         defaultExpandedKeys={graph.nodes
           .filter(isGroupNode)
           .map((group) => entryKey(nodeEntry(group)))}
-        className="h-full"
+        className="h-full p-0"
       >
         {elements.map(renderItem)}
         {routes.length > 0 ? (
