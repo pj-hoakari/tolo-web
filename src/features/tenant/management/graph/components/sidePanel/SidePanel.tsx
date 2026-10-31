@@ -1,6 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useId, useRef } from "react";
+import { type Ref, useEffect, useId, useImperativeHandle, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import type { GraphData } from "../../type";
 import type { GraphElementEntry } from "../../utils/relatedElements";
@@ -25,7 +25,10 @@ export type SidePanelProps = SidePanelSelection &
     onSelectNode: (id: string) => void;
     onSelectEdge: (id: string) => void;
     onClearSelection: () => void;
+    ref?: Ref<SidePanelHandle>;
   };
+
+export type SidePanelHandle = { backToOutline: () => void };
 
 type FocusRequest = { kind: "outline" } | { kind: "element"; id: string };
 
@@ -37,6 +40,7 @@ export function SidePanel({
   onSelectNode,
   onSelectEdge,
   onClearSelection,
+  ref,
   ...bindings
 }: SidePanelProps) {
   const view = sidePanelView({ selectedNode, selectedEdge, selectionCounts });
@@ -69,6 +73,7 @@ export function SidePanel({
     focusRequest.current = { kind: "outline" };
     onClearSelection();
   };
+  useImperativeHandle(ref, () => ({ backToOutline }));
 
   return (
     <aside className="flex w-72 shrink-0 flex-col border-l border-border bg-card">

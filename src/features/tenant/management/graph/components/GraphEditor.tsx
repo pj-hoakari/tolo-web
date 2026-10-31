@@ -2,7 +2,14 @@
 
 import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
 import { useMessages, useTranslations } from "next-intl";
-import { type Ref, useEffect, useImperativeHandle, useState } from "react";
+import {
+  type KeyboardEvent,
+  type Ref,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import {
   type GraphKey,
   GraphValidationError,
@@ -16,7 +23,7 @@ import type { GraphData } from "../type";
 import { FIT_VIEW_OPTIONS, GraphCanvas } from "./GraphCanvas";
 import { GraphEditorToolbar } from "./GraphEditorToolbar";
 import { GraphLoadState } from "./GraphLoadState";
-import { SidePanel } from "./sidePanel/SidePanel";
+import { SidePanel, type SidePanelHandle } from "./sidePanel/SidePanel";
 
 export type GraphEditorHandle = {
   getGraphData: () => GraphData;
@@ -31,6 +38,12 @@ type SaveState =
   | { status: "failed"; error: unknown };
 
 const SAVED_STATUS_MS = 3000;
+
+const isTextEntry = (target: EventTarget) =>
+  target instanceof HTMLTextAreaElement ||
+  (target instanceof HTMLInputElement &&
+    target.type !== "checkbox" &&
+    target.type !== "radio");
 
 const SAVE_ERROR_MESSAGES = {
   byCode: { PRECONDITION_FAILED: "saveUnavailable" },
@@ -76,9 +89,17 @@ function GraphEditorInner({
   initialGraph: GraphData;
   handleRef?: Ref<GraphEditorHandle>;
 }) {
-  const { graph, canvas, toolbar, properties, getGraphData, setSelection } =
-    useGraphEditor(initialGraph);
+  const {
+    graph,
+    selection,
+    canvas,
+    toolbar,
+    properties,
+    getGraphData,
+    setSelection,
+  } = useGraphEditor(initialGraph);
   const easyConnect = useEasyConnect();
+  const sidePanelRef = useRef<SidePanelHandle>(null);
   const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
 
   // 親から ref 経由で編集済みデータを取得できるように
@@ -127,6 +148,21 @@ function GraphEditorInner({
     });
   };
 
+  const handleEscape = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (
+      event.key !== "Escape" ||
+      !(event.target instanceof Node) ||
+      !event.currentTarget.contains(event.target) ||
+      isTextEntry(event.target)
+    )
+      return;
+    if (easyConnect.active) easyConnect.end();
+    else if (selection.nodeIds.length + selection.edgeIds.length > 0)
+      sidePanelRef.current?.backToOutline();
+    else return;
+    event.stopPropagation();
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <GraphEditorToolbar
@@ -138,9 +174,9 @@ function GraphEditorInner({
       {saveState.status === "failed" && (
         <SaveErrorAlert error={saveState.error} />
       )}
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1" onKeyDownCapture={handleEscape}>
         <GraphCanvas {...canvas} editing={{ ...canvas.editing, easyConnect }} />
-        <SidePanel {...properties} graph={graph} />
+        <SidePanel ref={sidePanelRef} {...properties} graph={graph} />
       </div>
     </div>
   );

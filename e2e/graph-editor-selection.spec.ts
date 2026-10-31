@@ -800,8 +800,7 @@ const outlineRows = (page: Page) =>
         return `${"  ".repeat(level - 1)}${row.textContent}`;
       }),
     );
-const clearSelection = (page: Page) =>
-  page.locator(".react-flow__pane").click({ position: { x: 10, y: 10 } });
+const clearSelection = (page: Page) => page.keyboard.press("Escape");
 
 test("何も選択していないとき、サイドパネルはグループの中にポイントを入れ子にした木と、ルートの一覧を表示する", async ({
   page,
@@ -903,7 +902,7 @@ test("木からグループ内のポイント・グループ・ルートを選�
 
   await clearSelection(page);
   await expect(outline(page)).toBeVisible();
-  await expect(panel(page).locator(":focus")).toHaveCount(0);
+  await expect(outlineRow(page, "2F")).toBeFocused();
   await outlineRow(page, "1F").click();
   await expect(selectedNodes(page)).toHaveCount(1);
   await expect(node(page, "ph_floor1")).toHaveClass(/selected/);
@@ -968,7 +967,7 @@ test("「一覧に戻る」を押すと選択が解除され、サイドパネ�
   await expect(backToOutline(page)).toHaveCount(0);
 
   await selectNode(page, "ph_booth");
-  await clearSelection(page);
+  await page.locator(".react-flow__pane").click({ position: { x: 10, y: 10 } });
   await expect(outline(page)).toBeVisible();
   await expect(panel(page).locator(":focus")).toHaveCount(0);
 
