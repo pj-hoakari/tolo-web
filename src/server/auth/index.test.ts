@@ -47,9 +47,12 @@ describe("getAccessToken with AUTH_MOCKING", () => {
     await expect(getAccessToken({ type: "tenant_access" })).rejects.toThrow();
   });
 
-  it("refuses when AUTH_MOCKING is not enabled", async () => {
+  it("requires the real authentication settings when AUTH_MOCKING is not enabled", async () => {
     vi.stubEnv("AUTH_MOCKING", "");
+    vi.stubEnv("AUTH_DATABASE_URL", "");
 
-    await expect(getAccessToken({ type: "tenant_access" })).rejects.toThrow();
+    await expect(getAccessToken({ type: "tenant_access" })).rejects.toThrow(
+      "AUTH_DATABASE_URL",
+    );
   });
 });
