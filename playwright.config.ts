@@ -4,6 +4,7 @@ const port = 3100;
 
 export default defineConfig({
   testDir: "e2e",
+  fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 0,
   reporter: process.env.CI ? "github" : "list",
