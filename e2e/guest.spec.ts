@@ -42,7 +42,10 @@ const openGuestPage = async (
 };
 
 test.beforeEach(async ({ page }) => {
+  const opened = page.waitForResponse("**/rpc/guest/openGuestPage");
+  const guideMap = page.waitForResponse("**/rpc/guest/getGuideMap");
   await page.goto("/event/test/guest");
+  await Promise.all([opened, guideMap]);
   await expect(
     page.getByRole("heading", { level: 1, name: "0123456789abcdef" }),
   ).toBeVisible();
