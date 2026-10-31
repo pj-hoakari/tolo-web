@@ -5,8 +5,8 @@ import {
 } from "better-auth";
 import { genericOAuth } from "better-auth/plugins/generic-oauth";
 import { Pool } from "pg";
-import { getRootDomain } from "@/lib/control/tenant";
-import { loginHandoff, PROVIDER_ID } from "./login";
+import { rootOrigin } from "@/lib/control/tenant";
+import { loginErrorUrl, loginHandoff, PROVIDER_ID } from "./login";
 
 export const SESSION_COOKIE = "__Host-tolo.session_token";
 
@@ -31,11 +31,6 @@ export function readAuthEnv(): AuthEnv {
   return Object.fromEntries(
     Object.entries(AUTH_ENV).map(([key, name]) => [key, process.env[name]]),
   ) as AuthEnv;
-}
-
-export function rootOrigin(rootDomain = getRootDomain()): string {
-  const local = rootDomain === "localhost" || rootDomain.endsWith(".localhost");
-  return `${local ? "http" : "https"}://${rootDomain}`;
 }
 
 export function discoveryUrl(issuer: string): string {
@@ -102,6 +97,7 @@ export function authOptions(env: AuthEnv) {
     secret: env.secret,
     baseURL: rootOrigin(),
     trustedOrigins: [rootOrigin()],
+    onAPIError: { errorURL: loginErrorUrl() },
     session: {
       expiresIn: 60 * 60,
       updateAge: 0,

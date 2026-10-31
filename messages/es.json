@@ -549,5 +549,12 @@
     "otherIntro": "Los pasos varían según el navegador y el dispositivo. Elige las instrucciones para tu dispositivo. Si falta una opción, abre esta página en uno de los navegadores compatibles de abajo.",
     "insecure": "La instalación requiere una conexión HTTPS. Abre el sitio público con su URL HTTPS.",
     "close": "Cerrar"
+  },
+  "Auth": {
+    "error": {
+      "title": "No se pudo iniciar sesión",
+      "retry": "Volver a iniciar sesión",
+      "reopen": "Abre de nuevo la página de tu inquilino y vuelve a iniciar sesión."
+    }
   }
 }

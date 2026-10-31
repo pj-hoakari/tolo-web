@@ -1,7 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import type { BetterAuthPlugin, GenericEndpointContext } from "better-auth";
 import {
-  APIError,
   createAuthEndpoint,
   createAuthMiddleware,
   getOAuthState,
@@ -12,6 +11,7 @@ import {
   setSessionCookie,
 } from "better-auth/cookies";
 import { z } from "zod";
+import { rootOrigin } from "@/lib/control/tenant";
 import type { RealAuth } from "./betterAuth";
 
 export const PROVIDER_ID = "tolo-idp";
@@ -69,6 +69,13 @@ const oauthLoginId = async () => {
   const loginId = (await getOAuthState())?.loginId;
   return typeof loginId === "string" ? loginId : undefined;
 };
+
+export function loginErrorUrl(host?: string, error?: string): string {
+  const url = new URL("/auth/error", rootOrigin());
+  if (host) url.searchParams.set("host", host);
+  if (error) url.searchParams.set("error", error);
+  return url.href;
+}
 
 export function sameHostPath(value: string): string | undefined {
   const base = "http://host.invalid";
@@ -153,7 +160,7 @@ export const loginHandoff = {
             !login.refreshToken ||
             !login.accessTokenExpiresAt
           ) {
-            throw ctx.redirect(`${baseURL}/error?error=login_expired`);
+            throw ctx.redirect(loginErrorUrl(login?.host, "login_expired"));
           }
           const code = randomToken();
           await adapter.update({
@@ -238,9 +245,7 @@ export const loginHandoff = {
           !presented ||
           sha256(presented) !== login.bindingHash
         ) {
-          throw new APIError("BAD_REQUEST", {
-            message: "this login link is invalid or expired; sign in again",
-          });
+          throw ctx.redirect(loginErrorUrl(ctx.body.host, "invalid_handoff"));
         }
         const previous = await ctx.getSignedCookie(
           authCookies.sessionToken.name,
@@ -297,13 +302,12 @@ export function createLoginFlow({ auth, env }: RealAuth) {
       const returnPath = sameHostPath(
         new URL(request.url).searchParams.get("return") ?? "/",
       );
+      const host = request.headers.get("host") ?? "";
       if (!returnPath) {
-        return new Response("return must be a path on this host", {
-          status: 400,
-        });
+        return Response.redirect(loginErrorUrl(host, "invalid_return"), 302);
       }
       return auth.api.startLogin({
-        body: { tenantId, host: request.headers.get("host") ?? "", returnPath },
+        body: { tenantId, host, returnPath },
         asResponse: true,
       });
     },
@@ -318,14 +322,16 @@ export function createLoginFlow({ auth, env }: RealAuth) {
           })
         : null;
       if (!login || login.codeHash || login.expiresAt <= new Date()) {
-        return new Response("this login has expired; sign in again", {
-          status: 400,
-        });
+        return Response.redirect(
+          loginErrorUrl(login?.host, "login_expired"),
+          302,
+        );
       }
       const { headers } = await auth.api.signInSocial({
         body: {
           provider: PROVIDER_ID,
           callbackURL: "/",
+          errorCallbackURL: loginErrorUrl(login.host),
           additionalData: { loginId: login.id },
           additionalParams: {
             resource: `https://${env.resourceHost}/tenants/${login.tenantId}`,

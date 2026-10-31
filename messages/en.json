@@ -549,5 +549,12 @@
     "otherIntro": "Steps vary by browser and device. Choose the instructions for your device. If an option is missing, open this page in one of the supported browsers below.",
     "insecure": "Installation requires HTTPS. Open the public site using its HTTPS URL.",
     "close": "Close"
+  },
+  "Auth": {
+    "error": {
+      "title": "Could not log in",
+      "retry": "Log in again",
+      "reopen": "Open your tenant's page again and log in."
+    }
   }
 }

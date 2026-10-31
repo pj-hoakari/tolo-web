@@ -2,6 +2,21 @@ export function getRootDomain(): string {
   return (process.env.ROOT_DOMAIN || "localhost").toLowerCase();
 }
 
+export function rootOrigin(rootDomain = getRootDomain()): string {
+  const local = rootDomain === "localhost" || rootDomain.endsWith(".localhost");
+  return `${local ? "http" : "https"}://${rootDomain}`;
+}
+
+export function tenantOrigin(host: string): string | undefined {
+  if (
+    !/^[a-z0-9.-]+(:\d+)?$/i.test(host) ||
+    resolveTenant(host).type !== "tenant"
+  ) {
+    return undefined;
+  }
+  return `${new URL(rootOrigin()).protocol}//${host}`;
+}
+
 const RESERVED_SUBDOMAINS = new Set(["www"]);
 
 export type TenantInvalidReason =

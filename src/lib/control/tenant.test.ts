@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { getRootDomain, resolveTenant } from "./tenant";
+import { getRootDomain, resolveTenant, tenantOrigin } from "./tenant";
 
 describe("resolveTenant", () => {
   test("extract one label below the root domain as the subdomain name", () => {
@@ -99,5 +99,33 @@ describe("getRootDomain", () => {
   test("falls back to localhost when ROOT_DOMAIN is unset", () => {
     vi.stubEnv("ROOT_DOMAIN", "");
     expect(getRootDomain()).toBe("localhost");
+  });
+});
+
+describe("tenantOrigin", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+  test("is the origin of a tenant host, with its port, on the root domain's scheme", () => {
+    vi.stubEnv("ROOT_DOMAIN", "example.com");
+    expect(tenantOrigin("acme.example.com")).toBe("https://acme.example.com");
+    vi.stubEnv("ROOT_DOMAIN", "");
+    expect(tenantOrigin("acme.localhost:3000")).toBe(
+      "http://acme.localhost:3000",
+    );
+  });
+  test.each([
+    "example.com",
+    "www.example.com",
+    "evil.test",
+    "a.acme.example.com",
+    "acme.example.com:@evil.test",
+    "acme.example.com:1@evil.test",
+    "acme.example.com/@evil.test",
+    "acme.example.com\\@evil.test",
+    "",
+  ])("is undefined for %j, which is not a tenant host", (host) => {
+    vi.stubEnv("ROOT_DOMAIN", "example.com");
+    expect(tenantOrigin(host)).toBeUndefined();
   });
 });
