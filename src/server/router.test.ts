@@ -63,6 +63,7 @@ vi.mock("./tenantManagement", () => ({
     listMemberships: vi.fn(),
     changeTenantRole: vi.fn(),
     revokeRole: vi.fn(),
+    grantEventRole: vi.fn(),
     listTenantInvitations: vi.fn(),
     createTenantInvitation: vi.fn(),
     revokeTenantInvitation: vi.fn(),
@@ -270,10 +271,10 @@ describe("tenant members and invitations", () => {
     tenantRole: Role.OWNER,
     displayName: "山田",
     joinedAt: timestampFromDate(new Date("2026-10-01T00:00:00.000Z")),
-    eventRoles: [],
+    eventRoles: [{ eventId: "0000000000000001", role: Role.OWNER }],
   };
 
-  it("lists the tenant's members with their display name, role, and the time they joined", async () => {
+  it("lists the tenant's members with their display name, role, the time they joined, and their event roles", async () => {
     const list = vi
       .mocked(relationAdminClient.listMemberships)
       .mockResolvedValue({
@@ -285,6 +286,7 @@ describe("tenant members and invitations", () => {
             tenantRole: Role.STAFF,
             displayName: "佐藤",
             joinedAt: undefined,
+            eventRoles: [],
           },
         ],
       } as never);
@@ -298,12 +300,14 @@ describe("tenant members and invitations", () => {
           displayName: "山田",
           role: "owner",
           joinedAt: "2026-10-01T00:00:00.000Z",
+          eventRoles: [{ eventId: "0000000000000001", role: "owner" }],
         },
         {
           userId: "user-staff",
           displayName: "佐藤",
           role: "staff",
           joinedAt: null,
+          eventRoles: [],
         },
       ],
     });
@@ -426,6 +430,51 @@ describe("tenant members and invitations", () => {
       );
     },
   );
+
+  it("grants an event role to a member and returns the member with it", async () => {
+    const grant = vi
+      .mocked(relationAdminClient.grantEventRole)
+      .mockResolvedValue({
+        membership: {
+          ...owner,
+          userId: "user-staff",
+          tenantRole: Role.STAFF,
+          eventRoles: [{ eventId: "0000000000000002", role: Role.STAFF }],
+        },
+      } as never);
+
+    await expect(
+      call(router.tenant.grantEventRole, {
+        eventId: "0000000000000002",
+        userId: "user-staff",
+        role: "staff",
+      }),
+    ).resolves.toMatchObject({
+      userId: "user-staff",
+      eventRoles: [{ eventId: "0000000000000002", role: "staff" }],
+    });
+    expect(grant).toHaveBeenCalledWith({
+      eventId: "0000000000000002",
+      userId: "user-staff",
+      role: Role.STAFF,
+    });
+  });
+
+  it("revokes only the event role, leaving the tenant membership", async () => {
+    const revoke = vi
+      .mocked(relationAdminClient.revokeRole)
+      .mockResolvedValue({} as never);
+
+    await call(router.tenant.revokeEventRole, {
+      eventId: "0000000000000002",
+      userId: "user-staff",
+    });
+
+    expect(revoke).toHaveBeenCalledWith({
+      userId: "user-staff",
+      scope: { case: "eventId", value: "0000000000000002" },
+    });
+  });
 
   it("lists the unused invitations without their tokens and revokes one by its ID", async () => {
     vi.mocked(relationAdminClient.listTenantInvitations).mockResolvedValue({

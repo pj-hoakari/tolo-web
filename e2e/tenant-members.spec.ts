@@ -201,12 +201,14 @@ test("オーナーが 2 人いれば、そのうち 1 人をスタッフにで�
         displayName: "山田 太郎",
         role: "owner",
         joinedAt: "2026-10-01T00:00:00.000Z",
+        eventRoles: [],
       },
       {
         userId: "user-owner-2",
         displayName: "田中 三郎",
         role: "owner",
         joinedAt: "2026-10-02T00:00:00.000Z",
+        eventRoles: [],
       },
     ],
   });

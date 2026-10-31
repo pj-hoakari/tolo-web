@@ -64,6 +64,7 @@ export type MockRouterOverrides = {
   listMembersError?: boolean;
   createInvitationError?: CommonORPCErrorCode;
   acceptInvitationError?: CommonORPCErrorCode;
+  grantEventRoleError?: CommonORPCErrorCode;
   guestComponents?: GuestPageComponent[];
   guideMap?: GuestGuideMap;
   getGuideMapError?: boolean;
@@ -77,12 +78,17 @@ export const SAMPLE_MEMBERS: TenantMember[] = [
     displayName: "山田 太郎",
     role: "owner",
     joinedAt: "2026-10-01T00:00:00.000Z",
+    eventRoles: [
+      { eventId: "0000000000000001", role: "owner" },
+      { eventId: "0000000000000002", role: "owner" },
+    ],
   },
   {
     userId: "user-staff",
     displayName: "佐藤 花子",
     role: "staff",
     joinedAt: "2026-10-29T01:30:00.000Z",
+    eventRoles: [],
   },
 ];
 
@@ -110,6 +116,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     listMembersError = false,
     createInvitationError,
     acceptInvitationError,
+    grantEventRoleError,
     guestComponents = [...DEFAULT_GUEST_PAGE_COMPONENTS],
     guideMap,
     getGuideMapError = false,
@@ -346,6 +353,47 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           findMember(input.userId);
           keepAnotherOwner(input.userId);
           members = members.filter((m) => m.userId !== input.userId);
+        }),
+      grantEventRole: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            userId: z.string().min(1),
+            role: z.enum(["owner", "staff"]),
+          }),
+        )
+        .handler(async ({ input }): Promise<TenantMember> => {
+          if (grantEventRoleError !== undefined) {
+            throw new ORPCError(grantEventRoleError, {
+              message: MOCK_SERVER_MESSAGE,
+            });
+          }
+          const member = findMember(input.userId);
+          const event = events.find((e) => e.eventId === input.eventId);
+          if (!event) throw new ORPCError("NOT_FOUND");
+          if (event.status === "archived") {
+            throw new ORPCError("PRECONDITION_FAILED", {
+              message: "event is archived",
+            });
+          }
+          member.eventRoles = [
+            ...member.eventRoles.filter((r) => r.eventId !== input.eventId),
+            { eventId: input.eventId, role: input.role },
+          ];
+          return structuredClone(member);
+        }),
+      revokeEventRole: os
+        .input(
+          z.object({ eventId: z.string().min(1), userId: z.string().min(1) }),
+        )
+        .handler(async ({ input }): Promise<void> => {
+          const member = findMember(input.userId);
+          if (!member.eventRoles.some((r) => r.eventId === input.eventId)) {
+            throw new ORPCError("NOT_FOUND");
+          }
+          member.eventRoles = member.eventRoles.filter(
+            (r) => r.eventId !== input.eventId,
+          );
         }),
       listInvitations: os
         .input(z.object({ tenantId: z.string().min(1) }))
