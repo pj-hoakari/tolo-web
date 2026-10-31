@@ -639,5 +639,15 @@
       "memberNotFound": "The member was not found. Reload the list.",
       "stale": "The tenant changed, so the operation could not be done. Reload the list."
     }
+  },
+  "Invitation": {
+    "title": "Join a tenant",
+    "description": "You have been invited to the tenant at {host}. Join it as staff?",
+    "accept": "Join",
+    "notFound": "No invitation was found. Open the invitation URL you received again.",
+    "unusable": "This invitation cannot be used. It may have been used already, expired, or been revoked. Contact the owner who invited you and ask for a new invitation URL.",
+    "cannotJoin": "You cannot join this tenant. You may already be a member, or the tenant may have been archived.",
+    "openManagement": "Open the management page",
+    "failed": "Could not join the tenant. Try again."
   }
 }

@@ -63,6 +63,7 @@ export type MockRouterOverrides = {
   members?: TenantMember[];
   listMembersError?: boolean;
   createInvitationError?: CommonORPCErrorCode;
+  acceptInvitationError?: CommonORPCErrorCode;
   guestComponents?: GuestPageComponent[];
   guideMap?: GuestGuideMap;
   getGuideMapError?: boolean;
@@ -108,6 +109,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     members: initialMembers = SAMPLE_MEMBERS,
     listMembersError = false,
     createInvitationError,
+    acceptInvitationError,
     guestComponents = [...DEFAULT_GUEST_PAGE_COMPONENTS],
     guideMap,
     getGuideMapError = false,
@@ -379,6 +381,14 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             invitationToken: `mock-invitation-token-${number}`,
           };
         }),
+      acceptInvitation: os.handler(async (): Promise<{ next: string }> => {
+        if (acceptInvitationError !== undefined) {
+          throw new ORPCError(acceptInvitationError, {
+            message: MOCK_SERVER_MESSAGE,
+          });
+        }
+        return { next: "/management" };
+      }),
       revokeInvitation: os
         .input(
           z.object({
