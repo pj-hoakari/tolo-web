@@ -12,7 +12,6 @@ import { AriaRouterProvider } from "@/components/aria-router-provider";
 import { PwaProvider } from "@/components/pwa/pwa-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
-import { MswBootstrap } from "./_mocks/MswBootstrap";
 
 const playfairDisplayHeading = Playfair_Display({
   subsets: ["latin"],
@@ -83,9 +82,7 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
             <AriaRouterProvider>
-              <PwaProvider>
-                <MswBootstrap>{children}</MswBootstrap>
-              </PwaProvider>
+              <PwaProvider>{children}</PwaProvider>
             </AriaRouterProvider>
           </ThemeProvider>
         </NextIntlClientProvider>

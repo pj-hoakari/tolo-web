@@ -12,6 +12,19 @@ test("ルートドメインにアクセスするとトップページが表示�
   ).toBeVisible();
 });
 
+test.describe("JavaScript を読み込む前", () => {
+  test.use({ javaScriptEnabled: false });
+
+  test("トップページは、サーバーが描画した HTML だけで表示される", async ({
+    page,
+  }) => {
+    await page.goto(`${rootURL}/`);
+    await expect(
+      page.getByRole("link", { name: "テナントを作成" }),
+    ).toBeVisible();
+  });
+});
+
 test("テナントとして解決できないホストにアクセスすると 404 になる", async ({
   page,
 }) => {
