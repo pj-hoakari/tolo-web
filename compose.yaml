@@ -101,6 +101,8 @@ services:
     image: tolo-web-e2e
     profiles:
       - e2e
+    extra_hosts:
+      - test.localhost:127.0.0.1
     volumes:
       - type: bind
         source: ./test-results

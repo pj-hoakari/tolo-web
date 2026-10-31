@@ -417,6 +417,9 @@ test.describe("グループへの出し入れ", () => {
       .getByRole("menu", { name: "グループ「1F」の操作" })
       .getByRole("menuitem", { name: "ポイントを追加", exact: true })
       .click();
+    await expect(
+      panel(page).getByRole("textbox", { name: "ラベル（日本語）" }),
+    ).toHaveValue("ポイント 12");
     const added = node(
       page,
       (await panel(page).getByRole("code").textContent()) ?? "",
