@@ -159,18 +159,27 @@ const PROTO_ROLES: Record<TenantRole, Role> = {
   staff: Role.STAFF,
 };
 
+function toTenantRole(role: Role): TenantRole {
+  const known = TENANT_ROLES[role];
+  if (!known) {
+    throw new Error(`unexpected role from tenant-management: ${role}`);
+  }
+  return known;
+}
+
 function toTenantMember(membership: Membership | undefined): TenantMember {
-  const role = membership && TENANT_ROLES[membership.tenantRole];
-  if (!membership || !role) {
-    throw new Error(
-      `unexpected membership from tenant-management: ${membership?.tenantRole}`,
-    );
+  if (!membership) {
+    throw new Error("tenant-management returned no membership");
   }
   return {
     userId: membership.userId,
     displayName: membership.displayName,
-    role,
+    role: toTenantRole(membership.tenantRole),
     joinedAt: toISOString(membership.joinedAt),
+    eventRoles: membership.eventRoles.map((r) => ({
+      eventId: r.eventId,
+      role: toTenantRole(r.role),
+    })),
   };
 }
 
@@ -478,6 +487,38 @@ export const router = {
           await relationAdminClient.revokeRole({
             userId: input.userId,
             scope: { case: "tenantId", value: input.tenantId },
+          });
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    grantEventRole: os
+      .input(
+        z.object({
+          eventId: publicId,
+          userId: z.string().min(1),
+          role: z.enum(["owner", "staff"]),
+        }),
+      )
+      .handler(async ({ input }): Promise<TenantMember> => {
+        try {
+          const res = await relationAdminClient.grantEventRole({
+            eventId: input.eventId,
+            userId: input.userId,
+            role: PROTO_ROLES[input.role],
+          });
+          return toTenantMember(res.membership);
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    revokeEventRole: os
+      .input(z.object({ eventId: publicId, userId: z.string().min(1) }))
+      .handler(async ({ input }): Promise<void> => {
+        try {
+          await relationAdminClient.revokeRole({
+            userId: input.userId,
+            scope: { case: "eventId", value: input.eventId },
           });
         } catch (err) {
           throw toORPCError(err);

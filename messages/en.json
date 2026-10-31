@@ -608,7 +608,10 @@
       "empty": "There are no members.",
       "error": "Could not load the members.",
       "joinedAt": "Joined: {joinedAt}",
-      "joinedAtUnknown": "unknown"
+      "joinedAtUnknown": "unknown",
+      "noEvents": "Events: none",
+      "events": "Events: {events}",
+      "eventSeparator": ", "
     },
     "actions": {
       "cancel": "Cancel",
@@ -638,6 +641,22 @@
       "lastOwner": "A tenant needs at least one owner. Make another member an owner first.",
       "memberNotFound": "The member was not found. Reload the list.",
       "stale": "The tenant changed, so the operation could not be done. Reload the list."
+    },
+    "eventRoles": {
+      "button": "Event roles",
+      "title": "Event roles of {name}",
+      "description": "This member can use the pages of an event only when it has an event role for that event. The event role you assign is the same as the member's tenant role: {role}.",
+      "empty": "No events are assigned.",
+      "assigned": "Assigned events",
+      "revoke": "Unassign",
+      "event": "Event",
+      "choose": "Choose an event",
+      "grant": "Assign",
+      "close": "Close",
+      "unavailable": "This event cannot be assigned. The event may have been archived, or the member may have left the tenant.",
+      "notFound": "The event or the member was not found. Reload the list.",
+      "grantFailed": "Could not assign the event role.",
+      "revokeFailed": "Could not unassign the event role."
     }
   },
   "Invitation": {

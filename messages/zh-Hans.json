@@ -608,7 +608,10 @@
       "empty": "没有成员。",
       "error": "无法获取成员列表。",
       "joinedAt": "加入时间: {joinedAt}",
-      "joinedAtUnknown": "未知"
+      "joinedAtUnknown": "未知",
+      "noEvents": "活动: 无",
+      "events": "活动: {events}",
+      "eventSeparator": "、"
     },
     "actions": {
       "cancel": "取消",
@@ -638,6 +641,22 @@
       "lastOwner": "租户至少需要一名所有者。请先将其他成员设为所有者。",
       "memberNotFound": "未找到该成员。请重新加载列表。",
       "stale": "租户状态已变更，无法执行操作。请重新加载列表。"
+    },
+    "eventRoles": {
+      "button": "活动角色",
+      "title": "{name} 的活动角色",
+      "description": "此成员只能使用已分配活动角色的活动页面。分配的活动角色与此成员的租户角色相同，为{role}。",
+      "empty": "尚未分配任何活动。",
+      "assigned": "已分配的活动",
+      "revoke": "取消分配",
+      "event": "活动",
+      "choose": "选择活动",
+      "grant": "分配",
+      "close": "关闭",
+      "unavailable": "无法分配此活动。活动可能已被归档，或成员已离开租户。",
+      "notFound": "未找到活动或成员。请重新加载列表。",
+      "grantFailed": "无法分配活动角色。",
+      "revokeFailed": "无法取消分配活动角色。"
     }
   },
   "Invitation": {
