@@ -6,7 +6,7 @@ import {
 import { genericOAuth } from "better-auth/plugins/generic-oauth";
 import { Pool } from "pg";
 
-export const PROVIDER_ID = "tolo-idp";
+const PROVIDER_ID = "tolo-idp";
 export const SESSION_COOKIE = "__Host-tolo.session_token";
 
 const AUTH_ENV = {
@@ -45,6 +45,20 @@ function withoutMaxAge(cookie: string): string {
 const toloSession = {
   id: "tolo-session",
   schema: {
+    tenantAccessToken: {
+      fields: {
+        sessionId: {
+          type: "string",
+          required: true,
+          unique: true,
+          references: { model: "session", field: "id", onDelete: "cascade" },
+        },
+        subject: { type: "string", required: true },
+        accessToken: { type: "string", required: true },
+        refreshToken: { type: "string", required: true },
+        accessTokenExpiresAt: { type: "date", required: true },
+      },
+    },
     eventAccessToken: {
       fields: {
         sessionId: {
@@ -121,18 +135,18 @@ export function authOptions(env: AuthEnv) {
   } satisfies BetterAuthOptions;
 }
 
-export type AccountLock = <T>(
-  accountId: string,
+export type SessionLock = <T>(
+  sessionId: string,
   task: () => Promise<T>,
 ) => Promise<T>;
 
-export function advisoryLock(pool: Pool): AccountLock {
-  return async (accountId, task) => {
+export function advisoryLock(pool: Pool): SessionLock {
+  return async (sessionId, task) => {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
       await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
-        accountId,
+        sessionId,
       ]);
       return await task();
     } finally {

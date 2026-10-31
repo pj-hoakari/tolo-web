@@ -7,13 +7,12 @@ import { Pool } from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { server } from "@/mocks/server";
 import {
-  type AccountLock,
   type AuthEnv,
   advisoryLock,
   authOptions,
-  PROVIDER_ID,
   type RealAuth,
   SESSION_COOKIE,
+  type SessionLock,
 } from "./betterAuth";
 import { createSessionAuth } from "./session";
 
@@ -26,21 +25,18 @@ const env: AuthEnv = {
   resourceHost: "api.tolo.test",
 };
 const TENANT = "0123456789abcdef";
+const OTHER_TENANT = "1111111111111111";
 const EVENT = "fedcba9876543210";
 const TOKEN_ENDPOINT = "https://idp.test/oauth2/token";
 const MINUTE = 60 * 1000;
 
-function jwt(claims: Record<string, unknown>): string {
-  return `e30.${Buffer.from(JSON.stringify(claims)).toString("base64url")}.sig`;
-}
-
-function inProcessLock(): AccountLock {
+function inProcessLock(): SessionLock {
   const tails = new Map<string, Promise<unknown>>();
-  return (accountId, task) => {
-    const run = (tails.get(accountId) ?? Promise.resolve())
+  return (sessionId, task) => {
+    const run = (tails.get(sessionId) ?? Promise.resolve())
       .catch(() => {})
       .then(task);
-    tails.set(accountId, run);
+    tails.set(sessionId, run);
     return run;
   };
 }
@@ -51,9 +47,10 @@ function createTestAuth(
     session: [],
     account: [],
     verification: [],
+    tenantAccessToken: [],
     eventAccessToken: [],
   }),
-  lock: AccountLock = inProcessLock(),
+  lock: SessionLock = inProcessLock(),
 ) {
   const options = authOptions(env);
   const auth = betterAuth({
@@ -78,30 +75,50 @@ async function signIn(
   auth: TestAuth,
   {
     tenantId = TENANT,
-    account,
+    userId,
+    tokens,
   }: {
     tenantId?: string;
-    account?: { accessToken: string; refreshToken: string; expiresAt: Date };
+    userId?: string;
+    tokens?: {
+      accessToken: string;
+      refreshToken: string;
+      accessTokenExpiresAt: Date;
+    };
   } = {},
 ) {
   const ctx = await auth.$context;
-  const user = await ctx.test.saveUser(ctx.test.createUser());
   const login = await ctx.test.login({
-    userId: user.id,
+    userId: userId ?? (await ctx.test.saveUser(ctx.test.createUser())).id,
     session: { tenantId, kind: "staff" },
   });
-  if (account) {
-    await ctx.internalAdapter.createAccount({
-      userId: user.id,
-      providerId: PROVIDER_ID,
-      accountId: "idp-subject",
-      accessToken: account.accessToken,
-      refreshToken: account.refreshToken,
-      accessTokenExpiresAt: account.expiresAt,
+  if (tokens) {
+    await ctx.adapter.create({
+      model: "tenantAccessToken",
+      data: { sessionId: login.session.id, subject: "idp-subject", ...tokens },
     });
   }
   return login;
 }
+
+async function storedTenantAccess(auth: TestAuth, sessionId: string) {
+  const ctx = await auth.$context;
+  return ctx.adapter.findOne<{ accessToken: string; refreshToken: string }>({
+    model: "tenantAccessToken",
+    where: [{ field: "sessionId", value: sessionId }],
+  });
+}
+
+const validTokens = () => ({
+  accessToken: "tenant-access-1",
+  refreshToken: "refresh-1",
+  accessTokenExpiresAt: new Date(Date.now() + 10 * MINUTE),
+});
+
+const expiredTokens = () => ({
+  ...validTokens(),
+  accessTokenExpiresAt: new Date(Date.now() - MINUTE),
+});
 
 function idpTokenEndpoint() {
   const requests: { form: URLSearchParams; authorization: string | null }[] =
@@ -122,8 +139,8 @@ function idpTokenEndpoint() {
         }
         usedRefreshTokens.add(refreshToken);
         return HttpResponse.json({
-          access_token: jwt({ tenant_id: TENANT, generation: 2 }),
-          refresh_token: "refresh-2",
+          access_token: `access-from-${refreshToken}`,
+          refresh_token: `${refreshToken}-next`,
           token_type: "Bearer",
           expires_in: 900,
         });
@@ -154,69 +171,121 @@ beforeEach(() => {
 });
 
 describe("tenant_access", () => {
+  const tenantAccess = { type: "tenant_access" } as const;
+
   it("returns an unexpired token without contacting the IdP", async () => {
     const { auth, sessionAuth } = createTestAuth();
     const idp = idpTokenEndpoint();
-    const accessToken = jwt({ tenant_id: TENANT, generation: 1 });
-    const { headers } = await signIn(auth, {
-      account: {
-        accessToken,
-        refreshToken: "refresh-1",
-        expiresAt: new Date(Date.now() + 10 * MINUTE),
+    const { headers } = await signIn(auth, { tokens: validTokens() });
+
+    await expect(
+      sessionAuth.accessToken(headers, TENANT, tenantAccess),
+    ).resolves.toBe("tenant-access-1");
+    expect(idp).toHaveLength(0);
+  });
+
+  it("refreshes an expired token once for concurrent requests and keeps the rotated refresh token", async () => {
+    const { auth, sessionAuth } = createTestAuth();
+    const idp = idpTokenEndpoint();
+    const { headers, session } = await signIn(auth, {
+      tokens: expiredTokens(),
+    });
+
+    const tokens = await Promise.all([
+      sessionAuth.accessToken(headers, TENANT, tenantAccess),
+      sessionAuth.accessToken(headers, TENANT, tenantAccess),
+    ]);
+
+    expect(tokens).toEqual(["access-from-refresh-1", "access-from-refresh-1"]);
+    expect(idp).toHaveLength(1);
+    expect(idp[0].authorization).toBe(
+      `Basic ${Buffer.from("console-ui:console-secret").toString("base64")}`,
+    );
+    expect(Object.fromEntries(idp[0].form)).toEqual({
+      grant_type: "refresh_token",
+      refresh_token: "refresh-1",
+    });
+    expect(await storedTenantAccess(auth, session.id)).toMatchObject({
+      accessToken: "access-from-refresh-1",
+      refreshToken: "refresh-1-next",
+    });
+  });
+
+  it("keeps each session's tokens when the same user signs in on two tenants", async () => {
+    const { auth, sessionAuth } = createTestAuth();
+    const idp = idpTokenEndpoint();
+    const onTenant = await signIn(auth, { tokens: validTokens() });
+    const onOtherTenant = await signIn(auth, {
+      tenantId: OTHER_TENANT,
+      userId: onTenant.user.id,
+      tokens: {
+        accessToken: "other-tenant-access",
+        refreshToken: "other-refresh",
+        accessTokenExpiresAt: new Date(Date.now() - MINUTE),
       },
     });
 
     await expect(
-      sessionAuth.accessToken(headers, TENANT, { type: "tenant_access" }),
-    ).resolves.toBe(accessToken);
-    expect(idp).toHaveLength(0);
+      sessionAuth.accessToken(
+        onOtherTenant.headers,
+        OTHER_TENANT,
+        tenantAccess,
+      ),
+    ).resolves.toBe("access-from-other-refresh");
+    await expect(
+      sessionAuth.accessToken(onTenant.headers, TENANT, tenantAccess),
+    ).resolves.toBe("tenant-access-1");
+    expect(idp.map(({ form }) => form.get("refresh_token"))).toEqual([
+      "other-refresh",
+    ]);
   });
 
-  it("refreshes an expired token once for concurrent requests and gives both the new token", async () => {
+  it("forgets the session's tokens when the IdP rejects the refresh token", async () => {
     const { auth, sessionAuth } = createTestAuth();
-    const idp = idpTokenEndpoint();
-    const { headers } = await signIn(auth, {
-      account: {
-        accessToken: jwt({ tenant_id: TENANT, generation: 1 }),
-        refreshToken: "refresh-1",
-        expiresAt: new Date(Date.now() - MINUTE),
-      },
+    server.use(
+      http.post(TOKEN_ENDPOINT, () =>
+        HttpResponse.json({ error: "invalid_grant" }, { status: 400 }),
+      ),
+    );
+    const { headers, session } = await signIn(auth, {
+      tokens: expiredTokens(),
     });
 
-    const tokens = await Promise.all([
-      sessionAuth.accessToken(headers, TENANT, { type: "tenant_access" }),
-      sessionAuth.accessToken(headers, TENANT, { type: "tenant_access" }),
-    ]);
-
-    const refreshed = jwt({ tenant_id: TENANT, generation: 2 });
-    expect(tokens).toEqual([refreshed, refreshed]);
-    expect(idp.map(({ form }) => form.get("refresh_token"))).toEqual([
-      "refresh-1",
-    ]);
+    await expect(
+      sessionAuth.accessToken(headers, TENANT, tenantAccess),
+    ).rejects.toThrow("sign in again");
+    expect(await storedTenantAccess(auth, session.id)).toBeNull();
+    await expect(sessionAuth.viewer(headers, TENANT)).resolves.toEqual({
+      type: "anonymous",
+    });
   });
 
-  it("refuses when the session has no IdP account", async () => {
+  it("keeps the session's tokens when the refresh fails for another reason", async () => {
+    const { auth, sessionAuth } = createTestAuth();
+    server.use(
+      http.post(TOKEN_ENDPOINT, () =>
+        HttpResponse.json({ error: "server_error" }, { status: 503 }),
+      ),
+    );
+    const { headers, session } = await signIn(auth, {
+      tokens: expiredTokens(),
+    });
+
+    await expect(
+      sessionAuth.accessToken(headers, TENANT, tenantAccess),
+    ).rejects.toThrow("503");
+    expect(await storedTenantAccess(auth, session.id)).toMatchObject({
+      refreshToken: "refresh-1",
+    });
+  });
+
+  it("refuses when the session has no tokens", async () => {
     const { auth, sessionAuth } = createTestAuth();
     const { headers } = await signIn(auth);
 
     await expect(
-      sessionAuth.accessToken(headers, TENANT, { type: "tenant_access" }),
+      sessionAuth.accessToken(headers, TENANT, tenantAccess),
     ).rejects.toThrow("no staff session");
-  });
-
-  it("refuses a stored token issued for another tenant", async () => {
-    const { auth, sessionAuth } = createTestAuth();
-    const { headers } = await signIn(auth, {
-      account: {
-        accessToken: jwt({ tenant_id: "1111111111111111" }),
-        refreshToken: "refresh-1",
-        expiresAt: new Date(Date.now() + 10 * MINUTE),
-      },
-    });
-
-    await expect(
-      sessionAuth.accessToken(headers, TENANT, { type: "tenant_access" }),
-    ).rejects.toThrow("not for this host's tenant");
   });
 });
 
@@ -224,14 +293,7 @@ describe("event_access", () => {
   it("exchanges the session's tenant_access for the event and reuses the stored token", async () => {
     const { auth, sessionAuth } = createTestAuth();
     const idp = idpTokenEndpoint();
-    const tenantAccess = jwt({ tenant_id: TENANT });
-    const { headers } = await signIn(auth, {
-      account: {
-        accessToken: tenantAccess,
-        refreshToken: "refresh-1",
-        expiresAt: new Date(Date.now() + 10 * MINUTE),
-      },
-    });
+    const { headers } = await signIn(auth, { tokens: validTokens() });
     const request = {
       type: "event_access",
       eventId: EVENT,
@@ -249,7 +311,7 @@ describe("event_access", () => {
     );
     expect(Object.fromEntries(idp[0].form)).toEqual({
       grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
-      subject_token: tenantAccess,
+      subject_token: "tenant-access-1",
       subject_token_type: "urn:ietf:params:oauth:token-type:access_token",
       resource: `https://api.tolo.test/tenants/${TENANT}/events/${EVENT}`,
       audience: "backend-api",
@@ -271,15 +333,9 @@ describe("event_access", () => {
 });
 
 describe("viewer", () => {
-  const account = {
-    accessToken: jwt({ tenant_id: TENANT }),
-    refreshToken: "refresh-1",
-    expiresAt: new Date(Date.now() + 10 * MINUTE),
-  };
-
   it("is the IdP subject on the session's own tenant host", async () => {
     const { auth, sessionAuth } = createTestAuth();
-    const { headers } = await signIn(auth, { account });
+    const { headers } = await signIn(auth, { tokens: validTokens() });
 
     await expect(sessionAuth.viewer(headers, TENANT)).resolves.toEqual({
       type: "staff",
@@ -288,11 +344,20 @@ describe("viewer", () => {
     });
   });
 
+  it("is anonymous when the session has no tokens", async () => {
+    const { auth, sessionAuth } = createTestAuth();
+    const { headers } = await signIn(auth);
+
+    await expect(sessionAuth.viewer(headers, TENANT)).resolves.toEqual({
+      type: "anonymous",
+    });
+  });
+
   it("is anonymous on another tenant's host", async () => {
     const { auth, sessionAuth } = createTestAuth();
     const { headers } = await signIn(auth, {
-      tenantId: "1111111111111111",
-      account,
+      tenantId: OTHER_TENANT,
+      tokens: validTokens(),
     });
 
     await expect(sessionAuth.viewer(headers, TENANT)).resolves.toEqual({
@@ -302,7 +367,7 @@ describe("viewer", () => {
 
   it("is anonymous 12 hours after login even while the session is in use", async () => {
     const { auth, sessionAuth } = createTestAuth();
-    const { headers, token } = await signIn(auth, { account });
+    const { headers, token } = await signIn(auth, { tokens: validTokens() });
     const ctx = await auth.$context;
     await ctx.internalAdapter.updateSession(token, {
       createdAt: new Date(Date.now() - 12 * 60 * MINUTE),
@@ -372,12 +437,8 @@ describe.skipIf(!process.env.AUTH_TEST_DATABASE_URL)("on PostgreSQL", () => {
     const first = instance();
     const second = instance();
     const idp = idpTokenEndpoint();
-    const { headers } = await signIn(first.auth, {
-      account: {
-        accessToken: jwt({ tenant_id: TENANT, generation: 1 }),
-        refreshToken: "refresh-1",
-        expiresAt: new Date(Date.now() - MINUTE),
-      },
+    const { headers, session } = await signIn(first.auth, {
+      tokens: expiredTokens(),
     });
 
     const tokens = await Promise.all([
@@ -387,24 +448,20 @@ describe.skipIf(!process.env.AUTH_TEST_DATABASE_URL)("on PostgreSQL", () => {
       }),
     ]);
 
-    const refreshed = jwt({ tenant_id: TENANT, generation: 2 });
-    expect(tokens).toEqual([refreshed, refreshed]);
+    expect(tokens).toEqual(["access-from-refresh-1", "access-from-refresh-1"]);
     expect(idp.map(({ form }) => form.get("refresh_token"))).toEqual([
       "refresh-1",
     ]);
+    expect(await storedTenantAccess(second.auth, session.id)).toMatchObject({
+      refreshToken: "refresh-1-next",
+    });
   });
 
   it("keeps event_access in the database for the next instance", async () => {
     const first = instance();
     const second = instance();
     const idp = idpTokenEndpoint();
-    const { headers } = await signIn(first.auth, {
-      account: {
-        accessToken: jwt({ tenant_id: TENANT }),
-        refreshToken: "refresh-1",
-        expiresAt: new Date(Date.now() + 10 * MINUTE),
-      },
-    });
+    const { headers } = await signIn(first.auth, { tokens: validTokens() });
     const request = {
       type: "event_access",
       eventId: EVENT,

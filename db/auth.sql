@@ -6,6 +6,8 @@ create table "account" ("id" text not null primary key, "accountId" text not nul
 
 create table "verification" ("id" text not null primary key, "identifier" text not null, "value" text not null, "expiresAt" timestamptz not null, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz default CURRENT_TIMESTAMP not null);
 
+create table "tenantAccessToken" ("id" text not null primary key, "sessionId" text not null unique references "session" ("id") on delete cascade, "subject" text not null, "accessToken" text not null, "refreshToken" text not null, "accessTokenExpiresAt" timestamptz not null);
+
 create table "eventAccessToken" ("id" text not null primary key, "sessionId" text not null references "session" ("id") on delete cascade, "eventId" text not null, "accessToken" text not null, "expiresAt" timestamptz not null);
 
 create index "session_userId_idx" on "session" ("userId");

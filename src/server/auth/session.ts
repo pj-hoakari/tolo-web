@@ -1,10 +1,11 @@
 import { encodeBasicCredentials } from "better-auth/oauth2";
 import { z } from "zod";
 import type { AccessTokenRequest, Viewer } from ".";
-import { discoveryUrl, PROVIDER_ID, type RealAuth } from "./betterAuth";
+import { discoveryUrl, type RealAuth } from "./betterAuth";
 
 const ABSOLUTE_LIFETIME_MS = 12 * 60 * 60 * 1000;
 const EXPIRY_MARGIN_MS = 5_000;
+const TENANT_ACCESS_TOKEN = "tenantAccessToken";
 const EVENT_ACCESS_TOKEN = "eventAccessToken";
 
 const discoveryDocument = z.object({ token_endpoint: z.string() });
@@ -12,6 +13,18 @@ const tokenExchangeResponse = z.object({
   access_token: z.string(),
   expires_in: z.number(),
 });
+const refreshResponse = tokenExchangeResponse.extend({
+  refresh_token: z.string(),
+});
+
+type TenantAccessToken = {
+  id: string;
+  sessionId: string;
+  subject: string;
+  accessToken: string;
+  refreshToken: string;
+  accessTokenExpiresAt: Date;
+};
 
 type EventAccessToken = {
   id: string;
@@ -21,11 +34,9 @@ type EventAccessToken = {
   expiresAt: Date;
 };
 
-function tenantClaim(token: string): unknown {
+function oauthError(body: string): unknown {
   try {
-    return JSON.parse(
-      Buffer.from(token.split(".")[1] ?? "", "base64url").toString("utf8"),
-    ).tenant_id;
+    return JSON.parse(body).error;
   } catch {
     return undefined;
   }
@@ -49,6 +60,26 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
     return tokenEndpoint;
   }
 
+  async function postToTokenEndpoint(params: Record<string, string>) {
+    return fetch(await resolveTokenEndpoint(), {
+      method: "POST",
+      headers: {
+        authorization: encodeBasicCredentials(env.clientId, env.clientSecret),
+        "content-type": "application/x-www-form-urlencoded",
+        accept: "application/json",
+      },
+      body: new URLSearchParams(params),
+    });
+  }
+
+  async function storedTenantAccess(sessionId: string) {
+    const { adapter } = await auth.$context;
+    return adapter.findOne<TenantAccessToken>({
+      model: TENANT_ACCESS_TOKEN,
+      where: [{ field: "sessionId", value: sessionId }],
+    });
+  }
+
   async function staffLogin(headers: Headers, tenantId: string | undefined) {
     if (!tenantId) return null;
     const current = await auth.api.getSession({ headers });
@@ -62,31 +93,57 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
     if (current.session.kind !== "staff") {
       throw new Error("machine sessions are not supported yet");
     }
-    const { internalAdapter } = await auth.$context;
-    const account = (await internalAdapter.findAccounts(current.user.id)).find(
-      (candidate) => candidate.providerId === PROVIDER_ID,
-    );
-    return account ? { session: current.session, account, tenantId } : null;
+    const stored = await storedTenantAccess(current.session.id);
+    return stored
+      ? { sessionId: current.session.id, subject: stored.subject, tenantId }
+      : null;
   }
 
   type StaffLogin = NonNullable<Awaited<ReturnType<typeof staffLogin>>>;
 
-  async function tenantAccess({ account, tenantId }: StaffLogin) {
-    const { accessToken } = await auth.api.getAccessToken({
-      body: { accountId: account.id, userId: account.userId },
+  async function tenantAccess(sessionId: string) {
+    const stored = await storedTenantAccess(sessionId);
+    if (!stored) throw new Error("no staff session for this host");
+    if (stored.accessTokenExpiresAt.getTime() - Date.now() > EXPIRY_MARGIN_MS) {
+      return stored.accessToken;
+    }
+    const { adapter } = await auth.$context;
+    const where = [{ field: "sessionId", value: sessionId }];
+    const response = await postToTokenEndpoint({
+      grant_type: "refresh_token",
+      refresh_token: stored.refreshToken,
     });
-    if (tenantClaim(accessToken) !== tenantId) {
+    if (!response.ok) {
+      const failure = await response.text();
+      if (oauthError(failure) === "invalid_grant") {
+        await adapter.delete({ model: TENANT_ACCESS_TOKEN, where });
+        throw new Error(
+          "the IdP rejected this session's refresh token; sign in again",
+        );
+      }
       throw new Error(
-        "the stored tenant_access is not for this host's tenant; sign in on this host again",
+        `refreshing tenant_access failed with ${response.status}: ${failure}`,
       );
     }
-    return accessToken;
+    const { access_token, refresh_token, expires_in } = refreshResponse.parse(
+      await response.json(),
+    );
+    await adapter.update({
+      model: TENANT_ACCESS_TOKEN,
+      where,
+      update: {
+        accessToken: access_token,
+        refreshToken: refresh_token,
+        accessTokenExpiresAt: new Date(Date.now() + expires_in * 1000),
+      },
+    });
+    return access_token;
   }
 
   async function eventAccess(login: StaffLogin, eventId: string) {
     const { adapter } = await auth.$context;
     const where = [
-      { field: "sessionId", value: login.session.id },
+      { field: "sessionId", value: login.sessionId },
       { field: "eventId", value: eventId },
     ];
     const stored = await adapter.findOne<EventAccessToken>({
@@ -96,20 +153,12 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
     if (stored && stored.expiresAt.getTime() - Date.now() > EXPIRY_MARGIN_MS) {
       return stored.accessToken;
     }
-    const response = await fetch(await resolveTokenEndpoint(), {
-      method: "POST",
-      headers: {
-        authorization: encodeBasicCredentials(env.clientId, env.clientSecret),
-        "content-type": "application/x-www-form-urlencoded",
-        accept: "application/json",
-      },
-      body: new URLSearchParams({
-        grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
-        subject_token: await tenantAccess(login),
-        subject_token_type: "urn:ietf:params:oauth:token-type:access_token",
-        resource: `https://${env.resourceHost}/tenants/${login.tenantId}/events/${encodeURIComponent(eventId)}`,
-        audience: "backend-api",
-      }),
+    const response = await postToTokenEndpoint({
+      grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
+      subject_token: await tenantAccess(login.sessionId),
+      subject_token_type: "urn:ietf:params:oauth:token-type:access_token",
+      resource: `https://${env.resourceHost}/tenants/${login.tenantId}/events/${encodeURIComponent(eventId)}`,
+      audience: "backend-api",
     });
     if (!response.ok) {
       throw new Error(
@@ -128,7 +177,7 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
     } else {
       await adapter.create({
         model: EVENT_ACCESS_TOKEN,
-        data: { sessionId: login.session.id, eventId, ...update },
+        data: { sessionId: login.sessionId, eventId, ...update },
       });
     }
     return access_token;
@@ -143,7 +192,7 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
       if (!login) return { type: "anonymous" };
       return {
         type: "staff",
-        userId: login.account.accountId,
+        userId: login.subject,
         tenantId: login.tenantId,
       };
     },
@@ -160,9 +209,9 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
       }
       const login = await staffLogin(headers, tenantId);
       if (!login) throw new Error("no staff session for this host");
-      return lock(login.account.id, () =>
+      return lock(login.sessionId, () =>
         request.type === "tenant_access"
-          ? tenantAccess(login)
+          ? tenantAccess(login.sessionId)
           : eventAccess(login, request.eventId),
       );
     },
