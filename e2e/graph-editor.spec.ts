@@ -458,6 +458,7 @@ test("案内マップのグラフを指定して開くと KCG本館の 1F から
   page,
 }) => {
   await page.goto("/event/test/management/graph/edit?layoutFixture=guide-map");
+  await expect(node(page, "g_0eb36458")).toBeVisible({ timeout: 15_000 });
 
   for (const [id, label] of [
     ["g_0eb36458", "1F"],
