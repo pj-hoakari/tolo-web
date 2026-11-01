@@ -31,6 +31,30 @@
     "backLink": "Volver a administración",
     "observationDevicesLink": "Dispositivos de observación"
   },
+  "ObservationSettings": {
+    "heading": "Configuración de observación",
+    "loading": "Cargando…",
+    "loadFailed": "No se pudo cargar la configuración de observación.",
+    "retry": "Recargar",
+    "unsetNotice": "El tipo de evento no está configurado. Los eventos sin tipo se tratan como de corta duración. Configure el tipo según la duración del evento.",
+    "eventType": {
+      "label": "Tipo de evento",
+      "unset": "Sin configurar",
+      "shortTerm": {
+        "name": "Corta duración",
+        "criterion": "Un evento que dura menos de varios días"
+      },
+      "longTerm": {
+        "name": "Larga duración",
+        "criterion": "Un evento que dura varios días o más (incluidas las instalaciones permanentes)"
+      }
+    },
+    "historyWindowDays": "Periodo de historial (días)",
+    "save": "Guardar",
+    "saved": "Se guardó la configuración de observación.",
+    "failed": "No se pudo guardar la configuración de observación.",
+    "invalid": "Elija un tipo de evento e introduzca un periodo de historial de al menos 1 día."
+  },
   "TenantManagement": {
     "title": "{tenantId} Gestión de eventos",
     "membersLink": "Miembros",
@@ -39,7 +63,9 @@
       "submit": "Crear",
       "failed": "No se pudo crear el evento.",
       "tenantUnavailable": "No se pueden crear eventos en este inquilino. Es posible que el inquilino esté archivado.",
-      "tenantNotFound": "No se encontró el inquilino."
+      "tenantNotFound": "No se encontró el inquilino.",
+      "created": "Se creó «{name}». Su tipo de evento aún no está configurado.",
+      "setEventType": "Configurar el tipo de evento"
     },
     "list": {
       "heading": "Eventos",
