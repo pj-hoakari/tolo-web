@@ -21,6 +21,10 @@ import type {
   TenantInvitation,
   TenantMember,
 } from "@/features/tenant/management/members/type";
+import {
+  EVENT_TYPES,
+  type ObservationSettings,
+} from "@/features/tenant/management/settings/type";
 import type {
   EdgeDevice,
   FirestoreToken,
@@ -48,6 +52,9 @@ export type MockRouterOverrides = {
   devicesError?: boolean;
   registerEdgeDeviceError?: CommonORPCErrorCode;
   unregisterEdgeDeviceError?: CommonORPCErrorCode;
+  reportMeasurementsError?: CommonORPCErrorCode;
+  getObservationSettingsError?: boolean;
+  updateObservationSettingsError?: CommonORPCErrorCode;
   /** graph.getGraph が返すグラフ（未指定なら PLACEHOLDER_GRAPH） */
   graph?: GraphData;
   getGraphError?: boolean;
@@ -104,6 +111,9 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     devicesError = false,
     registerEdgeDeviceError,
     unregisterEdgeDeviceError,
+    reportMeasurementsError,
+    getObservationSettingsError = false,
+    updateObservationSettingsError,
     graph = PLACEHOLDER_GRAPH,
     getGraphError = false,
     saveGraphError,
@@ -131,6 +141,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
   ];
   let nextEventNumber = events.length + 1;
   let devices = [...initialDevices];
+  const observationSettings = new Map<string, ObservationSettings>();
   let members = structuredClone(initialMembers);
   let invitations: TenantInvitation[] = [
     {
@@ -222,6 +233,59 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             (d) => d.edgeDeviceId !== input.edgeDeviceId,
           );
         }),
+      listObservationPoints: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            edgeDeviceId: z.string().min(1),
+          }),
+        )
+        .handler(async ({ input }) => ({
+          observationPoints:
+            devices.find((d) => d.edgeDeviceId === input.edgeDeviceId)
+              ?.observationPoints ?? [],
+        })),
+      reportMeasurements: os.handler(async (): Promise<void> => {
+        if (reportMeasurementsError !== undefined) {
+          throw new ORPCError(reportMeasurementsError, {
+            message: MOCK_SERVER_MESSAGE,
+          });
+        }
+      }),
+      getSettings: os
+        .input(z.object({ eventId: z.string().min(1) }))
+        .handler(async ({ input }): Promise<ObservationSettings> => {
+          if (getObservationSettingsError) {
+            throw new ORPCError("INTERNAL_SERVER_ERROR");
+          }
+          return (
+            observationSettings.get(input.eventId) ?? {
+              historyWindowDays: 30,
+              eventType: null,
+            }
+          );
+        }),
+      updateSettings: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            historyWindowDays: z.int32().min(1),
+            eventType: z.enum(EVENT_TYPES),
+          }),
+        )
+        .handler(
+          async ({
+            input: { eventId, ...settings },
+          }): Promise<ObservationSettings> => {
+            if (updateObservationSettingsError !== undefined) {
+              throw new ORPCError(updateObservationSettingsError, {
+                message: MOCK_SERVER_MESSAGE,
+              });
+            }
+            observationSettings.set(eventId, settings);
+            return settings;
+          },
+        ),
     },
     tenant: {
       register: os

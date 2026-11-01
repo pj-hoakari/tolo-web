@@ -6,6 +6,7 @@ import {
   type Route,
   test,
 } from "@playwright/test";
+import type { MockRouterOverrides } from "@/mocks/router";
 
 test.use({
   launchOptions: {
@@ -74,6 +75,16 @@ const addLine = async (page: Page) => {
   await lineCreationToggle(page).click();
   await dragOnCanvas(page, [0.2, 0.2], [0.5, 0.3]);
   await expect(page.getByRole("radio", { name: "編集モード" })).toBeChecked();
+};
+
+const overrideMock = async (
+  page: Page,
+  overrides: Pick<MockRouterOverrides, "reportMeasurementsError">,
+) => {
+  await page.evaluate((value) => {
+    sessionStorage.setItem("msw:overrides", value);
+    window.dispatchEvent(new Event("msw:overrides"));
+  }, JSON.stringify(overrides));
 };
 
 const holdModelRequest = async (context: BrowserContext) => {
@@ -571,6 +582,93 @@ test.describe("検出の開始", () => {
       ),
     ).toBeVisible();
     await expect(page.getByText("Permission denied")).toHaveCount(0);
+  });
+});
+
+test.describe("計測値の送信", () => {
+  test.use({ permissions: ["camera"] });
+
+  const REPORT_INTERVAL_MS = 30_000;
+
+  const sentWindows = (page: Page) => {
+    const windows: { windowStart: string; windowEnd: string }[][] = [];
+    page.on("request", (request) => {
+      if (request.url().includes("/rpc/observation/reportMeasurements")) {
+        windows.push(
+          request
+            .postDataJSON()
+            .json.measurements.map(
+              ({
+                windowStart,
+                windowEnd,
+              }: {
+                windowStart: string;
+                windowEnd: string;
+              }) => ({ windowStart, windowEnd }),
+            ),
+        );
+      }
+    });
+    return windows;
+  };
+
+  test.beforeEach(async ({ page }) => {
+    await page.clock.install();
+    await setUpUnlockCode(page, "1234");
+    await lineName(page).fill("入口");
+    await startButton(page).click();
+    await expect(page.getByText("検出状態: 検出中")).toBeVisible();
+  });
+
+  test("送信に失敗したウィンドウの計測値は開始と終了の時刻を変えずに次の送信に含めて再送する", async ({
+    page,
+  }) => {
+    const windows = sentWindows(page);
+    await overrideMock(page, {
+      reportMeasurementsError: "SERVICE_UNAVAILABLE",
+    });
+    await page.clock.fastForward(REPORT_INTERVAL_MS);
+    await expect.poll(() => windows.length).toBe(1);
+
+    await overrideMock(page, {});
+    await page.clock.fastForward(REPORT_INTERVAL_MS);
+    await expect.poll(() => windows.length).toBe(2);
+
+    expect(windows[1]).toHaveLength(2);
+    expect(windows[1][0]).toEqual(windows[0][0]);
+    expect(windows[1][1].windowStart).toBe(windows[0][0].windowEnd);
+  });
+
+  test("送信に成功したウィンドウの計測値は次の送信に含めない", async ({
+    page,
+  }) => {
+    const windows = sentWindows(page);
+    await page.clock.fastForward(REPORT_INTERVAL_MS);
+    await page.clock.fastForward(REPORT_INTERVAL_MS);
+    await expect.poll(() => windows.length).toBe(2);
+
+    expect(windows[1]).toEqual([
+      { windowStart: windows[0][0].windowEnd, windowEnd: expect.any(String) },
+    ]);
+  });
+
+  test("端末が登録解除されていて送信を断られた計測値は次の送信に含めない", async ({
+    page,
+  }) => {
+    const windows = sentWindows(page);
+    await overrideMock(page, {
+      reportMeasurementsError: "PRECONDITION_FAILED",
+    });
+    await page.clock.fastForward(REPORT_INTERVAL_MS);
+    await expect.poll(() => windows.length).toBe(1);
+
+    await overrideMock(page, {});
+    await page.clock.fastForward(REPORT_INTERVAL_MS);
+    await expect.poll(() => windows.length).toBe(2);
+
+    expect(windows[1]).toEqual([
+      { windowStart: windows[0][0].windowEnd, windowEnd: expect.any(String) },
+    ]);
   });
 });
 

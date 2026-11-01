@@ -31,6 +31,30 @@
     "backLink": "Back to management",
     "observationDevicesLink": "Observation devices"
   },
+  "ObservationSettings": {
+    "heading": "Observation settings",
+    "loading": "Loading…",
+    "loadFailed": "Could not load the observation settings.",
+    "retry": "Reload",
+    "unsetNotice": "The event type is not set. Events without a type are treated as short-term. Set the type to match the event's duration.",
+    "eventType": {
+      "label": "Event type",
+      "unset": "Not set",
+      "shortTerm": {
+        "name": "Short-term",
+        "criterion": "An event that lasts less than several days"
+      },
+      "longTerm": {
+        "name": "Long-term",
+        "criterion": "An event that lasts several days or more (including permanent facilities)"
+      }
+    },
+    "historyWindowDays": "History window (days)",
+    "save": "Save",
+    "saved": "Saved the observation settings.",
+    "failed": "Could not save the observation settings.",
+    "invalid": "Choose an event type and enter a history window of at least 1 day."
+  },
   "TenantManagement": {
     "title": "{tenantId} Event management",
     "membersLink": "Members",
@@ -39,7 +63,9 @@
       "submit": "Create",
       "failed": "Could not create the event.",
       "tenantUnavailable": "Events can't be created for this tenant. The tenant may have been archived.",
-      "tenantNotFound": "The tenant could not be found."
+      "tenantNotFound": "The tenant could not be found.",
+      "created": "Created “{name}”. Its event type is not set yet.",
+      "setEventType": "Set the event type"
     },
     "list": {
       "heading": "Events",

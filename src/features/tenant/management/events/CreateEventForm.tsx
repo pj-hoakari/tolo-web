@@ -3,10 +3,13 @@
 import { useTranslations } from "next-intl";
 import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/components/ui/link";
 import { JollyTextField } from "@/components/ui/textfield";
 import { errorMessageKey } from "@/lib/errorMessageKey";
 import { orpc } from "@/lib/orpc";
+import { managementPath } from "../routes";
 import { EVENT_ERROR_MESSAGES } from "./errorMessages";
+import type { TenantEvent } from "./type";
 
 type Props = {
   tenantId: string;
@@ -19,13 +22,15 @@ export function CreateEventForm({ tenantId, onCreated }: Props) {
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [created, setCreated] = useState<TenantEvent | null>(null);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    setCreated(null);
     try {
-      await orpc.tenant.createEvent({ tenantId, name });
+      setCreated(await orpc.tenant.createEvent({ tenantId, name }));
       setName("");
       onCreated();
     } catch (err) {
@@ -49,6 +54,17 @@ export function CreateEventForm({ tenantId, onCreated }: Props) {
           {t("submit")}
         </Button>
       </div>
+      {created && (
+        <p role="status" className="text-sm">
+          {t("created", { name: created.name })}{" "}
+          <Link
+            href={managementPath(created.eventId)}
+            className="font-medium underline underline-offset-4"
+          >
+            {t("setEventType")}
+          </Link>
+        </p>
+      )}
       {error && (
         <p role="alert" className="text-sm text-destructive">
           {error}
