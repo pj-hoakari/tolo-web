@@ -66,6 +66,22 @@ test("イベント名を入力して作成すると一覧に下書きとして�
   await expect(field).toHaveValue("");
 });
 
+test("イベントを作成すると、イベント種別が未設定である旨と、そのイベントの種別を設定するページへのリンクが表示される", async ({
+  page,
+}) => {
+  await open(page);
+  await page.getByRole("textbox", { name: "イベント名" }).fill("Event F");
+  await page.getByRole("button", { name: "作成" }).click();
+
+  const status = page.getByRole("main").getByRole("status");
+  await expect(status).toContainText(
+    "「Event F」を作成しました。イベント種別はまだ設定されていません。",
+  );
+  await expect(
+    status.getByRole("link", { name: "イベント種別を設定する" }),
+  ).toHaveAttribute("href", "/event/0000000000000006/management");
+});
+
 test("下書きのイベントをダイアログで確認してアーカイブすると一覧から消える", async ({
   page,
 }) => {

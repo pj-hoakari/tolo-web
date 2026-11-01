@@ -31,6 +31,30 @@
     "backLink": "返回管理页面",
     "observationDevicesLink": "观测设备管理"
   },
+  "ObservationSettings": {
+    "heading": "观测设置",
+    "loading": "加载中…",
+    "loadFailed": "无法获取观测设置。",
+    "retry": "重新加载",
+    "unsetNotice": "尚未设置活动类型。未设置类型的活动按短期处理。请根据会期设置类型。",
+    "eventType": {
+      "label": "活动类型",
+      "unset": "未设置",
+      "shortTerm": {
+        "name": "短期",
+        "criterion": "会期不足数日的活动"
+      },
+      "longTerm": {
+        "name": "长期",
+        "criterion": "会期在数日以上的活动（含常设设施）"
+      }
+    },
+    "historyWindowDays": "历史期间（天）",
+    "save": "保存",
+    "saved": "已保存观测设置。",
+    "failed": "无法保存观测设置。",
+    "invalid": "请选择活动类型，并输入 1 天以上的历史期间。"
+  },
   "TenantManagement": {
     "title": "{tenantId} 活动管理",
     "membersLink": "成员管理",
@@ -39,7 +63,9 @@
       "submit": "创建",
       "failed": "无法创建活动。",
       "tenantUnavailable": "无法在此租户下创建活动。该租户可能已被归档。",
-      "tenantNotFound": "找不到该租户。"
+      "tenantNotFound": "找不到该租户。",
+      "created": "已创建“{name}”。尚未设置其活动类型。",
+      "setEventType": "设置活动类型"
     },
     "list": {
       "heading": "活动",
