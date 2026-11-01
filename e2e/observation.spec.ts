@@ -79,7 +79,10 @@ const addLine = async (page: Page) => {
 
 const overrideMock = async (
   page: Page,
-  overrides: Pick<MockRouterOverrides, "reportMeasurementsError">,
+  overrides: Pick<
+    MockRouterOverrides,
+    "listObservationPointsError" | "heartbeatError" | "reportMeasurementsError"
+  >,
 ) => {
   await page.evaluate((value) => {
     sessionStorage.setItem("msw:overrides", value);
@@ -651,24 +654,97 @@ test.describe("計測値の送信", () => {
       { windowStart: windows[0][0].windowEnd, windowEnd: expect.any(String) },
     ]);
   });
+});
 
-  test("端末が登録解除されていて送信を断られた計測値は次の送信に含めない", async ({
+test.describe("登録解除された観測デバイス", () => {
+  test.use({ permissions: ["camera"] });
+
+  const REPORT_INTERVAL_MS = 30_000;
+  const unregisteredAlert = (page: Page) =>
+    page
+      .getByRole("alert")
+      .filter({ hasText: "この観測デバイスは登録解除されています" });
+
+  const sentRequests = (page: Page) => {
+    const sent = { heartbeat: 0, reportMeasurements: 0 };
+    page.on("request", (request) => {
+      if (request.url().includes("/rpc/observation/heartbeat")) {
+        sent.heartbeat++;
+      }
+      if (request.url().includes("/rpc/observation/reportMeasurements")) {
+        sent.reportMeasurements++;
+      }
+    });
+    return sent;
+  };
+
+  const fastForwardAndSettle = async (page: Page, ms: number) => {
+    await page.clock.fastForward(ms);
+    await page.waitForTimeout(1_000);
+  };
+
+  const startDetecting = async (page: Page) => {
+    await lineName(page).fill("入口");
+    await startButton(page).click();
+    await expect(page.getByText("検出状態: 検出中")).toBeVisible();
+  };
+
+  test.beforeEach(async ({ page }) => {
+    await page.clock.install();
+  });
+
+  test("観測点の取得を登録解除で断られると登録解除されていると表示し、検出を始めても Heartbeat と計測値を送らない", async ({
     page,
   }) => {
-    const windows = sentWindows(page);
+    await overrideMock(page, {
+      listObservationPointsError: "PRECONDITION_FAILED",
+    });
+    await page.reload();
+    await setUpUnlockCode(page, "1234");
+    const sent = sentRequests(page);
+
+    await expect(unregisteredAlert(page)).toBeVisible();
+    await startDetecting(page);
+    await fastForwardAndSettle(page, REPORT_INTERVAL_MS * 2);
+
+    expect(sent).toEqual({ heartbeat: 0, reportMeasurements: 0 });
+  });
+
+  test("Heartbeat を登録解除で断られると登録解除されていると表示し、以後は Heartbeat と計測値を送らない", async ({
+    page,
+  }) => {
+    await setUpUnlockCode(page, "1234");
+    const sent = sentRequests(page);
+    await overrideMock(page, { heartbeatError: "PRECONDITION_FAILED" });
+
+    await startDetecting(page);
+    await expect(unregisteredAlert(page)).toBeVisible();
+    await fastForwardAndSettle(page, REPORT_INTERVAL_MS * 2);
+
+    expect(sent).toEqual({ heartbeat: 1, reportMeasurements: 0 });
+  });
+
+  test("計測値の送信を登録解除で断られると登録解除されていると表示し、以後は Heartbeat と計測値を送らない", async ({
+    page,
+  }) => {
+    await setUpUnlockCode(page, "1234");
+    const sent = sentRequests(page);
+    await startDetecting(page);
     await overrideMock(page, {
       reportMeasurementsError: "PRECONDITION_FAILED",
     });
-    await page.clock.fastForward(REPORT_INTERVAL_MS);
-    await expect.poll(() => windows.length).toBe(1);
 
+    await page.clock.fastForward(REPORT_INTERVAL_MS);
+    await expect.poll(() => sent.reportMeasurements).toBe(1);
+    await expect(unregisteredAlert(page)).toBeVisible();
+    const heartbeatsUntilUnregistered = sent.heartbeat;
     await overrideMock(page, {});
-    await page.clock.fastForward(REPORT_INTERVAL_MS);
-    await expect.poll(() => windows.length).toBe(2);
+    await fastForwardAndSettle(page, REPORT_INTERVAL_MS * 2);
 
-    expect(windows[1]).toEqual([
-      { windowStart: windows[0][0].windowEnd, windowEnd: expect.any(String) },
-    ]);
+    expect(sent).toEqual({
+      heartbeat: heartbeatsUntilUnregistered,
+      reportMeasurements: 1,
+    });
   });
 });
 

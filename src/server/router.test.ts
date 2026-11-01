@@ -21,6 +21,7 @@ import {
   EventType,
   GetObservationSettingsResponseSchema,
   HeartbeatResponseSchema,
+  ListEdgeDeviceObservationPointsResponseSchema,
   ListEdgeDevicesResponseSchema,
   RegisterEdgeDeviceResponseSchema,
   ReportMeasurementsResponseSchema,
@@ -972,7 +973,7 @@ describe("observation settings", () => {
 });
 
 describe("observation credentials by caller", () => {
-  it("lists edge devices and their observation points with the console credentials", async () => {
+  it("lists edge devices with the console credentials", async () => {
     const consoleList = vi
       .spyOn(consoleEdgeDeviceClient, "listEdgeDevices")
       .mockResolvedValue(
@@ -983,14 +984,31 @@ describe("observation credentials by caller", () => {
     await expect(
       call(router.observation.listEdgeDevices, { eventId }),
     ).resolves.toEqual({ devices: [wireDevice] });
+    expect(consoleList).toHaveBeenCalledOnce();
+    expect(edgeList).not.toHaveBeenCalled();
+  });
+
+  it("lists the observation points of the edge device with the edge credentials", async () => {
+    const edgeList = vi
+      .spyOn(edgeEdgeDeviceClient, "listEdgeDeviceObservationPoints")
+      .mockResolvedValue(
+        create(ListEdgeDeviceObservationPointsResponseSchema, {
+          observationPoints: protoDevice.observationPoints,
+        }),
+      );
+    const consoleList = vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices");
+
     await expect(
       call(router.observation.listObservationPoints, {
         eventId,
         edgeDeviceId: "0123456789abcdef",
       }),
     ).resolves.toEqual({ observationPoints: wireDevice.observationPoints });
-    expect(consoleList).toHaveBeenCalledTimes(2);
-    expect(edgeList).not.toHaveBeenCalled();
+    expect(edgeList).toHaveBeenCalledWith({
+      eventId,
+      edgeDeviceId: "0123456789abcdef",
+    });
+    expect(consoleList).not.toHaveBeenCalled();
   });
 
   it("sends heartbeats and measurements with the edge credentials", async () => {
@@ -1016,6 +1034,32 @@ describe("observation credentials by caller", () => {
     expect(edgeHeartbeat).toHaveBeenCalledOnce();
     expect(consoleHeartbeat).not.toHaveBeenCalled();
     expect(report).toHaveBeenCalledOnce();
+  });
+
+  it("passes the observation points and heartbeats of an unregistered device to the browser as a rejected precondition", async () => {
+    const unregistered = new ConnectError(
+      "edge device is unregistered",
+      Code.FailedPrecondition,
+    );
+    vi.spyOn(
+      edgeEdgeDeviceClient,
+      "listEdgeDeviceObservationPoints",
+    ).mockRejectedValue(unregistered);
+    vi.spyOn(edgeEdgeDeviceClient, "heartbeat").mockRejectedValue(unregistered);
+
+    await expect(
+      call(router.observation.listObservationPoints, {
+        eventId,
+        edgeDeviceId: "0123456789abcdef",
+      }),
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+    await expect(
+      call(router.observation.heartbeat, {
+        eventId,
+        edgeDeviceId: "0123456789abcdef",
+        activeObservationPointIds: [],
+      }),
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
   });
 
   it("passes measurements from an unregistered device to the browser as a rejected precondition", async () => {

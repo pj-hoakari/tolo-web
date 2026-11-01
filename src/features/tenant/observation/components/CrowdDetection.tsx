@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useRef, useState } from "react";
 import { DetectionLineCreationModeToggle } from "@/features/tenant/detection/components/DetectionLineActions";
 import { useDetectionStores } from "@/features/tenant/detection/stores/detectionStore";
@@ -30,6 +31,7 @@ export function CrowdDetection({
   eventId,
   edgeDeviceId,
 }: CrowdDetectionProps) {
+  const t = useTranslations("Observation.errors");
   const [sourceFactory, setSourceFactory] = useState<CrowdVideoSourceFactory>(
     () => createCameraVideoSource,
   );
@@ -66,7 +68,7 @@ export function CrowdDetection({
     onDetectionError: reportDetectionError,
   });
 
-  useObservationReporting({
+  const { unregistered } = useObservationReporting({
     eventId,
     edgeDeviceId,
     listening: edgeId !== null,
@@ -82,6 +84,11 @@ export function CrowdDetection({
   return (
     <div className="flex w-full flex-col items-center gap-4">
       <ObservationLockButton />
+      {unregistered && (
+        <p role="alert" className="text-destructive">
+          {t("unregistered")}
+        </p>
+      )}
       {status === "detecting" && (
         <div className="flex w-full max-w-3xl justify-end px-4 sm:px-0">
           <DetectionLineCreationModeToggle viewStateStore={viewStateStore} />

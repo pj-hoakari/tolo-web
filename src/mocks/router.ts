@@ -52,6 +52,8 @@ export type MockRouterOverrides = {
   devicesError?: boolean;
   registerEdgeDeviceError?: CommonORPCErrorCode;
   unregisterEdgeDeviceError?: CommonORPCErrorCode;
+  listObservationPointsError?: CommonORPCErrorCode;
+  heartbeatError?: CommonORPCErrorCode;
   reportMeasurementsError?: CommonORPCErrorCode;
   getObservationSettingsError?: boolean;
   updateObservationSettingsError?: CommonORPCErrorCode;
@@ -111,6 +113,8 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     devicesError = false,
     registerEdgeDeviceError,
     unregisterEdgeDeviceError,
+    listObservationPointsError,
+    heartbeatError,
     reportMeasurementsError,
     getObservationSettingsError = false,
     updateObservationSettingsError,
@@ -240,11 +244,25 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             edgeDeviceId: z.string().min(1),
           }),
         )
-        .handler(async ({ input }) => ({
-          observationPoints:
-            devices.find((d) => d.edgeDeviceId === input.edgeDeviceId)
-              ?.observationPoints ?? [],
-        })),
+        .handler(async ({ input }) => {
+          if (listObservationPointsError !== undefined) {
+            throw new ORPCError(listObservationPointsError, {
+              message: MOCK_SERVER_MESSAGE,
+            });
+          }
+          return {
+            observationPoints:
+              devices.find((d) => d.edgeDeviceId === input.edgeDeviceId)
+                ?.observationPoints ?? [],
+          };
+        }),
+      heartbeat: os.handler(async (): Promise<void> => {
+        if (heartbeatError !== undefined) {
+          throw new ORPCError(heartbeatError, {
+            message: MOCK_SERVER_MESSAGE,
+          });
+        }
+      }),
       reportMeasurements: os.handler(async (): Promise<void> => {
         if (reportMeasurementsError !== undefined) {
           throw new ORPCError(reportMeasurementsError, {

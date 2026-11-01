@@ -25,6 +25,7 @@ import {
   MeasurementSource,
   type EdgeDevice as ProtoEdgeDevice,
   EventType as ProtoEventType,
+  type ObservationPoint as ProtoObservationPoint,
   type ObservationSettings as ProtoObservationSettings,
 } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
 import {
@@ -112,6 +113,10 @@ export interface RegisteredEdgeDevice {
   observationPagePath: string;
 }
 
+function toObservationPoint(p: ProtoObservationPoint): ObservationPoint {
+  return { observationPointId: p.observationPointId, name: p.name };
+}
+
 function toEdgeDevice(d: ProtoEdgeDevice): EdgeDevice {
   return {
     edgeDeviceId: d.edgeDeviceId,
@@ -120,10 +125,7 @@ function toEdgeDevice(d: ProtoEdgeDevice): EdgeDevice {
     lastHeartbeatAt: d.lastHeartbeatAt
       ? timestampDate(d.lastHeartbeatAt).toISOString()
       : null,
-    observationPoints: d.observationPoints.map((p) => ({
-      observationPointId: p.observationPointId,
-      name: p.name,
-    })),
+    observationPoints: d.observationPoints.map(toObservationPoint),
   };
 }
 
@@ -796,13 +798,21 @@ export const router = {
         async ({
           input,
         }): Promise<{ observationPoints: ObservationPoint[] }> => {
-          const devices = observationMocking()
-            ? sampleEdgeDevicesWire
-            : await listEdgeDevices(input.eventId);
-          const device = devices.find(
-            (d) => d.edgeDeviceId === input.edgeDeviceId,
-          );
-          return { observationPoints: device?.observationPoints ?? [] };
+          if (observationMocking()) {
+            const device = sampleEdgeDevicesWire.find(
+              (d) => d.edgeDeviceId === input.edgeDeviceId,
+            );
+            return { observationPoints: device?.observationPoints ?? [] };
+          }
+          try {
+            const res =
+              await edgeEdgeDeviceClient.listEdgeDeviceObservationPoints(input);
+            return {
+              observationPoints: res.observationPoints.map(toObservationPoint),
+            };
+          } catch (err) {
+            throw toORPCError(err);
+          }
         },
       ),
     getSettings: os
@@ -861,7 +871,11 @@ export const router = {
         if (observationMocking()) {
           return;
         }
-        await edgeEdgeDeviceClient.heartbeat(input);
+        try {
+          await edgeEdgeDeviceClient.heartbeat(input);
+        } catch (err) {
+          throw toORPCError(err);
+        }
       }),
     reportMeasurements: os
       .input(
