@@ -5,6 +5,7 @@ import { createConnectTransport } from "@connectrpc/connect-node";
 import {
   EdgeDeviceService,
   MeasurementIngestService,
+  ObservationSettingsService,
 } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
 import { eventAccess } from "./authorize";
 
@@ -21,6 +22,11 @@ const edgeTransport = transportWith("edge");
 
 export const consoleEdgeDeviceClient = createClient(
   EdgeDeviceService,
+  consoleTransport,
+);
+
+export const consoleObservationSettingsClient = createClient(
+  ObservationSettingsService,
   consoleTransport,
 );
 

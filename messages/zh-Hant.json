@@ -31,6 +31,30 @@
     "backLink": "返回管理頁面",
     "observationDevicesLink": "觀測裝置管理"
   },
+  "ObservationSettings": {
+    "heading": "觀測設定",
+    "loading": "載入中…",
+    "loadFailed": "無法取得觀測設定。",
+    "retry": "重新載入",
+    "unsetNotice": "尚未設定活動類型。未設定類型的活動會以短期處理。請依會期設定類型。",
+    "eventType": {
+      "label": "活動類型",
+      "unset": "未設定",
+      "shortTerm": {
+        "name": "短期",
+        "criterion": "會期不滿數日的活動"
+      },
+      "longTerm": {
+        "name": "長期",
+        "criterion": "會期在數日以上的活動（含常設設施）"
+      }
+    },
+    "historyWindowDays": "歷史期間（天）",
+    "save": "儲存",
+    "saved": "已儲存觀測設定。",
+    "failed": "無法儲存觀測設定。",
+    "invalid": "請選擇活動類型，並輸入 1 天以上的歷史期間。"
+  },
   "TenantManagement": {
     "title": "{tenantId} 活動管理",
     "membersLink": "成員管理",
@@ -39,7 +63,9 @@
       "submit": "建立",
       "failed": "無法建立活動。",
       "tenantUnavailable": "無法在此租戶下建立活動。該租戶可能已被封存。",
-      "tenantNotFound": "找不到該租戶。"
+      "tenantNotFound": "找不到該租戶。",
+      "created": "已建立「{name}」。尚未設定其活動類型。",
+      "setEventType": "設定活動類型"
     },
     "list": {
       "heading": "活動",

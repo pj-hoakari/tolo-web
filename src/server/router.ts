@@ -24,6 +24,8 @@ import {
 import {
   MeasurementSource,
   type EdgeDevice as ProtoEdgeDevice,
+  EventType as ProtoEventType,
+  type ObservationSettings as ProtoObservationSettings,
 } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
 import {
   type Membership,
@@ -54,6 +56,11 @@ import type {
   TenantRole,
 } from "@/features/tenant/management/members/type";
 import {
+  EVENT_TYPES,
+  type EventType,
+  type ObservationSettings,
+} from "@/features/tenant/management/settings/type";
+import {
   registeredEdgeDeviceWire,
   sampleEdgeDevicesWire,
 } from "@/mocks/fixtures/edges";
@@ -67,6 +74,7 @@ import { fromGuideMapResponse } from "./guideMap";
 import { issueRegistrationToken } from "./idp";
 import {
   consoleEdgeDeviceClient,
+  consoleObservationSettingsClient,
   edgeEdgeDeviceClient,
   edgeMeasurementIngestClient,
 } from "./observation";
@@ -129,6 +137,30 @@ function observationMocking(): boolean {
     process.env.NODE_ENV === "development" &&
     process.env.OBSERVATION_API_MOCKING === "enabled"
   );
+}
+
+const PROTO_EVENT_TYPES: Record<EventType, ProtoEventType> = {
+  shortTerm: ProtoEventType.SHORT_TERM,
+  longTerm: ProtoEventType.LONG_TERM,
+};
+
+const UNSET_OBSERVATION_SETTINGS: ObservationSettings = {
+  historyWindowDays: 30,
+  eventType: null,
+};
+
+function toObservationSettings(
+  settings: ProtoObservationSettings | undefined,
+): ObservationSettings {
+  if (!settings) {
+    throw new Error("observation returned no settings");
+  }
+  return {
+    historyWindowDays: settings.historyWindowDays,
+    eventType:
+      EVENT_TYPES.find((t) => PROTO_EVENT_TYPES[t] === settings.eventType) ??
+      null,
+  };
 }
 
 const EVENT_STATUSES: Partial<Record<ProtoEventStatus, EventStatus>> = {
@@ -773,6 +805,52 @@ export const router = {
           return { observationPoints: device?.observationPoints ?? [] };
         },
       ),
+    getSettings: os
+      .input(z.object({ eventId: z.string().min(1) }))
+      .handler(async ({ input }): Promise<ObservationSettings> => {
+        if (observationMocking()) {
+          return UNSET_OBSERVATION_SETTINGS;
+        }
+        try {
+          const res =
+            await consoleObservationSettingsClient.getObservationSettings(
+              input,
+            );
+          return toObservationSettings(res.settings);
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    updateSettings: os
+      .input(
+        z.object({
+          eventId: z.string().min(1),
+          historyWindowDays: z.int32().min(1),
+          eventType: z.enum(EVENT_TYPES),
+        }),
+      )
+      .handler(
+        async ({
+          input: { eventId, historyWindowDays, eventType },
+        }): Promise<ObservationSettings> => {
+          if (observationMocking()) {
+            return { historyWindowDays, eventType };
+          }
+          try {
+            const res =
+              await consoleObservationSettingsClient.updateObservationSettings({
+                eventId,
+                settings: {
+                  historyWindowDays,
+                  eventType: PROTO_EVENT_TYPES[eventType],
+                },
+              });
+            return toObservationSettings(res.settings);
+          } catch (err) {
+            throw toORPCError(err);
+          }
+        },
+      ),
     heartbeat: os
       .input(
         edgeDeviceInput.extend({
@@ -804,16 +882,20 @@ export const router = {
         if (observationMocking()) {
           return;
         }
-        await edgeMeasurementIngestClient.reportMeasurements({
-          eventId: input.eventId,
-          edgeDeviceId: input.edgeDeviceId,
-          measurements: input.measurements.map((m) => ({
-            ...m,
-            windowStart: timestampFromDate(m.windowStart),
-            windowEnd: timestampFromDate(m.windowEnd),
-            source: MeasurementSource.EDGE,
-          })),
-        });
+        try {
+          await edgeMeasurementIngestClient.reportMeasurements({
+            eventId: input.eventId,
+            edgeDeviceId: input.edgeDeviceId,
+            measurements: input.measurements.map((m) => ({
+              ...m,
+              windowStart: timestampFromDate(m.windowStart),
+              windowEnd: timestampFromDate(m.windowEnd),
+              source: MeasurementSource.EDGE,
+            })),
+          });
+        } catch (err) {
+          throw toORPCError(err);
+        }
       }),
   },
 };
