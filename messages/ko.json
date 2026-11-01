@@ -421,6 +421,7 @@
     "errors": {
       "videoSource": "영상 소스를 가져오지 못했습니다",
       "detection": "사람 검출 처리에 실패했습니다",
+      "unregistered": "이 관측 디바이스는 등록 해제되었습니다",
       "modelLoad": "검출 모델을 불러오지 못했습니다（{status}: {path}）",
       "camera": {
         "permissionDenied": "카메라 사용이 허용되지 않았습니다. 브라우저 설정에서 카메라 접근을 허용해 주세요.",

@@ -421,6 +421,7 @@
     "errors": {
       "videoSource": "No se pudo obtener la fuente de vídeo",
       "detection": "Falló la detección de personas",
+      "unregistered": "Este dispositivo de observación se ha dado de baja",
       "modelLoad": "No se pudo cargar el modelo de detección ({status}: {path})",
       "camera": {
         "permissionDenied": "No se permite el acceso a la cámara. Permite el acceso a la cámara en la configuración del navegador.",

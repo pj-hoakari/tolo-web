@@ -421,6 +421,7 @@
     "errors": {
       "videoSource": "Failed to obtain the video source",
       "detection": "Person detection failed",
+      "unregistered": "This observation device has been unregistered",
       "modelLoad": "Failed to load the detection model ({status}: {path})",
       "camera": {
         "permissionDenied": "Camera access is not allowed. Allow camera access in your browser settings.",

@@ -421,6 +421,7 @@
     "errors": {
       "videoSource": "获取视频源失败",
       "detection": "人体检测处理失败",
+      "unregistered": "此观测设备已取消注册",
       "modelLoad": "加载检测模型失败（{status}: {path}）",
       "camera": {
         "permissionDenied": "未允许使用摄像头。请在浏览器设置中允许访问摄像头。",

@@ -16,6 +16,9 @@ const REPORT_INTERVAL_MS = 30_000;
 const HEARTBEAT_INTERVAL_MS = 10_000;
 const MAX_UNSENT_WINDOWS = 120;
 
+const isUnregistered = (cause: unknown) =>
+  cause instanceof ORPCError && cause.code === "PRECONDITION_FAILED";
+
 export function useObservationReporting({
   eventId,
   edgeDeviceId,
@@ -30,7 +33,8 @@ export function useObservationReporting({
   status: DetectCrowdStatus;
   settingsStore: DetectionSettingsStore;
   resultStore: DetectionResultStore;
-}): void {
+}): { unregistered: boolean } {
+  const [unregistered, setUnregistered] = useState(false);
   const [pointIdByName, setPointIdByName] = useState<ReadonlyMap<
     string,
     string
@@ -51,6 +55,9 @@ export function useObservationReporting({
       })
       .catch((cause: unknown) => {
         console.error("failed to load observation points", cause);
+        if (!cancelled && isUnregistered(cause)) {
+          setUnregistered(true);
+        }
       });
     return () => {
       cancelled = true;
@@ -58,7 +65,7 @@ export function useObservationReporting({
   }, [eventId, edgeDeviceId]);
 
   useEffect(() => {
-    if (!listening) {
+    if (!listening || unregistered) {
       return;
     }
     const detecting = status === "detecting";
@@ -79,16 +86,27 @@ export function useObservationReporting({
         .heartbeat({ eventId, edgeDeviceId, activeObservationPointIds })
         .catch((cause: unknown) => {
           console.error("failed to send heartbeat", cause);
+          if (isUnregistered(cause)) {
+            setUnregistered(true);
+          }
         });
     };
 
     heartbeat();
     const timer = setInterval(heartbeat, HEARTBEAT_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [eventId, edgeDeviceId, listening, pointIdByName, status, settingsStore]);
+  }, [
+    eventId,
+    edgeDeviceId,
+    listening,
+    pointIdByName,
+    status,
+    settingsStore,
+    unregistered,
+  ]);
 
   useEffect(() => {
-    if (!pointIdByName || status !== "detecting") {
+    if (!pointIdByName || status !== "detecting" || unregistered) {
       return;
     }
     let windowStart = new Date();
@@ -125,10 +143,8 @@ export function useObservationReporting({
         })
         .catch((cause: unknown) => {
           console.error("failed to report measurements", cause);
-          if (
-            cause instanceof ORPCError &&
-            cause.code === "PRECONDITION_FAILED"
-          ) {
+          if (isUnregistered(cause)) {
+            setUnregistered(true);
             return;
           }
           unsent = [...windows, ...unsent].slice(-MAX_UNSENT_WINDOWS);
@@ -144,5 +160,8 @@ export function useObservationReporting({
     status,
     settingsStore,
     resultStore,
+    unregistered,
   ]);
+
+  return { unregistered };
 }

@@ -421,6 +421,7 @@
     "errors": {
       "videoSource": "取得視訊來源失敗",
       "detection": "人體偵測處理失敗",
+      "unregistered": "此觀測裝置已取消註冊",
       "modelLoad": "載入偵測模型失敗（{status}: {path}）",
       "camera": {
         "permissionDenied": "未允許使用攝影機。請在瀏覽器設定中允許存取攝影機。",

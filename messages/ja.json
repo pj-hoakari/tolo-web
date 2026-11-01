@@ -421,6 +421,7 @@
     "errors": {
       "videoSource": "映像ソースの取得に失敗しました",
       "detection": "人検出処理に失敗しました",
+      "unregistered": "この観測デバイスは登録解除されています",
       "modelLoad": "検出モデルの読み込みに失敗しました（{status}: {path}）",
       "camera": {
         "permissionDenied": "カメラの使用が許可されていません。ブラウザの設定でカメラへのアクセスを許可してください。",
