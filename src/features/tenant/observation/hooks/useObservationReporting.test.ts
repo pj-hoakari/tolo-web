@@ -115,16 +115,19 @@ describe("計測値の送信に失敗したとき", () => {
         },
       ],
     });
-    renderHook(() =>
-      useObservationReporting({
-        eventId: "test",
-        edgeDeviceId: "8c1f0e2a5d4b3c6e",
-        listening: false,
-        status: "detecting",
-        ...stores,
-      }),
+    const rendered = renderHook(
+      (props: { edgeDeviceId: string }) =>
+        useObservationReporting({
+          eventId: "test",
+          listening: false,
+          status: "detecting",
+          ...stores,
+          ...props,
+        }),
+      { initialProps: { edgeDeviceId: "8c1f0e2a5d4b3c6e" } },
     );
     await act(() => vi.advanceTimersByTimeAsync(0));
+    return rendered;
   }
 
   it("保持するのは新しい 120 ウィンドウまでで、超えた分は古いウィンドウから捨てる", async () => {
@@ -140,5 +143,21 @@ describe("計測値の送信に失敗したとき", () => {
     expect(resent).toHaveLength(121);
     expect(resent).not.toContain(firstWindowStart);
     expect(resent[0]).toBe(firstWindowStart + REPORT_INTERVAL_MS);
+  });
+
+  it("観測デバイスが替わると、前の観測デバイスで送信に失敗したウィンドウの計測値を再送しない", async () => {
+    reportMeasurements.mockRejectedValue(new Error("network"));
+    const { rerender } = await startDetecting();
+    await act(() => vi.advanceTimersByTimeAsync(REPORT_INTERVAL_MS));
+
+    reportMeasurements.mockResolvedValue(undefined);
+    rerender({ edgeDeviceId: "0123456789abcdef" });
+    await act(() => vi.advanceTimersByTimeAsync(REPORT_INTERVAL_MS));
+
+    expect(reportMeasurements).toHaveBeenLastCalledWith(
+      expect.objectContaining({ edgeDeviceId: "0123456789abcdef" }),
+    );
+    expect(sentWindowStarts(1)).toHaveLength(1);
+    expect(sentWindowStarts(1)).not.toContain(sentWindowStarts(0)[0]);
   });
 });

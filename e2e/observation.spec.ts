@@ -642,6 +642,28 @@ test.describe("計測値の送信", () => {
     expect(windows[1][1].windowStart).toBe(windows[0][0].windowEnd);
   });
 
+  test("送信に失敗したウィンドウの計測値は検出を停止して再開した後の送信に含めて再送する", async ({
+    page,
+  }) => {
+    const windows = sentWindows(page);
+    await overrideMock(page, {
+      reportMeasurementsError: "SERVICE_UNAVAILABLE",
+    });
+    await page.clock.fastForward(REPORT_INTERVAL_MS);
+    await expect.poll(() => windows.length).toBe(1);
+
+    await stopButton(page).click();
+    await expect(page.getByText("検出状態: 停止中")).toBeVisible();
+    await overrideMock(page, {});
+    await startButton(page).click();
+    await expect(page.getByText("検出状態: 検出中")).toBeVisible();
+    await page.clock.fastForward(REPORT_INTERVAL_MS);
+    await expect.poll(() => windows.length).toBe(2);
+
+    expect(windows[1]).toHaveLength(2);
+    expect(windows[1][0]).toEqual(windows[0][0]);
+  });
+
   test("送信に成功したウィンドウの計測値は次の送信に含めない", async ({
     page,
   }) => {

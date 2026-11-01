@@ -1,5 +1,5 @@
 import { ORPCError } from "@orpc/client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
   DetectionResultStore,
   DetectionSettingsStore,
@@ -39,8 +39,10 @@ export function useObservationReporting({
     string,
     string
   > | null>(null);
+  const unsentRef = useRef<WindowMeasurement[][]>([]);
 
   useEffect(() => {
+    unsentRef.current = [];
     let cancelled = false;
     orpc.observation
       .listObservationPoints({ eventId, edgeDeviceId })
@@ -111,7 +113,6 @@ export function useObservationReporting({
     }
     let windowStart = new Date();
     let previous = resultStore.getState();
-    let unsent: WindowMeasurement[][] = [];
 
     const tick = () => {
       const pointIdByLineId = mapLinesToObservationPoints(
@@ -129,9 +130,10 @@ export function useObservationReporting({
       });
       windowStart = windowEnd;
       previous = current;
+      const unsent = unsentRef.current;
       const windows =
         measurements.length === 0 ? unsent : [...unsent, measurements];
-      unsent = [];
+      unsentRef.current = [];
       if (windows.length === 0) {
         return;
       }
@@ -147,7 +149,9 @@ export function useObservationReporting({
             setUnregistered(true);
             return;
           }
-          unsent = [...windows, ...unsent].slice(-MAX_UNSENT_WINDOWS);
+          unsentRef.current = [...windows, ...unsentRef.current].slice(
+            -MAX_UNSENT_WINDOWS,
+          );
         });
     };
 
