@@ -882,16 +882,20 @@ export const router = {
         if (observationMocking()) {
           return;
         }
-        await edgeMeasurementIngestClient.reportMeasurements({
-          eventId: input.eventId,
-          edgeDeviceId: input.edgeDeviceId,
-          measurements: input.measurements.map((m) => ({
-            ...m,
-            windowStart: timestampFromDate(m.windowStart),
-            windowEnd: timestampFromDate(m.windowEnd),
-            source: MeasurementSource.EDGE,
-          })),
-        });
+        try {
+          await edgeMeasurementIngestClient.reportMeasurements({
+            eventId: input.eventId,
+            edgeDeviceId: input.edgeDeviceId,
+            measurements: input.measurements.map((m) => ({
+              ...m,
+              windowStart: timestampFromDate(m.windowStart),
+              windowEnd: timestampFromDate(m.windowEnd),
+              source: MeasurementSource.EDGE,
+            })),
+          });
+        } catch (err) {
+          throw toORPCError(err);
+        }
       }),
   },
 };

@@ -52,6 +52,7 @@ export type MockRouterOverrides = {
   devicesError?: boolean;
   registerEdgeDeviceError?: CommonORPCErrorCode;
   unregisterEdgeDeviceError?: CommonORPCErrorCode;
+  reportMeasurementsError?: CommonORPCErrorCode;
   getObservationSettingsError?: boolean;
   updateObservationSettingsError?: CommonORPCErrorCode;
   /** graph.getGraph が返すグラフ（未指定なら PLACEHOLDER_GRAPH） */
@@ -110,6 +111,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     devicesError = false,
     registerEdgeDeviceError,
     unregisterEdgeDeviceError,
+    reportMeasurementsError,
     getObservationSettingsError = false,
     updateObservationSettingsError,
     graph = PLACEHOLDER_GRAPH,
@@ -231,6 +233,25 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             (d) => d.edgeDeviceId !== input.edgeDeviceId,
           );
         }),
+      listObservationPoints: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            edgeDeviceId: z.string().min(1),
+          }),
+        )
+        .handler(async ({ input }) => ({
+          observationPoints:
+            devices.find((d) => d.edgeDeviceId === input.edgeDeviceId)
+              ?.observationPoints ?? [],
+        })),
+      reportMeasurements: os.handler(async (): Promise<void> => {
+        if (reportMeasurementsError !== undefined) {
+          throw new ORPCError(reportMeasurementsError, {
+            message: MOCK_SERVER_MESSAGE,
+          });
+        }
+      }),
       getSettings: os
         .input(z.object({ eventId: z.string().min(1) }))
         .handler(async ({ input }): Promise<ObservationSettings> => {

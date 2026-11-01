@@ -1017,6 +1017,23 @@ describe("observation credentials by caller", () => {
     expect(consoleHeartbeat).not.toHaveBeenCalled();
     expect(report).toHaveBeenCalledOnce();
   });
+
+  it("passes measurements from an unregistered device to the browser as a rejected precondition", async () => {
+    vi.spyOn(
+      edgeMeasurementIngestClient,
+      "reportMeasurements",
+    ).mockRejectedValue(
+      new ConnectError("edge device is unregistered", Code.FailedPrecondition),
+    );
+
+    await expect(
+      call(router.observation.reportMeasurements, {
+        eventId,
+        edgeDeviceId: "0123456789abcdef",
+        measurements: [],
+      }),
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+  });
 });
 
 describe("observation procedures with OBSERVATION_API_MOCKING", () => {
