@@ -9,6 +9,7 @@ import {
   graphEditPath,
   managementPath,
 } from "@/features/tenant/management/routes";
+import { ObservationSettingsSection } from "@/features/tenant/management/settings/ObservationSettingsSection";
 import { observationPath } from "@/features/tenant/observation/routes";
 import { getPwaMetadata } from "@/lib/pwa/manifest";
 import { requireStaff } from "@/server/auth";
@@ -45,8 +46,9 @@ export default async function TenantManagement({
           <LogoutButton />
         </div>
       </header>
-      <main className="flex min-h-0 w-full flex-1 p-2">
-        <div className="w-full overflow-hidden rounded-lg border border-border bg-background">
+      <main className="flex min-h-0 w-full flex-1 flex-col gap-2 p-2">
+        <ObservationSettingsSection key={eventId} eventId={eventId} />
+        <div className="min-h-0 w-full flex-1 overflow-hidden rounded-lg border border-border bg-background">
           <GraphViewer
             tenantId={tenantId}
             eventId={eventId}

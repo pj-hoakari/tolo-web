@@ -18,11 +18,14 @@ import {
 } from "@pj-hoakari/tolo-guest-client-es/tolo/guest/v1/guest_pb";
 import {
   EdgeDeviceSchema,
+  EventType,
+  GetObservationSettingsResponseSchema,
   HeartbeatResponseSchema,
   ListEdgeDevicesResponseSchema,
   RegisterEdgeDeviceResponseSchema,
   ReportMeasurementsResponseSchema,
   UnregisterEdgeDeviceResponseSchema,
+  UpdateObservationSettingsResponseSchema,
 } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
 import { Role } from "@pj-hoakari/tolo-tenant-management-connect-es/tolo/relation/v1/relation_pb";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -35,6 +38,7 @@ import { guestPageClient } from "./guest";
 import { issueRegistrationToken } from "./idp";
 import {
   consoleEdgeDeviceClient,
+  consoleObservationSettingsClient,
   edgeEdgeDeviceClient,
   edgeMeasurementIngestClient,
 } from "./observation";
@@ -874,6 +878,99 @@ describe("observation.unregisterEdgeDevice", () => {
   });
 });
 
+describe("observation settings", () => {
+  it.each([
+    { eventType: EventType.UNSPECIFIED, expected: null },
+    { eventType: EventType.SHORT_TERM, expected: "shortTerm" },
+    { eventType: EventType.LONG_TERM, expected: "longTerm" },
+  ])(
+    "returns the settings with event type $eventType as $expected using the console credentials",
+    async ({ eventType, expected }) => {
+      const get = vi
+        .spyOn(consoleObservationSettingsClient, "getObservationSettings")
+        .mockResolvedValue(
+          create(GetObservationSettingsResponseSchema, {
+            settings: { historyWindowDays: 30, eventType },
+          }),
+        );
+
+      await expect(
+        call(router.observation.getSettings, { eventId }),
+      ).resolves.toEqual({ historyWindowDays: 30, eventType: expected });
+      expect(get).toHaveBeenCalledWith({ eventId });
+    },
+  );
+
+  it("replaces both settings at once and returns the stored settings", async () => {
+    const update = vi
+      .spyOn(consoleObservationSettingsClient, "updateObservationSettings")
+      .mockResolvedValue(
+        create(UpdateObservationSettingsResponseSchema, {
+          settings: { historyWindowDays: 14, eventType: EventType.LONG_TERM },
+        }),
+      );
+
+    await expect(
+      call(router.observation.updateSettings, {
+        eventId,
+        historyWindowDays: 14,
+        eventType: "longTerm",
+      }),
+    ).resolves.toEqual({ historyWindowDays: 14, eventType: "longTerm" });
+    expect(update).toHaveBeenCalledWith({
+      eventId,
+      settings: { historyWindowDays: 14, eventType: EventType.LONG_TERM },
+    });
+  });
+
+  it.each([
+    { historyWindowDays: 0, eventType: "shortTerm" },
+    { historyWindowDays: 1.5, eventType: "shortTerm" },
+    { historyWindowDays: 2 ** 31, eventType: "shortTerm" },
+    { historyWindowDays: 30, eventType: "unspecified" },
+    { historyWindowDays: 30, eventType: null },
+  ])(
+    "rejects %j as a bad request without reaching the gateway",
+    async (input) => {
+      const update = vi.spyOn(
+        consoleObservationSettingsClient,
+        "updateObservationSettings",
+      );
+
+      await expect(
+        call(router.observation.updateSettings, {
+          eventId,
+          ...input,
+        } as never),
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+      expect(update).not.toHaveBeenCalled();
+    },
+  );
+
+  it("passes settings rejected by the gateway to the browser as a bad request without the server message", async () => {
+    vi.spyOn(
+      consoleObservationSettingsClient,
+      "updateObservationSettings",
+    ).mockRejectedValue(
+      new ConnectError(
+        "history_window_days must be positive",
+        Code.InvalidArgument,
+      ),
+    );
+
+    const error = await call(router.observation.updateSettings, {
+      eventId,
+      historyWindowDays: 30,
+      eventType: "shortTerm",
+    }).catch((e: unknown) => e);
+
+    expect(error).toMatchObject({ code: "BAD_REQUEST" });
+    expect((error as ORPCError<string, unknown>).message).not.toContain(
+      "history_window_days",
+    );
+  });
+});
+
 describe("observation credentials by caller", () => {
   it("lists edge devices and their observation points with the console credentials", async () => {
     const consoleList = vi
@@ -919,6 +1016,23 @@ describe("observation credentials by caller", () => {
     expect(edgeHeartbeat).toHaveBeenCalledOnce();
     expect(consoleHeartbeat).not.toHaveBeenCalled();
     expect(report).toHaveBeenCalledOnce();
+  });
+
+  it("passes measurements from an unregistered device to the browser as a rejected precondition", async () => {
+    vi.spyOn(
+      edgeMeasurementIngestClient,
+      "reportMeasurements",
+    ).mockRejectedValue(
+      new ConnectError("edge device is unregistered", Code.FailedPrecondition),
+    );
+
+    await expect(
+      call(router.observation.reportMeasurements, {
+        eventId,
+        edgeDeviceId: "0123456789abcdef",
+        measurements: [],
+      }),
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
   });
 });
 
@@ -968,6 +1082,22 @@ describe("observation procedures with OBSERVATION_API_MOCKING", () => {
         edgeDeviceId: registered.edgeDeviceId,
       }),
     ).resolves.toBeUndefined();
+  });
+
+  it("answer the settings as unset and echo an update without reaching the gateway in development", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("OBSERVATION_API_MOCKING", "enabled");
+
+    await expect(
+      call(router.observation.getSettings, { eventId }),
+    ).resolves.toEqual({ historyWindowDays: 30, eventType: null });
+    await expect(
+      call(router.observation.updateSettings, {
+        eventId,
+        historyWindowDays: 7,
+        eventType: "longTerm",
+      }),
+    ).resolves.toEqual({ historyWindowDays: 7, eventType: "longTerm" });
   });
 
   it("reach the gateway in production", async () => {

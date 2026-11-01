@@ -90,7 +90,7 @@ tolo-idp の `POST /api/login` の CORS では、ルートドメインの origin
 
 ブラウザは、tolo-edge-bridge が発行した Firebase のカスタムトークンで Auth エミュレータにサインインしてから、シグナリング文書を読み書きします。Firebase エミュレータはこのリポジトリの `firebase-emulator/` からビルドし、同じディレクトリのセキュリティルール（tolo-edge-bridge のシグナリング文書のルールと同じもの）を適用します。ホストへは Firestore を `localhost:8080`、Auth を `localhost:9099`、Emulator UI を `http://localhost:4000` で公開します。
 
-Service Gateway と Observation は起動しません。代わりに、`web` は環境変数 `OBSERVATION_API_MOCKING` が `enabled` のとき、Observation の手続き（端末一覧、観測地点、ハートビート、計測値の送信）に Service Gateway を呼ばずに応答します。端末一覧は MSW のモックと同じサンプル（`src/mocks/fixtures/edges.ts`）で、観測デバイス管理ページには、稼働中の 2 台とオフラインの 1 台が表示されます。計測値は捨てます。シグナリングはこの切り替えの対象外で、tolo-edge-bridge を通ります。`compose.yaml` はこの変数を既定で `enabled` にします。この切り替えは `NODE_ENV` が `development` のときだけ働きます。
+Service Gateway と Observation は起動しません。代わりに、`web` は環境変数 `OBSERVATION_API_MOCKING` が `enabled` のとき、Observation の手続き（端末一覧、観測地点、ハートビート、計測値の送信、観測設定の取得と保存）に Service Gateway を呼ばずに応答します。端末一覧は MSW のモックと同じサンプル（`src/mocks/fixtures/edges.ts`）で、観測デバイス管理ページには、稼働中の 2 台とオフラインの 1 台が表示されます。計測値は捨てます。観測設定はイベント種別が未設定の既定値を返し、保存した値は保持しません。シグナリングはこの切り替えの対象外で、tolo-edge-bridge を通ります。`compose.yaml` はこの変数を既定で `enabled` にします。この切り替えは `NODE_ENV` が `development` のときだけ働きます。
 
 ホストで起動する Next.js（`pnpm dev`）では、`.env.example` のとおりこの変数を `disabled` にし、`GATEWAY_URL` の Service Gateway を呼びます。
 

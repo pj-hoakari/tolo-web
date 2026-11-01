@@ -1,4 +1,10 @@
 import { expect, type Page, test } from "@playwright/test";
+import { MOCK_SERVER_MESSAGE, type MockRouterOverrides } from "@/mocks/router";
+
+type MockOverrides = Pick<
+  MockRouterOverrides,
+  "getObservationSettingsError" | "updateObservationSettingsError"
+>;
 
 const pointA = "入口";
 const pointB = "ブース前";
@@ -8,6 +14,21 @@ const observationPoint = (page: Page, name: string) =>
   panel(page).getByRole("group", { name: "観測点" }).getByText(name);
 const emptyNotice = "観測点を紐づけるポイントまたはルートを選択してください。";
 const booth = (page: Page) => page.getByTestId("rf__node-ph_booth");
+const settings = (page: Page) => page.getByRole("region", { name: "観測設定" });
+const eventTypeSelect = (page: Page) =>
+  settings(page).getByRole("button", { name: /イベント種別/ });
+const historyWindowDays = (page: Page) =>
+  settings(page).getByRole("spinbutton", { name: "履歴期間（日）" });
+const saveButton = (page: Page) =>
+  settings(page).getByRole("button", { name: "保存" });
+const unsetNotice =
+  "イベント種別が未設定です。未設定のイベントは短期として扱われます。会期に合わせて種別を設定してください。";
+const overrideMock = async (page: Page, overrides: MockOverrides) => {
+  await page.evaluate((value) => {
+    sessionStorage.setItem("msw:overrides", value);
+    window.dispatchEvent(new Event("msw:overrides"));
+  }, JSON.stringify(overrides));
+};
 const nodeTransform = (page: Page, id: string) =>
   page
     .getByTestId(`rf__node-${id}`)
@@ -27,6 +48,81 @@ test("管理ページを開くとルート図が表示される", async ({ page 
   await expect(page.getByRole("tab")).toHaveCount(0);
   await expect(booth(page)).toBeVisible();
   await expect(panel(page)).toContainText(emptyNotice);
+});
+
+test("イベント種別が未設定のイベントでは、種別が未設定と表示され、短期として扱われることと設定を促す文言が出る", async ({
+  page,
+}) => {
+  await expect(eventTypeSelect(page)).toContainText("未設定");
+  await expect(historyWindowDays(page)).toHaveValue("30");
+  await expect(settings(page)).toContainText(unsetNotice);
+  await expect(saveButton(page)).toBeDisabled();
+});
+
+test("イベント種別の選択肢は短期と長期で、それぞれに会期で選ぶ基準が添えられている", async ({
+  page,
+}) => {
+  await eventTypeSelect(page).click();
+
+  const options = page.getByRole("option");
+  await expect(options).toHaveCount(2);
+  await expect(options.nth(0)).toHaveText(/短期.*会期が数日に満たないイベント/);
+  await expect(options.nth(1)).toHaveText(
+    /長期.*会期が数日以上にわたるイベント（常設施設を含む）/,
+  );
+});
+
+test("イベント種別と履歴期間を保存すると、保存した旨が表示され未設定の文言が消える", async ({
+  page,
+}) => {
+  await eventTypeSelect(page).click();
+  await page.getByRole("option", { name: /長期/ }).click();
+  await historyWindowDays(page).fill("14");
+  await saveButton(page).click();
+
+  await expect(settings(page).getByRole("status")).toHaveText(
+    "観測設定を保存しました。",
+  );
+  await expect(settings(page)).not.toContainText(unsetNotice);
+  await expect(eventTypeSelect(page)).toContainText("長期");
+  await expect(historyWindowDays(page)).toHaveValue("14");
+});
+
+test("履歴期間が 1 日未満のあいだは保存できない", async ({ page }) => {
+  await eventTypeSelect(page).click();
+  await page.getByRole("option", { name: /短期/ }).click();
+  await historyWindowDays(page).fill("0");
+
+  await expect(saveButton(page)).toBeDisabled();
+});
+
+test("観測設定の保存に失敗すると、保存できなかった旨が表示され未設定の文言は残る", async ({
+  page,
+}) => {
+  await overrideMock(page, {
+    updateObservationSettingsError: "INTERNAL_SERVER_ERROR",
+  });
+  await eventTypeSelect(page).click();
+  await page.getByRole("option", { name: /長期/ }).click();
+  await saveButton(page).click();
+
+  await expect(settings(page).getByRole("alert")).toHaveText(
+    "観測設定を保存できませんでした。",
+  );
+  await expect(page.getByText(MOCK_SERVER_MESSAGE)).toHaveCount(0);
+  await expect(settings(page)).toContainText(unsetNotice);
+});
+
+test("観測設定の取得に失敗するとエラーと再読み込みボタンが表示される", async ({
+  page,
+}) => {
+  await overrideMock(page, { getObservationSettingsError: true });
+  await page.reload();
+
+  const alert = settings(page).getByRole("alert");
+  await expect(alert).toContainText("観測設定を取得できませんでした。");
+  await expect(alert.getByRole("button", { name: "再読み込み" })).toBeVisible();
+  await expect(eventTypeSelect(page)).toHaveCount(0);
 });
 
 test("管理ページの観測デバイス管理リンクを押すと観測デバイス管理ページに移動する", async ({

@@ -31,6 +31,30 @@
     "backLink": "管理ページへ戻る",
     "observationDevicesLink": "観測デバイス管理"
   },
+  "ObservationSettings": {
+    "heading": "観測設定",
+    "loading": "読み込み中…",
+    "loadFailed": "観測設定を取得できませんでした。",
+    "retry": "再読み込み",
+    "unsetNotice": "イベント種別が未設定です。未設定のイベントは短期として扱われます。会期に合わせて種別を設定してください。",
+    "eventType": {
+      "label": "イベント種別",
+      "unset": "未設定",
+      "shortTerm": {
+        "name": "短期",
+        "criterion": "会期が数日に満たないイベント"
+      },
+      "longTerm": {
+        "name": "長期",
+        "criterion": "会期が数日以上にわたるイベント（常設施設を含む）"
+      }
+    },
+    "historyWindowDays": "履歴期間（日）",
+    "save": "保存",
+    "saved": "観測設定を保存しました。",
+    "failed": "観測設定を保存できませんでした。",
+    "invalid": "イベント種別を選び、履歴期間を 1 日以上で入力してください。"
+  },
   "TenantManagement": {
     "title": "{tenantId} イベント管理",
     "membersLink": "メンバー管理",
@@ -39,7 +63,9 @@
       "submit": "作成",
       "failed": "イベントを作成できませんでした。",
       "tenantUnavailable": "このテナントではイベントを作成できません。テナントがアーカイブされている可能性があります。",
-      "tenantNotFound": "テナントが見つかりませんでした。"
+      "tenantNotFound": "テナントが見つかりませんでした。",
+      "created": "「{name}」を作成しました。イベント種別はまだ設定されていません。",
+      "setEventType": "イベント種別を設定する"
     },
     "list": {
       "heading": "イベント",
