@@ -1,3 +1,4 @@
+import { ORPCError } from "@orpc/client";
 import { useEffect, useState } from "react";
 import type {
   DetectionResultStore,
@@ -7,11 +8,13 @@ import { orpc } from "@/lib/orpc";
 import {
   buildWindowMeasurements,
   mapLinesToObservationPoints,
+  type WindowMeasurement,
 } from "../utils/measurements";
 import type { DetectCrowdStatus } from "./useDetectCrowd";
 
 const REPORT_INTERVAL_MS = 30_000;
 const HEARTBEAT_INTERVAL_MS = 10_000;
+const MAX_UNSENT_WINDOWS = 120;
 
 export function useObservationReporting({
   eventId,
@@ -90,6 +93,7 @@ export function useObservationReporting({
     }
     let windowStart = new Date();
     let previous = resultStore.getState();
+    let unsent: WindowMeasurement[][] = [];
 
     const tick = () => {
       const pointIdByLineId = mapLinesToObservationPoints(
@@ -107,13 +111,27 @@ export function useObservationReporting({
       });
       windowStart = windowEnd;
       previous = current;
-      if (measurements.length === 0) {
+      const windows =
+        measurements.length === 0 ? unsent : [...unsent, measurements];
+      unsent = [];
+      if (windows.length === 0) {
         return;
       }
       orpc.observation
-        .reportMeasurements({ eventId, edgeDeviceId, measurements })
+        .reportMeasurements({
+          eventId,
+          edgeDeviceId,
+          measurements: windows.flat(),
+        })
         .catch((cause: unknown) => {
           console.error("failed to report measurements", cause);
+          if (
+            cause instanceof ORPCError &&
+            cause.code === "PRECONDITION_FAILED"
+          ) {
+            return;
+          }
+          unsent = [...windows, ...unsent].slice(-MAX_UNSENT_WINDOWS);
         });
     };
 
