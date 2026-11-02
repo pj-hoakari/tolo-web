@@ -49,6 +49,7 @@ import type {
   EventStatus,
   TenantEvent,
 } from "@/features/tenant/management/events/type";
+import { EVENT_STATUSES as EVENT_STATUS_VALUES } from "@/features/tenant/management/events/type";
 import type { GraphData } from "@/features/tenant/management/graph/type";
 import type {
   CreatedInvitation,
@@ -171,6 +172,14 @@ const EVENT_STATUSES: Partial<Record<ProtoEventStatus, EventStatus>> = {
   [ProtoEventStatus.LOCKED]: "locked",
   [ProtoEventStatus.CLOSED]: "closed",
   [ProtoEventStatus.ARCHIVED]: "archived",
+};
+
+const PROTO_EVENT_STATUSES: Record<EventStatus, ProtoEventStatus> = {
+  draft: ProtoEventStatus.DRAFT,
+  open: ProtoEventStatus.OPEN,
+  locked: ProtoEventStatus.LOCKED,
+  closed: ProtoEventStatus.CLOSED,
+  archived: ProtoEventStatus.ARCHIVED,
 };
 
 function toTenantEvent(event: Event | undefined): TenantEvent {
@@ -457,6 +466,19 @@ export const router = {
       .handler(async ({ input }): Promise<TenantEvent> => {
         try {
           const res = await tenantManagementClient.createEvent(input);
+          return toTenantEvent(res.event);
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    transitionEventStatus: os
+      .input(z.object({ eventId: publicId, to: z.enum(EVENT_STATUS_VALUES) }))
+      .handler(async ({ input }): Promise<TenantEvent> => {
+        try {
+          const res = await tenantManagementClient.transitionEventStatus({
+            eventId: input.eventId,
+            to: PROTO_EVENT_STATUSES[input.to],
+          });
           return toTenantEvent(res.event);
         } catch (err) {
           throw toORPCError(err);

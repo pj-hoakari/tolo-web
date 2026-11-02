@@ -29,7 +29,12 @@
     "title": "{tenantId} 관리 페이지",
     "graphEditTitle": "{tenantId} 경로도 편집",
     "backLink": "관리 페이지로 돌아가기",
-    "observationDevicesLink": "관측 장치 관리"
+    "observationDevicesLink": "관측 장치 관리",
+    "tenantId": "테넌트 ID: {id}",
+    "filters": {
+      "reset": "필터 초기화",
+      "results": "{total}개 중 {shown}개 표시"
+    }
   },
   "ObservationSettings": {
     "heading": "관측 설정",
@@ -65,7 +70,10 @@
       "tenantUnavailable": "이 테넌트에서는 이벤트를 만들 수 없습니다. 테넌트가 보관되었을 수 있습니다.",
       "tenantNotFound": "테넌트를 찾을 수 없습니다.",
       "created": "“{name}”을(를) 만들었습니다. 이벤트 유형이 아직 설정되지 않았습니다.",
-      "setEventType": "이벤트 유형 설정하기"
+      "setEventType": "이벤트 유형 설정하기",
+      "open": "이벤트 만들기",
+      "cancel": "취소",
+      "success": "이벤트를 만들었습니다."
     },
     "list": {
       "heading": "이벤트",
@@ -73,7 +81,21 @@
       "empty": "아직 이벤트가 없습니다.",
       "error": "이벤트 목록을 불러올 수 없습니다.",
       "retry": "다시 불러오기",
-      "showArchived": "보관된 이벤트도 표시"
+      "showArchived": "보관된 이벤트도 표시",
+      "count": "{count}개",
+      "state": "상태",
+      "actions": "작업",
+      "open": "관리",
+      "openLabel": "{name} 관리",
+      "search": "이벤트 이름·ID로 검색",
+      "allStatuses": "모든 상태",
+      "noResults": "조건에 맞는 이벤트가 없습니다.",
+      "moreActions": "{name}의 추가 작업",
+      "idLabel": "이벤트 ID",
+      "copyId": "{name}의 이벤트 ID 복사",
+      "idCopied": "{name}의 이벤트 ID를 복사했습니다.",
+      "copyFailed": "복사할 수 없습니다. ID를 선택하여 직접 복사하세요.",
+      "results": "전체 {total}개 중 {shown}개 표시"
     },
     "status": {
       "draft": "초안",
@@ -88,15 +110,30 @@
       "description": "“{name}”을(를) 보관합니다. 보관한 이벤트는 “보관된 이벤트도 표시”를 켜면 목록에 표시되며, 거기서 복원할 수 있습니다.",
       "cancel": "취소",
       "confirm": "보관하기",
-      "failed": "이벤트를 보관할 수 없습니다."
+      "failed": "이벤트를 보관할 수 없습니다.",
+      "success": "“{name}”을(를) 보관했습니다."
     },
     "restore": {
       "button": "복원",
-      "failed": "이벤트를 복원할 수 없습니다."
+      "failed": "이벤트를 복원할 수 없습니다.",
+      "success": "“{name}”을(를) 복원했습니다."
     },
     "transition": {
       "stale": "이벤트 또는 테넌트의 상태가 바뀌어 작업을 완료할 수 없습니다. 목록을 다시 불러와 주세요.",
-      "eventNotFound": "이벤트를 찾을 수 없습니다. 목록을 다시 불러와 주세요."
+      "eventNotFound": "이벤트를 찾을 수 없습니다. 목록을 다시 불러와 주세요.",
+      "button": "{name}의 상태 변경({status})",
+      "title": "이벤트 상태 변경",
+      "description": "{name}의 상태를 {from}에서 {to}(으)로 변경합니다.",
+      "confirm": "변경",
+      "cancel": "취소",
+      "failed": "이벤트 상태를 변경할 수 없습니다.",
+      "success": "{name}의 상태를 {status}(으)로 변경했습니다."
+    },
+    "pageTitle": "이벤트 관리",
+    "workspace": {
+      "brand": "Tolo",
+      "allEvents": "모든 이벤트",
+      "navigation": "이벤트 보기"
     }
   },
   "Graph": {

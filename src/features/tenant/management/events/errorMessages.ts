@@ -15,4 +15,5 @@ export const EVENT_ERROR_MESSAGES = {
   },
   archive: { byCode: TRANSITION_ERRORS, fallback: "archive.failed" },
   restore: { byCode: TRANSITION_ERRORS, fallback: "restore.failed" },
+  transition: { byCode: TRANSITION_ERRORS, fallback: "transition.failed" },
 } as const satisfies Record<string, ErrorMessageKeys<string>>;

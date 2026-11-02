@@ -1,11 +1,8 @@
 import { getTranslations } from "next-intl/server";
-import { LocaleSelect } from "@/components/locale-select";
-import { PwaInstall } from "@/components/pwa/pwa-install";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Link } from "@/components/ui/link";
-import { LogoutButton } from "@/features/auth/LogoutButton";
+import { ManagementHeader } from "@/features/tenant/management/components/ManagementHeader";
 import { TenantEvents } from "@/features/tenant/management/events/TenantEvents";
 import { getPwaMetadata } from "@/lib/pwa/manifest";
+
 import { requireStaff } from "@/server/auth";
 
 export function generateMetadata() {
@@ -22,22 +19,11 @@ export default async function TenantEventManagement({
   const t = await getTranslations("TenantManagement");
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="flex w-full items-center justify-between px-10 py-5">
-        <h2 className="text-2xl font-bold">{t("title", { tenantId })}</h2>
-        <div className="flex items-center gap-2">
-          <Link href="/management/members" variant="ghost" size="sm">
-            {t("membersLink")}
-          </Link>
-          <PwaInstall compact />
-          <LocaleSelect />
-          <ThemeToggle />
-          <LogoutButton />
-        </div>
-      </header>
-      <main className="flex w-full flex-1 justify-center px-10 py-5">
-        <TenantEvents tenantId={tenantId} />
-      </main>
+    <div className="min-h-dvh bg-background">
+      <TenantEvents
+        tenantId={tenantId}
+        header={<ManagementHeader title={t("pageTitle")} tenantId={tenantId} />}
+      />
     </div>
   );
 }
