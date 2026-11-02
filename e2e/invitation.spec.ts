@@ -67,8 +67,8 @@ test("招待を受けて参加すると、同じテナントのホストの管�
   await expect(page).toHaveURL("/management");
   await expect(
     page.getByRole("heading", {
-      level: 2,
-      name: "0123456789abcdef イベント管理",
+      level: 1,
+      name: "イベント管理",
     }),
   ).toBeVisible();
 });
