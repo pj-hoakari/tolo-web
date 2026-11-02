@@ -7,8 +7,8 @@ test("AUTH_MOCKING では、管理ページはログインなしでモックの�
 
   await expect(
     page.getByRole("heading", {
-      level: 2,
-      name: "0123456789abcdef イベント管理",
+      level: 1,
+      name: "イベント管理",
     }),
   ).toBeVisible();
   expect(new URL(page.url()).pathname).toBe("/management");
@@ -66,8 +66,8 @@ test("ログインに失敗した画面から、ログインを始めたテナ�
 
   await expect(
     page.getByRole("heading", {
-      level: 2,
-      name: "0123456789abcdef イベント管理",
+      level: 1,
+      name: "イベント管理",
     }),
   ).toBeVisible();
   expect(page.url()).toBe("http://test.localhost:3100/management");
@@ -104,8 +104,8 @@ test("AUTH_MOCKING では、管理ページにログアウトのボタンはな�
 
   await expect(
     page.getByRole("heading", {
-      level: 2,
-      name: "0123456789abcdef イベント管理",
+      level: 1,
+      name: "イベント管理",
     }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "ログアウト" })).toHaveCount(0);
@@ -130,8 +130,8 @@ test("ログアウトした後の画面から、ログアウトしたテナン�
 
   await expect(
     page.getByRole("heading", {
-      level: 2,
-      name: "0123456789abcdef イベント管理",
+      level: 1,
+      name: "イベント管理",
     }),
   ).toBeVisible();
   expect(page.url()).toBe("http://test.localhost:3100/management");

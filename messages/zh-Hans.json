@@ -29,7 +29,12 @@
     "title": "{tenantId} 管理页面",
     "graphEditTitle": "{tenantId} 路径图编辑",
     "backLink": "返回管理页面",
-    "observationDevicesLink": "观测设备管理"
+    "observationDevicesLink": "观测设备管理",
+    "tenantId": "租户 ID: {id}",
+    "filters": {
+      "reset": "重置筛选",
+      "results": "显示 {shown} / {total} 项"
+    }
   },
   "ObservationSettings": {
     "heading": "观测设置",
@@ -65,7 +70,10 @@
       "tenantUnavailable": "无法在此租户下创建活动。该租户可能已被归档。",
       "tenantNotFound": "找不到该租户。",
       "created": "已创建“{name}”。尚未设置其活动类型。",
-      "setEventType": "设置活动类型"
+      "setEventType": "设置活动类型",
+      "open": "创建活动",
+      "cancel": "取消",
+      "success": "活动已创建。"
     },
     "list": {
       "heading": "活动",
@@ -73,7 +81,21 @@
       "empty": "暂无活动。",
       "error": "无法获取活动列表。",
       "retry": "重新加载",
-      "showArchived": "同时显示已归档"
+      "showArchived": "同时显示已归档",
+      "count": "{count} 项",
+      "state": "状态",
+      "actions": "操作",
+      "open": "管理",
+      "openLabel": "管理{name}",
+      "search": "按活动名称或 ID 搜索",
+      "allStatuses": "所有状态",
+      "noResults": "没有符合筛选条件的活动。",
+      "moreActions": "{name}的更多操作",
+      "idLabel": "活动ID",
+      "copyId": "复制{name}的活动ID",
+      "idCopied": "已复制{name}的活动ID。",
+      "copyFailed": "无法复制。请选择ID并手动复制。",
+      "results": "共{total}项，显示{shown}项"
     },
     "status": {
       "draft": "草稿",
@@ -88,15 +110,30 @@
       "description": "将归档“{name}”。归档后的活动仅在开启“同时显示已归档”时显示在列表中，并可在那里恢复。",
       "cancel": "取消",
       "confirm": "归档",
-      "failed": "无法归档活动。"
+      "failed": "无法归档活动。",
+      "success": "已归档“{name}”。"
     },
     "restore": {
       "button": "恢复",
-      "failed": "无法恢复活动。"
+      "failed": "无法恢复活动。",
+      "success": "已恢复“{name}”。"
     },
     "transition": {
       "stale": "活动或租户的状态已变化，无法完成操作。请重新加载列表。",
-      "eventNotFound": "找不到该活动。请重新加载列表。"
+      "eventNotFound": "找不到该活动。请重新加载列表。",
+      "button": "更改{name}的状态（{status}）",
+      "title": "更改活动状态",
+      "description": "将{name}的状态从{from}更改为{to}。",
+      "confirm": "更改",
+      "cancel": "取消",
+      "failed": "无法更改活动状态。",
+      "success": "已将{name}的状态更改为{status}。"
+    },
+    "pageTitle": "活动管理",
+    "workspace": {
+      "brand": "Tolo",
+      "allEvents": "所有活动",
+      "navigation": "活动视图"
     }
   },
   "Graph": {
