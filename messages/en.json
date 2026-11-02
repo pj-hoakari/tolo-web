@@ -95,7 +95,15 @@
       "copyId": "Copy event ID for {name}",
       "idCopied": "Copied the event ID for {name}.",
       "copyFailed": "Could not copy. Select the ID and copy it manually.",
-      "results": "Showing {shown} of {total} events"
+      "results": "Showing {shown} of {total} events",
+      "backToList": "Back to events",
+      "activeFilters": "Active filters",
+      "searchCondition": "Search: {query}",
+      "clearSearch": "Clear search",
+      "clearStatus": "Clear status filter",
+      "clearArchived": "Hide archived events",
+      "clearConditions": "Clear filters",
+      "dismissNotice": "Dismiss notification"
     },
     "status": {
       "draft": "Draft",
@@ -127,7 +135,15 @@
       "confirm": "Change status",
       "cancel": "Cancel",
       "failed": "Could not change the event status.",
-      "success": "Changed the status of {name} to {status}."
+      "success": "Changed the status of {name} to {status}.",
+      "actions": {
+        "draft": "Set to draft",
+        "open": "Publish",
+        "locked": "Lock",
+        "closed": "End event",
+        "archived": "Archive"
+      },
+      "draftReason": "Draft is the initial state. Events cannot return to draft from another state."
     },
     "pageTitle": "Event management",
     "workspace": {

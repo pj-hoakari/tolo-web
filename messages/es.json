@@ -95,7 +95,15 @@
       "copyId": "Copiar el ID del evento {name}",
       "idCopied": "Se ha copiado el ID del evento {name}.",
       "copyFailed": "No se pudo copiar. Selecciona el ID y cópialo manualmente.",
-      "results": "Mostrando {shown} de {total} eventos"
+      "results": "Mostrando {shown} de {total} eventos",
+      "backToList": "Volver a eventos",
+      "activeFilters": "Filtros activos",
+      "searchCondition": "Buscar: {query}",
+      "clearSearch": "Borrar búsqueda",
+      "clearStatus": "Quitar filtro de estado",
+      "clearArchived": "Ocultar eventos archivados",
+      "clearConditions": "Quitar filtros",
+      "dismissNotice": "Cerrar notificación"
     },
     "status": {
       "draft": "Borrador",
@@ -127,7 +135,15 @@
       "confirm": "Cambiar estado",
       "cancel": "Cancelar",
       "failed": "No se pudo cambiar el estado del evento.",
-      "success": "Se cambió el estado de {name} a {status}."
+      "success": "Se cambió el estado de {name} a {status}.",
+      "actions": {
+        "draft": "Pasar a borrador",
+        "open": "Publicar",
+        "locked": "Bloquear",
+        "closed": "Finalizar evento",
+        "archived": "Archivar"
+      },
+      "draftReason": "Borrador es el estado inicial. Los eventos no pueden volver a borrador desde otro estado."
     },
     "pageTitle": "Gestión de eventos",
     "workspace": {

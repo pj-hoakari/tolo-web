@@ -48,7 +48,7 @@ export function RestoreEventButton({ event, onRestored }: Props) {
         size="sm"
         onPress={restore}
         isDisabled={submitting}
-        className="col-start-2 row-start-1 h-10 w-10 justify-self-end px-0"
+        className="col-start-2 row-start-1 size-11 justify-self-end px-0 lg:size-10"
       >
         <RotateCcw aria-hidden className="size-4" />
         <span className="sr-only">{t("button")}</span>

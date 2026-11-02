@@ -68,6 +68,7 @@ export type MockRouterOverrides = {
   };
   registerTenantError?: CommonORPCErrorCode;
   listEventsError?: boolean;
+  events?: TenantEvent[];
   createEventError?: CommonORPCErrorCode;
   archiveEventError?: CommonORPCErrorCode;
   restoreEventError?: CommonORPCErrorCode;
@@ -140,13 +141,15 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     transitionEventStatusError,
   } = overrides;
 
-  const events: TenantEvent[] = [
-    { eventId: "0000000000000001", name: "Event A", status: "draft" },
-    { eventId: "0000000000000002", name: "Event B", status: "open" },
-    { eventId: "0000000000000003", name: "Event C", status: "locked" },
-    { eventId: "0000000000000004", name: "Event D", status: "closed" },
-    { eventId: "0000000000000005", name: "Event E", status: "archived" },
-  ];
+  const events: TenantEvent[] = structuredClone(
+    overrides.events ?? [
+      { eventId: "0000000000000001", name: "Event A", status: "draft" },
+      { eventId: "0000000000000002", name: "Event B", status: "open" },
+      { eventId: "0000000000000003", name: "Event C", status: "locked" },
+      { eventId: "0000000000000004", name: "Event D", status: "closed" },
+      { eventId: "0000000000000005", name: "Event E", status: "archived" },
+    ],
+  );
   let nextEventNumber = events.length + 1;
   let devices = [...initialDevices];
   const observationSettings = new Map<string, ObservationSettings>();

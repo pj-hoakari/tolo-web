@@ -95,7 +95,15 @@
       "copyId": "「{name}」のイベントIDをコピー",
       "idCopied": "「{name}」のイベントIDをコピーしました。",
       "copyFailed": "コピーできませんでした。IDを選択してコピーしてください。",
-      "results": "{total}件中{shown}件を表示"
+      "results": "{total}件中{shown}件を表示",
+      "backToList": "イベント一覧に戻る",
+      "activeFilters": "適用中の条件",
+      "searchCondition": "検索：{query}",
+      "clearSearch": "検索条件を解除",
+      "clearStatus": "状態条件を解除",
+      "clearArchived": "アーカイブ表示を解除",
+      "clearConditions": "条件を解除する",
+      "dismissNotice": "通知を閉じる"
     },
     "status": {
       "draft": "下書き",
@@ -127,7 +135,15 @@
       "confirm": "変更する",
       "cancel": "キャンセル",
       "failed": "イベントの状態を変更できませんでした。",
-      "success": "「{name}」の状態を「{status}」に変更しました。"
+      "success": "「{name}」の状態を「{status}」に変更しました。",
+      "actions": {
+        "draft": "下書きにする",
+        "open": "公開する",
+        "locked": "ロックする",
+        "closed": "終了する",
+        "archived": "アーカイブする"
+      },
+      "draftReason": "下書きは作成時の状態です。他の状態から下書きには戻せません。"
     },
     "pageTitle": "イベント管理",
     "workspace": {

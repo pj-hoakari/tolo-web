@@ -1,8 +1,8 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DialogContent,
@@ -31,6 +31,8 @@ export function EventStatusControl({
   onChanged: (updated: TenantEvent) => void;
 }) {
   const t = useTranslations("TenantManagement");
+  const reasonId = useId();
+  const inFlight = useRef(false);
   const [target, setTarget] = useState<EventStatus | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +42,8 @@ export function EventStatusControl({
   });
 
   async function change(close: () => void) {
-    if (!target || submitting) return;
+    if (!target || inFlight.current) return;
+    inFlight.current = true;
     setSubmitting(true);
     setError(null);
     try {
@@ -53,6 +56,7 @@ export function EventStatusControl({
     } catch (err) {
       setError(t(errorMessageKey(err, EVENT_ERROR_MESSAGES.transition)));
     } finally {
+      inFlight.current = false;
       setSubmitting(false);
     }
   }
@@ -62,15 +66,24 @@ export function EventStatusControl({
       <MenuTrigger>
         <Button
           variant="ghost"
-          className="h-auto min-h-10 max-w-full rounded-md p-0"
+          className="h-auto min-h-11 max-w-full rounded-md p-0 lg:min-h-10"
           aria-label={label}
         >
           <EventStatusBadge status={event.status}>
             <ChevronDown aria-hidden className="size-3 shrink-0" />
           </EventStatusBadge>
         </Button>
-        <MenuPopover placement="bottom start">
-          <Menu aria-label={label}>
+        <MenuPopover
+          placement="bottom start"
+          className="max-w-[calc(100vw-2rem)]"
+        >
+          <p
+            id={reasonId}
+            className="max-w-72 border-b border-border px-3 py-3 text-xs text-muted-foreground"
+          >
+            {t("transition.draftReason")}
+          </p>
+          <Menu aria-label={label} aria-describedby={reasonId}>
             <MenuItem id="draft" isDisabled>
               {t("status.draft")}
             </MenuItem>
@@ -78,12 +91,13 @@ export function EventStatusControl({
               <MenuItem
                 key={status}
                 id={status}
+                className="min-h-11"
                 onAction={() => {
                   setError(null);
                   setTarget(status);
                 }}
               >
-                {t(`status.${status}`)}
+                {t(`transition.actions.${status}`)}
               </MenuItem>
             ))}
           </Menu>
@@ -111,6 +125,16 @@ export function EventStatusControl({
                     })}
                 </DialogDescription>
               </DialogHeader>
+              {target && (
+                <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/40 p-4">
+                  <EventStatusBadge status={event.status} />
+                  <ArrowRight
+                    aria-hidden
+                    className="size-4 text-muted-foreground"
+                  />
+                  <EventStatusBadge status={target} />
+                </div>
+              )}
               {target === "archived" && (
                 <p className="text-sm text-muted-foreground">
                   {t("archive.description", { name: event.name })}
@@ -134,7 +158,7 @@ export function EventStatusControl({
                   onPress={() => change(close)}
                   isDisabled={submitting}
                 >
-                  {t("transition.confirm")}
+                  {target && t(`transition.actions.${target}`)}
                 </Button>
               </DialogFooter>
             </>

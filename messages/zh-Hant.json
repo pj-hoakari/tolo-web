@@ -95,7 +95,15 @@
       "copyId": "複製{name}的活動ID",
       "idCopied": "已複製{name}的活動ID。",
       "copyFailed": "無法複製。請選取ID並手動複製。",
-      "results": "共{total}項，顯示{shown}項"
+      "results": "共{total}項，顯示{shown}項",
+      "backToList": "返回活動清單",
+      "activeFilters": "目前篩選條件",
+      "searchCondition": "搜尋：{query}",
+      "clearSearch": "清除搜尋條件",
+      "clearStatus": "清除狀態條件",
+      "clearArchived": "隱藏已封存活動",
+      "clearConditions": "清除篩選條件",
+      "dismissNotice": "關閉通知"
     },
     "status": {
       "draft": "草稿",
@@ -127,7 +135,15 @@
       "confirm": "變更",
       "cancel": "取消",
       "failed": "無法變更活動狀態。",
-      "success": "已將{name}的狀態變更為{status}。"
+      "success": "已將{name}的狀態變更為{status}。",
+      "actions": {
+        "draft": "設為草稿",
+        "open": "發布",
+        "locked": "鎖定",
+        "closed": "結束活動",
+        "archived": "封存"
+      },
+      "draftReason": "草稿是建立時的狀態。活動無法從其他狀態恢復為草稿。"
     },
     "pageTitle": "活動管理",
     "workspace": {

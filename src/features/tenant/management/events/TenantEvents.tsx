@@ -9,6 +9,7 @@ import {
   List,
   Lock,
   Radio,
+  X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
@@ -30,6 +31,7 @@ import {
   RESTORABLE_STATUSES,
   type TenantEvent,
 } from "./type";
+import { useEventListPosition, useEventListState } from "./useEventListState";
 import { useTenantEvents } from "./useTenantEvents";
 
 type Props = {
@@ -41,13 +43,21 @@ export function TenantEvents({ tenantId, header }: Props) {
   const t = useTranslations("TenantManagement");
   const tManagement = useTranslations("Management");
   const tFilters = useTranslations("Management.filters");
-  const [includeArchived, setIncludeArchived] = useState(false);
-  const [query, setQuery] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState<EventStatus | "all">(
-    "all",
-  );
+  const {
+    query,
+    selectedStatus,
+    includeArchived,
+    updateFilters,
+    rememberList,
+  } = useEventListState(tenantId);
   const [notice, setNotice] = useState<ReactNode>(null);
   const list = useTenantEvents(tenantId, includeArchived);
+  useEventListPosition(tenantId, list.status === "ready");
+  const resetFilters = () =>
+    updateFilters({ query: "", selectedStatus: "all", includeArchived: false });
+  const hasFilters = Boolean(
+    query || selectedStatus !== "all" || includeArchived,
+  );
   const visibleEvents =
     list.events?.filter(
       (event) =>
@@ -56,26 +66,27 @@ export function TenantEvents({ tenantId, header }: Props) {
     ) ?? [];
 
   function selectStatus(value: EventStatus | "all") {
-    setSelectedStatus(value);
-    if (value === "archived") setIncludeArchived(true);
+    updateFilters({
+      selectedStatus: value,
+      ...(value === "archived" ? { includeArchived: true } : {}),
+    });
   }
 
   function handleCreated(event: TenantEvent) {
-    setQuery("");
-    setSelectedStatus("all");
+    updateFilters({ query: "", selectedStatus: "all" });
     setNotice(
-      <>
-        {t("create.success")}
-        <span className="mt-1 block">
-          {t("create.created", { name: event.name })}{" "}
-          <Link
-            href={managementPath(event.eventId)}
-            className="font-medium underline underline-offset-4"
-          >
-            {t("create.setEventType")}
-          </Link>
-        </span>
-      </>,
+      <span className="mt-1 block">
+        {t("create.created", { name: event.name })}{" "}
+        <Link
+          href={managementPath(event.eventId)}
+          onPress={rememberList}
+          variant="outline"
+          size="sm"
+          className="mt-2 min-h-11"
+        >
+          {t("create.setEventType")}
+        </Link>
+      </span>,
     );
     list.refresh();
   }
@@ -154,12 +165,21 @@ export function TenantEvents({ tenantId, header }: Props) {
             <CreateEventForm tenantId={tenantId} onCreated={handleCreated} />
           </div>
           {notice && (
-            <p
+            <div
               role="status"
-              className="border-b border-border bg-muted/40 px-4 py-3 text-sm sm:px-6"
+              className="flex items-start justify-between gap-4 border-b border-border bg-muted/40 px-4 py-3 text-sm sm:px-6"
             >
-              {notice}
-            </p>
+              <div className="min-w-0">{notice}</div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-11 shrink-0"
+                aria-label={t("list.dismissNotice")}
+                onPress={() => setNotice(null)}
+              >
+                <X aria-hidden className="size-4" />
+              </Button>
+            </div>
           )}
           <section
             aria-label={t("list.heading")}
@@ -168,7 +188,8 @@ export function TenantEvents({ tenantId, header }: Props) {
             <div className="border-b border-border px-4 py-4 sm:px-6">
               <ListFilters<EventStatus | "all">
                 query={query}
-                onQueryChange={setQuery}
+                onQueryChange={(query) => updateFilters({ query }, true)}
+                hideStatusOnDesktop
                 searchLabel={t("list.search")}
                 filterLabel={t("list.state")}
                 selected={selectedStatus}
@@ -183,19 +204,18 @@ export function TenantEvents({ tenantId, header }: Props) {
                 isResetDisabled={
                   !query && selectedStatus === "all" && !includeArchived
                 }
-                onReset={() => {
-                  setQuery("");
-                  setSelectedStatus("all");
-                  setIncludeArchived(false);
-                }}
+                onReset={resetFilters}
                 additionalFilters={
                   <Checkbox
-                    className="min-h-10 text-sm"
+                    className="min-h-11 text-sm lg:min-h-10"
                     isSelected={includeArchived}
                     onChange={(value) => {
-                      setIncludeArchived(value);
-                      if (!value && selectedStatus === "archived")
-                        setSelectedStatus("all");
+                      updateFilters({
+                        includeArchived: value,
+                        ...(!value && selectedStatus === "archived"
+                          ? { selectedStatus: "all" as const }
+                          : {}),
+                      });
                       setNotice(null);
                     }}
                   >
@@ -204,6 +224,58 @@ export function TenantEvents({ tenantId, header }: Props) {
                 }
               />
             </div>
+            {hasFilters && (
+              <section
+                aria-label={t("list.activeFilters")}
+                className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2 sm:px-6"
+              >
+                {query && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="min-h-11 max-w-full gap-2 lg:min-h-8"
+                    aria-label={t("list.clearSearch")}
+                    onPress={() => updateFilters({ query: "" })}
+                  >
+                    <span className="truncate">
+                      {t("list.searchCondition", { query })}
+                    </span>
+                    <X aria-hidden className="size-3 shrink-0" />
+                  </Button>
+                )}
+                {selectedStatus !== "all" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="min-h-11 gap-2 lg:min-h-8"
+                    aria-label={t("list.clearStatus")}
+                    onPress={() => updateFilters({ selectedStatus: "all" })}
+                  >
+                    {t(`status.${selectedStatus}`)}
+                    <X aria-hidden className="size-3" />
+                  </Button>
+                )}
+                {includeArchived && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="min-h-11 gap-2 lg:min-h-8"
+                    aria-label={t("list.clearArchived")}
+                    onPress={() =>
+                      updateFilters({
+                        includeArchived: false,
+                        ...(selectedStatus === "archived"
+                          ? { selectedStatus: "all" as const }
+                          : {}),
+                      })
+                    }
+                  >
+                    {t("list.showArchived")}
+                    <X aria-hidden className="size-3" />
+                  </Button>
+                )}
+              </section>
+            )}
             <div className="grid grid-cols-1 items-center gap-4 border-b border-border bg-muted/40 px-4 py-3 sm:px-6 md:grid-cols-[minmax(0,1fr)_8rem_10rem]">
               <div className="flex min-w-0 items-center gap-2">
                 <CalendarDays
@@ -257,17 +329,34 @@ export function TenantEvents({ tenantId, header }: Props) {
                 </Button>
               </div>
             )}
-            {list.status === "ready" && list.events.length === 0 && (
-              <p className="px-6 py-10 text-sm text-muted-foreground">
-                {t("list.empty")}
-              </p>
-            )}
             {list.status === "ready" &&
-              list.events.length > 0 &&
+              list.events.length === 0 &&
+              !hasFilters && (
+                <div className="flex flex-col items-start gap-4 px-6 py-10">
+                  <p className="text-sm text-muted-foreground">
+                    {t("list.empty")}
+                  </p>
+                  <CreateEventForm
+                    tenantId={tenantId}
+                    onCreated={handleCreated}
+                  />
+                </div>
+              )}
+            {list.status === "ready" &&
+              (list.events.length > 0 || hasFilters) &&
               visibleEvents.length === 0 && (
-                <p className="px-6 py-10 text-sm text-muted-foreground">
-                  {t("list.noResults")}
-                </p>
+                <div className="flex flex-col items-start gap-4 px-6 py-10">
+                  <p className="text-sm text-muted-foreground">
+                    {t("list.noResults")}
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="min-h-11"
+                    onPress={resetFilters}
+                  >
+                    {t("list.clearConditions")}
+                  </Button>
+                </div>
               )}
             {list.status === "ready" && visibleEvents.length > 0 && (
               <ul className="divide-y divide-border">
@@ -279,7 +368,8 @@ export function TenantEvents({ tenantId, header }: Props) {
                     <div className="col-span-2 min-w-0 md:col-span-1">
                       <Link
                         href={managementPath(event.eventId)}
-                        className="block min-w-0 rounded-sm text-sm leading-5 font-medium underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-ring"
+                        onPress={rememberList}
+                        className="block min-w-0 rounded-sm text-sm leading-5 font-medium underline-offset-4 hover:bg-accent hover:text-accent-foreground hover:underline focus-visible:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                       >
                         <span title={event.name} className="block truncate">
                           {event.name}
@@ -302,12 +392,13 @@ export function TenantEvents({ tenantId, header }: Props) {
                         }}
                       />
                     </div>
-                    <div className="grid grid-cols-[minmax(0,1fr)_2.5rem] items-center gap-2">
+                    <div className="grid grid-cols-[minmax(0,1fr)_2.75rem] items-center gap-2 lg:grid-cols-[minmax(0,1fr)_2.5rem]">
                       <Link
                         href={managementPath(event.eventId)}
+                        onPress={rememberList}
                         variant="outline"
                         size="sm"
-                        className="h-10 w-full md:h-8 md:text-xs"
+                        className="min-h-11 w-full lg:min-h-8 lg:text-xs"
                         aria-label={t("list.openLabel", { name: event.name })}
                       >
                         {t("list.open")}

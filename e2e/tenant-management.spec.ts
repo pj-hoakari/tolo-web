@@ -26,12 +26,42 @@ const checkShowArchived = async (page: Page) => {
 
 type MockOverrides = Pick<
   MockRouterOverrides,
+  | "events"
   | "listEventsError"
   | "createEventError"
   | "archiveEventError"
   | "restoreEventError"
   | "transitionEventStatusError"
 >;
+
+const selectStatus = async (page: Page, status: string) => {
+  const navigation = page.getByRole("navigation", {
+    name: "イベントの表示切り替え",
+  });
+  if (await navigation.isVisible())
+    await navigation.getByRole("radio", { name: status, exact: true }).click();
+  else {
+    await page.getByRole("button", { name: / 状態$/ }).click();
+    await page.getByRole("option", { name: status, exact: true }).click();
+  }
+};
+const actionForStatus = (status: string): string => {
+  const actions: Record<string, string> = {
+    公開中: "公開する",
+    ロック中: "ロックする",
+    終了: "終了する",
+    アーカイブ済み: "アーカイブする",
+  };
+  const action = actions[status];
+  if (!action) throw new Error(`Unknown status: ${status}`);
+  return action;
+};
+const confirmStatus = (page: Page) =>
+  page
+    .getByRole("dialog", { name: "イベントの状態を変更" })
+    .getByRole("button", {
+      name: /^(公開する|ロックする|終了する|アーカイブする)$/,
+    });
 
 const open = async (page: Page, overrides?: MockOverrides) => {
   if (overrides) {
@@ -82,7 +112,10 @@ test("作成ダイアログからイベントを作成すると一覧に追加�
   await expect(eventList(page).getByRole("listitem")).toHaveCount(5);
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(
-    page.getByRole("status").filter({ hasText: "イベントを作成しました。" }),
+    page.getByRole("status").filter({
+      hasText:
+        "「Event F」を作成しました。イベント種別はまだ設定されていません。",
+    }),
   ).toBeVisible();
   await page.getByRole("button", { name: "イベントを作成" }).click();
   await expect(field).toHaveValue("");
@@ -248,8 +281,7 @@ test("イベント名・IDの検索と状態を組み合わせ、該当なしか
   const search = page.getByRole("searchbox", { name: "イベント名・IDで検索" });
   await search.fill("  ｅｖｅｎｔ  ");
   await expect(eventList(page).getByRole("listitem")).toHaveCount(4);
-  await page.getByRole("button", { name: /すべての状態/ }).click();
-  await page.getByRole("option", { name: "公開中", exact: true }).click();
+  await selectStatus(page, "公開中");
   await expect(eventList(page).getByRole("listitem")).toHaveCount(1);
   await expect(eventRow(page, "Event B")).toBeVisible();
   await expect(page.getByRole("status")).toHaveText("4件中1件を表示");
@@ -270,17 +302,17 @@ test("アーカイブ済みを状態で選ぶと取得対象に含まれ、表�
   page,
 }) => {
   await open(page);
-  await page.getByRole("button", { name: /すべての状態/ }).click();
-  await page
-    .getByRole("option", { name: "アーカイブ済み", exact: true })
-    .click();
+  await selectStatus(page, "アーカイブ済み");
   await expect(showArchived(page)).toBeChecked();
   await expect(eventList(page).getByRole("listitem")).toHaveCount(1);
   await expect(eventRow(page, "Event E")).toBeVisible();
-  await page.getByText("アーカイブ済みも表示", { exact: true }).click();
+  await page
+    .locator("label")
+    .filter({ hasText: "アーカイブ済みも表示" })
+    .click();
   await expect(showArchived(page)).not.toBeChecked();
   await expect(
-    page.getByRole("button", { name: /すべての状態/ }),
+    page.getByRole("radio", { name: "すべてのイベント", exact: true }),
   ).toBeVisible();
   await expect(eventList(page).getByRole("listitem")).toHaveCount(4);
 });
@@ -516,7 +548,9 @@ const statusDialog = (page: Page) =>
   page.getByRole("dialog", { name: "イベントの状態を変更" });
 const chooseStatus = async (page: Page, name: string, target: string) => {
   await statusTrigger(page, name).click();
-  await page.getByRole("menuitem", { name: target, exact: true }).click();
+  await page
+    .getByRole("menuitem", { name: actionForStatus(target), exact: true })
+    .click();
 };
 
 for (const { name, from, targets, to } of [
@@ -565,16 +599,16 @@ for (const { name, from, targets, to } of [
     await statusTrigger(page, name).click();
     await expect(page.getByRole("menu").getByRole("menuitem")).toHaveText([
       "下書き",
-      ...targets,
+      ...targets.map(actionForStatus),
     ]);
     await expect(
       page.getByRole("menuitem", { name: "下書き", exact: true }),
     ).toBeDisabled();
-    await page.getByRole("menuitem", { name: to, exact: true }).click();
-    await expect(statusDialog(page)).toContainText(`「${from}」から「${to}」`);
-    await statusDialog(page)
-      .getByRole("button", { name: "変更する", exact: true })
+    await page
+      .getByRole("menuitem", { name: actionForStatus(to), exact: true })
       .click();
+    await expect(statusDialog(page)).toContainText(`「${from}」から「${to}」`);
+    await confirmStatus(page).click();
     await expect(statusDialog(page)).toHaveCount(0);
     await expect(
       page.getByRole("status").filter({
@@ -597,7 +631,7 @@ test("状態変更をキャンセルすると状態は変わらず、状態ボ�
   await statusTrigger(page, "Event A").focus();
   await statusTrigger(page, "Event A").press("Enter");
   await page
-    .getByRole("menuitem", { name: "公開中", exact: true })
+    .getByRole("menuitem", { name: "公開する", exact: true })
     .press("Enter");
   await statusDialog(page)
     .getByRole("button", { name: "キャンセル", exact: true })
@@ -613,12 +647,9 @@ test("状態を変更すると現在の絞り込み条件と件数に反映さ�
   page,
 }) => {
   await open(page);
-  await page.getByRole("button", { name: /すべての状態/ }).click();
-  await page.getByRole("option", { name: "公開中", exact: true }).click();
+  await selectStatus(page, "公開中");
   await chooseStatus(page, "Event B", "ロック中");
-  await statusDialog(page)
-    .getByRole("button", { name: "変更する", exact: true })
-    .click();
+  await confirmStatus(page).click();
   await expect(eventRow(page, "Event B")).toHaveCount(0);
   await expect(
     page.getByRole("status").filter({ hasText: "4件中0件を表示" }),
@@ -646,9 +677,7 @@ for (const { code, message } of [
   }) => {
     await open(page, { transitionEventStatusError: code });
     await chooseStatus(page, "Event A", "公開中");
-    await statusDialog(page)
-      .getByRole("button", { name: "変更する", exact: true })
-      .click();
+    await confirmStatus(page).click();
     await expect(statusDialog(page).getByRole("alert")).toHaveText(message);
     await expect(page.getByText(MOCK_SERVER_MESSAGE)).toHaveCount(0);
     await expect(statusTrigger(page, "Event A")).toHaveAccessibleName(
@@ -754,8 +783,13 @@ test("サイドバーと状態フィルターが連動し、アーカイブ表�
   await navigation.getByRole("radio", { name: "公開中", exact: true }).click();
   await expect(eventList(page).getByRole("listitem")).toHaveCount(1);
   await expect(eventRow(page, "Event B")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "公開中 状態", exact: true }),
+  ).toHaveCount(0);
+  await page.setViewportSize({ width: 768, height: 1024 });
   await page.getByRole("button", { name: "公開中 状態", exact: true }).click();
   await page.getByRole("option", { name: "ロック中", exact: true }).click();
+  await page.setViewportSize({ width: 1440, height: 900 });
   await expect(
     navigation.getByRole("radio", { name: "ロック中", exact: true }),
   ).toBeChecked();
@@ -765,7 +799,10 @@ test("サイドバーと状態フィルターが連動し、アーカイブ表�
     .click();
   await expect(showArchived(page)).toBeChecked();
   await expect(eventRow(page, "Event E")).toBeVisible();
-  await page.getByText("アーカイブ済みも表示", { exact: true }).click();
+  await page
+    .locator("label")
+    .filter({ hasText: "アーカイブ済みも表示" })
+    .click();
   await expect(
     navigation.getByRole("radio", { name: "すべてのイベント", exact: true }),
   ).toBeChecked();

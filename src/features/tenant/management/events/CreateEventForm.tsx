@@ -65,7 +65,7 @@ export function CreateEventForm({
         }
       }}
     >
-      <Button className={cn("h-10 gap-2", triggerClassName)}>
+      <Button className={cn("min-h-11 gap-2 lg:min-h-10", triggerClassName)}>
         <Plus aria-hidden className="size-4" />
         {t("open")}
       </Button>

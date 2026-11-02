@@ -28,6 +28,7 @@ export function ListFilters<T extends string>({
   isResetDisabled,
   compact = false,
   additionalFilters,
+  hideStatusOnDesktop = false,
 }: {
   query: string;
   onQueryChange: (value: string) => void;
@@ -41,12 +42,16 @@ export function ListFilters<T extends string>({
   isResetDisabled: boolean;
   compact?: boolean;
   additionalFilters?: ReactNode;
+  hideStatusOnDesktop?: boolean;
 }) {
   return (
     <div
       className={cn(
         "grid gap-4",
-        !compact && "lg:grid-cols-[minmax(0,1fr)_10rem_auto_auto]",
+        !compact &&
+          (hideStatusOnDesktop
+            ? "lg:grid-cols-[minmax(0,1fr)_auto_auto]"
+            : "lg:grid-cols-[minmax(0,1fr)_10rem_auto_auto]"),
       )}
     >
       <TextField
@@ -61,7 +66,7 @@ export function ListFilters<T extends string>({
             aria-hidden
             className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
           />
-          <Input placeholder={searchLabel} className="h-10 pl-10" />
+          <Input placeholder={searchLabel} className="h-11 pl-10 lg:h-10" />
         </div>
       </TextField>
       <div
@@ -76,10 +81,13 @@ export function ListFilters<T extends string>({
             const option = options.find((item) => item.id === key);
             if (option) onSelectionChange(option.id);
           }}
-          className="group min-w-0 flex-1 basis-40"
+          className={cn(
+            "group min-w-0 flex-1 basis-40",
+            hideStatusOnDesktop && "lg:hidden",
+          )}
         >
           <Label className="sr-only">{filterLabel}</Label>
-          <SelectTrigger>
+          <SelectTrigger className="min-h-11 lg:min-h-10">
             <SelectValue />
           </SelectTrigger>
           <SelectPopover>
@@ -99,7 +107,7 @@ export function ListFilters<T extends string>({
           variant="outline"
           onPress={onReset}
           isDisabled={isResetDisabled}
-          className="h-10 gap-2 px-3 sm:px-4"
+          className="min-h-11 gap-2 px-3 sm:px-4 lg:min-h-10"
           aria-label={resetLabel}
         >
           <RotateCcw aria-hidden className="size-4" />

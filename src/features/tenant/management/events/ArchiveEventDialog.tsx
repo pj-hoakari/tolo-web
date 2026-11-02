@@ -51,7 +51,7 @@ export function ArchiveEventDialog({ event, onArchived, actionsLabel }: Props) {
         <Button
           variant="ghost"
           size="icon"
-          className="size-10"
+          className="size-11 lg:size-10"
           aria-label={actionsLabel}
         >
           <Ellipsis aria-hidden className="size-4" />
@@ -75,6 +75,7 @@ export function ArchiveEventDialog({ event, onArchived, actionsLabel }: Props) {
         isOpen={isOpen}
         onOpenChange={setIsOpen}
         isDismissable={!submitting}
+        isKeyboardDismissDisabled={submitting}
       >
         <DialogContent role="alertdialog" closeButton={false}>
           {({ close }) => (

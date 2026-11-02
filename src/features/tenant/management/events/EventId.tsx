@@ -31,7 +31,7 @@ export function EventId({ id, name }: { id: string; name: string }) {
         <Button
           variant="ghost"
           size="icon"
-          className="size-9 shrink-0 md:size-6"
+          className="size-11 shrink-0 lg:size-6"
           aria-label={t("copyId", { name })}
           onPress={copy}
           isDisabled={status === "copying"}
