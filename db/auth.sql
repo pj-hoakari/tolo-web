@@ -24,7 +24,11 @@ create index if not exists "verification_identifier_idx" on "verification" ("ide
 
 create index if not exists "eventAccessToken_sessionId_idx" on "eventAccessToken" ("sessionId");
 
-create table if not exists "pendingConnectionAuthorization" ("id" text not null primary key, "stateHash" text not null unique, "codeVerifier" text not null, "nonce" text not null, "tenantId" text not null, "eventId" text not null, "pageEdgeDeviceId" text not null, "cameraIds" text not null, "staffSub" text not null, "returnPath" text not null, "redirectUri" text not null, "expiresAt" timestamptz not null);
+create table if not exists "pendingConnectionAuthorization" ("id" text not null primary key, "stateHash" text not null unique, "codeVerifier" text not null, "nonce" text not null, "tenantId" text not null, "eventId" text not null, "pageEdgeDeviceId" text not null, "cameraIds" text not null, "staffSub" text not null, "returnPath" text not null, "redirectUri" text not null, "generation" integer not null default 0, "expiresAt" timestamptz not null);
+
+alter table "pendingConnectionAuthorization" add column if not exists "generation" integer not null default 0;
+
+create table if not exists "connectionDelegationState" ("id" text not null primary key, "connectionKey" text not null unique, "generation" integer not null, "deletedAt" timestamptz, "updatedAt" timestamptz not null);
 
 create table if not exists "connectionAuthorization" ("id" text not null primary key, "connectionKey" text not null unique, "tenantId" text not null, "eventId" text not null, "pageEdgeDeviceId" text not null, "cameraIds" text not null, "staffSub" text not null, "accessToken" text not null, "refreshToken" text not null, "idToken" text, "accessTokenExpiresAt" timestamptz not null, "createdAt" timestamptz not null, "expiresAt" timestamptz not null);
 

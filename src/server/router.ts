@@ -79,6 +79,7 @@ import {
   deleteConnectionDelegationsForCamera,
   deleteConnectionDelegationsForEvent,
   deleteConnectionDelegationsForPage,
+  withCameraConnectionAuthorization,
 } from "./auth/connection";
 import { forgetInvitation, pendingInvitationToken } from "./auth/invitation";
 import {
@@ -1057,36 +1058,38 @@ export const router = {
             pageEdgeDeviceId: input.pageEdgeDeviceId,
           });
           delegatedCamera(devices, input.pageEdgeDeviceId, input.cameraEdgeId);
-          const accessToken = await connectionEventAccess(
+          return await withCameraConnectionAuthorization(
             tenantId,
             input.eventId,
             input.pageEdgeDeviceId,
             input.cameraEdgeId,
+            async (accessToken) => {
+              const context = {
+                contextValues: createContextValues()
+                  .set(eventIdKey, input.eventId)
+                  .set(tenantIdKey, tenantId)
+                  .set(pageEdgeDeviceIdKey, input.pageEdgeDeviceId)
+                  .set(connectionAccessTokenKey, accessToken),
+              };
+              const res = await connectionSignalingClient.requestConnection(
+                { edgeDeviceId: input.cameraEdgeId },
+                context,
+              );
+              const token = await requestBoundCameraToken(
+                input.eventId,
+                tenantId,
+                input.pageEdgeDeviceId,
+                input.cameraEdgeId,
+                res.sessionId,
+                accessToken,
+              );
+              return {
+                sessionId: res.sessionId,
+                firestoreToken: token.customToken,
+                expiresAt: token.expiresAt,
+              };
+            },
           );
-          const context = {
-            contextValues: createContextValues()
-              .set(eventIdKey, input.eventId)
-              .set(tenantIdKey, tenantId)
-              .set(pageEdgeDeviceIdKey, input.pageEdgeDeviceId)
-              .set(connectionAccessTokenKey, accessToken),
-          };
-          const res = await connectionSignalingClient.requestConnection(
-            { edgeDeviceId: input.cameraEdgeId },
-            context,
-          );
-          const token = await requestBoundCameraToken(
-            input.eventId,
-            tenantId,
-            input.pageEdgeDeviceId,
-            input.cameraEdgeId,
-            res.sessionId,
-            accessToken,
-          );
-          return {
-            sessionId: res.sessionId,
-            firestoreToken: token.customToken,
-            expiresAt: token.expiresAt,
-          };
         } catch (err) {
           throw toORPCError(err);
         }

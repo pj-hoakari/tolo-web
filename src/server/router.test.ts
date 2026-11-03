@@ -51,6 +51,7 @@ import {
   connectionEventAccess,
   deleteConnectionDelegationsForCamera,
   deleteConnectionDelegationsForEvent,
+  withCameraConnectionAuthorization,
 } from "./auth/connection";
 import { forgetInvitation, pendingInvitationToken } from "./auth/invitation";
 import { graphAuthoringClient } from "./graphAuthoring";
@@ -122,6 +123,7 @@ vi.mock("./auth/connection", () => ({
   deleteConnectionDelegationsForCamera: vi.fn(),
   deleteConnectionDelegationsForEvent: vi.fn(),
   deleteConnectionDelegationsForPage: vi.fn(),
+  withCameraConnectionAuthorization: vi.fn(),
 }));
 vi.mock("./auth/invitation", () => ({
   forgetInvitation: vi.fn(),
@@ -1732,6 +1734,10 @@ describe("signaling.requestCameraConnection", () => {
   const stubs = (devices = [protoPageWithCamera, protoCamera]) => {
     vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
     vi.mocked(connectionEventAccess).mockResolvedValue("connection-token");
+    vi.mocked(withCameraConnectionAuthorization).mockImplementation(
+      async (_tenantId, _eventId, _pageEdgeDeviceId, _cameraEdgeId, task) =>
+        task("connection-token"),
+    );
     const list = vi
       .spyOn(consoleEdgeDeviceClient, "listEdgeDevices")
       .mockResolvedValue(create(ListEdgeDevicesResponseSchema, { devices }));
@@ -1770,11 +1776,12 @@ describe("signaling.requestCameraConnection", () => {
       "firestoreToken",
       "sessionId",
     ]);
-    expect(connectionEventAccess).toHaveBeenCalledWith(
+    expect(withCameraConnectionAuthorization).toHaveBeenCalledWith(
       "0123456789abcdef",
       eventId,
       protoDevice.edgeDeviceId,
       protoCamera.edgeDeviceId,
+      expect.any(Function),
     );
     expect(request).toHaveBeenCalledWith(
       { edgeDeviceId: protoCamera.edgeDeviceId },
@@ -1791,7 +1798,7 @@ describe("signaling.requestCameraConnection", () => {
 
   it("rejects a camera without a stored connection delegation before calling Edge Bridge", async () => {
     const { request, issue } = stubs();
-    vi.mocked(connectionEventAccess).mockRejectedValue(
+    vi.mocked(withCameraConnectionAuthorization).mockRejectedValue(
       new ORPCError("PRECONDITION_FAILED", {
         data: { code: "CONNECTION_AUTHORIZATION_REQUIRED" },
       }),

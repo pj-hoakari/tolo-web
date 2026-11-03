@@ -104,7 +104,16 @@ const toloSession = {
         staffSub: { type: "string", required: true },
         returnPath: { type: "string", required: true },
         redirectUri: { type: "string", required: true },
+        generation: { type: "number", required: true },
         expiresAt: { type: "date", required: true },
+      },
+    },
+    connectionDelegationState: {
+      fields: {
+        connectionKey: { type: "string", required: true, unique: true },
+        generation: { type: "number", required: true },
+        deletedAt: { type: "date", required: false },
+        updatedAt: { type: "date", required: true },
       },
     },
     connectionAuthorization: {

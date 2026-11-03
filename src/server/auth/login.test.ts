@@ -180,6 +180,38 @@ async function createTestAuth(
 
 type TestAuth = Awaited<ReturnType<typeof createTestAuth>>;
 
+async function createMachineSession(
+  testAuth: TestAuth,
+  { sub = "user-1", tenantId = TENANT } = {},
+) {
+  const ctx = await testAuth.auth.$context;
+  const email = `${sub}@tolo-idp.local`;
+  const existing = await ctx.internalAdapter.findUserByEmail(email);
+  const user =
+    existing?.user ??
+    (await ctx.test.saveUser(ctx.test.createUser({ email, name: sub })));
+  const machine = await ctx.test.login({
+    userId: user.id,
+    session: {
+      tenantId,
+      kind: "machine",
+      eventId: "fedcba9876543210",
+      edgeDeviceId: "1111111111111111",
+    },
+  });
+  await ctx.adapter.create({
+    model: "tenantAccessToken",
+    data: {
+      sessionId: machine.session.id,
+      subject: sub,
+      accessToken: "machine-tenant",
+      refreshToken: "machine-refresh",
+      accessTokenExpiresAt: new Date(Date.now() + 60_000),
+    },
+  });
+  return machine;
+}
+
 function onHost(url: string, host: string, cookie: string) {
   return new Request(url, { headers: { host, cookie } });
 }
@@ -707,6 +739,69 @@ describe("login handoff", () => {
       status: 302,
       page: "https://tolo.test/auth/error",
     });
+  });
+});
+
+describe("machine session protection", () => {
+  it("refuses to start a staff login when the host has a machine session", async () => {
+    idp();
+    const testAuth = await createTestAuth();
+    const machine = await createMachineSession(testAuth);
+    const cookie = machine.headers.get("cookie") ?? "";
+
+    const started = await testAuth.flow.start(
+      onHost(
+        `https://${HOST}/auth/login?return=${encodeURIComponent("/management")}`,
+        HOST,
+        cookie,
+      ),
+      TENANT,
+    );
+
+    expect(loginErrorPage(started)).toEqual({
+      status: 302,
+      page: "https://tolo.test/auth/error",
+      host: HOST,
+      error: "machine_session_forbidden",
+    });
+    const ctx = await testAuth.auth.$context;
+    expect(await ctx.adapter.findMany({ model: "pendingLogin" })).toEqual([]);
+    await expect(
+      testAuth.sessionAuth.viewer(new Headers({ cookie }), TENANT),
+    ).resolves.toMatchObject({ type: "machine" });
+  });
+
+  it("refuses a staff handoff that was started before the host became a machine session", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const login = await logInUntilHandoff(testAuth, provider);
+    const machine = await createMachineSession(testAuth);
+    for (const cookie of machine.cookies) {
+      login.tenantJar.cookies.set(cookie.name, cookie.value);
+    }
+
+    const handedOff = await handOff(
+      testAuth,
+      login.handoffUrl,
+      login.tenantJar,
+    );
+
+    expect(loginErrorPage(handedOff)).toEqual({
+      status: 302,
+      page: "https://tolo.test/auth/error",
+      host: HOST,
+      error: "machine_session_forbidden",
+    });
+    const ctx = await testAuth.auth.$context;
+    const sessions = await ctx.adapter.findMany<{ kind: string }>({
+      model: "session",
+    });
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0]).toMatchObject({ kind: "machine" });
+    expect(await ctx.adapter.findMany({ model: "pendingLogin" })).toEqual([]);
+    await expect(
+      testAuth.sessionAuth.viewer(sessionHeaders(login.tenantJar), TENANT),
+    ).resolves.toMatchObject({ type: "machine" });
   });
 });
 
