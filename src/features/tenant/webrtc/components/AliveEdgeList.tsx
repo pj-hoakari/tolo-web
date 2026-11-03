@@ -7,6 +7,7 @@ import type { ConnectionStatus, EdgeDeviceItem } from "../type";
 import {
   type CameraConnectionNotice,
   cameraConnectionPath,
+  machineSessionPath,
   pageForCamera,
 } from "../utils/cameraConnection";
 import { isActiveConnection } from "../utils/connectionStatus";
@@ -206,6 +207,23 @@ export function AliveEdgeList({
                       aria-label={t("authorizeConnectionLabel", { name })}
                     >
                       {t("authorizeConnection")}
+                    </Link>
+                  )}
+                  {!isCamera && (
+                    <Link
+                      href={machineSessionPath({
+                        eventId,
+                        pageEdgeDeviceId: edge.edgeDeviceId,
+                        returnPath: observationDevicePath(
+                          eventId,
+                          edge.edgeDeviceId,
+                        ),
+                      })}
+                      variant="outline"
+                      size="sm"
+                      aria-label={t("useAsMachineLabel", { name })}
+                    >
+                      {t("useAsMachine")}
                     </Link>
                   )}
                   {isCamera && (

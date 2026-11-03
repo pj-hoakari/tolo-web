@@ -9,7 +9,7 @@ import {
   ConnectError,
   createContextValues,
 } from "@connectrpc/connect";
-import { ORPCError, os } from "@orpc/server";
+import { os as baseOs, ORPCError } from "@orpc/server";
 import type { SignalingService } from "@pj-hoakari/tolo-edge-bridge-client-es/tolo/edgebridge/v1/signaling_pb";
 import {
   ElementKind,
@@ -67,7 +67,12 @@ import {
   registeredEdgeDeviceWire,
   sampleObservationDevicesWire,
 } from "@/mocks/fixtures/edges";
-import { afterJoinPath, getRegistrationToken, requestTenantId } from "./auth";
+import {
+  afterJoinPath,
+  getRegistrationToken,
+  getViewer,
+  requestTenantId,
+} from "./auth";
 import {
   addCameraToConnectionDelegation,
   connectionEventAccess,
@@ -99,6 +104,7 @@ import {
   consoleObservationSettingsClient,
   edgeEdgeDeviceClient,
   edgeMeasurementIngestClient,
+  listEdgeDevicesWithAccessToken,
 } from "./observation";
 import {
   connectionSignalingClient,
@@ -114,6 +120,18 @@ import {
 
 const publicId = z.string().regex(/^[0-9a-f]{16}$/);
 const displayName = z.string().trim().min(1).max(64);
+
+const MACHINE_ALLOWED_PROCEDURES = new WeakSet<object>();
+
+const os = baseOs.use(async ({ procedure, next }) => {
+  const viewer = await getViewer();
+  if (viewer.type === "machine" && !MACHINE_ALLOWED_PROCEDURES.has(procedure)) {
+    throw new ORPCError("FORBIDDEN", {
+      message: "this procedure is not available to observation page machines",
+    });
+  }
+  return next();
+});
 
 const edgeDeviceInput = z.object({
   eventId: z.string().min(1),
@@ -199,6 +217,10 @@ export interface EdgeDevice {
 export interface RegisteredEdgeDevice {
   device: EdgeDevice;
   observationPagePath: string;
+}
+
+export interface DelegatedCamera extends EdgeDevice {
+  observationPointId: string;
 }
 
 export type { CameraProvisioningDefaults };
@@ -548,6 +570,62 @@ async function observationDevices(eventId: string): Promise<EdgeDevice[]> {
   return observationMocking()
     ? sampleObservationDevicesWire
     : listEdgeDevices(eventId);
+}
+
+function pageCameras(
+  devices: EdgeDevice[],
+  pageEdgeDeviceId: string,
+): { page: EdgeDevice; cameras: EdgeDevice[] } {
+  const page = devices.find((d) => d.edgeDeviceId === pageEdgeDeviceId);
+  if (!page) throw new ORPCError("NOT_FOUND");
+  if (page.kind !== "observation_page") {
+    throw new ORPCError("PRECONDITION_FAILED");
+  }
+  const cameraIds = new Set(
+    page.cameraLinks.map((link) => link.cameraEdgeDeviceId),
+  );
+  return {
+    page,
+    cameras: devices.filter(
+      (device) =>
+        device.kind === "camera" && cameraIds.has(device.edgeDeviceId),
+    ),
+  };
+}
+
+async function pageDevicesForViewer({
+  viewer,
+  tenantId,
+  eventId,
+  pageEdgeDeviceId,
+}: {
+  viewer:
+    | { type: "anonymous" }
+    | { type: "staff"; userId: string; tenantId: string }
+    | {
+        type: "machine";
+        userId: string;
+        tenantId: string;
+        eventId: string;
+        edgeDeviceId: string;
+      };
+  tenantId: string;
+  eventId: string;
+  pageEdgeDeviceId: string;
+}): Promise<EdgeDevice[]> {
+  if (viewer.type === "anonymous") throw new ORPCError("UNAUTHORIZED");
+  if (viewer.type === "staff") return observationDevices(eventId);
+  if (viewer.eventId !== eventId || viewer.edgeDeviceId !== pageEdgeDeviceId) {
+    throw new ORPCError("FORBIDDEN");
+  }
+  if (observationMocking()) return sampleObservationDevicesWire;
+  const accessToken = await connectionEventAccess(
+    tenantId,
+    eventId,
+    pageEdgeDeviceId,
+  );
+  const response = await listEdgeDevicesWithAccessToken(eventId, accessToken);
+  return response.devices.map(toEdgeDevice);
 }
 
 function delegatedCamera(
@@ -970,10 +1048,15 @@ export const router = {
       .input(cameraConnectionInput)
       .handler(async ({ input }): Promise<CameraConnection> => {
         try {
-          const devices = await observationDevices(input.eventId);
-          delegatedCamera(devices, input.pageEdgeDeviceId, input.cameraEdgeId);
           const tenantId = await requestTenantId();
           if (!tenantId) throw new ORPCError("UNAUTHORIZED");
+          const devices = await pageDevicesForViewer({
+            viewer: await getViewer(),
+            tenantId,
+            eventId: input.eventId,
+            pageEdgeDeviceId: input.pageEdgeDeviceId,
+          });
+          delegatedCamera(devices, input.pageEdgeDeviceId, input.cameraEdgeId);
           const accessToken = await connectionEventAccess(
             tenantId,
             input.eventId,
@@ -1020,6 +1103,44 @@ export const router = {
       ),
   },
   camera: {
+    listDelegatedCameras: os
+      .input(
+        z.object({
+          eventId: z.string().min(1),
+          pageEdgeDeviceId: publicId,
+        }),
+      )
+      .handler(async ({ input }): Promise<{ cameras: DelegatedCamera[] }> => {
+        try {
+          const tenantId = await requestTenantId();
+          if (!tenantId) throw new ORPCError("UNAUTHORIZED");
+          const devices = await pageDevicesForViewer({
+            viewer: await getViewer(),
+            tenantId,
+            eventId: input.eventId,
+            pageEdgeDeviceId: input.pageEdgeDeviceId,
+          });
+          const { page, cameras } = pageCameras(
+            devices,
+            input.pageEdgeDeviceId,
+          );
+          const observationPointByCamera = new Map(
+            page.cameraLinks.map((link) => [
+              link.cameraEdgeDeviceId,
+              link.observationPointId,
+            ]),
+          );
+          return {
+            cameras: cameras.map((camera) => ({
+              ...camera,
+              observationPointId:
+                observationPointByCamera.get(camera.edgeDeviceId) ?? "",
+            })),
+          };
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
     approveDeviceAuthorization: os
       .input(
         z.object({
@@ -1243,8 +1364,8 @@ export const router = {
           measurements: z.array(
             z.object({
               observationPointId: publicId,
-              windowStart: z.date(),
-              windowEnd: z.date(),
+              windowStart: z.coerce.date(),
+              windowEnd: z.coerce.date(),
               countIn: z.number().int().nonnegative(),
               countOut: z.number().int().nonnegative(),
               meanDetectedPeople: z.number().nonnegative().finite().optional(),
@@ -1273,3 +1394,14 @@ export const router = {
       }),
   },
 };
+
+for (const procedure of [
+  router.observation.heartbeat,
+  router.observation.reportMeasurements,
+  router.observation.listObservationPoints,
+  router.camera.listDelegatedCameras,
+  router.signaling.requestCameraConnection,
+  router.signaling.issueEdgeFirestoreToken,
+]) {
+  MACHINE_ALLOWED_PROCEDURES.add(procedure);
+}

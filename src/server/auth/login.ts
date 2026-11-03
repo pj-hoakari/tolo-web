@@ -403,8 +403,10 @@ export function createLoginFlow({ auth, env }: RealAuth) {
       });
       const { idToken } = response;
       const loggedOut = `${rootOrigin()}/auth/logged-out`;
-      const target = new URL(idToken ? await endSessionEndpoint() : loggedOut);
-      if (idToken) {
+      const target = new URL(
+        idToken ? await endSessionEndpoint().catch(() => loggedOut) : loggedOut,
+      );
+      if (idToken && target.href !== loggedOut) {
         target.searchParams.set("id_token_hint", idToken);
         target.searchParams.set("post_logout_redirect_uri", loggedOut);
       }

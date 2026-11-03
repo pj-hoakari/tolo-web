@@ -2,10 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { orpc } from "@/lib/orpc";
-import {
-  type ObservationCamera,
-  selectObservationCameras,
-} from "../utils/cameraSources";
+import type { ObservationCamera } from "../utils/cameraSources";
 
 export type ObservationPageCamerasStatus = "loading" | "ready" | "error";
 
@@ -17,8 +14,8 @@ export type UseObservationPageCamerasResult = {
 };
 
 /**
- * 観測ページ自身の edge 端末を ListEdgeDevices から引き、cameraLinks に
- * 含まれるカメラを返す。ページが見つからない・種別が違う場合は error。
+ * 観測ページ自身に委任されたカメラだけを BFF の listDelegatedCameras から
+ * 引き、このページが接続してよいカメラを返す。
  */
 export function useObservationPageCameras({
   eventId,
@@ -39,26 +36,23 @@ export function useObservationPageCameras({
     setStatus("loading");
     setError(null);
 
-    orpc.observation
-      .listEdgeDevices({ eventId })
-      .then(({ devices }) => {
+    orpc.camera
+      .listDelegatedCameras({ eventId, pageEdgeDeviceId })
+      .then(({ cameras: delegated }) => {
         if (cancelled) {
           return;
         }
-        const selection = selectObservationCameras(
-          devices,
-          pageEdgeDeviceId,
-          requestedCameraId,
+        const next = delegated.map((camera) => ({
+          edgeDeviceId: camera.edgeDeviceId,
+          name: camera.name,
+          observationPointId: camera.observationPointId,
+        }));
+        setCameras(next);
+        setInitialCameraId(
+          next.some((camera) => camera.edgeDeviceId === requestedCameraId)
+            ? (requestedCameraId ?? null)
+            : (next[0]?.edgeDeviceId ?? null),
         );
-        if (!selection.page) {
-          setCameras([]);
-          setInitialCameraId(null);
-          setError("observation page was not found in this event");
-          setStatus("error");
-          return;
-        }
-        setCameras(selection.cameras);
-        setInitialCameraId(selection.initialCameraId);
         setStatus("ready");
       })
       .catch((cause: unknown) => {

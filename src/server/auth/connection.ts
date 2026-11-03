@@ -562,6 +562,28 @@ export function createConnectionAuth(
       return finish("authorized");
     },
 
+    async hasAuthorization({
+      tenantId,
+      eventId,
+      pageEdgeDeviceId,
+    }: {
+      tenantId: string;
+      eventId: string;
+      pageEdgeDeviceId: string;
+    }): Promise<boolean> {
+      const store = await adapter();
+      const authorization = await store.findOne<ConnectionAuthorization>({
+        model: CONNECTION_AUTHORIZATION,
+        where: [
+          {
+            field: "connectionKey",
+            value: connectionKey(tenantId, eventId, pageEdgeDeviceId),
+          },
+        ],
+      });
+      return !!authorization && authorization.expiresAt > new Date();
+    },
+
     /**
      * 委任の保存済み tenant_access を必要なら Refresh し、events.read の
      * event_access へ交換して返す。ブラウザへは返さない。
