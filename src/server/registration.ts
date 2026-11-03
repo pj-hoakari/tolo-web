@@ -76,7 +76,12 @@ export async function completeOnboarding(request: Request): Promise<Response> {
     );
   } catch (err) {
     console.error("failed to claim the tenant ownership", err);
-    return redirect(headers, `/onboarding?error=${onboardingError(err)}`);
+    const error = onboardingError(err);
+    if (error === "failed") {
+      await onboardingStore().forget(pending.id);
+      headers.append("set-cookie", cookie(ONBOARDING_COOKIE, "", 0));
+    }
+    return redirect(headers, `/onboarding?error=${error}`);
   }
   await onboardingStore().forget(pending.id);
   headers.append("set-cookie", cookie(ONBOARDING_COOKIE, "", 0));

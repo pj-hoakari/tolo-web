@@ -69,11 +69,11 @@ Better Auth の `baseURL` はルートドメインの origin です。`ROOT_DOMA
 1. ルートドメインの `/onboarding` で送信すると、`web` は StartTenantRegistration で仮テナントを作ります。仮テナントの公開 ID、所有権取得トークン、入力を `tenantRegistration` の行に置き、行をそのブラウザに結び付ける値を Cookie（`__Host-tolo.onboarding`）に置きます。Cookie と行の期限は、所有権取得トークンの期限と同じです。
 2. `/onboarding/start` が仮テナントを `resource` にした `registration` トークンの認可を始めます。tolo-idp のログイン画面でアカウントを作ります。
 3. ルートドメインの `/onboarding/claim` が引き渡しコードで `registration` トークンを受け取り、ClaimTenantOwnership を呼びます。所有権を取得できたら行と Cookie を消し、確定したサブドメイン名のテナントのホストの `/auth/login?return=/management` へ移ります。tolo-idp のログイン状態が残っていれば、入力なしで管理ページに着きます。
-4. サブドメイン名の重複などで所有権を取得できないときは、行を残したまま理由を付けて `/onboarding` へ戻ります。フォームには前の入力が入っています。送り直すと、`web` は仮テナントを作り直さず、行のサブドメイン名と表示名だけを書き換えて、2 から進みます。テナント名は変えられません。
+4. サブドメイン名の重複などで所有権を取得できないときは、行を残したまま理由を付けて `/onboarding` へ戻ります。フォームには前の入力が入っています。送り直すと、`web` は仮テナントを作り直さず、行のサブドメイン名と表示名だけを書き換えて、2 から進みます。テナント名は変えられません。ほかの理由で取得できないときは、行と Cookie を消して `/onboarding` へ戻ります。次の送信では仮テナントを作り直します。
 
 招待の受諾は次の順に進みます。
 
-1. 招待先のテナントのホストで参加のボタンを押すと、`/auth/join` へ移ります。ここからルートドメインの `/auth/begin` までは、ログインの 1 と同じです。
+1. 招待先のテナントのホストで参加のボタンを押すと、`/auth/join` へ移ります。招待トークンの Cookie がなければ、`/auth/join` は `/invitation/accept` へ戻します。ここからルートドメインの `/auth/begin` までは、ログインの 1 と同じです。
 2. 招待先のテナントを `resource` にした `registration` トークンの認可へ進み、tolo-idp のログイン画面でアカウントを作るか、作成済みのアカウントでログインします。
 3. テナントのホストの `/invitation/handoff` は、ログインの 4 と同じ条件のときだけ `registration` トークンを受け取ります。Cookie の招待トークンで AcceptTenantInvitation を呼び、受諾できたら招待トークンの Cookie を消して `/auth/login?return=/management` へ移ります。受諾できないときは、理由を付けて `/invitation/accept` へ戻ります。
 

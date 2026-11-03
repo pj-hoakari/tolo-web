@@ -97,10 +97,27 @@ describe("completing the onboarding on the root domain", () => {
     });
   });
 
+  it("forgets the provisional tenant on any other failure, so that the next submission starts a new one", async () => {
+    handOver({ tenantId: TENANT, token: "registration-token" });
+    const store = keep(pending);
+    vi.mocked(tenantRegistrationClient.claimTenantOwnership).mockRejectedValue(
+      new ConnectError("refused", Code.PermissionDenied),
+    );
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const response = await completeOnboarding(claimRequest());
+
+    expect(store.forget).toHaveBeenCalledWith("registration-1");
+    expect(redirected(response)).toEqual({
+      status: 302,
+      location: "/onboarding?error=failed",
+      cookies: ["__Host-tolo.login.l1=", "__Host-tolo.onboarding="],
+    });
+  });
+
   it.each([
     ["a taken subdomain", Code.AlreadyExists, "subdomainTaken"],
     ["an invalid subdomain or display name", Code.InvalidArgument, "invalid"],
-    ["any other failure", Code.Unavailable, "failed"],
   ])(
     "keeps the provisional tenant on %s and sends the owner back to the form to retry the claim",
     async (_, code, error) => {
