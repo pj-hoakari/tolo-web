@@ -379,6 +379,7 @@
         "writing": "Writing the settings…",
         "waitingConfig": "Waiting for the device to confirm the settings…",
         "waitingAuthorization": "Waiting for the device authorization code…",
+        "reconnecting": "Reconnecting to the device…",
         "approving": "Approving the device authorization…",
         "waitingResult": "Waiting for the device authorization result…"
       },
@@ -396,7 +397,11 @@
       "authorizationTimeout": "Timed out while waiting for the authorization result.",
       "timeout": "The device did not respond. Check the connection and retry.",
       "failed": "Provisioning failed. Check the connection and retry.",
-      "notConnected": "The serial port is not open. Start again."
+      "notConnected": "The serial port is not open. Start again.",
+      "reconnectTitle": "The serial port was disconnected",
+      "reconnectDescription": "The device may have restarted. Select the port again to reconnect.",
+      "reconnectFailed": "Could not open the serial port. Select the port again.",
+      "reconnectPort": "Reconnect port"
     }
   },
   "Detection": {

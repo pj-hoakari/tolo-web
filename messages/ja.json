@@ -379,6 +379,7 @@
         "writing": "設定を書き込んでいます…",
         "waitingConfig": "端末の確認応答を待っています…",
         "waitingAuthorization": "端末の認可コードを待っています…",
+        "reconnecting": "端末の再接続を待っています…",
         "approving": "デバイス認可を承認しています…",
         "waitingResult": "端末の認可結果を待っています…"
       },
@@ -396,7 +397,11 @@
       "authorizationTimeout": "認可結果を待つ間にタイムアウトしました。",
       "timeout": "端末から応答がありませんでした。接続を確認して再試行してください。",
       "failed": "初期設定に失敗しました。接続を確認して再試行してください。",
-      "notConnected": "シリアルポートが開かれていません。最初からやり直してください。"
+      "notConnected": "シリアルポートが開かれていません。最初からやり直してください。",
+      "reconnectTitle": "シリアルポートが切断されました",
+      "reconnectDescription": "端末が再起動した可能性があります。ポートを選択し直して再接続してください。",
+      "reconnectFailed": "シリアルポートを開けませんでした。もう一度ポートを選択してください。",
+      "reconnectPort": "ポートを再接続"
     }
   },
   "Detection": {

@@ -28,6 +28,7 @@ import {
 import {
   detectWebSerialAvailability,
   type SerialAvailability,
+  SerialPortClosedError,
   type SerialTransport,
   WebSerialTransport,
 } from "../provisioning/transport";
@@ -38,6 +39,7 @@ type ProvisioningStep =
   | "writing"
   | "waitingConfig"
   | "waitingAuthorization"
+  | "reconnecting"
   | "approving"
   | "waitingResult";
 
@@ -50,10 +52,16 @@ type ProvisioningState =
       verificationUri?: string;
     }
   | { kind: "manual" }
+  | { kind: "reconnect"; message?: string }
   | { kind: "complete"; userCode: string }
   | { kind: "failed"; message: string; userCode?: string };
 
 const DEFAULT_TIMEOUT_MS = 60_000;
+const RECONNECT_DELAY_MS = 500;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 class DeviceReportedError extends Error {
   constructor(message: string) {
@@ -150,6 +158,45 @@ export function CameraProvisioningDialog({
       return t("deviceError", { error: redact(error.message) });
     }
     return t("failed");
+  }
+
+  async function waitForAuthorizationCode(
+    runId: number,
+    channel: SerialMessageChannel,
+    { autoReconnect }: { autoReconnect: boolean },
+  ): Promise<DeviceAuthorizationMessage | null> {
+    try {
+      return await waitForMessage(channel, "device_authorization", timeoutMs);
+    } catch (error) {
+      if (runId !== runIdRef.current) return null;
+      if (error instanceof ProvisioningTimeoutError) {
+        setState({ kind: "manual" });
+        return null;
+      }
+      if (!(error instanceof SerialPortClosedError)) throw error;
+    }
+
+    if (!autoReconnect) {
+      setState({ kind: "reconnect" });
+      return null;
+    }
+
+    setState({ kind: "running", step: "reconnecting" });
+    await delay(RECONNECT_DELAY_MS);
+    if (runId !== runIdRef.current) return null;
+
+    try {
+      await transport.reopen({ baudRate: PROVISIONING_BAUD_RATE });
+    } catch {
+      if (runId !== runIdRef.current) return null;
+      setState({ kind: "reconnect" });
+      return null;
+    }
+    if (runId !== runIdRef.current) return null;
+
+    channel.restart();
+    setState({ kind: "running", step: "waitingAuthorization" });
+    return waitForAuthorizationCode(runId, channel, { autoReconnect: false });
   }
 
   async function approveAndWait(
@@ -251,20 +298,11 @@ export function CameraProvisioningDialog({
       }
 
       setState({ kind: "running", step: "waitingAuthorization" });
-      let authorization: DeviceAuthorizationMessage;
-      try {
-        authorization = await waitForMessage(
-          channel,
-          "device_authorization",
-          timeoutMs,
-        );
-      } catch (error) {
-        if (error instanceof ProvisioningTimeoutError) {
-          if (runId === runIdRef.current) setState({ kind: "manual" });
-          return;
-        }
-        throw error;
-      }
+      const authorization = await waitForAuthorizationCode(runId, channel, {
+        autoReconnect: true,
+      });
+      if (runId !== runIdRef.current) return;
+      if (!authorization) return;
 
       await approveAndWait(
         runId,
@@ -302,6 +340,48 @@ export function CameraProvisioningDialog({
         return;
       }
       setState({ kind: "failed", message: messageForError(error), userCode });
+    }
+  }
+
+  async function handleReconnectPort() {
+    const channel = channelRef.current;
+    if (!channel) {
+      setState({ kind: "failed", message: t("notConnected") });
+      return;
+    }
+    const runId = runIdRef.current;
+    try {
+      setState({ kind: "running", step: "selecting" });
+      await transport.selectPort();
+      if (runId !== runIdRef.current) return;
+      setState({ kind: "running", step: "opening" });
+      await transport.open({ baudRate: PROVISIONING_BAUD_RATE });
+    } catch (error) {
+      if (runId !== runIdRef.current) return;
+      if (error instanceof ProvisioningStoppedError) return;
+      setState({ kind: "reconnect", message: t("reconnectFailed") });
+      return;
+    }
+    if (runId !== runIdRef.current) return;
+
+    channel.restart();
+    setState({ kind: "running", step: "waitingAuthorization" });
+    try {
+      const authorization = await waitForAuthorizationCode(runId, channel, {
+        autoReconnect: true,
+      });
+      if (runId !== runIdRef.current) return;
+      if (!authorization) return;
+      await approveAndWait(
+        runId,
+        channel,
+        authorization.user_code,
+        authorization.verification_uri,
+      );
+    } catch (error) {
+      if (runId !== runIdRef.current) return;
+      if (error instanceof ProvisioningStoppedError) return;
+      setState({ kind: "failed", message: messageForError(error) });
     }
   }
 
@@ -424,6 +504,20 @@ export function CameraProvisioningDialog({
                       </div>
                     )}
 
+                    {state.kind === "reconnect" && (
+                      <div
+                        role="alert"
+                        className="flex flex-col gap-2 rounded-md border p-3"
+                      >
+                        <p className="text-sm font-medium">
+                          {t("reconnectTitle")}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {state.message ?? t("reconnectDescription")}
+                        </p>
+                      </div>
+                    )}
+
                     {state.kind === "complete" && (
                       <p role="status" className="text-sm">
                         {t("complete", {
@@ -457,6 +551,11 @@ export function CameraProvisioningDialog({
                     isDisabled={!manualCode.trim()}
                   >
                     {t("manualSubmit")}
+                  </Button>
+                )}
+                {state.kind === "reconnect" && (
+                  <Button onPress={handleReconnectPort}>
+                    {t("reconnectPort")}
                   </Button>
                 )}
                 {state.kind === "failed" && (

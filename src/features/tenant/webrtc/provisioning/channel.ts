@@ -26,11 +26,20 @@ export class SerialMessageChannel {
   private readonly waiters = new Set<Waiter>();
   private stopped = false;
   private failure: Error | null = null;
+  private generation = 0;
 
   constructor(private readonly transport: SerialTransport) {}
 
   start(): void {
-    void this.readLoop();
+    this.stopped = false;
+    this.failure = null;
+    this.beginRead();
+  }
+
+  restart(): void {
+    this.stopped = false;
+    this.failure = null;
+    this.beginRead();
   }
 
   next(timeoutMs: number): Promise<DeviceMessage> {
@@ -54,16 +63,22 @@ export class SerialMessageChannel {
 
   stop(): void {
     this.stopped = true;
+    this.generation += 1;
     this.rejectWaiters(new ProvisioningStoppedError());
   }
 
-  private async readLoop(): Promise<void> {
-    while (!this.stopped) {
+  private beginRead(): void {
+    const generation = ++this.generation;
+    void this.readLoop(generation);
+  }
+
+  private async readLoop(generation: number): Promise<void> {
+    while (!this.stopped && generation === this.generation) {
       let line: string;
       try {
         line = await this.transport.readLine();
       } catch (error) {
-        if (!this.stopped) {
+        if (!this.stopped && generation === this.generation) {
           this.fail(
             error instanceof Error
               ? error
@@ -72,7 +87,7 @@ export class SerialMessageChannel {
         }
         return;
       }
-      if (this.stopped) return;
+      if (this.stopped || generation !== this.generation) return;
       const message = parseDeviceMessage(line);
       if (message) this.push(message);
     }

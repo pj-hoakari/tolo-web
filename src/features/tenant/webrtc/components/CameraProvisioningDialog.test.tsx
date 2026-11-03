@@ -4,27 +4,55 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createOrpcHandlers } from "@/mocks/handlers";
 import { server } from "@/mocks/server";
 import { IntlTestProvider } from "@/test/IntlTestProvider";
-import type { SerialTransport } from "../provisioning/transport";
+import {
+  SerialPortClosedError,
+  type SerialTransport,
+} from "../provisioning/transport";
 import { CameraProvisioningDialog } from "./CameraProvisioningDialog";
+
+type PendingReader = {
+  resolve: (line: string) => void;
+  reject: (error: Error) => void;
+};
 
 class FakeTransport implements SerialTransport {
   readonly written: string[] = [];
   openedAt: number | null = null;
   selected = false;
+  selectCount = 0;
   closed = false;
+  reopenAttempts = 0;
+  reopenSucceeds = true;
   private readonly queued: string[] = [];
-  private readonly readers: ((line: string) => void)[] = [];
+  private readers: PendingReader[] = [];
+  private openState = false;
+  private portClosed = false;
 
   isAvailable(): boolean {
     return true;
   }
 
+  isOpen(): boolean {
+    return this.openState;
+  }
+
   async selectPort(): Promise<void> {
     this.selected = true;
+    this.selectCount += 1;
   }
 
   async open({ baudRate }: { baudRate: number }): Promise<void> {
     this.openedAt = baudRate;
+    this.openState = true;
+    this.portClosed = false;
+  }
+
+  async reopen({ baudRate }: { baudRate: number }): Promise<void> {
+    this.reopenAttempts += 1;
+    if (!this.reopenSucceeds) throw new SerialPortClosedError();
+    this.openedAt = baudRate;
+    this.openState = true;
+    this.portClosed = false;
   }
 
   async writeLine(line: string): Promise<void> {
@@ -34,22 +62,38 @@ class FakeTransport implements SerialTransport {
   readLine(): Promise<string> {
     const queued = this.queued.shift();
     if (queued !== undefined) return Promise.resolve(queued);
-    return new Promise((resolve) => {
-      this.readers.push(resolve);
+    if (this.portClosed) return Promise.reject(new SerialPortClosedError());
+    return new Promise((resolve, reject) => {
+      this.readers.push({ resolve, reject });
     });
   }
 
   async close(): Promise<void> {
     this.closed = true;
+    this.openState = false;
+    this.portClosed = true;
+    this.rejectReaders(new SerialPortClosedError());
+  }
+
+  closePort(): void {
+    this.openState = false;
+    this.portClosed = true;
+    this.rejectReaders(new SerialPortClosedError());
   }
 
   push(line: string): void {
     const reader = this.readers.shift();
     if (reader) {
-      reader(line);
+      reader.resolve(line);
       return;
     }
     this.queued.push(line);
+  }
+
+  private rejectReaders(error: Error): void {
+    const readers = this.readers;
+    this.readers = [];
+    for (const reader of readers) reader.reject(error);
   }
 }
 
@@ -196,6 +240,162 @@ describe("CameraProvisioningDialog", () => {
     expect(approvals).toEqual([
       { eventId: "e", edgeDeviceId, userCode: "WXYZ-1234" },
     ]);
+  });
+
+  it("reopens the port automatically when the device reboots after the config result", async () => {
+    const transport = new FakeTransport();
+    const approvals = recordApprovals();
+    transport.push(message({ type: "config_result", ok: true }));
+
+    renderDialog(transport);
+    openDialog();
+    fillWifi();
+    start();
+
+    await screen.findByText("端末の認可コードを待っています…");
+    transport.closePort();
+    transport.push(
+      message({
+        type: "device_authorization",
+        user_code: "ABCD-EFGH",
+        verification_uri: "https://idp.example/device",
+        expires_in: 600,
+      }),
+    );
+    transport.push(message({ type: "authorization_result", ok: true }));
+
+    expect(await screen.findByText("端末の再接続を待っています…")).toBeTruthy();
+    expect(
+      await screen.findByText(/初期設定が完了しました/, {}, { timeout: 3_000 }),
+    ).toBeTruthy();
+    expect(transport.reopenAttempts).toBe(1);
+    expect(approvals).toEqual([
+      { eventId: "e", edgeDeviceId, userCode: "ABCD-EFGH" },
+    ]);
+  });
+
+  it("falls back to selecting the port again when the automatic reopen fails", async () => {
+    const transport = new FakeTransport();
+    const approvals = recordApprovals();
+    transport.reopenSucceeds = false;
+    transport.push(message({ type: "config_result", ok: true }));
+
+    renderDialog(transport);
+    openDialog();
+    fillWifi();
+    start();
+
+    await screen.findByText("端末の認可コードを待っています…");
+    transport.closePort();
+    transport.push(
+      message({
+        type: "device_authorization",
+        user_code: "ABCD-EFGH",
+        verification_uri: "https://idp.example/device",
+        expires_in: 600,
+      }),
+    );
+    transport.push(message({ type: "authorization_result", ok: true }));
+
+    expect(
+      await screen.findByText(
+        "シリアルポートが切断されました",
+        {},
+        { timeout: 3_000 },
+      ),
+    ).toBeTruthy();
+    expect(transport.reopenAttempts).toBe(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "ポートを再接続" }));
+
+    expect(
+      await screen.findByText(/初期設定が完了しました/, {}, { timeout: 3_000 }),
+    ).toBeTruthy();
+    expect(transport.selectCount).toBe(2);
+    expect(approvals).toEqual([
+      { eventId: "e", edgeDeviceId, userCode: "ABCD-EFGH" },
+    ]);
+  });
+
+  it("accepts a manual user code after reconnecting the port", async () => {
+    const transport = new FakeTransport();
+    const approvals = recordApprovals();
+    transport.reopenSucceeds = false;
+    transport.push(message({ type: "config_result", ok: true }));
+
+    renderDialog(transport, 500);
+    openDialog();
+    fillWifi();
+    start();
+
+    await screen.findByText("端末の認可コードを待っています…");
+    transport.closePort();
+
+    expect(
+      await screen.findByText(
+        "シリアルポートが切断されました",
+        {},
+        { timeout: 3_000 },
+      ),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "ポートを再接続" }));
+
+    expect(
+      await screen.findByText(
+        "ユーザーコードを受け取れませんでした",
+        {},
+        { timeout: 3_000 },
+      ),
+    ).toBeTruthy();
+
+    fireEvent.change(screen.getByRole("textbox", { name: "ユーザーコード" }), {
+      target: { value: "WXYZ-1234" },
+    });
+    transport.push(message({ type: "authorization_result", ok: true }));
+    fireEvent.click(screen.getByRole("button", { name: "承認する" }));
+
+    expect(
+      await screen.findByText(/初期設定が完了しました/, {}, { timeout: 3_000 }),
+    ).toBeTruthy();
+    expect(approvals).toEqual([
+      { eventId: "e", edgeDeviceId, userCode: "WXYZ-1234" },
+    ]);
+  });
+
+  it("does not expose secrets when the port reconnects", async () => {
+    const transport = new FakeTransport();
+    recordApprovals();
+    const password = "super-secret-password";
+    transport.push(message({ type: "config_result", ok: true }));
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    renderDialog(transport);
+    openDialog();
+    fillWifi("reception", password);
+    start();
+
+    await screen.findByText("端末の認可コードを待っています…");
+    transport.closePort();
+    transport.push(
+      message({
+        type: "device_authorization",
+        user_code: "ABCD-EFGH",
+        verification_uri: "https://idp.example/device",
+        expires_in: 600,
+      }),
+    );
+    transport.push(message({ type: "authorization_result", ok: true }));
+
+    await screen.findByText(/初期設定が完了しました/, {}, { timeout: 3_000 });
+
+    expect(document.body.textContent).not.toContain(password);
+    expect(document.body.textContent).not.toContain("wifi_password");
+    const logged = [...log.mock.calls, ...error.mock.calls]
+      .flat()
+      .map(String)
+      .join(" ");
+    expect(logged).not.toContain(password);
   });
 
   it("never renders the Wi-Fi password or the serial config command", async () => {

@@ -2,9 +2,21 @@ export interface SerialTransport {
   isAvailable(): boolean;
   selectPort(): Promise<void>;
   open(options: { baudRate: number }): Promise<void>;
+  reopen(options: { baudRate: number }): Promise<void>;
+  isOpen(): boolean;
   writeLine(line: string): Promise<void>;
   readLine(): Promise<string>;
   close(): Promise<void>;
+}
+
+export class SerialPortClosedError extends Error {
+  constructor(
+    message = "The serial port was closed",
+    options?: { cause?: unknown },
+  ) {
+    super(message, options);
+    this.name = "SerialPortClosedError";
+  }
 }
 
 type SerialPortLike = {
@@ -50,9 +62,18 @@ export class WebSerialTransport implements SerialTransport {
   private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
   private readonly decoder = new TextDecoder();
   private buffer = "";
+  private openState = false;
 
   isAvailable(): boolean {
     return serialApi() !== undefined;
+  }
+
+  isOpen(): boolean {
+    return (
+      this.openState &&
+      this.port?.readable != null &&
+      this.port?.writable != null
+    );
   }
 
   async selectPort(): Promise<void> {
@@ -61,17 +82,49 @@ export class WebSerialTransport implements SerialTransport {
       throw new Error("Web Serial is not available");
     }
     this.port = await serial.requestPort();
+    this.buffer = "";
   }
 
   async open({ baudRate }: { baudRate: number }): Promise<void> {
     if (!this.port) {
       throw new Error("No serial port has been selected");
     }
+    await this.releaseReader();
+    this.buffer = "";
     await this.port.open({ baudRate });
     if (!this.port.readable || !this.port.writable) {
+      this.openState = false;
       throw new Error("The serial port is not readable");
     }
     this.reader = this.port.readable.getReader();
+    this.openState = true;
+  }
+
+  async reopen({ baudRate }: { baudRate: number }): Promise<void> {
+    const port = this.port;
+    if (!port) {
+      throw new SerialPortClosedError("No serial port has been selected");
+    }
+    await this.releaseReader();
+    this.buffer = "";
+    this.openState = false;
+    try {
+      await port.close();
+    } catch {
+      // The device may have already closed the port while rebooting.
+    }
+    try {
+      await port.open({ baudRate });
+    } catch (error) {
+      throw new SerialPortClosedError("The serial port could not be reopened", {
+        cause: error,
+      });
+    }
+    if (!port.readable || !port.writable) {
+      throw new SerialPortClosedError("The serial port is not readable");
+    }
+    this.reader = port.readable.getReader();
+    this.openState = true;
   }
 
   async writeLine(line: string): Promise<void> {
@@ -88,8 +141,9 @@ export class WebSerialTransport implements SerialTransport {
   }
 
   async readLine(): Promise<string> {
-    if (!this.reader) {
-      throw new Error("The serial port is not readable");
+    const reader = this.reader;
+    if (!reader) {
+      throw new SerialPortClosedError("The serial port is not readable");
     }
     for (;;) {
       const newline = this.buffer.indexOf("\n");
@@ -99,34 +153,52 @@ export class WebSerialTransport implements SerialTransport {
         if (line.trim()) return line;
         continue;
       }
-      const { value, done } = await this.reader.read();
-      if (done) {
-        throw new Error("The serial port was closed");
+      let result: ReadableStreamReadResult<Uint8Array>;
+      try {
+        result = await reader.read();
+      } catch (error) {
+        await this.releaseReader();
+        this.openState = false;
+        throw new SerialPortClosedError("The serial port was closed", {
+          cause: error,
+        });
       }
-      this.buffer += this.decoder.decode(value, { stream: true });
+      if (result.done) {
+        await this.releaseReader();
+        this.openState = false;
+        throw new SerialPortClosedError();
+      }
+      this.buffer += this.decoder.decode(result.value, { stream: true });
     }
   }
 
   async close(): Promise<void> {
+    const port = this.port;
+    await this.releaseReader();
+    this.openState = false;
     try {
-      await this.reader?.cancel();
-    } catch {
-      // The reader may already be closed by the device.
-    }
-    try {
-      this.reader?.releaseLock();
-    } catch {
-      // Ignore an already released reader.
-    }
-    this.reader = null;
-    try {
-      if (this.port) {
-        await this.port.close();
+      if (port) {
+        await port.close();
       }
     } catch {
       // The port may already be closed after a device reboot.
     }
-    this.port = null;
     this.buffer = "";
+  }
+
+  private async releaseReader(): Promise<void> {
+    const reader = this.reader;
+    this.reader = null;
+    if (!reader) return;
+    try {
+      await reader.cancel();
+    } catch {
+      // The reader may already be closed by the device.
+    }
+    try {
+      reader.releaseLock();
+    } catch {
+      // Ignore an already released reader.
+    }
   }
 }
