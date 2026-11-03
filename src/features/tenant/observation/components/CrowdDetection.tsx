@@ -27,6 +27,7 @@ import {
 import type { CameraCyclePhase } from "../utils/cameraScheduler";
 import type { CameraSourceSpec } from "../utils/cameraSources";
 import { createEspCameraVideoSource } from "../utils/espVideoSource";
+import { createMockCameraVideoSource } from "../utils/mockVideoSource";
 import {
   type CrowdVideoSourceFactory,
   createCameraVideoSource,
@@ -37,6 +38,7 @@ import { DevVideoSourcePanel } from "./DevVideoSourcePanel";
 import { ObservationLockButton } from "./ObservationSoftLock";
 
 const DEV_VIDEO_SOURCE_ENABLED = process.env.NODE_ENV === "development";
+const API_MOCKING_ENABLED = process.env.NEXT_PUBLIC_API_MOCKING === "enabled";
 const LOCAL_SOURCE_KEY = "local-camera";
 
 export type CrowdDetectionProps = {
@@ -89,23 +91,28 @@ export function CrowdDetection({
         { cameraEdgeId: LOCAL_SOURCE_KEY, createSource: devSourceFactory },
       ];
     }
-    return cameras.map((camera) => ({
-      cameraEdgeId: camera.edgeDeviceId,
-      createSource: () =>
-        createEspCameraVideoSource({
-          tenantId,
-          eventId,
-          edgeDeviceId: camera.edgeDeviceId,
-          firebaseConfig,
-          label: camera.name || camera.edgeDeviceId,
-          requestConnection: () =>
-            orpc.signaling.requestCameraConnection({
-              eventId,
-              pageEdgeDeviceId: edgeDeviceId,
-              cameraEdgeId: camera.edgeDeviceId,
-            }),
-        }),
-    }));
+    return cameras.map((camera) => {
+      const label = camera.name || camera.edgeDeviceId;
+      return {
+        cameraEdgeId: camera.edgeDeviceId,
+        createSource: API_MOCKING_ENABLED
+          ? () => createMockCameraVideoSource({ label })
+          : () =>
+              createEspCameraVideoSource({
+                tenantId,
+                eventId,
+                edgeDeviceId: camera.edgeDeviceId,
+                firebaseConfig,
+                label,
+                requestConnection: () =>
+                  orpc.signaling.requestCameraConnection({
+                    eventId,
+                    pageEdgeDeviceId: edgeDeviceId,
+                    cameraEdgeId: camera.edgeDeviceId,
+                  }),
+              }),
+      };
+    });
   }, [
     effectiveMode,
     cameras,

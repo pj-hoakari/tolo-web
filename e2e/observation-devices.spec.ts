@@ -11,6 +11,7 @@ const edgeA = "入口カメラ";
 const edgeB = "3b9d77f41e2a5c08";
 const offlineEdge = "ホールカメラ";
 const cameraEdge = "ESP32 カメラ";
+const secondCameraEdge = "ESP32 カメラ 2";
 
 const main = (page: Page) => page.getByRole("main");
 const cameraBadge = (page: Page) => page.getByText("カメラ", { exact: true });
@@ -26,6 +27,11 @@ const cameraRow = (page: Page) =>
   main(page)
     .getByRole("listitem")
     .filter({ has: page.getByText(cameraEdge, { exact: true }) })
+    .filter({ has: cameraBadge(page) });
+const secondCameraRow = (page: Page) =>
+  main(page)
+    .getByRole("listitem")
+    .filter({ has: page.getByText(secondCameraEdge, { exact: true }) })
     .filter({ has: cameraBadge(page) });
 const registerEdge = async (page: Page, name: string, points: string) => {
   await main(page).getByRole("textbox", { name: "デバイス名" }).fill(name);
@@ -52,7 +58,7 @@ test.beforeEach(async ({ page }) => {
 test("ID のない観測ページの URL を開くと観測デバイス管理ページが表示され画面ロックは出ない", async ({
   page,
 }) => {
-  await expect(main(page)).toContainText("観測デバイス（4）");
+  await expect(main(page)).toContainText("観測デバイス（5）");
   await expect(
     page.getByRole("heading", { level: 2, name: "解除コードを設定" }),
   ).toHaveCount(0);
@@ -83,15 +89,17 @@ test("観測デバイス管理ページを開くとオフラインのものを�
   page,
 }) => {
   const list = main(page);
-  await expect(list).toContainText("観測デバイス（4）");
+  await expect(list).toContainText("観測デバイス（5）");
   const items = list.getByRole("listitem");
-  await expect(items).toHaveCount(4);
+  await expect(items).toHaveCount(5);
   await expect(items.nth(0)).toContainText(edgeA);
   await expect(items.nth(1)).toContainText(edgeB);
   await expect(items.nth(2)).toContainText(offlineEdge);
   await expect(items.nth(2)).toContainText("オフライン");
   await expect(items.nth(3)).toContainText(cameraEdge);
   await expect(items.nth(3)).toContainText("カメラ");
+  await expect(items.nth(4)).toContainText(secondCameraEdge);
+  await expect(items.nth(4)).toContainText("カメラ");
   await expect(
     list.getByRole("button", { name: `「${offlineEdge}」に接続` }),
   ).toBeDisabled();
@@ -183,7 +191,8 @@ test("カメラの一時停止を確認すると一覧に残したまま操作�
 
   await expect(dialog).toBeHidden();
   await expect(cameraRow(page)).toHaveCount(1);
-  await expect(main(page)).toContainText("観測デバイス（4）");
+  await expect(secondCameraRow(page)).toHaveCount(1);
+  await expect(main(page)).toContainText("観測デバイス（5）");
 });
 
 test("観測デバイスへの接続に失敗するとその行に接続失敗と表示され接続ボタンと閉じるボタンが出る", async ({
@@ -249,7 +258,7 @@ test("観測デバイスを登録すると一覧に加わり発行 URL とこの
   await expect(
     main(page).getByRole("button", { name: "URL をコピー" }),
   ).toBeVisible();
-  await expect(main(page)).toContainText("観測デバイス（5）");
+  await expect(main(page)).toContainText("観測デバイス（6）");
   await expect(edgeRow(page, "受付カメラ")).toContainText("オフライン");
   await expect(
     main(page).getByRole("textbox", { name: "デバイス名" }),
@@ -280,7 +289,7 @@ test("観測デバイスの登録に失敗すると理由が表示され入力�
   await expect(
     main(page).getByRole("textbox", { name: "デバイス名" }),
   ).toHaveValue("受付カメラ");
-  await expect(main(page)).toContainText("観測デバイス（4）");
+  await expect(main(page)).toContainText("観測デバイス（5）");
 });
 
 test("デバイス名か観測点名が空のあいだは登録できない", async ({ page }) => {
@@ -330,7 +339,7 @@ test("登録解除を確認するとその観測デバイスが一覧から消�
   await dialog.getByRole("button", { name: "登録を解除する" }).click();
 
   await expect(dialog).toBeHidden();
-  await expect(main(page)).toContainText("観測デバイス（3）");
+  await expect(main(page)).toContainText("観測デバイス（4）");
   await expect(edgeRow(page, offlineEdge)).toHaveCount(0);
 });
 
@@ -346,7 +355,7 @@ test("登録解除の確認でキャンセルすると観測デバイスは一�
     .click();
 
   await expect(page.getByRole("alertdialog")).toBeHidden();
-  await expect(main(page)).toContainText("観測デバイス（4）");
+  await expect(main(page)).toContainText("観測デバイス（5）");
   await expect(edgeRow(page, offlineEdge)).toHaveCount(1);
 });
 
@@ -365,5 +374,5 @@ test("登録解除に失敗すると確認ダイアログに理由が表示さ�
   await expect(dialog.getByRole("alert")).toHaveText(
     "観測デバイスが見つからないか、既に登録が解除されています。一覧を更新してください。",
   );
-  await expect(main(page)).toContainText("観測デバイス（4）");
+  await expect(main(page)).toContainText("観測デバイス（5）");
 });

@@ -6,6 +6,7 @@ import {
   type Route,
   test,
 } from "@playwright/test";
+import { sampleEdgeDevicesWire } from "@/mocks/fixtures/edges";
 import type { MockRouterOverrides } from "@/mocks/router";
 
 test.use({
@@ -81,7 +82,10 @@ const overrideMock = async (
   page: Page,
   overrides: Pick<
     MockRouterOverrides,
-    "listObservationPointsError" | "heartbeatError" | "reportMeasurementsError"
+    | "devices"
+    | "listObservationPointsError"
+    | "heartbeatError"
+    | "reportMeasurementsError"
   >,
 ) => {
   await page.evaluate((value) => {
@@ -567,6 +571,7 @@ test.describe("検出の開始", () => {
   test("カメラの使用が拒否されるとブラウザの文言ではなく翻訳済みの理由が表示される", async ({
     page,
   }) => {
+    await overrideMock(page, { devices: sampleEdgeDevicesWire });
     await page.addInitScript(() => {
       navigator.mediaDevices.getUserMedia = () =>
         Promise.reject(
@@ -637,9 +642,12 @@ test.describe("計測値の送信", () => {
     await page.clock.fastForward(REPORT_INTERVAL_MS);
     await expect.poll(() => windows.length).toBe(2);
 
-    expect(windows[1]).toHaveLength(2);
-    expect(windows[1][0]).toEqual(windows[0][0]);
-    expect(windows[1][1].windowStart).toBe(windows[0][0].windowEnd);
+    expect(windows[1]).toHaveLength(4);
+    expect(windows[1].slice(0, 2)).toEqual(windows[0]);
+    expect(windows[1].slice(2).map(({ windowStart }) => windowStart)).toEqual([
+      windows[0][0].windowEnd,
+      windows[0][1].windowEnd,
+    ]);
   });
 
   test("送信に失敗したウィンドウの計測値は検出を停止して再開した後の送信に含めて再送する", async ({
@@ -660,8 +668,8 @@ test.describe("計測値の送信", () => {
     await page.clock.fastForward(REPORT_INTERVAL_MS);
     await expect.poll(() => windows.length).toBe(2);
 
-    expect(windows[1]).toHaveLength(2);
-    expect(windows[1][0]).toEqual(windows[0][0]);
+    expect(windows[1]).toHaveLength(4);
+    expect(windows[1].slice(0, 2)).toEqual(windows[0]);
   });
 
   test("送信に成功したウィンドウの計測値は次の送信に含めない", async ({
@@ -672,9 +680,13 @@ test.describe("計測値の送信", () => {
     await page.clock.fastForward(REPORT_INTERVAL_MS);
     await expect.poll(() => windows.length).toBe(2);
 
-    expect(windows[1]).toEqual([
-      { windowStart: windows[0][0].windowEnd, windowEnd: expect.any(String) },
-    ]);
+    expect(windows[1]).toHaveLength(2);
+    expect(windows[1]).toEqual(
+      windows[0].map(() => ({
+        windowStart: windows[0][0].windowEnd,
+        windowEnd: expect.any(String),
+      })),
+    );
   });
 });
 

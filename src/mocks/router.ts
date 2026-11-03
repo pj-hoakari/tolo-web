@@ -202,6 +202,54 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
         }),
     },
     camera: {
+      listDelegatedCameras: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            pageEdgeDeviceId: z.string().min(1),
+          }),
+        )
+        .handler(
+          async ({
+            input,
+          }): Promise<{
+            cameras: {
+              edgeDeviceId: string;
+              name: string;
+              observationPointId: string;
+            }[];
+          }> => {
+            const page = devices.find(
+              (device) => device.edgeDeviceId === input.pageEdgeDeviceId,
+            );
+            if (!page) {
+              throw new ORPCError("NOT_FOUND");
+            }
+            if (page.kind !== "observation_page") {
+              throw new ORPCError("PRECONDITION_FAILED");
+            }
+            const observationPointByCamera = new Map(
+              page.cameraLinks.map((link) => [
+                link.cameraEdgeDeviceId,
+                link.observationPointId,
+              ]),
+            );
+            return {
+              cameras: devices
+                .filter(
+                  (device) =>
+                    device.kind === "camera" &&
+                    observationPointByCamera.has(device.edgeDeviceId),
+                )
+                .map((device) => ({
+                  edgeDeviceId: device.edgeDeviceId,
+                  name: device.name,
+                  observationPointId:
+                    observationPointByCamera.get(device.edgeDeviceId) ?? "",
+                })),
+            };
+          },
+        ),
       approveDeviceAuthorization: os
         .input(
           z.object({
