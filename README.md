@@ -58,9 +58,32 @@ Better Auth の `baseURL` はルートドメインの origin です。`ROOT_DOMA
 
 `/rpc` への要求には、ヘッダ `x-csrf-token: orpc` が必要です。このヘッダのない要求は 403 で拒否します。ブラウザの oRPC のクライアントは、このヘッダを付けて送ります。
 
+### テナントのオンボーディングと招待の受諾
+
+仮テナントの所有権の取得（ClaimTenantOwnership）と招待の受諾（AcceptTenantInvitation）には、tolo-idp の `registration` トークンを使います。`registration` トークンはテナントを持たないので、`web` は認可、サインアップ、所有権の取得、受諾を同じテナントで行います（ADR-0124）。
+
+`registration` トークンの認可は、ログインと同じく `/auth/begin` から始めます。ルートドメインは `resource` にテナントの URI、`audience` に `backend-api`、`scope` に `tenant.join` だけを付けて認可へ進みます。PKCE と `state` は `web` が作り、`pendingLogin` の行に置きます。callback は同じ `<baseURL>/api/auth/callback/tolo-idp` で受け、`state` がこの行のものなら `web` が認可コードを交換します。それ以外の callback は Better Auth が処理します。callback の後は、ルートドメインのセッションも Better Auth のユーザーも作りません。`registration` トークンは一回限りの引き渡しコード（1 分）を付けて、認可を始めたホストへ渡します。
+
+オンボーディングは次の順に進みます。
+
+1. ルートドメインの `/onboarding` で送信すると、`web` は StartTenantRegistration で仮テナントを作ります。仮テナントの公開 ID、所有権取得トークン、入力を `tenantRegistration` の行に置き、行をそのブラウザに結び付ける値を Cookie（`__Host-tolo.onboarding`）に置きます。Cookie と行の期限は、所有権取得トークンの期限と同じです。
+2. `/onboarding/start` が仮テナントを `resource` にした `registration` トークンの認可を始めます。tolo-idp のログイン画面でアカウントを作ります。
+3. ルートドメインの `/onboarding/claim` が引き渡しコードで `registration` トークンを受け取り、ClaimTenantOwnership を呼びます。所有権を取得できたら行と Cookie を消し、確定したサブドメイン名のテナントのホストの `/auth/login?return=/management` へ移ります。tolo-idp のログイン状態が残っていれば、入力なしで管理ページに着きます。
+4. サブドメイン名の重複などで所有権を取得できないときは、行を残したまま理由を付けて `/onboarding` へ戻ります。フォームには前の入力が入っています。送り直すと、`web` は仮テナントを作り直さず、行のサブドメイン名と表示名だけを書き換えて、2 から進みます。テナント名は変えられません。
+
+招待の受諾は次の順に進みます。
+
+1. 招待先のテナントのホストで参加のボタンを押すと、`/auth/join` へ移ります。ここからルートドメインの `/auth/begin` までは、ログインの 1 と同じです。
+2. 招待先のテナントを `resource` にした `registration` トークンの認可へ進み、tolo-idp のログイン画面でアカウントを作るか、作成済みのアカウントでログインします。
+3. テナントのホストの `/invitation/handoff` は、ログインの 4 と同じ条件のときだけ `registration` トークンを受け取ります。Cookie の招待トークンで AcceptTenantInvitation を呼び、受諾できたら招待トークンの Cookie を消して `/auth/login?return=/management` へ移ります。受諾できないときは、理由を付けて `/invitation/accept` へ戻ります。
+
+`AUTH_MOCKING` が `enabled` のときは、これらの経路は 404 を返します。
+
 ### ログイン画面
 
 tolo-idp は、ログイン状態のない認可要求を受けると、login challenge を付けてルートドメインの `/login` へ移します。`/login` は ID とパスワードを受け取り、challenge と一緒にブラウザから tolo-idp の `POST /api/login` へ送ります。tolo-idp が受け付けたら、challenge を付けて認可エンドポイントへ戻り、tolo-idp が元の認可要求を続けます。ID かパスワードが違うときは、同じ画面で入力し直せます。
+
+`/auth/begin` が `registration` トークンの認可を始めたブラウザでは、`/login` はサインアップの入力を出します。`/auth/begin` は、ルートドメインに限る Cookie（`__Host-tolo.signup`、10 分）にその `pendingLogin` の行を指す値を置き、`/login` はその行で判断します。通常のログインを始めたときと callback を受けたときは、この Cookie を消します。サインアップは ID とパスワードを challenge と一緒に tolo-idp の `POST /api/signup` へ送ります。ID は空白と制御文字を含まない 50 文字まで、パスワードは 8 文字以上で 72 バイトまでです。ID が使用済みのときは、tolo-idp が 409 を返し、画面は別の ID を求めます。そのテナントのアカウントを持つ人のために、作成済みのアカウントでログインする入力にも切り替えられます。
 
 `/login` の応答には `Content-Security-Policy: frame-ancestors 'none'` を付けて、ほかのサイトに埋め込ませません。`AUTH_MOCKING` が `enabled` のときは、`/login` は 404 を返します。
 
@@ -206,7 +229,9 @@ GATEWAY_URL=http://127.0.0.1:8080 NEXT_PUBLIC_API_MOCKING=disabled TENANT_SUBDOM
 
 ### オンボーディングページでテナントを作る
 
-上の curl の手順の代わりに、ルートドメインのトップ（`http://localhost:3000/`）の「テナントを作成」から `/onboarding` を開いてもテナントを作れます。テナント名、サブドメイン名、オーナーのメールアドレス、オーナーの表示名を入力すると、`web` がテナントの登録を始め、偽 IdP から scope が `tenant.join` の `registration` トークンを発行し、所有権を取得します。オーナーはメールアドレスを `sub` とするユーザーになり、入力した表示名でテナントに所属します。表示名は 64 文字までです。
+上の curl の手順の代わりに、ルートドメインのトップ（`http://localhost:3000/`）の「テナントを作成」から `/onboarding` を開いてもテナントを作れます。フォームはテナント名、サブドメイン名、オーナーの表示名を受け取ります。表示名は 64 文字までです。オーナーの ID とパスワードは、tolo-idp のサインアップで決めます（「テナントのオンボーディングと招待の受諾」の節）。
+
+`AUTH_MOCKING` が `enabled` のときは、送信すると `web` がテナントの登録を始め、偽 IdP から `sub` が `AUTH_MOCK_USER_ID`（既定は `user-owner`）で scope が `tenant.join` の `registration` トークンを発行し、所有権を取得します。
 
 `web` は偽 IdP の URL を環境変数 `FAKEIDP_URL` から読みます。未設定のときは `http://127.0.0.1:8082` を使います。
 
@@ -224,11 +249,9 @@ GATEWAY_URL=http://127.0.0.1:8080 NEXT_PUBLIC_API_MOCKING=disabled TENANT_SUBDOM
 
 招待 URL（`/invitation?token=<招待トークン>`）を開くと、`web` は招待トークンを、そのホストにだけ送る Cookie（`__Host-tolo.invitation`、`HttpOnly`、`Secure`、`SameSite=Lax`、30 分）に移し、招待トークンを含まない `/invitation/accept` へリダイレクトします。このリダイレクトの応答には `Referrer-Policy: no-referrer` を付けます。開発サーバーは `token=` を含む URL への要求をログに出しません。ルートドメインには招待 URL がなく、404 を返します。
 
-`/invitation/accept` は、Cookie に招待トークンがあれば参加のボタンを出し、なければ招待 URL を開き直すよう案内します。参加のボタンを押すと、`web` はホスト名から照会したテナントの公開 ID と Cookie の招待トークンで AcceptTenantInvitation を呼びます。受諾できたら Cookie を消し、同じホストで tenantId を指定した認可をやり直すために `/auth/login?return=/management` へ移ります。`AUTH_MOCKING` が `enabled` のときはログインがないので、`/management` へ移ります。招待トークンが使用済み、期限切れ、取り消し済みのときは、招待したオーナーに連絡するよう案内します。
+`/invitation/accept` は、Cookie に招待トークンがあれば参加のボタンを出し、なければ招待 URL を開き直すよう案内します。参加のボタンを押すと、`web` はホスト名から照会したテナントの公開 ID と Cookie の招待トークンで AcceptTenantInvitation を呼びます。受諾に要る `registration` トークンの得かたと、受諾の後の移り先は、「テナントのオンボーディングと招待の受諾」の節のとおりです。招待トークンが使用済み、期限切れ、取り消し済みのときは、招待したオーナーに連絡するよう案内します。
 
-受諾には `registration` トークンが要ります。`AUTH_MOCKING` が `enabled` のときは、オンボーディングと同じく偽 IdP から、`sub` が `AUTH_MOCK_USER_ID`（既定は `user-owner`）で scope が `tenant.join` のトークンを発行します。オーナーはすでにテナントに所属しているので、受諾を試すときは `AUTH_MOCK_USER_ID` にほかの値を設定します。
-
-`AUTH_MOCKING` が `enabled` でないときの受諾はまだ使えず、参加のボタンはエラーになります。テナント未指定の認可で受け取った `registration` トークンをルートドメインからテナントのホストへ引き渡す流れは、tolo-idp の対応（MER-337）を待っています。
+`AUTH_MOCKING` が `enabled` のときは、参加のボタンを押すとすぐに受諾します。`registration` トークンは、オンボーディングと同じく偽 IdP から、`sub` が `AUTH_MOCK_USER_ID` で scope が `tenant.join` のものを発行します。受諾できたら Cookie を消し、`/management` へ移ります。オーナーはすでにテナントに所属しているので、受諾を試すときは `AUTH_MOCK_USER_ID` にほかの値を設定します。
 
 ## Learn More
 
