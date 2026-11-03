@@ -10,7 +10,9 @@ create table "tenantAccessToken" ("id" text not null primary key, "sessionId" te
 
 create table "eventAccessToken" ("id" text not null primary key, "sessionId" text not null references "session" ("id") on delete cascade, "eventId" text not null, "accessToken" text not null, "expiresAt" timestamptz not null);
 
-create table "pendingLogin" ("id" text not null primary key, "tenantId" text not null, "host" text not null, "bindingHash" text not null, "returnPath" text not null, "expiresAt" timestamptz not null, "codeHash" text unique, "userId" text, "subject" text, "accessToken" text, "refreshToken" text, "accessTokenExpiresAt" timestamptz, "idToken" text);
+create table "pendingLogin" ("id" text not null primary key, "kind" text not null, "tenantId" text not null, "host" text not null, "bindingHash" text not null, "returnPath" text not null, "expiresAt" timestamptz not null, "codeHash" text unique, "userId" text, "subject" text, "accessToken" text, "refreshToken" text, "accessTokenExpiresAt" timestamptz, "idToken" text, "stateHash" text unique, "codeVerifier" text);
+
+create table "tenantRegistration" ("id" text not null primary key, "tenantId" text not null, "ownershipClaimToken" text not null, "name" text not null, "subdomain" text not null, "displayName" text not null, "bindingHash" text not null unique, "expiresAt" timestamptz not null);
 
 create index "session_userId_idx" on "session" ("userId");
 

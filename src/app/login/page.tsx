@@ -1,8 +1,10 @@
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AuthScreen } from "@/features/auth/AuthScreen";
 import { CHALLENGE_PARAM } from "@/features/auth/idpLogin";
 import { LoginForm } from "@/features/auth/LoginForm";
+import { SignupOrLogin } from "@/features/auth/SignupOrLogin";
 import { loginFlow } from "@/server/auth";
 import { authMockingEnabled } from "@/server/auth/mocking";
 
@@ -17,11 +19,14 @@ export default async function Login({
     redirect("/auth/error?error=no_challenge");
   }
   const login = await loginFlow().challengeLogin(challenge);
-  const t = await getTranslations("Auth.login");
+  const signup = await loginFlow().signupPending(
+    (await headers()).get("cookie") ?? "",
+  );
+  const t = await getTranslations("Auth");
 
   return (
-    <AuthScreen title={t("title")}>
-      <LoginForm login={login} />
+    <AuthScreen title={t(signup ? "signup.title" : "login.title")}>
+      {signup ? <SignupOrLogin login={login} /> : <LoginForm login={login} />}
     </AuthScreen>
   );
 }

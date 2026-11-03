@@ -6,7 +6,6 @@
     "title": "テナントを作成",
     "name": "テナント名",
     "subdomain": "サブドメイン名",
-    "ownerEmail": "オーナーのメールアドレス",
     "ownerDisplayName": "オーナーの表示名",
     "ownerDisplayNameDescription": "テナントのメンバーに表示する名前です。64 文字まで入力できます。",
     "submit": "作成",
@@ -594,6 +593,22 @@
       "submit": "ログイン",
       "invalidCredentials": "ID またはパスワードが違います。",
       "failed": "ログインできませんでした。もう一度試しても続くときは、利用していたテナントのページからやり直してください。"
+    },
+    "signup": {
+      "title": "アカウントを作成",
+      "description": "このテナントで使うアカウントの ID とパスワードを決めてください。",
+      "loginDescription": "このテナントのアカウントを持っているときは、その ID とパスワードでログインしてください。",
+      "usernameLabel": "ID",
+      "usernameDescription": "50 文字まで。空白は使えません。",
+      "passwordLabel": "パスワード",
+      "passwordDescription": "8 文字以上、72 バイト以内です。",
+      "submit": "アカウントを作成",
+      "invalidUsername": "ID は空白を含まない 50 文字以内にしてください。",
+      "lengthOutOfRange": "パスワードは 8 文字以上、72 バイト以内にしてください。",
+      "usernameTaken": "この ID は既に使われています。別の ID を指定してください。",
+      "failed": "アカウントを作成できませんでした。もう一度試しても続くときは、最初からやり直してください。",
+      "useExistingAccount": "作成済みのアカウントでログインする",
+      "createAccount": "新しいアカウントを作成する"
     },
     "loggedOut": {
       "title": "ログアウトしました",

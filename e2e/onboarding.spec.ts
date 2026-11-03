@@ -20,9 +20,6 @@ const open = async (page: Page, overrides?: MockOverrides) => {
 const fillAndSubmit = async (page: Page) => {
   await page.getByRole("textbox", { name: "テナント名" }).fill("Acme");
   await page.getByRole("textbox", { name: "サブドメイン名" }).fill("acme");
-  await page
-    .getByRole("textbox", { name: "オーナーのメールアドレス" })
-    .fill("owner@example.com");
   await page.getByRole("textbox", { name: "オーナーの表示名" }).fill("山田");
   await page.getByRole("button", { name: "作成" }).click();
 };
@@ -39,7 +36,18 @@ test("ルートドメインのトップで「テナントを作成」を押す�
   ).toBeVisible();
 });
 
-test("テナント名・サブドメイン名・オーナーのメールアドレス・オーナーの表示名を入力して作成すると、完了表示とそのサブドメインのテナントページへのリンクが出る", async ({
+test("フォームはテナント名・サブドメイン名・オーナーの表示名だけを受け取り、オーナーのアカウントは聞かない", async ({
+  page,
+}) => {
+  await open(page);
+
+  await expect(page.getByRole("main").getByRole("textbox")).toHaveCount(3);
+  await expect(
+    page.getByRole("textbox", { name: "オーナーのメールアドレス" }),
+  ).toHaveCount(0);
+});
+
+test("AUTH_MOCKING では、入力して作成すると完了表示とそのサブドメインのテナントページへのリンクが出る", async ({
   page,
 }) => {
   await open(page);
@@ -58,9 +66,6 @@ test("オーナーの表示名が空白だけのときは作成できない", as
   await open(page);
   await page.getByRole("textbox", { name: "テナント名" }).fill("Acme");
   await page.getByRole("textbox", { name: "サブドメイン名" }).fill("acme");
-  await page
-    .getByRole("textbox", { name: "オーナーのメールアドレス" })
-    .fill("owner@example.com");
   await page.getByRole("textbox", { name: "オーナーの表示名" }).fill("  ");
 
   await expect(page.getByRole("button", { name: "作成" })).toBeDisabled();
@@ -101,6 +106,27 @@ test("それ以外の理由で失敗したときは、作成できなかった�
   await expect(page.getByRole("main").getByRole("alert")).toHaveText(
     "テナントを作成できませんでした。",
   );
+});
+
+test("所有権の取得に失敗して戻ってきたときは、その理由のエラーが表示され、入力し直して送れる", async ({
+  page,
+}) => {
+  await page.goto(`${rootURL}/onboarding?error=subdomainTaken`);
+
+  await expect(page.getByRole("main").getByRole("alert")).toHaveText(
+    "このサブドメイン名は既に使われています。別の名前を指定してください。",
+  );
+  await expect(
+    page.getByRole("textbox", { name: "サブドメイン名" }),
+  ).toBeEnabled();
+});
+
+test("戻り先に知らないエラーが付いていても、エラーは表示しない", async ({
+  page,
+}) => {
+  await page.goto(`${rootURL}/onboarding?error=%3Cscript%3E`);
+
+  await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
 });
 
 test("テナントのホストでオンボーディングページを開くと 404 になる", async ({

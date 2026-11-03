@@ -6,7 +6,6 @@
     "title": "테넌트 만들기",
     "name": "테넌트 이름",
     "subdomain": "서브도메인",
-    "ownerEmail": "소유자 이메일 주소",
     "ownerDisplayName": "소유자 표시 이름",
     "ownerDisplayNameDescription": "테넌트 멤버에게 표시되는 이름입니다. 64자까지 입력할 수 있습니다.",
     "submit": "만들기",
@@ -594,6 +593,22 @@
       "submit": "로그인",
       "invalidCredentials": "ID 또는 비밀번호가 올바르지 않습니다.",
       "failed": "로그인하지 못했습니다. 다시 시도해도 계속되면 사용하던 테넌트 페이지에서 다시 시작하세요."
+    },
+    "signup": {
+      "title": "계정 만들기",
+      "description": "이 테넌트에서 사용할 계정의 ID와 비밀번호를 정하세요.",
+      "loginDescription": "이 테넌트의 계정이 이미 있으면 그 ID와 비밀번호로 로그인하세요.",
+      "usernameLabel": "ID",
+      "usernameDescription": "50자 이내, 공백은 사용할 수 없습니다.",
+      "passwordLabel": "비밀번호",
+      "passwordDescription": "8자 이상, 72바이트 이하입니다.",
+      "submit": "계정 만들기",
+      "invalidUsername": "ID는 공백 없이 50자 이내로 입력하세요.",
+      "lengthOutOfRange": "비밀번호는 8자 이상, 72바이트 이하로 입력하세요.",
+      "usernameTaken": "이미 사용 중인 ID입니다. 다른 ID를 지정하세요.",
+      "failed": "계정을 만들지 못했습니다. 다시 시도해도 계속되면 처음부터 다시 시작하세요.",
+      "useExistingAccount": "기존 계정으로 로그인",
+      "createAccount": "새 계정 만들기"
     },
     "loggedOut": {
       "title": "로그아웃했습니다",

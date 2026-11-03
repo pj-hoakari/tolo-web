@@ -65,20 +65,25 @@ import {
   registeredEdgeDeviceWire,
   sampleEdgeDevicesWire,
 } from "@/mocks/fixtures/edges";
-import { afterJoinPath, getRegistrationToken, requestTenantId } from "./auth";
+import {
+  authMockingEnabled,
+  getRegistrationToken,
+  prepareOnboarding,
+  requestTenantId,
+} from "./auth";
 import { forgetInvitation, pendingInvitationToken } from "./auth/invitation";
 import { eventIdKey } from "./authorize";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
 import { guestPageClient } from "./guest";
 import { fromGuideMapResponse } from "./guideMap";
-import { issueRegistrationToken } from "./idp";
 import {
   consoleEdgeDeviceClient,
   consoleObservationSettingsClient,
   edgeEdgeDeviceClient,
   edgeMeasurementIngestClient,
 } from "./observation";
+import { claimTenantOwnership } from "./registration";
 import { consoleSignalingClient, edgeSignalingClient } from "./signaling";
 import {
   relationAdminClient,
@@ -94,6 +99,10 @@ const edgeDeviceInput = z.object({
   eventId: z.string().min(1),
   edgeDeviceId: publicId,
 });
+
+export type RegisterTenantResult =
+  | { type: "created"; subdomain: string }
+  | { type: "authorize"; next: string };
 
 export interface ObservationPoint {
   observationPointId: string;
@@ -400,43 +409,54 @@ export const router = {
         z.object({
           name: z.string().trim().min(1),
           subdomain: z.string().trim().min(1),
-          ownerEmail: z.email(),
           ownerDisplayName: displayName,
         }),
       )
-      .handler(
-        async ({ input }): Promise<{ tenantId: string; subdomain: string }> => {
-          try {
-            const started =
-              await tenantRegistrationClient.startTenantRegistration({
-                name: input.name,
-                contractPlan: "standard",
-              });
-            if (!started.tenant) {
-              throw new Error("StartTenantRegistration returned no tenant");
-            }
-            const token = await issueRegistrationToken(input.ownerEmail);
-            const claimed = await tenantRegistrationClient.claimTenantOwnership(
+      .handler(async ({ input }): Promise<RegisterTenantResult> => {
+        const start = async () => {
+          const started =
+            await tenantRegistrationClient.startTenantRegistration({
+              name: input.name,
+              contractPlan: "standard",
+            });
+          if (!started.tenant) {
+            throw new Error("StartTenantRegistration returned no tenant");
+          }
+          return {
+            tenantId: started.tenant.tenantId,
+            ownershipClaimToken: started.ownershipClaimToken,
+            expiresAt: started.expiresAt
+              ? timestampDate(started.expiresAt)
+              : new Date(Date.now() + 60 * 60 * 1000),
+          };
+        };
+        try {
+          if (!authMockingEnabled()) {
+            const next = await prepareOnboarding(
               {
-                tenantId: started.tenant.tenantId,
-                ownershipClaimToken: started.ownershipClaimToken,
+                name: input.name,
                 subdomain: input.subdomain,
                 displayName: input.ownerDisplayName,
               },
-              { headers: { Authorization: `Bearer ${token}` } },
+              start,
             );
-            if (!claimed.tenant) {
-              throw new Error("ClaimTenantOwnership returned no tenant");
-            }
-            return {
-              tenantId: claimed.tenant.tenantId,
-              subdomain: claimed.tenant.subdomain,
-            };
-          } catch (err) {
-            throw toORPCError(err);
+            return { type: "authorize", next };
           }
-        },
-      ),
+          const started = await start();
+          const subdomain = await claimTenantOwnership(
+            {
+              tenantId: started.tenantId,
+              ownershipClaimToken: started.ownershipClaimToken,
+              subdomain: input.subdomain,
+              displayName: input.ownerDisplayName,
+            },
+            await getRegistrationToken(),
+          );
+          return { type: "created", subdomain };
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
     listEvents: os
       .input(
         z.object({
@@ -591,6 +611,7 @@ export const router = {
       const invitationToken = await pendingInvitationToken();
       const tenantId = await requestTenantId();
       if (!invitationToken || !tenantId) throw new ORPCError("NOT_FOUND");
+      if (!authMockingEnabled()) return { next: "/auth/join" };
       const registrationToken = await getRegistrationToken();
       try {
         await relationRegistrationClient.acceptTenantInvitation(
@@ -604,7 +625,7 @@ export const router = {
         throw toORPCError(err);
       }
       await forgetInvitation();
-      return { next: afterJoinPath() };
+      return { next: "/management" };
     }),
     revokeInvitation: os
       .input(z.object({ tenantId: publicId, invitationId: z.string().min(1) }))
