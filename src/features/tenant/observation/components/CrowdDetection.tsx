@@ -211,7 +211,7 @@ export function CrowdDetection({
     tenantId,
     eventId,
     edgeDeviceId,
-    stream: broadcastStream,
+    stream: API_MOCKING_ENABLED ? null : broadcastStream,
     settingsStore,
   });
 
