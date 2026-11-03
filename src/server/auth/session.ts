@@ -8,6 +8,12 @@ const ABSOLUTE_LIFETIME_MS = 12 * 60 * 60 * 1000;
 const EXPIRY_MARGIN_MS = 5_000;
 const TENANT_ACCESS_TOKEN = "tenantAccessToken";
 const EVENT_ACCESS_TOKEN = "eventAccessToken";
+const EVENT_SCOPES = [
+  "events.read",
+  "events.manage",
+  "events.operate",
+  "events.report",
+];
 
 const tokenExchangeResponse = z.object({
   access_token: z.string(),
@@ -34,6 +40,21 @@ type EventAccessToken = {
   accessToken: string;
   expiresAt: Date;
 };
+
+const scopeClaim = z.object({ scope: z.string() });
+
+function eventScopes(tenantAccessToken: string): string {
+  const payload = tenantAccessToken.split(".")[1] ?? "";
+  const { scope } = scopeClaim.parse(
+    JSON.parse(Buffer.from(payload, "base64url").toString("utf8")),
+  );
+  const granted = new Set(scope.split(" "));
+  const scopes = EVENT_SCOPES.filter((name) => granted.has(name));
+  if (scopes.length === 0) {
+    throw new Error("the session's tenant_access carries no event scope");
+  }
+  return scopes.join(" ");
+}
 
 function oauthError(body: string): unknown {
   try {
@@ -139,12 +160,14 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
     if (stored && stored.expiresAt.getTime() - Date.now() > EXPIRY_MARGIN_MS) {
       return stored.accessToken;
     }
+    const subjectToken = await tenantAccess(login.sessionId);
     const response = await postToTokenEndpoint({
       grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
-      subject_token: await tenantAccess(login.sessionId),
+      subject_token: subjectToken,
       subject_token_type: "urn:ietf:params:oauth:token-type:access_token",
       resource: `https://${env.resourceHost}/tenants/${login.tenantId}/events/${encodeURIComponent(eventId)}`,
       audience: "backend-api",
+      scope: eventScopes(subjectToken),
     });
     if (!response.ok) {
       throw new Error(
