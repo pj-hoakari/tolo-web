@@ -47,7 +47,6 @@ import {
   isDestination,
   localizeGuideMapLayout,
   type MapObject,
-  mapColorOf,
   type PlaceObject,
 } from "./guideMapLayout";
 import {
@@ -56,7 +55,7 @@ import {
   setGuideMapPointIds,
   useGuideMapRequest,
 } from "./guideMapLinkStore";
-import { displayName } from "./guideMapStyle";
+import { displayName, placeCategory, placePalette } from "./guideMapStyle";
 import { InfoCard } from "./InfoCard";
 import { defineGuestInfoComponent, type GuestInfoComponentProps } from "./type";
 
@@ -423,7 +422,11 @@ function GuideMapContent({
                     </SelectHeader>
                   )}
                   {items.map((o) => {
-                    const color = mapColorOf(o.color);
+                    // 地図と同じ色（場所の種類の色。普通の部屋は中立色）
+                    const color = placePalette(
+                      o.color,
+                      placeCategory(o.title, o.color),
+                    );
                     return (
                       <SelectItem
                         key={o.id}
