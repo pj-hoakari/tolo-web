@@ -150,6 +150,14 @@ const toloSession = {
         expiresAt: { type: "date", required: true },
       },
     },
+    browserHostState: {
+      fields: {
+        host: { type: "string", required: true, unique: true },
+        generation: { type: "number", required: true, defaultValue: 0 },
+        machineAt: { type: "date", required: false },
+        updatedAt: { type: "date", required: true },
+      },
+    },
   },
   async onResponse(response) {
     const cookies = response.headers.getSetCookie();
@@ -168,7 +176,8 @@ const toloSession = {
   },
 } satisfies BetterAuthPlugin;
 
-export function authOptions(env: AuthEnv) {
+export function authOptions(env: AuthEnv, lock?: SessionLock) {
+  const authLock: SessionLock = lock ?? ((_, task) => task());
   const baseUrl = env.baseUrl ?? rootOrigin();
   return {
     secret: env.secret,
@@ -182,6 +191,7 @@ export function authOptions(env: AuthEnv) {
         tenantId: { type: "string", required: false, input: false },
         eventId: { type: "string", required: false, input: false },
         edgeDeviceId: { type: "string", required: false, input: false },
+        host: { type: "string", required: false, input: false },
         kind: {
           type: ["staff", "machine"],
           required: true,
@@ -234,8 +244,8 @@ export function authOptions(env: AuthEnv) {
         ],
       }),
       toloSession,
-      loginHandoff,
-      machineSessionPlugin,
+      loginHandoff(authLock),
+      machineSessionPlugin(authLock),
     ],
   } satisfies BetterAuthOptions;
 }
@@ -264,13 +274,14 @@ export function advisoryLock(pool: Pool): SessionLock {
 }
 
 function createRealAuth(env: AuthEnv) {
+  const lock = advisoryLock(new Pool({ connectionString: env.databaseUrl }));
   return {
     env,
     auth: betterAuth({
-      ...authOptions(env),
+      ...authOptions(env, lock),
       database: new Pool({ connectionString: env.databaseUrl }),
     }),
-    lock: advisoryLock(new Pool({ connectionString: env.databaseUrl })),
+    lock,
   };
 }
 

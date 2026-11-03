@@ -1,4 +1,9 @@
-import { generateKeyPairSync, sign } from "node:crypto";
+import {
+  createHash,
+  generateKeyPairSync,
+  randomBytes,
+  sign,
+} from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
@@ -21,8 +26,11 @@ import {
   authOptions,
   type RealAuth,
   SESSION_COOKIE,
+  type SessionLock,
 } from "./betterAuth";
+import { hostLockKey } from "./hostState";
 import { createLoginFlow } from "./login";
+import { MACHINE_BINDING_COOKIE } from "./machineSession";
 import { createSessionAuth } from "./session";
 
 const env: AuthEnv = {
@@ -127,6 +135,52 @@ function idp() {
   };
 }
 
+function inProcessLock(): SessionLock {
+  const tails = new Map<string, Promise<unknown>>();
+  return (key, task) => {
+    const run = (tails.get(key) ?? Promise.resolve())
+      .catch(() => {})
+      .then(task);
+    tails.set(key, run);
+    return run;
+  };
+}
+
+function instrumentedLock() {
+  const base = inProcessLock();
+  const listeners: (() => void)[] = [];
+  const lock: SessionLock = (key, task) => {
+    const run = base(key, task);
+    listeners.shift()?.();
+    return run;
+  };
+  return {
+    lock,
+    hold(key: string) {
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const held = lock(key, async () => {
+        await gate;
+      });
+      return {
+        async release() {
+          release();
+          await held;
+        },
+      };
+    },
+    whenLockCalled: () =>
+      new Promise<void>((resolve) => {
+        listeners.push(resolve);
+      }),
+  };
+}
+
+const sha256 = (value: string) =>
+  createHash("sha256").update(value).digest("base64url");
+
 function cookieJar() {
   const cookies = new Map<string, string>();
   return {
@@ -155,10 +209,12 @@ async function createTestAuth(
     tenantAccessToken: [],
     eventAccessToken: [],
     pendingLogin: [],
+    browserHostState: [],
   }),
   databaseHooks?: BetterAuthOptions["databaseHooks"],
+  lock: SessionLock = inProcessLock(),
 ) {
-  const options = authOptions(env);
+  const options = authOptions(env, lock);
   const auth = betterAuth({
     ...options,
     database,
@@ -168,7 +224,7 @@ async function createTestAuth(
   const realAuth = {
     auth: auth as unknown as RealAuth["auth"],
     env,
-    lock: (_: string, task: () => Promise<unknown>) => task(),
+    lock,
   } as RealAuth;
   await auth.$context;
   return {
@@ -210,6 +266,47 @@ async function createMachineSession(
     },
   });
   return machine;
+}
+
+async function completeMachineConversion(
+  testAuth: TestAuth,
+  { sub = "user-1", tenantId = TENANT, host = HOST, cookie = "" } = {},
+) {
+  const ctx = await testAuth.auth.$context;
+  const email = `${sub}@tolo-idp.local`;
+  const existing = await ctx.internalAdapter.findUserByEmail(email);
+  const user =
+    existing?.user ??
+    (await ctx.test.saveUser(ctx.test.createUser({ email, name: sub })));
+  const code = randomBytes(16).toString("base64url");
+  const binding = randomBytes(16).toString("base64url");
+  await ctx.adapter.create({
+    model: "pendingMachineHandoff",
+    data: {
+      codeHash: sha256(code),
+      tenantId,
+      eventId: "fedcba9876543210",
+      edgeDeviceId: "1111111111111111",
+      userId: user.id,
+      subject: sub,
+      accessToken: "machine-tenant-access",
+      refreshToken: "machine-refresh",
+      accessTokenExpiresAt: new Date(Date.now() + 60_000),
+      host,
+      bindingHash: sha256(binding),
+      returnPath: "/",
+      expiresAt: new Date(Date.now() + 60_000),
+    },
+  });
+  const response = await testAuth.auth.api.completeMachineSession({
+    body: { code, host },
+    headers: new Headers({
+      host,
+      cookie: `${cookie ? `${cookie}; ` : ""}${MACHINE_BINDING_COOKIE}=${binding}`,
+    }),
+    asResponse: true,
+  });
+  return { response, user };
 }
 
 function onHost(url: string, host: string, cookie: string) {
@@ -802,6 +899,92 @@ describe("machine session protection", () => {
     await expect(
       testAuth.sessionAuth.viewer(sessionHeaders(login.tenantJar), TENANT),
     ).resolves.toMatchObject({ type: "machine" });
+  });
+
+  it("rejects a handoff resumed with an old cookie after machine conversion", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const oldJar = await logInOn(testAuth, provider);
+    const login = await logInUntilHandoff(testAuth, provider, {
+      tenantJar: oldJar,
+    });
+
+    await completeMachineConversion(testAuth, { cookie: oldJar.header() });
+    const handedOff = await handOff(
+      testAuth,
+      login.handoffUrl,
+      login.tenantJar,
+    );
+
+    expect(loginErrorPage(handedOff)).toEqual({
+      status: 302,
+      page: "https://tolo.test/auth/error",
+      host: HOST,
+      error: "machine_session_forbidden",
+    });
+    const ctx = await testAuth.auth.$context;
+    const sessions = await ctx.adapter.findMany<{ kind: string }>({
+      model: "session",
+    });
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0]).toMatchObject({ kind: "machine" });
+    expect(await ctx.adapter.findMany({ model: "pendingLogin" })).toEqual([]);
+  });
+
+  it("serializes a handoff with machine conversion so the handoff is rejected", async () => {
+    const provider = idp();
+    const instrumented = instrumentedLock();
+    const testAuth = await createTestAuth(
+      undefined,
+      undefined,
+      instrumented.lock,
+    );
+    const login = await logInUntilHandoff(testAuth, provider);
+
+    const hold = instrumented.hold(hostLockKey(HOST));
+    const conversionQueued = instrumented.whenLockCalled();
+    const conversion = completeMachineConversion(testAuth);
+    await conversionQueued;
+    const handoffQueued = instrumented.whenLockCalled();
+    const handedOff = handOff(testAuth, login.handoffUrl, login.tenantJar);
+    await handoffQueued;
+    await hold.release();
+    const [, response] = await Promise.all([conversion, handedOff]);
+
+    expect(loginErrorPage(response)).toMatchObject({
+      error: "machine_session_forbidden",
+    });
+    const ctx = await testAuth.auth.$context;
+    expect(
+      await ctx.adapter.findMany<{ kind: string }>({ model: "session" }),
+    ).toEqual([expect.objectContaining({ kind: "machine" })]);
+  });
+
+  it("removes a staff session created by a handoff that won the lock", async () => {
+    const provider = idp();
+    const instrumented = instrumentedLock();
+    const testAuth = await createTestAuth(
+      undefined,
+      undefined,
+      instrumented.lock,
+    );
+    const login = await logInUntilHandoff(testAuth, provider);
+
+    const hold = instrumented.hold(hostLockKey(HOST));
+    const handoffQueued = instrumented.whenLockCalled();
+    const handedOff = handOff(testAuth, login.handoffUrl, login.tenantJar);
+    await handoffQueued;
+    const conversionQueued = instrumented.whenLockCalled();
+    const conversion = completeMachineConversion(testAuth);
+    await conversionQueued;
+    await hold.release();
+    const [response] = await Promise.all([handedOff, conversion]);
+
+    expect(response.status).toBe(200);
+    const ctx = await testAuth.auth.$context;
+    expect(
+      await ctx.adapter.findMany<{ kind: string }>({ model: "session" }),
+    ).toEqual([expect.objectContaining({ kind: "machine" })]);
   });
 });
 

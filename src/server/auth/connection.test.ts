@@ -31,6 +31,7 @@ const EVENT = "fedcba9876543210";
 const PAGE = "1111111111111111";
 const CAMERA = "2222222222222222";
 const OTHER_CAMERA = "3333333333333333";
+const CONNECTION_LOCK_KEY = `connection:${TENANT}:${EVENT}:${PAGE}`;
 const TOKEN_ENDPOINT = "https://idp.test/oauth2/token";
 
 const { privateKey, publicKey } = generateKeyPairSync("rsa", {
@@ -58,15 +59,19 @@ function inProcessLock(): SessionLock {
 
 function instrumentedLock() {
   const base = inProcessLock();
-  const listeners: (() => void)[] = [];
+  const listeners: {
+    predicate: (key: string) => boolean;
+    resolve: () => void;
+  }[] = [];
   return {
-    lock: ((sessionId, task) => {
-      listeners.shift()?.();
-      return base(sessionId, task);
+    lock: ((key, task) => {
+      const index = listeners.findIndex((listener) => listener.predicate(key));
+      if (index >= 0) listeners.splice(index, 1)[0].resolve();
+      return base(key, task);
     }) satisfies SessionLock,
-    whenLockCalled: () =>
+    whenLockCalled: (predicate: (key: string) => boolean = () => true) =>
       new Promise<void>((resolve) => {
-        listeners.push(resolve);
+        listeners.push({ predicate, resolve });
       }),
   };
 }
@@ -141,6 +146,7 @@ function createTestConnection(lock: SessionLock = inProcessLock()) {
     connectionAuthorization: [],
     connectionEventAccess: [],
     connectionDelegationState: [],
+    browserHostState: [],
   }) as BetterAuthOptions["database"];
   const options = authOptions(env);
   const auth = betterAuth({ ...options, database });
@@ -208,12 +214,9 @@ async function holdConnectionLock(test: TestConnection) {
   const gate = new Promise<void>((resolve) => {
     release = resolve;
   });
-  const held = test.realAuth.lock(
-    `connection:${TENANT}:${EVENT}:${PAGE}`,
-    async () => {
-      await gate;
-    },
-  );
+  const held = test.realAuth.lock(CONNECTION_LOCK_KEY, async () => {
+    await gate;
+  });
   return {
     async release() {
       release();
@@ -404,6 +407,63 @@ describe("connection authorization callback", () => {
         model: "pendingConnectionAuthorization",
       }),
     ).toEqual([]);
+  });
+
+  it("does not save a delegation when a stop races the initial pending creation", async () => {
+    const test = createTestConnection();
+    const provider = idp();
+    const { adapter } = await test.auth.$context;
+    const originalCreate = adapter.create.bind(adapter);
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let paused!: () => void;
+    const reached = new Promise<void>((resolve) => {
+      paused = resolve;
+    });
+    adapter.create = (async (args) => {
+      if (args.model === "pendingConnectionAuthorization") {
+        paused();
+        await gate;
+      }
+      return originalCreate(args);
+    }) as typeof adapter.create;
+
+    const started = start(test.connection, provider, [CAMERA]);
+    await reached;
+    const stopping = test.connection.deleteForCamera(EVENT, CAMERA);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    release();
+    const location = await started;
+    await stopping;
+
+    const redirect = await callback(test, location);
+
+    expect(redirect).toBe(
+      `/event/${EVENT}/observation?cameraConnection=failed`,
+    );
+    expect(await storedAuthorization(test.auth)).toBeNull();
+    expect(
+      await adapter.findMany({ model: "pendingConnectionAuthorization" }),
+    ).toEqual([]);
+  });
+
+  it("keeps a normal start, stop, and callback working", async () => {
+    const test = createTestConnection();
+    const provider = idp();
+    const location = await start(test.connection, provider, [CAMERA]);
+
+    const redirect = await callback(test, location);
+
+    expect(redirect).toBe(
+      `/event/${EVENT}/observation?cameraConnection=authorized`,
+    );
+    expect(await storedAuthorization(test.auth)).toMatchObject({
+      cameraIds: JSON.stringify([CAMERA]),
+    });
+    await test.connection.deleteForCamera(EVENT, CAMERA);
+    expect(await storedAuthorization(test.auth)).toBeNull();
   });
 
   it("rejects a reauthorization callback that would restore a stopped camera", async () => {
@@ -676,7 +736,9 @@ describe("connection delegation cleanup", () => {
     const hold = await holdConnectionLock(test);
     await holdStarted;
 
-    const deleteStarted = instrumented.whenLockCalled();
+    const deleteStarted = instrumented.whenLockCalled(
+      (key) => key === CONNECTION_LOCK_KEY,
+    );
     const deletion = test.connection.deleteForCamera(EVENT, CAMERA);
     await deleteStarted;
 
@@ -750,11 +812,15 @@ describe("connection delegation cleanup", () => {
     const hold = await holdConnectionLock(test);
     await holdStarted;
 
-    const deleteStarted = instrumented.whenLockCalled();
+    const deleteStarted = instrumented.whenLockCalled(
+      (key) => key === CONNECTION_LOCK_KEY,
+    );
     const deletion = test.connection.deleteForCamera(EVENT, CAMERA);
     await deleteStarted;
 
-    const accessStarted = instrumented.whenLockCalled();
+    const accessStarted = instrumented.whenLockCalled(
+      (key) => key === CONNECTION_LOCK_KEY,
+    );
     const access = test.connection.eventAccess({
       tenantId: TENANT,
       eventId: EVENT,
@@ -794,7 +860,9 @@ describe("connection delegation cleanup", () => {
     const addition = test.connection.addForCamera(EVENT, PAGE, OTHER_CAMERA);
     await addStarted;
 
-    const accessStarted = instrumented.whenLockCalled();
+    const accessStarted = instrumented.whenLockCalled(
+      (key) => key === CONNECTION_LOCK_KEY,
+    );
     const access = test.connection.eventAccess({
       tenantId: TENANT,
       eventId: EVENT,
