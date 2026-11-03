@@ -17,12 +17,16 @@ import {
   type DetectionOverlayFrame,
   type DetectionOverlayLine,
   drawDetectionOverlay,
-  toOverlayCountingLines,
 } from "@/features/tenant/webrtc/utils/detectionOverlay";
 import {
   type BroadcastStreamHandle,
   createBroadcastStream,
 } from "../utils/broadcastStream";
+import {
+  selectCameraSettingsStore,
+  selectCameraViewStateStore,
+  toCameraDetectionOptions,
+} from "../utils/cameraDetectionSettings";
 import {
   CAMERA_FRAME_COUNT,
   CAMERA_FRAME_INTERVAL_MS,
@@ -141,9 +145,14 @@ export type MultiCameraDetectionLoopParams = {
   overlayCanvasRef: RefObject<HTMLCanvasElement | null>;
   lineCanvasRef?: RefObject<HTMLCanvasElement | null>;
   status: DetectCrowdStatus;
+  /** ローカルカメラ・開発用の共有ストア。カメラ用のストアがない場合に使う。 */
   settingsStore: DetectionSettingsStore;
   viewStateStore: DetectionViewStateStore;
   resultStore: DetectionResultStore;
+  /** カメラごとの検出設定。 */
+  cameraSettingsStores: ReadonlyMap<string, DetectionSettingsStore>;
+  /** カメラごとの画面操作の状態。 */
+  cameraViewStateStores: ReadonlyMap<string, DetectionViewStateStore>;
   /** カメラごとの結果。選択中でないカメラの計測報告にも使う。 */
   cameraResultStores: ReadonlyMap<string, DetectionResultStore>;
   onCameraPhase: (
@@ -172,6 +181,8 @@ export function useMultiCameraDetectionLoop({
   settingsStore,
   viewStateStore,
   resultStore,
+  cameraSettingsStores,
+  cameraViewStateStores,
   cameraResultStores,
   onCameraPhase,
   onBroadcastStreamChange,
@@ -206,28 +217,79 @@ export function useMultiCameraDetectionLoop({
     onBroadcastStreamChange(null);
   }, [onBroadcastStreamChange]);
 
-  // カウントラインが変わったら全カメラの通過数を数え直す
+  // カウントラインが変わったら、そのカメラの通過数だけを数え直す
   useEffect(() => {
-    let previousCountingLines = settingsStore.getState().countingLines;
+    const subscriptions: (() => void)[] = [];
 
-    return settingsStore.subscribe(() => {
-      const nextCountingLines = settingsStore.getState().countingLines;
-      if (areCountingLinesEqual(previousCountingLines, nextCountingLines)) {
-        return;
-      }
-      previousCountingLines = nextCountingLines;
+    const resetCamera = (key: string | null) => {
+      const settings = selectCameraSettingsStore(
+        key,
+        cameraSettingsStores,
+        settingsStore,
+      ).getState();
+      const lineCounts = createInitialLineCounts(settings.countingLines);
+      let affectsSelected: boolean;
 
-      latestOverlayFramesRef.current.clear();
-      for (const state of detectionStatesRef.current.values()) {
-        resetCrowdLineCount(state);
+      if (key === null) {
+        for (const [cameraKey, state] of detectionStatesRef.current) {
+          if (cameraSettingsStores.has(cameraKey)) {
+            continue;
+          }
+          resetCrowdLineCount(state);
+          latestOverlayFramesRef.current.delete(cameraKey);
+          const result = cameraResultStores.get(cameraKey);
+          if (result) {
+            applyLineCounts(result, lineCounts);
+          }
+        }
+        const selected = selectedKeyRef.current;
+        affectsSelected =
+          selected === null || !cameraSettingsStores.has(selected);
+      } else {
+        const state = detectionStatesRef.current.get(key);
+        if (state) {
+          resetCrowdLineCount(state);
+        }
+        latestOverlayFramesRef.current.delete(key);
+        const result = cameraResultStores.get(key);
+        if (result) {
+          applyLineCounts(result, lineCounts);
+        }
+        affectsSelected = selectedKeyRef.current === key;
       }
-      for (const store of cameraResultStores.values()) {
-        applyLineCounts(store, createInitialLineCounts(nextCountingLines));
+
+      if (affectsSelected) {
+        applyLineCounts(resultStore, lineCounts);
+        onDetectionFrameRef.current(null);
       }
-      applyLineCounts(resultStore, createInitialLineCounts(nextCountingLines));
-      onDetectionFrameRef.current(null);
-    });
-  }, [settingsStore, cameraResultStores, resultStore]);
+    };
+
+    const watch = (store: DetectionSettingsStore, key: string | null) => {
+      let previousCountingLines = store.getState().countingLines;
+      subscriptions.push(
+        store.subscribe(() => {
+          const nextCountingLines = store.getState().countingLines;
+          if (areCountingLinesEqual(previousCountingLines, nextCountingLines)) {
+            return;
+          }
+          previousCountingLines = nextCountingLines;
+          resetCamera(key);
+        }),
+      );
+    };
+
+    for (const [key, store] of cameraSettingsStores) {
+      watch(store, key);
+    }
+    // ローカルカメラ・開発用の共有ストアも監視する
+    watch(settingsStore, null);
+
+    return () => {
+      for (const unsubscribe of subscriptions) {
+        unsubscribe();
+      }
+    };
+  }, [settingsStore, cameraSettingsStores, cameraResultStores, resultStore]);
 
   // 停止したら選択中の表示を初期状態へ戻す
   useEffect(() => {
@@ -241,13 +303,27 @@ export function useMultiCameraDetectionLoop({
       ?.getContext("2d")
       ?.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
 
-    const lines = settingsStore.getState().countingLines;
-    const initialLineCounts = createInitialLineCounts(lines);
-    applyLineCounts(resultStore, initialLineCounts);
+    const selectedSettings = selectCameraSettingsStore(
+      selectedKeyRef.current,
+      cameraSettingsStores,
+      settingsStore,
+    ).getState();
+    applyLineCounts(
+      resultStore,
+      createInitialLineCounts(selectedSettings.countingLines),
+    );
     applyMetrics(resultStore, INITIAL_METRICS);
     resetDetectedPeople(resultStore);
-    for (const store of cameraResultStores.values()) {
-      applyLineCounts(store, initialLineCounts);
+    for (const [key, store] of cameraResultStores) {
+      const cameraSettings = selectCameraSettingsStore(
+        key,
+        cameraSettingsStores,
+        settingsStore,
+      ).getState();
+      applyLineCounts(
+        store,
+        createInitialLineCounts(cameraSettings.countingLines),
+      );
       applyMetrics(store, INITIAL_METRICS);
       resetDetectedPeople(store);
     }
@@ -258,6 +334,7 @@ export function useMultiCameraDetectionLoop({
     lineCanvasRef,
     overlayCanvasRef,
     settingsStore,
+    cameraSettingsStores,
     resultStore,
     cameraResultStores,
   ]);
@@ -265,6 +342,18 @@ export function useMultiCameraDetectionLoop({
   // 選択が変わったら、そのカメラの最新結果を既存の表示先へ移す
   useEffect(() => {
     if (status !== "detecting") {
+      const selectedSettings = selectCameraSettingsStore(
+        selectedKey,
+        cameraSettingsStores,
+        settingsStore,
+      ).getState();
+      applyLineCounts(
+        resultStore,
+        createInitialLineCounts(selectedSettings.countingLines),
+      );
+      applyMetrics(resultStore, INITIAL_METRICS);
+      resetDetectedPeople(resultStore);
+      onDetectionFrameRef.current(null);
       return;
     }
 
@@ -275,9 +364,14 @@ export function useMultiCameraDetectionLoop({
       applyMetrics(resultStore, snapshot.metrics);
       applyDetectedPeople(resultStore, snapshot.detectedPeople);
     } else {
+      const selectedSettings = selectCameraSettingsStore(
+        selectedKey,
+        cameraSettingsStores,
+        settingsStore,
+      ).getState();
       applyLineCounts(
         resultStore,
-        createInitialLineCounts(settingsStore.getState().countingLines),
+        createInitialLineCounts(selectedSettings.countingLines),
       );
       applyMetrics(resultStore, INITIAL_METRICS);
       resetDetectedPeople(resultStore);
@@ -288,7 +382,14 @@ export function useMultiCameraDetectionLoop({
         ? (latestOverlayFramesRef.current.get(selectedKey) ?? null)
         : null,
     );
-  }, [selectedKey, status, cameraResultStores, resultStore, settingsStore]);
+  }, [
+    selectedKey,
+    status,
+    cameraResultStores,
+    resultStore,
+    cameraSettingsStores,
+    settingsStore,
+  ]);
 
   useEffect(() => {
     if (status !== "detecting" || sources.size === 0) {
@@ -308,16 +409,29 @@ export function useMultiCameraDetectionLoop({
     detectionStatesRef.current = detectionStates;
     latestOverlayFramesRef.current.clear();
 
-    // この回の検出開始時点から数え直す
-    const initialLineCounts = createInitialLineCounts(
-      settingsStore.getState().countingLines,
-    );
-    for (const store of cameraResultStores.values()) {
-      applyLineCounts(store, initialLineCounts);
+    // この回の検出開始時点から、カメラごとのラインで数え直す
+    for (const [key, store] of cameraResultStores) {
+      const cameraSettings = selectCameraSettingsStore(
+        key,
+        cameraSettingsStores,
+        settingsStore,
+      ).getState();
+      applyLineCounts(
+        store,
+        createInitialLineCounts(cameraSettings.countingLines),
+      );
       applyMetrics(store, INITIAL_METRICS);
       resetDetectedPeople(store);
     }
-    applyLineCounts(resultStore, initialLineCounts);
+    const selectedSettings = selectCameraSettingsStore(
+      selectedKeyRef.current,
+      cameraSettingsStores,
+      settingsStore,
+    ).getState();
+    applyLineCounts(
+      resultStore,
+      createInitialLineCounts(selectedSettings.countingLines),
+    );
     applyMetrics(resultStore, INITIAL_METRICS);
     resetDetectedPeople(resultStore);
 
@@ -376,26 +490,25 @@ export function useMultiCameraDetectionLoop({
           if (cancelled) {
             return;
           }
-          const currentSettings = settingsStore.getState();
-          const countingLines = toOverlayCountingLines(
-            currentSettings.countingLines,
+          const currentSettings = selectCameraSettingsStore(
+            key,
+            cameraSettingsStores,
+            settingsStore,
+          ).getState();
+          const detectionOptions = toCameraDetectionOptions(
+            currentSettings,
             video.videoWidth,
             video.videoHeight,
           );
           const frame = await detectCapturedCrowdFrame(
             captured,
-            {
-              confidenceThreshold: currentSettings.confidenceThreshold,
-              trackingDistanceThreshold:
-                currentSettings.trackingDistanceThreshold,
-              countingLines,
-            },
+            detectionOptions,
             state,
           );
           if (cancelled) {
             return;
           }
-          updateCameraResult(key, video, frame, countingLines);
+          updateCameraResult(key, video, frame, detectionOptions.countingLines);
         },
         onPhase: (phase, error) => {
           if (!cancelled) {
@@ -421,7 +534,13 @@ export function useMultiCameraDetectionLoop({
         if (cancelled) {
           return;
         }
-        const pause = settingsStore.getState().detectionInterval;
+        // 直列スケジューラは全カメラを 1 周するため、周回後の待機は
+        // 選択中のカメラの検出間隔に合わせる。
+        const pause = selectCameraSettingsStore(
+          selectedKeyRef.current,
+          cameraSettingsStores,
+          settingsStore,
+        ).getState().detectionInterval;
         if (pause > 0) {
           await wait(pause);
         }
@@ -459,11 +578,21 @@ export function useMultiCameraDetectionLoop({
           const context = overlay.getContext("2d");
           if (context) {
             context.clearRect(0, 0, width, height);
-            const countingLines = toOverlayCountingLines(
-              settingsStore.getState().countingLines,
+            const selectedSettings = selectCameraSettingsStore(
+              key,
+              cameraSettingsStores,
+              settingsStore,
+            ).getState();
+            const selectedViewState = selectCameraViewStateStore(
+              key,
+              cameraViewStateStores,
+              viewStateStore,
+            ).getState();
+            const countingLines = toCameraDetectionOptions(
+              selectedSettings,
               width,
               height,
-            );
+            ).countingLines;
             const emptyFrame = toDetectionOverlayFrame(
               null,
               countingLines,
@@ -475,7 +604,7 @@ export function useMultiCameraDetectionLoop({
               (key ? latestOverlayFramesRef.current.get(key) : undefined) ??
                 emptyFrame,
               {
-                highlightedLineId: viewStateStore.getState().editingLineId,
+                highlightedLineId: selectedViewState.editingLineId,
                 lineCanvas: lineCanvasRef?.current,
               },
             );
@@ -523,6 +652,8 @@ export function useMultiCameraDetectionLoop({
     settingsStore,
     viewStateStore,
     resultStore,
+    cameraSettingsStores,
+    cameraViewStateStores,
     cameraResultStores,
     overlayCanvasRef,
     lineCanvasRef,

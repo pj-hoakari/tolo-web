@@ -168,16 +168,28 @@ describe("計測値の送信に失敗したとき", () => {
 
 describe("複数カメラの計測報告", () => {
   const REPORT_INTERVAL_MS = 30_000;
-  const lineId = INITIAL_SETTINGS.countingLines[0].id;
 
   function createCamera(
     key: string,
     observationPointId: string,
+    options: { lineId?: string; lineName?: string } = {},
   ): ObservationReportingCamera {
+    const countingLines = [
+      {
+        ...INITIAL_SETTINGS.countingLines[0],
+        id: options.lineId ?? INITIAL_SETTINGS.countingLines[0].id,
+        name: options.lineName ?? "",
+      },
+    ];
+    const cameraStores = createDetectionStores({
+      ...INITIAL_SETTINGS,
+      countingLines,
+    });
     return {
       key,
       observationPointId,
-      resultStore: createDetectionResultStore(INITIAL_SETTINGS.countingLines),
+      settingsStore: cameraStores.settingsStore,
+      resultStore: createDetectionResultStore(countingLines),
     };
   }
 
@@ -186,11 +198,12 @@ describe("複数カメラの計測報告", () => {
     forward: number,
     backward: number,
   ) {
+    const [line] = camera.settingsStore.getState().countingLines;
     camera.resultStore.setState((current) => ({
       ...current,
       lineCounts: {
         ...current.lineCounts,
-        [lineId]: { forward, backward },
+        [line.id]: { forward, backward },
       },
     }));
   }
@@ -251,6 +264,52 @@ describe("複数カメラの計測報告", () => {
     expect(
       sent.map((measurement) => measurement.observationPointId),
     ).not.toContain("");
+  });
+
+  it("カメラごとの設定ストアのラインで、そのカメラの観測点へ計測値を送る", async () => {
+    const first = createCamera("first", "a1b2c3d4e5f60718", {
+      lineId: "first-line",
+      lineName: "入口",
+    });
+    const second = createCamera("second", "b1b2c3d4e5f60718", {
+      lineId: "second-line",
+      lineName: "出口",
+    });
+    renderCameraReporting([first, second]);
+    await act(() => vi.advanceTimersByTimeAsync(0));
+
+    act(() => {
+      setLineCounts(first, 7, 2);
+      setLineCounts(second, 1, 5);
+    });
+
+    await act(() => vi.advanceTimersByTimeAsync(REPORT_INTERVAL_MS));
+
+    expect(reportMeasurements).toHaveBeenCalledTimes(1);
+    const sent = (
+      reportMeasurements.mock.calls[0][0] as {
+        measurements: {
+          observationPointId: string;
+          countIn: number;
+          countOut: number;
+        }[];
+      }
+    ).measurements;
+    expect(sent).toHaveLength(2);
+    expect(sent).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          observationPointId: "a1b2c3d4e5f60718",
+          countIn: 7,
+          countOut: 2,
+        }),
+        expect.objectContaining({
+          observationPointId: "b1b2c3d4e5f60718",
+          countIn: 1,
+          countOut: 5,
+        }),
+      ]),
+    );
   });
 
   it("紐づけのないカメラだけなら計測値を送らない", async () => {

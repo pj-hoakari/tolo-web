@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { JollySelect, SelectItem } from "@/components/ui/select";
 import { DetectionLineCreationModeToggle } from "@/features/tenant/detection/components/DetectionLineActions";
 import {
+  createCameraDetectionStoreMaps,
   createDetectionResultStore,
   useDetectionStores,
 } from "@/features/tenant/detection/stores/detectionStore";
@@ -19,6 +20,10 @@ import {
   type ObservationReportingCamera,
   useObservationReporting,
 } from "../hooks/useObservationReporting";
+import {
+  selectCameraSettingsStore,
+  selectCameraViewStateStore,
+} from "../utils/cameraDetectionSettings";
 import type { CameraCyclePhase } from "../utils/cameraScheduler";
 import type { CameraSourceSpec } from "../utils/cameraSources";
 import { createEspCameraVideoSource } from "../utils/espVideoSource";
@@ -116,15 +121,32 @@ export function CrowdDetection({
     () => sourceSpecs.map((spec) => spec.cameraEdgeId),
     [sourceSpecs],
   );
+  const espCameraKeys = useMemo(
+    () => (effectiveMode === "esp" ? cameraKeys : []),
+    [effectiveMode, cameraKeys],
+  );
+  const {
+    settingsStores: cameraSettingsStores,
+    viewStateStores: cameraViewStateStores,
+  } = useMemo(
+    () => createCameraDetectionStoreMaps(espCameraKeys),
+    [espCameraKeys],
+  );
   const cameraResultStores = useMemo(
     () =>
       new Map(
         cameraKeys.map((key) => [
           key,
-          createDetectionResultStore(settingsStore.getState().countingLines),
+          createDetectionResultStore(
+            selectCameraSettingsStore(
+              key,
+              cameraSettingsStores,
+              settingsStore,
+            ).getState().countingLines,
+          ),
         ]),
       ),
-    [cameraKeys, settingsStore],
+    [cameraKeys, cameraSettingsStores, settingsStore],
   );
 
   const {
@@ -140,6 +162,17 @@ export function CrowdDetection({
   } = useCrowdVideoSources(
     sourceSpecs,
     effectiveMode === "esp" ? initialCameraId : LOCAL_SOURCE_KEY,
+  );
+
+  const selectedSettingsStore = selectCameraSettingsStore(
+    selectedKey,
+    cameraSettingsStores,
+    settingsStore,
+  );
+  const selectedViewStateStore = selectCameraViewStateStore(
+    selectedKey,
+    cameraViewStateStores,
+    viewStateStore,
   );
 
   const [broadcastStream, setBroadcastStream] = useState<MediaStream | null>(
@@ -197,6 +230,8 @@ export function CrowdDetection({
     settingsStore,
     viewStateStore,
     resultStore,
+    cameraSettingsStores,
+    cameraViewStateStores,
     cameraResultStores,
     onCameraPhase: handleCameraPhase,
     onBroadcastStreamChange: setBroadcastStream,
@@ -214,18 +249,20 @@ export function CrowdDetection({
         return [];
       }
       const cameraResultStore = cameraResultStores.get(camera.edgeDeviceId);
-      if (!cameraResultStore) {
+      const cameraSettingsStore = cameraSettingsStores.get(camera.edgeDeviceId);
+      if (!cameraResultStore || !cameraSettingsStore) {
         return [];
       }
       return [
         {
           key: camera.edgeDeviceId,
           observationPointId: camera.observationPointId,
+          settingsStore: cameraSettingsStore,
           resultStore: cameraResultStore,
         },
       ];
     });
-  }, [effectiveMode, cameras, cameraResultStores]);
+  }, [effectiveMode, cameras, cameraResultStores, cameraSettingsStores]);
 
   const { unregistered } = useObservationReporting({
     eventId,
@@ -257,7 +294,9 @@ export function CrowdDetection({
       )}
       {status === "detecting" && (
         <div className="flex w-full max-w-3xl justify-end px-4 sm:px-0">
-          <DetectionLineCreationModeToggle viewStateStore={viewStateStore} />
+          <DetectionLineCreationModeToggle
+            viewStateStore={selectedViewStateStore}
+          />
         </div>
       )}
       {DEV_VIDEO_SOURCE_ENABLED && (
@@ -338,9 +377,9 @@ export function CrowdDetection({
         videoRef={videoRef}
         overlayCanvasRef={overlayCanvasRef}
         lineCanvasRef={lineCanvasRef}
-        settingsStore={settingsStore}
+        settingsStore={selectedSettingsStore}
         resultStore={resultStore}
-        viewStateStore={viewStateStore}
+        viewStateStore={selectedViewStateStore}
       />
       <BroadcastIndicator active={active} edgeId={edgeId} />
     </div>

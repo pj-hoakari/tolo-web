@@ -5,6 +5,7 @@ import {
   applyMetrics,
   applyNumberSetting,
   applySettings,
+  createCameraDetectionStoreMaps,
   createDetectionStores,
   type DetectionSettings,
   INITIAL_SETTINGS,
@@ -323,5 +324,63 @@ describe("画面操作の状態", () => {
       editingLineId: null,
       lineCreationMode: false,
     });
+  });
+});
+
+describe("カメラごとの設定と画面操作の状態", () => {
+  it("同じ初期値から作ってもカメラごとに独立している", () => {
+    const { settingsStores, viewStateStores } = createCameraDetectionStoreMaps([
+      "camera-a",
+      "camera-b",
+    ]);
+    const first = settingsStores.get("camera-a");
+    const second = settingsStores.get("camera-b");
+    const firstView = viewStateStores.get("camera-a");
+    const secondView = viewStateStores.get("camera-b");
+    expect(first).toBeDefined();
+    expect(second).toBeDefined();
+    expect(firstView).toBeDefined();
+    expect(secondView).toBeDefined();
+    expect(first).not.toBe(second);
+    expect(firstView).not.toBe(secondView);
+  });
+
+  it("カメラAのラインとしきい値を変えてもカメラBは変わらない", () => {
+    const { settingsStores, viewStateStores } = createCameraDetectionStoreMaps([
+      "camera-a",
+      "camera-b",
+    ]);
+    const first = settingsStores.get("camera-a");
+    const second = settingsStores.get("camera-b");
+    const firstView = viewStateStores.get("camera-a");
+    const secondView = viewStateStores.get("camera-b");
+    if (!first || !second || !firstView || !secondView) {
+      throw new Error("camera stores were not created");
+    }
+    const secondBefore = structuredClone(second.getState());
+    const secondViewBefore = structuredClone(secondView.getState());
+
+    applyCountingLines(first, [
+      {
+        id: "camera-a-line",
+        name: "入口",
+        p1: { x: 0.1, y: 0.2 },
+        p2: { x: 0.9, y: 0.8 },
+      },
+    ]);
+    applyNumberSetting(first, "confidenceThreshold", 0.42);
+    applyNumberSetting(first, "trackingDistanceThreshold", 0.33);
+    applyNumberSetting(first, "detectionInterval", 750);
+    setEditingLine(firstView, "camera-a-line");
+
+    expect(first.getState()).toMatchObject({
+      confidenceThreshold: 0.42,
+      trackingDistanceThreshold: 0.33,
+      detectionInterval: 750,
+      countingLines: [{ id: "camera-a-line", name: "入口" }],
+    });
+    expect(firstView.getState().editingLineId).toBe("camera-a-line");
+    expect(second.getState()).toEqual(secondBefore);
+    expect(secondView.getState()).toEqual(secondViewBefore);
   });
 });

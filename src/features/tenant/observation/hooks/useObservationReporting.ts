@@ -25,6 +25,7 @@ export type ObservationReportingCamera = {
   key: string;
   /** カメラの cameraLinks で紐づいた観測点。未紐づけなら空文字。 */
   observationPointId: string;
+  settingsStore: DetectionSettingsStore;
   resultStore: DetectionResultStore;
 };
 
@@ -167,7 +168,6 @@ export function useObservationReporting({
     }
 
     const tick = () => {
-      const countingLines = settingsStore.getState().countingLines;
       const windowEnd = new Date();
       let measurements: WindowMeasurement[];
 
@@ -177,6 +177,7 @@ export function useObservationReporting({
           const current = camera.resultStore.getState();
           const before = previousByCamera.get(camera.key) ?? current;
           if (camera.observationPointId !== "") {
+            const countingLines = camera.settingsStore.getState().countingLines;
             measurements.push(
               ...buildWindowMeasurements({
                 pointIdByLineId: mapLinesToObservationPoint(
@@ -196,7 +197,7 @@ export function useObservationReporting({
         const current = resultStore.getState();
         measurements = buildWindowMeasurements({
           pointIdByLineId: mapLinesToObservationPoints(
-            countingLines,
+            settingsStore.getState().countingLines,
             pointIdByName as ReadonlyMap<string, string>,
           ),
           previous,

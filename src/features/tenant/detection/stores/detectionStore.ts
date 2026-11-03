@@ -146,17 +146,63 @@ export function createDetectionResultStore(
   }));
 }
 
+export function createDetectionSettingsStore(
+  settings: DetectionSettings = INITIAL_SETTINGS,
+): DetectionSettingsStore {
+  return createStore<DetectionSettings>()(() => ({
+    ...settings,
+    countingLines: settings.countingLines.map((line) => ({
+      ...line,
+      p1: { ...line.p1 },
+      p2: { ...line.p2 },
+    })),
+  }));
+}
+
+export function createDetectionViewStateStore(
+  countingLines: DetectionCountingLineSetting[] = INITIAL_SETTINGS.countingLines,
+): DetectionViewStateStore {
+  return createStore<DetectionViewState>()(() => ({
+    selectedLineId: countingLines[0]?.id ?? DEFAULT_LINE_ID,
+    editingLineId: countingLines[0]?.id ?? null,
+    lineCreationMode: false,
+  }));
+}
+
+export type CameraDetectionStoreMaps = {
+  settingsStores: ReadonlyMap<string, DetectionSettingsStore>;
+  viewStateStores: ReadonlyMap<string, DetectionViewStateStore>;
+};
+
+/**
+ * カメラごとの設定と画面操作の状態を作る。
+ *
+ * 検出器と ONNX セッションは共有したまま、カメラごとに独立した
+ * しきい値・検出間隔・カウントライン・編集対象を持たせる。
+ */
+export function createCameraDetectionStoreMaps(
+  cameraKeys: readonly string[],
+  settings: DetectionSettings = INITIAL_SETTINGS,
+): CameraDetectionStoreMaps {
+  const settingsStores = new Map<string, DetectionSettingsStore>();
+  const viewStateStores = new Map<string, DetectionViewStateStore>();
+  for (const key of cameraKeys) {
+    settingsStores.set(key, createDetectionSettingsStore(settings));
+    viewStateStores.set(
+      key,
+      createDetectionViewStateStore(settings.countingLines),
+    );
+  }
+  return { settingsStores, viewStateStores };
+}
+
 export function createDetectionStores(
   settings: DetectionSettings = INITIAL_SETTINGS,
 ): DetectionStores {
   return {
-    settingsStore: createStore<DetectionSettings>()(() => settings),
+    settingsStore: createDetectionSettingsStore(settings),
     resultStore: createDetectionResultStore(settings.countingLines),
-    viewStateStore: createStore<DetectionViewState>()(() => ({
-      selectedLineId: settings.countingLines[0]?.id ?? DEFAULT_LINE_ID,
-      editingLineId: settings.countingLines[0]?.id ?? null,
-      lineCreationMode: false,
-    })),
+    viewStateStore: createDetectionViewStateStore(settings.countingLines),
   };
 }
 
