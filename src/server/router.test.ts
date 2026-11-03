@@ -1445,12 +1445,14 @@ describe("camera", () => {
     vi.stubEnv("FIREBASE_API_KEY", "api-key-1");
     vi.stubEnv("FIRESTORE_EMULATOR_HOST", "firestore:8080");
     vi.stubEnv("FIREBASE_AUTH_EMULATOR_HOST", "auth:9099");
+    vi.stubEnv("AUTH_IDP_ISSUER", "https://idp.test/");
     vi.stubEnv("AUTH_IDP_CLIENT_SECRET", "must-not-leak");
 
     await expect(
       call(router.camera.provisioningDefaults, undefined),
     ).resolves.toEqual({
       signalingUrl: "https://signaling.example",
+      idpUrl: "https://idp.test",
       firebaseProjectId: "project-1",
       firebaseApiKey: "api-key-1",
       firestoreEmulatorHost: "firestore:8080",

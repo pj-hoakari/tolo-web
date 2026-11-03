@@ -134,9 +134,11 @@ describe("provisioningDefaults", () => {
     vi.stubEnv("FIREBASE_API_KEY", "api-key-1");
     vi.stubEnv("FIRESTORE_EMULATOR_HOST", "firestore:8080");
     vi.stubEnv("FIREBASE_AUTH_EMULATOR_HOST", "auth:9099");
+    vi.stubEnv("AUTH_IDP_ISSUER", "https://idp.test/");
 
     expect(provisioningDefaults()).toEqual({
       signalingUrl: "https://signaling.example",
+      idpUrl: "https://idp.test",
       firebaseProjectId: "project-1",
       firebaseApiKey: "api-key-1",
       firestoreEmulatorHost: "firestore:8080",
@@ -151,9 +153,11 @@ describe("provisioningDefaults", () => {
     vi.stubEnv("FIREBASE_API_KEY", "");
     vi.stubEnv("FIRESTORE_EMULATOR_HOST", "");
     vi.stubEnv("FIREBASE_AUTH_EMULATOR_HOST", "");
+    vi.stubEnv("AUTH_IDP_ISSUER", "");
 
     expect(provisioningDefaults()).toEqual({
       signalingUrl: "http://internal:8787",
+      idpUrl: "",
       firebaseProjectId: "tolo-signaling",
       firebaseApiKey: "demo-tolo-web",
       firestoreEmulatorHost: null,

@@ -5,6 +5,7 @@ export type CameraConfigInput = {
   wifiSsid: string;
   wifiPassword: string;
   signalingUrl: string;
+  idpUrl: string;
   firebaseProjectId: string;
   firebaseApiKey: string;
   firestoreEmulatorHost: string | null;
@@ -18,6 +19,7 @@ export type ConfigCommand = {
   wifi_ssid: string;
   wifi_password: string;
   signaling_url: string;
+  idp_url: string;
   firebase_project_id: string;
   firebase_api_key: string;
   firestore_emulator_host: string;
@@ -69,6 +71,7 @@ export function encodeConfigCommand(input: CameraConfigInput): string {
     wifi_ssid: input.wifiSsid,
     wifi_password: input.wifiPassword,
     signaling_url: input.signalingUrl,
+    idp_url: input.idpUrl,
     firebase_project_id: input.firebaseProjectId,
     firebase_api_key: input.firebaseApiKey,
     firestore_emulator_host: input.firestoreEmulatorHost ?? "",

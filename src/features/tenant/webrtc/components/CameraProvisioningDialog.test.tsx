@@ -140,6 +140,7 @@ describe("CameraProvisioningDialog", () => {
       version: 1,
       wifi_ssid: "reception",
       wifi_password: "wifi-secret",
+      idp_url: "",
       edge_device_id: edgeDeviceId,
     });
     expect(approvals).toEqual([

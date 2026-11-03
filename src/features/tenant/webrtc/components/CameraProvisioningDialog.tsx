@@ -223,6 +223,7 @@ export function CameraProvisioningDialog({
           wifiSsid,
           wifiPassword,
           signalingUrl: defaults.signalingUrl,
+          idpUrl: defaults.idpUrl,
           firebaseProjectId: defaults.firebaseProjectId,
           firebaseApiKey: defaults.firebaseApiKey,
           firestoreEmulatorHost: defaults.firestoreEmulatorHost,

@@ -223,6 +223,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
       provisioningDefaults: os.handler(
         async (): Promise<CameraProvisioningDefaults> => ({
           signalingUrl: "http://127.0.0.1:8787",
+          idpUrl: "",
           firebaseProjectId: "demo-tolo",
           firebaseApiKey: "demo-tolo-web",
           firestoreEmulatorHost: "127.0.0.1:8080",
