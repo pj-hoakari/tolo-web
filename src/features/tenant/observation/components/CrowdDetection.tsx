@@ -152,6 +152,8 @@ export function CrowdDetection({
   const {
     videoSource,
     videoSources,
+    freshness,
+    isFresh,
     status,
     error,
     sourceStates,
@@ -224,6 +226,7 @@ export function CrowdDetection({
   useMultiCameraDetectionLoop({
     sources: videoSources,
     selectedKey,
+    isFresh,
     overlayCanvasRef,
     lineCanvasRef,
     status,
@@ -272,6 +275,7 @@ export function CrowdDetection({
     settingsStore,
     resultStore,
     cameras: reportingCameras,
+    isFresh,
   });
 
   const handleSourceChange = useCallback((factory: CrowdVideoSourceFactory) => {
@@ -354,6 +358,9 @@ export function CrowdDetection({
             {cameras.map((camera) => {
               const loop = cameraPhases[camera.edgeDeviceId];
               const name = camera.name || camera.edgeDeviceId;
+              const stale =
+                loop?.phase === "stale" ||
+                freshness.get(camera.edgeDeviceId) === false;
               return (
                 <li key={camera.edgeDeviceId}>
                   {loop?.error
@@ -363,7 +370,9 @@ export function CrowdDetection({
                       })
                     : tCameraStatus("label", {
                         camera: name,
-                        status: tCameraStatus(loop?.phase ?? "waiting"),
+                        status: tCameraStatus(
+                          stale ? "stale" : (loop?.phase ?? "waiting"),
+                        ),
                       })}
                 </li>
               );

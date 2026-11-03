@@ -530,6 +530,7 @@
     "cameraStatus": {
       "label": "{camera}: {status}",
       "waiting": "待機中",
+      "stale": "映像が届いていません",
       "capturing": "撮影中",
       "inferring": "検出中",
       "ready": "検出中",

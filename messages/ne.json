@@ -530,6 +530,7 @@
     "cameraStatus": {
       "label": "{camera}: {status}",
       "waiting": "प्रतीक्षामा",
+      "stale": "भिडियो आएको छैन",
       "capturing": "क्याप्चर गर्दै",
       "inferring": "पहिचान गर्दै",
       "ready": "पहिचान गर्दै",

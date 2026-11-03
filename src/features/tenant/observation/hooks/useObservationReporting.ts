@@ -44,6 +44,7 @@ export function useObservationReporting({
   settingsStore,
   resultStore,
   cameras,
+  isFresh,
 }: {
   eventId: string;
   edgeDeviceId: string;
@@ -52,6 +53,8 @@ export function useObservationReporting({
   settingsStore: DetectionSettingsStore;
   resultStore: DetectionResultStore;
   cameras?: readonly ObservationReportingCamera[];
+  /** カメラの映像が新しく届いているか。false のカメラは報告しない。 */
+  isFresh: (key: string) => boolean;
 }): { unregistered: boolean } {
   const [unregistered, setUnregistered] = useState(false);
   const [pointIdByName, setPointIdByName] = useState<ReadonlyMap<
@@ -109,6 +112,7 @@ export function useObservationReporting({
           activeObservationPointIds = [
             ...new Set(
               cameras
+                .filter((camera) => isFresh(camera.key))
                 .map((camera) => camera.observationPointId)
                 .filter((pointId) => pointId !== ""),
             ),
@@ -146,6 +150,7 @@ export function useObservationReporting({
     settingsStore,
     unregistered,
     cameras,
+    isFresh,
   ]);
 
   useEffect(() => {
@@ -176,7 +181,7 @@ export function useObservationReporting({
         for (const camera of cameras) {
           const current = camera.resultStore.getState();
           const before = previousByCamera.get(camera.key) ?? current;
-          if (camera.observationPointId !== "") {
+          if (camera.observationPointId !== "" && isFresh(camera.key)) {
             const countingLines = camera.settingsStore.getState().countingLines;
             measurements.push(
               ...buildWindowMeasurements({
@@ -245,6 +250,7 @@ export function useObservationReporting({
     resultStore,
     unregistered,
     cameras,
+    isFresh,
   ]);
 
   return { unregistered };

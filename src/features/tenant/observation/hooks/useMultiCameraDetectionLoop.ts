@@ -142,6 +142,8 @@ export type MultiCameraDetectionLoopParams = {
   /** 開いた全カメラの映像ソース。選択中以外も検出に使う。 */
   sources: ReadonlyMap<string, VideoSourceDescriptor>;
   selectedKey: string | null;
+  /** カメラの映像が新しく届いているか。false のカメラは取得も推論も飛ばす。 */
+  isFresh: (key: string) => boolean;
   overlayCanvasRef: RefObject<HTMLCanvasElement | null>;
   lineCanvasRef?: RefObject<HTMLCanvasElement | null>;
   status: DetectCrowdStatus;
@@ -175,6 +177,7 @@ export type MultiCameraDetectionLoopParams = {
 export function useMultiCameraDetectionLoop({
   sources,
   selectedKey,
+  isFresh,
   overlayCanvasRef,
   lineCanvasRef,
   status,
@@ -485,6 +488,7 @@ export function useMultiCameraDetectionLoop({
       scheduledCameras.push({
         key,
         isReady: () => isVideoReady(video),
+        isFresh: () => isFresh(key),
         capture: () => captureCrowdFrame(video, state),
         infer: async (captured) => {
           if (cancelled) {
@@ -649,6 +653,7 @@ export function useMultiCameraDetectionLoop({
   }, [
     status,
     sources,
+    isFresh,
     settingsStore,
     viewStateStore,
     resultStore,

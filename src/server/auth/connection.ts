@@ -591,15 +591,6 @@ export function createConnectionAuth(
           "no camera connection authorization; authorize the camera connection",
         );
       }
-      if (
-        cameraEdgeDeviceId &&
-        !parseCameraIds(authorization.cameraIds).includes(cameraEdgeDeviceId)
-      ) {
-        throw connectionError(
-          CONNECTION_ERROR_CODES.cameraNotDelegated,
-          "the camera is not part of this page's connection delegation",
-        );
-      }
       return realAuth.lock(`connection:${authorization.id}`, async () => {
         const current = await store.findOne<ConnectionAuthorization>({
           model: CONNECTION_AUTHORIZATION,
@@ -610,6 +601,15 @@ export function createConnectionAuth(
           throw connectionError(
             CONNECTION_ERROR_CODES.authorizationRequired,
             "no camera connection authorization; authorize the camera connection",
+          );
+        }
+        if (
+          cameraEdgeDeviceId &&
+          !parseCameraIds(current.cameraIds).includes(cameraEdgeDeviceId)
+        ) {
+          throw connectionError(
+            CONNECTION_ERROR_CODES.cameraNotDelegated,
+            "the camera is not part of this page's connection delegation",
           );
         }
         return eventAccess(current, env);
@@ -623,17 +623,27 @@ export function createConnectionAuth(
         where: [{ field: "eventId", value: eventId }],
       });
       for (const row of rows ?? []) {
-        const cameraIds = parseCameraIds(row.cameraIds);
-        if (!cameraIds.includes(cameraEdgeDeviceId)) continue;
-        const remaining = cameraIds.filter((id) => id !== cameraEdgeDeviceId);
-        if (remaining.length === 0) {
-          await deleteAuthorization(row.id);
+        if (!parseCameraIds(row.cameraIds).includes(cameraEdgeDeviceId)) {
           continue;
         }
-        await db.update({
-          model: CONNECTION_AUTHORIZATION,
-          where: [{ field: "id", value: row.id }],
-          update: { cameraIds: JSON.stringify(remaining) },
+        await realAuth.lock(`connection:${row.id}`, async () => {
+          const current = await db.findOne<ConnectionAuthorization>({
+            model: CONNECTION_AUTHORIZATION,
+            where: [{ field: "id", value: row.id }],
+          });
+          if (!current) return;
+          const cameraIds = parseCameraIds(current.cameraIds);
+          if (!cameraIds.includes(cameraEdgeDeviceId)) return;
+          const remaining = cameraIds.filter((id) => id !== cameraEdgeDeviceId);
+          if (remaining.length === 0) {
+            await deleteAuthorization(current.id);
+            return;
+          }
+          await db.update({
+            model: CONNECTION_AUTHORIZATION,
+            where: [{ field: "id", value: current.id }],
+            update: { cameraIds: JSON.stringify(remaining) },
+          });
         });
       }
     },
@@ -652,14 +662,24 @@ export function createConnectionAuth(
         ],
       });
       for (const row of rows ?? []) {
-        const cameraIds = parseCameraIds(row.cameraIds);
-        if (cameraIds.includes(cameraEdgeDeviceId)) continue;
-        await db.update({
-          model: CONNECTION_AUTHORIZATION,
-          where: [{ field: "id", value: row.id }],
-          update: {
-            cameraIds: JSON.stringify([...cameraIds, cameraEdgeDeviceId]),
-          },
+        if (parseCameraIds(row.cameraIds).includes(cameraEdgeDeviceId)) {
+          continue;
+        }
+        await realAuth.lock(`connection:${row.id}`, async () => {
+          const current = await db.findOne<ConnectionAuthorization>({
+            model: CONNECTION_AUTHORIZATION,
+            where: [{ field: "id", value: row.id }],
+          });
+          if (!current) return;
+          const cameraIds = parseCameraIds(current.cameraIds);
+          if (cameraIds.includes(cameraEdgeDeviceId)) return;
+          await db.update({
+            model: CONNECTION_AUTHORIZATION,
+            where: [{ field: "id", value: current.id }],
+            update: {
+              cameraIds: JSON.stringify([...cameraIds, cameraEdgeDeviceId]),
+            },
+          });
         });
       }
     },

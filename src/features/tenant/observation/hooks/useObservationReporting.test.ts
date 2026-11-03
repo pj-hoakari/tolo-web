@@ -44,6 +44,7 @@ function renderReporting(initial: {
         status: "idle",
         settingsStore,
         resultStore,
+        isFresh: () => true,
         ...props,
       }),
     { initialProps: initial },
@@ -126,6 +127,7 @@ describe("計測値の送信に失敗したとき", () => {
           listening: false,
           status: "detecting",
           ...stores,
+          isFresh: () => true,
           ...props,
         }),
       { initialProps: { edgeDeviceId: "8c1f0e2a5d4b3c6e" } },
@@ -210,7 +212,10 @@ describe("複数カメラの計測報告", () => {
 
   function renderCameraReporting(
     cameras: ObservationReportingCamera[],
-    options: { listening?: boolean } = {},
+    options: {
+      listening?: boolean;
+      isFresh?: (key: string) => boolean;
+    } = {},
   ) {
     return renderHook(() =>
       useObservationReporting({
@@ -221,6 +226,7 @@ describe("複数カメラの計測報告", () => {
         settingsStore,
         resultStore: resultStore,
         cameras,
+        isFresh: options.isFresh ?? (() => true),
       }),
     );
   }
@@ -321,6 +327,77 @@ describe("複数カメラの計測報告", () => {
     await act(() => vi.advanceTimersByTimeAsync(REPORT_INTERVAL_MS * 2));
 
     expect(reportMeasurements).not.toHaveBeenCalled();
+  });
+
+  it("新しい映像が届いているカメラだけを Heartbeat と計測の対象にし、復帰すると再開する", async () => {
+    const freshKeys = new Set(["first"]);
+    const isFresh = (key: string) => freshKeys.has(key);
+    const first = createCamera("first", "a1b2c3d4e5f60718");
+    const second = createCamera("second", "b1b2c3d4e5f60718");
+    renderCameraReporting([first, second], { listening: true, isFresh });
+    await act(() => vi.advanceTimersByTimeAsync(0));
+
+    expect(heartbeat).toHaveBeenLastCalledWith({
+      eventId: "test",
+      edgeDeviceId: "0123456789abcdef",
+      activeObservationPointIds: ["a1b2c3d4e5f60718"],
+    });
+
+    act(() => {
+      setLineCounts(first, 2, 0);
+      setLineCounts(second, 5, 5);
+    });
+    await act(() => vi.advanceTimersByTimeAsync(REPORT_INTERVAL_MS));
+
+    expect(reportMeasurements).toHaveBeenCalledTimes(1);
+    const firstWindow = (
+      reportMeasurements.mock.calls[0][0] as {
+        measurements: { observationPointId: string; countIn: number }[];
+      }
+    ).measurements;
+    expect(firstWindow).toEqual([
+      expect.objectContaining({
+        observationPointId: "a1b2c3d4e5f60718",
+        countIn: 2,
+        countOut: 0,
+      }),
+    ]);
+
+    freshKeys.add("second");
+    act(() => {
+      setLineCounts(first, 3, 0);
+      setLineCounts(second, 8, 7);
+    });
+    await act(() => vi.advanceTimersByTimeAsync(REPORT_INTERVAL_MS));
+
+    expect(reportMeasurements).toHaveBeenCalledTimes(2);
+    const secondWindow = (
+      reportMeasurements.mock.calls[1][0] as {
+        measurements: { observationPointId: string; countIn: number }[];
+      }
+    ).measurements;
+    expect(secondWindow).toHaveLength(2);
+    expect(secondWindow).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          observationPointId: "a1b2c3d4e5f60718",
+          countIn: 1,
+          countOut: 0,
+        }),
+        expect.objectContaining({
+          observationPointId: "b1b2c3d4e5f60718",
+          countIn: 3,
+          countOut: 2,
+        }),
+      ]),
+    );
+
+    await act(() => vi.advanceTimersByTimeAsync(10_000));
+    expect(heartbeat).toHaveBeenLastCalledWith({
+      eventId: "test",
+      edgeDeviceId: "0123456789abcdef",
+      activeObservationPointIds: ["a1b2c3d4e5f60718", "b1b2c3d4e5f60718"],
+    });
   });
 
   it("検出中は全カメラの紐づけ先を Heartbeat の対象にする", async () => {

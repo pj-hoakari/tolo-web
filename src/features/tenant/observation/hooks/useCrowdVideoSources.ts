@@ -15,6 +15,7 @@ import {
 import {
   CameraAccessError,
   type CrowdVideoSource,
+  isFrameFresh,
   type VideoSourceDescriptor,
 } from "../utils/videoSource";
 import type { DetectCrowdStatus } from "./useDetectCrowd";
@@ -29,6 +30,10 @@ export type UseCrowdVideoSourcesResult = {
   videoSource: VideoSourceDescriptor | null;
   /** 開いた全カメラの映像ソース。選択中以外も検出ループが利用する。 */
   videoSources: ReadonlyMap<string, VideoSourceDescriptor>;
+  /** カメラごとに新しいフレームが届いているか。UI 表示用。 */
+  freshness: ReadonlyMap<string, boolean>;
+  /** カメラの映像が新しく届いているか。検出と報告の可否に使う。 */
+  isFresh: (key: string) => boolean;
   status: DetectCrowdStatus;
   error: string | null;
   sourceStates: CrowdSourceState[];
@@ -38,6 +43,23 @@ export type UseCrowdVideoSourcesResult = {
   stop: () => void;
   reportDetectionError: (cause: unknown) => void;
 };
+
+const FRESHNESS_POLL_INTERVAL_MS = 1_000;
+
+function areFreshnessEqual(
+  a: ReadonlyMap<string, boolean>,
+  b: ReadonlyMap<string, boolean>,
+): boolean {
+  if (a.size !== b.size) {
+    return false;
+  }
+  for (const [key, fresh] of a) {
+    if (b.get(key) !== fresh) {
+      return false;
+    }
+  }
+  return true;
+}
 
 /**
  * 複数の映像ソースを同時に開いたまま、選択した1つの映像だけを表示する。
@@ -52,12 +74,17 @@ export function useCrowdVideoSources(
   specsRef.current = specs;
 
   const openedRef = useRef<CrowdVideoSource[]>([]);
+  const sourceByKeyRef = useRef<Map<string, CrowdVideoSource>>(new Map());
+  const lastFrameAtRef = useRef<Map<string, number | null>>(new Map());
   const descriptorsRef = useRef<Map<string, VideoSourceDescriptor>>(new Map());
   const operationIdRef = useRef(0);
 
   const [descriptors, setDescriptors] = useState<
     Map<string, VideoSourceDescriptor>
   >(() => new Map());
+  const [freshness, setFreshness] = useState<ReadonlyMap<string, boolean>>(
+    () => new Map(),
+  );
   const [sourceStates, setSourceStates] = useState<CrowdSourceState[]>([]);
   const [selectedKey, setSelectedKey] = useState<string | null>(
     initialSelectedKey ?? specs[0]?.cameraEdgeId ?? null,
@@ -102,14 +129,54 @@ export function useCrowdVideoSources(
     });
   }, [specs, initialSelectedKey]);
 
+  const readFreshness = useCallback((): Map<string, boolean> => {
+    const now = performance.now();
+    const next = new Map<string, boolean>();
+    for (const [key, source] of sourceByKeyRef.current) {
+      const lastFrameAt = source.lastFrameAt();
+      lastFrameAtRef.current.set(key, lastFrameAt);
+      next.set(key, isFrameFresh(lastFrameAt, now));
+    }
+    return next;
+  }, []);
+
+  const publishFreshness = useCallback(() => {
+    const next = readFreshness();
+    setFreshness((previous) =>
+      areFreshnessEqual(previous, next) ? previous : next,
+    );
+  }, [readFreshness]);
+
+  const isFresh = useCallback((key: string): boolean => {
+    const source = sourceByKeyRef.current.get(key);
+    if (!source) {
+      return false;
+    }
+    const lastFrameAt = source.lastFrameAt();
+    lastFrameAtRef.current.set(key, lastFrameAt);
+    return isFrameFresh(lastFrameAt);
+  }, []);
+
   const closeSources = useCallback(() => {
     for (const source of openedRef.current) {
       source.close();
     }
     openedRef.current = [];
+    sourceByKeyRef.current = new Map();
+    lastFrameAtRef.current = new Map();
     descriptorsRef.current = new Map();
     setDescriptors(new Map());
+    setFreshness((previous) => (previous.size === 0 ? previous : new Map()));
   }, []);
+
+  useEffect(() => {
+    publishFreshness();
+    if (descriptors.size === 0) {
+      return;
+    }
+    const timer = setInterval(publishFreshness, FRESHNESS_POLL_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [descriptors, publishFreshness]);
 
   const start = useCallback(async () => {
     const operationId = ++operationIdRef.current;
@@ -137,9 +204,11 @@ export function useCrowdVideoSources(
 
     openedRef.current = opened.map((entry) => entry.source);
     const nextDescriptors = new Map<string, VideoSourceDescriptor>();
+    const nextSources = new Map<string, CrowdVideoSource>();
     const nextStates: CrowdSourceState[] = opened.map((entry) => {
       if (entry.descriptor) {
         nextDescriptors.set(entry.cameraEdgeId, entry.descriptor);
+        nextSources.set(entry.cameraEdgeId, entry.source);
         return { key: entry.cameraEdgeId, status: "ready", error: null };
       }
       return {
@@ -148,9 +217,11 @@ export function useCrowdVideoSources(
         error: describeError(entry.error),
       };
     });
+    sourceByKeyRef.current = nextSources;
     descriptorsRef.current = nextDescriptors;
     setDescriptors(nextDescriptors);
     setSourceStates(nextStates);
+    publishFreshness();
 
     const readyKeys = [...nextDescriptors.keys()];
     if (readyKeys.length === 0) {
@@ -186,7 +257,7 @@ export function useCrowdVideoSources(
       return;
     }
     setStatus("detecting");
-  }, [closeSources, describeError, initialSelectedKey, t]);
+  }, [closeSources, describeError, initialSelectedKey, publishFreshness, t]);
 
   const stop = useCallback(() => {
     operationIdRef.current += 1;
@@ -236,6 +307,8 @@ export function useCrowdVideoSources(
   return {
     videoSource,
     videoSources: descriptors,
+    freshness,
+    isFresh,
     status,
     error,
     sourceStates,

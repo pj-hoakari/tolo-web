@@ -530,6 +530,7 @@
     "cameraStatus": {
       "label": "{camera}: {status}",
       "waiting": "En espera",
+      "stale": "Sin vídeo",
       "capturing": "Capturando",
       "inferring": "Detectando",
       "ready": "Detectando",

@@ -11,6 +11,7 @@ export const CAMERA_FRAME_INTERVAL_MS = 300;
 
 export type CameraCyclePhase =
   | "waiting"
+  | "stale"
   | "capturing"
   | "inferring"
   | "ready"
@@ -26,6 +27,11 @@ export type ScheduledCamera<TFrame> = {
   key: string;
   /** この回にフレームを取得できる状態か（映像が来ているか）。 */
   isReady: () => boolean;
+  /**
+   * 映像が新しく届いているか。省略時は常に新しいとみなす。
+   * `isReady` が true でもこれが false なら、凍結したフレームは取得しない。
+   */
+  isFresh?: () => boolean;
   /** 同期的に 1 枚取得する。失敗は例外で伝える。 */
   capture: () => TFrame;
   /** 取得済みの 1 枚を推論する。5 枚をまとめて渡さない。 */
@@ -76,14 +82,22 @@ export async function runCameraSchedulerCycle<TFrame>(
       break;
     }
 
+    const isFresh = () => camera.isFresh?.() ?? true;
+
     if (!camera.isReady()) {
       camera.onPhase?.("waiting");
       outcomes.push({ key: camera.key, status: "skipped" });
       continue;
     }
 
+    if (!isFresh()) {
+      camera.onPhase?.("stale");
+      outcomes.push({ key: camera.key, status: "skipped" });
+      continue;
+    }
+
     const frames: TFrame[] = [];
-    let ready = true;
+    let skipPhase: "waiting" | "stale" | null = null;
     camera.onPhase?.("capturing");
 
     try {
@@ -95,7 +109,11 @@ export async function runCameraSchedulerCycle<TFrame>(
           return outcomes;
         }
         if (!camera.isReady()) {
-          ready = false;
+          skipPhase = "waiting";
+          break;
+        }
+        if (!isFresh()) {
+          skipPhase = "stale";
           break;
         }
         frames.push(camera.capture());
@@ -109,8 +127,8 @@ export async function runCameraSchedulerCycle<TFrame>(
       continue;
     }
 
-    if (!ready) {
-      camera.onPhase?.("waiting");
+    if (skipPhase) {
+      camera.onPhase?.(skipPhase);
       outcomes.push({ key: camera.key, status: "skipped" });
       continue;
     }

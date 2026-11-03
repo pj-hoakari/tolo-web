@@ -180,6 +180,37 @@ describe("runCameraSchedulerCycle", () => {
     expect(events).toContain("capture:b:1");
   });
 
+  it("skips a frozen canvas whose video is still ready but lastFrameAt is old, and resumes when frames return", async () => {
+    const events: string[] = [];
+    let fresh = false;
+    const frozen = createCamera("frozen", events, { ready: () => true });
+    frozen.isFresh = () => fresh;
+    const phases: string[] = [];
+    frozen.onPhase = (phase) => phases.push(phase);
+    const other = createCamera("other", events);
+
+    const first = await runCameraSchedulerCycle([frozen, other], {
+      wait: async () => {},
+    });
+
+    expect(first).toEqual([
+      { key: "frozen", status: "skipped" },
+      { key: "other", status: "completed" },
+    ]);
+    expect(events).not.toContain("capture:frozen:1");
+    expect(events).not.toContain("infer:frozen:1");
+    expect(phases).toEqual(["stale"]);
+
+    fresh = true;
+    const second = await runCameraSchedulerCycle([frozen], {
+      wait: async () => {},
+    });
+
+    expect(second).toEqual([{ key: "frozen", status: "completed" }]);
+    expect(events).toContain("capture:frozen:1");
+    expect(events).toContain("infer:frozen:5");
+  });
+
   it("stops between steps when cancelled", async () => {
     const events: string[] = [];
     let cancelled = false;

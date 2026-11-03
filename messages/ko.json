@@ -530,6 +530,7 @@
     "cameraStatus": {
       "label": "{camera}: {status}",
       "waiting": "대기 중",
+      "stale": "영상 없음",
       "capturing": "촬영 중",
       "inferring": "감지 중",
       "ready": "감지 중",
