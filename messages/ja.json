@@ -439,7 +439,8 @@
       "camera": "カメラ",
       "activeHint": "（切替は停止後）",
       "inactiveHint": "（選択後に起動で反映）",
-      "hide": "非表示"
+      "hide": "非表示",
+      "espCamera": "ESP カメラ ({edgeId})"
     }
   },
   "ObservationDevices": {

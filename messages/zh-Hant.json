@@ -439,7 +439,8 @@
       "camera": "攝影機",
       "activeHint": "（停止後才能切換）",
       "inactiveHint": "（選擇後啟動時生效）",
-      "hide": "隱藏"
+      "hide": "隱藏",
+      "espCamera": "ESP 攝影機 ({edgeId})"
     }
   },
   "ObservationDevices": {

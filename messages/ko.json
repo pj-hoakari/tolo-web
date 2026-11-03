@@ -439,7 +439,8 @@
       "camera": "카메라",
       "activeHint": "(중지 후 전환)",
       "inactiveHint": "(선택 후 시작 시 반영)",
-      "hide": "숨기기"
+      "hide": "숨기기",
+      "espCamera": "ESP 카메라 ({edgeId})"
     }
   },
   "ObservationDevices": {

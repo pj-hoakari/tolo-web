@@ -1,14 +1,17 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { DetectionLineCreationModeToggle } from "@/features/tenant/detection/components/DetectionLineActions";
 import { useDetectionStores } from "@/features/tenant/detection/stores/detectionStore";
 import { BroadcastIndicator } from "@/features/tenant/webrtc/components/BroadcastIndicator";
+import { useFirebaseConfig } from "@/features/tenant/webrtc/components/FirebaseConfigProvider";
 import { useVideoSender } from "@/features/tenant/webrtc/hooks/useVideoSender";
+import { orpc } from "@/lib/orpc";
 import { useCrowdDetectionLoop } from "../hooks/useCrowdDetectionLoop";
 import { useDetectCrowd } from "../hooks/useDetectCrowd";
 import { useObservationReporting } from "../hooks/useObservationReporting";
+import { createEspCameraVideoSource } from "../utils/espVideoSource";
 import {
   type CrowdVideoSourceFactory,
   createCameraVideoSource,
@@ -24,16 +27,41 @@ export type CrowdDetectionProps = {
   tenantId: string;
   eventId: string;
   edgeDeviceId: string;
+  /** 指定すると ESP カメラを既定の映像ソースにする */
+  cameraEdgeId?: string;
 };
 
 export function CrowdDetection({
   tenantId,
   eventId,
   edgeDeviceId,
+  cameraEdgeId,
 }: CrowdDetectionProps) {
   const t = useTranslations("Observation.errors");
+  const firebaseConfig = useFirebaseConfig();
+
+  const espSourceFactory = useMemo<CrowdVideoSourceFactory | null>(() => {
+    if (!cameraEdgeId) {
+      return null;
+    }
+    return () =>
+      createEspCameraVideoSource({
+        tenantId,
+        eventId,
+        edgeDeviceId: cameraEdgeId,
+        firebaseConfig,
+        requestSession: () =>
+          orpc.signaling.requestConnection({
+            eventId,
+            edgeId: cameraEdgeId,
+          }),
+        issueToken: () =>
+          orpc.signaling.issueConsoleFirestoreToken({ eventId }),
+      });
+  }, [tenantId, eventId, cameraEdgeId, firebaseConfig]);
+
   const [sourceFactory, setSourceFactory] = useState<CrowdVideoSourceFactory>(
-    () => createCameraVideoSource,
+    () => espSourceFactory ?? createCameraVideoSource,
   );
 
   const { videoSource, status, error, start, stop, reportDetectionError } =
@@ -98,6 +126,12 @@ export function CrowdDetection({
         <DevVideoSourcePanel
           status={status}
           onSourceChange={handleSourceChange}
+          espEdgeId={cameraEdgeId}
+          onEspSelect={
+            espSourceFactory
+              ? () => setSourceFactory(() => espSourceFactory)
+              : undefined
+          }
         />
       )}
       <CrowdDetectionControls status={status} onStart={start} onStop={stop} />

@@ -439,7 +439,8 @@
       "camera": "Camera",
       "activeHint": " (switch after stopping)",
       "inactiveHint": " (applied on the next start)",
-      "hide": "Hide"
+      "hide": "Hide",
+      "espCamera": "ESP camera ({edgeId})"
     }
   },
   "ObservationDevices": {

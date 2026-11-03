@@ -1,0 +1,25 @@
+{
+	auto_https off
+}
+
+# ESP 用の Firebase エミュレータ入口。TryCloudflare の1ドメインで
+# Firestore (/v1/*) と Auth (/identitytoolkit... /securetoken...) の両方を扱う。
+:8080 {
+	@firestore path /google.firestore.v1.Firestore/* /v1/*
+	handle @firestore {
+		reverse_proxy firebase-emulator:8080
+	}
+
+	@auth path /identitytoolkit.googleapis.com/* /securetoken.googleapis.com/* /emulator/*
+	handle @auth {
+		reverse_proxy firebase-emulator:9099
+	}
+
+	# 観測ページ/管理UIも同じトンネルで見られるようにする。
+	# テナントは Host のサブドメインで決まるため test.localhost を渡す。
+	handle {
+		reverse_proxy web:3000 {
+			header_up Host test.localhost:3000
+		}
+	}
+}

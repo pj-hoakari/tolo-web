@@ -439,7 +439,8 @@
       "camera": "Cámara",
       "activeHint": " (cambia tras detener)",
       "inactiveHint": " (se aplica al iniciar)",
-      "hide": "Ocultar"
+      "hide": "Ocultar",
+      "espCamera": "Cámara ESP ({edgeId})"
     }
   },
   "ObservationDevices": {

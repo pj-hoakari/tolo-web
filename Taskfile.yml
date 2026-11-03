@@ -4,6 +4,7 @@ version: "3"
 
 vars:
   TUNNEL_COMPOSE: docker compose -f compose.yaml -f compose.tunnel.yaml
+  ESP_TUNNEL_COMPOSE: docker compose -f compose.yaml -f compose.esp-tunnel.yaml
 
 tasks:
   release:
@@ -49,6 +50,48 @@ tasks:
           exit 0
         fi
         gh release create "$TAG" "${ARGS[@]}"
+
+  esp-tunnel:
+    desc: ESP 用に edge-bridge と Firebase emulator の TryCloudflare トンネルを2本起動し、URL を表示する
+    cmds:
+      - "{{.ESP_TUNNEL_COMPOSE}} up -d esp-tunnel-proxy esp-emulator-tunnel esp-edge-tunnel"
+      - task: esp-tunnel:url
+
+  esp-tunnel:stop:
+    desc: ESP 用の TryCloudflare トンネルを止める
+    cmds:
+      - "{{.ESP_TUNNEL_COMPOSE}} stop esp-emulator-tunnel esp-edge-tunnel esp-tunnel-proxy"
+
+  esp-tunnel:url:
+    desc: ESP 用の2つの TryCloudflare URL を表示する
+    silent: true
+    cmds:
+      - |
+        for service in esp-edge-tunnel esp-emulator-tunnel; do
+          container=$({{.ESP_TUNNEL_COMPOSE}} ps -q "$service")
+          if [ -z "$container" ]; then
+            echo "$service: 起動していません。task esp-tunnel で起動してください。" >&2
+            exit 1
+          fi
+          started=$(docker inspect --format '{{"{{.State.StartedAt}}"}}' "$container")
+          url=""
+          for _ in $(seq 1 30); do
+            url=$({{.ESP_TUNNEL_COMPOSE}} logs --no-log-prefix --since "$started" "$service" 2>/dev/null | awk '
+              match($0, /https:\/\/[a-z0-9-]+\.trycloudflare\.com/) { url = substr($0, RSTART, RLENGTH) }
+              /Registered tunnel connection/ { registered = 1 }
+              END { if (registered) print url }
+            ')
+            if [ -n "$url" ]; then
+              echo "$service: $url"
+              break
+            fi
+            sleep 2
+          done
+          if [ -z "$url" ]; then
+            echo "$service: URL を確認できませんでした。{{.ESP_TUNNEL_COMPOSE}} logs $service を確認してください。" >&2
+            exit 1
+          fi
+        done
 
   tunnel:
     desc: Quick Tunnel で開発環境を公開し、URL を表示する

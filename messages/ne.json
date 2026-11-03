@@ -439,7 +439,8 @@
       "camera": "क्यामेरा",
       "activeHint": "(रोकेपछि मात्र बदलिन्छ)",
       "inactiveHint": "(छानेपछि सुरु गर्दा लागू हुन्छ)",
-      "hide": "लुकाउनुहोस्"
+      "hide": "लुकाउनुहोस्",
+      "espCamera": "ESP क्यामेरा ({edgeId})"
     }
   },
   "ObservationDevices": {

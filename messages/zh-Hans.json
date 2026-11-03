@@ -439,7 +439,8 @@
       "camera": "摄像头",
       "activeHint": "（停止后才能切换）",
       "inactiveHint": "（选择后启动时生效）",
-      "hide": "隐藏"
+      "hide": "隐藏",
+      "espCamera": "ESP 摄像头 ({edgeId})"
     }
   },
   "ObservationDevices": {
