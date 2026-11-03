@@ -310,6 +310,7 @@
       "useAsMachine": "Use as observation page",
       "useAsMachineLabel": "Use {name} as an observation page",
       "authorizeConnectionLabel": "Authorize the camera connection for “{name}”",
+      "cameraConnectionHint": "Opening the observation page as staff starts the connection authorization automatically. On an observation page device (machine session), a staff member must reauthorize it here.",
       "stop": "Stop",
       "stopLabel": "Temporarily stop “{name}”",
       "reapprove": "Re-approve",
@@ -509,6 +510,8 @@
       "unregistered": "Este dispositivo de observación se ha dado de baja",
       "modelLoad": "No se pudo cargar el modelo de detección ({status}: {path})",
       "connectionAuthorizationRequired": "Camera connection authorization is missing. Authorize the camera connection again.",
+      "connectionAuthorizationAutoStart": "Camera connection authorization is required. Moving to the authorization page.",
+      "connectionAuthorizationMachine": "Camera connection authorization is missing. A staff member must reauthorize it from the management screen.",
       "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "No se permite el acceso a la cámara. Permite el acceso a la cámara en la configuración del navegador.",

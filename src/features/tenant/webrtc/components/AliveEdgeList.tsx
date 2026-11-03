@@ -54,6 +54,9 @@ export function AliveEdgeList({
       : t("unknownTime");
 
   const observationPointNames = new Map<string, string>();
+  const hasCameraWithPage = edges.some(
+    (edge) => edge.kind === "camera" && pageForCamera(edges, edge.edgeDeviceId),
+  );
   for (const edge of edges) {
     if (edge.kind !== "observation_page") continue;
     for (const point of edge.observationPoints) {
@@ -76,6 +79,11 @@ export function AliveEdgeList({
           {t("refresh")}
         </Button>
       </div>
+      {hasCameraWithPage && (
+        <p className="text-sm text-muted-foreground">
+          {t("cameraConnectionHint")}
+        </p>
+      )}
       {connectionNotice && (
         <p
           role={connectionNotice === "authorized" ? "status" : "alert"}

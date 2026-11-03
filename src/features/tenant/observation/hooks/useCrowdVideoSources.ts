@@ -1,8 +1,11 @@
 "use client";
 
-import { ORPCError } from "@orpc/client";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type CameraConnectionError,
+  cameraConnectionError,
+} from "@/features/tenant/webrtc/utils/cameraConnection";
 import {
   type CameraSourceSpec,
   openCameraSources,
@@ -36,6 +39,7 @@ export type UseCrowdVideoSourcesResult = {
   isFresh: (key: string) => boolean;
   status: DetectCrowdStatus;
   error: string | null;
+  cameraConnectionError: CameraConnectionError | null;
   sourceStates: CrowdSourceState[];
   selectedKey: string | null;
   selectSource: (key: string) => void;
@@ -91,6 +95,8 @@ export function useCrowdVideoSources(
   );
   const [status, setStatus] = useState<DetectCrowdStatus>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [connectionError, setConnectionError] =
+    useState<CameraConnectionError | null>(null);
 
   const describeError = useCallback(
     (cause: unknown): string => {
@@ -100,14 +106,14 @@ export function useCrowdVideoSources(
       if (cause instanceof CameraAccessError) {
         return t(`camera.${cause.reason}`);
       }
-      if (cause instanceof ORPCError) {
-        const code = (cause.data as { code?: unknown } | undefined)?.code;
-        if (code === "CONNECTION_AUTHORIZATION_REQUIRED") {
-          return t("connectionAuthorizationRequired");
-        }
-        if (code === "CAMERA_NOT_DELEGATED") {
-          return t("cameraNotDelegated");
-        }
+      const connectionError = cameraConnectionError(cause);
+      if (connectionError?.code === "CONNECTION_AUTHORIZATION_REQUIRED") {
+        return connectionError.viewerType === "staff"
+          ? t("connectionAuthorizationAutoStart")
+          : t("connectionAuthorizationMachine");
+      }
+      if (connectionError?.code === "CAMERA_NOT_DELEGATED") {
+        return t("cameraNotDelegated");
       }
       return cause instanceof Error ? cause.message : t("videoSource");
     },
@@ -183,6 +189,7 @@ export function useCrowdVideoSources(
     resetCrowdTracking();
     closeSources();
     setError(null);
+    setConnectionError(null);
     setStatus("loading");
 
     const currentSpecs = specsRef.current;
@@ -221,6 +228,12 @@ export function useCrowdVideoSources(
     descriptorsRef.current = nextDescriptors;
     setDescriptors(nextDescriptors);
     setSourceStates(nextStates);
+    setConnectionError(
+      opened
+        .map((entry) => cameraConnectionError(entry.error))
+        .find((entry): entry is CameraConnectionError => entry !== null) ??
+        null,
+    );
     publishFreshness();
 
     const readyKeys = [...nextDescriptors.keys()];
@@ -267,6 +280,7 @@ export function useCrowdVideoSources(
     setSourceStates([]);
     setStatus("idle");
     setError(null);
+    setConnectionError(null);
   }, [closeSources]);
 
   const reportDetectionError = useCallback(
@@ -278,6 +292,7 @@ export function useCrowdVideoSources(
       setSourceStates([]);
       setStatus("error");
       setError(cause instanceof Error ? cause.message : t("detection"));
+      setConnectionError(null);
     },
     [closeSources, t],
   );
@@ -311,6 +326,7 @@ export function useCrowdVideoSources(
     isFresh,
     status,
     error,
+    cameraConnectionError: connectionError,
     sourceStates,
     selectedKey,
     selectSource,

@@ -310,6 +310,7 @@
       "useAsMachine": "観測ページ端末にする",
       "useAsMachineLabel": "{name} を観測ページ端末にする",
       "authorizeConnectionLabel": "「{name}」のカメラ接続を許可",
+      "cameraConnectionHint": "スタッフが観測ページを開くと接続認可は自動で始まります。観測ページ端末（マシンセッション）では、この画面からスタッフが再認可してください。",
       "stop": "停止",
       "stopLabel": "「{name}」を一時停止",
       "reapprove": "再承認",
@@ -509,6 +510,8 @@
       "unregistered": "この観測デバイスは登録解除されています",
       "modelLoad": "検出モデルの読み込みに失敗しました（{status}: {path}）",
       "connectionAuthorizationRequired": "カメラ接続の認可がありません。「カメラ接続を許可」から再認可してください。",
+      "connectionAuthorizationAutoStart": "カメラ接続の認可が必要なため、認可画面へ移動します。",
+      "connectionAuthorizationMachine": "カメラ接続の認可がありません。スタッフが管理画面の「カメラ接続を許可」から再認可してください。",
       "cameraNotDelegated": "このカメラは観測ページの接続委任に含まれていません。",
       "camera": {
         "permissionDenied": "カメラの使用が許可されていません。ブラウザの設定でカメラへのアクセスを許可してください。",

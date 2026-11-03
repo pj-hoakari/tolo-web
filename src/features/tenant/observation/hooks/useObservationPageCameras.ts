@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  type CameraConnectionError,
+  cameraConnectionError,
+} from "@/features/tenant/webrtc/utils/cameraConnection";
 import { orpc } from "@/lib/orpc";
 import type { ObservationCamera } from "../utils/cameraSources";
 
@@ -11,6 +15,7 @@ export type UseObservationPageCamerasResult = {
   initialCameraId: string | null;
   status: ObservationPageCamerasStatus;
   error: string | null;
+  cameraConnectionError: CameraConnectionError | null;
 };
 
 /**
@@ -30,11 +35,14 @@ export function useObservationPageCameras({
   const [initialCameraId, setInitialCameraId] = useState<string | null>(null);
   const [status, setStatus] = useState<ObservationPageCamerasStatus>("loading");
   const [error, setError] = useState<string | null>(null);
+  const [connectionError, setConnectionError] =
+    useState<CameraConnectionError | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setStatus("loading");
     setError(null);
+    setConnectionError(null);
 
     orpc.camera
       .listDelegatedCameras({ eventId, pageEdgeDeviceId })
@@ -65,6 +73,7 @@ export function useObservationPageCameras({
         setError(
           cause instanceof Error ? cause.message : "failed to load cameras",
         );
+        setConnectionError(cameraConnectionError(cause));
         setStatus("error");
       });
 
@@ -73,5 +82,11 @@ export function useObservationPageCameras({
     };
   }, [eventId, pageEdgeDeviceId, requestedCameraId]);
 
-  return { cameras, initialCameraId, status, error };
+  return {
+    cameras,
+    initialCameraId,
+    status,
+    error,
+    cameraConnectionError: connectionError,
+  };
 }

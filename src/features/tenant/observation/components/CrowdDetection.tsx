@@ -13,6 +13,7 @@ import {
 import { BroadcastIndicator } from "@/features/tenant/webrtc/components/BroadcastIndicator";
 import { useFirebaseConfig } from "@/features/tenant/webrtc/components/FirebaseConfigProvider";
 import { useVideoSender } from "@/features/tenant/webrtc/hooks/useVideoSender";
+import { clearCameraConnectionAutoStart } from "@/features/tenant/webrtc/utils/cameraConnection";
 import { orpc } from "@/lib/orpc";
 import { cn } from "@/lib/utils";
 import { useCrowdVideoSources } from "../hooks/useCrowdVideoSources";
@@ -39,6 +40,7 @@ import {
   type CrowdVideoSourceFactory,
   createCameraVideoSource,
 } from "../utils/videoSource";
+import { CameraConnectionAuthorizationNotice } from "./CameraConnectionAuthorizationNotice";
 import { CrowdDetectionControls } from "./CrowdDetectionControls";
 import { CrowdDetectionView } from "./CrowdDetectionView";
 import { DevVideoSourcePanel } from "./DevVideoSourcePanel";
@@ -73,6 +75,7 @@ export function CrowdDetection({
     cameras,
     initialCameraId,
     status: camerasStatus,
+    cameraConnectionError: cameraListConnectionError,
   } = useObservationPageCameras({
     eventId,
     pageEdgeDeviceId: edgeDeviceId,
@@ -103,7 +106,16 @@ export function CrowdDetection({
       return {
         cameraEdgeId: camera.edgeDeviceId,
         createSource: API_MOCKING_ENABLED
-          ? () => createMockCameraVideoSource({ label })
+          ? () =>
+              createMockCameraVideoSource({
+                label,
+                requestConnection: () =>
+                  orpc.signaling.requestCameraConnection({
+                    eventId,
+                    pageEdgeDeviceId: edgeDeviceId,
+                    cameraEdgeId: camera.edgeDeviceId,
+                  }),
+              })
           : () =>
               createEspCameraVideoSource({
                 tenantId,
@@ -170,6 +182,7 @@ export function CrowdDetection({
     isFresh,
     status,
     error,
+    cameraConnectionError: videoConnectionError,
     sourceStates,
     selectedKey,
     selectSource,
@@ -179,6 +192,22 @@ export function CrowdDetection({
     sourceSpecs,
     effectiveMode === "esp" ? initialCameraId : LOCAL_SOURCE_KEY,
   );
+
+  const connectionAuthorizationError =
+    cameraListConnectionError?.code === "CONNECTION_AUTHORIZATION_REQUIRED"
+      ? cameraListConnectionError
+      : videoConnectionError?.code === "CONNECTION_AUTHORIZATION_REQUIRED"
+        ? videoConnectionError
+        : null;
+
+  useEffect(() => {
+    if (status === "detecting" && !connectionAuthorizationError) {
+      clearCameraConnectionAutoStart({
+        eventId,
+        pageEdgeDeviceId: edgeDeviceId,
+      });
+    }
+  }, [status, connectionAuthorizationError, eventId, edgeDeviceId]);
 
   useEspCameraAutoStart({
     enabled: effectiveMode === "esp",
@@ -290,7 +319,7 @@ export function CrowdDetection({
   const { unregistered } = useObservationReporting({
     eventId,
     edgeDeviceId,
-    listening: edgeId !== null,
+    listening: API_MOCKING_ENABLED || edgeId !== null,
     status,
     settingsStore,
     resultStore,
@@ -304,7 +333,7 @@ export function CrowdDetection({
   }, []);
 
   const cameraErrors =
-    effectiveMode === "esp"
+    effectiveMode === "esp" && !connectionAuthorizationError
       ? sourceStates.filter((state) => state.status === "error")
       : [];
   const cameraErrorKeys = new Set(cameraErrors.map((state) => state.key));
@@ -317,6 +346,11 @@ export function CrowdDetection({
           {t("unregistered")}
         </p>
       )}
+      <CameraConnectionAuthorizationNotice
+        error={connectionAuthorizationError}
+        eventId={eventId}
+        pageEdgeDeviceId={edgeDeviceId}
+      />
       {status === "detecting" && (
         <div className="flex w-full max-w-3xl justify-end px-4 sm:px-0">
           <DetectionLineCreationModeToggle
@@ -410,7 +444,7 @@ export function CrowdDetection({
       <CrowdDetectionView
         videoSource={videoSource}
         status={status}
-        error={error}
+        error={connectionAuthorizationError ? null : error}
         videoRef={videoRef}
         overlayCanvasRef={overlayCanvasRef}
         lineCanvasRef={lineCanvasRef}

@@ -721,6 +721,35 @@ export function createConnectionAuth(
     },
 
     /**
+     * 保存済みの委任に含まれるカメラだけを返す。委任がない、または期限切れなら
+     * null。トークンは返さない。
+     */
+    async delegatedCameraIds({
+      tenantId,
+      eventId,
+      pageEdgeDeviceId,
+    }: {
+      tenantId: string;
+      eventId: string;
+      pageEdgeDeviceId: string;
+    }): Promise<string[] | null> {
+      const store = await adapter();
+      const authorization = await store.findOne<ConnectionAuthorization>({
+        model: CONNECTION_AUTHORIZATION,
+        where: [
+          {
+            field: "connectionKey",
+            value: connectionKey(tenantId, eventId, pageEdgeDeviceId),
+          },
+        ],
+      });
+      if (!authorization || authorization.expiresAt <= new Date()) {
+        return null;
+      }
+      return parseCameraIds(authorization.cameraIds);
+    },
+
+    /**
      * 委任の保存済み tenant_access を必要なら Refresh し、events.read の
      * event_access へ交換して返す。ブラウザへは返さない。
      */
@@ -1069,6 +1098,24 @@ export async function connectionEventAccess(
     eventId,
     pageEdgeDeviceId,
     cameraEdgeDeviceId,
+  });
+}
+
+/**
+ * 保存済みの接続委任に含まれるカメラ ID を返す。接続用のデータストアが
+ * 設定されていなければ undefined、委任がなければ null。
+ */
+export async function connectionDelegationCameraIds(
+  tenantId: string,
+  eventId: string,
+  pageEdgeDeviceId: string,
+): Promise<string[] | null | undefined> {
+  const store = await existingConnectionStore();
+  if (!store) return undefined;
+  return createConnectionAuth(store).delegatedCameraIds({
+    tenantId,
+    eventId,
+    pageEdgeDeviceId,
   });
 }
 

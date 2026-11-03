@@ -9,6 +9,11 @@ export type MockCameraVideoSourceOptions = {
   width?: number;
   height?: number;
   fps?: number;
+  /**
+   * 実際の ESP カメラと同じく、映像を開く前に BFF へ接続を要求する。
+   * モックでも接続認可のエラー経路を確認できるようにする。
+   */
+  requestConnection?: () => Promise<unknown>;
 };
 
 function accentFor(label: string): string {
@@ -151,6 +156,7 @@ export function createMockCameraVideoSource(
     label,
     async open(): Promise<VideoSourceDescriptor> {
       close();
+      await options.requestConnection?.();
       if (typeof document === "undefined") {
         throw new Error("合成カメラ映像はブラウザでのみ利用できます");
       }

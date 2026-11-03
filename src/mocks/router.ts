@@ -64,6 +64,12 @@ export type MockRouterOverrides = {
   listObservationPointsError?: CommonORPCErrorCode;
   heartbeatError?: CommonORPCErrorCode;
   reportMeasurementsError?: CommonORPCErrorCode;
+  requestCameraConnectionError?: {
+    viewerType: "staff" | "machine";
+    eventId?: string;
+    pageEdgeDeviceId?: string;
+    cameraEdgeDeviceId?: string;
+  };
   getObservationSettingsError?: boolean;
   updateObservationSettingsError?: CommonORPCErrorCode;
   /** graph.getGraph が返すグラフ（未指定なら PLACEHOLDER_GRAPH） */
@@ -126,6 +132,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     listObservationPointsError,
     heartbeatError,
     reportMeasurementsError,
+    requestCameraConnectionError,
     getObservationSettingsError = false,
     updateObservationSettingsError,
     graph = PLACEHOLDER_GRAPH,
@@ -709,6 +716,22 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           }),
         )
         .handler(async ({ input }): Promise<CameraConnection> => {
+          if (requestCameraConnectionError) {
+            throw new ORPCError("PRECONDITION_FAILED", {
+              message: MOCK_SERVER_MESSAGE,
+              data: {
+                code: "CONNECTION_AUTHORIZATION_REQUIRED",
+                viewerType: requestCameraConnectionError.viewerType,
+                eventId: requestCameraConnectionError.eventId ?? input.eventId,
+                pageEdgeDeviceId:
+                  requestCameraConnectionError.pageEdgeDeviceId ??
+                  input.pageEdgeDeviceId,
+                cameraEdgeDeviceId:
+                  requestCameraConnectionError.cameraEdgeDeviceId ??
+                  input.cameraEdgeId,
+              },
+            });
+          }
           const page = devices.find(
             (d) => d.edgeDeviceId === input.pageEdgeDeviceId,
           );
