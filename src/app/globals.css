@@ -90,7 +90,19 @@
   --guest-glow-to: oklch(0.9 0.025 68);
   /* 案内マップ：下地と、案内マップエディタの色キーごとの塗り・線・文字。
      ゲスト画面の落ち着いた暖色に合わせ、原色ではなく淡い（ダークでは沈んだ）トーンにする */
-  --guest-map-ground: oklch(0.945 0.014 78);
+  /* 案内マップの明暗の順番：建物の外（地面）＜部屋（少し濃い・影で浮かせる）＜通路（いちばん明るい床） */
+  --guest-map-ground: oklch(0.915 0.016 76);
+  --guest-map-floor: oklch(0.992 0.004 85);
+  --guest-map-wall: oklch(0.48 0.025 62);
+  --guest-map-room-fill: oklch(0.945 0.009 78);
+  --guest-map-room-stroke: oklch(0.78 0.016 70);
+  --guest-map-room-ink: oklch(0.33 0.02 60);
+  --guest-map-shadow: oklch(0.35 0.03 60 / 0.18);
+  --guest-map-connector-fill: oklch(0.42 0.05 255);
+  --guest-map-connector-ink: oklch(0.99 0 0);
+  --guest-map-connector-soft: oklch(0.92 0.03 255);
+  --guest-map-you: oklch(0.6 0.17 255);
+  --guest-map-route-flow: oklch(1 0 0 / 0.9);
   --guest-map-indigo-fill: oklch(0.91 0.04 268);
   --guest-map-indigo-stroke: oklch(0.7 0.07 268);
   --guest-map-indigo-ink: oklch(0.36 0.06 268);
@@ -133,7 +145,19 @@
   --guest-glow-from: oklch(0.16 0.008 62);
   --guest-glow-to: oklch(0.1 0.004 60);
   /* 案内マップ（ダーク）：下地はカードより少し明るく、部屋は沈んだトーン・文字は明るく */
-  --guest-map-ground: oklch(0.255 0.01 62);
+  /* 案内マップ（ダーク）：地面＜通路の床＜部屋。部屋をいちばん明るくして、暗い中でも形が沈まないようにする */
+  --guest-map-ground: oklch(0.17 0.006 62);
+  --guest-map-floor: oklch(0.255 0.01 62);
+  --guest-map-wall: oklch(0.66 0.02 70);
+  --guest-map-room-fill: oklch(0.36 0.012 64);
+  --guest-map-room-stroke: oklch(0.5 0.016 66);
+  --guest-map-room-ink: oklch(0.95 0.01 80);
+  --guest-map-shadow: oklch(0 0 0 / 0.45);
+  --guest-map-connector-fill: oklch(0.74 0.07 250);
+  --guest-map-connector-ink: oklch(0.2 0.02 250);
+  --guest-map-connector-soft: oklch(0.34 0.045 250);
+  --guest-map-you: oklch(0.68 0.16 250);
+  --guest-map-route-flow: oklch(1 0 0 / 0.85);
   --guest-map-indigo-fill: oklch(0.36 0.045 268);
   --guest-map-indigo-stroke: oklch(0.52 0.06 268);
   --guest-map-indigo-ink: oklch(0.92 0.02 268);

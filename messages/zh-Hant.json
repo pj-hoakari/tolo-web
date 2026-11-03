@@ -448,6 +448,8 @@
   },
   "Guest": {
     "pageSubtitle": "訪客頁面",
+    "showOnMap": "在地圖上查看",
+    "showOnMapLabel": "在地圖上查看{place}",
     "waitingNumber": {
       "title": "目前等候人數",
       "unit": "人"
@@ -496,13 +498,11 @@
     },
     "guideMap": {
       "title": "導覽圖",
-      "hint": "選擇目的地即可顯示路線",
       "currentLocation": "目前位置",
       "destinationsLabel": "目的地",
       "expand": "放大地圖",
       "collapse": "縮小地圖",
-      "search": "搜尋目的地",
-      "noResults": "無結果",
+      "selectDestination": "請選擇目的地",
       "reset": "重設",
       "goal": "目的地",
       "rideTo": "搭{via}到{floor}",
@@ -515,17 +515,16 @@
       "walkStep": "{floor}：{from} → {to}",
       "rideStep": "{via}：{from} → {to}",
       "noRoute": "找不到前往此目的地的路線",
-      "zoomInHint": "點按地圖放大",
       "zoomOutHint": "拖曳移動 · 點按查看全圖",
       "closed": "（禁止通行）",
       "crowdAvoided": "這是避開擁擠區域的路線",
       "crowdRerouted": "由於擁擠情況改變，已變更路線",
       "crowdThroughDanger": "必須經過因擁擠而危險的區域才能到達。請依照工作人員的引導",
-      "crowdLegend": "擁擠"
+      "crowdLegend": "擁擠",
+      "stepsLabel": "路線",
+      "nextFloor": "下一步：{floor}的路線"
     },
     "floor": {
-      "title": "目前樓層",
-      "placeholderName": "1樓",
       "selectLabel": "顯示樓層"
     },
     "congestion": {
@@ -537,7 +536,9 @@
       },
       "danger": "危險",
       "updatedAt": "{time} 更新",
-      "empty": "目前沒有擁擠資訊"
+      "empty": "目前沒有擁擠資訊",
+      "floorRange": "{from}～{to}",
+      "floorJoin": "、"
     },
     "loading": "載入中…",
     "loadError": "無法取得資訊"

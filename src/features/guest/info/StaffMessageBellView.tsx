@@ -71,7 +71,7 @@ export function StaffMessageBellView({
         <PopoverDialog aria-labelledby={titleId}>
           <h2
             id={titleId}
-            className="mb-3 text-sm font-medium tracking-wide text-primary/55"
+            className="mb-3 text-sm font-medium tracking-wide text-primary/70"
           >
             {title}
           </h2>

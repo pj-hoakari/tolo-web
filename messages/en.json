@@ -448,6 +448,8 @@
   },
   "Guest": {
     "pageSubtitle": "Guest Page",
+    "showOnMap": "View on map",
+    "showOnMapLabel": "View {place} on the map",
     "waitingNumber": {
       "title": "People waiting",
       "unit": "people"
@@ -496,13 +498,11 @@
     },
     "guideMap": {
       "title": "Guide map",
-      "hint": "Select a destination to see the route",
       "currentLocation": "You are here",
       "destinationsLabel": "Destinations",
       "expand": "Enlarge the map",
       "collapse": "Shrink the map",
-      "search": "Search destination",
-      "noResults": "No results",
+      "selectDestination": "Choose a destination",
       "reset": "Reset",
       "goal": "Destination",
       "rideTo": "{via} to {floor}",
@@ -515,17 +515,16 @@
       "walkStep": "{floor}: {from} → {to}",
       "rideStep": "{via}: {from} → {to}",
       "noRoute": "No route to this destination was found",
-      "zoomInHint": "Tap the map to zoom in",
       "zoomOutHint": "Drag to move · tap to see the whole map",
       "closed": " (closed)",
       "crowdAvoided": "This route avoids crowded areas",
       "crowdRerouted": "The route was changed because crowd conditions changed",
       "crowdThroughDanger": "This route passes through a dangerously crowded area. Please follow the staff's directions",
-      "crowdLegend": "Crowd"
+      "crowdLegend": "Crowd",
+      "stepsLabel": "Directions",
+      "nextFloor": "Next: route on {floor}"
     },
     "floor": {
-      "title": "Current floor",
-      "placeholderName": "1F",
       "selectLabel": "Floor to show"
     },
     "congestion": {
@@ -537,7 +536,9 @@
       },
       "danger": "Danger",
       "updatedAt": "Updated {time}",
-      "empty": "No crowd information yet"
+      "empty": "No crowd information yet",
+      "floorRange": "{from}–{to}",
+      "floorJoin": ", "
     },
     "loading": "Loading…",
     "loadError": "Couldn't load this information"

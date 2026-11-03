@@ -1,16 +1,37 @@
 "use client";
 
-import { ArrowRight, Info, Search, TriangleAlert, X } from "lucide-react";
+import {
+  ArrowRight,
+  Footprints,
+  Info,
+  MapPin,
+  TriangleAlert,
+  X,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input, TextField } from "@/components/ui/textfield";
+import {
+  Select,
+  SelectHeader,
+  SelectItem,
+  SelectListBox,
+  SelectPopover,
+  SelectSection,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
 import { resolveLabel } from "@/features/tenant/management/graph/utils/labels";
 import { orpc } from "@/lib/orpc";
 import { cn } from "@/lib/utils";
 import type { GuestGuideMap } from "@/server/router";
 import { type GuestPolling, useGuestPolling } from "../useGuestPolling";
-import { type GuideMapMarker, GuideMapView } from "./GuideMapView";
+import {
+  ConnectorIcon,
+  type GuideMapMarker,
+  GuideMapView,
+} from "./GuideMapView";
 import { computeFloorRoute, type FloorRouteResult } from "./guideMapFloorRoute";
 import {
   clearGuideMapFloors,
@@ -26,8 +47,16 @@ import {
   isDestination,
   localizeGuideMapLayout,
   type MapObject,
+  mapColorOf,
   type PlaceObject,
 } from "./guideMapLayout";
+import {
+  clearGuideMapLink,
+  consumeGuideMapRequest,
+  setGuideMapPointIds,
+  useGuideMapRequest,
+} from "./guideMapLinkStore";
+import { displayName } from "./guideMapStyle";
 import { InfoCard } from "./InfoCard";
 import { defineGuestInfoComponent, type GuestInfoComponentProps } from "./type";
 
@@ -64,7 +93,7 @@ function GuideMap({ eventId, qrLocationId }: GuestInfoComponentProps) {
   if (guideMap.status !== "ready")
     return (
       <InfoCard title={t("guideMap.title")}>
-        <p className="text-sm text-primary/55">
+        <p className="text-sm text-primary/70">
           {guideMap.status === "loading" ? t("loading") : t("loadError")}
         </p>
       </InfoCard>
@@ -80,6 +109,7 @@ function GuideMapContent({
   guideMap: GuestGuideMap;
 }) {
   const t = useTranslations("Guest.guideMap");
+  const tFloor = useTranslations("Guest.floor");
   const tCongestion = useTranslations("Guest.congestion");
   const locale = useLocale();
   const doc = useMemo(
@@ -170,12 +200,12 @@ function GuideMapContent({
   }, [doc, graph, startFloor]);
   const activeFloorId = sharedFloorId ?? startFloor;
 
-  // 目的地検索の入力と、検索/一覧から選んだ目的地
-  const [query, setQuery] = useState("");
+  // プルダウンで選んだ目的地
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // 表示名（グラフのポイントのラベルを表示言語で解決し、無ければレイアウトの名前を使う）
-  const nameOf = (o: MapObject) => o.title ?? "";
+  // 全角の英数字（「４０３」など）は半角に直して、地図と同じ表記で出す
+  const nameOf = (o: MapObject) => displayName(o.title);
 
   // 現在地そのものは目的地の候補に出さない
   const destinations = doc.objects.filter(
@@ -226,26 +256,49 @@ function GuideMapContent({
     (s) => !(s.kind === "walk" && s.fromId === s.toId),
   );
 
-  // 検索一致する目的地（名称の部分一致・大文字小文字を無視）
-  const q = query.trim().toLowerCase();
-  const matches = q
-    ? destinations.filter((o) => nameOf(o).toLowerCase().includes(q))
-    : [];
-
   const pickRoom = (id: string) => {
     setSelectedId(id);
-    setQuery("");
     // 経路は現在地から始まるので、現在地のフロアを表示する
     setGuideMapActiveFloor(startFloor);
   };
-  const resetRoute = () => {
-    setSelectedId(null);
-    setQuery("");
-  };
-  // Enter で、候補があれば先頭を選ぶ（クリックと同じ挙動）
-  const submitSearch = () => {
-    if (matches.length > 0) pickRoom(matches[0].id);
-  };
+  const resetRoute = () => setSelectedId(null);
+
+  // 行列・混雑状況のカードから「地図で見る」を頼まれたら、その場所を地図で見せる
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [focusIds, setFocusIds] = useState<string[] | null>(null);
+  useEffect(() => {
+    setGuideMapPointIds(
+      new Set(doc.objects.flatMap((o) => (o.pointId ? [o.pointId] : []))),
+    );
+    return () => clearGuideMapLink();
+  }, [doc]);
+  const request = useGuideMapRequest();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 依頼（request）が来たときだけ動かす
+  useEffect(() => {
+    if (!request) return;
+    consumeGuideMapRequest(request.seq);
+    const targets = doc.objects.filter((o) => o.pointId === request.pointId);
+    if (targets.length === 0) return;
+    const destination = targets.find(
+      (o): o is PlaceObject => isDestination(o) && o.id !== start?.id,
+    );
+    if (destination) {
+      // 目的地ならそこへの道順を出す
+      pickRoom(destination.id);
+      setFocusIds(null);
+    } else {
+      // 目的地でない場所（エレベーター・通路など）は、その階を開いて、場所を波紋で示す
+      setGuideMapActiveFloor(targets[0].groupId);
+      setFocusIds(targets.map((o) => o.id));
+    }
+    cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [request]);
+  // 強調は少し経ったら戻す
+  useEffect(() => {
+    if (!focusIds) return;
+    const timer = setTimeout(() => setFocusIds(null), 4000);
+    return () => clearTimeout(timer);
+  }, [focusIds]);
 
   const selected = destinations.find((o) => o.id === selectedId);
   const objectName = (id: string) => {
@@ -265,9 +318,8 @@ function GuideMapContent({
 
   // 現在地・目的地・乗り換えのラベル
   const markers: GuideMapMarker[] = [];
-  // 場所の名前がすでに「現在地」なら、同じ文言の目印は重ねない
-  if (start && nameOf(start) !== t("currentLocation"))
-    markers.push({ objectId: start.id, label: t("currentLocation") });
+  // 現在地は地図では青い点なので、吹き出しで「現在地」と添える
+  if (start) markers.push({ objectId: start.id, label: t("currentLocation") });
   for (const s of steps) {
     if (s.kind !== "ride") continue;
     const up =
@@ -284,72 +336,133 @@ function GuideMapContent({
   }
   if (selected) markers.push({ objectId: selected.id, label: t("goal") });
 
+  // 目的地のプルダウン（階ごとにまとめる。選ぶとすぐ経路を出す）
+  const destinationsByFloor = doc.groups
+    .map((g) => ({
+      floor: g.groupId,
+      items: destinations.filter((o) => o.groupId === g.groupId),
+    }))
+    .filter((f) => f.items.length > 0);
+
+  // 表示中の階の切り替え（地図の上に出す）
+  const floorTabs =
+    doc.groups.length > 1 ? (
+      <ToggleButtonGroup
+        selectionMode="single"
+        disallowEmptySelection
+        selectedKeys={[activeFloorId]}
+        onSelectionChange={(keys) => {
+          const next = [...keys][0];
+          if (next != null) setGuideMapActiveFloor(String(next));
+        }}
+        aria-label={tFloor("selectLabel")}
+        // 横にはみ出す分はスクロールで見る。中央寄せだと左端の階に戻れなくなるので左から並べる
+        className="flex [scrollbar-width:none] justify-start gap-1.5 overflow-x-auto"
+      >
+        {doc.groups.map((g) => (
+          <Toggle
+            key={g.groupId}
+            id={g.groupId}
+            size="sm"
+            className="selected:border-accent selected:bg-accent selected:text-secondary h-11 min-w-11 shrink-0 rounded-full border border-primary/12 bg-secondary px-3.5 text-base font-bold whitespace-nowrap text-primary/70 tabular-nums hover:bg-secondary hover:text-accent"
+          >
+            {floorNameOf(g.groupId)}
+          </Toggle>
+        ))}
+      </ToggleButtonGroup>
+    ) : null;
+
   const toolbar = (
-    <div className="mb-3 space-y-2">
-      <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-primary/40" />
-        <TextField
-          aria-label={t("search")}
-          value={query}
-          onChange={setQuery}
-          className="w-full"
+    <div className="mb-3 space-y-2.5">
+      <div className="flex items-center gap-2">
+        <Select
+          aria-label={t("destinationsLabel")}
+          placeholder={t("selectDestination")}
+          selectedKey={selectedId}
+          onSelectionChange={(key) => {
+            if (key !== null) pickRoom(String(key));
+          }}
+          className="min-w-0 flex-1"
         >
-          <Input
-            placeholder={t("search")}
-            className="h-11 pl-9 text-base"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                submitSearch();
-              }
-            }}
-          />
-        </TextField>
-      </div>
-
-      {q && (
-        <div className="flex flex-wrap gap-1.5">
-          {matches.length > 0 ? (
-            matches.slice(0, 8).map((o) => (
-              <Button
-                key={o.id}
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-9 gap-1.5 rounded-full border-primary/12 px-3.5 text-sm text-primary/70 hover:text-accent"
-                onPress={() => pickRoom(o.id)}
-              >
-                {nameOf(o)}
-                {doc.groups.length > 1 && (
-                  <span className="text-xs text-primary/40">
-                    {floorNameOf(o.groupId)}
+          <SelectTrigger className="pressed:bg-primary/5 h-12 gap-3 rounded-xl border-primary/12 bg-secondary px-2.5 text-base text-primary shadow-sm transition-colors hover:border-accent/50 focus-visible:ring-accent/40 focus-visible:ring-offset-0">
+            <span
+              aria-hidden
+              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent"
+            >
+              <MapPin className="size-4" />
+            </span>
+            <SelectValue className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
+              {({ isPlaceholder }) =>
+                isPlaceholder || !selected ? (
+                  <span className="text-primary/70">
+                    {t("selectDestination")}
                   </span>
-                )}
-              </Button>
-            ))
-          ) : (
-            <span className="text-sm text-primary/45">{t("noResults")}</span>
-          )}
-        </div>
-      )}
+                ) : (
+                  <>
+                    <span className="truncate font-medium">
+                      {nameOf(selected)}
+                    </span>
+                    {doc.groups.length > 1 && (
+                      <span className="shrink-0 text-xs text-primary/70">
+                        {floorNameOf(selected.groupId)}
+                      </span>
+                    )}
+                  </>
+                )
+              }
+            </SelectValue>
+          </SelectTrigger>
+          {/* 一覧は body 直下に出るので、ゲスト画面の配色を引き継がせる */}
+          <SelectPopover className="guest-theme max-h-80 overflow-hidden rounded-xl border-primary/12 bg-secondary text-primary shadow-lg">
+            <SelectListBox className="max-h-80 p-1.5">
+              {destinationsByFloor.map(({ floor: floorId, items }) => (
+                <SelectSection key={floorId} className="not-first:mt-1">
+                  {doc.groups.length > 1 && (
+                    <SelectHeader className="sticky top-0 z-10 rounded-md bg-secondary/95 px-2.5 pt-2 pb-1 text-xs font-semibold tracking-wide text-primary/70 backdrop-blur">
+                      {floorNameOf(floorId)}
+                    </SelectHeader>
+                  )}
+                  {items.map((o) => {
+                    const color = mapColorOf(o.color);
+                    return (
+                      <SelectItem
+                        key={o.id}
+                        id={o.id}
+                        textValue={nameOf(o)}
+                        className="selected:font-medium selected:text-accent selection-single:pl-2.5 min-h-11 gap-3 rounded-lg px-2.5 text-base text-primary hover:bg-accent/10 hover:text-primary focus:bg-accent/10 focus:text-primary"
+                      >
+                        <span
+                          aria-hidden
+                          className="size-3 shrink-0 rounded-[4px] border"
+                          style={{
+                            background: color.fill,
+                            borderColor: color.stroke,
+                          }}
+                        />
+                        <span className="truncate">{nameOf(o)}</span>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectSection>
+              ))}
+            </SelectListBox>
+          </SelectPopover>
+        </Select>
 
-      {selected && !q && (
-        <div className="flex items-center gap-2">
-          <span className="rounded-full bg-accent px-3 py-1 text-sm font-medium text-secondary">
-            {nameOf(selected)}
-          </span>
+        {selected && (
           <Button
             type="button"
             variant="ghost"
-            size="sm"
-            className="h-9 gap-1 px-3 text-sm text-primary/55"
+            size="icon"
+            aria-label={t("reset")}
+            className="size-12 shrink-0 rounded-xl text-primary/70 hover:bg-primary/5 hover:text-primary"
             onPress={resetRoute}
           >
-            <X className="size-3.5" />
-            {t("reset")}
+            <X className="size-4" />
           </Button>
-        </div>
-      )}
+        )}
+      </div>
+      {floorTabs}
     </div>
   );
 
@@ -361,10 +474,16 @@ function GuideMapContent({
       : avoided
         ? t("crowdAvoided")
         : null;
-  const footer = !selected ? (
-    <p className="mt-3 text-sm text-primary/55">{t("hint")}</p>
-  ) : route && "error" in route ? (
-    <p className="mt-3 text-sm text-primary/55">{t("noRoute")}</p>
+  // いま地図に出している階の歩く区間の、次に歩く階（「次へ」で地図を送る）
+  const walkFloors = steps.flatMap((s) => (s.kind === "walk" ? [s.floor] : []));
+  const currentWalk = walkFloors.indexOf(activeFloorId);
+  const nextFloor =
+    currentWalk >= 0
+      ? walkFloors.slice(currentWalk + 1).find((f) => f !== activeFloorId)
+      : undefined;
+
+  const footer = !selected ? null : route && "error" in route ? (
+    <p className="mt-3 text-sm text-primary/70">{t("noRoute")}</p>
   ) : (
     <>
       {crowdNotice && (
@@ -374,7 +493,7 @@ function GuideMapContent({
             "mt-3 flex items-start gap-2 rounded-lg px-3 py-2 text-sm",
             throughDanger
               ? "bg-guest-notify/10 text-guest-notify"
-              : "bg-accent/10 text-primary/75",
+              : "bg-accent/10 text-primary/80",
           )}
         >
           {throughDanger ? (
@@ -385,44 +504,80 @@ function GuideMapContent({
           {crowdNotice}
         </p>
       )}
-      <ol className="mt-3 space-y-1.5">
-        {steps.map((s) =>
-          s.kind === "walk" ? (
-            <li key={`${s.fromId}-${s.toId}`}>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onPress={() => setGuideMapActiveFloor(s.floor)}
-                className={cn(
-                  "h-auto min-h-10 w-full justify-start gap-2 rounded-lg px-3 py-2 text-left text-sm",
-                  s.floor === activeFloorId
-                    ? "bg-accent/10 text-primary"
-                    : "text-primary/60",
-                )}
-              >
-                {t("walkStep", {
-                  floor: floorNameOf(s.floor),
-                  from: objectName(s.fromId),
-                  to: objectName(s.toId),
-                })}
-              </Button>
-            </li>
-          ) : (
+      <ol aria-label={t("stepsLabel")} className="mt-4">
+        {steps.map((s, i) => {
+          const current = s.kind === "walk" && s.floor === activeFloorId;
+          return (
             <li
               key={`${s.fromId}-${s.toId}`}
-              className="flex items-center gap-2 px-3 py-1 text-sm text-primary/55"
+              className="relative flex gap-3 pb-3 last:pb-0"
             >
-              <ArrowRight className="size-4 shrink-0" />
-              {t("rideStep", {
-                via: t(`connectors.${s.via}`),
-                from: floorNameOf(s.fromFloor),
-                to: floorNameOf(s.toFloor),
-              })}
+              {/* 番号をつなぐ縦線 */}
+              {i < steps.length - 1 && (
+                <span
+                  aria-hidden
+                  className="absolute top-8 bottom-0 left-3.5 w-px bg-primary/15"
+                />
+              )}
+              <span
+                aria-hidden
+                className={cn(
+                  "flex size-7 shrink-0 items-center justify-center rounded-full text-sm font-bold tabular-nums",
+                  current
+                    ? "bg-accent text-secondary"
+                    : "bg-primary/8 text-primary/70",
+                )}
+              >
+                {i + 1}
+              </span>
+              {s.kind === "walk" ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onPress={() => setGuideMapActiveFloor(s.floor)}
+                  aria-current={current ? "step" : undefined}
+                  className={cn(
+                    "-mt-2 h-auto min-h-11 flex-1 justify-start gap-2 rounded-xl px-3 py-2 text-left text-sm whitespace-normal",
+                    current
+                      ? "bg-accent/10 text-primary ring-1 ring-accent/30 hover:bg-accent/15"
+                      : "text-primary/80 hover:bg-primary/5",
+                  )}
+                >
+                  <Footprints className="size-4 shrink-0 text-accent" />
+                  {t("walkStep", {
+                    floor: floorNameOf(s.floor),
+                    from: objectName(s.fromId),
+                    to: objectName(s.toId),
+                  })}
+                </Button>
+              ) : (
+                <p className="flex min-h-7 flex-1 items-center gap-2 px-3 text-sm text-primary/80">
+                  <ConnectorIcon
+                    type={s.via}
+                    className="size-4 shrink-0 text-accent"
+                  />
+                  {t("rideStep", {
+                    via: t(`connectors.${s.via}`),
+                    from: floorNameOf(s.fromFloor),
+                    to: floorNameOf(s.toFloor),
+                  })}
+                </p>
+              )}
             </li>
-          ),
-        )}
+          );
+        })}
       </ol>
+      {nextFloor && (
+        <Button
+          type="button"
+          variant="outline"
+          onPress={() => setGuideMapActiveFloor(nextFloor)}
+          className="mt-3 h-11 w-full gap-2 rounded-xl border-accent/40 bg-accent/10 text-base font-medium text-primary hover:bg-accent/15"
+        >
+          {t("nextFloor", { floor: floorNameOf(nextFloor) })}
+          <ArrowRight className="size-4" />
+        </Button>
+      )}
     </>
   );
 
@@ -430,32 +585,33 @@ function GuideMapContent({
     doc.groups.find((g) => g.groupId === activeFloorId) ?? doc.groups[0];
 
   return (
-    <GuideMapView
-      // フロアを切り替えたら拡大を解いて全体から見せる
-      key={floor.groupId}
-      title={t("title")}
-      floor={floor}
-      objects={floorObjects}
-      routes={routes}
-      markers={markers}
-      activeId={selectedId}
-      highlightIds={q ? matches.map((o) => o.id) : undefined}
-      toolbar={toolbar}
-      footer={footer}
-      zoomInLabel={t("expand")}
-      zoomOutLabel={t("collapse")}
-      zoomInHint={t("zoomInHint")}
-      zoomOutHint={t("zoomOutHint")}
-      closedLabel={t("closed")}
-      frame={floor.image ? undefined : blankFrame}
-      crowd={crowd}
-      crowdLegend={{
-        title: t("crowdLegend"),
-        mid: tCongestion("levels.mid"),
-        high: tCongestion("levels.high"),
-        danger: tCongestion("danger"),
-      }}
-    />
+    // 行列・混雑状況のカードから飛んできたとき、固定ヘッダーに隠れない位置で止める
+    <div ref={cardRef} className="scroll-mt-20">
+      <GuideMapView
+        title={t("title")}
+        floor={floor}
+        objects={floorObjects}
+        routes={routes}
+        markers={markers}
+        activeId={selectedId}
+        currentId={start?.id ?? null}
+        toolbar={toolbar}
+        footer={footer}
+        focusIds={focusIds ?? undefined}
+        zoomInLabel={t("expand")}
+        zoomOutLabel={t("collapse")}
+        zoomOutHint={t("zoomOutHint")}
+        closedLabel={t("closed")}
+        frame={floor.image ? undefined : blankFrame}
+        crowd={crowd}
+        crowdLegend={{
+          title: t("crowdLegend"),
+          mid: tCongestion("levels.mid"),
+          high: tCongestion("levels.high"),
+          danger: tCongestion("danger"),
+        }}
+      />
+    </div>
   );
 }
 
