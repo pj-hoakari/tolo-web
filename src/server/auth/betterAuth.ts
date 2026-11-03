@@ -8,6 +8,7 @@ import { Pool } from "pg";
 import { rootOrigin } from "@/lib/control/tenant";
 import { discoveryUrl } from "./discovery";
 import { loginErrorUrl, loginHandoff, PROVIDER_ID } from "./login";
+import { tenantOnboarding } from "./onboarding";
 
 export const SESSION_COOKIE = "__Host-tolo.session_token";
 
@@ -153,6 +154,7 @@ export function authOptions(env: AuthEnv) {
       }),
       toloSession,
       loginHandoff,
+      tenantOnboarding,
     ],
   } satisfies BetterAuthOptions;
 }

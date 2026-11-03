@@ -33,6 +33,7 @@ import type {
   GuestMessage,
   GuestQueue,
   RegisteredEdgeDevice,
+  RegisterTenantResult,
 } from "@/server/router";
 import {
   registeredEdgeDeviceWire,
@@ -311,22 +312,17 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           z.object({
             name: z.string().trim().min(1),
             subdomain: z.string().trim().min(1),
-            ownerEmail: z.email(),
             ownerDisplayName: z.string().trim().min(1).max(64),
           }),
         )
-        .handler(
-          async ({
-            input,
-          }): Promise<{ tenantId: string; subdomain: string }> => {
-            if (registerTenantError !== undefined) {
-              throw new ORPCError(registerTenantError, {
-                message: MOCK_SERVER_MESSAGE,
-              });
-            }
-            return { tenantId: "00000000000000a1", subdomain: input.subdomain };
-          },
-        ),
+        .handler(async ({ input }): Promise<RegisterTenantResult> => {
+          if (registerTenantError !== undefined) {
+            throw new ORPCError(registerTenantError, {
+              message: MOCK_SERVER_MESSAGE,
+            });
+          }
+          return { type: "created", subdomain: input.subdomain };
+        }),
       listEvents: os
         .input(
           z.object({

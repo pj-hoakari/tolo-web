@@ -113,6 +113,18 @@ test("それ以外の理由で参加できなかったときは、エラーが�
   await expect(page.getByRole("button", { name: "参加する" })).toBeEnabled();
 });
 
+test("参加の処理に失敗して参加の画面へ戻ってきたときは、その理由が表示される", async ({
+  page,
+}) => {
+  await page.goto(invitationUrl);
+  await page.goto("/invitation/accept?error=unusable");
+
+  await expect(page.getByRole("main").getByRole("alert")).toHaveText(
+    "この招待は使えません。使用済みか、期限が切れているか、取り消された可能性があります。招待したオーナーに連絡して、新しい招待 URL を受け取ってください。",
+  );
+  await expect(page.getByRole("button", { name: "参加する" })).toHaveCount(0);
+});
+
 test("ルートドメインで招待 URL を開くと 404 になる", async ({ page }) => {
   const response = await page.goto(`http://localhost:3100${invitationUrl}`);
   expect(response?.status()).toBe(404);

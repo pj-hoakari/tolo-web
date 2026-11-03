@@ -14,13 +14,17 @@ test("AUTH_MOCKING では、管理ページはログインなしでモックの�
   expect(new URL(page.url()).pathname).toBe("/management");
 });
 
-test("AUTH_MOCKING では、ログインの開始と引き渡しの経路とルートドメインのログイン画面は 404 になる", async ({
+test("AUTH_MOCKING では、ログインと registration の認可の開始と引き渡しの経路とルートドメインのログイン画面は 404 になる", async ({
   request,
 }) => {
   for (const path of [
     "/auth/login?return=/management",
     "/auth/handoff?code=x",
+    "/auth/join",
+    "/invitation/handoff?code=x",
     "http://localhost:3100/auth/begin?login=x",
+    "http://localhost:3100/onboarding/start",
+    "http://localhost:3100/onboarding/claim?code=x",
     "http://localhost:3100/login?challenge=x",
     "http://localhost:3100/login",
   ]) {

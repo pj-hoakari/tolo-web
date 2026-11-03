@@ -6,7 +6,6 @@
     "title": "Create a tenant",
     "name": "Tenant name",
     "subdomain": "Subdomain",
-    "ownerEmail": "Owner email address",
     "ownerDisplayName": "Owner display name",
     "ownerDisplayNameDescription": "The name shown to the tenant's members. Up to 64 characters.",
     "submit": "Create",
@@ -594,6 +593,22 @@
       "submit": "Log in",
       "invalidCredentials": "The ID or password is incorrect.",
       "failed": "Could not log in. If this keeps happening, start again from your tenant's page."
+    },
+    "signup": {
+      "title": "Create an account",
+      "description": "Choose the ID and password for your account in this tenant.",
+      "loginDescription": "If you already have an account in this tenant, log in with its ID and password.",
+      "usernameLabel": "ID",
+      "usernameDescription": "Up to 50 characters, without spaces.",
+      "passwordLabel": "Password",
+      "passwordDescription": "At least 8 characters and at most 72 bytes.",
+      "submit": "Create account",
+      "invalidUsername": "The ID must be 1 to 50 characters without spaces.",
+      "lengthOutOfRange": "The password must be at least 8 characters and at most 72 bytes.",
+      "usernameTaken": "This ID is already taken. Choose another ID.",
+      "failed": "Could not create the account. If this keeps happening, start over.",
+      "useExistingAccount": "Log in with an existing account",
+      "createAccount": "Create a new account"
     },
     "loggedOut": {
       "title": "You have logged out",

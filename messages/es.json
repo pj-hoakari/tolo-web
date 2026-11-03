@@ -6,7 +6,6 @@
     "title": "Crear un inquilino",
     "name": "Nombre del inquilino",
     "subdomain": "Subdominio",
-    "ownerEmail": "Correo electrónico del propietario",
     "ownerDisplayName": "Nombre visible del propietario",
     "ownerDisplayNameDescription": "El nombre que ven los miembros del inquilino. Hasta 64 caracteres.",
     "submit": "Crear",
@@ -594,6 +593,22 @@
       "submit": "Iniciar sesión",
       "invalidCredentials": "El ID o la contraseña no son correctos.",
       "failed": "No se pudo iniciar sesión. Si vuelve a ocurrir, empieza de nuevo desde la página de tu inquilino."
+    },
+    "signup": {
+      "title": "Crear una cuenta",
+      "description": "Elige el ID y la contraseña de tu cuenta en este inquilino.",
+      "loginDescription": "Si ya tienes una cuenta en este inquilino, inicia sesión con su ID y contraseña.",
+      "usernameLabel": "ID",
+      "usernameDescription": "Hasta 50 caracteres, sin espacios.",
+      "passwordLabel": "Contraseña",
+      "passwordDescription": "Al menos 8 caracteres y como máximo 72 bytes.",
+      "submit": "Crear cuenta",
+      "invalidUsername": "El ID debe tener de 1 a 50 caracteres, sin espacios.",
+      "lengthOutOfRange": "La contraseña debe tener al menos 8 caracteres y como máximo 72 bytes.",
+      "usernameTaken": "Este ID ya está en uso. Elige otro ID.",
+      "failed": "No se pudo crear la cuenta. Si sigue ocurriendo, empieza de nuevo.",
+      "useExistingAccount": "Iniciar sesión con una cuenta existente",
+      "createAccount": "Crear una cuenta nueva"
     },
     "loggedOut": {
       "title": "Has cerrado la sesión",

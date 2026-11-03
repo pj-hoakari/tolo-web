@@ -1,6 +1,6 @@
 import "server-only";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { resolveTenant } from "@/lib/control/tenant";
 import { issueRegistrationToken } from "../idp";
@@ -8,7 +8,16 @@ import { resolveTenantSubdomain } from "../tenantSubdomain";
 import { getRealAuth } from "./betterAuth";
 import { createLoginFlow } from "./login";
 import { authMockingEnabled } from "./mocking";
+import {
+  createOnboarding,
+  ONBOARDING_COOKIE,
+  type OnboardingInput,
+  type StartedRegistration,
+  type TenantRegistration,
+} from "./onboarding";
 import { createSessionAuth } from "./session";
+
+export { authMockingEnabled };
 
 export type Viewer =
   | { type: "anonymous" }
@@ -27,6 +36,7 @@ export type AccessTokenRequest =
 
 let sessionAuth: ReturnType<typeof createSessionAuth> | undefined;
 let login: ReturnType<typeof createLoginFlow> | undefined;
+let onboarding: ReturnType<typeof createOnboarding> | undefined;
 
 function realAuth() {
   sessionAuth ??= createSessionAuth(getRealAuth());
@@ -36,6 +46,39 @@ function realAuth() {
 export function loginFlow() {
   login ??= createLoginFlow(getRealAuth());
   return login;
+}
+
+export function onboardingStore() {
+  onboarding ??= createOnboarding(getRealAuth());
+  return onboarding;
+}
+
+export async function boundOnboarding(): Promise<
+  TenantRegistration | undefined
+> {
+  return onboardingStore().bound(
+    (await cookies()).get(ONBOARDING_COOKIE)?.value,
+  );
+}
+
+export async function prepareOnboarding(
+  input: OnboardingInput,
+  start: () => Promise<StartedRegistration>,
+): Promise<string> {
+  const jar = await cookies();
+  const { binding, expiresAt } = await onboardingStore().keep(
+    jar.get(ONBOARDING_COOKIE)?.value,
+    input,
+    start,
+  );
+  jar.set(ONBOARDING_COOKIE, binding, {
+    path: "/",
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    maxAge: Math.max(0, Math.floor((expiresAt.getTime() - Date.now()) / 1000)),
+  });
+  return "/onboarding/start";
 }
 
 export async function requestTenantId(): Promise<string | undefined> {
@@ -60,16 +103,10 @@ function mockUserId(): string {
 export async function getRegistrationToken(): Promise<string> {
   if (!authMockingEnabled()) {
     throw new Error(
-      "registration tokens for accepting an invitation are not supported yet: the root domain does not hand one over to the tenant host",
+      "registration tokens come from the IdP's registration authorization unless AUTH_MOCKING is enabled",
     );
   }
   return issueRegistrationToken(mockUserId());
-}
-
-export function afterJoinPath(): string {
-  return authMockingEnabled()
-    ? "/management"
-    : `/auth/login?return=${encodeURIComponent("/management")}`;
 }
 
 export async function requireStaff(returnPath: string): Promise<void> {
