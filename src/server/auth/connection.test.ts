@@ -2,13 +2,17 @@ import { generateKeyPairSync, sign } from "node:crypto";
 import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
 import { HttpResponse, http } from "msw";
+import type { Pool } from "pg";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { server } from "@/mocks/server";
 import {
   type AuthEnv,
+  advisoryLock,
+  advisoryLockMany,
   authOptions,
   type RealAuth,
   type SessionLock,
+  type SessionLocks,
 } from "./betterAuth";
 import { createConnectionAuth } from "./connection";
 
@@ -57,18 +61,31 @@ function inProcessLock(): SessionLock {
   };
 }
 
+function inProcessLockMany(lock: SessionLock): SessionLocks {
+  return async <T>(keys: string[], task: () => Promise<T>): Promise<T> => {
+    const sorted = [...new Set(keys)].sort();
+    const run = async (index: number): Promise<T> =>
+      index === sorted.length
+        ? task()
+        : lock(sorted[index], () => run(index + 1));
+    return run(0);
+  };
+}
+
 function instrumentedLock() {
   const base = inProcessLock();
   const listeners: {
     predicate: (key: string) => boolean;
     resolve: () => void;
   }[] = [];
+  const lock: SessionLock = (key, task) => {
+    const index = listeners.findIndex((listener) => listener.predicate(key));
+    if (index >= 0) listeners.splice(index, 1)[0].resolve();
+    return base(key, task);
+  };
   return {
-    lock: ((key, task) => {
-      const index = listeners.findIndex((listener) => listener.predicate(key));
-      if (index >= 0) listeners.splice(index, 1)[0].resolve();
-      return base(key, task);
-    }) satisfies SessionLock,
+    lock,
+    lockMany: inProcessLockMany(lock),
     whenLockCalled: (predicate: (key: string) => boolean = () => true) =>
       new Promise<void>((resolve) => {
         listeners.push({ predicate, resolve });
@@ -133,7 +150,10 @@ function idp() {
   };
 }
 
-function createTestConnection(lock: SessionLock = inProcessLock()) {
+function createTestConnection(
+  lock: SessionLock = inProcessLock(),
+  lockMany: SessionLocks = inProcessLockMany(lock),
+) {
   const database = memoryAdapter({
     user: [],
     session: [],
@@ -154,6 +174,7 @@ function createTestConnection(lock: SessionLock = inProcessLock()) {
     auth: auth as unknown as RealAuth["auth"],
     env,
     lock,
+    lockMany,
   } as RealAuth;
   return {
     auth,
@@ -244,6 +265,70 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllEnvs();
+});
+
+function fakePool() {
+  const lockKeys: string[] = [];
+  let active = 0;
+  let maxActive = 0;
+  const waiting: (() => void)[] = [];
+  const client = {
+    query: async (text: string, values?: unknown[]) => {
+      if (text.includes("pg_advisory_xact_lock")) {
+        lockKeys.push(String(values?.[0]));
+      }
+      return { rows: [] };
+    },
+    release: () => {
+      active -= 1;
+      waiting.shift()?.();
+    },
+  };
+  return {
+    pool: {
+      connect: () =>
+        new Promise<typeof client>((resolve) => {
+          const grant = () => {
+            active += 1;
+            maxActive = Math.max(maxActive, active);
+            resolve(client);
+          };
+          if (active === 0) grant();
+          else waiting.push(grant);
+        }),
+    } as unknown as Pool,
+    lockKeys,
+    maxActive: () => maxActive,
+  };
+}
+
+describe("advisory locks", () => {
+  it("acquires multiple keys on one connection in sorted order", async () => {
+    const fake = fakePool();
+
+    await advisoryLockMany(fake.pool)(["z", "a", "m", "a"], async () => {});
+
+    expect(fake.lockKeys).toEqual(["a", "m", "z"]);
+    expect(fake.maxActive()).toBe(1);
+  });
+
+  it("runs concurrent starts and stops without holding nested connections", async () => {
+    const fake = fakePool();
+    const test = createTestConnection(
+      advisoryLock(fake.pool),
+      advisoryLockMany(fake.pool),
+    );
+
+    await expect(
+      Promise.all([
+        start(test.connection),
+        start(test.connection, undefined, [CAMERA, OTHER_CAMERA]),
+        test.connection.deleteForCamera(EVENT, CAMERA),
+        test.connection.deleteForEvent(EVENT),
+      ]),
+    ).resolves.toHaveLength(4);
+    expect(fake.maxActive()).toBe(1);
+  }, 15_000);
 });
 
 describe("connection authorization start", () => {
@@ -728,7 +813,7 @@ describe("connection delegation cleanup", () => {
 
   it("serializes a connection request with a stop so no request starts after the stop", async () => {
     const instrumented = instrumentedLock();
-    const test = createTestConnection(instrumented.lock);
+    const test = createTestConnection(instrumented.lock, instrumented.lockMany);
     const provider = idp();
     await callback(test, await start(test.connection, provider));
 
@@ -796,7 +881,7 @@ describe("connection delegation cleanup", () => {
 
   it("rejects a camera removed while its connection request is waiting", async () => {
     const instrumented = instrumentedLock();
-    const test = createTestConnection(instrumented.lock);
+    const test = createTestConnection(instrumented.lock, instrumented.lockMany);
     const provider = idp();
     await callback(
       test,
@@ -848,7 +933,7 @@ describe("connection delegation cleanup", () => {
 
   it("connects a camera added while its connection request is waiting", async () => {
     const instrumented = instrumentedLock();
-    const test = createTestConnection(instrumented.lock);
+    const test = createTestConnection(instrumented.lock, instrumented.lockMany);
     const provider = idp();
     await callback(test, await start(test.connection, provider, [CAMERA]));
 

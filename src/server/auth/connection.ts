@@ -561,8 +561,9 @@ export function createConnectionAuth(
         input.eventId,
         input.pageEdgeDeviceId,
       );
-      return realAuth.lock(connectionEventLockKey(input.eventId), () =>
-        realAuth.lock(connectionLockKey(key), async () => {
+      return realAuth.lockMany(
+        [connectionEventLockKey(input.eventId), connectionLockKey(key)],
+        async () => {
           const store = await adapter();
           const state = await ensureState(store, key);
           await store.deleteMany({
@@ -623,7 +624,7 @@ export function createConnectionAuth(
           url.searchParams.set("code_challenge", challenge);
           url.searchParams.set("code_challenge_method", "S256");
           return url.href;
-        }),
+        },
       );
     },
 
@@ -764,7 +765,7 @@ export function createConnectionAuth(
     },
 
     async deleteForCamera(eventId: string, cameraEdgeDeviceId: string) {
-      return realAuth.lock(connectionEventLockKey(eventId), async () => {
+      const collectTargets = async () => {
         const { adapter: db } = await realAuth.auth.$context;
         const pending = await db.findMany<PendingConnection>({
           model: PENDING_CONNECTION,
@@ -797,8 +798,17 @@ export function createConnectionAuth(
             });
           }
         }
-        for (const key of targets.keys()) {
-          await realAuth.lock(connectionLockKey(key), async () => {
+        return targets;
+      };
+      const initial = await collectTargets();
+      return realAuth.lockMany(
+        [
+          connectionEventLockKey(eventId),
+          ...[...initial.keys()].map(connectionLockKey),
+        ],
+        async () => {
+          const targets = await collectTargets();
+          for (const key of targets.keys()) {
             const store = await adapter();
             let deletedAuthorization = false;
             const current = await store.findOne<ConnectionAuthorization>({
@@ -828,9 +838,9 @@ export function createConnectionAuth(
               key,
               deletedAuthorization ? { deletedAt: new Date() } : {},
             );
-          });
-        }
-      });
+          }
+        },
+      );
     },
 
     async addForCamera(
@@ -846,20 +856,31 @@ export function createConnectionAuth(
           { field: "pageEdgeDeviceId", value: pageEdgeDeviceId },
         ],
       });
-      for (const row of rows ?? []) {
-        if (parseCameraIds(row.cameraIds).includes(cameraEdgeDeviceId)) {
-          continue;
-        }
-        const key = row.connectionKey;
-        await realAuth.lock(connectionLockKey(key), async () => {
+      const keys = [
+        ...new Set(
+          (rows ?? [])
+            .filter(
+              (row) =>
+                !parseCameraIds(row.cameraIds).includes(cameraEdgeDeviceId),
+            )
+            .map((row) => row.connectionKey),
+        ),
+      ];
+      if (keys.length === 0) return;
+      return realAuth.lockMany(keys.map(connectionLockKey), async () => {
+        for (const row of rows ?? []) {
+          if (parseCameraIds(row.cameraIds).includes(cameraEdgeDeviceId)) {
+            continue;
+          }
+          const key = row.connectionKey;
           const store = await adapter();
           const current = await store.findOne<ConnectionAuthorization>({
             model: CONNECTION_AUTHORIZATION,
             where: [{ field: "connectionKey", value: key }],
           });
-          if (!current) return;
+          if (!current) continue;
           const cameraIds = parseCameraIds(current.cameraIds);
-          if (cameraIds.includes(cameraEdgeDeviceId)) return;
+          if (cameraIds.includes(cameraEdgeDeviceId)) continue;
           await store.update({
             model: CONNECTION_AUTHORIZATION,
             where: [{ field: "id", value: current.id }],
@@ -868,12 +889,12 @@ export function createConnectionAuth(
             },
           });
           await advanceState(store, key);
-        });
-      }
+        }
+      });
     },
 
     async deleteForPage(eventId: string, pageEdgeDeviceId: string) {
-      return realAuth.lock(connectionEventLockKey(eventId), async () => {
+      const collectTargets = async () => {
         const { adapter: db } = await realAuth.auth.$context;
         const pending = await db.findMany<PendingConnection>({
           model: PENDING_CONNECTION,
@@ -905,8 +926,17 @@ export function createConnectionAuth(
             pageEdgeDeviceId: row.pageEdgeDeviceId,
           });
         }
-        for (const [key, target] of targets) {
-          await realAuth.lock(connectionLockKey(key), async () => {
+        return targets;
+      };
+      const initial = await collectTargets();
+      return realAuth.lockMany(
+        [
+          connectionEventLockKey(eventId),
+          ...[...initial.keys()].map(connectionLockKey),
+        ],
+        async () => {
+          const targets = await collectTargets();
+          for (const [key, target] of targets) {
             const store = await adapter();
             const stale = await store.findMany<PendingConnection>({
               model: PENDING_CONNECTION,
@@ -928,13 +958,13 @@ export function createConnectionAuth(
             });
             if (current) await deleteAuthorizationRows(store, current.id);
             await advanceState(store, key, { deletedAt: new Date() });
-          });
-        }
-      });
+          }
+        },
+      );
     },
 
     async deleteForEvent(eventId: string) {
-      return realAuth.lock(connectionEventLockKey(eventId), async () => {
+      const collectTargets = async () => {
         const { adapter: db } = await realAuth.auth.$context;
         const pending = await db.findMany<PendingConnection>({
           model: PENDING_CONNECTION,
@@ -962,8 +992,17 @@ export function createConnectionAuth(
             pageEdgeDeviceId: row.pageEdgeDeviceId,
           });
         }
-        for (const [key, target] of targets) {
-          await realAuth.lock(connectionLockKey(key), async () => {
+        return targets;
+      };
+      const initial = await collectTargets();
+      return realAuth.lockMany(
+        [
+          connectionEventLockKey(eventId),
+          ...[...initial.keys()].map(connectionLockKey),
+        ],
+        async () => {
+          const targets = await collectTargets();
+          for (const [key, target] of targets) {
             const store = await adapter();
             const stale = await store.findMany<PendingConnection>({
               model: PENDING_CONNECTION,
@@ -985,9 +1024,9 @@ export function createConnectionAuth(
             });
             if (current) await deleteAuthorizationRows(store, current.id);
             await advanceState(store, key, { deletedAt: new Date() });
-          });
-        }
-      });
+          }
+        },
+      );
     },
   };
 }

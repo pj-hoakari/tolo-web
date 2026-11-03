@@ -27,7 +27,16 @@ import {
   type RealAuth,
   SESSION_COOKIE,
   type SessionLock,
+  type SessionLocks,
 } from "./betterAuth";
+import {
+  BROWSER_COOKIE,
+  browserCookieValue,
+  browserHash,
+  newBrowserId,
+  signBrowserId,
+  verifyBrowserId,
+} from "./browser";
 import { hostLockKey } from "./hostState";
 import { createLoginFlow } from "./login";
 import { MACHINE_BINDING_COOKIE } from "./machineSession";
@@ -146,6 +155,17 @@ function inProcessLock(): SessionLock {
   };
 }
 
+function inProcessLockMany(lock: SessionLock = inProcessLock()): SessionLocks {
+  return async <T>(keys: string[], task: () => Promise<T>): Promise<T> => {
+    const sorted = [...new Set(keys)].sort();
+    const run = async (index: number): Promise<T> =>
+      index === sorted.length
+        ? task()
+        : lock(sorted[index], () => run(index + 1));
+    return run(0);
+  };
+}
+
 function instrumentedLock() {
   const base = inProcessLock();
   const listeners: (() => void)[] = [];
@@ -225,6 +245,7 @@ async function createTestAuth(
     auth: auth as unknown as RealAuth["auth"],
     env,
     lock,
+    lockMany: inProcessLockMany(lock),
   } as RealAuth;
   await auth.$context;
   return {
@@ -280,6 +301,14 @@ async function completeMachineConversion(
     (await ctx.test.saveUser(ctx.test.createUser({ email, name: sub })));
   const code = randomBytes(16).toString("base64url");
   const binding = randomBytes(16).toString("base64url");
+  const presentedBrowser = browserCookieValue(cookie);
+  const browserId =
+    verifyBrowserId(presentedBrowser, env.secret) ?? newBrowserId();
+  const browser = browserHash(browserId);
+  const browserValue =
+    presentedBrowser && verifyBrowserId(presentedBrowser, env.secret)
+      ? presentedBrowser
+      : signBrowserId(browserId, env.secret);
   await ctx.adapter.create({
     model: "pendingMachineHandoff",
     data: {
@@ -293,6 +322,7 @@ async function completeMachineConversion(
       refreshToken: "machine-refresh",
       accessTokenExpiresAt: new Date(Date.now() + 60_000),
       host,
+      browserHash: browser,
       bindingHash: sha256(binding),
       returnPath: "/",
       expiresAt: new Date(Date.now() + 60_000),
@@ -302,7 +332,7 @@ async function completeMachineConversion(
     body: { code, host },
     headers: new Headers({
       host,
-      cookie: `${cookie ? `${cookie}; ` : ""}${MACHINE_BINDING_COOKIE}=${binding}`,
+      cookie: `${cookie ? `${cookie}; ` : ""}${BROWSER_COOKIE}=${browserValue}; ${MACHINE_BINDING_COOKIE}=${binding}`,
     }),
     asResponse: true,
   });
@@ -419,6 +449,12 @@ function sessionHeaders(jar: ReturnType<typeof cookieJar>) {
   return new Headers({ cookie: jar.header() });
 }
 
+function browserKey(jar: ReturnType<typeof cookieJar>): string {
+  const id = verifyBrowserId(jar.cookies.get(BROWSER_COOKIE), env.secret);
+  if (!id) throw new Error("the browser cookie is missing");
+  return hostLockKey(HOST, browserHash(id));
+}
+
 beforeEach(() => {
   vi.stubEnv("ROOT_DOMAIN", "tolo.test");
 });
@@ -497,9 +533,24 @@ describe("login handoff", () => {
     expect(started.headers.get("location")).toMatch(
       /^https:\/\/tolo\.test\/auth\/begin\?login=/,
     );
-    const [bindingCookie] = started.headers.getSetCookie();
-    expect(bindingCookie).toMatch(/^__Host-tolo\.login\.[^=]+=[^;]+;/);
-    expect(bindingCookie.split("; ")).toEqual(
+    const bindingCookie = started.headers
+      .getSetCookie()
+      .find((cookie) => cookie.startsWith("__Host-tolo.login."));
+    expect(bindingCookie ?? "").toMatch(/^__Host-tolo\.login\.[^=]+=[^;]+;/);
+    const browserCookie = started.headers
+      .getSetCookie()
+      .find((cookie) => cookie.startsWith(`${BROWSER_COOKIE}=`));
+    expect(browserCookie?.split("; ")).toEqual(
+      expect.arrayContaining([
+        "Max-Age=31536000",
+        "Path=/",
+        "HttpOnly",
+        "Secure",
+        "SameSite=Lax",
+      ]),
+    );
+    expect(browserCookie ?? "").not.toMatch(/Domain/i);
+    expect((bindingCookie ?? "").split("; ")).toEqual(
       expect.arrayContaining([
         "Max-Age=600",
         "Path=/",
@@ -508,7 +559,7 @@ describe("login handoff", () => {
         "SameSite=Lax",
       ]),
     );
-    expect(bindingCookie).not.toMatch(/Domain/i);
+    expect(bindingCookie ?? "").not.toMatch(/Domain/i);
     expect(Object.fromEntries(authorizeUrl.searchParams)).toMatchObject({
       client_id: "console-ui",
       redirect_uri: "https://tolo.test/api/auth/callback/tolo-idp",
@@ -920,7 +971,7 @@ describe("machine session protection", () => {
       status: 302,
       page: "https://tolo.test/auth/error",
       host: HOST,
-      error: "machine_session_forbidden",
+      error: "invalid_handoff",
     });
     const ctx = await testAuth.auth.$context;
     const sessions = await ctx.adapter.findMany<{ kind: string }>({
@@ -928,6 +979,52 @@ describe("machine session protection", () => {
     });
     expect(sessions).toHaveLength(1);
     expect(sessions[0]).toMatchObject({ kind: "machine" });
+    expect(await ctx.adapter.findMany({ model: "pendingLogin" })).toEqual([]);
+  });
+
+  it("converts only the current browser and leaves another browser's staff session and login alone", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const browserA = await logInOn(testAuth, provider);
+    const browserB = await logInOn(testAuth, provider);
+    const delayed = await logInUntilHandoff(testAuth, provider, {
+      tenantJar: browserA,
+    });
+
+    await completeMachineConversion(testAuth, { cookie: browserA.header() });
+
+    await expect(
+      testAuth.sessionAuth.viewer(sessionHeaders(browserB), TENANT),
+    ).resolves.toMatchObject({ type: "staff" });
+    const loginB = await logInUntilHandoff(testAuth, provider, {
+      tenantJar: browserB,
+    });
+    const handedOffB = await handOff(
+      testAuth,
+      loginB.handoffUrl,
+      loginB.tenantJar,
+    );
+    expect(handedOffB.status).toBe(200);
+
+    const handedOffA = await handOff(
+      testAuth,
+      delayed.handoffUrl,
+      delayed.tenantJar,
+    );
+    expect(loginErrorPage(handedOffA)).toMatchObject({
+      error: "invalid_handoff",
+    });
+
+    const ctx = await testAuth.auth.$context;
+    const sessions = await ctx.adapter.findMany<{ kind: string }>({
+      model: "session",
+    });
+    expect(
+      sessions.filter((session) => session.kind === "machine"),
+    ).toHaveLength(1);
+    expect(sessions.filter((session) => session.kind === "staff")).toHaveLength(
+      1,
+    );
     expect(await ctx.adapter.findMany({ model: "pendingLogin" })).toEqual([]);
   });
 
@@ -941,9 +1038,11 @@ describe("machine session protection", () => {
     );
     const login = await logInUntilHandoff(testAuth, provider);
 
-    const hold = instrumented.hold(hostLockKey(HOST));
+    const hold = instrumented.hold(browserKey(login.tenantJar));
     const conversionQueued = instrumented.whenLockCalled();
-    const conversion = completeMachineConversion(testAuth);
+    const conversion = completeMachineConversion(testAuth, {
+      cookie: login.tenantJar.header(),
+    });
     await conversionQueued;
     const handoffQueued = instrumented.whenLockCalled();
     const handedOff = handOff(testAuth, login.handoffUrl, login.tenantJar);
@@ -970,12 +1069,14 @@ describe("machine session protection", () => {
     );
     const login = await logInUntilHandoff(testAuth, provider);
 
-    const hold = instrumented.hold(hostLockKey(HOST));
+    const hold = instrumented.hold(browserKey(login.tenantJar));
     const handoffQueued = instrumented.whenLockCalled();
     const handedOff = handOff(testAuth, login.handoffUrl, login.tenantJar);
     await handoffQueued;
     const conversionQueued = instrumented.whenLockCalled();
-    const conversion = completeMachineConversion(testAuth);
+    const conversion = completeMachineConversion(testAuth, {
+      cookie: login.tenantJar.header(),
+    });
     await conversionQueued;
     await hold.release();
     const [response] = await Promise.all([handedOff, conversion]);

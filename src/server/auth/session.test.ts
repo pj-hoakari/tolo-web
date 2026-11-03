@@ -13,6 +13,7 @@ import {
   type RealAuth,
   SESSION_COOKIE,
   type SessionLock,
+  type SessionLocks,
 } from "./betterAuth";
 import { createSessionAuth } from "./session";
 
@@ -45,6 +46,17 @@ function inProcessLock(): SessionLock {
   };
 }
 
+function inProcessLockMany(lock: SessionLock): SessionLocks {
+  return async <T>(keys: string[], task: () => Promise<T>): Promise<T> => {
+    const sorted = [...new Set(keys)].sort();
+    const run = async (index: number): Promise<T> =>
+      index === sorted.length
+        ? task()
+        : lock(sorted[index], () => run(index + 1));
+    return run(0);
+  };
+}
+
 function createTestAuth(
   database: BetterAuthOptions["database"] = memoryAdapter({
     user: [],
@@ -70,6 +82,7 @@ function createTestAuth(
       auth: auth as unknown as RealAuth["auth"],
       env,
       lock,
+      lockMany: inProcessLockMany(lock),
     }),
   };
 }

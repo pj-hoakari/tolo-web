@@ -1,12 +1,14 @@
 create table if not exists "user" ("id" text not null primary key, "name" text not null, "email" text not null unique, "emailVerified" boolean not null, "image" text, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz default CURRENT_TIMESTAMP not null);
 
-create table if not exists "session" ("id" text not null primary key, "expiresAt" timestamptz not null, "token" text not null unique, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz not null, "ipAddress" text, "userAgent" text, "userId" text not null references "user" ("id") on delete cascade, "tenantId" text, "kind" text not null, "eventId" text, "edgeDeviceId" text, "host" text);
+create table if not exists "session" ("id" text not null primary key, "expiresAt" timestamptz not null, "token" text not null unique, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz not null, "ipAddress" text, "userAgent" text, "userId" text not null references "user" ("id") on delete cascade, "tenantId" text, "kind" text not null, "eventId" text, "edgeDeviceId" text, "host" text, "browserHash" text);
 
 alter table "session" add column if not exists "eventId" text;
 
 alter table "session" add column if not exists "edgeDeviceId" text;
 
 alter table "session" add column if not exists "host" text;
+
+alter table "session" add column if not exists "browserHash" text;
 
 create table if not exists "account" ("id" text not null primary key, "accountId" text not null, "providerId" text not null, "userId" text not null references "user" ("id") on delete cascade, "accessToken" text, "refreshToken" text, "idToken" text, "accessTokenExpiresAt" timestamptz, "refreshTokenExpiresAt" timestamptz, "scope" text, "password" text, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz not null);
 
@@ -16,11 +18,19 @@ create table if not exists "tenantAccessToken" ("id" text not null primary key, 
 
 create table if not exists "eventAccessToken" ("id" text not null primary key, "sessionId" text not null references "session" ("id") on delete cascade, "eventId" text not null, "accessToken" text not null, "expiresAt" timestamptz not null);
 
-create table if not exists "pendingLogin" ("id" text not null primary key, "tenantId" text not null, "host" text not null, "hostGeneration" integer not null default 0, "bindingHash" text not null, "returnPath" text not null, "expiresAt" timestamptz not null, "codeHash" text unique, "userId" text, "subject" text, "accessToken" text, "refreshToken" text, "accessTokenExpiresAt" timestamptz, "idToken" text);
+create table if not exists "pendingLogin" ("id" text not null primary key, "tenantId" text not null, "host" text not null, "hostGeneration" integer not null default 0, "browserHash" text not null, "bindingHash" text not null, "returnPath" text not null, "expiresAt" timestamptz not null, "codeHash" text unique, "userId" text, "subject" text, "accessToken" text, "refreshToken" text, "accessTokenExpiresAt" timestamptz, "idToken" text);
 
 alter table "pendingLogin" add column if not exists "hostGeneration" integer not null default 0;
 
-create table if not exists "browserHostState" ("id" text not null primary key, "host" text not null unique, "generation" integer not null default 0, "machineAt" timestamptz, "updatedAt" timestamptz not null);
+alter table "pendingLogin" add column if not exists "browserHash" text;
+
+create table if not exists "browserHostState" ("id" text not null primary key, "host" text not null, "browserHash" text not null, "generation" integer not null default 0, "machineAt" timestamptz, "updatedAt" timestamptz not null);
+
+alter table "browserHostState" add column if not exists "browserHash" text;
+
+alter table "browserHostState" drop constraint if exists "browserHostState_host_key";
+
+create unique index if not exists "browserHostState_host_browserHash_idx" on "browserHostState" ("host", "browserHash");
 
 create index if not exists "session_userId_idx" on "session" ("userId");
 
@@ -44,6 +54,10 @@ create index if not exists "connectionAuthorization_eventId_idx" on "connectionA
 
 create index if not exists "connectionEventAccess_connectionAuthorizationId_idx" on "connectionEventAccess" ("connectionAuthorizationId");
 
-create table if not exists "pendingMachineAuthorization" ("id" text not null primary key, "stateHash" text not null unique, "codeVerifier" text not null, "nonce" text not null, "tenantId" text not null, "eventId" text not null, "pageEdgeDeviceId" text not null, "staffSub" text not null, "host" text not null, "bindingHash" text not null, "returnPath" text not null, "redirectUri" text not null, "expiresAt" timestamptz not null);
+create table if not exists "pendingMachineAuthorization" ("id" text not null primary key, "stateHash" text not null unique, "codeVerifier" text not null, "nonce" text not null, "tenantId" text not null, "eventId" text not null, "pageEdgeDeviceId" text not null, "staffSub" text not null, "host" text not null, "browserHash" text not null, "bindingHash" text not null, "returnPath" text not null, "redirectUri" text not null, "expiresAt" timestamptz not null);
 
-create table if not exists "pendingMachineHandoff" ("id" text not null primary key, "codeHash" text not null unique, "tenantId" text not null, "eventId" text not null, "edgeDeviceId" text not null, "userId" text not null, "subject" text not null, "accessToken" text not null, "refreshToken" text not null, "idToken" text, "accessTokenExpiresAt" timestamptz not null, "host" text not null, "bindingHash" text not null, "returnPath" text not null, "expiresAt" timestamptz not null);
+alter table "pendingMachineAuthorization" add column if not exists "browserHash" text;
+
+create table if not exists "pendingMachineHandoff" ("id" text not null primary key, "codeHash" text not null unique, "tenantId" text not null, "eventId" text not null, "edgeDeviceId" text not null, "userId" text not null, "subject" text not null, "accessToken" text not null, "refreshToken" text not null, "idToken" text, "accessTokenExpiresAt" timestamptz not null, "host" text not null, "browserHash" text not null, "bindingHash" text not null, "returnPath" text not null, "expiresAt" timestamptz not null);
+
+alter table "pendingMachineHandoff" add column if not exists "browserHash" text;

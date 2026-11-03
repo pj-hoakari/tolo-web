@@ -152,7 +152,8 @@ const toloSession = {
     },
     browserHostState: {
       fields: {
-        host: { type: "string", required: true, unique: true },
+        host: { type: "string", required: true },
+        browserHash: { type: "string", required: true },
         generation: { type: "number", required: true, defaultValue: 0 },
         machineAt: { type: "date", required: false },
         updatedAt: { type: "date", required: true },
@@ -192,6 +193,7 @@ export function authOptions(env: AuthEnv, lock?: SessionLock) {
         eventId: { type: "string", required: false, input: false },
         edgeDeviceId: { type: "string", required: false, input: false },
         host: { type: "string", required: false, input: false },
+        browserHash: { type: "string", required: false, input: false },
         kind: {
           type: ["staff", "machine"],
           required: true,
@@ -251,30 +253,46 @@ export function authOptions(env: AuthEnv, lock?: SessionLock) {
 }
 
 export type SessionLock = <T>(
-  sessionId: string,
+  key: string,
   task: () => Promise<T>,
 ) => Promise<T>;
 
-export function advisoryLock(pool: Pool): SessionLock {
-  return async (sessionId, task) => {
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
-        sessionId,
-      ]);
-      return await task();
-    } finally {
-      await client.query("ROLLBACK").then(
-        () => client.release(),
-        (err: Error) => client.release(err),
-      );
+export type SessionLocks = <T>(
+  keys: string[],
+  task: () => Promise<T>,
+) => Promise<T>;
+
+async function withAdvisoryLocks<T>(
+  pool: Pool,
+  keys: string[],
+  task: () => Promise<T>,
+): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    for (const key of [...new Set(keys)].sort()) {
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [key]);
     }
-  };
+    return await task();
+  } finally {
+    await client.query("ROLLBACK").then(
+      () => client.release(),
+      (err: Error) => client.release(err),
+    );
+  }
+}
+
+export function advisoryLock(pool: Pool): SessionLock {
+  return (key, task) => withAdvisoryLocks(pool, [key], task);
+}
+
+export function advisoryLockMany(pool: Pool): SessionLocks {
+  return (keys, task) => withAdvisoryLocks(pool, keys, task);
 }
 
 function createRealAuth(env: AuthEnv) {
-  const lock = advisoryLock(new Pool({ connectionString: env.databaseUrl }));
+  const pool = new Pool({ connectionString: env.databaseUrl });
+  const lock = advisoryLock(pool);
   return {
     env,
     auth: betterAuth({
@@ -282,6 +300,7 @@ function createRealAuth(env: AuthEnv) {
       database: new Pool({ connectionString: env.databaseUrl }),
     }),
     lock,
+    lockMany: advisoryLockMany(pool),
   };
 }
 
