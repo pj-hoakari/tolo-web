@@ -136,16 +136,22 @@ export type DetectionStores = {
   viewStateStore: DetectionViewStateStore;
 };
 
+export function createDetectionResultStore(
+  countingLines: DetectionCountingLineSetting[],
+): DetectionResultStore {
+  return createStore<DetectionResult>()(() => ({
+    lineCounts: createInitialLineCounts(countingLines),
+    metrics: INITIAL_METRICS,
+    detectedPeople: INITIAL_DETECTED_PEOPLE,
+  }));
+}
+
 export function createDetectionStores(
   settings: DetectionSettings = INITIAL_SETTINGS,
 ): DetectionStores {
   return {
     settingsStore: createStore<DetectionSettings>()(() => settings),
-    resultStore: createStore<DetectionResult>()(() => ({
-      lineCounts: createInitialLineCounts(settings.countingLines),
-      metrics: INITIAL_METRICS,
-      detectedPeople: INITIAL_DETECTED_PEOPLE,
-    })),
+    resultStore: createDetectionResultStore(settings.countingLines),
     viewStateStore: createStore<DetectionViewState>()(() => ({
       selectedLineId: settings.countingLines[0]?.id ?? DEFAULT_LINE_ID,
       editingLineId: settings.countingLines[0]?.id ?? null,
@@ -384,14 +390,22 @@ export function recordDetectedPeople(
   );
 }
 
-export function resetDetectedPeople(store: DetectionResultStore): void {
+export function applyDetectedPeople(
+  store: DetectionResultStore,
+  detectedPeople: DetectedPeopleTally,
+): void {
   store.setState(
     (current) =>
-      current.detectedPeople === INITIAL_DETECTED_PEOPLE
+      current.detectedPeople.frames === detectedPeople.frames &&
+      current.detectedPeople.people === detectedPeople.people
         ? current
-        : { ...current, detectedPeople: INITIAL_DETECTED_PEOPLE },
+        : { ...current, detectedPeople },
     true,
   );
+}
+
+export function resetDetectedPeople(store: DetectionResultStore): void {
+  applyDetectedPeople(store, INITIAL_DETECTED_PEOPLE);
 }
 
 export function selectLine(

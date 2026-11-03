@@ -498,6 +498,15 @@
       "inactiveHint": "（選択後に起動で反映）",
       "hide": "非表示",
       "espCamera": "ESP カメラ ({edgeId})"
+    },
+    "cameraStatus": {
+      "label": "{camera}: {status}",
+      "waiting": "待機中",
+      "capturing": "撮影中",
+      "inferring": "検出中",
+      "ready": "検出中",
+      "error": "エラー",
+      "errorDetail": "{camera}: {error}"
     }
   },
   "ObservationDevices": {

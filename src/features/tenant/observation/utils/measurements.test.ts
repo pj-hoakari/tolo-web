@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildWindowMeasurements,
+  mapLinesToObservationPoint,
   mapLinesToObservationPoints,
 } from "./measurements";
 
@@ -91,5 +92,21 @@ describe("buildWindowMeasurements", () => {
 
     expect(measurement.meanDetectedPeople).toBe(expected);
     expect("meanDetectedPeople" in measurement).toBe(expected !== undefined);
+  });
+});
+
+describe("mapLinesToObservationPoint", () => {
+  it("maps every line of a camera to the camera's linked observation point", () => {
+    expect(
+      mapLinesToObservationPoint(
+        [line("a", "entrance"), line("b", "")],
+        "0000000000000001",
+      ),
+    ).toEqual(
+      new Map([
+        ["a", "0000000000000001"],
+        ["b", "0000000000000001"],
+      ]),
+    );
   });
 });

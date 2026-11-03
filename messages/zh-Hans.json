@@ -498,6 +498,15 @@
       "inactiveHint": "（选择后启动时生效）",
       "hide": "隐藏",
       "espCamera": "ESP 摄像头 ({edgeId})"
+    },
+    "cameraStatus": {
+      "label": "{camera}: {status}",
+      "waiting": "等待中",
+      "capturing": "拍摄中",
+      "inferring": "检测中",
+      "ready": "检测中",
+      "error": "错误",
+      "errorDetail": "{camera}: {error}"
     }
   },
   "ObservationDevices": {

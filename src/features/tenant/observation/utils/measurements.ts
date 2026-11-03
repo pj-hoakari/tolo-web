@@ -44,6 +44,17 @@ export function mapLinesToObservationPoints(
   return pointIdByLineId;
 }
 
+/**
+ * カメラは観測点 1 つに紐づくため、そのカメラの全ラインを
+ * 紐づけ先の観測点へ対応させる。
+ */
+export function mapLinesToObservationPoint(
+  lines: DetectionCountingLineSetting[],
+  observationPointId: string,
+): Map<string, string> {
+  return new Map(lines.map((line) => [line.id, observationPointId]));
+}
+
 export function buildWindowMeasurements({
   pointIdByLineId,
   previous,

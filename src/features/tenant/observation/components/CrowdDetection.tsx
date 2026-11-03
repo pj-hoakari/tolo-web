@@ -1,18 +1,25 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { JollySelect, SelectItem } from "@/components/ui/select";
 import { DetectionLineCreationModeToggle } from "@/features/tenant/detection/components/DetectionLineActions";
-import { useDetectionStores } from "@/features/tenant/detection/stores/detectionStore";
+import {
+  createDetectionResultStore,
+  useDetectionStores,
+} from "@/features/tenant/detection/stores/detectionStore";
 import { BroadcastIndicator } from "@/features/tenant/webrtc/components/BroadcastIndicator";
 import { useFirebaseConfig } from "@/features/tenant/webrtc/components/FirebaseConfigProvider";
 import { useVideoSender } from "@/features/tenant/webrtc/hooks/useVideoSender";
 import { orpc } from "@/lib/orpc";
-import { useCrowdDetectionLoop } from "../hooks/useCrowdDetectionLoop";
 import { useCrowdVideoSources } from "../hooks/useCrowdVideoSources";
+import { useMultiCameraDetectionLoop } from "../hooks/useMultiCameraDetectionLoop";
 import { useObservationPageCameras } from "../hooks/useObservationPageCameras";
-import { useObservationReporting } from "../hooks/useObservationReporting";
+import {
+  type ObservationReportingCamera,
+  useObservationReporting,
+} from "../hooks/useObservationReporting";
+import type { CameraCyclePhase } from "../utils/cameraScheduler";
 import type { CameraSourceSpec } from "../utils/cameraSources";
 import { createEspCameraVideoSource } from "../utils/espVideoSource";
 import {
@@ -45,6 +52,7 @@ export function CrowdDetection({
 }: CrowdDetectionProps) {
   const t = useTranslations("Observation.errors");
   const tCamera = useTranslations("Observation.cameraSelector");
+  const tCameraStatus = useTranslations("Observation.cameraStatus");
   const firebaseConfig = useFirebaseConfig();
 
   const {
@@ -103,8 +111,25 @@ export function CrowdDetection({
     firebaseConfig,
   ]);
 
+  const { settingsStore, resultStore, viewStateStore } = useDetectionStores();
+  const cameraKeys = useMemo(
+    () => sourceSpecs.map((spec) => spec.cameraEdgeId),
+    [sourceSpecs],
+  );
+  const cameraResultStores = useMemo(
+    () =>
+      new Map(
+        cameraKeys.map((key) => [
+          key,
+          createDetectionResultStore(settingsStore.getState().countingLines),
+        ]),
+      ),
+    [cameraKeys, settingsStore],
+  );
+
   const {
     videoSource,
+    videoSources,
     status,
     error,
     sourceStates,
@@ -112,7 +137,6 @@ export function CrowdDetection({
     selectSource,
     start,
     stop,
-    reportDetectionError,
   } = useCrowdVideoSources(
     sourceSpecs,
     effectiveMode === "esp" ? initialCameraId : LOCAL_SOURCE_KEY,
@@ -121,7 +145,9 @@ export function CrowdDetection({
   const [broadcastStream, setBroadcastStream] = useState<MediaStream | null>(
     null,
   );
-  const { settingsStore, resultStore, viewStateStore } = useDetectionStores();
+  const [cameraPhases, setCameraPhases] = useState<
+    Record<string, { phase: CameraCyclePhase; error: string | null }>
+  >({});
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const lineCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -134,18 +160,72 @@ export function CrowdDetection({
     settingsStore,
   });
 
-  useCrowdDetectionLoop({
-    videoRef,
+  const handleCameraPhase = useCallback(
+    (key: string, phase: CameraCyclePhase, cause?: unknown) => {
+      const error =
+        phase === "error"
+          ? cause instanceof Error
+            ? cause.message
+            : t("detection")
+          : null;
+      setCameraPhases((previous) => {
+        const current = previous[key];
+        if (current?.phase === phase && current.error === error) {
+          return previous;
+        }
+        return { ...previous, [key]: { phase, error } };
+      });
+    },
+    [t],
+  );
+
+  useEffect(() => {
+    if (status === "detecting") {
+      return;
+    }
+    setCameraPhases((previous) =>
+      Object.keys(previous).length === 0 ? previous : {},
+    );
+  }, [status]);
+
+  useMultiCameraDetectionLoop({
+    sources: videoSources,
+    selectedKey,
     overlayCanvasRef,
     lineCanvasRef,
     status,
     settingsStore,
     viewStateStore,
     resultStore,
+    cameraResultStores,
+    onCameraPhase: handleCameraPhase,
     onBroadcastStreamChange: setBroadcastStream,
     onDetectionFrame: sendDetectionFrame,
-    onDetectionError: reportDetectionError,
   });
+
+  const reportingCameras = useMemo<
+    ObservationReportingCamera[] | undefined
+  >(() => {
+    if (effectiveMode !== "esp") {
+      return undefined;
+    }
+    return cameras.flatMap((camera) => {
+      if (!camera.observationPointId) {
+        return [];
+      }
+      const cameraResultStore = cameraResultStores.get(camera.edgeDeviceId);
+      if (!cameraResultStore) {
+        return [];
+      }
+      return [
+        {
+          key: camera.edgeDeviceId,
+          observationPointId: camera.observationPointId,
+          resultStore: cameraResultStore,
+        },
+      ];
+    });
+  }, [effectiveMode, cameras, cameraResultStores]);
 
   const { unregistered } = useObservationReporting({
     eventId,
@@ -154,6 +234,7 @@ export function CrowdDetection({
     status,
     settingsStore,
     resultStore,
+    cameras: reportingCameras,
   });
 
   const handleSourceChange = useCallback((factory: CrowdVideoSourceFactory) => {
@@ -227,6 +308,29 @@ export function CrowdDetection({
           </p>
         );
       })}
+      {effectiveMode === "esp" &&
+        cameras.length > 0 &&
+        status === "detecting" && (
+          <ul className="flex w-full max-w-3xl flex-wrap gap-x-4 gap-y-1 px-4 text-xs text-muted-foreground sm:px-0">
+            {cameras.map((camera) => {
+              const loop = cameraPhases[camera.edgeDeviceId];
+              const name = camera.name || camera.edgeDeviceId;
+              return (
+                <li key={camera.edgeDeviceId}>
+                  {loop?.error
+                    ? tCameraStatus("errorDetail", {
+                        camera: name,
+                        error: loop.error,
+                      })
+                    : tCameraStatus("label", {
+                        camera: name,
+                        status: tCameraStatus(loop?.phase ?? "waiting"),
+                      })}
+                </li>
+              );
+            })}
+          </ul>
+        )}
       <CrowdDetectionView
         videoSource={videoSource}
         status={status}

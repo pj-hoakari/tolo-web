@@ -26,6 +26,8 @@ export type CrowdSourceState = {
 
 export type UseCrowdVideoSourcesResult = {
   videoSource: VideoSourceDescriptor | null;
+  /** 開いた全カメラの映像ソース。選択中以外も検出ループが利用する。 */
+  videoSources: ReadonlyMap<string, VideoSourceDescriptor>;
   status: DetectCrowdStatus;
   error: string | null;
   sourceStates: CrowdSourceState[];
@@ -38,8 +40,7 @@ export type UseCrowdVideoSourcesResult = {
 
 /**
  * 複数の映像ソースを同時に開いたまま、選択した1つの映像だけを表示する。
- * 検出ループは選択中の映像に対して動かし、カメラごとの推論の直列化は
- * Phase 5b で扱う。
+ * すべての映像ソースを返し、検出ループがカメラごとに直列処理できるようにする。
  */
 export function useCrowdVideoSources(
   specs: CameraSourceSpec[],
@@ -224,6 +225,7 @@ export function useCrowdVideoSources(
 
   return {
     videoSource,
+    videoSources: descriptors,
     status,
     error,
     sourceStates,

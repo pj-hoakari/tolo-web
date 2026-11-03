@@ -498,6 +498,15 @@
       "inactiveHint": " (applied on the next start)",
       "hide": "Hide",
       "espCamera": "ESP camera ({edgeId})"
+    },
+    "cameraStatus": {
+      "label": "{camera}: {status}",
+      "waiting": "Waiting",
+      "capturing": "Capturing",
+      "inferring": "Detecting",
+      "ready": "Detecting",
+      "error": "Error",
+      "errorDetail": "{camera}: {error}"
     }
   },
   "ObservationDevices": {

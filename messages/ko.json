@@ -498,6 +498,15 @@
       "inactiveHint": "(선택 후 시작 시 반영)",
       "hide": "숨기기",
       "espCamera": "ESP 카메라 ({edgeId})"
+    },
+    "cameraStatus": {
+      "label": "{camera}: {status}",
+      "waiting": "대기 중",
+      "capturing": "촬영 중",
+      "inferring": "감지 중",
+      "ready": "감지 중",
+      "error": "오류",
+      "errorDetail": "{camera}: {error}"
     }
   },
   "ObservationDevices": {

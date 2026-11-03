@@ -498,6 +498,15 @@
       "inactiveHint": "(छानेपछि सुरु गर्दा लागू हुन्छ)",
       "hide": "लुकाउनुहोस्",
       "espCamera": "ESP क्यामेरा ({edgeId})"
+    },
+    "cameraStatus": {
+      "label": "{camera}: {status}",
+      "waiting": "प्रतीक्षामा",
+      "capturing": "क्याप्चर गर्दै",
+      "inferring": "पहिचान गर्दै",
+      "ready": "पहिचान गर्दै",
+      "error": "त्रुटि",
+      "errorDetail": "{camera}: {error}"
     }
   },
   "ObservationDevices": {
