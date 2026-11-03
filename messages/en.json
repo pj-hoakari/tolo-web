@@ -462,7 +462,8 @@
     "controls": {
       "start": "Start camera",
       "stop": "Stop",
-      "loading": "Starting…"
+      "loading": "Starting…",
+      "retry": "Reconnect"
     },
     "cameraSelector": {
       "label": "Camera"

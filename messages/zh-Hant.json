@@ -462,7 +462,8 @@
     "controls": {
       "start": "啟動攝影機",
       "stop": "停止",
-      "loading": "啟動中…"
+      "loading": "啟動中…",
+      "retry": "重新連線"
     },
     "cameraSelector": {
       "label": "攝影機"

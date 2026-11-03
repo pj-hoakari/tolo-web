@@ -2,7 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { JollySelect, SelectItem } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Tab, TabList, Tabs } from "@/components/ui/tabs";
 import { DetectionLineCreationModeToggle } from "@/features/tenant/detection/components/DetectionLineActions";
 import {
   createCameraDetectionStoreMaps,
@@ -13,7 +14,9 @@ import { BroadcastIndicator } from "@/features/tenant/webrtc/components/Broadcas
 import { useFirebaseConfig } from "@/features/tenant/webrtc/components/FirebaseConfigProvider";
 import { useVideoSender } from "@/features/tenant/webrtc/hooks/useVideoSender";
 import { orpc } from "@/lib/orpc";
+import { cn } from "@/lib/utils";
 import { useCrowdVideoSources } from "../hooks/useCrowdVideoSources";
+import { useEspCameraAutoStart } from "../hooks/useEspCameraAutoStart";
 import { useMultiCameraDetectionLoop } from "../hooks/useMultiCameraDetectionLoop";
 import { useObservationPageCameras } from "../hooks/useObservationPageCameras";
 import {
@@ -26,6 +29,10 @@ import {
 } from "../utils/cameraDetectionSettings";
 import type { CameraCyclePhase } from "../utils/cameraScheduler";
 import type { CameraSourceSpec } from "../utils/cameraSources";
+import {
+  CAMERA_STATUS_DOT_CLASS,
+  resolveCameraStatusKey,
+} from "../utils/cameraStatus";
 import { createEspCameraVideoSource } from "../utils/espVideoSource";
 import { createMockCameraVideoSource } from "../utils/mockVideoSource";
 import {
@@ -58,7 +65,7 @@ export function CrowdDetection({
   requestedCameraId,
 }: CrowdDetectionProps) {
   const t = useTranslations("Observation.errors");
-  const tCamera = useTranslations("Observation.cameraSelector");
+  const tControls = useTranslations("Observation.controls");
   const tCameraStatus = useTranslations("Observation.cameraStatus");
   const firebaseConfig = useFirebaseConfig();
 
@@ -172,6 +179,12 @@ export function CrowdDetection({
     sourceSpecs,
     effectiveMode === "esp" ? initialCameraId : LOCAL_SOURCE_KEY,
   );
+
+  useEspCameraAutoStart({
+    enabled: effectiveMode === "esp",
+    cameraIds: espCameraKeys,
+    start,
+  });
 
   const selectedSettingsStore = selectCameraSettingsStore(
     selectedKey,
@@ -294,6 +307,7 @@ export function CrowdDetection({
     effectiveMode === "esp"
       ? sourceStates.filter((state) => state.status === "error")
       : [];
+  const cameraErrorKeys = new Set(cameraErrors.map((state) => state.key));
 
   return (
     <div className="flex w-full flex-col items-center gap-4">
@@ -320,30 +334,65 @@ export function CrowdDetection({
           }
         />
       )}
-      <CrowdDetectionControls
-        status={status}
-        onStart={start}
-        onStop={stop}
-        disabled={camerasStatus === "loading"}
-      />
-      {effectiveMode === "esp" && cameras.length > 1 && (
-        <JollySelect
-          label={tCamera("label")}
-          selectedKey={selectedKey}
-          onSelectionChange={(key) => {
-            if (key !== null) {
-              selectSource(String(key));
-            }
-          }}
-          items={cameras}
-          className="w-full max-w-xs"
+      {effectiveMode === "dev" ? (
+        <CrowdDetectionControls
+          status={status}
+          onStart={start}
+          onStop={stop}
+          disabled={camerasStatus === "loading"}
+        />
+      ) : status === "error" ? (
+        <Button type="button" variant="secondary" size="sm" onPress={start}>
+          {tControls("retry")}
+        </Button>
+      ) : null}
+      {effectiveMode === "esp" && cameras.length > 0 && (
+        <Tabs
+          selectedKey={selectedKey ?? undefined}
+          onSelectionChange={(key) => selectSource(String(key))}
+          className="w-full max-w-3xl px-4 sm:px-0"
         >
-          {(camera) => (
-            <SelectItem id={camera.edgeDeviceId}>
-              {camera.name || camera.edgeDeviceId}
-            </SelectItem>
-          )}
-        </JollySelect>
+          <TabList className="w-full justify-start overflow-x-auto">
+            {cameras.map((camera) => {
+              const loop = cameraPhases[camera.edgeDeviceId];
+              const name = camera.name || camera.edgeDeviceId;
+              const statusKey = resolveCameraStatusKey({
+                phase: loop?.phase,
+                stale:
+                  loop?.phase === "stale" ||
+                  freshness.get(camera.edgeDeviceId) === false,
+                hasError:
+                  status === "error" ||
+                  Boolean(loop?.error) ||
+                  cameraErrorKeys.has(camera.edgeDeviceId),
+              });
+              const statusText = tCameraStatus(statusKey);
+              return (
+                <Tab
+                  key={camera.edgeDeviceId}
+                  id={camera.edgeDeviceId}
+                  aria-label={tCameraStatus("label", {
+                    camera: name,
+                    status: statusText,
+                  })}
+                  className="shrink-0 items-center gap-2"
+                >
+                  <span>{name}</span>
+                  <span className="flex items-center gap-1 text-xs font-normal text-muted-foreground">
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "size-2 shrink-0 rounded-full",
+                        CAMERA_STATUS_DOT_CLASS[statusKey],
+                      )}
+                    />
+                    {statusText}
+                  </span>
+                </Tab>
+              );
+            })}
+          </TabList>
+        </Tabs>
       )}
       {cameraErrors.map((state) => {
         const camera = cameras.find(
@@ -358,34 +407,6 @@ export function CrowdDetection({
           </p>
         );
       })}
-      {effectiveMode === "esp" &&
-        cameras.length > 0 &&
-        status === "detecting" && (
-          <ul className="flex w-full max-w-3xl flex-wrap gap-x-4 gap-y-1 px-4 text-xs text-muted-foreground sm:px-0">
-            {cameras.map((camera) => {
-              const loop = cameraPhases[camera.edgeDeviceId];
-              const name = camera.name || camera.edgeDeviceId;
-              const stale =
-                loop?.phase === "stale" ||
-                freshness.get(camera.edgeDeviceId) === false;
-              return (
-                <li key={camera.edgeDeviceId}>
-                  {loop?.error
-                    ? tCameraStatus("errorDetail", {
-                        camera: name,
-                        error: loop.error,
-                      })
-                    : tCameraStatus("label", {
-                        camera: name,
-                        status: tCameraStatus(
-                          stale ? "stale" : (loop?.phase ?? "waiting"),
-                        ),
-                      })}
-                </li>
-              );
-            })}
-          </ul>
-        )}
       <CrowdDetectionView
         videoSource={videoSource}
         status={status}
@@ -396,6 +417,7 @@ export function CrowdDetection({
         settingsStore={selectedSettingsStore}
         resultStore={resultStore}
         viewStateStore={selectedViewStateStore}
+        showDetectionStatus={effectiveMode !== "esp"}
       />
       <BroadcastIndicator active={active} edgeId={edgeId} />
     </div>

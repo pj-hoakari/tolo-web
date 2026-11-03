@@ -462,7 +462,8 @@
     "controls": {
       "start": "启动摄像头",
       "stop": "停止",
-      "loading": "启动中…"
+      "loading": "启动中…",
+      "retry": "重新连接"
     },
     "cameraSelector": {
       "label": "摄像头"

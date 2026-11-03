@@ -462,7 +462,8 @@
     "controls": {
       "start": "カメラを起動",
       "stop": "停止",
-      "loading": "起動中…"
+      "loading": "起動中…",
+      "retry": "再接続"
     },
     "cameraSelector": {
       "label": "カメラ"
