@@ -452,6 +452,7 @@ export function createLoginFlow({ auth, env }: RealAuth) {
       }
       return auth.api.startLogin({
         body: { tenantId, host, returnPath },
+        headers: request.headers,
         asResponse: true,
       });
     },

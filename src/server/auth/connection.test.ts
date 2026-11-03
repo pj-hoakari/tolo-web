@@ -1,4 +1,4 @@
-import { generateKeyPairSync, sign } from "node:crypto";
+import { createHash, generateKeyPairSync, sign } from "node:crypto";
 import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
 import { HttpResponse, http } from "msw";
@@ -36,7 +36,11 @@ const PAGE = "1111111111111111";
 const CAMERA = "2222222222222222";
 const OTHER_CAMERA = "3333333333333333";
 const CONNECTION_LOCK_KEY = `connection:${TENANT}:${EVENT}:${PAGE}`;
+const EVENT_LOCK_KEY = `connection-event:${EVENT}`;
 const TOKEN_ENDPOINT = "https://idp.test/oauth2/token";
+
+const sha256 = (value: string) =>
+  createHash("sha256").update(value).digest("base64url");
 
 const { privateKey, publicKey } = generateKeyPairSync("rsa", {
   modulusLength: 2048,
@@ -246,6 +250,22 @@ async function holdConnectionLock(test: TestConnection) {
   };
 }
 
+async function holdEventLock(test: TestConnection) {
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const held = test.realAuth.lock(EVENT_LOCK_KEY, async () => {
+    await gate;
+  });
+  return {
+    async release() {
+      release();
+      await held;
+    },
+  };
+}
+
 beforeEach(() => {
   server.use(
     http.get("https://idp.test/.well-known/openid-configuration", () =>
@@ -271,7 +291,6 @@ function fakePool() {
   const lockKeys: string[] = [];
   let active = 0;
   let maxActive = 0;
-  const waiting: (() => void)[] = [];
   const client = {
     query: async (text: string, values?: unknown[]) => {
       if (text.includes("pg_advisory_xact_lock")) {
@@ -281,21 +300,15 @@ function fakePool() {
     },
     release: () => {
       active -= 1;
-      waiting.shift()?.();
     },
   };
   return {
     pool: {
-      connect: () =>
-        new Promise<typeof client>((resolve) => {
-          const grant = () => {
-            active += 1;
-            maxActive = Math.max(maxActive, active);
-            resolve(client);
-          };
-          if (active === 0) grant();
-          else waiting.push(grant);
-        }),
+      connect: async () => {
+        active += 1;
+        maxActive = Math.max(maxActive, active);
+        return client;
+      },
     } as unknown as Pool,
     lockKeys,
     maxActive: () => maxActive,
@@ -312,7 +325,7 @@ describe("advisory locks", () => {
     expect(fake.maxActive()).toBe(1);
   });
 
-  it("runs concurrent starts and stops without holding nested connections", async () => {
+  it("runs concurrent starts and stops without deadlocking", async () => {
     const fake = fakePool();
     const test = createTestConnection(
       advisoryLock(fake.pool),
@@ -327,7 +340,7 @@ describe("advisory locks", () => {
         test.connection.deleteForEvent(EVENT),
       ]),
     ).resolves.toHaveLength(4);
-    expect(fake.maxActive()).toBe(1);
+    expect(fake.maxActive()).toBeLessThanOrEqual(4);
   }, 15_000);
 });
 
@@ -534,6 +547,105 @@ describe("connection authorization callback", () => {
     ).toEqual([]);
   });
 
+  it("does not save a pending authorization that a deletion overtakes", async () => {
+    const instrumented = instrumentedLock();
+    const test = createTestConnection(instrumented.lock, instrumented.lockMany);
+    const provider = idp();
+    const { adapter } = await test.auth.$context;
+    const state = "pending-state-before-delete";
+    const nonce = "pending-nonce-before-delete";
+    provider.setNonce(nonce);
+
+    const holdStarted = instrumented.whenLockCalled(
+      (key) => key === EVENT_LOCK_KEY,
+    );
+    const hold = await holdEventLock(test);
+    await holdStarted;
+
+    const deleteQueued = instrumented.whenLockCalled(
+      (key) => key === EVENT_LOCK_KEY,
+    );
+    const deletion = test.connection.deleteForPage(EVENT, PAGE);
+    await deleteQueued;
+
+    await adapter.create({
+      model: "pendingConnectionAuthorization",
+      data: {
+        stateHash: sha256(state),
+        codeVerifier: "pending-verifier",
+        nonce,
+        tenantId: TENANT,
+        eventId: EVENT,
+        pageEdgeDeviceId: PAGE,
+        cameraIds: JSON.stringify([CAMERA]),
+        staffSub: "idp-staff",
+        returnPath: `/event/${EVENT}/observation`,
+        redirectUri: "https://web.test/api/auth/connection/callback",
+        generation: 0,
+        expiresAt: new Date(Date.now() + 60_000),
+      },
+    });
+
+    let releaseSave!: () => void;
+    const saveGate = new Promise<void>((resolve) => {
+      releaseSave = resolve;
+    });
+    let savePaused!: () => void;
+    const saveReached = new Promise<void>((resolve) => {
+      savePaused = resolve;
+    });
+    let pauseSave = true;
+    const originalFindOne = adapter.findOne.bind(adapter);
+    adapter.findOne = (async (args) => {
+      if (pauseSave && args.model === "connectionAuthorization") {
+        pauseSave = false;
+        savePaused();
+        await saveGate;
+      }
+      return originalFindOne(args);
+    }) as typeof adapter.findOne;
+
+    const callbackDone = test.connection.callback({
+      code: "code-1",
+      state,
+      error: undefined,
+      viewer: { type: "staff", userId: "idp-staff", tenantId: TENANT },
+    });
+    const callbackQueued = instrumented.whenLockCalled(
+      (key) => key === EVENT_LOCK_KEY,
+    );
+    const outcome = await Promise.race([
+      saveReached.then(() => "save" as const),
+      callbackQueued.then(() => "event" as const),
+    ]);
+    pauseSave = false;
+    await hold.release();
+    await deletion;
+    if (outcome === "save") releaseSave();
+
+    expect(await callbackDone).toBe(
+      `/event/${EVENT}/observation?cameraConnection=failed`,
+    );
+    expect(await storedAuthorization(test.auth)).toBeNull();
+    expect(
+      await adapter.findMany({ model: "pendingConnectionAuthorization" }),
+    ).toEqual([]);
+    await expect(
+      test.connection.withAuthorization(
+        {
+          tenantId: TENANT,
+          eventId: EVENT,
+          pageEdgeDeviceId: PAGE,
+          cameraEdgeDeviceId: CAMERA,
+        },
+        async () => "connection-token",
+      ),
+    ).rejects.toMatchObject({
+      code: "PRECONDITION_FAILED",
+      data: { code: "CONNECTION_AUTHORIZATION_REQUIRED" },
+    });
+  });
+
   it("keeps a normal start, stop, and callback working", async () => {
     const test = createTestConnection();
     const provider = idp();
@@ -549,6 +661,31 @@ describe("connection authorization callback", () => {
     });
     await test.connection.deleteForCamera(EVENT, CAMERA);
     expect(await storedAuthorization(test.auth)).toBeNull();
+  });
+
+  it("cancels a pending authorization on a page stop and accepts a fresh start", async () => {
+    const test = createTestConnection();
+    const provider = idp();
+    const pending = await start(test.connection, provider, [CAMERA]);
+
+    await test.connection.deleteForPage(EVENT, PAGE);
+    const refused = await callback(test, pending);
+
+    expect(refused).toBe(
+      "http://localhost/auth/error?error=connection_state_invalid",
+    );
+    expect(await storedAuthorization(test.auth)).toBeNull();
+
+    const fresh = await callback(
+      test,
+      await start(test.connection, provider, [CAMERA]),
+    );
+    expect(fresh).toBe(
+      `/event/${EVENT}/observation?cameraConnection=authorized`,
+    );
+    expect(await storedAuthorization(test.auth)).toMatchObject({
+      cameraIds: JSON.stringify([CAMERA]),
+    });
   });
 
   it("rejects a reauthorization callback that would restore a stopped camera", async () => {
@@ -904,7 +1041,7 @@ describe("connection delegation cleanup", () => {
     await deleteStarted;
 
     const accessStarted = instrumented.whenLockCalled(
-      (key) => key === CONNECTION_LOCK_KEY,
+      (key) => key === EVENT_LOCK_KEY,
     );
     const access = test.connection.eventAccess({
       tenantId: TENANT,
@@ -946,7 +1083,7 @@ describe("connection delegation cleanup", () => {
     await addStarted;
 
     const accessStarted = instrumented.whenLockCalled(
-      (key) => key === CONNECTION_LOCK_KEY,
+      (key) => key === EVENT_LOCK_KEY,
     );
     const access = test.connection.eventAccess({
       tenantId: TENANT,

@@ -313,54 +313,57 @@ export function createConnectionAuth(
       pending.eventId,
       pending.pageEdgeDeviceId,
     );
-    return realAuth.lock(connectionLockKey(key), async () => {
-      const state = await ensureState(store, key);
-      if (Number(state.generation) !== Number(pending.generation)) {
-        return false;
-      }
-      const now = new Date();
-      const values = {
-        connectionKey: key,
-        tenantId: pending.tenantId,
-        eventId: pending.eventId,
-        pageEdgeDeviceId: pending.pageEdgeDeviceId,
-        cameraIds: pending.cameraIds,
-        staffSub,
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token,
-        idToken: tokens.id_token ?? null,
-        accessTokenExpiresAt: new Date(
-          now.getTime() + tokens.expires_in * 1000,
-        ),
-        createdAt: now,
-        expiresAt: new Date(now.getTime() + authorizationTtlMs),
-      };
-      const existing = await store.findOne<ConnectionAuthorization>({
-        model: CONNECTION_AUTHORIZATION,
-        where: [{ field: "connectionKey", value: key }],
-      });
-      if (existing) {
-        await store.deleteMany({
-          model: CONNECTION_EVENT_ACCESS,
-          where: [{ field: "connectionAuthorizationId", value: existing.id }],
-        });
-        await store.update({
+    return realAuth.lockMany(
+      [connectionEventLockKey(pending.eventId), connectionLockKey(key)],
+      async () => {
+        const state = await ensureState(store, key);
+        if (Number(state.generation) !== Number(pending.generation)) {
+          return false;
+        }
+        const now = new Date();
+        const values = {
+          connectionKey: key,
+          tenantId: pending.tenantId,
+          eventId: pending.eventId,
+          pageEdgeDeviceId: pending.pageEdgeDeviceId,
+          cameraIds: pending.cameraIds,
+          staffSub,
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token,
+          idToken: tokens.id_token ?? null,
+          accessTokenExpiresAt: new Date(
+            now.getTime() + tokens.expires_in * 1000,
+          ),
+          createdAt: now,
+          expiresAt: new Date(now.getTime() + authorizationTtlMs),
+        };
+        const existing = await store.findOne<ConnectionAuthorization>({
           model: CONNECTION_AUTHORIZATION,
-          where: [{ field: "id", value: existing.id }],
-          update: values,
+          where: [{ field: "connectionKey", value: key }],
         });
-      } else {
-        await store.create<
-          Omit<ConnectionAuthorization, "id">,
-          ConnectionAuthorization
-        >({
-          model: CONNECTION_AUTHORIZATION,
-          data: values,
-        });
-      }
-      await advanceState(store, key, { deletedAt: null });
-      return true;
-    });
+        if (existing) {
+          await store.deleteMany({
+            model: CONNECTION_EVENT_ACCESS,
+            where: [{ field: "connectionAuthorizationId", value: existing.id }],
+          });
+          await store.update({
+            model: CONNECTION_AUTHORIZATION,
+            where: [{ field: "id", value: existing.id }],
+            update: values,
+          });
+        } else {
+          await store.create<
+            Omit<ConnectionAuthorization, "id">,
+            ConnectionAuthorization
+          >({
+            model: CONNECTION_AUTHORIZATION,
+            data: values,
+          });
+        }
+        await advanceState(store, key, { deletedAt: null });
+        return true;
+      },
+    );
   }
 
   async function postToTokenEndpoint(
@@ -513,6 +516,7 @@ export function createConnectionAuth(
 
   async function withCurrentAuthorization<T>(
     key: string,
+    eventId: string,
     cameraEdgeDeviceId: string | undefined,
     task: (
       authorization: ConnectionAuthorization,
@@ -520,33 +524,36 @@ export function createConnectionAuth(
     ) => Promise<T>,
   ): Promise<T> {
     const env = environment();
-    return realAuth.lock(connectionLockKey(key), async () => {
-      const store = await adapter();
-      const authorization = await store.findOne<ConnectionAuthorization>({
-        model: CONNECTION_AUTHORIZATION,
-        where: [{ field: "connectionKey", value: key }],
-      });
-      if (!authorization || authorization.expiresAt <= new Date()) {
-        if (authorization) {
-          await deleteAuthorizationRows(store, authorization.id);
-          await advanceState(store, key, { deletedAt: new Date() });
+    return realAuth.lockMany(
+      [connectionEventLockKey(eventId), connectionLockKey(key)],
+      async () => {
+        const store = await adapter();
+        const authorization = await store.findOne<ConnectionAuthorization>({
+          model: CONNECTION_AUTHORIZATION,
+          where: [{ field: "connectionKey", value: key }],
+        });
+        if (!authorization || authorization.expiresAt <= new Date()) {
+          if (authorization) {
+            await deleteAuthorizationRows(store, authorization.id);
+            await advanceState(store, key, { deletedAt: new Date() });
+          }
+          throw connectionError(
+            CONNECTION_ERROR_CODES.authorizationRequired,
+            "no camera connection authorization; authorize the camera connection",
+          );
         }
-        throw connectionError(
-          CONNECTION_ERROR_CODES.authorizationRequired,
-          "no camera connection authorization; authorize the camera connection",
-        );
-      }
-      if (
-        cameraEdgeDeviceId &&
-        !parseCameraIds(authorization.cameraIds).includes(cameraEdgeDeviceId)
-      ) {
-        throw connectionError(
-          CONNECTION_ERROR_CODES.cameraNotDelegated,
-          "the camera is not part of this page's connection delegation",
-        );
-      }
-      return task(authorization, env);
-    });
+        if (
+          cameraEdgeDeviceId &&
+          !parseCameraIds(authorization.cameraIds).includes(cameraEdgeDeviceId)
+        ) {
+          throw connectionError(
+            CONNECTION_ERROR_CODES.cameraNotDelegated,
+            "the camera is not part of this page's connection delegation",
+          );
+        }
+        return task(authorization, env);
+      },
+    );
   }
 
   return {
@@ -731,6 +738,7 @@ export function createConnectionAuth(
       const key = connectionKey(tenantId, eventId, pageEdgeDeviceId);
       return withCurrentAuthorization(
         key,
+        eventId,
         cameraEdgeDeviceId,
         (authorization, env) => exchangeEventAccess(authorization, env, key),
       );
@@ -758,6 +766,7 @@ export function createConnectionAuth(
       const key = connectionKey(tenantId, eventId, pageEdgeDeviceId);
       return withCurrentAuthorization(
         key,
+        eventId,
         cameraEdgeDeviceId,
         async (authorization, env) =>
           task(await exchangeEventAccess(authorization, env, key)),
@@ -800,47 +809,47 @@ export function createConnectionAuth(
         }
         return targets;
       };
-      const initial = await collectTargets();
-      return realAuth.lockMany(
-        [
-          connectionEventLockKey(eventId),
-          ...[...initial.keys()].map(connectionLockKey),
-        ],
-        async () => {
-          const targets = await collectTargets();
-          for (const key of targets.keys()) {
-            const store = await adapter();
-            let deletedAuthorization = false;
-            const current = await store.findOne<ConnectionAuthorization>({
-              model: CONNECTION_AUTHORIZATION,
-              where: [{ field: "connectionKey", value: key }],
-            });
-            if (current) {
-              const cameraIds = parseCameraIds(current.cameraIds);
-              if (cameraIds.includes(cameraEdgeDeviceId)) {
-                const remaining = cameraIds.filter(
-                  (id) => id !== cameraEdgeDeviceId,
-                );
-                if (remaining.length === 0) {
-                  await deleteAuthorizationRows(store, current.id);
-                  deletedAuthorization = true;
-                } else {
-                  await store.update({
-                    model: CONNECTION_AUTHORIZATION,
-                    where: [{ field: "id", value: current.id }],
-                    update: { cameraIds: JSON.stringify(remaining) },
-                  });
+      return realAuth.lock(connectionEventLockKey(eventId), async () => {
+        const initial = await collectTargets();
+        if (initial.size === 0) return;
+        return realAuth.lockMany(
+          [...initial.keys()].map(connectionLockKey),
+          async () => {
+            const targets = await collectTargets();
+            for (const key of targets.keys()) {
+              const store = await adapter();
+              let deletedAuthorization = false;
+              const current = await store.findOne<ConnectionAuthorization>({
+                model: CONNECTION_AUTHORIZATION,
+                where: [{ field: "connectionKey", value: key }],
+              });
+              if (current) {
+                const cameraIds = parseCameraIds(current.cameraIds);
+                if (cameraIds.includes(cameraEdgeDeviceId)) {
+                  const remaining = cameraIds.filter(
+                    (id) => id !== cameraEdgeDeviceId,
+                  );
+                  if (remaining.length === 0) {
+                    await deleteAuthorizationRows(store, current.id);
+                    deletedAuthorization = true;
+                  } else {
+                    await store.update({
+                      model: CONNECTION_AUTHORIZATION,
+                      where: [{ field: "id", value: current.id }],
+                      update: { cameraIds: JSON.stringify(remaining) },
+                    });
+                  }
                 }
               }
+              await advanceState(
+                store,
+                key,
+                deletedAuthorization ? { deletedAt: new Date() } : {},
+              );
             }
-            await advanceState(
-              store,
-              key,
-              deletedAuthorization ? { deletedAt: new Date() } : {},
-            );
-          }
-        },
-      );
+          },
+        );
+      });
     },
 
     async addForCamera(
@@ -848,48 +857,50 @@ export function createConnectionAuth(
       pageEdgeDeviceId: string,
       cameraEdgeDeviceId: string,
     ) {
-      const { adapter: db } = await realAuth.auth.$context;
-      const rows = await db.findMany<ConnectionAuthorization>({
-        model: CONNECTION_AUTHORIZATION,
-        where: [
-          { field: "eventId", value: eventId },
-          { field: "pageEdgeDeviceId", value: pageEdgeDeviceId },
-        ],
-      });
-      const keys = [
-        ...new Set(
-          (rows ?? [])
-            .filter(
-              (row) =>
-                !parseCameraIds(row.cameraIds).includes(cameraEdgeDeviceId),
-            )
-            .map((row) => row.connectionKey),
-        ),
-      ];
-      if (keys.length === 0) return;
-      return realAuth.lockMany(keys.map(connectionLockKey), async () => {
-        for (const row of rows ?? []) {
-          if (parseCameraIds(row.cameraIds).includes(cameraEdgeDeviceId)) {
-            continue;
+      return realAuth.lock(connectionEventLockKey(eventId), async () => {
+        const { adapter: db } = await realAuth.auth.$context;
+        const rows = await db.findMany<ConnectionAuthorization>({
+          model: CONNECTION_AUTHORIZATION,
+          where: [
+            { field: "eventId", value: eventId },
+            { field: "pageEdgeDeviceId", value: pageEdgeDeviceId },
+          ],
+        });
+        const keys = [
+          ...new Set(
+            (rows ?? [])
+              .filter(
+                (row) =>
+                  !parseCameraIds(row.cameraIds).includes(cameraEdgeDeviceId),
+              )
+              .map((row) => row.connectionKey),
+          ),
+        ];
+        if (keys.length === 0) return;
+        return realAuth.lockMany(keys.map(connectionLockKey), async () => {
+          for (const row of rows ?? []) {
+            if (parseCameraIds(row.cameraIds).includes(cameraEdgeDeviceId)) {
+              continue;
+            }
+            const key = row.connectionKey;
+            const store = await adapter();
+            const current = await store.findOne<ConnectionAuthorization>({
+              model: CONNECTION_AUTHORIZATION,
+              where: [{ field: "connectionKey", value: key }],
+            });
+            if (!current) continue;
+            const cameraIds = parseCameraIds(current.cameraIds);
+            if (cameraIds.includes(cameraEdgeDeviceId)) continue;
+            await store.update({
+              model: CONNECTION_AUTHORIZATION,
+              where: [{ field: "id", value: current.id }],
+              update: {
+                cameraIds: JSON.stringify([...cameraIds, cameraEdgeDeviceId]),
+              },
+            });
+            await advanceState(store, key);
           }
-          const key = row.connectionKey;
-          const store = await adapter();
-          const current = await store.findOne<ConnectionAuthorization>({
-            model: CONNECTION_AUTHORIZATION,
-            where: [{ field: "connectionKey", value: key }],
-          });
-          if (!current) continue;
-          const cameraIds = parseCameraIds(current.cameraIds);
-          if (cameraIds.includes(cameraEdgeDeviceId)) continue;
-          await store.update({
-            model: CONNECTION_AUTHORIZATION,
-            where: [{ field: "id", value: current.id }],
-            update: {
-              cameraIds: JSON.stringify([...cameraIds, cameraEdgeDeviceId]),
-            },
-          });
-          await advanceState(store, key);
-        }
+        });
       });
     },
 
@@ -928,39 +939,39 @@ export function createConnectionAuth(
         }
         return targets;
       };
-      const initial = await collectTargets();
-      return realAuth.lockMany(
-        [
-          connectionEventLockKey(eventId),
-          ...[...initial.keys()].map(connectionLockKey),
-        ],
-        async () => {
-          const targets = await collectTargets();
-          for (const [key, target] of targets) {
-            const store = await adapter();
-            const stale = await store.findMany<PendingConnection>({
-              model: PENDING_CONNECTION,
-              where: [
-                { field: "tenantId", value: target.tenantId },
-                { field: "eventId", value: target.eventId },
-                { field: "pageEdgeDeviceId", value: target.pageEdgeDeviceId },
-              ],
-            });
-            for (const row of stale ?? []) {
-              await store.delete({
+      return realAuth.lock(connectionEventLockKey(eventId), async () => {
+        const initial = await collectTargets();
+        if (initial.size === 0) return;
+        return realAuth.lockMany(
+          [...initial.keys()].map(connectionLockKey),
+          async () => {
+            const targets = await collectTargets();
+            for (const [key, target] of targets) {
+              const store = await adapter();
+              const stale = await store.findMany<PendingConnection>({
                 model: PENDING_CONNECTION,
-                where: [{ field: "id", value: row.id }],
+                where: [
+                  { field: "tenantId", value: target.tenantId },
+                  { field: "eventId", value: target.eventId },
+                  { field: "pageEdgeDeviceId", value: target.pageEdgeDeviceId },
+                ],
               });
+              for (const row of stale ?? []) {
+                await store.delete({
+                  model: PENDING_CONNECTION,
+                  where: [{ field: "id", value: row.id }],
+                });
+              }
+              const current = await store.findOne<ConnectionAuthorization>({
+                model: CONNECTION_AUTHORIZATION,
+                where: [{ field: "connectionKey", value: key }],
+              });
+              if (current) await deleteAuthorizationRows(store, current.id);
+              await advanceState(store, key, { deletedAt: new Date() });
             }
-            const current = await store.findOne<ConnectionAuthorization>({
-              model: CONNECTION_AUTHORIZATION,
-              where: [{ field: "connectionKey", value: key }],
-            });
-            if (current) await deleteAuthorizationRows(store, current.id);
-            await advanceState(store, key, { deletedAt: new Date() });
-          }
-        },
-      );
+          },
+        );
+      });
     },
 
     async deleteForEvent(eventId: string) {
@@ -994,39 +1005,39 @@ export function createConnectionAuth(
         }
         return targets;
       };
-      const initial = await collectTargets();
-      return realAuth.lockMany(
-        [
-          connectionEventLockKey(eventId),
-          ...[...initial.keys()].map(connectionLockKey),
-        ],
-        async () => {
-          const targets = await collectTargets();
-          for (const [key, target] of targets) {
-            const store = await adapter();
-            const stale = await store.findMany<PendingConnection>({
-              model: PENDING_CONNECTION,
-              where: [
-                { field: "tenantId", value: target.tenantId },
-                { field: "eventId", value: target.eventId },
-                { field: "pageEdgeDeviceId", value: target.pageEdgeDeviceId },
-              ],
-            });
-            for (const row of stale ?? []) {
-              await store.delete({
+      return realAuth.lock(connectionEventLockKey(eventId), async () => {
+        const initial = await collectTargets();
+        if (initial.size === 0) return;
+        return realAuth.lockMany(
+          [...initial.keys()].map(connectionLockKey),
+          async () => {
+            const targets = await collectTargets();
+            for (const [key, target] of targets) {
+              const store = await adapter();
+              const stale = await store.findMany<PendingConnection>({
                 model: PENDING_CONNECTION,
-                where: [{ field: "id", value: row.id }],
+                where: [
+                  { field: "tenantId", value: target.tenantId },
+                  { field: "eventId", value: target.eventId },
+                  { field: "pageEdgeDeviceId", value: target.pageEdgeDeviceId },
+                ],
               });
+              for (const row of stale ?? []) {
+                await store.delete({
+                  model: PENDING_CONNECTION,
+                  where: [{ field: "id", value: row.id }],
+                });
+              }
+              const current = await store.findOne<ConnectionAuthorization>({
+                model: CONNECTION_AUTHORIZATION,
+                where: [{ field: "connectionKey", value: key }],
+              });
+              if (current) await deleteAuthorizationRows(store, current.id);
+              await advanceState(store, key, { deletedAt: new Date() });
             }
-            const current = await store.findOne<ConnectionAuthorization>({
-              model: CONNECTION_AUTHORIZATION,
-              where: [{ field: "connectionKey", value: key }],
-            });
-            if (current) await deleteAuthorizationRows(store, current.id);
-            await advanceState(store, key, { deletedAt: new Date() });
-          }
-        },
-      );
+          },
+        );
+      });
     },
   };
 }

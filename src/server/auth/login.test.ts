@@ -694,6 +694,34 @@ describe("login handoff", () => {
     expect(await ctx.adapter.findMany({ model: "session" })).toHaveLength(1);
   });
 
+  it("keeps the browser id when the same browser starts another login", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const jar = await logInOn(testAuth, provider);
+    const browserValue = jar.cookies.get(BROWSER_COOKIE);
+    const browserId = verifyBrowserId(browserValue, env.secret);
+    expect(browserId).toBeTruthy();
+
+    await authorizeAtIdp(testAuth, provider, { tenantJar: jar });
+
+    expect(jar.cookies.get(BROWSER_COOKIE)).toBe(browserValue);
+    const ctx = await testAuth.auth.$context;
+    const pending = await ctx.adapter.findOne<{ browserHash: string }>({
+      model: "pendingLogin",
+      where: [{ field: "host", value: HOST }],
+    });
+    expect(pending?.browserHash).toBe(browserHash(browserId as string));
+    expect(
+      await ctx.adapter.findMany({
+        model: "browserHostState",
+        where: [
+          { field: "host", value: HOST },
+          { field: "browserHash", value: browserHash(browserId as string) },
+        ],
+      }),
+    ).toHaveLength(1);
+  });
+
   it("accepts a code only once", async () => {
     const provider = idp();
     const testAuth = await createTestAuth();
