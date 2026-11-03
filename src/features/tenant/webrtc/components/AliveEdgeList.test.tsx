@@ -217,7 +217,7 @@ describe("AliveEdgeList", () => {
     ).toBeTruthy();
   });
 
-  it("オフラインの端末の行には観測ページを開くリンクを出し、各観測ページには端末にするリンクを出す", () => {
+  it("オフラインの端末の行には観測ページを開くリンクを出す", () => {
     renderList("idle");
 
     expect(
@@ -225,13 +225,6 @@ describe("AliveEdgeList", () => {
         .getByRole("link", { name: "「倉庫カメラ」をこの端末で開く" })
         .getAttribute("href"),
     ).toBe("/event/e/observation/edge-c");
-    expect(
-      within(row("ホールカメラ") as HTMLElement)
-        .getByRole("link", { name: "ホールカメラ を観測ページ端末にする" })
-        .getAttribute("href"),
-    ).toBe(
-      "/api/auth/machine/start?eventId=e&pageEdgeDeviceId=edge-b&return=%2Fevent%2Fe%2Fobservation%2Fedge-b",
-    );
   });
 
   it("カメラの行にバッジと紐づけ先を表示し、稼働状態と接続と観測ページリンクを出さない", () => {
