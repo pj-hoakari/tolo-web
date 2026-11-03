@@ -9,6 +9,7 @@ import { loginFlow, onboardingStore } from "./auth";
 import { INVITATION_COOKIE } from "./auth/invitation";
 import { cookie, loginErrorUrl } from "./auth/login";
 import { ONBOARDING_COOKIE } from "./auth/onboarding";
+import { tokenScopes } from "./auth/session";
 import {
   relationRegistrationClient,
   tenantRegistrationClient,
@@ -43,7 +44,7 @@ function onboardingError(err: unknown): OnboardingError {
 
 function acceptError(err: unknown): AcceptError {
   if (!(err instanceof ConnectError)) return "failed";
-  if (err.code === Code.Unauthenticated) return "unusable";
+  if (err.code === Code.PermissionDenied) return "unusable";
   if (err.code === Code.FailedPrecondition) return "cannotJoin";
   if (err.code === Code.NotFound) return "notFound";
   return "failed";
@@ -104,6 +105,12 @@ export async function completeInvitation(
     INVITATION_COOKIE,
   );
   if (!invitationToken) return redirect(headers, "/invitation/accept");
+  if (!tokenScopes(registration.token).has("tenant.join")) {
+    console.error(
+      "the registration token for the invitation lacks tenant.join",
+    );
+    return redirect(headers, "/invitation/accept?error=failed");
+  }
   try {
     await relationRegistrationClient.acceptTenantInvitation(
       { tenantId, invitationToken },

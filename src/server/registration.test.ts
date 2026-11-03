@@ -15,6 +15,14 @@ vi.mock("./tenantManagement", () => ({
 }));
 
 const TENANT = "0123456789abcdef";
+
+function jwtWithScope(scope: string) {
+  const part = (value: object) =>
+    Buffer.from(JSON.stringify(value)).toString("base64url");
+  return `${part({ alg: "RS256" })}.${part({ scope })}.signature`;
+}
+
+const REGISTRATION_TOKEN = jwtWithScope("tenant.join");
 const pending = {
   id: "registration-1",
   tenantId: TENANT,
@@ -71,7 +79,7 @@ describe("completing the onboarding on the root domain", () => {
     );
 
   it("claims the kept provisional tenant with the handed-over registration token, forgets it, and logs in on the new tenant host", async () => {
-    handOver({ tenantId: TENANT, token: "registration-token" });
+    handOver({ tenantId: TENANT, token: REGISTRATION_TOKEN });
     const store = keep(pending);
     const claim = vi
       .mocked(tenantRegistrationClient.claimTenantOwnership)
@@ -87,7 +95,7 @@ describe("completing the onboarding on the root domain", () => {
         subdomain: "acme",
         displayName: "Owner",
       },
-      { headers: { Authorization: "Bearer registration-token" } },
+      { headers: { Authorization: `Bearer ${REGISTRATION_TOKEN}` } },
     );
     expect(store.forget).toHaveBeenCalledWith("registration-1");
     expect(redirected(response)).toEqual({
@@ -98,7 +106,7 @@ describe("completing the onboarding on the root domain", () => {
   });
 
   it("forgets the provisional tenant on any other failure, so that the next submission starts a new one", async () => {
-    handOver({ tenantId: TENANT, token: "registration-token" });
+    handOver({ tenantId: TENANT, token: REGISTRATION_TOKEN });
     const store = keep(pending);
     vi.mocked(tenantRegistrationClient.claimTenantOwnership).mockRejectedValue(
       new ConnectError("refused", Code.PermissionDenied),
@@ -121,7 +129,7 @@ describe("completing the onboarding on the root domain", () => {
   ])(
     "keeps the provisional tenant on %s and sends the owner back to the form to retry the claim",
     async (_, code, error) => {
-      handOver({ tenantId: TENANT, token: "registration-token" });
+      handOver({ tenantId: TENANT, token: REGISTRATION_TOKEN });
       const store = keep(pending);
       vi.mocked(
         tenantRegistrationClient.claimTenantOwnership,
@@ -175,7 +183,7 @@ describe("completing an invitation on the tenant host", () => {
     );
 
   it("accepts the kept invitation with the handed-over registration token, forgets it, and logs in on the same host", async () => {
-    handOver({ tenantId: TENANT, token: "registration-token" });
+    handOver({ tenantId: TENANT, token: REGISTRATION_TOKEN });
     const accept = vi
       .mocked(relationRegistrationClient.acceptTenantInvitation)
       .mockResolvedValue({} as never);
@@ -184,7 +192,7 @@ describe("completing an invitation on the tenant host", () => {
 
     expect(accept).toHaveBeenCalledWith(
       { tenantId: TENANT, invitationToken: "invitation-token" },
-      { headers: { Authorization: "Bearer registration-token" } },
+      { headers: { Authorization: `Bearer ${REGISTRATION_TOKEN}` } },
     );
     expect(redirected(response)).toEqual({
       status: 302,
@@ -194,14 +202,14 @@ describe("completing an invitation on the tenant host", () => {
   });
 
   it.each([
-    ["an unusable invitation", Code.Unauthenticated, "unusable"],
+    ["an unusable invitation", Code.PermissionDenied, "unusable"],
     ["an existing membership", Code.FailedPrecondition, "cannotJoin"],
     ["a missing tenant", Code.NotFound, "notFound"],
     ["any other failure", Code.Unavailable, "failed"],
   ])(
     "keeps the invitation on %s and shows why on the invitation page",
     async (_, code, error) => {
-      handOver({ tenantId: TENANT, token: "registration-token" });
+      handOver({ tenantId: TENANT, token: REGISTRATION_TOKEN });
       vi.mocked(
         relationRegistrationClient.acceptTenantInvitation,
       ).mockRejectedValue(new ConnectError("refused", code));
@@ -217,8 +225,22 @@ describe("completing an invitation on the tenant host", () => {
     },
   );
 
+  it("does not accept with a registration token that carries no tenant.join", async () => {
+    handOver({ tenantId: TENANT, token: jwtWithScope("openid") });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const response = await completeInvitation(handoffRequest(), TENANT);
+
+    expect(
+      relationRegistrationClient.acceptTenantInvitation,
+    ).not.toHaveBeenCalled();
+    expect(redirected(response).location).toBe(
+      "/invitation/accept?error=failed",
+    );
+  });
+
   it("sends the browser back to the invitation page when no invitation is kept", async () => {
-    handOver({ tenantId: TENANT, token: "registration-token" });
+    handOver({ tenantId: TENANT, token: REGISTRATION_TOKEN });
 
     const response = await completeInvitation(handoffRequest(""), TENANT);
 

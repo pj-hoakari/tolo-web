@@ -10,7 +10,7 @@ import type { AcceptError } from "./acceptErrors";
 
 const ACCEPT_ERROR_MESSAGES = {
   byCode: {
-    UNAUTHORIZED: "unusable",
+    FORBIDDEN: "unusable",
     PRECONDITION_FAILED: "cannotJoin",
     NOT_FOUND: "notFound",
   },

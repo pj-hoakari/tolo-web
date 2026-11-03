@@ -611,7 +611,7 @@ describe("tenant.acceptInvitation", () => {
   );
 
   it.each([
-    ["an unusable invitation", Code.Unauthenticated, "UNAUTHORIZED"],
+    ["an unusable invitation", Code.PermissionDenied, "FORBIDDEN"],
     ["an existing membership", Code.FailedPrecondition, "PRECONDITION_FAILED"],
   ])(
     "passes the refusal of %s to the browser by its code without the server message and keeps the invitation",
