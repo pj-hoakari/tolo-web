@@ -619,8 +619,8 @@ export const router = {
           { headers: { Authorization: `Bearer ${registrationToken}` } },
         );
       } catch (err) {
-        if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
-          throw new ORPCError("UNAUTHORIZED");
+        if (err instanceof ConnectError && err.code === Code.PermissionDenied) {
+          throw new ORPCError("FORBIDDEN");
         }
         throw toORPCError(err);
       }

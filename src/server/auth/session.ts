@@ -43,12 +43,16 @@ type EventAccessToken = {
 
 const scopeClaim = z.object({ scope: z.string() });
 
-function eventScopes(tenantAccessToken: string): string {
-  const payload = tenantAccessToken.split(".")[1] ?? "";
+export function tokenScopes(accessToken: string): Set<string> {
+  const payload = accessToken.split(".")[1] ?? "";
   const { scope } = scopeClaim.parse(
     JSON.parse(Buffer.from(payload, "base64url").toString("utf8")),
   );
-  const granted = new Set(scope.split(" "));
+  return new Set(scope.split(" "));
+}
+
+function eventScopes(tenantAccessToken: string): string {
+  const granted = tokenScopes(tenantAccessToken);
   const scopes = EVENT_SCOPES.filter((name) => granted.has(name));
   if (scopes.length === 0) {
     throw new Error("the session's tenant_access carries no event scope");

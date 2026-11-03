@@ -76,7 +76,7 @@ test("招待を受けて参加すると、同じテナントのホストの管�
 test("使用済み・期限切れ・取り消し済みの招待で参加しようとすると、招待したオーナーに連絡するよう案内され参加のボタンは消える", async ({
   page,
 }) => {
-  await openInvitation(page, { acceptInvitationError: "UNAUTHORIZED" });
+  await openInvitation(page, { acceptInvitationError: "FORBIDDEN" });
   await page.getByRole("button", { name: "参加する" }).click();
 
   await expect(page.getByRole("main").getByRole("alert")).toHaveText(
