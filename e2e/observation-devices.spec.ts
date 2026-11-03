@@ -10,10 +10,23 @@ type MockOverrides = Pick<
 const edgeA = "入口カメラ";
 const edgeB = "3b9d77f41e2a5c08";
 const offlineEdge = "ホールカメラ";
+const cameraEdge = "ESP32 カメラ";
 
 const main = (page: Page) => page.getByRole("main");
+const cameraBadge = (page: Page) => page.getByText("カメラ", { exact: true });
+const observationPageRows = (page: Page) =>
+  main(page)
+    .getByRole("listitem")
+    .filter({ hasNot: cameraBadge(page) });
 const edgeRow = (page: Page, name: string) =>
-  main(page).getByRole("listitem").filter({ hasText: name });
+  observationPageRows(page).filter({
+    has: page.getByText(name, { exact: true }),
+  });
+const cameraRow = (page: Page) =>
+  main(page)
+    .getByRole("listitem")
+    .filter({ has: page.getByText(cameraEdge, { exact: true }) })
+    .filter({ has: cameraBadge(page) });
 const registerEdge = async (page: Page, name: string, points: string) => {
   await main(page).getByRole("textbox", { name: "デバイス名" }).fill(name);
   await main(page).getByRole("textbox", { name: "観測点名" }).fill(points);
@@ -39,7 +52,7 @@ test.beforeEach(async ({ page }) => {
 test("ID のない観測ページの URL を開くと観測デバイス管理ページが表示され画面ロックは出ない", async ({
   page,
 }) => {
-  await expect(main(page)).toContainText("観測デバイス（3）");
+  await expect(main(page)).toContainText("観測デバイス（4）");
   await expect(
     page.getByRole("heading", { level: 2, name: "解除コードを設定" }),
   ).toHaveCount(0);
@@ -70,13 +83,15 @@ test("観測デバイス管理ページを開くとオフラインのものを�
   page,
 }) => {
   const list = main(page);
-  await expect(list).toContainText("観測デバイス（3）");
+  await expect(list).toContainText("観測デバイス（4）");
   const items = list.getByRole("listitem");
-  await expect(items).toHaveCount(3);
+  await expect(items).toHaveCount(4);
   await expect(items.nth(0)).toContainText(edgeA);
   await expect(items.nth(1)).toContainText(edgeB);
   await expect(items.nth(2)).toContainText(offlineEdge);
   await expect(items.nth(2)).toContainText("オフライン");
+  await expect(items.nth(3)).toContainText(cameraEdge);
+  await expect(items.nth(3)).toContainText("カメラ");
   await expect(
     list.getByRole("button", { name: `「${offlineEdge}」に接続` }),
   ).toBeDisabled();
@@ -88,16 +103,9 @@ test("観測デバイス管理ページを開くとオフラインのものを�
 test("観測デバイスの一覧には各観測デバイスの最終応答時刻が表示される", async ({
   page,
 }) => {
-  const items = main(page).getByRole("listitem");
-  await expect(items.filter({ hasText: edgeA })).toContainText(
-    "最終応答: 19:00:00",
-  );
-  await expect(items.filter({ hasText: edgeB })).toContainText(
-    "最終応答: 19:00:05",
-  );
-  await expect(items.filter({ hasText: offlineEdge })).toContainText(
-    "最終応答: 18:00:00",
-  );
+  await expect(edgeRow(page, edgeA)).toContainText("最終応答: 19:00:00");
+  await expect(edgeRow(page, edgeB)).toContainText("最終応答: 19:00:05");
+  await expect(edgeRow(page, offlineEdge)).toContainText("最終応答: 18:00:00");
 });
 
 test("未接続の観測デバイスの行には接続ボタンと登録解除ボタンだけが表示される", async ({
@@ -111,6 +119,71 @@ test("未接続の観測デバイスの行には接続ボタンと登録解除�
   await expect(
     row.getByRole("button", { name: `「${edgeA}」の登録を解除` }),
   ).toBeEnabled();
+});
+
+test("カメラの行には設定・再承認・一時停止・登録解除だけを表示する", async ({
+  page,
+}) => {
+  const row = cameraRow(page);
+  await expect(row).toContainText("カメラ");
+  await expect(row).toContainText(`紐づけ先: ${edgeA}`);
+  await expect(row.getByRole("button")).toHaveCount(4);
+  await expect(
+    row.getByRole("button", { name: `「${cameraEdge}」を設定` }),
+  ).toBeVisible();
+  await expect(
+    row.getByRole("button", { name: `「${cameraEdge}」を再承認` }),
+  ).toBeVisible();
+  await expect(
+    row.getByRole("button", { name: `「${cameraEdge}」を一時停止` }),
+  ).toBeVisible();
+  await expect(
+    row.getByRole("button", { name: `「${cameraEdge}」の登録を解除` }),
+  ).toBeVisible();
+  await expect(row.getByRole("button", { name: /に接続$/ })).toHaveCount(0);
+  await expect(row.getByRole("link", { name: /この端末で開く$/ })).toHaveCount(
+    0,
+  );
+});
+
+test("カメラの設定ボタンで初期設定ダイアログを開く", async ({ page }) => {
+  await cameraRow(page)
+    .getByRole("button", { name: `「${cameraEdge}」を設定` })
+    .click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText("ESP32 カメラの初期設定");
+  await expect(dialog).not.toContainText("一時停止中のカメラを再承認します");
+});
+
+test("カメラの再承認ボタンで一時停止解除の注意を表示する", async ({ page }) => {
+  await cameraRow(page)
+    .getByRole("button", { name: `「${cameraEdge}」を再承認` })
+    .click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText("ESP32 カメラの初期設定");
+  await expect(dialog).toContainText(
+    "一時停止中のカメラを再承認します。この操作で一時停止が解除され、端末が再び接続できるようになります。",
+  );
+});
+
+test("カメラの一時停止を確認すると一覧に残したまま操作を完了する", async ({
+  page,
+}) => {
+  await cameraRow(page)
+    .getByRole("button", { name: `「${cameraEdge}」を一時停止` })
+    .click();
+
+  const dialog = page.getByRole("alertdialog");
+  await expect(dialog).toContainText(
+    `「${cameraEdge}」の配信を一時停止します。`,
+  );
+  await dialog.getByRole("button", { name: "一時停止する" }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect(cameraRow(page)).toHaveCount(1);
+  await expect(main(page)).toContainText("観測デバイス（4）");
 });
 
 test("観測デバイスへの接続に失敗するとその行に接続失敗と表示され接続ボタンと閉じるボタンが出る", async ({
@@ -176,7 +249,7 @@ test("観測デバイスを登録すると一覧に加わり発行 URL とこの
   await expect(
     main(page).getByRole("button", { name: "URL をコピー" }),
   ).toBeVisible();
-  await expect(main(page)).toContainText("観測デバイス（4）");
+  await expect(main(page)).toContainText("観測デバイス（5）");
   await expect(edgeRow(page, "受付カメラ")).toContainText("オフライン");
   await expect(
     main(page).getByRole("textbox", { name: "デバイス名" }),
@@ -207,7 +280,7 @@ test("観測デバイスの登録に失敗すると理由が表示され入力�
   await expect(
     main(page).getByRole("textbox", { name: "デバイス名" }),
   ).toHaveValue("受付カメラ");
-  await expect(main(page)).toContainText("観測デバイス（3）");
+  await expect(main(page)).toContainText("観測デバイス（4）");
 });
 
 test("デバイス名か観測点名が空のあいだは登録できない", async ({ page }) => {
@@ -257,7 +330,7 @@ test("登録解除を確認するとその観測デバイスが一覧から消�
   await dialog.getByRole("button", { name: "登録を解除する" }).click();
 
   await expect(dialog).toBeHidden();
-  await expect(main(page)).toContainText("観測デバイス（2）");
+  await expect(main(page)).toContainText("観測デバイス（3）");
   await expect(edgeRow(page, offlineEdge)).toHaveCount(0);
 });
 
@@ -273,7 +346,7 @@ test("登録解除の確認でキャンセルすると観測デバイスは一�
     .click();
 
   await expect(page.getByRole("alertdialog")).toBeHidden();
-  await expect(main(page)).toContainText("観測デバイス（3）");
+  await expect(main(page)).toContainText("観測デバイス（4）");
   await expect(edgeRow(page, offlineEdge)).toHaveCount(1);
 });
 
@@ -292,5 +365,5 @@ test("登録解除に失敗すると確認ダイアログに理由が表示さ�
   await expect(dialog.getByRole("alert")).toHaveText(
     "観測デバイスが見つからないか、既に登録が解除されています。一覧を更新してください。",
   );
-  await expect(main(page)).toContainText("観測デバイス（3）");
+  await expect(main(page)).toContainText("観測デバイス（4）");
 });

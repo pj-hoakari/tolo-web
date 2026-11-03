@@ -308,6 +308,10 @@
       "provisionLabel": "Provision “{name}”",
       "authorizeConnection": "Authorize camera connection",
       "authorizeConnectionLabel": "Authorize the camera connection for “{name}”",
+      "stop": "Stop",
+      "stopLabel": "Temporarily stop “{name}”",
+      "reapprove": "Re-approve",
+      "reapproveLabel": "Re-approve “{name}”",
       "connection": {
         "authorized": "The camera connection delegation was saved.",
         "login_required": "Staff sign-in is required to authorize the camera connection. Start again from “Authorize camera connection”.",
@@ -361,9 +365,18 @@
       "failed": "No se pudo dar de baja el dispositivo de observación.",
       "stale": "No se encontró el dispositivo de observación o ya está dado de baja. Actualiza la lista."
     },
+    "stopCamera": {
+      "title": "Temporarily stop the camera",
+      "description": "Temporarily stop “{name}”. The device stays registered, and you can resume it by re-approving.",
+      "cancel": "Cancel",
+      "confirm": "Stop temporarily",
+      "failed": "Could not stop the camera.",
+      "stale": "The camera was not found or does not belong to this event. Refresh the list."
+    },
     "cameraProvision": {
       "title": "ESP32 camera provisioning",
       "description": "Write the Wi-Fi and connection settings to “{name}” ({id}).",
+      "reapprovalNotice": "This re-approves a temporarily stopped camera. It clears the temporary stop and lets the device connect again.",
       "trigger": "Provision",
       "wifiSsidLabel": "Wi-Fi SSID",
       "wifiPasswordLabel": "Wi-Fi password",

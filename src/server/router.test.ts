@@ -35,6 +35,7 @@ import {
   UpdateObservationSettingsResponseSchema,
 } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
 import { Role } from "@pj-hoakari/tolo-tenant-management-connect-es/tolo/relation/v1/relation_pb";
+import { EventStatus as ProtoEventStatus } from "@pj-hoakari/tolo-tenant-management-connect-es/tolo/tenant/v1/tenant_pb";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
 import { sampleObservationDevicesWire } from "@/mocks/fixtures/edges";
@@ -76,7 +77,7 @@ vi.mock("server-only", () => ({}));
 vi.mock(
   "@pj-hoakari/tolo-tenant-management-connect-es/tolo/tenant/v1/tenant_pb",
   () => ({
-    EventStatus: { CLOSED: 4, ARCHIVED: 5 },
+    EventStatus: { DRAFT: 1, OPEN: 2, LOCKED: 3, CLOSED: 4, ARCHIVED: 5 },
     TenantService: { methods: [] },
   }),
 );
@@ -1085,6 +1086,7 @@ describe("observation.unregisterEdgeDevice", () => {
         body: JSON.stringify({
           event_id: eventId,
           edge_device_id: "0123456789abcdee",
+          permanent: true,
         }),
       }),
     );
@@ -1403,6 +1405,16 @@ describe("tenant.archiveEvent camera revocation", () => {
       call(router.tenant.archiveEvent, { eventId }),
     ).resolves.toEqual({ eventId, name: "Event", status: "archived" });
     expect(order).toEqual(["list", "revoke", "revoke", "delete", "transition"]);
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "https://idp.test/api/device-authorization/revoke",
+      expect.objectContaining({
+        body: JSON.stringify({
+          event_id: eventId,
+          edge_device_id: "0123456789abcdee",
+          permanent: true,
+        }),
+      }),
+    );
   });
 
   it("does not archive the event when any camera grant cannot be revoked", async () => {
@@ -1450,11 +1462,22 @@ describe("camera", () => {
     vi.mocked(getAccessToken).mockResolvedValue("staff-token");
   };
 
+  const approvableEvent = (status = ProtoEventStatus.OPEN) => {
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(tenantManagementClient.listEvents).mockResolvedValue({
+      events: [{ eventId, name: "Event", status }],
+    } as never);
+  };
+
+  const listCameras = (devices = [protoCamera]) =>
+    vi
+      .spyOn(consoleEdgeDeviceClient, "listEdgeDevices")
+      .mockResolvedValue(create(ListEdgeDevicesResponseSchema, { devices }));
+
   it("approves a registered camera after checking that it belongs to the event", async () => {
     stubIdp();
-    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockResolvedValue(
-      create(ListEdgeDevicesResponseSchema, { devices: [protoCamera] }),
-    );
+    approvableEvent();
+    listCameras();
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response(null, { status: 204 }));
@@ -1478,11 +1501,78 @@ describe("camera", () => {
     );
   });
 
+  it("approves with an explicit reapproval when the staff asks for it", async () => {
+    stubIdp();
+    approvableEvent();
+    listCameras();
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
+
+    await call(router.camera.approveDeviceAuthorization, {
+      eventId,
+      edgeDeviceId: "0123456789abcdee",
+      userCode: "ABCD-EFGH",
+      reapproval: true,
+    });
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://idp.test/api/device-authorization/approve",
+      expect.objectContaining({
+        body: JSON.stringify({
+          user_code: "ABCD-EFGH",
+          event_id: eventId,
+          edge_device_id: "0123456789abcdee",
+          reapproval: true,
+        }),
+      }),
+    );
+  });
+
+  it.each([
+    ["closed", ProtoEventStatus.CLOSED],
+    ["archived", ProtoEventStatus.ARCHIVED],
+  ])("refuses to approve a camera in a %s event", async (_, status) => {
+    stubIdp();
+    approvableEvent(status);
+    const list = listCameras();
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await expect(
+      call(router.camera.approveDeviceAuthorization, {
+        eventId,
+        edgeDeviceId: "0123456789abcdee",
+        userCode: "ABCD-EFGH",
+      }),
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+    expect(list).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("refuses to approve when the event state cannot be fetched", async () => {
+    stubIdp();
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(tenantManagementClient.listEvents).mockRejectedValue(
+      new ConnectError("tenant-management unavailable", Code.Unavailable),
+    );
+    const list = listCameras();
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await expect(
+      call(router.camera.approveDeviceAuthorization, {
+        eventId,
+        edgeDeviceId: "0123456789abcdee",
+        userCode: "ABCD-EFGH",
+      }),
+    ).rejects.toBeInstanceOf(ConnectError);
+    expect(list).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it("refuses to approve an observation page device", async () => {
     stubIdp();
-    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockResolvedValue(
-      create(ListEdgeDevicesResponseSchema, { devices: [protoDevice] }),
-    );
+    approvableEvent();
+    listCameras([protoDevice]);
     const fetchSpy = vi.spyOn(globalThis, "fetch");
 
     await expect(
@@ -1492,6 +1582,113 @@ describe("camera", () => {
         userCode: "ABCD-EFGH",
       }),
     ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("revokes a registered camera permanently", async () => {
+    stubIdp();
+    listCameras();
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
+
+    await expect(
+      call(router.camera.revokeDeviceAuthorization, {
+        eventId,
+        edgeDeviceId: "0123456789abcdee",
+      }),
+    ).resolves.toBeUndefined();
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://idp.test/api/device-authorization/revoke",
+      expect.objectContaining({
+        body: JSON.stringify({
+          event_id: eventId,
+          edge_device_id: "0123456789abcdee",
+          permanent: true,
+        }),
+      }),
+    );
+    expect(deleteConnectionDelegationsForCamera).toHaveBeenCalledWith(
+      eventId,
+      "0123456789abcdee",
+    );
+  });
+
+  it("stops a registered camera temporarily without unregistering it", async () => {
+    stubIdp();
+    listCameras();
+    const unregister = vi.spyOn(
+      consoleEdgeDeviceClient,
+      "unregisterEdgeDevice",
+    );
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
+
+    await expect(
+      call(router.camera.stopDeviceAuthorization, {
+        eventId,
+        edgeDeviceId: "0123456789abcdee",
+      }),
+    ).resolves.toBeUndefined();
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://idp.test/api/device-authorization/revoke",
+      expect.objectContaining({
+        body: JSON.stringify({
+          event_id: eventId,
+          edge_device_id: "0123456789abcdee",
+          permanent: false,
+        }),
+      }),
+    );
+    expect(unregister).not.toHaveBeenCalled();
+    expect(deleteConnectionDelegationsForCamera).toHaveBeenCalledWith(
+      eventId,
+      "0123456789abcdee",
+    );
+  });
+
+  it("refuses to revoke a camera that is not registered in the event", async () => {
+    stubIdp();
+    listCameras([protoDevice]);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await expect(
+      call(router.camera.revokeDeviceAuthorization, {
+        eventId,
+        edgeDeviceId: "0123456789abcdee",
+      }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("refuses to revoke a device whose kind is not a camera", async () => {
+    stubIdp();
+    listCameras([protoDevice]);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await expect(
+      call(router.camera.stopDeviceAuthorization, {
+        eventId,
+        edgeDeviceId: "0123456789abcdef",
+      }),
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("refuses to revoke when the staff has no event access", async () => {
+    stubIdp();
+    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockRejectedValue(
+      new ConnectError("event role is required", Code.PermissionDenied),
+    );
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await expect(
+      call(router.camera.revokeDeviceAuthorization, {
+        eventId,
+        edgeDeviceId: "0123456789abcdee",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 

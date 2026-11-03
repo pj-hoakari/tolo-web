@@ -252,16 +252,34 @@ async function listEdgeDevices(eventId: string): Promise<EdgeDevice[]> {
   return res.devices.map(toEdgeDevice);
 }
 
+async function requireEventCamera(
+  eventId: string,
+  edgeDeviceId: string,
+): Promise<EdgeDevice> {
+  const devices = observationMocking()
+    ? sampleObservationDevicesWire
+    : await listEdgeDevices(eventId);
+  const device = devices.find((d) => d.edgeDeviceId === edgeDeviceId);
+  if (!device) throw new ORPCError("NOT_FOUND");
+  if (device.kind !== "camera") {
+    throw new ORPCError("PRECONDITION_FAILED");
+  }
+  return device;
+}
+
 async function revokeCameraGrants(eventId: string): Promise<void> {
   const devices = observationMocking()
     ? sampleObservationDevicesWire
     : await listEdgeDevices(eventId);
   for (const device of devices) {
     if (device.kind === "camera") {
-      await revokeDeviceAuthorization({
-        eventId,
-        edgeDeviceId: device.edgeDeviceId,
-      });
+      await revokeDeviceAuthorization(
+        {
+          eventId,
+          edgeDeviceId: device.edgeDeviceId,
+        },
+        { permanent: true },
+      );
     }
   }
 }
@@ -306,6 +324,23 @@ function toTenantEvent(event: Event | undefined): TenantEvent {
     );
   }
   return { eventId: event.eventId, name: event.name, status };
+}
+
+async function requireApprovableEvent(eventId: string): Promise<TenantEvent> {
+  const tenantId = await requestTenantId();
+  if (!tenantId) throw new ORPCError("UNAUTHORIZED");
+  const res = await tenantManagementClient.listEvents({
+    tenantId,
+    includeArchived: true,
+  });
+  const event = res.events
+    .map(toTenantEvent)
+    .find((e) => e.eventId === eventId);
+  if (!event) throw new ORPCError("NOT_FOUND");
+  if (event.status === "closed" || event.status === "archived") {
+    throw new ORPCError("PRECONDITION_FAILED");
+  }
+  return event;
 }
 
 const TENANT_ROLES: Partial<Record<Role, TenantRole>> = {
@@ -382,6 +417,7 @@ const ORPC_ERROR_CODES: Partial<Record<Code, string>> = {
   [Code.FailedPrecondition]: "PRECONDITION_FAILED",
   [Code.NotFound]: "NOT_FOUND",
   [Code.AlreadyExists]: "CONFLICT",
+  [Code.PermissionDenied]: "FORBIDDEN",
 };
 
 function toORPCError(err: unknown): unknown {
@@ -990,21 +1026,16 @@ export const router = {
           eventId: z.string().min(1),
           edgeDeviceId: publicId,
           userCode: z.string().trim().min(1).max(64),
+          reapproval: z.boolean().optional(),
         }),
       )
       .handler(async ({ input }): Promise<void> => {
         try {
-          const devices = observationMocking()
-            ? sampleObservationDevicesWire
-            : await listEdgeDevices(input.eventId);
-          const device = devices.find(
-            (d) => d.edgeDeviceId === input.edgeDeviceId,
-          );
-          if (!device) throw new ORPCError("NOT_FOUND");
-          if (device.kind !== "camera") {
-            throw new ORPCError("PRECONDITION_FAILED");
-          }
-          await approveDeviceAuthorization(input);
+          await requireApprovableEvent(input.eventId);
+          await requireEventCamera(input.eventId, input.edgeDeviceId);
+          await approveDeviceAuthorization(input, {
+            reapproval: input.reapproval === true,
+          });
         } catch (err) {
           throw toORPCError(err);
         }
@@ -1013,7 +1044,22 @@ export const router = {
       .input(edgeDeviceInput)
       .handler(async ({ input }): Promise<void> => {
         try {
-          await revokeDeviceAuthorization(input);
+          await requireEventCamera(input.eventId, input.edgeDeviceId);
+          await revokeDeviceAuthorization(input, { permanent: true });
+          await deleteConnectionDelegationsForCamera(
+            input.eventId,
+            input.edgeDeviceId,
+          );
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    stopDeviceAuthorization: os
+      .input(edgeDeviceInput)
+      .handler(async ({ input }): Promise<void> => {
+        try {
+          await requireEventCamera(input.eventId, input.edgeDeviceId);
+          await revokeDeviceAuthorization(input, { permanent: false });
           await deleteConnectionDelegationsForCamera(
             input.eventId,
             input.edgeDeviceId,
@@ -1090,7 +1136,7 @@ export const router = {
             (d) => d.edgeDeviceId === input.edgeDeviceId,
           );
           if (device?.kind === "camera") {
-            await revokeDeviceAuthorization(input);
+            await revokeDeviceAuthorization(input, { permanent: true });
             await deleteConnectionDelegationsForCamera(
               input.eventId,
               input.edgeDeviceId,

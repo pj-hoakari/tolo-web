@@ -97,6 +97,7 @@ type Props = {
   triggerAriaLabel?: string;
   triggerVariant?: ButtonProps["variant"];
   triggerSize?: ButtonProps["size"];
+  reapproval?: boolean;
 };
 
 export function CameraProvisioningDialog({
@@ -109,6 +110,7 @@ export function CameraProvisioningDialog({
   triggerAriaLabel,
   triggerVariant = "outline",
   triggerSize = "sm",
+  reapproval = false,
 }: Props) {
   const t = useTranslations("Webrtc.cameraProvision");
   const transport = useMemo(
@@ -215,6 +217,7 @@ export function CameraProvisioningDialog({
       eventId,
       edgeDeviceId,
       userCode,
+      ...(reapproval && { reapproval: true }),
     });
     if (runId !== runIdRef.current) return;
 
@@ -432,6 +435,15 @@ export function CameraProvisioningDialog({
                   {t("description", { name: edgeName, id: edgeDeviceId })}
                 </DialogDescription>
               </DialogHeader>
+
+              {reapproval && (
+                <p
+                  role="status"
+                  className="rounded-md border p-3 text-sm text-muted-foreground"
+                >
+                  {t("reapprovalNotice")}
+                </p>
+              )}
 
               {availability === "unsupported" && (
                 <p role="alert" className="text-sm text-destructive">

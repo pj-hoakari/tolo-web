@@ -57,6 +57,7 @@ export type MockRouterOverrides = {
     eventId: string;
     edgeDeviceId: string;
     userCode: string;
+    reapproval?: boolean;
   }) => void | Promise<void>;
   registerEdgeDeviceError?: CommonORPCErrorCode;
   unregisterEdgeDeviceError?: CommonORPCErrorCode;
@@ -207,12 +208,21 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             eventId: z.string().min(1),
             edgeDeviceId: z.string().min(1),
             userCode: z.string().trim().min(1),
+            reapproval: z.boolean().optional(),
           }),
         )
         .handler(async ({ input }): Promise<void> => {
           await approveDeviceAuthorization?.(input);
         }),
       revokeDeviceAuthorization: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            edgeDeviceId: z.string().min(1),
+          }),
+        )
+        .handler(async (): Promise<void> => {}),
+      stopDeviceAuthorization: os
         .input(
           z.object({
             eventId: z.string().min(1),

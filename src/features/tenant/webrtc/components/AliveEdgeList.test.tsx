@@ -244,8 +244,44 @@ describe("AliveEdgeList", () => {
       camera.getByRole("button", { name: "「ESP32 カメラ」を設定" }),
     ).toBeTruthy();
     expect(
+      camera.getByRole("button", { name: "「ESP32 カメラ」を再承認" }),
+    ).toBeTruthy();
+    expect(
+      camera.getByRole("button", { name: "「ESP32 カメラ」を一時停止" }),
+    ).toBeTruthy();
+    expect(
       camera.getByRole("button", { name: "「ESP32 カメラ」の登録を解除" }),
     ).toBeTruthy();
+  });
+
+  it("カメラの再承認ボタンで一時停止の解除を明示した初期設定ダイアログを開く", () => {
+    renderList("idle");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "「ESP32 カメラ」を再承認" }),
+    );
+
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(screen.getByText(/一時停止中のカメラを再承認します/)).toBeTruthy();
+  });
+
+  it("カメラを一時停止すると登録は解除せず一覧の更新を求める", async () => {
+    const onUnregistered = vi.fn();
+    renderList("idle", vi.fn(), { onUnregistered });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "「ESP32 カメラ」を一時停止" }),
+    );
+    const dialog = screen.getByRole("alertdialog");
+    expect(dialog.textContent).toContain(
+      "「ESP32 カメラ」の配信を一時停止します。",
+    );
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "一時停止する" }),
+    );
+
+    await waitFor(() => expect(onUnregistered).toHaveBeenCalledOnce());
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
   });
 
   it("カメラの設定ボタンで初期設定ダイアログを開く", () => {

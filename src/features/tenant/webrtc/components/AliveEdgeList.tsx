@@ -11,6 +11,7 @@ import {
 } from "../utils/cameraConnection";
 import { isActiveConnection } from "../utils/connectionStatus";
 import { CameraProvisioningDialog } from "./CameraProvisioningDialog";
+import { StopCameraDialog } from "./StopCameraDialog";
 import { UnregisterEdgeDeviceDialog } from "./UnregisterEdgeDeviceDialog";
 
 export type AliveEdgeListProps = {
@@ -208,13 +209,29 @@ export function AliveEdgeList({
                     </Link>
                   )}
                   {isCamera && (
-                    <CameraProvisioningDialog
-                      eventId={eventId}
-                      edgeDeviceId={edge.edgeDeviceId}
-                      edgeName={name}
-                      triggerLabel={t("provision")}
-                      triggerAriaLabel={t("provisionLabel", { name })}
-                    />
+                    <>
+                      <CameraProvisioningDialog
+                        eventId={eventId}
+                        edgeDeviceId={edge.edgeDeviceId}
+                        edgeName={name}
+                        triggerLabel={t("provision")}
+                        triggerAriaLabel={t("provisionLabel", { name })}
+                      />
+                      <CameraProvisioningDialog
+                        eventId={eventId}
+                        edgeDeviceId={edge.edgeDeviceId}
+                        edgeName={name}
+                        triggerLabel={t("reapprove")}
+                        triggerAriaLabel={t("reapproveLabel", { name })}
+                        reapproval
+                      />
+                      <StopCameraDialog
+                        eventId={eventId}
+                        edgeDeviceId={edge.edgeDeviceId}
+                        name={name}
+                        onStopped={onUnregistered}
+                      />
+                    </>
                   )}
                   <UnregisterEdgeDeviceDialog
                     eventId={eventId}

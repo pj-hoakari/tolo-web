@@ -308,6 +308,10 @@
       "provisionLabel": "「{name}」を設定",
       "authorizeConnection": "カメラ接続を許可",
       "authorizeConnectionLabel": "「{name}」のカメラ接続を許可",
+      "stop": "停止",
+      "stopLabel": "「{name}」を一時停止",
+      "reapprove": "再承認",
+      "reapproveLabel": "「{name}」を再承認",
       "connection": {
         "authorized": "カメラ接続の委任を保存しました。",
         "login_required": "カメラ接続の認可にはスタッフの再ログインが必要です。もう一度「カメラ接続を許可」からやり直してください。",
@@ -361,9 +365,18 @@
       "failed": "登録を解除できませんでした。",
       "stale": "観測デバイスが見つからないか、既に登録が解除されています。一覧を更新してください。"
     },
+    "stopCamera": {
+      "title": "カメラを一時停止",
+      "description": "「{name}」の配信を一時停止します。登録は解除されず、再承認すると再開できます。",
+      "cancel": "キャンセル",
+      "confirm": "一時停止する",
+      "failed": "カメラを一時停止できませんでした。",
+      "stale": "カメラが見つからないか、このイベントのカメラではありません。一覧を更新してください。"
+    },
     "cameraProvision": {
       "title": "ESP32 カメラの初期設定",
       "description": "「{name}」({id}) に Wi-Fi と接続先を書き込みます。",
+      "reapprovalNotice": "一時停止中のカメラを再承認します。この操作で一時停止が解除され、端末が再び接続できるようになります。",
       "trigger": "設定",
       "wifiSsidLabel": "Wi-Fi SSID",
       "wifiPasswordLabel": "Wi-Fi パスワード",
