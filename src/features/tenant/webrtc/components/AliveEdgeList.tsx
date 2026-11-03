@@ -5,6 +5,7 @@ import { observationDevicePath } from "@/features/tenant/observation/routes";
 import type { EdgeDevicesStatus } from "../hooks/useEdgeDevices";
 import type { ConnectionStatus, EdgeDeviceItem } from "../type";
 import { isActiveConnection } from "../utils/connectionStatus";
+import { CameraProvisioningDialog } from "./CameraProvisioningDialog";
 import { UnregisterEdgeDeviceDialog } from "./UnregisterEdgeDeviceDialog";
 
 export type AliveEdgeListProps = {
@@ -42,6 +43,14 @@ export function AliveEdgeList({
       ? lastHeartbeatAt.toLocaleTimeString(locale)
       : t("unknownTime");
 
+  const observationPointNames = new Map<string, string>();
+  for (const edge of edges) {
+    if (edge.kind !== "observation_page") continue;
+    for (const point of edge.observationPoints) {
+      observationPointNames.set(point.observationPointId, point.name);
+    }
+  }
+
   return (
     <div className="flex w-full max-w-3xl flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -72,15 +81,35 @@ export function AliveEdgeList({
             const isConnected = edge.edgeDeviceId === connectedEdgeId;
             const isActive = isConnected && isActiveConnection(receiveStatus);
 
-            const showStatus = isConnected && receiveStatus !== "idle";
+            const showStatus =
+              !isCamera && isConnected && receiveStatus !== "idle";
             const name = edge.name || edge.edgeDeviceId;
+            const linkedPointNames = isCamera
+              ? edge.cameraLinks
+                  .map((link) =>
+                    observationPointNames.get(link.observationPointId),
+                  )
+                  .filter((label): label is string => Boolean(label))
+              : [];
             return (
               <li
                 key={edge.edgeDeviceId}
                 className="flex items-center justify-between gap-4 px-4 py-3"
               >
                 <div className="flex flex-col">
-                  <span className="font-medium break-all">{name}</span>
+                  <span className="flex items-center gap-2">
+                    {isCamera && (
+                      <span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
+                        {t("cameraBadge")}
+                      </span>
+                    )}
+                    <span className="font-medium break-all">{name}</span>
+                  </span>
+                  {isCamera && linkedPointNames.length > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      {t("linkedPoint", { name: linkedPointNames.join(", ") })}
+                    </span>
+                  )}
                   {!isCamera && (
                     <span className="text-xs text-muted-foreground">
                       {t("lastSeen", {
@@ -139,6 +168,15 @@ export function AliveEdgeList({
                     >
                       {t("openHere")}
                     </Link>
+                  )}
+                  {isCamera && (
+                    <CameraProvisioningDialog
+                      eventId={eventId}
+                      edgeDeviceId={edge.edgeDeviceId}
+                      edgeName={name}
+                      triggerLabel={t("provision")}
+                      triggerAriaLabel={t("provisionLabel", { name })}
+                    />
                   )}
                   <UnregisterEdgeDeviceDialog
                     eventId={eventId}

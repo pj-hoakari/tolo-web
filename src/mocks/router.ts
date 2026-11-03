@@ -51,6 +51,12 @@ export type MockRouterOverrides = {
   devices?: EdgeDevice[];
   /** observation.listEdgeDevices を失敗させる（status: error の確認用） */
   devicesError?: boolean;
+  /** camera.approveDeviceAuthorization が呼ばれたときの記録用フック */
+  approveDeviceAuthorization?: (input: {
+    eventId: string;
+    edgeDeviceId: string;
+    userCode: string;
+  }) => void | Promise<void>;
   registerEdgeDeviceError?: CommonORPCErrorCode;
   unregisterEdgeDeviceError?: CommonORPCErrorCode;
   listObservationPointsError?: CommonORPCErrorCode;
@@ -112,6 +118,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
   const {
     devices: initialDevices = sampleEdgeDevicesWire,
     devicesError = false,
+    approveDeviceAuthorization,
     registerEdgeDeviceError,
     unregisterEdgeDeviceError,
     listObservationPointsError,
@@ -201,7 +208,9 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             userCode: z.string().trim().min(1),
           }),
         )
-        .handler(async (): Promise<void> => {}),
+        .handler(async ({ input }): Promise<void> => {
+          await approveDeviceAuthorization?.(input);
+        }),
       revokeDeviceAuthorization: os
         .input(
           z.object({

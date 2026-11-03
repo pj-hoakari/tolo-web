@@ -301,7 +301,11 @@
       "openHere": "이 단말에서 열기",
       "openHereLabel": "“{name}”을(를) 이 단말에서 열기",
       "unregister": "등록 해제",
-      "unregisterLabel": "“{name}” 등록 해제"
+      "unregisterLabel": "“{name}” 등록 해제",
+      "cameraBadge": "Camera",
+      "linkedPoint": "Linked point: {name}",
+      "provision": "Provision",
+      "provisionLabel": "Provision “{name}”"
     },
     "receiver": {
       "stoppedTitle": "관측이 중지되었습니다",
@@ -327,7 +331,19 @@
       "open": "이 단말에서 열기",
       "failed": "관측 장치를 등록할 수 없습니다.",
       "invalid": "장치 이름과 관측 지점 이름을 확인하세요.",
-      "eventNotFound": "이벤트를 찾을 수 없습니다."
+      "eventNotFound": "이벤트를 찾을 수 없습니다.",
+      "kindLabel": "Kind",
+      "kind": {
+        "observation_page": "Observation page",
+        "camera": "Camera"
+      },
+      "cameraPointLabel": "Linked observation point",
+      "cameraPointDescription": "Choose the camera-method observation point for this camera",
+      "cameraPointPlaceholder": "Select an observation point",
+      "noCameraPoints": "No observation point is available. Register an observation page device first.",
+      "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
+      "edgeDeviceIdLabel": "Edge device ID",
+      "openProvisioning": "Open provisioning"
     },
     "unregisterEdge": {
       "title": "관측 장치 등록 해제",
@@ -336,6 +352,43 @@
       "confirm": "등록 해제하기",
       "failed": "등록을 해제할 수 없습니다.",
       "stale": "관측 장치를 찾을 수 없거나 이미 등록이 해제되었습니다. 목록을 새로 고치세요."
+    },
+    "cameraProvision": {
+      "title": "ESP32 camera provisioning",
+      "description": "Write the Wi-Fi and connection settings to “{name}” ({id}).",
+      "trigger": "Provision",
+      "wifiSsidLabel": "Wi-Fi SSID",
+      "wifiPasswordLabel": "Wi-Fi password",
+      "wifiPasswordDescription": "Never shown in the page or logs",
+      "start": "Start writing",
+      "retry": "Retry",
+      "close": "Close",
+      "unsupported": "This browser does not support Web Serial. Use desktop Chrome or Edge.",
+      "insecure": "Web Serial is only available in a secure context (HTTPS or localhost).",
+      "steps": {
+        "selecting": "Selecting the serial port…",
+        "opening": "Opening the serial port…",
+        "writing": "Writing the settings…",
+        "waitingConfig": "Waiting for the device to confirm the settings…",
+        "waitingAuthorization": "Waiting for the device authorization code…",
+        "approving": "Approving the device authorization…",
+        "waitingResult": "Waiting for the device authorization result…"
+      },
+      "userCodeLabel": "User code",
+      "verificationUri": "Verification URL: {uri}",
+      "complete": "Provisioning for “{name}” is complete. Approved user code {userCode}.",
+      "manualTitle": "Could not receive the user code",
+      "manualDescription": "Enter the user code shown by the device and approve it.",
+      "manualLabel": "User code",
+      "manualSubmit": "Approve",
+      "configRejected": "The device rejected the settings: {error}",
+      "configRejectedNoReason": "The device rejected the settings.",
+      "deviceError": "The device returned an error: {error}",
+      "authorizationRejected": "The device authorization failed.",
+      "authorizationTimeout": "Timed out while waiting for the authorization result.",
+      "timeout": "The device did not respond. Check the connection and retry.",
+      "failed": "Provisioning failed. Check the connection and retry.",
+      "notConnected": "The serial port is not open. Start again."
     }
   },
   "Detection": {
