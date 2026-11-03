@@ -68,6 +68,7 @@ export function AliveEdgeList({
       ) : (
         <ul className="divide-y rounded-md border">
           {edges.map((edge) => {
+            const isCamera = edge.kind === "camera";
             const isConnected = edge.edgeDeviceId === connectedEdgeId;
             const isActive = isConnected && isActiveConnection(receiveStatus);
 
@@ -80,14 +81,16 @@ export function AliveEdgeList({
               >
                 <div className="flex flex-col">
                   <span className="font-medium break-all">{name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {t("lastSeen", {
-                      time: formatLastSeen(edge.lastHeartbeatAt),
-                    })}
-                  </span>
+                  {!isCamera && (
+                    <span className="text-xs text-muted-foreground">
+                      {t("lastSeen", {
+                        time: formatLastSeen(edge.lastHeartbeatAt),
+                      })}
+                    </span>
+                  )}
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">
-                  {!edge.online && (
+                  {!isCamera && !edge.online && (
                     <span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
                       {t("offline")}
                     </span>
@@ -97,7 +100,7 @@ export function AliveEdgeList({
                       {tStatus(receiveStatus)}
                     </span>
                   )}
-                  {!isActive && (
+                  {!isCamera && !isActive && (
                     <Button
                       size="sm"
                       onPress={() => onConnect(edge.edgeDeviceId)}
@@ -127,7 +130,7 @@ export function AliveEdgeList({
                       {t("close")}
                     </Button>
                   )}
-                  {!edge.online && (
+                  {!isCamera && !edge.online && (
                     <Link
                       href={observationDevicePath(eventId, edge.edgeDeviceId)}
                       variant="secondary"

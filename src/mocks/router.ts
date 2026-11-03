@@ -26,6 +26,7 @@ import {
   type ObservationSettings,
 } from "@/features/tenant/management/settings/type";
 import type {
+  CameraProvisioningDefaults,
   EdgeDevice,
   FirestoreToken,
   GuestCrowdSnapshot,
@@ -191,6 +192,34 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           }
         }),
     },
+    camera: {
+      approveDeviceAuthorization: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            edgeDeviceId: z.string().min(1),
+            userCode: z.string().trim().min(1),
+          }),
+        )
+        .handler(async (): Promise<void> => {}),
+      revokeDeviceAuthorization: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            edgeDeviceId: z.string().min(1),
+          }),
+        )
+        .handler(async (): Promise<void> => {}),
+      provisioningDefaults: os.handler(
+        async (): Promise<CameraProvisioningDefaults> => ({
+          signalingUrl: "http://127.0.0.1:8787",
+          firebaseProjectId: "demo-tolo",
+          firebaseApiKey: "demo-tolo-web",
+          firestoreEmulatorHost: "127.0.0.1:8080",
+          firebaseAuthEmulatorHost: "127.0.0.1:9099",
+        }),
+      ),
+    },
     observation: {
       listEdgeDevices: os
         .input(z.object({ eventId: z.string().min(1) }))
@@ -207,7 +236,13 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           z.object({
             eventId: z.string().min(1),
             name: z.string().trim().min(1),
-            observationPointNames: z.array(z.string().trim().min(1)).min(1),
+            kind: z
+              .enum(["observation_page", "camera"])
+              .default("observation_page"),
+            observationPointNames: z
+              .array(z.string().trim().min(1))
+              .default([]),
+            linkedObservationPointId: z.string().optional(),
           }),
         )
         .handler(async ({ input }): Promise<RegisteredEdgeDevice> => {

@@ -31,6 +31,8 @@ const renderList = (
         {
           edgeDeviceId: "edge-a",
           name: "入口カメラ",
+          kind: "observation_page",
+          cameraLinks: [],
           online: connectedOnline,
           lastHeartbeatAt: null,
           observationPoints: [],
@@ -38,6 +40,8 @@ const renderList = (
         {
           edgeDeviceId: "edge-b",
           name: "ホールカメラ",
+          kind: "observation_page",
+          cameraLinks: [],
           online: true,
           lastHeartbeatAt: null,
           observationPoints: [],
@@ -45,6 +49,8 @@ const renderList = (
         {
           edgeDeviceId: "edge-c",
           name: "倉庫カメラ",
+          kind: "observation_page",
+          cameraLinks: [],
           online: false,
           lastHeartbeatAt: new Date("2026-06-14T09:00:00.000Z"),
           observationPoints: [],
