@@ -436,6 +436,9 @@
       "stop": "停止",
       "loading": "起動中…"
     },
+    "cameraSelector": {
+      "label": "カメラ"
+    },
     "status": {
       "detection": "検出状態: {status}",
       "trackedCount": "追跡中人数: {count}人",
@@ -481,7 +484,8 @@
         "notFound": "カメラが見つかりません。カメラが接続されているか確認してください。",
         "unsupported": "このブラウザまたは接続ではカメラを利用できません",
         "unavailable": "カメラを起動できませんでした"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "映像ソース",

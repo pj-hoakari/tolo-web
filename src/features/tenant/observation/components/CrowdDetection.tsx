@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { JollySelect, SelectItem } from "@/components/ui/select";
 import { DetectionLineCreationModeToggle } from "@/features/tenant/detection/components/DetectionLineActions";
 import { useDetectionStores } from "@/features/tenant/detection/stores/detectionStore";
 import { BroadcastIndicator } from "@/features/tenant/webrtc/components/BroadcastIndicator";
@@ -9,8 +10,10 @@ import { useFirebaseConfig } from "@/features/tenant/webrtc/components/FirebaseC
 import { useVideoSender } from "@/features/tenant/webrtc/hooks/useVideoSender";
 import { orpc } from "@/lib/orpc";
 import { useCrowdDetectionLoop } from "../hooks/useCrowdDetectionLoop";
-import { useDetectCrowd } from "../hooks/useDetectCrowd";
+import { useCrowdVideoSources } from "../hooks/useCrowdVideoSources";
+import { useObservationPageCameras } from "../hooks/useObservationPageCameras";
 import { useObservationReporting } from "../hooks/useObservationReporting";
+import type { CameraSourceSpec } from "../utils/cameraSources";
 import { createEspCameraVideoSource } from "../utils/espVideoSource";
 import {
   type CrowdVideoSourceFactory,
@@ -22,50 +25,98 @@ import { DevVideoSourcePanel } from "./DevVideoSourcePanel";
 import { ObservationLockButton } from "./ObservationSoftLock";
 
 const DEV_VIDEO_SOURCE_ENABLED = process.env.NODE_ENV === "development";
+const LOCAL_SOURCE_KEY = "local-camera";
 
 export type CrowdDetectionProps = {
   tenantId: string;
   eventId: string;
   edgeDeviceId: string;
-  /** 指定すると ESP カメラを既定の映像ソースにする */
-  cameraEdgeId?: string;
+  /** 指定すると、委任されたカメラの中からこのカメラを初期選択にする */
+  requestedCameraId?: string;
 };
+
+type SourceMode = "auto" | "esp" | "dev";
 
 export function CrowdDetection({
   tenantId,
   eventId,
   edgeDeviceId,
-  cameraEdgeId,
+  requestedCameraId,
 }: CrowdDetectionProps) {
   const t = useTranslations("Observation.errors");
+  const tCamera = useTranslations("Observation.cameraSelector");
   const firebaseConfig = useFirebaseConfig();
 
-  const espSourceFactory = useMemo<CrowdVideoSourceFactory | null>(() => {
-    if (!cameraEdgeId) {
-      return null;
+  const {
+    cameras,
+    initialCameraId,
+    status: camerasStatus,
+  } = useObservationPageCameras({
+    eventId,
+    pageEdgeDeviceId: edgeDeviceId,
+    requestedCameraId,
+  });
+
+  const [sourceMode, setSourceMode] = useState<SourceMode>("auto");
+  const [devSourceFactory, setDevSourceFactory] =
+    useState<CrowdVideoSourceFactory>(() => createCameraVideoSource);
+
+  const effectiveMode: "esp" | "dev" =
+    sourceMode === "dev"
+      ? "dev"
+      : sourceMode === "esp" && cameras.length > 0
+        ? "esp"
+        : cameras.length > 0
+          ? "esp"
+          : "dev";
+
+  const sourceSpecs = useMemo<CameraSourceSpec[]>(() => {
+    if (effectiveMode === "dev") {
+      return [
+        { cameraEdgeId: LOCAL_SOURCE_KEY, createSource: devSourceFactory },
+      ];
     }
-    return () =>
-      createEspCameraVideoSource({
-        tenantId,
-        eventId,
-        edgeDeviceId: cameraEdgeId,
-        firebaseConfig,
-        requestSession: () =>
-          orpc.signaling.requestConnection({
-            eventId,
-            edgeId: cameraEdgeId,
-          }),
-        issueToken: () =>
-          orpc.signaling.issueConsoleFirestoreToken({ eventId }),
-      });
-  }, [tenantId, eventId, cameraEdgeId, firebaseConfig]);
+    return cameras.map((camera) => ({
+      cameraEdgeId: camera.edgeDeviceId,
+      createSource: () =>
+        createEspCameraVideoSource({
+          tenantId,
+          eventId,
+          edgeDeviceId: camera.edgeDeviceId,
+          firebaseConfig,
+          label: camera.name || camera.edgeDeviceId,
+          requestConnection: () =>
+            orpc.signaling.requestCameraConnection({
+              eventId,
+              pageEdgeDeviceId: edgeDeviceId,
+              cameraEdgeId: camera.edgeDeviceId,
+            }),
+        }),
+    }));
+  }, [
+    effectiveMode,
+    cameras,
+    devSourceFactory,
+    tenantId,
+    eventId,
+    edgeDeviceId,
+    firebaseConfig,
+  ]);
 
-  const [sourceFactory, setSourceFactory] = useState<CrowdVideoSourceFactory>(
-    () => espSourceFactory ?? createCameraVideoSource,
+  const {
+    videoSource,
+    status,
+    error,
+    sourceStates,
+    selectedKey,
+    selectSource,
+    start,
+    stop,
+    reportDetectionError,
+  } = useCrowdVideoSources(
+    sourceSpecs,
+    effectiveMode === "esp" ? initialCameraId : LOCAL_SOURCE_KEY,
   );
-
-  const { videoSource, status, error, start, stop, reportDetectionError } =
-    useDetectCrowd(sourceFactory);
 
   const [broadcastStream, setBroadcastStream] = useState<MediaStream | null>(
     null,
@@ -106,8 +157,14 @@ export function CrowdDetection({
   });
 
   const handleSourceChange = useCallback((factory: CrowdVideoSourceFactory) => {
-    setSourceFactory(() => factory);
+    setDevSourceFactory(() => factory);
+    setSourceMode("dev");
   }, []);
+
+  const cameraErrors =
+    effectiveMode === "esp"
+      ? sourceStates.filter((state) => state.status === "error")
+      : [];
 
   return (
     <div className="flex w-full flex-col items-center gap-4">
@@ -126,15 +183,50 @@ export function CrowdDetection({
         <DevVideoSourcePanel
           status={status}
           onSourceChange={handleSourceChange}
-          espEdgeId={cameraEdgeId}
+          espEdgeId={cameras[0]?.edgeDeviceId}
           onEspSelect={
-            espSourceFactory
-              ? () => setSourceFactory(() => espSourceFactory)
-              : undefined
+            cameras.length > 0 ? () => setSourceMode("esp") : undefined
           }
         />
       )}
-      <CrowdDetectionControls status={status} onStart={start} onStop={stop} />
+      <CrowdDetectionControls
+        status={status}
+        onStart={start}
+        onStop={stop}
+        disabled={camerasStatus === "loading"}
+      />
+      {effectiveMode === "esp" && cameras.length > 1 && (
+        <JollySelect
+          label={tCamera("label")}
+          selectedKey={selectedKey}
+          onSelectionChange={(key) => {
+            if (key !== null) {
+              selectSource(String(key));
+            }
+          }}
+          items={cameras}
+          className="w-full max-w-xs"
+        >
+          {(camera) => (
+            <SelectItem id={camera.edgeDeviceId}>
+              {camera.name || camera.edgeDeviceId}
+            </SelectItem>
+          )}
+        </JollySelect>
+      )}
+      {cameraErrors.map((state) => {
+        const camera = cameras.find(
+          (entry) => entry.edgeDeviceId === state.key,
+        );
+        return (
+          <p key={state.key} role="alert" className="text-destructive">
+            {t("cameraSource", {
+              camera: camera?.name || state.key,
+              error: state.error ?? "",
+            })}
+          </p>
+        );
+      })}
       <CrowdDetectionView
         videoSource={videoSource}
         status={status}

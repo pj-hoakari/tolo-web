@@ -436,6 +436,9 @@
       "stop": "停止",
       "loading": "啟動中…"
     },
+    "cameraSelector": {
+      "label": "攝影機"
+    },
     "status": {
       "detection": "偵測狀態：{status}",
       "trackedCount": "追蹤人數：{count}人",
@@ -481,7 +484,8 @@
         "notFound": "找不到攝影機。請確認攝影機已連接。",
         "unsupported": "此瀏覽器或連線無法使用攝影機",
         "unavailable": "無法啟動攝影機"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "視訊來源",

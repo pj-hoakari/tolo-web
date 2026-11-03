@@ -1,3 +1,4 @@
+import { type Auth, signInWithCustomToken } from "firebase/auth";
 import type { DocumentReference, Firestore } from "firebase/firestore";
 import { ICE_SERVERS } from "@/features/tenant/webrtc/utils/config";
 import {
@@ -5,7 +6,6 @@ import {
   getNamedDb,
 } from "@/features/tenant/webrtc/utils/firebase";
 import type { FirebaseConfig } from "@/features/tenant/webrtc/utils/firebaseConfig";
-import { signInForSignaling } from "@/features/tenant/webrtc/utils/firestoreSignIn";
 import {
   type AssembledJpeg,
   JpegAssembler,
@@ -19,7 +19,7 @@ import {
   clearSession,
   createFirestorePollingSignalingChannel,
 } from "@/features/tenant/webrtc/utils/signalingChannel";
-import type { FirestoreToken } from "@/server/router";
+import type { CameraConnection } from "@/server/router";
 import type { CrowdVideoSource, VideoSourceDescriptor } from "./videoSource";
 
 export type EspCameraSourceOptions = {
@@ -27,8 +27,12 @@ export type EspCameraSourceOptions = {
   eventId: string;
   edgeDeviceId: string;
   firebaseConfig: FirebaseConfig;
-  requestSession: () => Promise<{ sessionId: string }>;
-  issueToken: () => Promise<FirestoreToken>;
+  /**
+   * セッションを作り、そのセッションに束縛された Firebase カスタムトークンを
+   * 返す。トークンはセッションより先に取得できない。
+   */
+  requestConnection: () => Promise<CameraConnection>;
+  label?: string;
 };
 
 const APP_NAME_PREFIX = "esp-camera-console";
@@ -78,12 +82,13 @@ class EspCameraLink {
   private readonly options: EspCameraSourceOptions;
   private readonly appName: string;
 
+  private auth!: Auth;
   private db!: Firestore;
   private canvas!: HTMLCanvasElement;
   private context!: CanvasRenderingContext2D;
   private stream!: MediaStream;
   private track!: CanvasCaptureMediaStreamTrack;
-  private stopSignIn: (() => void) | null = null;
+  private pendingConnection: CameraConnection | null = null;
 
   private closed = false;
   private generation = 0;
@@ -97,20 +102,25 @@ class EspCameraLink {
   }
 
   async open(): Promise<VideoSourceDescriptor> {
-    const auth = getNamedAuth(this.options.firebaseConfig, this.appName);
+    this.auth = getNamedAuth(this.options.firebaseConfig, this.appName);
     this.db = getNamedDb(this.options.firebaseConfig, this.appName);
-    this.stopSignIn = await signInForSignaling(this.options.issueToken, auth);
+
+    // カスタムトークンはセッションに束縛されるため、セッションを作ってから
+    // 取得してサインインする。ここで失敗したら open の失敗として扱い、
+    // ほかのカメラの映像には影響させない。
+    const connection = await this.options.requestConnection();
     if (this.closed) {
-      this.stopSignIn?.();
-      this.stopSignIn = null;
       throw new Error("ESP カメラの接続が中止されました");
     }
+    await signInWithCustomToken(this.auth, connection.firestoreToken);
+    if (this.closed) {
+      throw new Error("ESP カメラの接続が中止されました");
+    }
+    this.pendingConnection = connection;
 
     this.canvas = document.createElement("canvas");
     const context = this.canvas.getContext("2d");
     if (!context) {
-      this.stopSignIn?.();
-      this.stopSignIn = null;
       throw new Error("ESP カメラ用の canvas を初期化できませんでした");
     }
     this.context = context;
@@ -121,8 +131,6 @@ class EspCameraLink {
       | undefined;
     if (!track || typeof track.requestFrame !== "function") {
       for (const t of this.stream.getTracks()) t.stop();
-      this.stopSignIn?.();
-      this.stopSignIn = null;
       throw new Error(
         "このブラウザは canvas の手動フレーム送出に対応していません",
       );
@@ -148,8 +156,7 @@ class EspCameraLink {
     for (const track of this.stream?.getTracks() ?? []) {
       track.stop();
     }
-    this.stopSignIn?.();
-    this.stopSignIn = null;
+    this.pendingConnection = null;
   }
 
   private scheduleReconnect(): void {
@@ -267,12 +274,23 @@ class EspCameraLink {
     };
 
     try {
-      const { sessionId } = await this.options.requestSession();
+      const pendingConnection = this.pendingConnection;
+      const connection =
+        pendingConnection ?? (await this.options.requestConnection());
+      this.pendingConnection = null;
       if (this.closed || generation !== this.generation) {
         cancel();
         return;
       }
+      if (!pendingConnection) {
+        await signInWithCustomToken(this.auth, connection.firestoreToken);
+        if (this.closed || generation !== this.generation) {
+          cancel();
+          return;
+        }
+      }
 
+      const { sessionId } = connection;
       sessionRef = sessionDoc(
         this.db,
         this.options.tenantId,
@@ -437,7 +455,7 @@ export function createEspCameraVideoSource(
   const link = new EspCameraLink(options);
 
   return {
-    label: `ESP (${options.edgeDeviceId})`,
+    label: options.label ?? `ESP (${options.edgeDeviceId})`,
     open(): Promise<VideoSourceDescriptor> {
       return link.open();
     },

@@ -65,8 +65,7 @@ import {
 } from "@/features/tenant/management/settings/type";
 import {
   registeredEdgeDeviceWire,
-  sampleCameraDeviceWire,
-  sampleEdgeDevicesWire,
+  sampleObservationDevicesWire,
 } from "@/mocks/fixtures/edges";
 import { afterJoinPath, getRegistrationToken, requestTenantId } from "./auth";
 import { forgetInvitation, pendingInvitationToken } from "./auth/invitation";
@@ -102,6 +101,12 @@ const displayName = z.string().trim().min(1).max(64);
 const edgeDeviceInput = z.object({
   eventId: z.string().min(1),
   edgeDeviceId: publicId,
+});
+
+const cameraConnectionInput = z.object({
+  eventId: z.string().min(1),
+  pageEdgeDeviceId: publicId,
+  cameraEdgeId: publicId,
 });
 
 const registerEdgeDeviceInput = z
@@ -232,7 +237,7 @@ async function listEdgeDevices(eventId: string): Promise<EdgeDevice[]> {
 
 async function revokeCameraGrants(eventId: string): Promise<void> {
   const devices = observationMocking()
-    ? sampleEdgeDevicesWire
+    ? sampleObservationDevicesWire
     : await listEdgeDevices(eventId);
   for (const device of devices) {
     if (device.kind === "camera") {
@@ -442,6 +447,12 @@ export interface FirestoreToken {
   expiresAt: Date;
 }
 
+export interface CameraConnection {
+  sessionId: string;
+  firestoreToken: string;
+  expiresAt: Date;
+}
+
 function eventContext(eventId: string) {
   return { contextValues: createContextValues().set(eventIdKey, eventId) };
 }
@@ -458,6 +469,58 @@ async function issueFirestoreToken(
     customToken: res.firebaseCustomToken,
     expiresAt: timestampDate(res.expiresAt),
   };
+}
+
+async function requestBoundCameraToken(
+  eventId: string,
+  cameraEdgeId: string,
+  sessionId: string,
+): Promise<FirestoreToken> {
+  const res = await consoleSignalingClient.issueFirestoreToken(
+    { edgeDeviceId: cameraEdgeId, sessionId },
+    eventContext(eventId),
+  );
+  if (!res.expiresAt) {
+    throw new Error("IssueFirestoreToken returned no expires_at");
+  }
+  return {
+    customToken: res.firebaseCustomToken,
+    expiresAt: timestampDate(res.expiresAt),
+  };
+}
+
+async function observationDevices(eventId: string): Promise<EdgeDevice[]> {
+  return observationMocking()
+    ? sampleObservationDevicesWire
+    : listEdgeDevices(eventId);
+}
+
+function delegatedCamera(
+  devices: EdgeDevice[],
+  pageEdgeDeviceId: string,
+  cameraEdgeId: string,
+): EdgeDevice {
+  const page = devices.find((d) => d.edgeDeviceId === pageEdgeDeviceId);
+  if (!page) {
+    throw new ORPCError("NOT_FOUND");
+  }
+  if (page.kind !== "observation_page") {
+    throw new ORPCError("PRECONDITION_FAILED");
+  }
+
+  const camera = devices.find((d) => d.edgeDeviceId === cameraEdgeId);
+  if (!camera) {
+    throw new ORPCError("NOT_FOUND");
+  }
+  if (camera.kind !== "camera") {
+    throw new ORPCError("PRECONDITION_FAILED");
+  }
+  if (
+    !page.cameraLinks.some((link) => link.cameraEdgeDeviceId === cameraEdgeId)
+  ) {
+    throw new ORPCError("PRECONDITION_FAILED");
+  }
+  return camera;
 }
 
 // フロント ↔ Next.js バックエンド間の oRPC ルータ。
@@ -844,6 +907,33 @@ export const router = {
         );
         return { sessionId: res.sessionId };
       }),
+    // 観測ページが委任されたカメラへ接続する。ページ自身の edge 端末と
+    // cameraLinks を確かめ、Edge Bridge にはカメラの edge_device_id だけを渡す。
+    // ブラウザへ返すのはセッションに束縛した Firebase カスタムトークンだけ。
+    requestCameraConnection: os
+      .input(cameraConnectionInput)
+      .handler(async ({ input }): Promise<CameraConnection> => {
+        try {
+          const devices = await observationDevices(input.eventId);
+          delegatedCamera(devices, input.pageEdgeDeviceId, input.cameraEdgeId);
+          const res = await consoleSignalingClient.requestConnection(
+            { edgeDeviceId: input.cameraEdgeId },
+            eventContext(input.eventId),
+          );
+          const token = await requestBoundCameraToken(
+            input.eventId,
+            input.cameraEdgeId,
+            res.sessionId,
+          );
+          return {
+            sessionId: res.sessionId,
+            firestoreToken: token.customToken,
+            expiresAt: token.expiresAt,
+          };
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
     issueConsoleFirestoreToken: os
       .input(z.object({ eventId: z.string().min(1) }))
       .handler(({ input }) =>
@@ -867,7 +957,7 @@ export const router = {
       .handler(async ({ input }): Promise<void> => {
         try {
           const devices = observationMocking()
-            ? [...sampleEdgeDevicesWire, sampleCameraDeviceWire]
+            ? sampleObservationDevicesWire
             : await listEdgeDevices(input.eventId);
           const device = devices.find(
             (d) => d.edgeDeviceId === input.edgeDeviceId,
@@ -898,7 +988,7 @@ export const router = {
     listEdgeDevices: os.input(z.object({ eventId: z.string().min(1) })).handler(
       async ({ input }): Promise<{ devices: EdgeDevice[] }> => ({
         devices: observationMocking()
-          ? sampleEdgeDevicesWire
+          ? sampleObservationDevicesWire
           : await listEdgeDevices(input.eventId),
       }),
     ),
@@ -952,7 +1042,7 @@ export const router = {
           input,
         }): Promise<{ observationPoints: ObservationPoint[] }> => {
           if (observationMocking()) {
-            const device = sampleEdgeDevicesWire.find(
+            const device = sampleObservationDevicesWire.find(
               (d) => d.edgeDeviceId === input.edgeDeviceId,
             );
             return { observationPoints: device?.observationPoints ?? [] };

@@ -436,6 +436,9 @@
       "stop": "중지",
       "loading": "시작 중…"
     },
+    "cameraSelector": {
+      "label": "카메라"
+    },
     "status": {
       "detection": "검출 상태: {status}",
       "trackedCount": "추적 중 인원: {count}명",
@@ -481,7 +484,8 @@
         "notFound": "카메라를 찾을 수 없습니다. 카메라가 연결되어 있는지 확인해 주세요.",
         "unsupported": "이 브라우저 또는 연결에서는 카메라를 사용할 수 없습니다",
         "unavailable": "카메라를 시작할 수 없습니다"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "영상 소스",

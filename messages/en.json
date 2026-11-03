@@ -436,6 +436,9 @@
       "stop": "Stop",
       "loading": "Starting…"
     },
+    "cameraSelector": {
+      "label": "Camera"
+    },
     "status": {
       "detection": "Detection status: {status}",
       "trackedCount": "Tracked people: {count}",
@@ -481,7 +484,8 @@
         "notFound": "No camera was found. Check that a camera is connected.",
         "unsupported": "The camera is not available in this browser or connection",
         "unavailable": "Could not start the camera"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "Video source",

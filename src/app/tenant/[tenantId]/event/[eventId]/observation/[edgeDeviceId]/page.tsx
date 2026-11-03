@@ -32,7 +32,7 @@ export default async function TenantObservation({
 }) {
   const { tenantId, eventId, edgeDeviceId } = await params;
   const requestedCamera = (await searchParams).camera;
-  const cameraEdgeId =
+  const requestedCameraId =
     typeof requestedCamera === "string" &&
     /^[0-9a-f]{16}$/.test(requestedCamera)
       ? requestedCamera
@@ -57,7 +57,7 @@ export default async function TenantObservation({
               tenantId={tenantId}
               eventId={eventId}
               edgeDeviceId={edgeDeviceId}
-              cameraEdgeId={cameraEdgeId}
+              requestedCameraId={requestedCameraId}
             />
           </main>
         </div>

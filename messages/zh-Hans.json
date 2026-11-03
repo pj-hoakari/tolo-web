@@ -436,6 +436,9 @@
       "stop": "停止",
       "loading": "启动中…"
     },
+    "cameraSelector": {
+      "label": "摄像头"
+    },
     "status": {
       "detection": "检测状态：{status}",
       "trackedCount": "跟踪人数：{count}人",
@@ -481,7 +484,8 @@
         "notFound": "未找到摄像头。请确认摄像头已连接。",
         "unsupported": "此浏览器或连接无法使用摄像头",
         "unavailable": "无法启动摄像头"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "视频源",

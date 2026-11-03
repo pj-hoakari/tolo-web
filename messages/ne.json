@@ -436,6 +436,9 @@
       "stop": "रोक्नुहोस्",
       "loading": "सुरु हुँदै…"
     },
+    "cameraSelector": {
+      "label": "क्यामेरा"
+    },
     "status": {
       "detection": "पहिचान स्थिति: {status}",
       "trackedCount": "ट्र्याक भइरहेका मानिस: {count}",
@@ -481,7 +484,8 @@
         "notFound": "क्यामेरा भेटिएन। क्यामेरा जोडिएको छ कि छैन जाँच गर्नुहोस्।",
         "unsupported": "यो ब्राउजर वा जडानमा क्यामेरा प्रयोग गर्न सकिँदैन",
         "unavailable": "क्यामेरा सुरु गर्न सकिएन"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "भिडियो स्रोत",

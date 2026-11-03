@@ -436,6 +436,9 @@
       "stop": "Detener",
       "loading": "Iniciando…"
     },
+    "cameraSelector": {
+      "label": "Cámara"
+    },
     "status": {
       "detection": "Estado de detección: {status}",
       "trackedCount": "Personas rastreadas: {count}",
@@ -481,7 +484,8 @@
         "notFound": "No se encontró ninguna cámara. Comprueba que haya una cámara conectada.",
         "unsupported": "La cámara no está disponible en este navegador o conexión",
         "unavailable": "No se pudo iniciar la cámara"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "Fuente de vídeo",
