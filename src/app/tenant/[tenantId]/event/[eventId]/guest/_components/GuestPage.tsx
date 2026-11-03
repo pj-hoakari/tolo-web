@@ -3,7 +3,6 @@
 import "@/features/guest/guest-theme.css";
 import { useEffect, useState } from "react";
 import Congestion from "@/features/guest/info/Congestion";
-import Floor from "@/features/guest/info/Floor";
 import GuideMap from "@/features/guest/info/GuideMap";
 import Queues from "@/features/guest/info/Queues";
 import {
@@ -22,13 +21,8 @@ const SESSION_ID_KEY = "tolo:guest-session";
 
 // 各コンポーネントが自身の span（col-span-1 / col-span-2）を宣言
 // フラットな配列で並び順だけを指定
-// 現在のフロアは案内マップの文脈なので、地図の直上に横長の帯として置く
-const infoComponents: GuestInfoComponent[] = [
-  Floor,
-  GuideMap,
-  Queues,
-  Congestion,
-];
+// 表示中の階の切り替えは案内マップのカードの中にある
+const infoComponents: GuestInfoComponent[] = [GuideMap, Queues, Congestion];
 
 function guestSessionId(): string {
   try {
@@ -81,7 +75,8 @@ export function GuestPage({ tenantId, eventId, qrLocationId }: GuestPageProps) {
         eventId={eventId}
         showStaffMessages={pageComponents.includes("staffMessages")}
       />
-      <main className="mx-auto w-full max-w-md px-4 py-6">
+      {/* iPhone のホームバー・左右の欠けにかからないよう、その分だけ内側に寄せる */}
+      <main className="mx-auto w-full max-w-md pt-4 pr-[max(1rem,env(safe-area-inset-right))] pb-[calc(1.5rem+env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))]">
         <GuestInfoContainer
           tenantId={tenantId}
           eventId={eventId}

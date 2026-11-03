@@ -2,15 +2,14 @@ import { expect, type Page, test } from "@playwright/test";
 import { GUEST_REFRESH_INTERVAL_MS } from "@/features/guest/useGuestPolling";
 import type { MockRouterOverrides } from "@/mocks/router";
 
-const search = (page: Page) =>
-  page.getByRole("textbox", { name: "目的地を検索" });
+const destinationSelect = (page: Page, name: string | RegExp = /目的地/) =>
+  page.getByRole("button", { name });
 const reset = (page: Page) => page.getByRole("button", { name: "リセット" });
-const searchToolbar = (page: Page) =>
-  page
-    .locator("div")
-    .filter({ has: search(page) })
-    .filter({ has: reset(page) })
-    .last();
+/** 目的地のプルダウンを開いて、名前の目的地を選ぶ（同じ名前が複数あるときは先頭） */
+const pickDestination = async (page: Page, name: string) => {
+  await destinationSelect(page).click();
+  await page.getByRole("option", { name, exact: true }).first().click();
+};
 const localeButton = (page: Page) =>
   page.getByRole("button", { name: "言語を切り替え" });
 const themeButton = (page: Page) =>
@@ -26,6 +25,9 @@ const card = (page: Page, title: string) =>
 const congestionCard = (page: Page) => card(page, "混雑状況");
 const queuesCard = (page: Page) => card(page, "行列の待ち時間");
 const guideMapCard = (page: Page) => card(page, "案内マップ");
+/** 案内マップの上の、表示中の階の切り替え */
+const floorTabs = (page: Page, name = "表示するフロア") =>
+  page.getByRole("radiogroup", { name }).first();
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 const openGuestPage = async (
@@ -54,12 +56,7 @@ test.beforeEach(async ({ page }) => {
 test("ゲストページを開くと各情報セクションの見出しが表示される", async ({
   page,
 }) => {
-  for (const title of [
-    "現在のフロア",
-    "案内マップ",
-    "行列の待ち時間",
-    "混雑状況",
-  ]) {
+  for (const title of ["案内マップ", "行列の待ち時間", "混雑状況"]) {
     await expect(
       page.getByRole("heading", { level: 2, name: title }),
     ).toBeVisible();
@@ -73,7 +70,9 @@ test("QR の URL からゲストページを開くと混雑状況と行列とお
 
   const congestion = congestionCard(page);
   await expect(
-    congestion.getByRole("listitem").filter({ hasText: "1F エレベーター前" }),
+    congestion
+      .getByRole("listitem")
+      .filter({ hasText: "1F〜6F エレベーター前" }),
   ).toContainText("危険");
   await expect(
     congestion.getByRole("listitem").filter({ hasText: "6F ホール" }),
@@ -138,12 +137,12 @@ test("行列ごとに切り上げた待ち時間とおすすめの入口だけ�
 test("言語を切り替えると混雑状況と行列の表示名を切り替えた言語で取り直す", async ({
   page,
 }) => {
-  await expect(congestionCard(page)).toContainText("1F エレベーター前");
+  await expect(congestionCard(page)).toContainText("1F〜6F エレベーター前");
 
   await localeButton(page).click();
   await page.getByRole("menuitemradio", { name: "English" }).click();
 
-  await expect(card(page, "Congestion")).toContainText("1F elevators");
+  await expect(card(page, "Congestion")).toContainText("1F–6F elevators");
   await expect(card(page, "Queue wait times")).toContainText("6F Hall");
 });
 
@@ -230,92 +229,52 @@ test("お知らせ一覧の外側を押すとお知らせ一覧が閉じる", as
   await expect(bell).not.toHaveText("2");
 });
 
-test("目的地を検索すると名前に検索語を含む目的地だけが候補に出る", async ({
+test("目的地のプルダウンを開くと目的地が階ごとにまとまって並び、現在地は出ない", async ({
   page,
 }) => {
-  await search(page).fill("職員室");
+  await destinationSelect(page).click();
 
-  // 2F と 3F の両方の職員室が候補に出て、名前に含まない目的地は出ない
-  await expect(page.getByRole("button", { name: /職員室/ })).toHaveCount(2);
-  await expect(page.getByRole("button", { name: /204/ })).toHaveCount(0);
+  // 2F と 3F の両方に職員室があり、それぞれの階の見出しの下に並ぶ
+  for (const floor of ["2F", "3F"]) {
+    await expect(
+      page
+        .getByRole("group", { name: floor })
+        .getByRole("option", { name: "職員室", exact: true }),
+    ).toBeVisible();
+  }
+  await expect(page.getByRole("option", { name: "現在地" })).toHaveCount(0);
 });
 
-test("検索の候補から目的地を選ぶと検索欄が空になり選んだ目的地が表示される", async ({
+test("プルダウンから目的地を選ぶと選んだ目的地と階がボタンに表示される", async ({
   page,
 }) => {
-  await search(page).fill("204");
+  await pickDestination(page, "204");
 
-  await page.getByRole("button", { name: /204/ }).click();
-
-  await expect(search(page)).toHaveValue("");
-  await expect(
-    searchToolbar(page).getByText("204", { exact: true }),
-  ).toBeVisible();
-});
-
-test("目的地の検索欄で Enter を押すと先頭の候補が選ばれ検索欄が空になる", async ({
-  page,
-}) => {
-  await search(page).fill("204");
-  await search(page).press("Enter");
-
-  await expect(search(page)).toHaveValue("");
-  await expect(
-    searchToolbar(page).getByText("204", { exact: true }),
-  ).toBeVisible();
-});
-
-test("一致しない語で Enter を押しても目的地は選ばれない", async ({ page }) => {
-  await search(page).fill("zzz");
-  await search(page).press("Enter");
-
-  await expect(search(page)).toHaveValue("zzz");
-  await expect(page.getByText("見つかりませんでした")).toBeVisible();
-  await expect(reset(page)).toHaveCount(0);
-});
-
-test("検索欄を空にすると候補と見つからなかった旨の表示が消える", async ({
-  page,
-}) => {
-  await search(page).fill("204");
-  await expect(page.getByRole("button", { name: /204/ })).toBeVisible();
-  await search(page).fill("");
-  await expect(page.getByRole("button", { name: /204/ })).toHaveCount(0);
-
-  await search(page).fill("zzz");
-  await expect(page.getByText("見つかりませんでした")).toBeVisible();
-  await search(page).fill("");
-  await expect(page.getByText("見つかりませんでした")).toHaveCount(0);
-});
-
-test("目的地を選んだあと再び検索すると選択表示が隠れ検索欄を空にすると再び出る", async ({
-  page,
-}) => {
-  await search(page).fill("204");
-  await page.getByRole("button", { name: /204/ }).click();
+  await expect(page.getByRole("listbox")).toHaveCount(0);
+  await expect(destinationSelect(page)).toContainText("204");
+  await expect(destinationSelect(page)).toContainText("2F");
   await expect(reset(page)).toBeVisible();
+});
 
-  await search(page).fill("204");
-  await expect(reset(page)).toHaveCount(0);
+test("キーボードだけでプルダウンを開いて目的地を選べる", async ({ page }) => {
+  await destinationSelect(page).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("listbox")).toBeVisible();
 
-  await search(page).fill("");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+
+  await expect(page.getByRole("listbox")).toHaveCount(0);
   await expect(reset(page)).toBeVisible();
 });
 
 test("選んだ目的地をリセットすると選択が解除される", async ({ page }) => {
-  await search(page).fill("204");
-  await page.getByRole("button", { name: /204/ }).click();
+  await pickDestination(page, "204");
 
   await reset(page).click();
 
   await expect(reset(page)).toBeHidden();
-});
-
-test("一致しない語で目的地を検索すると見つからなかったことが表示される", async ({
-  page,
-}) => {
-  await search(page).fill("zzz");
-  await expect(page.getByText("見つかりませんでした")).toBeVisible();
+  await expect(destinationSelect(page)).toContainText("目的地を選んでください");
 });
 
 test("地図をタップすると拡大し、もう一度タップすると全体表示に戻る", async ({
@@ -330,38 +289,125 @@ test("地図をタップすると拡大し、もう一度タップすると全�
   ).toBeVisible();
   await expect(map).not.toHaveAttribute("viewBox", fullView ?? "");
 
+  // 全体表示に戻ったら、拡大中の案内は消える
   await map.click();
-  await expect(page.getByText("地図をタップで拡大")).toBeVisible();
   await expect(map).toHaveAttribute("viewBox", fullView ?? "");
+  await expect(page.getByText("ドラッグで移動・タップで全体表示")).toHaveCount(
+    0,
+  );
 });
 
-test("別の階の目的地を選ぶと階移動を含む道順が出て、現在のフロアが地図と連動する", async ({
+test("別の階の目的地を選ぶと階移動を含む道順が出て、表示中の階が地図と連動する", async ({
   page,
 }) => {
-  const floorCard = card(page, "現在のフロア");
-  await search(page).fill("204");
-  await page.getByRole("button", { name: /204/ }).click();
+  const floorCard = floorTabs(page);
+  await pickDestination(page, "204");
 
   await expect(page.getByText(/で 1F → 2F$/)).toBeVisible();
   await expect(floorCard.getByRole("radio", { name: "1F" })).toBeChecked();
   await expect(page.getByText(/^▲ .+で2Fへ$/)).toBeVisible();
 
-  // 道順の 2F の区間を押すと、地図と現在のフロアが 2F に切り替わる
+  // 道順の 2F の区間を押すと、地図と表示中の階が 2F に切り替わる
   await page.getByRole("button", { name: /^2F：/ }).click();
   await expect(floorCard.getByRole("radio", { name: "2F" })).toBeChecked();
   await expect(page.getByText("1Fから到着")).toBeVisible();
 
-  // 現在のフロアで 1F を選ぶと地図も 1F に戻る
+  // 階の切り替えで 1F を選ぶと地図も 1F に戻る
   await floorCard.getByRole("radio", { name: "1F" }).click();
   await expect(floorCard.getByRole("radio", { name: "1F" })).toBeChecked();
+});
+
+test("道順は番号付きで並び、「次へ」で次に歩く階の地図に送れる", async ({
+  page,
+}) => {
+  await pickDestination(page, "204");
+
+  const steps = page.getByRole("list", { name: "道順" }).getByRole("listitem");
+  await expect(steps.first()).toContainText("1F：現在地");
+  await page.getByRole("button", { name: "次へ：2Fの道順" }).click();
+
+  await expect(
+    floorTabs(page).getByRole("radio", { name: "2F" }),
+  ).toBeChecked();
+  await expect(page.getByRole("button", { name: /^2F：/ })).toHaveAttribute(
+    "aria-current",
+    "step",
+  );
+  // 最後の階まで来たら「次へ」は出ない
+  await expect(page.getByRole("button", { name: /^次へ/ })).toHaveCount(0);
+});
+
+test("混雑状況の場所の「地図で見る」で、目的地ならそこへの道順が出る", async ({
+  page,
+}) => {
+  await congestionCard(page)
+    .getByRole("button", { name: "6F ホールを地図で見る" })
+    .click();
+
+  await expect(destinationSelect(page)).toContainText("ホール");
+  await expect(page.getByRole("list", { name: "道順" })).toBeVisible();
+});
+
+test("混雑状況の場所の「地図で見る」で、目的地でない場所はその階を開いて強調する", async ({
+  page,
+}) => {
+  await floorTabs(page).getByRole("radio", { name: "3F" }).click();
+
+  await congestionCard(page)
+    .getByRole("button", { name: "1F〜6F エレベーター前を地図で見る" })
+    .click();
+
+  await expect(
+    floorTabs(page).getByRole("radio", { name: "1F" }),
+  ).toBeChecked();
+  await expect(reset(page)).toHaveCount(0);
+});
+
+test("地図に無い場所の混雑には「地図で見る」が出ない", async ({ page }) => {
+  await expect(
+    congestionCard(page).getByRole("listitem").filter({ hasText: "4F 廊下" }),
+  ).toBeVisible();
+  await expect(
+    congestionCard(page).getByRole("button", { name: /4F 廊下を地図で見る/ }),
+  ).toHaveCount(0);
+});
+
+test("混雑状況は、同じ場所・同じ段階で階だけ違うものを 1 行にまとめる", async ({
+  page,
+}) => {
+  const rows = congestionCard(page).getByRole("listitem");
+  await expect(rows).toHaveCount(4);
+  await expect(rows.filter({ hasText: "1F〜6F エレベーター前" })).toContainText(
+    "危険",
+  );
+  await expect(rows.filter({ hasText: "1F〜2F 中央階段" })).toContainText("中");
+  await expect(rows.filter({ hasText: /^3F エレベーター前/ })).toHaveCount(0);
+});
+
+test("混雑状況は危険な場所から順に並ぶ", async ({ page }) => {
+  await expect(
+    congestionCard(page).getByRole("listitem").first(),
+  ).toContainText("1F〜6F エレベーター前");
+});
+
+test("行列のおすすめの入口の「地図で見る」で案内マップにその入口の階を開く", async ({
+  page,
+}) => {
+  // API モックでは 6F ホールの行列のおすすめの入口が 6Fホール の階段
+  await queuesCard(page)
+    .getByRole("button", { name: "階段を地図で見る" })
+    .click();
+
+  await expect(
+    floorTabs(page).getByRole("radio", { name: "6Fホール" }),
+  ).toBeChecked();
 });
 
 test("混雑状況で危険なエレベーターは避け、階段を使う道順と混雑の表示が出る", async ({
   page,
 }) => {
   // API モックでは 1F エレベーター前が危険（地図の 1F エレベーターに結び付けてある）
-  await search(page).fill("４０３");
-  await page.getByRole("button", { name: /４０３/ }).click();
+  await pickDestination(page, "403");
 
   await expect(page.getByRole("status")).toHaveText(
     "混雑している所を避けたルートです",
@@ -396,7 +442,7 @@ test("案内マップはページを開いたときに 1 回だけ取得し、�
   const count = (procedure: string) =>
     requests.filter((url) => url.includes(`/rpc/guest/${procedure}`)).length;
   await openGuestPage(page, "/event/test/guest");
-  await expect(search(page)).toBeVisible();
+  await expect(destinationSelect(page)).toBeVisible();
   const crowdBefore = count("getCrowd");
 
   await page.clock.runFor(GUEST_REFRESH_INTERVAL_MS * 2 + 1_000);
@@ -411,8 +457,9 @@ test("案内マップを取得できないと案内マップのカードに情�
   await openGuestPage(page, "/event/test/guest", { getGuideMapError: true });
 
   await expect(guideMapCard(page)).toContainText("情報を取得できませんでした");
-  await expect(search(page)).toHaveCount(0);
-  await expect(congestionCard(page).getByRole("listitem")).toHaveCount(3);
+  await expect(destinationSelect(page)).toHaveCount(0);
+  // 1F〜6F エレベーター前・1F〜2F 中央階段・6F ホール・4F 廊下（同じ場所・同じ段階の階はまとめる）
+  await expect(congestionCard(page).getByRole("listitem")).toHaveCount(4);
 });
 
 test("言語を English に切り替えると目的地の名前がグラフのポイントの英語のラベルで出る", async ({
@@ -421,11 +468,11 @@ test("言語を English に切り替えると目的地の名前がグラフの�
   await localeButton(page).click();
   await page.getByRole("menuitemradio", { name: "English" }).click();
 
-  await page
-    .getByRole("textbox", { name: "Search destination" })
-    .fill("Staff room");
-  await expect(page.getByRole("button", { name: /Staff room/ })).toHaveCount(2);
-  await expect(page.getByRole("button", { name: /職員室/ })).toHaveCount(0);
+  await destinationSelect(page, /Destinations/).click();
+  await expect(
+    page.getByRole("option", { name: "Staff room", exact: true }),
+  ).toHaveCount(2);
+  await expect(page.getByRole("option", { name: "職員室" })).toHaveCount(0);
 });
 
 test("言語を English に切り替えると地図の上の場所の名前もグラフのポイントの英語のラベルで出る", async ({
@@ -439,13 +486,13 @@ test("言語を English に切り替えると地図の上の場所の名前も�
   await expect(map.getByText("階段")).toHaveCount(0);
 });
 
-test("言語を English に切り替えると現在のフロアの階の名前がグラフのグループの英語のラベルで出る", async ({
+test("言語を English に切り替えると階の切り替えの階の名前がグラフのグループの英語のラベルで出る", async ({
   page,
 }) => {
   await localeButton(page).click();
   await page.getByRole("menuitemradio", { name: "English" }).click();
 
-  const floorCard = card(page, "Current floor");
+  const floorCard = floorTabs(page, "Floor to show");
   await expect(floorCard.getByRole("radio", { name: "6F Hall" })).toBeVisible();
   await expect(floorCard.getByRole("radio", { name: "6Fホール" })).toHaveCount(
     0,
@@ -458,7 +505,7 @@ test("4F の QR の URL から開くと案内マップは 4F の現在地から�
   await openGuestPage(page, "/event/test/guest/a84d0e6c2b9f1735");
 
   await expect(
-    card(page, "現在のフロア").getByRole("radio", { name: "4F" }),
+    floorTabs(page).getByRole("radio", { name: "4F" }),
   ).toBeChecked();
   await expect(
     page.getByRole("img", { name: "案内マップ" }).getByText("現在地"),
@@ -474,7 +521,7 @@ test("登録のない QR の URL から開くと設置箇所 ID を添えて案�
   expect(json).toMatchObject({ eventId: "test", qrLocationId: "gate-east" });
 
   await expect(
-    card(page, "現在のフロア").getByRole("radio", { name: "1F" }),
+    floorTabs(page).getByRole("radio", { name: "1F" }),
   ).toBeChecked();
   await expect(
     page.getByRole("img", { name: "案内マップ" }).getByText("現在地"),

@@ -448,6 +448,8 @@
   },
   "Guest": {
     "pageSubtitle": "Página del visitante",
+    "showOnMap": "Ver en el mapa",
+    "showOnMapLabel": "Ver {place} en el mapa",
     "waitingNumber": {
       "title": "Personas en espera",
       "unit": "personas"
@@ -496,13 +498,11 @@
     },
     "guideMap": {
       "title": "Mapa de orientación",
-      "hint": "Selecciona un destino para ver la ruta",
       "currentLocation": "Estás aquí",
       "destinationsLabel": "Destinos",
       "expand": "Ampliar el mapa",
       "collapse": "Reducir el mapa",
-      "search": "Buscar destino",
-      "noResults": "Sin resultados",
+      "selectDestination": "Elige un destino",
       "reset": "Restablecer",
       "goal": "Destino",
       "rideTo": "{via} hasta {floor}",
@@ -515,17 +515,16 @@
       "walkStep": "{floor}: {from} → {to}",
       "rideStep": "{via}: {from} → {to}",
       "noRoute": "No se encontró una ruta a este destino",
-      "zoomInHint": "Toca el mapa para ampliar",
       "zoomOutHint": "Arrastra para mover · toca para ver todo",
       "closed": " (cerrado)",
       "crowdAvoided": "Esta ruta evita las zonas concurridas",
       "crowdRerouted": "La ruta ha cambiado porque cambió el nivel de aglomeración",
       "crowdThroughDanger": "Esta ruta pasa por una zona peligrosamente concurrida. Siga las indicaciones del personal",
-      "crowdLegend": "Aglomeración"
+      "crowdLegend": "Aglomeración",
+      "stepsLabel": "Indicaciones",
+      "nextFloor": "Siguiente: ruta en {floor}"
     },
     "floor": {
-      "title": "Planta actual",
-      "placeholderName": "Planta 1",
       "selectLabel": "Planta a mostrar"
     },
     "congestion": {
@@ -537,7 +536,9 @@
       },
       "danger": "Peligro",
       "updatedAt": "Actualizado a las {time}",
-      "empty": "Aún no hay información de afluencia"
+      "empty": "Aún no hay información de afluencia",
+      "floorRange": "{from}–{to}",
+      "floorJoin": ", "
     },
     "loading": "Cargando…",
     "loadError": "No se pudo obtener la información"

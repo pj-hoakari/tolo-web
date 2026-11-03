@@ -13,6 +13,9 @@ export type GuestHeaderProps = {
   showStaffMessages: boolean;
 };
 
+/**
+ * ゲストページのヘッダー。スクロールしても上に残し、iPhone のノッチ・左右の欠けの分だけ内側に寄せる。
+ */
 export function GuestHeader({
   tenantName,
   tenantId,
@@ -22,8 +25,8 @@ export function GuestHeader({
   const t = useTranslations("Guest");
 
   return (
-    <header className="border-b border-primary/12 bg-secondary">
-      <div className="mx-auto flex w-full max-w-md items-center justify-between gap-3 px-4 py-3 sm:py-4">
+    <header className="sticky top-0 z-30 border-b border-primary/12 bg-secondary/95 pt-[env(safe-area-inset-top)] backdrop-blur">
+      <div className="mx-auto flex w-full max-w-md items-center justify-between gap-2 py-2 pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))]">
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium tracking-wide text-primary/55">
             {t("pageSubtitle")}

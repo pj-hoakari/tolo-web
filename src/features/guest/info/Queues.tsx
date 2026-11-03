@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useCallback } from "react";
 import { orpc } from "@/lib/orpc";
 import { useGuestPolling } from "../useGuestPolling";
+import { showOnGuideMap, useGuideMapPointIds } from "./guideMapLinkStore";
 import { type QueueSummary, QueuesView } from "./QueuesView";
 import { defineGuestInfoComponent, type GuestInfoComponentProps } from "./type";
 
@@ -17,6 +18,8 @@ function Queues({ eventId }: GuestInfoComponentProps) {
     ),
   );
 
+  // 地図上にある入口（おすすめを優先）は「地図で見る」で案内マップに出せる
+  const mapPointIds = useGuideMapPointIds();
   const gateList = new Intl.ListFormat(locale);
   const queues: QueueSummary[] =
     result.status === "ready"
@@ -24,6 +27,10 @@ function Queues({ eventId }: GuestInfoComponentProps) {
           const gates = queue.gates
             .filter((gate) => gate.recommended)
             .map((gate) => gate.name);
+          const gateOnMap =
+            queue.gates.find(
+              (gate) => gate.recommended && mapPointIds.has(gate.pointId),
+            ) ?? queue.gates.find((gate) => mapPointIds.has(gate.pointId));
           return {
             id: queue.queueId,
             name: queue.name,
@@ -36,6 +43,13 @@ function Queues({ eventId }: GuestInfoComponentProps) {
                     gates: gateList.format(gates),
                   })
                 : undefined,
+            mapAction: gateOnMap
+              ? {
+                  label: t("showOnMap"),
+                  ariaLabel: t("showOnMapLabel", { place: gateOnMap.name }),
+                  onPress: () => showOnGuideMap(gateOnMap.pointId),
+                }
+              : undefined,
           };
         })
       : [];

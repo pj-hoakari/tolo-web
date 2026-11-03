@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import type { LocalizedLabel } from "@/features/tenant/management/graph/type";
 
 /**
- * 案内マップが表示しているフロアを、ゲストページ内の他のカード（現在のフロア）と共有する。
+ * 案内マップが表示しているフロアを、地図・階の切り替え・道順の間で共有する。
  * 案内マップがレイアウトを読み込んだらフロア一覧を登録し、表示フロアが変わるたびに更新する。
  */
 

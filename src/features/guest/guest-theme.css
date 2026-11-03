@@ -21,8 +21,59 @@
   animation: guide-route-flow 0.9s linear infinite;
 }
 
+/* 現在地の波紋と、危険な混雑の場所の縁（ゆっくり点滅） */
+@keyframes guide-you-halo {
+  0%,
+  100% {
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* 危険の波紋：縁から外へ広がりながら薄れて消える */
+@keyframes guide-danger-ripple {
+  0% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+.map-you-halo {
+  animation: guide-you-halo 2.4s ease-in-out infinite;
+}
+
+.map-danger-ripple {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: guide-danger-ripple 2.4s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+}
+
+.map-danger-ripple-late {
+  animation-delay: 1.2s;
+}
+
+/* 「地図で見る」で見せている場所：時間差で広がる波紋 */
+.map-focus-ripple {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: guide-danger-ripple 1.6s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+}
+
+.map-focus-ripple-late {
+  animation-delay: 0.8s;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .route-anim {
+  .route-anim,
+  .map-you-halo,
+  .map-danger-ripple,
+  .map-focus-ripple {
     animation: none;
   }
 }
