@@ -305,7 +305,14 @@
       "cameraBadge": "Camera",
       "linkedPoint": "Linked point: {name}",
       "provision": "Provision",
-      "provisionLabel": "Provision “{name}”"
+      "provisionLabel": "Provision “{name}”",
+      "authorizeConnection": "Authorize camera connection",
+      "authorizeConnectionLabel": "Authorize the camera connection for “{name}”",
+      "connection": {
+        "authorized": "The camera connection delegation was saved.",
+        "login_required": "Staff sign-in is required to authorize the camera connection. Start again from “Authorize camera connection”.",
+        "failed": "Could not authorize the camera connection. Try again."
+      }
     },
     "receiver": {
       "stoppedTitle": "La observación se detuvo",
@@ -343,7 +350,8 @@
       "noCameraPoints": "No observation point is available. Register an observation page device first.",
       "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
       "edgeDeviceIdLabel": "Edge device ID",
-      "openProvisioning": "Open provisioning"
+      "openProvisioning": "Open provisioning",
+      "authorizeConnection": "Authorize camera connection"
     },
     "unregisterEdge": {
       "title": "Dar de baja el dispositivo de observación",
@@ -479,6 +487,8 @@
       "detection": "Falló la detección de personas",
       "unregistered": "Este dispositivo de observación se ha dado de baja",
       "modelLoad": "No se pudo cargar el modelo de detección ({status}: {path})",
+      "connectionAuthorizationRequired": "Camera connection authorization is missing. Authorize the camera connection again.",
+      "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "No se permite el acceso a la cámara. Permite el acceso a la cámara en la configuración del navegador.",
         "notFound": "No se encontró ninguna cámara. Comprueba que haya una cámara conectada.",

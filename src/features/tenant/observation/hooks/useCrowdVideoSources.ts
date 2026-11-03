@@ -1,5 +1,6 @@
 "use client";
 
+import { ORPCError } from "@orpc/client";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -71,6 +72,15 @@ export function useCrowdVideoSources(
       }
       if (cause instanceof CameraAccessError) {
         return t(`camera.${cause.reason}`);
+      }
+      if (cause instanceof ORPCError) {
+        const code = (cause.data as { code?: unknown } | undefined)?.code;
+        if (code === "CONNECTION_AUTHORIZATION_REQUIRED") {
+          return t("connectionAuthorizationRequired");
+        }
+        if (code === "CAMERA_NOT_DELEGATED") {
+          return t("cameraNotDelegated");
+        }
       }
       return cause instanceof Error ? cause.message : t("videoSource");
     },

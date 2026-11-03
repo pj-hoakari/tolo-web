@@ -2,8 +2,10 @@
 
 import { DetectionLineCountList } from "@/features/tenant/detection/components/DetectionLineCountList";
 import { DetectionSettingsPanel } from "@/features/tenant/detection/components/DetectionSettingsPanel";
+import { observationPath } from "@/features/tenant/observation/routes";
 import { useEdgeDevices } from "../hooks/useEdgeDevices";
 import { useVideoReceiver } from "../hooks/useVideoReceiver";
+import type { CameraConnectionNotice } from "../utils/cameraConnection";
 import { AliveEdgeList } from "./AliveEdgeList";
 import { RegisterEdgeDeviceForm } from "./RegisterEdgeDeviceForm";
 import { VideoReceiverView } from "./VideoReceiverView";
@@ -11,9 +13,14 @@ import { VideoReceiverView } from "./VideoReceiverView";
 export type ConnectedEdgesProps = {
   tenantId: string;
   eventId: string;
+  connectionNotice?: CameraConnectionNotice | null;
 };
 
-export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
+export function ConnectedEdges({
+  tenantId,
+  eventId,
+  connectionNotice,
+}: ConnectedEdgesProps) {
   const { edges, status, error, refresh } = useEdgeDevices({ eventId });
   const {
     status: receiveStatus,
@@ -36,6 +43,7 @@ export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
         eventId={eventId}
         onRegistered={refresh}
         edges={edges}
+        connectionReturnPath={observationPath(eventId)}
       />
       <AliveEdgeList
         eventId={eventId}
@@ -48,6 +56,8 @@ export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
         onConnect={connect}
         onDisconnect={disconnect}
         onUnregistered={refresh}
+        connectionReturnPath={observationPath(eventId)}
+        connectionNotice={connectionNotice}
       />
       {connectedEdgeId && (
         <div className="flex w-full flex-col items-center gap-2">

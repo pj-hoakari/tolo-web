@@ -305,7 +305,14 @@
       "cameraBadge": "Camera",
       "linkedPoint": "Linked point: {name}",
       "provision": "Provision",
-      "provisionLabel": "Provision “{name}”"
+      "provisionLabel": "Provision “{name}”",
+      "authorizeConnection": "Authorize camera connection",
+      "authorizeConnectionLabel": "Authorize the camera connection for “{name}”",
+      "connection": {
+        "authorized": "The camera connection delegation was saved.",
+        "login_required": "Staff sign-in is required to authorize the camera connection. Start again from “Authorize camera connection”.",
+        "failed": "Could not authorize the camera connection. Try again."
+      }
     },
     "receiver": {
       "stoppedTitle": "观测已停止",
@@ -343,7 +350,8 @@
       "noCameraPoints": "No observation point is available. Register an observation page device first.",
       "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
       "edgeDeviceIdLabel": "Edge device ID",
-      "openProvisioning": "Open provisioning"
+      "openProvisioning": "Open provisioning",
+      "authorizeConnection": "Authorize camera connection"
     },
     "unregisterEdge": {
       "title": "取消注册观测设备",
@@ -479,6 +487,8 @@
       "detection": "人体检测处理失败",
       "unregistered": "此观测设备已取消注册",
       "modelLoad": "加载检测模型失败（{status}: {path}）",
+      "connectionAuthorizationRequired": "Camera connection authorization is missing. Authorize the camera connection again.",
+      "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "未允许使用摄像头。请在浏览器设置中允许访问摄像头。",
         "notFound": "未找到摄像头。请确认摄像头已连接。",

@@ -19,3 +19,13 @@ create index "account_userId_idx" on "account" ("userId");
 create index "verification_identifier_idx" on "verification" ("identifier");
 
 create index "eventAccessToken_sessionId_idx" on "eventAccessToken" ("sessionId");
+
+create table "pendingConnectionAuthorization" ("id" text not null primary key, "stateHash" text not null unique, "codeVerifier" text not null, "nonce" text not null, "tenantId" text not null, "eventId" text not null, "pageEdgeDeviceId" text not null, "cameraIds" text not null, "staffSub" text not null, "returnPath" text not null, "redirectUri" text not null, "expiresAt" timestamptz not null);
+
+create table "connectionAuthorization" ("id" text not null primary key, "connectionKey" text not null unique, "tenantId" text not null, "eventId" text not null, "pageEdgeDeviceId" text not null, "cameraIds" text not null, "staffSub" text not null, "accessToken" text not null, "refreshToken" text not null, "idToken" text, "accessTokenExpiresAt" timestamptz not null, "createdAt" timestamptz not null, "expiresAt" timestamptz not null);
+
+create table "connectionEventAccess" ("id" text not null primary key, "connectionAuthorizationId" text not null references "connectionAuthorization" ("id") on delete cascade, "cacheKey" text not null unique, "eventId" text not null, "accessToken" text not null, "expiresAt" timestamptz not null);
+
+create index "connectionAuthorization_eventId_idx" on "connectionAuthorization" ("eventId");
+
+create index "connectionEventAccess_connectionAuthorizationId_idx" on "connectionEventAccess" ("connectionAuthorizationId");

@@ -20,7 +20,10 @@ const AUTH_ENV = {
   resourceHost: "AUTH_RESOURCE_HOST",
 } as const;
 
-export type AuthEnv = Record<keyof typeof AUTH_ENV, string>;
+export type AuthEnv = Record<keyof typeof AUTH_ENV, string> & {
+  connectionClientId: string;
+  connectionClientSecret: string;
+};
 
 export function readAuthEnv(): AuthEnv {
   const missing = Object.values(AUTH_ENV).filter((name) => !process.env[name]);
@@ -29,9 +32,17 @@ export function readAuthEnv(): AuthEnv {
       `set ${missing.join(", ")} for authentication, or AUTH_MOCKING=enabled to use the local mock`,
     );
   }
-  return Object.fromEntries(
-    Object.entries(AUTH_ENV).map(([key, name]) => [key, process.env[name]]),
-  ) as AuthEnv;
+  return {
+    ...(Object.fromEntries(
+      Object.entries(AUTH_ENV).map(([key, name]) => [key, process.env[name]]),
+    ) as Record<keyof typeof AUTH_ENV, string>),
+    connectionClientId:
+      process.env.AUTH_IDP_CONNECTION_CLIENT_ID || "observation-connection",
+    connectionClientSecret:
+      process.env.AUTH_IDP_CONNECTION_CLIENT_SECRET ||
+      process.env.AUTH_IDP_CLIENT_SECRET ||
+      "",
+  };
 }
 
 function withoutMaxAge(cookie: string): string {
@@ -66,6 +77,55 @@ const toloSession = {
           index: true,
           references: { model: "session", field: "id", onDelete: "cascade" },
         },
+        eventId: { type: "string", required: true },
+        accessToken: { type: "string", required: true },
+        expiresAt: { type: "date", required: true },
+      },
+    },
+    pendingConnectionAuthorization: {
+      fields: {
+        stateHash: { type: "string", required: true, unique: true },
+        codeVerifier: { type: "string", required: true },
+        nonce: { type: "string", required: true },
+        tenantId: { type: "string", required: true },
+        eventId: { type: "string", required: true },
+        pageEdgeDeviceId: { type: "string", required: true },
+        cameraIds: { type: "string", required: true },
+        staffSub: { type: "string", required: true },
+        returnPath: { type: "string", required: true },
+        redirectUri: { type: "string", required: true },
+        expiresAt: { type: "date", required: true },
+      },
+    },
+    connectionAuthorization: {
+      fields: {
+        connectionKey: { type: "string", required: true, unique: true },
+        tenantId: { type: "string", required: true },
+        eventId: { type: "string", required: true, index: true },
+        pageEdgeDeviceId: { type: "string", required: true },
+        cameraIds: { type: "string", required: true },
+        staffSub: { type: "string", required: true },
+        accessToken: { type: "string", required: true },
+        refreshToken: { type: "string", required: true },
+        idToken: { type: "string", required: false },
+        accessTokenExpiresAt: { type: "date", required: true },
+        createdAt: { type: "date", required: true },
+        expiresAt: { type: "date", required: true },
+      },
+    },
+    connectionEventAccess: {
+      fields: {
+        connectionAuthorizationId: {
+          type: "string",
+          required: true,
+          index: true,
+          references: {
+            model: "connectionAuthorization",
+            field: "id",
+            onDelete: "cascade",
+          },
+        },
+        cacheKey: { type: "string", required: true, unique: true },
         eventId: { type: "string", required: true },
         accessToken: { type: "string", required: true },
         expiresAt: { type: "date", required: true },

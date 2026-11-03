@@ -68,14 +68,27 @@ import {
   sampleObservationDevicesWire,
 } from "@/mocks/fixtures/edges";
 import { afterJoinPath, getRegistrationToken, requestTenantId } from "./auth";
+import {
+  addCameraToConnectionDelegation,
+  connectionEventAccess,
+  deleteConnectionDelegationsForCamera,
+  deleteConnectionDelegationsForEvent,
+  deleteConnectionDelegationsForPage,
+} from "./auth/connection";
 import { forgetInvitation, pendingInvitationToken } from "./auth/invitation";
-import { eventIdKey } from "./authorize";
+import {
+  connectionAccessTokenKey,
+  eventIdKey,
+  pageEdgeDeviceIdKey,
+  tenantIdKey,
+} from "./authorize";
 import {
   approveDeviceAuthorization,
   type CameraProvisioningDefaults,
   provisioningDefaults,
   revokeDeviceAuthorization,
 } from "./camera";
+import { cameraPageEdgeDeviceId, observationMocking } from "./cameraDelegation";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
 import { guestPageClient } from "./guest";
@@ -87,7 +100,11 @@ import {
   edgeEdgeDeviceClient,
   edgeMeasurementIngestClient,
 } from "./observation";
-import { consoleSignalingClient, edgeSignalingClient } from "./signaling";
+import {
+  connectionSignalingClient,
+  consoleSignalingClient,
+  edgeSignalingClient,
+} from "./signaling";
 import {
   relationAdminClient,
   relationRegistrationClient,
@@ -247,13 +264,6 @@ async function revokeCameraGrants(eventId: string): Promise<void> {
       });
     }
   }
-}
-
-function observationMocking(): boolean {
-  return (
-    process.env.NODE_ENV === "development" &&
-    process.env.OBSERVATION_API_MOCKING === "enabled"
-  );
 }
 
 const PROTO_EVENT_TYPES: Record<EventType, ProtoEventType> = {
@@ -473,12 +483,21 @@ async function issueFirestoreToken(
 
 async function requestBoundCameraToken(
   eventId: string,
+  tenantId: string,
+  pageEdgeDeviceId: string,
   cameraEdgeId: string,
   sessionId: string,
+  accessToken: string,
 ): Promise<FirestoreToken> {
-  const res = await consoleSignalingClient.issueFirestoreToken(
+  const res = await connectionSignalingClient.issueFirestoreToken(
     { edgeDeviceId: cameraEdgeId, sessionId },
-    eventContext(eventId),
+    {
+      contextValues: createContextValues()
+        .set(eventIdKey, eventId)
+        .set(tenantIdKey, tenantId)
+        .set(pageEdgeDeviceIdKey, pageEdgeDeviceId)
+        .set(connectionAccessTokenKey, accessToken),
+    },
   );
   if (!res.expiresAt) {
     throw new Error("IssueFirestoreToken returned no expires_at");
@@ -640,6 +659,7 @@ export const router = {
       .handler(async ({ input }): Promise<TenantEvent> => {
         try {
           await revokeCameraGrants(input.eventId);
+          await deleteConnectionDelegationsForEvent(input.eventId);
           const res = await tenantManagementClient.transitionEventStatus({
             eventId: input.eventId,
             to: ProtoEventStatus.ARCHIVED,
@@ -916,14 +936,32 @@ export const router = {
         try {
           const devices = await observationDevices(input.eventId);
           delegatedCamera(devices, input.pageEdgeDeviceId, input.cameraEdgeId);
-          const res = await consoleSignalingClient.requestConnection(
+          const tenantId = await requestTenantId();
+          if (!tenantId) throw new ORPCError("UNAUTHORIZED");
+          const accessToken = await connectionEventAccess(
+            tenantId,
+            input.eventId,
+            input.pageEdgeDeviceId,
+            input.cameraEdgeId,
+          );
+          const context = {
+            contextValues: createContextValues()
+              .set(eventIdKey, input.eventId)
+              .set(tenantIdKey, tenantId)
+              .set(pageEdgeDeviceIdKey, input.pageEdgeDeviceId)
+              .set(connectionAccessTokenKey, accessToken),
+          };
+          const res = await connectionSignalingClient.requestConnection(
             { edgeDeviceId: input.cameraEdgeId },
-            eventContext(input.eventId),
+            context,
           );
           const token = await requestBoundCameraToken(
             input.eventId,
+            tenantId,
+            input.pageEdgeDeviceId,
             input.cameraEdgeId,
             res.sessionId,
+            accessToken,
           );
           return {
             sessionId: res.sessionId,
@@ -976,6 +1014,10 @@ export const router = {
       .handler(async ({ input }): Promise<void> => {
         try {
           await revokeDeviceAuthorization(input);
+          await deleteConnectionDelegationsForCamera(
+            input.eventId,
+            input.edgeDeviceId,
+          );
         } catch (err) {
           throw toORPCError(err);
         }
@@ -1009,6 +1051,26 @@ export const router = {
           if (!res.device) {
             throw new Error("RegisterEdgeDevice returned no device");
           }
+          if (input.kind === "camera") {
+            try {
+              const pageEdgeDeviceId = await cameraPageEdgeDeviceId(
+                input.eventId,
+                res.device.edgeDeviceId,
+              );
+              if (pageEdgeDeviceId) {
+                await addCameraToConnectionDelegation(
+                  input.eventId,
+                  pageEdgeDeviceId,
+                  res.device.edgeDeviceId,
+                );
+              }
+            } catch (error) {
+              console.error(
+                "failed to add the camera to the connection delegation",
+                error,
+              );
+            }
+          }
           return {
             device: toEdgeDevice(res.device),
             observationPagePath: res.observationPagePath,
@@ -1029,6 +1091,15 @@ export const router = {
           );
           if (device?.kind === "camera") {
             await revokeDeviceAuthorization(input);
+            await deleteConnectionDelegationsForCamera(
+              input.eventId,
+              input.edgeDeviceId,
+            );
+          } else {
+            await deleteConnectionDelegationsForPage(
+              input.eventId,
+              input.edgeDeviceId,
+            );
           }
           await consoleEdgeDeviceClient.unregisterEdgeDevice(input);
         } catch (err) {

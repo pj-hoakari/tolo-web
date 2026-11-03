@@ -305,7 +305,14 @@
       "cameraBadge": "Camera",
       "linkedPoint": "Linked point: {name}",
       "provision": "Provision",
-      "provisionLabel": "Provision “{name}”"
+      "provisionLabel": "Provision “{name}”",
+      "authorizeConnection": "Authorize camera connection",
+      "authorizeConnectionLabel": "Authorize the camera connection for “{name}”",
+      "connection": {
+        "authorized": "The camera connection delegation was saved.",
+        "login_required": "Staff sign-in is required to authorize the camera connection. Start again from “Authorize camera connection”.",
+        "failed": "Could not authorize the camera connection. Try again."
+      }
     },
     "receiver": {
       "stoppedTitle": "관측이 중지되었습니다",
@@ -343,7 +350,8 @@
       "noCameraPoints": "No observation point is available. Register an observation page device first.",
       "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
       "edgeDeviceIdLabel": "Edge device ID",
-      "openProvisioning": "Open provisioning"
+      "openProvisioning": "Open provisioning",
+      "authorizeConnection": "Authorize camera connection"
     },
     "unregisterEdge": {
       "title": "관측 장치 등록 해제",
@@ -479,6 +487,8 @@
       "detection": "사람 검출 처리에 실패했습니다",
       "unregistered": "이 관측 디바이스는 등록 해제되었습니다",
       "modelLoad": "검출 모델을 불러오지 못했습니다（{status}: {path}）",
+      "connectionAuthorizationRequired": "Camera connection authorization is missing. Authorize the camera connection again.",
+      "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "카메라 사용이 허용되지 않았습니다. 브라우저 설정에서 카메라 접근을 허용해 주세요.",
         "notFound": "카메라를 찾을 수 없습니다. 카메라가 연결되어 있는지 확인해 주세요.",

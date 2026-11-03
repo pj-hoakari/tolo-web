@@ -23,6 +23,8 @@ const env: AuthEnv = {
   clientId: "console-ui",
   clientSecret: "console-secret",
   resourceHost: "api.tolo.test",
+  connectionClientId: "observation-connection",
+  connectionClientSecret: "connection-secret",
 };
 const TENANT = "0123456789abcdef";
 const OTHER_TENANT = "1111111111111111";

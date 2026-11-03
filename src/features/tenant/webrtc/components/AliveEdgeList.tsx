@@ -4,6 +4,11 @@ import { Link } from "@/components/ui/link";
 import { observationDevicePath } from "@/features/tenant/observation/routes";
 import type { EdgeDevicesStatus } from "../hooks/useEdgeDevices";
 import type { ConnectionStatus, EdgeDeviceItem } from "../type";
+import {
+  type CameraConnectionNotice,
+  cameraConnectionPath,
+  pageForCamera,
+} from "../utils/cameraConnection";
 import { isActiveConnection } from "../utils/connectionStatus";
 import { CameraProvisioningDialog } from "./CameraProvisioningDialog";
 import { UnregisterEdgeDeviceDialog } from "./UnregisterEdgeDeviceDialog";
@@ -19,6 +24,8 @@ export type AliveEdgeListProps = {
   onConnect: (edgeId: string) => void;
   onDisconnect: () => void;
   onUnregistered: () => void;
+  connectionReturnPath?: string;
+  connectionNotice?: CameraConnectionNotice | null;
 };
 
 export function AliveEdgeList({
@@ -32,6 +39,8 @@ export function AliveEdgeList({
   onConnect,
   onDisconnect,
   onUnregistered,
+  connectionReturnPath,
+  connectionNotice,
 }: AliveEdgeListProps) {
   const loading = status === "loading";
   const locale = useLocale();
@@ -66,6 +75,18 @@ export function AliveEdgeList({
           {t("refresh")}
         </Button>
       </div>
+      {connectionNotice && (
+        <p
+          role={connectionNotice === "authorized" ? "status" : "alert"}
+          className={
+            connectionNotice === "authorized"
+              ? "text-sm text-muted-foreground"
+              : "text-sm text-destructive"
+          }
+        >
+          {t(`connection.${connectionNotice}`)}
+        </p>
+      )}
       {status === "error" && error ? (
         <p role="alert" className="text-sm text-destructive">
           {error}
@@ -91,6 +112,9 @@ export function AliveEdgeList({
                   )
                   .filter((label): label is string => Boolean(label))
               : [];
+            const owningPage = isCamera
+              ? pageForCamera(edges, edge.edgeDeviceId)
+              : undefined;
             return (
               <li
                 key={edge.edgeDeviceId}
@@ -167,6 +191,20 @@ export function AliveEdgeList({
                       aria-label={t("openHereLabel", { name })}
                     >
                       {t("openHere")}
+                    </Link>
+                  )}
+                  {isCamera && owningPage && (
+                    <Link
+                      href={cameraConnectionPath({
+                        eventId,
+                        pageEdgeDeviceId: owningPage.edgeDeviceId,
+                        returnPath: connectionReturnPath ?? "/",
+                      })}
+                      variant="outline"
+                      size="sm"
+                      aria-label={t("authorizeConnectionLabel", { name })}
+                    >
+                      {t("authorizeConnection")}
                     </Link>
                   )}
                   {isCamera && (
