@@ -42,7 +42,7 @@ export type DetectedPeopleTally = {
 export type DetectionResult = {
   lineCounts: Record<string, DetectionLineCount>;
   metrics: DetectionMetrics;
-  detectedPeople: DetectedPeopleTally;
+  detectedPeople: Record<string, DetectedPeopleTally>;
 };
 
 /** 検出結果には影響しない画面操作の状態 */
@@ -77,6 +77,8 @@ export const INITIAL_DETECTED_PEOPLE: DetectedPeopleTally = {
   frames: 0,
   people: 0,
 };
+
+export const NO_DETECTED_PEOPLE: Record<string, DetectedPeopleTally> = {};
 
 export const INITIAL_SETTINGS: DetectionSettings = {
   confidenceThreshold: 0.15,
@@ -144,7 +146,7 @@ export function createDetectionStores(
     resultStore: createStore<DetectionResult>()(() => ({
       lineCounts: createInitialLineCounts(settings.countingLines),
       metrics: INITIAL_METRICS,
-      detectedPeople: INITIAL_DETECTED_PEOPLE,
+      detectedPeople: NO_DETECTED_PEOPLE,
     })),
     viewStateStore: createStore<DetectionViewState>()(() => ({
       selectedLineId: settings.countingLines[0]?.id ?? DEFAULT_LINE_ID,
@@ -370,26 +372,30 @@ export function applyMetrics(
 
 export function recordDetectedPeople(
   store: DetectionResultStore,
-  people: number,
+  peopleByPoint: ReadonlyMap<string, number>,
 ): void {
-  store.setState(
-    (current) => ({
-      ...current,
-      detectedPeople: {
-        frames: current.detectedPeople.frames + 1,
-        people: current.detectedPeople.people + people,
-      },
-    }),
-    true,
-  );
+  if (peopleByPoint.size === 0) {
+    return;
+  }
+  store.setState((current) => {
+    const detectedPeople = { ...current.detectedPeople };
+    for (const [pointId, people] of peopleByPoint) {
+      const tally = detectedPeople[pointId] ?? INITIAL_DETECTED_PEOPLE;
+      detectedPeople[pointId] = {
+        frames: tally.frames + 1,
+        people: tally.people + people,
+      };
+    }
+    return { ...current, detectedPeople };
+  }, true);
 }
 
 export function resetDetectedPeople(store: DetectionResultStore): void {
   store.setState(
     (current) =>
-      current.detectedPeople === INITIAL_DETECTED_PEOPLE
+      current.detectedPeople === NO_DETECTED_PEOPLE
         ? current
-        : { ...current, detectedPeople: INITIAL_DETECTED_PEOPLE },
+        : { ...current, detectedPeople: NO_DETECTED_PEOPLE },
     true,
   );
 }
