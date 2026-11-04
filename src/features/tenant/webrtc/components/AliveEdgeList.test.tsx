@@ -168,7 +168,7 @@ describe("AliveEdgeList", () => {
 
     const offline = within(row("倉庫カメラ") as HTMLElement);
     expect(offline.getByText("オフライン")).toBeTruthy();
-    expect(offline.queryByText(/^最終応答: \S+/)).toBeNull();
+    expect(offline.getByText(/^最終応答: \S+/)).toBeTruthy();
     expect(offline.queryByText(/不明/)).toBeNull();
     expect(
       offline

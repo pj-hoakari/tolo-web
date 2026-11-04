@@ -176,13 +176,11 @@ export function AliveEdgeList({
                           ))}
                         </fieldset>
                       ) : null}
-                      {edge.observationPoints.length === 0 ? (
-                        <span className="text-xs text-muted-foreground">
-                          {t("lastSeen", {
-                            time: formatLastSeen(edge.lastHeartbeatAt),
-                          })}
-                        </span>
-                      ) : null}
+                      <span className="text-xs text-muted-foreground">
+                        {t("lastSeen", {
+                          time: formatLastSeen(edge.lastHeartbeatAt),
+                        })}
+                      </span>
                     </>
                   )}
                 </div>

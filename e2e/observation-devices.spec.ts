@@ -472,7 +472,7 @@ test.describe("flow-control の判定できない状態", () => {
     });
     await page.reload();
 
-    await expect(observationPoints(page, edgeA)).toHaveText("入口");
+    await expect(observationPoints(page, edgeA)).toHaveText("入口出口");
     await expect(observationPoints(page, edgeB)).toHaveText("ブース前");
   });
 
