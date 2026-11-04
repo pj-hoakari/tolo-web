@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
       ],
     },
   ],
+
+  allowedDevOrigins: process.env.TUNNEL_SUBDOMAIN
+    ? ["*.trycloudflare.com"]
+    : [],
 };
 
 const withNextIntl = createNextIntlPlugin();

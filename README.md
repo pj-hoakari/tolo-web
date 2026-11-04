@@ -185,7 +185,31 @@ edge-bridge にカメラ専用ロールを追加するか、BFF で権限を絞�
 
 ### スマートフォンから開く
 
-カメラと画面の常時点灯は HTTPS か `localhost` で開いたページでしか使えません。LAN の IP アドレスを HTTP で開いても、観測ページのカメラは起動できません。別端末から開く場合は、LAN 内に HTTPS のリバースプロキシを用意してください。開発環境をインターネットへ公開する手順はこのリポジトリでは扱いません。
+スマートフォンなど別の端末からは、Cloudflare の Quick Tunnel が発行する HTTPS の URL で開きます。カメラと画面の常時点灯は、HTTPS か `localhost` で開いたページでしか使えません。LAN の IP アドレスを http で開いても、観測ページのカメラは起動できません。
+
+Quick Tunnel はローカルの環境をインターネットに公開します。そのため、メール認証を必須にしています。ページを開いた人は `TUNNEL_ALLOWED_MAIL` に指定したアドレスで届くワンタイム PIN を入力して入ります。開く人にもトンネルを立てる人にも、Cloudflare のアカウントは要りません。
+
+`.env` に次を設定します。
+
+```bash
+TUNNEL_ALLOWED_MAIL=alice@example.com,bob@example.com
+```
+
+トンネルの URL にはテナントのサブドメイン名を付けられないので、トンネルで開くテナントを 1 つに固定します。そのテナントのサブドメイン名を `TUNNEL_SUBDOMAIN` に指定します。既定は `test` で、上のトークンのテナントに対応します。`TUNNEL_ALLOWED_MAIL` には、許可するアドレスをカンマで区切って並べます。`*@example.com` と書くと、そのドメインのアドレスをすべて許可します。
+
+`task tunnel` で、`compose.tunnel.yaml` を重ねて起動します。トンネルがつながると、URL を表示します。起動したあとで URL を確かめるときは、`task tunnel:url` を実行します。`task` は mise で入ります。
+
+```bash
+task tunnel
+```
+
+観測ページは `https://{発行された URL}/event/fedcba9876543210/observation/{edgeDeviceId}` で開きます。URL は起動のたびに変わります。トンネルを止めると、全員がアクセスできなくなります。
+
+```bash
+task tunnel:stop
+```
+
+`tunnel-proxy`（Caddy）がトンネルからの通信を Firebase エミュレータと `web` に振り分けます。HTTPS で開いたページは、ページと同じオリジンを通してエミュレータに接続します。
 
 ## テナントのイベント管理ページ
 
