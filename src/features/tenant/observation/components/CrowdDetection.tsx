@@ -51,6 +51,7 @@ const API_MOCKING_ENABLED = process.env.NEXT_PUBLIC_API_MOCKING === "enabled";
 const LOCAL_SOURCE_KEY = "local-camera";
 
 export type CrowdDetectionProps = {
+  canReport: boolean;
   tenantId: string;
   eventId: string;
   edgeDeviceId: string;
@@ -61,6 +62,7 @@ export type CrowdDetectionProps = {
 type SourceMode = "auto" | "esp" | "dev";
 
 export function CrowdDetection({
+  canReport,
   tenantId,
   eventId,
   edgeDeviceId,
@@ -240,7 +242,7 @@ export function CrowdDetection({
     tenantId,
     eventId,
     edgeDeviceId,
-    stream: API_MOCKING_ENABLED ? null : broadcastStream,
+    stream: canReport && !API_MOCKING_ENABLED ? broadcastStream : null,
     settingsStore,
   });
 
@@ -317,6 +319,7 @@ export function CrowdDetection({
   }, [effectiveMode, cameras, cameraResultStores, cameraSettingsStores]);
 
   const { unregistered } = useObservationReporting({
+    enabled: canReport,
     eventId,
     edgeDeviceId,
     listening: API_MOCKING_ENABLED || edgeId !== null,

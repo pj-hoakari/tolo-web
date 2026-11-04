@@ -83,6 +83,10 @@ function createTestAuth(
       env,
       lock,
       lockMany: inProcessLockMany(lock),
+      lockManyDynamic: (keys, selectMoreKeys, task) =>
+        inProcessLockMany(lock)(keys, async () =>
+          inProcessLockMany(lock)(await selectMoreKeys(), task),
+        ),
     }),
   };
 }

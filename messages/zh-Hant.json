@@ -464,7 +464,8 @@
       "start": "啟動攝影機",
       "stop": "停止",
       "loading": "啟動中…",
-      "retry": "重新連線"
+      "retry": "重新連線",
+      "observeOnThisDevice": "在此裝置上觀測"
     },
     "cameraSelector": {
       "label": "攝影機"

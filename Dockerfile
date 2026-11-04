@@ -8,11 +8,9 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY vendor ./vendor
-COPY scripts/install-local-clients.sh ./scripts/install-local-clients.sh
 RUN --mount=type=secret,id=npm_token \
     env "npm_config_//npm.pkg.github.com/:_authToken=$(cat /run/secrets/npm_token)" \
         pnpm install --frozen-lockfile
-RUN chmod +x scripts/install-local-clients.sh && scripts/install-local-clients.sh
 
 FROM base AS dev
 ENV NODE_ENV=development

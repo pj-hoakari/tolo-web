@@ -545,9 +545,8 @@ export function useMultiCameraDetectionLoop({
           cameraSettingsStores,
           settingsStore,
         ).getState().detectionInterval;
-        if (pause > 0) {
-          await wait(pause);
-        }
+        // 未準備・stale だけの周回でもタイマーや映像の復帰を進める。
+        await wait(Math.max(16, pause));
       }
     };
 

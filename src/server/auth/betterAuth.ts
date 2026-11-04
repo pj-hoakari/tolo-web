@@ -101,6 +101,7 @@ const toloSession = {
         eventId: { type: "string", required: true },
         pageEdgeDeviceId: { type: "string", required: true },
         cameraIds: { type: "string", required: true },
+        host: { type: "string", required: true },
         staffSub: { type: "string", required: true },
         returnPath: { type: "string", required: true },
         redirectUri: { type: "string", required: true },
@@ -262,17 +263,31 @@ export type SessionLocks = <T>(
   task: () => Promise<T>,
 ) => Promise<T>;
 
+export type SessionLocksDynamic = <T>(
+  initialKeys: string[],
+  selectMoreKeys: () => Promise<string[]>,
+  task: () => Promise<T>,
+) => Promise<T>;
+
 async function withAdvisoryLocks<T>(
   pool: Pool,
   keys: string[],
   task: () => Promise<T>,
+  selectMoreKeys: () => Promise<string[]> = async () => [],
 ): Promise<T> {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    for (const key of [...new Set(keys)].sort()) {
-      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [key]);
-    }
+    const locked = new Set<string>();
+    const acquire = async (keys: string[]) => {
+      for (const key of [...new Set(keys)].sort()) {
+        if (locked.has(key)) continue;
+        await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [key]);
+        locked.add(key);
+      }
+    };
+    await acquire(keys);
+    await acquire(await selectMoreKeys());
     return await task();
   } finally {
     await client.query("ROLLBACK").then(
@@ -290,6 +305,15 @@ export function advisoryLockMany(pool: Pool): SessionLocks {
   return (keys, task) => withAdvisoryLocks(pool, keys, task);
 }
 
+/** Select additional keys while holding the initial locks, using one connection.
+ * Callers must serialize target creation with the initial locks and re-read
+ * targets in task after the additional locks have been acquired.
+ */
+export function advisoryLockManyDynamic(pool: Pool): SessionLocksDynamic {
+  return (keys, selectMoreKeys, task) =>
+    withAdvisoryLocks(pool, keys, task, selectMoreKeys);
+}
+
 function createRealAuth(env: AuthEnv) {
   const pool = new Pool({ connectionString: env.databaseUrl });
   const lock = advisoryLock(pool);
@@ -301,6 +325,7 @@ function createRealAuth(env: AuthEnv) {
     }),
     lock,
     lockMany: advisoryLockMany(pool),
+    lockManyDynamic: advisoryLockManyDynamic(pool),
   };
 }
 

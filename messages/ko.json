@@ -464,7 +464,8 @@
       "start": "카메라 시작",
       "stop": "중지",
       "loading": "시작 중…",
-      "retry": "다시 연결"
+      "retry": "다시 연결",
+      "observeOnThisDevice": "이 기기에서 관측하기"
     },
     "cameraSelector": {
       "label": "카메라"

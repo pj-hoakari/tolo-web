@@ -65,6 +65,42 @@ afterEach(() => {
 });
 
 describe("useObservationReporting", () => {
+  it("disables Heartbeat and measurements for staff, including after reporting was active", async () => {
+    const stores = createDetectionStores();
+    const camera: ObservationReportingCamera = {
+      key: "camera",
+      observationPointId: "point",
+      ...stores,
+    };
+    const { rerender } = renderHook(
+      ({ enabled }) =>
+        useObservationReporting({
+          enabled,
+          eventId: "event",
+          edgeDeviceId: "edge",
+          listening: true,
+          status: "detecting",
+          ...stores,
+          cameras: [camera],
+          isFresh: () => true,
+        }),
+      { initialProps: { enabled: false } },
+    );
+    await act(() => vi.advanceTimersByTimeAsync(60_000));
+    expect(heartbeat).not.toHaveBeenCalled();
+    expect(reportMeasurements).not.toHaveBeenCalled();
+    rerender({ enabled: true });
+    await act(() => vi.advanceTimersByTimeAsync(30_000));
+    expect(heartbeat).toHaveBeenCalled();
+    expect(reportMeasurements).toHaveBeenCalled();
+    heartbeat.mockClear();
+    reportMeasurements.mockClear();
+    rerender({ enabled: false });
+    await act(() => vi.advanceTimersByTimeAsync(60_000));
+    expect(heartbeat).not.toHaveBeenCalled();
+    expect(reportMeasurements).not.toHaveBeenCalled();
+  });
+
   it("待ち受けていない間は Heartbeat を送らない", async () => {
     renderReporting({ edgeDeviceId: "0123456789abcdef", listening: false });
 

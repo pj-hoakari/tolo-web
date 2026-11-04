@@ -37,6 +37,7 @@ export type ObservationReportingCamera = {
  * ライン名で対応づけた観測点を使う（ローカルカメラ・開発用）。
  */
 export function useObservationReporting({
+  enabled = true,
   eventId,
   edgeDeviceId,
   listening,
@@ -48,6 +49,7 @@ export function useObservationReporting({
 }: {
   eventId: string;
   edgeDeviceId: string;
+  enabled?: boolean;
   listening: boolean;
   status: DetectCrowdStatus;
   settingsStore: DetectionSettingsStore;
@@ -76,6 +78,7 @@ export function useObservationReporting({
   }, [eventId, edgeDeviceId]);
 
   useEffect(() => {
+    if (!enabled) return;
     let cancelled = false;
     orpc.observation
       .listObservationPoints({ eventId, edgeDeviceId })
@@ -97,10 +100,10 @@ export function useObservationReporting({
     return () => {
       cancelled = true;
     };
-  }, [eventId, edgeDeviceId]);
+  }, [enabled, eventId, edgeDeviceId]);
 
   useEffect(() => {
-    if (!listening || unregistered) {
+    if (!enabled || !listening || unregistered) {
       return;
     }
     const detecting = status === "detecting";
@@ -142,6 +145,7 @@ export function useObservationReporting({
     const timer = setInterval(heartbeat, HEARTBEAT_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [
+    enabled,
     eventId,
     edgeDeviceId,
     listening,
@@ -154,7 +158,7 @@ export function useObservationReporting({
   ]);
 
   useEffect(() => {
-    if (status !== "detecting" || unregistered) {
+    if (!enabled || status !== "detecting" || unregistered) {
       return;
     }
     if (cameras) {
@@ -242,6 +246,7 @@ export function useObservationReporting({
     const timer = setInterval(tick, REPORT_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [
+    enabled,
     eventId,
     edgeDeviceId,
     pointIdByName,
