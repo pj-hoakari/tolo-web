@@ -273,6 +273,50 @@
       "retry": "再試行"
     }
   },
+  "FlowState": {
+    "error": "判定の状態を取得できませんでした",
+    "skipped": "{judgements}を判定できません",
+    "judgement": {
+      "surge": "急増",
+      "highStagnation": "停滞警戒",
+      "combined": "組合せ発火",
+      "puncture": "パンク"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "観測が届いていません",
+        "action": "端末が動いているか確かめ、止まっていれば再起動してください"
+      },
+      "invalid": {
+        "label": "観測値が無効です",
+        "action": "カメラの向きや遮るものなど、設置を見直してください"
+      },
+      "hold": {
+        "label": "計測値が届かず、値が止まっています",
+        "action": "しばらく待ち、続くときは端末を再起動してください"
+      },
+      "stale": {
+        "label": "観測が古くなっています",
+        "action": "しばらく待ち、続くときは端末を再起動してください"
+      },
+      "noHistory": {
+        "label": "判定に使う履歴がまだありません",
+        "action": "履歴がたまるまでしばらく待ってください"
+      },
+      "windowOnlyHistory": {
+        "label": "長期の履歴がなく、直近の計測値だけで判定しています",
+        "action": "履歴がたまるまでしばらく待ってください"
+      },
+      "shortHistory": {
+        "label": "履歴が 4 時間分たまっていません",
+        "action": "履歴がたまるまでしばらく待ってください"
+      },
+      "intermittentLine": {
+        "label": "直近の流量の計測値が {count} 点しかありません",
+        "action": "端末が計測を続けているか確かめ、止まっていれば再起動してください"
+      }
+    }
+  },
   "Webrtc": {
     "connectionStatus": {
       "idle": "未接続",
@@ -300,7 +344,8 @@
       "openHere": "この端末で開く",
       "openHereLabel": "「{name}」をこの端末で開く",
       "unregister": "登録解除",
-      "unregisterLabel": "「{name}」の登録を解除"
+      "unregisterLabel": "「{name}」の登録を解除",
+      "observationPoints": "観測点"
     },
     "receiver": {
       "stoppedTitle": "観測が停止しました",

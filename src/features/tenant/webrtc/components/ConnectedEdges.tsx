@@ -1,7 +1,11 @@
 "use client";
 
+import { useMemo } from "react";
+import { useFlowElementStates } from "@/features/flowState/useFlowElementStates";
+import { useGraph } from "@/features/graph";
 import { DetectionLineCountList } from "@/features/tenant/detection/components/DetectionLineCountList";
 import { DetectionSettingsPanel } from "@/features/tenant/detection/components/DetectionSettingsPanel";
+import { flowStatesByObservationPoint } from "@/features/tenant/management/graph/utils/observationPoints";
 import { useEdgeDevices } from "../hooks/useEdgeDevices";
 import { useVideoReceiver } from "../hooks/useVideoReceiver";
 import { AliveEdgeList } from "./AliveEdgeList";
@@ -15,6 +19,19 @@ export type ConnectedEdgesProps = {
 
 export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
   const { edges, status, error, refresh } = useEdgeDevices({ eventId });
+  const loaded = useGraph({ tenantId, eventId });
+  const flow = useFlowElementStates(eventId);
+  const flowStates = useMemo(
+    () =>
+      loaded.graph
+        ? flowStatesByObservationPoint(
+            loaded.graph.nodes,
+            loaded.graph.edges,
+            flow.states,
+          )
+        : undefined,
+    [loaded.graph, flow.states],
+  );
   const {
     status: receiveStatus,
     error: receiveError,
@@ -38,7 +55,13 @@ export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
         edges={edges}
         status={status}
         error={error}
-        onRefresh={refresh}
+        onRefresh={() => {
+          refresh();
+          loaded.refresh();
+          void flow.refresh();
+        }}
+        flowStates={flowStates}
+        flowStatesFailed={flow.failed || loaded.status === "error"}
         connectedEdgeId={connectedEdgeId}
         receiveStatus={receiveStatus}
         onConnect={connect}
