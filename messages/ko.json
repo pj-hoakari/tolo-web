@@ -417,7 +417,11 @@
       "count": "라인 {index}: forward {forward} / backward {backward}",
       "namedCount": "{name}: forward {forward} / backward {backward}",
       "nameLabel": "선택한 라인 이름",
-      "namePlaceholder": "예: A홀 입구, 북쪽 연결 통로"
+      "namePlaceholder": "예: A홀 입구, 북쪽 연결 통로",
+      "areaWidthLabel": "선택한 라인의 영역 너비(%)",
+      "areaWidthDescription": "라인을 중심으로 한 띠의 전체 너비를 영상의 짧은 변에 대한 비율로 지정합니다. 띠 안에 있는 사람을 라인 이름의 관측 지점 인원으로 셉니다.",
+      "reRegisterNote": "라인의 위치나 영역 너비를 바꾼 관측 지점은 인원 기록을 새로 시작하도록 관측 지점을 다시 등록하세요.",
+      "areaOverlapWarning": "「{first}」와(과) 「{second}」의 영역이 겹칩니다. 겹친 곳에 있는 사람은 두 관측 지점 모두에 셉니다."
     }
   },
   "Observation": {

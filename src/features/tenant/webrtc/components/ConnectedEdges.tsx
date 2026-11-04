@@ -88,6 +88,7 @@ export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
               <DetectionSettingsPanel
                 settingsStore={stores.settingsStore}
                 viewStateStore={stores.viewStateStore}
+                resultStore={stores.resultStore}
               />
             </>
           )}

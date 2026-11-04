@@ -417,7 +417,11 @@
       "count": "Línea {index}: forward {forward} / backward {backward}",
       "namedCount": "{name}: forward {forward} / backward {backward}",
       "nameLabel": "Nombre de la línea seleccionada",
-      "namePlaceholder": "p. ej., entrada del salón A, pasillo norte"
+      "namePlaceholder": "p. ej., entrada del salón A, pasillo norte",
+      "areaWidthLabel": "Ancho del área de la línea seleccionada (%)",
+      "areaWidthDescription": "Ancho total de la franja centrada en la línea, como porcentaje del lado más corto del video. Las personas dentro de la franja se cuentan para el punto de observación con el nombre de la línea.",
+      "reRegisterNote": "Si mueves una línea o cambias el ancho de su área, vuelve a registrar su punto de observación para reiniciar el historial de personas.",
+      "areaOverlapWarning": "Las áreas de «{first}» y «{second}» se superponen. Las personas en la superposición se cuentan para ambos puntos de observación."
     }
   },
   "Observation": {

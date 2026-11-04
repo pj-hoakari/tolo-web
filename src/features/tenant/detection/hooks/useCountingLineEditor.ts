@@ -1,6 +1,7 @@
 import { type PointerEvent, type RefObject, useCallback, useRef } from "react";
 import {
   applyCountingLines,
+  DEFAULT_AREA_WIDTH,
   type DetectionCountingLineSetting,
   type DetectionPoint,
   type DetectionSettingsStore,
@@ -179,7 +180,13 @@ export function useCountingLineEditor({
         const lineId = createLineId(countingLines);
         const nextLines = [
           ...countingLines,
-          { id: lineId, name: "", p1: unitPoint, p2: unitPoint },
+          {
+            id: lineId,
+            name: "",
+            p1: unitPoint,
+            p2: unitPoint,
+            areaWidth: DEFAULT_AREA_WIDTH,
+          },
         ];
         selectLine(viewStateStore, lineId);
         applyCountingLines(settingsStore, nextLines);

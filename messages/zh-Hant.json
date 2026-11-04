@@ -417,7 +417,11 @@
       "count": "線 {index}：forward {forward} / backward {backward}",
       "namedCount": "{name}：forward {forward} / backward {backward}",
       "nameLabel": "所選線的名稱",
-      "namePlaceholder": "例如：A廳入口、北側連通走廊"
+      "namePlaceholder": "例如：A廳入口、北側連通走廊",
+      "areaWidthLabel": "所選線的區域寬度（%）",
+      "areaWidthDescription": "以線為中心的帶狀區域的總寬度，以畫面短邊的百分比表示。帶內的人計入與線同名的觀測點。",
+      "reRegisterNote": "移動了線或變更了區域寬度的觀測點，請重新登錄該觀測點，以重新開始人數記錄。",
+      "areaOverlapWarning": "「{first}」和「{second}」的區域重疊。位於重疊處的人會同時計入兩個觀測點。"
     }
   },
   "Observation": {

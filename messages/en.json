@@ -417,7 +417,11 @@
       "count": "Line {index}: forward {forward} / backward {backward}",
       "namedCount": "{name}: forward {forward} / backward {backward}",
       "nameLabel": "Selected line name",
-      "namePlaceholder": "e.g. Hall A entrance, north corridor"
+      "namePlaceholder": "e.g. Hall A entrance, north corridor",
+      "areaWidthLabel": "Area width of the selected line (%)",
+      "areaWidthDescription": "The full width of the band centered on the line, as a percentage of the shorter side of the video. People inside the band are counted for the observation point named after the line.",
+      "reRegisterNote": "If you move a line or change its area width, register its observation point again so its people count history starts over.",
+      "areaOverlapWarning": "The areas of \"{first}\" and \"{second}\" overlap. People in the overlap are counted for both observation points."
     }
   },
   "Observation": {
