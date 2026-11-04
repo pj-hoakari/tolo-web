@@ -6,6 +6,7 @@ import {
   EdgeDeviceService,
   MeasurementIngestService,
   ObservationSettingsService,
+  StatusQueryService,
 } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
 import { eventAccess } from "./authorize";
 
@@ -27,6 +28,11 @@ export const consoleEdgeDeviceClient = createClient(
 
 export const consoleObservationSettingsClient = createClient(
   ObservationSettingsService,
+  consoleTransport,
+);
+
+export const consoleStatusQueryClient = createClient(
+  StatusQueryService,
   consoleTransport,
 );
 

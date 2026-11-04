@@ -19,6 +19,10 @@ import {
 import {
   EdgeDeviceSchema,
   EventType,
+  FlowHistoryTier,
+  FlowJudgement,
+  FlowObservationState,
+  GetEventOverviewResponseSchema,
   GetObservationSettingsResponseSchema,
   HeartbeatResponseSchema,
   ListEdgeDeviceObservationPointsResponseSchema,
@@ -44,6 +48,7 @@ import { guestPageClient } from "./guest";
 import {
   consoleEdgeDeviceClient,
   consoleObservationSettingsClient,
+  consoleStatusQueryClient,
   edgeEdgeDeviceClient,
   edgeMeasurementIngestClient,
 } from "./observation";
@@ -1027,6 +1032,55 @@ describe("observation settings", () => {
     expect((error as ORPCError<string, unknown>).message).not.toContain(
       "history_window_days",
     );
+  });
+});
+
+describe("observation.getFlowElementStates", () => {
+  it("returns the flow element states of the latest cycle with the axes as names and unspecified values as null", async () => {
+    const get = vi
+      .spyOn(consoleStatusQueryClient, "getEventOverview")
+      .mockResolvedValue(
+        create(GetEventOverviewResponseSchema, {
+          overview: {
+            flowElementStates: [
+              {
+                targetKey: "node:gate",
+                observation: FlowObservationState.HOLD,
+                history: FlowHistoryTier.WINDOW_ONLY,
+                linePoints: 1,
+                skipped: [
+                  FlowJudgement.SURGE,
+                  FlowJudgement.UNSPECIFIED,
+                  FlowJudgement.PUNCTURE,
+                ],
+              },
+              { targetKey: "edge:hall" },
+            ],
+          },
+        }),
+      );
+
+    await expect(
+      call(router.observation.getFlowElementStates, { eventId }),
+    ).resolves.toEqual({
+      flowElementStates: [
+        {
+          targetKey: "node:gate",
+          observation: "hold",
+          history: "windowOnly",
+          linePoints: 1,
+          skipped: ["surge", "puncture"],
+        },
+        {
+          targetKey: "edge:hall",
+          observation: null,
+          history: null,
+          linePoints: 0,
+          skipped: [],
+        },
+      ],
+    });
+    expect(get).toHaveBeenCalledWith({ eventId });
   });
 });
 

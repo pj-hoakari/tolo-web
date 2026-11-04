@@ -15,6 +15,7 @@ import {
   RESTORABLE_STATUSES,
   type TenantEvent,
 } from "@/features/tenant/management/events/type";
+import type { FlowElementState } from "@/features/tenant/management/graph/flowElementState";
 import type { GraphData } from "@/features/tenant/management/graph/type";
 import type {
   CreatedInvitation,
@@ -58,6 +59,8 @@ export type MockRouterOverrides = {
   reportMeasurementsError?: CommonORPCErrorCode;
   getObservationSettingsError?: boolean;
   updateObservationSettingsError?: CommonORPCErrorCode;
+  flowElementStates?: FlowElementState[];
+  getFlowElementStatesError?: boolean;
   /** graph.getGraph が返すグラフ（未指定なら PLACEHOLDER_GRAPH） */
   graph?: GraphData;
   getGraphError?: boolean;
@@ -119,6 +122,8 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     reportMeasurementsError,
     getObservationSettingsError = false,
     updateObservationSettingsError,
+    flowElementStates = [],
+    getFlowElementStatesError = false,
     graph = PLACEHOLDER_GRAPH,
     getGraphError = false,
     saveGraphError,
@@ -271,6 +276,16 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           });
         }
       }),
+      getFlowElementStates: os
+        .input(z.object({ eventId: z.string().min(1) }))
+        .handler(
+          async (): Promise<{ flowElementStates: FlowElementState[] }> => {
+            if (getFlowElementStatesError) {
+              throw new ORPCError("INTERNAL_SERVER_ERROR");
+            }
+            return { flowElementStates };
+          },
+        ),
       getSettings: os
         .input(z.object({ eventId: z.string().min(1) }))
         .handler(async ({ input }): Promise<ObservationSettings> => {

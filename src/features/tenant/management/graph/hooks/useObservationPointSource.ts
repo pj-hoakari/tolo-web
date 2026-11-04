@@ -1,10 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useEdgeDevices } from "@/features/tenant/webrtc/hooks/useEdgeDevices";
+import { orpc } from "@/lib/orpc";
 import type { ObservationPointsSource } from "../components/observation";
+import type { FlowElementState } from "../flowElementState";
 import type { GraphData } from "../type";
-import { collectObservationPointIds } from "../utils/observationPoints";
+import {
+  collectObservationPointIds,
+  flowStatesByObservationPoint,
+} from "../utils/observationPoints";
+
+const FLOW_STATES_INTERVAL_MS = 30_000;
 
 /**
  * プロパティパネルに渡す観測点の選択肢を組み立てるフック。
@@ -32,5 +39,44 @@ export function useObservationPointSource({
     [graph],
   );
 
-  return { available, status, usedIds, onRefresh: refresh };
+  const flow = useFlowElementStates(eventId);
+  const flowStates = useMemo(
+    () => flowStatesByObservationPoint(graph.nodes, graph.edges, flow.states),
+    [graph, flow.states],
+  );
+
+  return {
+    available,
+    status,
+    usedIds,
+    flowStates,
+    flowStatesFailed: flow.failed,
+    onRefresh: () => {
+      refresh();
+      void flow.refresh();
+    },
+  };
+}
+
+function useFlowElementStates(eventId: string) {
+  const [states, setStates] = useState<FlowElementState[]>([]);
+  const [failed, setFailed] = useState(false);
+
+  const refresh = useCallback(async () => {
+    try {
+      const res = await orpc.observation.getFlowElementStates({ eventId });
+      setStates(res.flowElementStates);
+      setFailed(false);
+    } catch {
+      setFailed(true);
+    }
+  }, [eventId]);
+
+  useEffect(() => {
+    void refresh();
+    const timer = setInterval(() => void refresh(), FLOW_STATES_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [refresh]);
+
+  return { states, failed, refresh };
 }
