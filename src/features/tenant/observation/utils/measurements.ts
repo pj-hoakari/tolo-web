@@ -1,7 +1,6 @@
 import {
   type DetectedPeopleTally,
   type DetectionCountingLineSetting,
-  type DetectionPoint,
   type DetectionResult,
   INITIAL_DETECTED_PEOPLE,
   INITIAL_LINE_COUNT,
@@ -20,49 +19,6 @@ type ResultSnapshot = Pick<DetectionResult, "lineCounts" | "detectedPeople">;
 
 function delta(previous: number, current: number): number {
   return current >= previous ? current - previous : current;
-}
-
-type Segment = { p1: DetectionPoint; p2: DetectionPoint };
-
-function distanceToSegment(point: DetectionPoint, { p1, p2 }: Segment): number {
-  const dx = p2.x - p1.x;
-  const dy = p2.y - p1.y;
-  const lengthSquared = dx * dx + dy * dy;
-  const t =
-    lengthSquared === 0
-      ? 0
-      : Math.min(
-          1,
-          Math.max(
-            0,
-            ((point.x - p1.x) * dx + (point.y - p1.y) * dy) / lengthSquared,
-          ),
-        );
-  return Math.hypot(point.x - (p1.x + t * dx), point.y - (p1.y + t * dy));
-}
-
-export function countPeopleByObservationPoint(
-  people: readonly DetectionPoint[],
-  linesByPoint: ReadonlyMap<string, readonly Segment[]>,
-): Map<string, number> {
-  const counts = new Map([...linesByPoint.keys()].map((id) => [id, 0]));
-  for (const person of people) {
-    let nearest: string | undefined;
-    let nearestDistance = Number.POSITIVE_INFINITY;
-    for (const [pointId, lines] of linesByPoint) {
-      for (const line of lines) {
-        const distance = distanceToSegment(person, line);
-        if (distance < nearestDistance) {
-          nearest = pointId;
-          nearestDistance = distance;
-        }
-      }
-    }
-    if (nearest !== undefined) {
-      counts.set(nearest, (counts.get(nearest) ?? 0) + 1);
-    }
-  }
-  return counts;
 }
 
 function meanDetectedPeople(

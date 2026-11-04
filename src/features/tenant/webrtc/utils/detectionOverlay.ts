@@ -3,6 +3,7 @@ import {
   type DetectionCountingLineSetting,
   type DetectionLineCount,
 } from "@/features/tenant/detection/stores/detectionStore";
+import { lineArea } from "@/features/tenant/detection/utils/observationAreas";
 
 export type DetectionOverlayPoint = {
   x: number;
@@ -23,6 +24,7 @@ export type DetectionOverlayLine = {
   name: string;
   p1: DetectionOverlayPoint;
   p2: DetectionOverlayPoint;
+  areaWidth: number;
 };
 
 /**
@@ -58,6 +60,7 @@ export function toOverlayCountingLines(
       x: clampUnit(countingLine.p2.x) * width,
       y: clampUnit(countingLine.p2.y) * height,
     },
+    areaWidth: countingLine.areaWidth * Math.min(width, height),
   }));
 }
 
@@ -72,6 +75,18 @@ export function drawCountingLine(
   const lineColor = isHighlighted ? "#fbbf24" : "#22d3ee";
   context.lineCap = "round";
   context.lineJoin = "round";
+  const area = lineArea(countingLine);
+  if (area.length > 0) {
+    context.beginPath();
+    for (const point of area) {
+      context.lineTo(point.x, point.y);
+    }
+    context.closePath();
+    context.fillStyle = isHighlighted
+      ? "rgba(251, 191, 36, 0.18)"
+      : "rgba(34, 211, 238, 0.12)";
+    context.fill();
+  }
   const strokeVisiblePath = () => {
     context.lineWidth = lineWidth;
     context.strokeStyle = lineColor;

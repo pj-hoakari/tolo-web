@@ -1,5 +1,6 @@
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 import {
+  applyFrameSize,
   applyLineCounts,
   applyMetrics,
   areCountingLinesEqual,
@@ -12,6 +13,10 @@ import {
   recordDetectedPeople,
   resetDetectedPeople,
 } from "@/features/tenant/detection/stores/detectionStore";
+import {
+  countPeopleInAreas,
+  observationPointAreas,
+} from "@/features/tenant/detection/utils/observationAreas";
 import {
   type DetectionOverlayFrame,
   type DetectionOverlayLine,
@@ -28,7 +33,6 @@ import {
   footPoint,
   resetCrowdLineCount,
 } from "../utils/detectCrowd";
-import { countPeopleByObservationPoint } from "../utils/measurements";
 import type { DetectCrowdStatus } from "./useDetectCrowd";
 
 function syncCanvasSize(
@@ -217,22 +221,15 @@ export function useCrowdDetectionLoop({
           trackedCount: frame.detections.length,
           fps,
         });
-        const pointIdByName = pointIdByNameRef.current;
-        const linesByPoint = new Map<string, DetectionOverlayLine[]>();
-        for (const line of countingLines) {
-          const pointId = pointIdByName?.get(line.name);
-          if (pointId) {
-            linesByPoint.set(pointId, [
-              ...(linesByPoint.get(pointId) ?? []),
-              line,
-            ]);
-          }
-        }
+        applyFrameSize(resultStore, video.videoWidth, video.videoHeight);
         recordDetectedPeople(
           resultStore,
-          countPeopleByObservationPoint(
+          countPeopleInAreas(
             frame.detections.map(footPoint),
-            linesByPoint,
+            observationPointAreas(
+              countingLines,
+              pointIdByNameRef.current ?? new Map(),
+            ),
           ),
         );
         onDetectionFrame(
