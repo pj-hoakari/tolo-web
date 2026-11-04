@@ -129,51 +129,7 @@
       "empty": "没有运行中的观测点",
       "online": "运行中",
       "offline": "离线",
-      "usedByOther": "已被其他节点 / 路径使用",
-      "flow": {
-        "error": "无法获取判定状态",
-        "skipped": "无法判定：{judgements}",
-        "judgement": {
-          "surge": "激增",
-          "highStagnation": "停滞警戒",
-          "combined": "组合触发",
-          "puncture": "饱和"
-        },
-        "issue": {
-          "unobserved": {
-            "label": "没有收到观测",
-            "action": "请确认设备是否在运行，如已停止请重启"
-          },
-          "invalid": {
-            "label": "观测值无效",
-            "action": "请检查安装情况，如摄像头角度和遮挡物"
-          },
-          "hold": {
-            "label": "测量值未送达，数值停滞",
-            "action": "请稍候，如持续请重启设备"
-          },
-          "stale": {
-            "label": "观测已过时",
-            "action": "请稍候，如持续请重启设备"
-          },
-          "noHistory": {
-            "label": "还没有用于判定的历史数据",
-            "action": "请稍候，等待历史数据积累"
-          },
-          "windowOnlyHistory": {
-            "label": "没有长期历史数据，仅根据最近的测量值判定",
-            "action": "请稍候，等待历史数据积累"
-          },
-          "shortHistory": {
-            "label": "历史数据不足 4 小时",
-            "action": "请稍候，等待历史数据积累"
-          },
-          "intermittentLine": {
-            "label": "最近的流量测量值只有 {count} 个",
-            "action": "请确认设备是否在持续测量，如已停止请重启"
-          }
-        }
-      }
+      "usedByOther": "已被其他节点 / 路径使用"
     },
     "nodeTypeDescription": {
       "EXTERNAL": "表示场馆外部的虚拟点。与外部连接的点将作为出入口。"
@@ -315,6 +271,50 @@
       "loading": "正在加载图…",
       "error": "加载图失败",
       "retry": "重试"
+    }
+  },
+  "FlowState": {
+    "error": "无法获取判定状态",
+    "skipped": "无法判定：{judgements}",
+    "judgement": {
+      "surge": "激增",
+      "highStagnation": "停滞警戒",
+      "combined": "组合触发",
+      "puncture": "饱和"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "没有收到观测",
+        "action": "请确认设备是否在运行，如已停止请重启"
+      },
+      "invalid": {
+        "label": "观测值无效",
+        "action": "请检查安装情况，如摄像头角度和遮挡物"
+      },
+      "hold": {
+        "label": "测量值未送达，数值停滞",
+        "action": "请稍候，如持续请重启设备"
+      },
+      "stale": {
+        "label": "观测已过时",
+        "action": "请稍候，如持续请重启设备"
+      },
+      "noHistory": {
+        "label": "还没有用于判定的历史数据",
+        "action": "请稍候，等待历史数据积累"
+      },
+      "windowOnlyHistory": {
+        "label": "没有长期历史数据，仅根据最近的测量值判定",
+        "action": "请稍候，等待历史数据积累"
+      },
+      "shortHistory": {
+        "label": "历史数据不足 4 小时",
+        "action": "请稍候，等待历史数据积累"
+      },
+      "intermittentLine": {
+        "label": "最近的流量测量值只有 {count} 个",
+        "action": "请确认设备是否在持续测量，如已停止请重启"
+      }
     }
   },
   "Webrtc": {

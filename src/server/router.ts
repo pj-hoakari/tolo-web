@@ -42,6 +42,12 @@ import {
   EventStatus as ProtoEventStatus,
 } from "@pj-hoakari/tolo-tenant-management-connect-es/tolo/tenant/v1/tenant_pb";
 import { z } from "zod";
+import type {
+  FlowElementState,
+  FlowHistory,
+  FlowJudgement,
+  FlowObservation,
+} from "@/features/flowState/type";
 import {
   type GraphViolation,
   graphDataSchema,
@@ -53,12 +59,6 @@ import type {
   EventStatus,
   TenantEvent,
 } from "@/features/tenant/management/events/type";
-import type {
-  FlowElementState,
-  FlowHistory,
-  FlowJudgement,
-  FlowObservation,
-} from "@/features/tenant/management/graph/flowElementState";
 import type { GraphData } from "@/features/tenant/management/graph/type";
 import type {
   CreatedInvitation,

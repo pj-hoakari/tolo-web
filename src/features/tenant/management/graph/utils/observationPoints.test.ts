@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { FlowElementState } from "../flowElementState";
+import type { FlowElementState } from "@/features/flowState/type";
 import type { GraphEdgeType, GraphNodeType } from "../type";
 import {
   collectObservationPointIds,

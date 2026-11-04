@@ -129,51 +129,7 @@
       "empty": "가동 중인 관측점이 없습니다",
       "online": "가동 중",
       "offline": "오프라인",
-      "usedByOther": "다른 지점 / 경로에서 사용 중",
-      "flow": {
-        "error": "판정 상태를 가져오지 못했습니다",
-        "skipped": "{judgements}을(를) 판정할 수 없습니다",
-        "judgement": {
-          "surge": "급증",
-          "highStagnation": "정체 경계",
-          "combined": "조합 발화",
-          "puncture": "펑크"
-        },
-        "issue": {
-          "unobserved": {
-            "label": "관측이 들어오지 않습니다",
-            "action": "단말이 작동 중인지 확인하고, 멈췄다면 재시작하세요"
-          },
-          "invalid": {
-            "label": "관측값이 유효하지 않습니다",
-            "action": "카메라 방향이나 가리는 물체 등 설치를 점검하세요"
-          },
-          "hold": {
-            "label": "측정값이 들어오지 않아 값이 멈춰 있습니다",
-            "action": "잠시 기다리고, 계속되면 단말을 재시작하세요"
-          },
-          "stale": {
-            "label": "관측이 오래되었습니다",
-            "action": "잠시 기다리고, 계속되면 단말을 재시작하세요"
-          },
-          "noHistory": {
-            "label": "판정에 쓸 이력이 아직 없습니다",
-            "action": "이력이 쌓일 때까지 잠시 기다리세요"
-          },
-          "windowOnlyHistory": {
-            "label": "장기 이력이 없어 최근 측정값만으로 판정하고 있습니다",
-            "action": "이력이 쌓일 때까지 잠시 기다리세요"
-          },
-          "shortHistory": {
-            "label": "이력이 4시간 분량에 못 미칩니다",
-            "action": "이력이 쌓일 때까지 잠시 기다리세요"
-          },
-          "intermittentLine": {
-            "label": "최근 유량 측정값이 {count}개뿐입니다",
-            "action": "단말이 측정을 계속하는지 확인하고, 멈췄다면 재시작하세요"
-          }
-        }
-      }
+      "usedByOther": "다른 지점 / 경로에서 사용 중"
     },
     "nodeTypeDescription": {
       "EXTERNAL": "행사장 밖을 나타내는 가상 지점입니다. 외부와 연결된 지점이 출입 지점이 됩니다."
@@ -315,6 +271,50 @@
       "loading": "그래프를 불러오는 중…",
       "error": "그래프를 불러오지 못했습니다",
       "retry": "다시 시도"
+    }
+  },
+  "FlowState": {
+    "error": "판정 상태를 가져오지 못했습니다",
+    "skipped": "{judgements}을(를) 판정할 수 없습니다",
+    "judgement": {
+      "surge": "급증",
+      "highStagnation": "정체 경계",
+      "combined": "조합 발화",
+      "puncture": "펑크"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "관측이 들어오지 않습니다",
+        "action": "단말이 작동 중인지 확인하고, 멈췄다면 재시작하세요"
+      },
+      "invalid": {
+        "label": "관측값이 유효하지 않습니다",
+        "action": "카메라 방향이나 가리는 물체 등 설치를 점검하세요"
+      },
+      "hold": {
+        "label": "측정값이 들어오지 않아 값이 멈춰 있습니다",
+        "action": "잠시 기다리고, 계속되면 단말을 재시작하세요"
+      },
+      "stale": {
+        "label": "관측이 오래되었습니다",
+        "action": "잠시 기다리고, 계속되면 단말을 재시작하세요"
+      },
+      "noHistory": {
+        "label": "판정에 쓸 이력이 아직 없습니다",
+        "action": "이력이 쌓일 때까지 잠시 기다리세요"
+      },
+      "windowOnlyHistory": {
+        "label": "장기 이력이 없어 최근 측정값만으로 판정하고 있습니다",
+        "action": "이력이 쌓일 때까지 잠시 기다리세요"
+      },
+      "shortHistory": {
+        "label": "이력이 4시간 분량에 못 미칩니다",
+        "action": "이력이 쌓일 때까지 잠시 기다리세요"
+      },
+      "intermittentLine": {
+        "label": "최근 유량 측정값이 {count}개뿐입니다",
+        "action": "단말이 측정을 계속하는지 확인하고, 멈췄다면 재시작하세요"
+      }
     }
   },
   "Webrtc": {

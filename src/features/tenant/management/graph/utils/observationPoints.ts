@@ -1,4 +1,4 @@
-import type { FlowElementState } from "../flowElementState";
+import type { FlowElementState } from "@/features/flowState/type";
 import type { GraphCanvasNode, GraphEdgeType } from "../type";
 import { isPointNode } from "../type";
 

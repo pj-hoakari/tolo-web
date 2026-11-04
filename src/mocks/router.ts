@@ -1,6 +1,7 @@
 import type { CommonORPCErrorCode } from "@orpc/client";
 import { ORPCError, os } from "@orpc/server";
 import { z } from "zod";
+import type { FlowElementState } from "@/features/flowState/type";
 import {
   type GraphViolation,
   graphDataSchema,
@@ -15,7 +16,6 @@ import {
   RESTORABLE_STATUSES,
   type TenantEvent,
 } from "@/features/tenant/management/events/type";
-import type { FlowElementState } from "@/features/tenant/management/graph/flowElementState";
 import type { GraphData } from "@/features/tenant/management/graph/type";
 import type {
   CreatedInvitation,

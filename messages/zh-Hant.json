@@ -129,51 +129,7 @@
       "empty": "沒有運作中的觀測點",
       "online": "運作中",
       "offline": "離線",
-      "usedByOther": "已被其他節點 / 路徑使用",
-      "flow": {
-        "error": "無法取得判定狀態",
-        "skipped": "無法判定：{judgements}",
-        "judgement": {
-          "surge": "激增",
-          "highStagnation": "停滯警戒",
-          "combined": "組合觸發",
-          "puncture": "飽和"
-        },
-        "issue": {
-          "unobserved": {
-            "label": "沒有收到觀測",
-            "action": "請確認裝置是否在運作，如已停止請重新啟動"
-          },
-          "invalid": {
-            "label": "觀測值無效",
-            "action": "請檢查安裝情況，如攝影機角度和遮擋物"
-          },
-          "hold": {
-            "label": "測量值未送達，數值停滯",
-            "action": "請稍候，如持續請重新啟動裝置"
-          },
-          "stale": {
-            "label": "觀測已過時",
-            "action": "請稍候，如持續請重新啟動裝置"
-          },
-          "noHistory": {
-            "label": "還沒有用於判定的歷史資料",
-            "action": "請稍候，等待歷史資料累積"
-          },
-          "windowOnlyHistory": {
-            "label": "沒有長期歷史資料，僅根據最近的測量值判定",
-            "action": "請稍候，等待歷史資料累積"
-          },
-          "shortHistory": {
-            "label": "歷史資料不足 4 小時",
-            "action": "請稍候，等待歷史資料累積"
-          },
-          "intermittentLine": {
-            "label": "最近的流量測量值只有 {count} 個",
-            "action": "請確認裝置是否持續測量，如已停止請重新啟動"
-          }
-        }
-      }
+      "usedByOther": "已被其他節點 / 路徑使用"
     },
     "nodeTypeDescription": {
       "EXTERNAL": "表示場館外部的虛擬點。與外部連接的點將作為出入口。"
@@ -315,6 +271,50 @@
       "loading": "正在載入圖…",
       "error": "載入圖失敗",
       "retry": "重試"
+    }
+  },
+  "FlowState": {
+    "error": "無法取得判定狀態",
+    "skipped": "無法判定：{judgements}",
+    "judgement": {
+      "surge": "激增",
+      "highStagnation": "停滯警戒",
+      "combined": "組合觸發",
+      "puncture": "飽和"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "沒有收到觀測",
+        "action": "請確認裝置是否在運作，如已停止請重新啟動"
+      },
+      "invalid": {
+        "label": "觀測值無效",
+        "action": "請檢查安裝情況，如攝影機角度和遮擋物"
+      },
+      "hold": {
+        "label": "測量值未送達，數值停滯",
+        "action": "請稍候，如持續請重新啟動裝置"
+      },
+      "stale": {
+        "label": "觀測已過時",
+        "action": "請稍候，如持續請重新啟動裝置"
+      },
+      "noHistory": {
+        "label": "還沒有用於判定的歷史資料",
+        "action": "請稍候，等待歷史資料累積"
+      },
+      "windowOnlyHistory": {
+        "label": "沒有長期歷史資料，僅根據最近的測量值判定",
+        "action": "請稍候，等待歷史資料累積"
+      },
+      "shortHistory": {
+        "label": "歷史資料不足 4 小時",
+        "action": "請稍候，等待歷史資料累積"
+      },
+      "intermittentLine": {
+        "label": "最近的流量測量值只有 {count} 個",
+        "action": "請確認裝置是否持續測量，如已停止請重新啟動"
+      }
     }
   },
   "Webrtc": {
