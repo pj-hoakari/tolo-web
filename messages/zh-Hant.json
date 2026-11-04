@@ -702,7 +702,8 @@
     },
     "loggedOut": {
       "title": "已登出",
-      "login": "再次登入"
+      "login": "再次登入",
+      "toObservation": "Back to the observation page"
     },
     "logout": "登出"
   },

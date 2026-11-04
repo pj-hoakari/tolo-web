@@ -702,7 +702,8 @@
     },
     "loggedOut": {
       "title": "ログアウトしました",
-      "login": "もう一度ログインする"
+      "login": "もう一度ログインする",
+      "toObservation": "観測ページに戻る"
     },
     "logout": "ログアウト"
   },

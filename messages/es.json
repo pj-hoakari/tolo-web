@@ -702,7 +702,8 @@
     },
     "loggedOut": {
       "title": "Has cerrado la sesión",
-      "login": "Volver a iniciar sesión"
+      "login": "Volver a iniciar sesión",
+      "toObservation": "Back to the observation page"
     },
     "logout": "Cerrar sesión"
   },

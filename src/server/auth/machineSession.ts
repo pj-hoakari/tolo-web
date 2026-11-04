@@ -6,6 +6,7 @@ import { z } from "zod";
 import { rootOrigin } from "@/lib/control/tenant";
 import type { SessionLock } from "./betterAuth";
 import { BROWSER_COOKIE, browserHash, verifyBrowserId } from "./browser";
+import { idpDiscovery } from "./discovery";
 import { advanceHostState, hostLockKey } from "./hostState";
 
 export const PENDING_MACHINE_AUTHORIZATION = "pendingMachineAuthorization";
@@ -46,7 +47,11 @@ export const machineBindingCookie = () => ({
   } as const,
 });
 
-export function machineSessionPlugin(lock: SessionLock) {
+export function machineSessionPlugin(
+  lock: SessionLock,
+  options: { issuer: string },
+) {
+  const discovery = idpDiscovery(options.issuer);
   return {
     id: "tolo-machine-session",
     schema: {
@@ -210,13 +215,45 @@ export function machineSessionPlugin(lock: SessionLock) {
                 maxAge: undefined,
               });
               expireCookie(ctx, machineBindingCookie());
-              throw ctx.redirect(handoff.returnPath);
+              throw ctx.redirect(await machineLogoutURL(handoff, discovery));
             },
           );
         },
       ),
     },
   } satisfies BetterAuthPlugin;
+}
+
+async function machineLogoutURL(
+  handoff: PendingMachineHandoff,
+  discovery: ReturnType<typeof idpDiscovery>,
+): Promise<string> {
+  const fallback = new URL(`${rootOrigin()}/auth/logged-out`);
+  fallback.searchParams.set("state", machineLogoutState(handoff));
+  if (!handoff.idToken) return fallback.href;
+  try {
+    const { end_session_endpoint } = await discovery();
+    if (!end_session_endpoint) return fallback.href;
+    const target = new URL(end_session_endpoint);
+    target.searchParams.set("id_token_hint", handoff.idToken);
+    target.searchParams.set(
+      "post_logout_redirect_uri",
+      `${rootOrigin()}/auth/logged-out`,
+    );
+    target.searchParams.set("state", machineLogoutState(handoff));
+    return target.href;
+  } catch {
+    return fallback.href;
+  }
+}
+
+function machineLogoutState(handoff: PendingMachineHandoff): string {
+  return Buffer.from(
+    JSON.stringify({
+      host: handoff.host,
+      returnPath: handoff.returnPath,
+    }),
+  ).toString("base64url");
 }
 
 function sha256(value: string): string {

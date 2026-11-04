@@ -69,6 +69,7 @@ function idp() {
         authorization_endpoint: "https://idp.test/oauth2/authorize",
         token_endpoint: TOKEN_ENDPOINT,
         jwks_uri: "https://idp.test/oauth2/jwks",
+        end_session_endpoint: "https://idp.test/connect/logout",
         id_token_signing_alg_values_supported: ["RS256"],
       }),
     ),
@@ -265,7 +266,7 @@ describe("machine start", () => {
       scope: "openid events.report",
       resource: `https://api.tolo.test/tenants/${TENANT}`,
       audience: "backend-api",
-      prompt: "none",
+      prompt: "login",
       code_challenge_method: "S256",
     });
     expect(authorizeUrl.searchParams.get("state")).toBeTruthy();
@@ -341,7 +342,20 @@ describe("machine callback and handoff", () => {
     );
 
     expect(handedOff.status).toBe(302);
-    expect(handedOff.headers.get("location")).toBe(RETURN_PATH);
+    const logout = new URL(handedOff.headers.get("location") ?? "");
+    expect(`${logout.origin}${logout.pathname}`).toBe(
+      "https://idp.test/connect/logout",
+    );
+    expect(logout.searchParams.get("post_logout_redirect_uri")).toBe(
+      "https://tolo.test/auth/logged-out",
+    );
+    expect(logout.searchParams.get("id_token_hint")).toBeTruthy();
+    const state = JSON.parse(
+      Buffer.from(logout.searchParams.get("state") ?? "", "base64url").toString(
+        "utf8",
+      ),
+    );
+    expect(state).toEqual({ host: HOST, returnPath: RETURN_PATH });
     const handoffCookies = cookiesFrom(handedOff);
     const sessionCookie = handoffCookies.find((cookie) =>
       cookie.startsWith(`${SESSION_COOKIE}=`),
@@ -463,7 +477,7 @@ describe("machine callback and handoff", () => {
     );
   });
 
-  it("sends a prompt=none login_required back to the observation page", async () => {
+  it("sends a login_required result back to the observation page", async () => {
     const test = createTestAuth();
     const started = await startMachine(test);
 

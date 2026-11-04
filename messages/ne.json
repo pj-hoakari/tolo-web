@@ -702,7 +702,8 @@
     },
     "loggedOut": {
       "title": "लग आउट भयो",
-      "login": "फेरि लग इन गर्नुहोस्"
+      "login": "फेरि लग इन गर्नुहोस्",
+      "toObservation": "Back to the observation page"
     },
     "logout": "लग आउट"
   },

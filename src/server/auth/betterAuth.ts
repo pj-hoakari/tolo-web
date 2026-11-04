@@ -248,7 +248,7 @@ export function authOptions(env: AuthEnv, lock?: SessionLock) {
       }),
       toloSession,
       loginHandoff(authLock),
-      machineSessionPlugin(authLock),
+      machineSessionPlugin(authLock, { issuer: env.issuer }),
     ],
   } satisfies BetterAuthOptions;
 }

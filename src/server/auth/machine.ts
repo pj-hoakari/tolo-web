@@ -255,7 +255,7 @@ export function createMachineAuth(
         `https://${env.resourceHost}/tenants/${input.tenantId}`,
       );
       url.searchParams.set("audience", "backend-api");
-      url.searchParams.set("prompt", "none");
+      url.searchParams.set("prompt", "login");
       url.searchParams.set("state", state);
       url.searchParams.set("nonce", nonce);
       url.searchParams.set("code_challenge", challenge);

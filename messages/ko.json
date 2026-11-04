@@ -702,7 +702,8 @@
     },
     "loggedOut": {
       "title": "로그아웃했습니다",
-      "login": "다시 로그인"
+      "login": "다시 로그인",
+      "toObservation": "Back to the observation page"
     },
     "logout": "로그아웃"
   },

@@ -702,7 +702,8 @@
     },
     "loggedOut": {
       "title": "You have logged out",
-      "login": "Log in again"
+      "login": "Log in again",
+      "toObservation": "Back to the observation page"
     },
     "logout": "Log out"
   },
