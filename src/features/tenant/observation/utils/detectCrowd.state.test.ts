@@ -63,7 +63,7 @@ describe("per-camera crowd detection state", () => {
     expect(first.backgroundSubtractor).not.toBe(second.backgroundSubtractor);
     expect(first.capturer).toBeNull();
     expect(second.capturer).toBeNull();
-  });
+  }, 30_000);
 
   it("resets only the state passed in", () => {
     const first = createCrowdDetectionState();

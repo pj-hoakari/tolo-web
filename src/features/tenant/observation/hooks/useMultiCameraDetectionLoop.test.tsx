@@ -142,7 +142,7 @@ it("keeps the working camera video, tracking state and cumulative results when a
   const video = document.querySelector("video");
   camera.resultStore.setState({
     lineCounts: { "line-1": { forward: 12, backward: 7 } },
-    detectedPeople: { frames: 10, people: 25 },
+    detectedPeople: { all: { frames: 10, people: 25 } },
   });
   const counts = camera.resultStore.getState();
   rerender({
