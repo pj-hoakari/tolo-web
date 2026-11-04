@@ -454,9 +454,10 @@ export function createConnectionAuth(
     authorization: ConnectionAuthorization,
     env: ConnectionEnvironment,
     key: string,
+    cameraEdgeDeviceId?: string,
   ) {
     const store = await adapter();
-    const cacheKey = `${authorization.id}:${authorization.eventId}`;
+    const cacheKey = `${authorization.id}:${authorization.eventId}:${cameraEdgeDeviceId ?? ""}`;
     const cached = await store.findOne<ConnectionEventAccess>({
       model: CONNECTION_EVENT_ACCESS,
       where: [{ field: "cacheKey", value: cacheKey }],
@@ -464,14 +465,16 @@ export function createConnectionAuth(
     if (cached && cached.expiresAt.getTime() - Date.now() > EXPIRY_MARGIN_MS) {
       return cached.accessToken;
     }
-    const response = await postToTokenEndpoint(env, {
+    const params: Record<string, string> = {
       grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
       subject_token: await tenantAccess(authorization, env, key),
       subject_token_type: "urn:ietf:params:oauth:token-type:access_token",
       resource: `https://${env.resourceHost}/tenants/${authorization.tenantId}/events/${encodeURIComponent(authorization.eventId)}`,
       audience: "backend-api",
       scope: "events.read",
-    });
+    };
+    if (cameraEdgeDeviceId) params.edge_device_id = cameraEdgeDeviceId;
+    const response = await postToTokenEndpoint(env, params);
     if (!response.ok) {
       throw connectionError(
         CONNECTION_ERROR_CODES.eventAccessFailed,
@@ -760,7 +763,8 @@ export function createConnectionAuth(
         key,
         eventId,
         cameraEdgeDeviceId,
-        (authorization, env) => exchangeEventAccess(authorization, env, key),
+        (authorization, env) =>
+          exchangeEventAccess(authorization, env, key, cameraEdgeDeviceId),
       );
     },
 
@@ -789,7 +793,14 @@ export function createConnectionAuth(
         eventId,
         cameraEdgeDeviceId,
         async (authorization, env) =>
-          task(await exchangeEventAccess(authorization, env, key)),
+          task(
+            await exchangeEventAccess(
+              authorization,
+              env,
+              key,
+              cameraEdgeDeviceId,
+            ),
+          ),
       );
     },
 

@@ -896,7 +896,33 @@ describe("connection event_access", () => {
       resource: `https://api.tolo.test/tenants/${TENANT}/events/${EVENT}`,
       audience: "backend-api",
       scope: "events.read",
+      edge_device_id: CAMERA,
     });
+  });
+
+  it("keeps unbound and camera-bound event access in separate cache entries", async () => {
+    const test = await authorized();
+    const unbound = await test.connection.eventAccess({
+      tenantId: TENANT,
+      eventId: EVENT,
+      pageEdgeDeviceId: PAGE,
+    });
+    const bound = await test.connection.eventAccess({
+      tenantId: TENANT,
+      eventId: EVENT,
+      pageEdgeDeviceId: PAGE,
+      cameraEdgeDeviceId: CAMERA,
+    });
+
+    expect(unbound).toBe("connection-event-1");
+    expect(bound).toBe("connection-event-2");
+    expect(
+      test.provider.requests.filter(
+        ({ form }) =>
+          form.get("grant_type") ===
+          "urn:ietf:params:oauth:grant-type:token-exchange",
+      ),
+    ).toHaveLength(2);
   });
 
   it("rejects a camera that is not in the stored delegation without exchanging", async () => {
@@ -1025,7 +1051,7 @@ describe("connection delegation cleanup", () => {
         pageEdgeDeviceId: PAGE,
         cameraEdgeDeviceId: OTHER_CAMERA,
       }),
-    ).resolves.toBe("connection-event-1");
+    ).resolves.toBe("connection-event-2");
   });
 
   it("deletes the authorization and cached event access when the last camera is removed", async () => {
@@ -1136,7 +1162,7 @@ describe("connection delegation cleanup", () => {
         pageEdgeDeviceId: PAGE,
         cameraEdgeDeviceId: OTHER_CAMERA,
       }),
-    ).resolves.toBe("connection-event-1");
+    ).resolves.toBe("connection-event-2");
     expect(test.provider.refreshed()).toBe(0);
   });
 
