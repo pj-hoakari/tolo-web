@@ -57,7 +57,10 @@ export function useObservationReporting({
   cameras?: readonly ObservationReportingCamera[];
   /** カメラの映像が新しく届いているか。false のカメラは報告しない。 */
   isFresh: (key: string) => boolean;
-}): { unregistered: boolean } {
+}): {
+  unregistered: boolean;
+  pointIdByName: ReadonlyMap<string, string> | null;
+} {
   const [unregistered, setUnregistered] = useState(false);
   const [pointIdByName, setPointIdByName] = useState<ReadonlyMap<
     string,
@@ -258,5 +261,5 @@ export function useObservationReporting({
     isFresh,
   ]);
 
-  return { unregistered };
+  return { unregistered, pointIdByName };
 }

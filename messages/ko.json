@@ -6,7 +6,6 @@
     "title": "테넌트 만들기",
     "name": "테넌트 이름",
     "subdomain": "서브도메인",
-    "ownerEmail": "소유자 이메일 주소",
     "ownerDisplayName": "소유자 표시 이름",
     "ownerDisplayNameDescription": "테넌트 멤버에게 표시되는 이름입니다. 64자까지 입력할 수 있습니다.",
     "submit": "만들기",
@@ -274,6 +273,50 @@
       "retry": "다시 시도"
     }
   },
+  "FlowState": {
+    "error": "판정 상태를 가져오지 못했습니다",
+    "skipped": "{judgements}을(를) 판정할 수 없습니다",
+    "judgement": {
+      "surge": "급증",
+      "highStagnation": "정체 경계",
+      "combined": "조합 발화",
+      "puncture": "펑크"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "관측이 들어오지 않습니다",
+        "action": "단말이 작동 중인지 확인하고, 멈췄다면 재시작하세요"
+      },
+      "invalid": {
+        "label": "관측값이 유효하지 않습니다",
+        "action": "카메라 방향이나 가리는 물체 등 설치를 점검하세요"
+      },
+      "hold": {
+        "label": "측정값이 들어오지 않아 값이 멈춰 있습니다",
+        "action": "잠시 기다리고, 계속되면 단말을 재시작하세요"
+      },
+      "stale": {
+        "label": "관측이 오래되었습니다",
+        "action": "잠시 기다리고, 계속되면 단말을 재시작하세요"
+      },
+      "noHistory": {
+        "label": "판정에 쓸 이력이 아직 없습니다",
+        "action": "이력이 쌓일 때까지 잠시 기다리세요"
+      },
+      "windowOnlyHistory": {
+        "label": "장기 이력이 없어 최근 측정값만으로 판정하고 있습니다",
+        "action": "이력이 쌓일 때까지 잠시 기다리세요"
+      },
+      "shortHistory": {
+        "label": "이력이 4시간 분량에 못 미칩니다",
+        "action": "이력이 쌓일 때까지 잠시 기다리세요"
+      },
+      "intermittentLine": {
+        "label": "최근 유량 측정값이 {count}개뿐입니다",
+        "action": "단말이 측정을 계속하는지 확인하고, 멈췄다면 재시작하세요"
+      }
+    }
+  },
   "Webrtc": {
     "connectionStatus": {
       "idle": "연결 안 됨",
@@ -319,7 +362,8 @@
         "authorized": "The camera connection delegation was saved.",
         "login_required": "Reauthorizing the camera connection requires a staff login. Use “Authorize observation page connection” again.",
         "failed": "Could not authorize the camera connection. Try again."
-      }
+      },
+      "observationPoints": "관측점"
     },
     "receiver": {
       "stoppedTitle": "관측이 중지되었습니다",
@@ -457,7 +501,11 @@
       "count": "라인 {index}: forward {forward} / backward {backward}",
       "namedCount": "{name}: forward {forward} / backward {backward}",
       "nameLabel": "선택한 라인 이름",
-      "namePlaceholder": "예: A홀 입구, 북쪽 연결 통로"
+      "namePlaceholder": "예: A홀 입구, 북쪽 연결 통로",
+      "areaWidthLabel": "선택한 라인의 영역 너비(%)",
+      "areaWidthDescription": "라인을 중심으로 한 띠의 전체 너비를 영상의 짧은 변에 대한 비율로 지정합니다. 띠 안에 있는 사람을 라인 이름의 관측 지점 인원으로 셉니다.",
+      "reRegisterNote": "라인의 위치나 영역 너비를 바꾼 관측 지점은 인원 기록을 새로 시작하도록 관측 지점을 다시 등록하세요.",
+      "areaOverlapWarning": "「{first}」와(과) 「{second}」의 영역이 겹칩니다. 겹친 곳에 있는 사람은 두 관측 지점 모두에 셉니다."
     }
   },
   "Observation": {
@@ -554,6 +602,8 @@
   },
   "Guest": {
     "pageSubtitle": "게스트 페이지",
+    "showOnMap": "지도에서 보기",
+    "showOnMapLabel": "{place}을(를) 지도에서 보기",
     "waitingNumber": {
       "title": "현재 대기 인원",
       "unit": "명"
@@ -602,13 +652,11 @@
     },
     "guideMap": {
       "title": "안내 지도",
-      "hint": "목적지를 선택하면 경로가 표시됩니다",
       "currentLocation": "현재 위치",
       "destinationsLabel": "목적지",
       "expand": "지도 확대",
       "collapse": "지도 축소",
-      "search": "목적지 검색",
-      "noResults": "결과 없음",
+      "selectDestination": "목적지를 선택하세요",
       "reset": "초기화",
       "goal": "목적지",
       "rideTo": "{via}로 {floor}까지",
@@ -621,17 +669,16 @@
       "walkStep": "{floor}: {from} → {to}",
       "rideStep": "{via}: {from} → {to}",
       "noRoute": "이 목적지까지의 경로를 찾을 수 없습니다",
-      "zoomInHint": "지도를 탭하여 확대",
       "zoomOutHint": "드래그로 이동 · 탭하여 전체 보기",
       "closed": " (통행 금지)",
       "crowdAvoided": "혼잡한 곳을 피한 경로입니다",
       "crowdRerouted": "혼잡 상황이 바뀌어 경로를 변경했습니다",
       "crowdThroughDanger": "혼잡으로 위험한 곳을 지나야 갈 수 있습니다. 스태프의 안내에 따라 주세요",
-      "crowdLegend": "혼잡"
+      "crowdLegend": "혼잡",
+      "stepsLabel": "경로 안내",
+      "nextFloor": "다음: {floor} 경로"
     },
     "floor": {
-      "title": "현재 층",
-      "placeholderName": "1층",
       "selectLabel": "표시할 층"
     },
     "congestion": {
@@ -643,7 +690,9 @@
       },
       "danger": "위험",
       "updatedAt": "{time} 업데이트",
-      "empty": "아직 혼잡 정보가 없습니다"
+      "empty": "아직 혼잡 정보가 없습니다",
+      "floorRange": "{from}~{to}",
+      "floorJoin": ", "
     },
     "loading": "불러오는 중…",
     "loadError": "정보를 불러오지 못했습니다"
@@ -699,6 +748,22 @@
       "submit": "로그인",
       "invalidCredentials": "ID 또는 비밀번호가 올바르지 않습니다.",
       "failed": "로그인하지 못했습니다. 다시 시도해도 계속되면 사용하던 테넌트 페이지에서 다시 시작하세요."
+    },
+    "signup": {
+      "title": "계정 만들기",
+      "description": "이 테넌트에서 사용할 계정의 ID와 비밀번호를 정하세요.",
+      "loginDescription": "이 테넌트의 계정이 이미 있으면 그 ID와 비밀번호로 로그인하세요.",
+      "usernameLabel": "ID",
+      "usernameDescription": "50자 이내, 공백은 사용할 수 없습니다.",
+      "passwordLabel": "비밀번호",
+      "passwordDescription": "8자 이상, 72바이트 이하입니다.",
+      "submit": "계정 만들기",
+      "invalidUsername": "ID는 공백 없이 50자 이내로 입력하세요.",
+      "lengthOutOfRange": "비밀번호는 8자 이상, 72바이트 이하로 입력하세요.",
+      "usernameTaken": "이미 사용 중인 ID입니다. 다른 ID를 지정하세요.",
+      "failed": "계정을 만들지 못했습니다. 다시 시도해도 계속되면 처음부터 다시 시작하세요.",
+      "useExistingAccount": "기존 계정으로 로그인",
+      "createAccount": "새 계정 만들기"
     },
     "loggedOut": {
       "title": "로그아웃했습니다",

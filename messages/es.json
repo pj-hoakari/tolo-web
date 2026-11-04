@@ -6,7 +6,6 @@
     "title": "Crear un inquilino",
     "name": "Nombre del inquilino",
     "subdomain": "Subdominio",
-    "ownerEmail": "Correo electrónico del propietario",
     "ownerDisplayName": "Nombre visible del propietario",
     "ownerDisplayNameDescription": "El nombre que ven los miembros del inquilino. Hasta 64 caracteres.",
     "submit": "Crear",
@@ -274,6 +273,50 @@
       "retry": "Reintentar"
     }
   },
+  "FlowState": {
+    "error": "No se pudo obtener el estado de evaluación",
+    "skipped": "No se puede evaluar: {judgements}",
+    "judgement": {
+      "surge": "aumento repentino",
+      "highStagnation": "alerta de estancamiento",
+      "combined": "activación combinada",
+      "puncture": "saturación"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "No llegan observaciones",
+        "action": "Compruebe que el dispositivo funciona y reinícielo si se ha detenido"
+      },
+      "invalid": {
+        "label": "Los valores observados no son válidos",
+        "action": "Revise la instalación, como el ángulo de la cámara o lo que la obstruye"
+      },
+      "hold": {
+        "label": "No llegan mediciones y los valores están en espera",
+        "action": "Espere un momento y reinicie el dispositivo si continúa"
+      },
+      "stale": {
+        "label": "Las observaciones están desactualizadas",
+        "action": "Espere un momento y reinicie el dispositivo si continúa"
+      },
+      "noHistory": {
+        "label": "Aún no hay historial para evaluar",
+        "action": "Espere a que se acumule historial"
+      },
+      "windowOnlyHistory": {
+        "label": "Sin historial a largo plazo; se evalúa solo con mediciones recientes",
+        "action": "Espere a que se acumule historial"
+      },
+      "shortHistory": {
+        "label": "Hay menos de 4 horas de historial",
+        "action": "Espere a que se acumule historial"
+      },
+      "intermittentLine": {
+        "label": "Solo hay {count} mediciones de flujo recientes",
+        "action": "Compruebe que el dispositivo sigue midiendo y reinícielo si se ha detenido"
+      }
+    }
+  },
   "Webrtc": {
     "connectionStatus": {
       "idle": "Sin conexión",
@@ -319,7 +362,8 @@
         "authorized": "The camera connection delegation was saved.",
         "login_required": "Reauthorizing the camera connection requires a staff login. Use “Authorize observation page connection” again.",
         "failed": "Could not authorize the camera connection. Try again."
-      }
+      },
+      "observationPoints": "Puntos de observación"
     },
     "receiver": {
       "stoppedTitle": "La observación se detuvo",
@@ -457,7 +501,11 @@
       "count": "Línea {index}: forward {forward} / backward {backward}",
       "namedCount": "{name}: forward {forward} / backward {backward}",
       "nameLabel": "Nombre de la línea seleccionada",
-      "namePlaceholder": "p. ej., entrada del salón A, pasillo norte"
+      "namePlaceholder": "p. ej., entrada del salón A, pasillo norte",
+      "areaWidthLabel": "Ancho del área de la línea seleccionada (%)",
+      "areaWidthDescription": "Ancho total de la franja centrada en la línea, como porcentaje del lado más corto del video. Las personas dentro de la franja se cuentan para el punto de observación con el nombre de la línea.",
+      "reRegisterNote": "Si mueves una línea o cambias el ancho de su área, vuelve a registrar su punto de observación para reiniciar el historial de personas.",
+      "areaOverlapWarning": "Las áreas de «{first}» y «{second}» se superponen. Las personas en la superposición se cuentan para ambos puntos de observación."
     }
   },
   "Observation": {
@@ -554,6 +602,8 @@
   },
   "Guest": {
     "pageSubtitle": "Página del visitante",
+    "showOnMap": "Ver en el mapa",
+    "showOnMapLabel": "Ver {place} en el mapa",
     "waitingNumber": {
       "title": "Personas en espera",
       "unit": "personas"
@@ -602,13 +652,11 @@
     },
     "guideMap": {
       "title": "Mapa de orientación",
-      "hint": "Selecciona un destino para ver la ruta",
       "currentLocation": "Estás aquí",
       "destinationsLabel": "Destinos",
       "expand": "Ampliar el mapa",
       "collapse": "Reducir el mapa",
-      "search": "Buscar destino",
-      "noResults": "Sin resultados",
+      "selectDestination": "Elige un destino",
       "reset": "Restablecer",
       "goal": "Destino",
       "rideTo": "{via} hasta {floor}",
@@ -621,17 +669,16 @@
       "walkStep": "{floor}: {from} → {to}",
       "rideStep": "{via}: {from} → {to}",
       "noRoute": "No se encontró una ruta a este destino",
-      "zoomInHint": "Toca el mapa para ampliar",
       "zoomOutHint": "Arrastra para mover · toca para ver todo",
       "closed": " (cerrado)",
       "crowdAvoided": "Esta ruta evita las zonas concurridas",
       "crowdRerouted": "La ruta ha cambiado porque cambió el nivel de aglomeración",
       "crowdThroughDanger": "Esta ruta pasa por una zona peligrosamente concurrida. Siga las indicaciones del personal",
-      "crowdLegend": "Aglomeración"
+      "crowdLegend": "Aglomeración",
+      "stepsLabel": "Indicaciones",
+      "nextFloor": "Siguiente: ruta en {floor}"
     },
     "floor": {
-      "title": "Planta actual",
-      "placeholderName": "Planta 1",
       "selectLabel": "Planta a mostrar"
     },
     "congestion": {
@@ -643,7 +690,9 @@
       },
       "danger": "Peligro",
       "updatedAt": "Actualizado a las {time}",
-      "empty": "Aún no hay información de afluencia"
+      "empty": "Aún no hay información de afluencia",
+      "floorRange": "{from}–{to}",
+      "floorJoin": ", "
     },
     "loading": "Cargando…",
     "loadError": "No se pudo obtener la información"
@@ -699,6 +748,22 @@
       "submit": "Iniciar sesión",
       "invalidCredentials": "El ID o la contraseña no son correctos.",
       "failed": "No se pudo iniciar sesión. Si vuelve a ocurrir, empieza de nuevo desde la página de tu inquilino."
+    },
+    "signup": {
+      "title": "Crear una cuenta",
+      "description": "Elige el ID y la contraseña de tu cuenta en este inquilino.",
+      "loginDescription": "Si ya tienes una cuenta en este inquilino, inicia sesión con su ID y contraseña.",
+      "usernameLabel": "ID",
+      "usernameDescription": "Hasta 50 caracteres, sin espacios.",
+      "passwordLabel": "Contraseña",
+      "passwordDescription": "Al menos 8 caracteres y como máximo 72 bytes.",
+      "submit": "Crear cuenta",
+      "invalidUsername": "El ID debe tener de 1 a 50 caracteres, sin espacios.",
+      "lengthOutOfRange": "La contraseña debe tener al menos 8 caracteres y como máximo 72 bytes.",
+      "usernameTaken": "Este ID ya está en uso. Elige otro ID.",
+      "failed": "No se pudo crear la cuenta. Si sigue ocurriendo, empieza de nuevo.",
+      "useExistingAccount": "Iniciar sesión con una cuenta existente",
+      "createAccount": "Crear una cuenta nueva"
     },
     "loggedOut": {
       "title": "Has cerrado la sesión",

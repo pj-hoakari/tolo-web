@@ -59,6 +59,10 @@ const presetGroup = (page: Page, title: string) =>
     .last();
 const lineCreationToggle = (page: Page) =>
   page.getByRole("radio", { name: "ライン生成" });
+const areaWidth = (page: Page) =>
+  page.getByRole("spinbutton", { name: "選択ラインのエリアの幅（%）" });
+const areaOverlapWarning = (page: Page) =>
+  page.getByRole("alert").filter({ hasText: "エリアが重なっています" });
 
 const canvasPoint = async (page: Page, u: number, v: number) => {
   const canvas = page.locator("canvas").first();
@@ -391,12 +395,41 @@ test.describe("検出設定", () => {
   }
 
   test("詳細調整を閉じると入力欄が消える", async ({ page }) => {
+    const advancedFields = page.getByRole("spinbutton", {
+      name: /^(検出感度|追跡のつながりやすさ|検出間隔 ms)$/,
+    });
     await page.getByRole("button", { name: "詳細調整" }).click();
-    await expect(page.getByRole("spinbutton")).toHaveCount(3);
+    await expect(advancedFields).toHaveCount(3);
 
     await page.getByRole("button", { name: "詳細調整を閉じる" }).click();
 
-    await expect(page.getByRole("spinbutton")).toHaveCount(0);
+    await expect(advancedFields).toHaveCount(0);
+  });
+
+  for (const { input, value } of [
+    { input: "0", value: "1" },
+    { input: "250", value: "100" },
+    { input: "25", value: "25" },
+  ]) {
+    test(`選択ラインのエリアの幅は既定で 10% で、${input} を入れると ${value} になる`, async ({
+      page,
+    }) => {
+      await expect(areaWidth(page)).toHaveValue("10");
+
+      await areaWidth(page).fill(input);
+
+      await expect(areaWidth(page)).toHaveValue(value);
+    });
+  }
+
+  test("観測点のエリアを変えたら観測点を登録し直すよう案内する", async ({
+    page,
+  }) => {
+    await expect(
+      page.getByText(
+        "ラインの位置やエリアの幅を変えた観測点は、人数の履歴を切り直すために観測点を登録し直してください。",
+      ),
+    ).toBeVisible();
   });
 });
 
@@ -453,6 +486,54 @@ test.describe("カウントライン", () => {
     await expect(
       page.getByRole("button", { name: "ホールA入口を編集" }),
     ).toBeVisible();
+  });
+
+  test("違う名前のラインのエリアが重なると警告が出て、ラインを離すと警告が消える", async ({
+    page,
+  }) => {
+    await lineName(page).fill("ゲート");
+    await lineCreationToggle(page).click();
+    await dragOnCanvas(page, [0.2, 0.58], [0.5, 0.58]);
+    await expect(page.getByRole("radio", { name: "編集モード" })).toBeChecked();
+    await lineName(page).fill("ホール");
+
+    await expect(areaOverlapWarning(page)).toHaveText(
+      "「ゲート」と「ホール」のエリアが重なっています。重なった場所にいる人は両方の観測点に数えます。",
+    );
+
+    await dragOnCanvas(page, [0.35, 0.58], [0.35, 0.2]);
+
+    await expect(areaOverlapWarning(page)).toHaveCount(0);
+  });
+
+  test("重なったラインを同じ名前にすると、同じ観測点のエリアになり警告が消える", async ({
+    page,
+  }) => {
+    await lineName(page).fill("ゲート");
+    await lineCreationToggle(page).click();
+    await dragOnCanvas(page, [0.2, 0.58], [0.5, 0.58]);
+    await expect(page.getByRole("radio", { name: "編集モード" })).toBeChecked();
+    await lineName(page).fill("ホール");
+    await expect(areaOverlapWarning(page)).toBeVisible();
+
+    await lineName(page).fill("ゲート");
+
+    await expect(areaOverlapWarning(page)).toHaveCount(0);
+  });
+
+  test("選択ラインのエリアの幅を広げると、離れた違う名前のラインのエリアと重なって警告が出る", async ({
+    page,
+  }) => {
+    await lineName(page).fill("ゲート");
+    await addLine(page);
+    await lineName(page).fill("ホール");
+    await expect(areaOverlapWarning(page)).toHaveCount(0);
+
+    await areaWidth(page).fill("100");
+
+    await expect(areaOverlapWarning(page)).toBeVisible();
+    await page.getByRole("button", { name: "ゲートを編集" }).click();
+    await expect(areaWidth(page)).toHaveValue("10");
   });
 
   test("停止すると停止ボタンとラインのモード切り替えを非表示にする", async ({

@@ -6,7 +6,6 @@
     "title": "Create a tenant",
     "name": "Tenant name",
     "subdomain": "Subdomain",
-    "ownerEmail": "Owner email address",
     "ownerDisplayName": "Owner display name",
     "ownerDisplayNameDescription": "The name shown to the tenant's members. Up to 64 characters.",
     "submit": "Create",
@@ -274,6 +273,50 @@
       "retry": "Retry"
     }
   },
+  "FlowState": {
+    "error": "Failed to load the judgement status",
+    "skipped": "Cannot judge: {judgements}",
+    "judgement": {
+      "surge": "surge",
+      "highStagnation": "stagnation alert",
+      "combined": "combined trigger",
+      "puncture": "puncture"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "No observations are arriving",
+        "action": "Check that the device is running, and restart it if it has stopped"
+      },
+      "invalid": {
+        "label": "Observed values are invalid",
+        "action": "Review the setup, such as the camera angle and anything blocking it"
+      },
+      "hold": {
+        "label": "Measurements are not arriving and values are on hold",
+        "action": "Wait a while, and restart the device if this continues"
+      },
+      "stale": {
+        "label": "Observations are out of date",
+        "action": "Wait a while, and restart the device if this continues"
+      },
+      "noHistory": {
+        "label": "There is no history to judge with yet",
+        "action": "Wait a while for history to build up"
+      },
+      "windowOnlyHistory": {
+        "label": "No long-term history; judging only from recent measurements",
+        "action": "Wait a while for history to build up"
+      },
+      "shortHistory": {
+        "label": "Less than 4 hours of history",
+        "action": "Wait a while for history to build up"
+      },
+      "intermittentLine": {
+        "label": "Only {count} recent flow measurements",
+        "action": "Check that the device keeps measuring, and restart it if it has stopped"
+      }
+    }
+  },
   "Webrtc": {
     "connectionStatus": {
       "idle": "Not connected",
@@ -319,7 +362,8 @@
         "authorized": "The camera connection delegation was saved.",
         "login_required": "Reauthorizing the camera connection requires a staff login. Use “Authorize observation page connection” again.",
         "failed": "Could not authorize the camera connection. Try again."
-      }
+      },
+      "observationPoints": "Observation points"
     },
     "receiver": {
       "stoppedTitle": "Observation stopped",
@@ -457,7 +501,11 @@
       "count": "Line {index}: forward {forward} / backward {backward}",
       "namedCount": "{name}: forward {forward} / backward {backward}",
       "nameLabel": "Selected line name",
-      "namePlaceholder": "e.g. Hall A entrance, north corridor"
+      "namePlaceholder": "e.g. Hall A entrance, north corridor",
+      "areaWidthLabel": "Area width of the selected line (%)",
+      "areaWidthDescription": "The full width of the band centered on the line, as a percentage of the shorter side of the video. People inside the band are counted for the observation point named after the line.",
+      "reRegisterNote": "If you move a line or change its area width, register its observation point again so its people count history starts over.",
+      "areaOverlapWarning": "The areas of \"{first}\" and \"{second}\" overlap. People in the overlap are counted for both observation points."
     }
   },
   "Observation": {
@@ -554,6 +602,8 @@
   },
   "Guest": {
     "pageSubtitle": "Guest Page",
+    "showOnMap": "View on map",
+    "showOnMapLabel": "View {place} on the map",
     "waitingNumber": {
       "title": "People waiting",
       "unit": "people"
@@ -602,13 +652,11 @@
     },
     "guideMap": {
       "title": "Guide map",
-      "hint": "Select a destination to see the route",
       "currentLocation": "You are here",
       "destinationsLabel": "Destinations",
       "expand": "Enlarge the map",
       "collapse": "Shrink the map",
-      "search": "Search destination",
-      "noResults": "No results",
+      "selectDestination": "Choose a destination",
       "reset": "Reset",
       "goal": "Destination",
       "rideTo": "{via} to {floor}",
@@ -621,17 +669,16 @@
       "walkStep": "{floor}: {from} → {to}",
       "rideStep": "{via}: {from} → {to}",
       "noRoute": "No route to this destination was found",
-      "zoomInHint": "Tap the map to zoom in",
       "zoomOutHint": "Drag to move · tap to see the whole map",
       "closed": " (closed)",
       "crowdAvoided": "This route avoids crowded areas",
       "crowdRerouted": "The route was changed because crowd conditions changed",
       "crowdThroughDanger": "This route passes through a dangerously crowded area. Please follow the staff's directions",
-      "crowdLegend": "Crowd"
+      "crowdLegend": "Crowd",
+      "stepsLabel": "Directions",
+      "nextFloor": "Next: route on {floor}"
     },
     "floor": {
-      "title": "Current floor",
-      "placeholderName": "1F",
       "selectLabel": "Floor to show"
     },
     "congestion": {
@@ -643,7 +690,9 @@
       },
       "danger": "Danger",
       "updatedAt": "Updated {time}",
-      "empty": "No crowd information yet"
+      "empty": "No crowd information yet",
+      "floorRange": "{from}–{to}",
+      "floorJoin": ", "
     },
     "loading": "Loading…",
     "loadError": "Couldn't load this information"
@@ -699,6 +748,22 @@
       "submit": "Log in",
       "invalidCredentials": "The ID or password is incorrect.",
       "failed": "Could not log in. If this keeps happening, start again from your tenant's page."
+    },
+    "signup": {
+      "title": "Create an account",
+      "description": "Choose the ID and password for your account in this tenant.",
+      "loginDescription": "If you already have an account in this tenant, log in with its ID and password.",
+      "usernameLabel": "ID",
+      "usernameDescription": "Up to 50 characters, without spaces.",
+      "passwordLabel": "Password",
+      "passwordDescription": "At least 8 characters and at most 72 bytes.",
+      "submit": "Create account",
+      "invalidUsername": "The ID must be 1 to 50 characters without spaces.",
+      "lengthOutOfRange": "The password must be at least 8 characters and at most 72 bytes.",
+      "usernameTaken": "This ID is already taken. Choose another ID.",
+      "failed": "Could not create the account. If this keeps happening, start over.",
+      "useExistingAccount": "Log in with an existing account",
+      "createAccount": "Create a new account"
     },
     "loggedOut": {
       "title": "You have logged out",

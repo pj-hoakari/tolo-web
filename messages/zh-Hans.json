@@ -6,7 +6,6 @@
     "title": "创建租户",
     "name": "租户名称",
     "subdomain": "子域名",
-    "ownerEmail": "所有者的电子邮件地址",
     "ownerDisplayName": "所有者的显示名称",
     "ownerDisplayNameDescription": "向租户成员显示的名称，最多 64 个字符。",
     "submit": "创建",
@@ -274,6 +273,50 @@
       "retry": "重试"
     }
   },
+  "FlowState": {
+    "error": "无法获取判定状态",
+    "skipped": "无法判定：{judgements}",
+    "judgement": {
+      "surge": "激增",
+      "highStagnation": "停滞警戒",
+      "combined": "组合触发",
+      "puncture": "饱和"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "没有收到观测",
+        "action": "请确认设备是否在运行，如已停止请重启"
+      },
+      "invalid": {
+        "label": "观测值无效",
+        "action": "请检查安装情况，如摄像头角度和遮挡物"
+      },
+      "hold": {
+        "label": "测量值未送达，数值停滞",
+        "action": "请稍候，如持续请重启设备"
+      },
+      "stale": {
+        "label": "观测已过时",
+        "action": "请稍候，如持续请重启设备"
+      },
+      "noHistory": {
+        "label": "还没有用于判定的历史数据",
+        "action": "请稍候，等待历史数据积累"
+      },
+      "windowOnlyHistory": {
+        "label": "没有长期历史数据，仅根据最近的测量值判定",
+        "action": "请稍候，等待历史数据积累"
+      },
+      "shortHistory": {
+        "label": "历史数据不足 4 小时",
+        "action": "请稍候，等待历史数据积累"
+      },
+      "intermittentLine": {
+        "label": "最近的流量测量值只有 {count} 个",
+        "action": "请确认设备是否在持续测量，如已停止请重启"
+      }
+    }
+  },
   "Webrtc": {
     "connectionStatus": {
       "idle": "未连接",
@@ -319,7 +362,8 @@
         "authorized": "The camera connection delegation was saved.",
         "login_required": "Reauthorizing the camera connection requires a staff login. Use “Authorize observation page connection” again.",
         "failed": "Could not authorize the camera connection. Try again."
-      }
+      },
+      "observationPoints": "观测点"
     },
     "receiver": {
       "stoppedTitle": "观测已停止",
@@ -457,7 +501,11 @@
       "count": "线 {index}：forward {forward} / backward {backward}",
       "namedCount": "{name}：forward {forward} / backward {backward}",
       "nameLabel": "所选线的名称",
-      "namePlaceholder": "例如：A厅入口、北侧连廊"
+      "namePlaceholder": "例如：A厅入口、北侧连廊",
+      "areaWidthLabel": "所选线的区域宽度（%）",
+      "areaWidthDescription": "以线为中心的带状区域的总宽度，以画面短边的百分比表示。带内的人计入与线同名的观测点。",
+      "reRegisterNote": "移动了线或更改了区域宽度的观测点，请重新登记该观测点，以重新开始人数记录。",
+      "areaOverlapWarning": "“{first}”和“{second}”的区域重叠。位于重叠处的人会同时计入两个观测点。"
     }
   },
   "Observation": {
@@ -554,6 +602,8 @@
   },
   "Guest": {
     "pageSubtitle": "访客页面",
+    "showOnMap": "在地图上查看",
+    "showOnMapLabel": "在地图上查看{place}",
     "waitingNumber": {
       "title": "当前等待人数",
       "unit": "人"
@@ -602,13 +652,11 @@
     },
     "guideMap": {
       "title": "导览图",
-      "hint": "选择目的地以显示路线",
       "currentLocation": "当前位置",
       "destinationsLabel": "目的地",
       "expand": "放大地图",
       "collapse": "缩小地图",
-      "search": "搜索目的地",
-      "noResults": "无结果",
+      "selectDestination": "请选择目的地",
       "reset": "重置",
       "goal": "目的地",
       "rideTo": "乘{via}到{floor}",
@@ -621,17 +669,16 @@
       "walkStep": "{floor}：{from} → {to}",
       "rideStep": "{via}：{from} → {to}",
       "noRoute": "未找到前往该目的地的路线",
-      "zoomInHint": "点按地图放大",
       "zoomOutHint": "拖动移动 · 点按查看全图",
       "closed": "（禁止通行）",
       "crowdAvoided": "这是避开拥挤区域的路线",
       "crowdRerouted": "由于拥挤情况发生变化，已更改路线",
       "crowdThroughDanger": "必须经过因拥挤而危险的区域才能到达。请听从工作人员的引导",
-      "crowdLegend": "拥挤"
+      "crowdLegend": "拥挤",
+      "stepsLabel": "路线",
+      "nextFloor": "下一步：{floor}的路线"
     },
     "floor": {
-      "title": "当前楼层",
-      "placeholderName": "1层",
       "selectLabel": "显示楼层"
     },
     "congestion": {
@@ -643,7 +690,9 @@
       },
       "danger": "危险",
       "updatedAt": "{time} 更新",
-      "empty": "暂无拥挤信息"
+      "empty": "暂无拥挤信息",
+      "floorRange": "{from}～{to}",
+      "floorJoin": "、"
     },
     "loading": "加载中…",
     "loadError": "无法获取信息"
@@ -699,6 +748,22 @@
       "submit": "登录",
       "invalidCredentials": "ID 或密码不正确。",
       "failed": "无法登录。如果再次尝试仍然失败，请从你使用的租户页面重新开始。"
+    },
+    "signup": {
+      "title": "创建账户",
+      "description": "请设置在此租户中使用的账户 ID 和密码。",
+      "loginDescription": "如果您已有此租户的账户，请使用其 ID 和密码登录。",
+      "usernameLabel": "ID",
+      "usernameDescription": "最多 50 个字符，不能包含空格。",
+      "passwordLabel": "密码",
+      "passwordDescription": "至少 8 个字符，最多 72 字节。",
+      "submit": "创建账户",
+      "invalidUsername": "ID 必须为 1 到 50 个字符，且不含空格。",
+      "lengthOutOfRange": "密码必须至少 8 个字符，最多 72 字节。",
+      "usernameTaken": "此 ID 已被使用。请指定其他 ID。",
+      "failed": "无法创建账户。如果问题持续，请从头开始。",
+      "useExistingAccount": "使用已有账户登录",
+      "createAccount": "创建新账户"
     },
     "loggedOut": {
       "title": "已退出登录",

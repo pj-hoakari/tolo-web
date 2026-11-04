@@ -27,6 +27,7 @@ describe("toCameraDetectionOptions", () => {
       {
         id: "camera-a-line",
         name: "入口",
+        areaWidth: 0.1,
         p1: { x: 0.1, y: 0.2 },
         p2: { x: 0.5, y: 0.6 },
       },
@@ -37,6 +38,7 @@ describe("toCameraDetectionOptions", () => {
       {
         id: "camera-b-line",
         name: "出口",
+        areaWidth: 0.1,
         p1: { x: 0, y: 0.5 },
         p2: { x: 1, y: 0.5 },
       },
@@ -59,6 +61,7 @@ describe("toCameraDetectionOptions", () => {
       {
         id: "camera-a-line",
         name: "入口",
+        areaWidth: 50,
         p1: { x: 100, y: 100 },
         p2: { x: 500, y: 300 },
       },
@@ -71,6 +74,7 @@ describe("toCameraDetectionOptions", () => {
       {
         id: "camera-b-line",
         name: "出口",
+        areaWidth: 50,
         p1: { x: 0, y: 250 },
         p2: { x: 1000, y: 250 },
       },

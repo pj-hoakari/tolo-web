@@ -8,8 +8,10 @@ import {
 import {
   deleteSessionCookie,
   expireCookie,
+  parseCookies,
   setSessionCookie,
 } from "better-auth/cookies";
+import { encodeBasicCredentials } from "better-auth/oauth2";
 import { z } from "zod";
 import { challengeLogin } from "@/features/auth/idpLogin";
 import { rootOrigin, tenantOrigin } from "@/lib/control/tenant";
@@ -32,9 +34,13 @@ export const PROVIDER_ID = "tolo-idp";
 const PENDING_LOGIN = "pendingLogin";
 const LOGIN_TTL_SECONDS = 10 * 60;
 const CODE_TTL_MS = 60 * 1000;
+const SIGNUP_COOKIE = "__Host-tolo.signup";
+
+export type LoginKind = "login" | "registration";
 
 type PendingLogin = {
   id: string;
+  kind: LoginKind;
   tenantId: string;
   host: string;
   hostGeneration?: number | null;
@@ -49,6 +55,8 @@ type PendingLogin = {
   refreshToken?: string | null;
   accessTokenExpiresAt?: Date | null;
   idToken?: string | null;
+  stateHash?: string | null;
+  codeVerifier?: string | null;
 };
 
 type ReceivedTokens = Pick<
@@ -59,9 +67,18 @@ type ReceivedTokens = Pick<
 const TENANT_ACCESS_TOKEN = "tenantAccessToken";
 const EVENT_ACCESS_TOKEN = "eventAccessToken";
 
-const sha256 = (value: string) =>
+export const sha256 = (value: string) =>
   createHash("sha256").update(value).digest("base64url");
-const randomToken = () => randomBytes(32).toString("base64url");
+export const randomToken = () => randomBytes(32).toString("base64url");
+
+export function cookie(name: string, value: string, maxAge: number): string {
+  return `${name}=${value}; Max-Age=${maxAge}; Path=/; HttpOnly; Secure; SameSite=Lax`;
+}
+
+const registrationTokenResponse = z.object({
+  access_token: z.string(),
+  expires_in: z.number(),
+});
 
 const binding = (loginId: string) => ({
   name: `__Host-tolo.login.${loginId}`,
@@ -115,6 +132,7 @@ export function loginHandoff(lock: SessionLock) {
     schema: {
       pendingLogin: {
         fields: {
+          kind: { type: "string", required: true },
           tenantId: { type: "string", required: true },
           host: { type: "string", required: true },
           hostGeneration: {
@@ -133,6 +151,8 @@ export function loginHandoff(lock: SessionLock) {
           refreshToken: { type: "string", required: false },
           accessTokenExpiresAt: { type: "date", required: false },
           idToken: { type: "string", required: false },
+          stateHash: { type: "string", required: false, unique: true },
+          codeVerifier: { type: "string", required: false },
         },
       },
     },
@@ -212,6 +232,7 @@ export function loginHandoff(lock: SessionLock) {
         {
           method: "POST",
           body: z.object({
+            kind: z.enum(["login", "registration"]),
             tenantId: z.string(),
             host: z.string(),
             returnPath: z.string(),
@@ -318,6 +339,7 @@ export function loginHandoff(lock: SessionLock) {
                 );
               }
               if (
+                login?.kind !== "login" ||
                 !login ||
                 !user ||
                 !login.subject ||
@@ -415,6 +437,65 @@ async function keepForLogin(
 
 export function createLoginFlow({ auth, env }: RealAuth) {
   const discovery = idpDiscovery(env.issuer);
+  const redirectUri = `${rootOrigin()}/api/auth/callback/${PROVIDER_ID}`;
+  const tenantResource = (tenantId: string) =>
+    `https://${env.resourceHost}/tenants/${tenantId}`;
+
+  async function pendingLogin(field: "id" | "stateHash", value: string) {
+    const { adapter } = await auth.$context;
+    return adapter.findOne<PendingLogin>({
+      model: PENDING_LOGIN,
+      where: [{ field, value }],
+    });
+  }
+
+  async function authorizeRegistration(login: PendingLogin) {
+    const state = randomToken();
+    const codeVerifier = randomToken();
+    const { adapter } = await auth.$context;
+    await adapter.update({
+      model: PENDING_LOGIN,
+      where: [{ field: "id", value: login.id }],
+      update: { stateHash: sha256(state), codeVerifier },
+    });
+    const target = new URL((await discovery()).authorization_endpoint);
+    target.search = new URLSearchParams({
+      response_type: "code",
+      client_id: env.clientId,
+      redirect_uri: redirectUri,
+      scope: "tenant.join",
+      resource: tenantResource(login.tenantId),
+      audience: "backend-api",
+      state,
+      code_challenge: sha256(codeVerifier),
+      code_challenge_method: "S256",
+    }).toString();
+    const headers = new Headers({ location: target.href });
+    headers.append(
+      "set-cookie",
+      cookie(SIGNUP_COOKIE, login.id, LOGIN_TTL_SECONDS),
+    );
+    return new Response(null, { status: 302, headers });
+  }
+
+  async function exchangeRegistrationCode(code: string, codeVerifier: string) {
+    const response = await fetch((await discovery()).token_endpoint, {
+      method: "POST",
+      headers: {
+        authorization: encodeBasicCredentials(env.clientId, env.clientSecret),
+        "content-type": "application/x-www-form-urlencoded",
+        accept: "application/json",
+      },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: redirectUri,
+        code_verifier: codeVerifier,
+      }),
+    });
+    if (!response.ok) return undefined;
+    return registrationTokenResponse.parse(await response.json());
+  }
 
   async function endSessionEndpoint() {
     const { end_session_endpoint } = await discovery();
@@ -451,27 +532,33 @@ export function createLoginFlow({ auth, env }: RealAuth) {
         return Response.redirect(loginErrorUrl(host, "invalid_return"), 302);
       }
       return auth.api.startLogin({
-        body: { tenantId, host, returnPath },
+        body: { kind: "login", tenantId, host, returnPath },
         headers: request.headers,
+        asResponse: true,
+      });
+    },
+
+    startRegistration(
+      host: string,
+      tenantId: string,
+      returnPath: string,
+    ): Promise<Response> {
+      return auth.api.startLogin({
+        body: { kind: "registration", tenantId, host, returnPath },
         asResponse: true,
       });
     },
 
     async begin(request: Request): Promise<Response> {
       const loginId = new URL(request.url).searchParams.get("login");
-      const { adapter } = await auth.$context;
-      const login = loginId
-        ? await adapter.findOne<PendingLogin>({
-            model: PENDING_LOGIN,
-            where: [{ field: "id", value: loginId }],
-          })
-        : null;
+      const login = loginId ? await pendingLogin("id", loginId) : null;
       if (!login || login.codeHash || login.expiresAt <= new Date()) {
         return Response.redirect(
           loginErrorUrl(login?.host, "login_expired"),
           302,
         );
       }
+      if (login.kind === "registration") return authorizeRegistration(login);
       const { headers } = await auth.api.signInSocial({
         body: {
           provider: PROVIDER_ID,
@@ -479,14 +566,109 @@ export function createLoginFlow({ auth, env }: RealAuth) {
           errorCallbackURL: loginErrorUrl(login.host),
           additionalData: { loginId: login.id },
           additionalParams: {
-            resource: `https://${env.resourceHost}/tenants/${login.tenantId}`,
+            resource: tenantResource(login.tenantId),
             audience: "backend-api",
           },
         },
         headers: request.headers,
         returnHeaders: true,
       });
+      headers.append("set-cookie", cookie(SIGNUP_COOKIE, "", 0));
       return new Response(null, { status: 302, headers });
+    },
+
+    async registrationCallback(
+      request: Request,
+    ): Promise<Response | undefined> {
+      const params = new URL(request.url).searchParams;
+      const state = params.get("state");
+      const login = state
+        ? await pendingLogin("stateHash", sha256(state))
+        : null;
+      if (!login) return undefined;
+      const { adapter } = await auth.$context;
+      const where = [{ field: "id", value: login.id }];
+      const headers = new Headers({ "referrer-policy": "no-referrer" });
+      headers.append("set-cookie", cookie(SIGNUP_COOKIE, "", 0));
+      const redirect = (location: string) => {
+        headers.set("location", location);
+        return new Response(null, { status: 302, headers });
+      };
+      const code = params.get("code");
+      const tokens =
+        code && login.codeVerifier && login.expiresAt > new Date()
+          ? await exchangeRegistrationCode(code, login.codeVerifier)
+          : undefined;
+      if (!tokens) {
+        await adapter.delete({ model: PENDING_LOGIN, where });
+        return redirect(
+          loginErrorUrl(login.host, params.get("error") ?? "login_expired"),
+        );
+      }
+      const handoffCode = randomToken();
+      await adapter.update({
+        model: PENDING_LOGIN,
+        where,
+        update: {
+          stateHash: null,
+          codeVerifier: null,
+          codeHash: sha256(handoffCode),
+          accessToken: tokens.access_token,
+          accessTokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+          expiresAt: new Date(Date.now() + CODE_TTL_MS),
+        },
+      });
+      return redirect(
+        `${new URL(rootOrigin()).protocol}//${login.host}${login.returnPath}?code=${handoffCode}`,
+      );
+    },
+
+    async takeRegistration(request: Request): Promise<{
+      headers: Headers;
+      registration?: { tenantId: string; token: string };
+    }> {
+      const headers = new Headers({
+        "referrer-policy": "no-referrer",
+        "cache-control": "no-store",
+      });
+      const code = new URL(request.url).searchParams.get("code");
+      const { adapter } = await auth.$context;
+      const login = code
+        ? await adapter.consumeOne<PendingLogin>({
+            model: PENDING_LOGIN,
+            where: [{ field: "codeHash", value: sha256(code) }],
+          })
+        : null;
+      if (!login) return { headers };
+      const bindingCookie = binding(login.id);
+      headers.append("set-cookie", cookie(bindingCookie.name, "", 0));
+      const presented = parseCookies(request.headers.get("cookie") ?? "").get(
+        bindingCookie.name,
+      );
+      if (
+        login.kind !== "registration" ||
+        !login.accessToken ||
+        login.expiresAt <= new Date() ||
+        login.host !== request.headers.get("host") ||
+        !presented ||
+        sha256(presented) !== login.bindingHash
+      ) {
+        return { headers };
+      }
+      return {
+        headers,
+        registration: { tenantId: login.tenantId, token: login.accessToken },
+      };
+    },
+
+    async signupPending(cookieHeader: string): Promise<boolean> {
+      const loginId = parseCookies(cookieHeader).get(SIGNUP_COOKIE);
+      const login = loginId ? await pendingLogin("id", loginId) : null;
+      return (
+        login?.kind === "registration" &&
+        !!login.stateHash &&
+        login.expiresAt > new Date()
+      );
     },
 
     async logout(request: Request): Promise<Response> {

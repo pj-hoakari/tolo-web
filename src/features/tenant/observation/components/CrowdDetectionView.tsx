@@ -63,6 +63,7 @@ function CrowdDetectionViewComponent({
       <DetectionSettingsPanel
         settingsStore={settingsStore}
         viewStateStore={viewStateStore}
+        resultStore={resultStore}
         showLineCreationModeToggle={false}
       />
       {status === "error" && error && (

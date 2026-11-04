@@ -1,10 +1,18 @@
 import { expect, type Page, test } from "@playwright/test";
+import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
+import { isPointNode } from "@/features/tenant/management/graph/type";
 import { sampleEdgeDevicesWire } from "@/mocks/fixtures/edges";
 import type { MockRouterOverrides } from "@/mocks/router";
 
 type MockOverrides = Pick<
   MockRouterOverrides,
-  "devices" | "registerEdgeDeviceError" | "unregisterEdgeDeviceError"
+  | "devices"
+  | "registerEdgeDeviceError"
+  | "unregisterEdgeDeviceError"
+  | "graph"
+  | "flowElementStates"
+  | "getFlowElementStatesError"
+  | "getGraphError"
 >;
 
 const edgeA = "入口カメラ";
@@ -382,4 +390,107 @@ test("登録解除に失敗すると確認ダイアログに理由が表示さ�
     "観測デバイスが見つからないか、既に登録が解除されています。一覧を更新してください。",
   );
   await expect(main(page)).toContainText("観測デバイス（5）");
+});
+
+test.describe("flow-control の判定できない状態", () => {
+  const observationPoints = (page: Page, edgeName: string) =>
+    edgeRow(page, edgeName).getByRole("group", { name: "観測点" });
+  const linkedGraph = {
+    nodes: PLACEHOLDER_GRAPH.nodes.map((node) =>
+      isPointNode(node) && node.id === "ph_booth"
+        ? {
+            ...node,
+            data: { ...node.data, observationPointIds: ["a1b2c3d4e5f60718"] },
+          }
+        : node,
+    ),
+    edges: PLACEHOLDER_GRAPH.edges.map((edge) =>
+      edge.id === "ph_e2" && edge.data
+        ? {
+            ...edge,
+            data: { ...edge.data, observationPointIds: ["b2c3d4e5f6071829"] },
+          }
+        : edge,
+    ),
+  };
+
+  test("観測デバイス管理ページの観測点の一覧にも、判定できない理由と対処が表示される", async ({
+    page,
+  }) => {
+    await overrideMock(page, {
+      graph: linkedGraph,
+      flowElementStates: [
+        {
+          targetKey: "node:ph_booth",
+          observation: "ok",
+          history: "none",
+          linePoints: 5,
+          skipped: ["surge", "highStagnation", "combined", "puncture"],
+        },
+        {
+          targetKey: "edge:ph_e2",
+          observation: "hold",
+          history: "established",
+          linePoints: 1,
+          skipped: [],
+        },
+      ],
+    });
+    await page.reload();
+
+    const entrance = observationPoints(page, edgeA);
+    await expect(entrance).toContainText("入口");
+    await expect(entrance).toContainText("判定に使う履歴がまだありません");
+    await expect(entrance).toContainText(
+      "履歴がたまるまでしばらく待ってください",
+    );
+    await expect(entrance).toContainText(
+      "急増、停滞警戒、組合せ発火、パンクを判定できません",
+    );
+
+    const booth = observationPoints(page, edgeB);
+    await expect(booth).toContainText("ブース前");
+    await expect(booth).toContainText("計測値が届かず、値が止まっています");
+    await expect(booth).toContainText(
+      "直近の流量の計測値が 1 点しかありません",
+    );
+    await expect(booth).not.toContainText("判定できません");
+  });
+
+  test("判定に問題のない観測点には何も表示されない", async ({ page }) => {
+    await overrideMock(page, {
+      graph: linkedGraph,
+      flowElementStates: [
+        {
+          targetKey: "node:ph_booth",
+          observation: "ok",
+          history: "established",
+          linePoints: 5,
+          skipped: [],
+        },
+      ],
+    });
+    await page.reload();
+
+    await expect(observationPoints(page, edgeA)).toHaveText("入口");
+    await expect(observationPoints(page, edgeB)).toHaveText("ブース前");
+  });
+
+  test("判定の状態を取得できないときは、観測デバイスの一覧に取得できなかった旨が表示される", async ({
+    page,
+  }) => {
+    await overrideMock(page, { getFlowElementStatesError: true });
+    await page.reload();
+
+    await expect(main(page)).toContainText("判定の状態を取得できませんでした");
+  });
+
+  test("ルート図を取得できないときも、観測デバイスの一覧に判定の状態を取得できなかった旨が表示される", async ({
+    page,
+  }) => {
+    await overrideMock(page, { getGraphError: true });
+    await page.reload();
+
+    await expect(main(page)).toContainText("判定の状態を取得できませんでした");
+  });
 });

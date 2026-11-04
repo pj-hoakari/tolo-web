@@ -16,6 +16,7 @@ it("未選択ラインは破線、編集中は実線と矢印で描く", () => {
     lineTo: vi.fn(),
     arc: vi.fn(),
     fill: vi.fn(),
+    closePath: vi.fn(),
     strokeStyle: "",
     stroke() {
       strokes.push(this.strokeStyle);
@@ -29,8 +30,20 @@ it("未選択ラインは破線、編集中は実線と矢印で描く", () => {
     detections: [],
     lineCounts: {},
     countingLines: [
-      { id: "a", name: "", p1: { x: 0, y: 0 }, p2: { x: 100, y: 100 } },
-      { id: "b", name: "", p1: { x: 10, y: 0 }, p2: { x: 110, y: 100 } },
+      {
+        id: "a",
+        name: "",
+        p1: { x: 0, y: 0 },
+        p2: { x: 100, y: 100 },
+        areaWidth: 48,
+      },
+      {
+        id: "b",
+        name: "",
+        p1: { x: 10, y: 0 },
+        p2: { x: 110, y: 100 },
+        areaWidth: 48,
+      },
     ],
   };
   drawDetectionOverlay(context as unknown as CanvasRenderingContext2D, frame, {

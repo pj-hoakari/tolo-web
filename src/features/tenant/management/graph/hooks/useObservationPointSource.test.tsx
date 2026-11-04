@@ -36,6 +36,7 @@ vi.mock("@/lib/orpc", () => ({
   orpc: {
     observation: {
       listEdgeDevices: () => Promise.resolve({ devices }),
+      getFlowElementStates: () => Promise.resolve({ flowElementStates: [] }),
     },
   },
 }));

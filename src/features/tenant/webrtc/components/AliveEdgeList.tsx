@@ -1,6 +1,8 @@
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
+import { FlowStateNotes } from "@/features/flowState/FlowStateNotes";
+import type { FlowElementState } from "@/features/flowState/type";
 import { observationDevicePath } from "@/features/tenant/observation/routes";
 import type { EdgeDevicesStatus } from "../hooks/useEdgeDevices";
 import type { ConnectionStatus, EdgeDeviceItem } from "../type";
@@ -20,6 +22,8 @@ export type AliveEdgeListProps = {
   status: EdgeDevicesStatus;
   error: string | null;
   onRefresh: () => void;
+  flowStates?: ReadonlyMap<string, FlowElementState>;
+  flowStatesFailed?: boolean;
   connectedEdgeId: string | null;
   receiveStatus: ConnectionStatus;
   onConnect: (edgeId: string) => void;
@@ -35,6 +39,8 @@ export function AliveEdgeList({
   status,
   error,
   onRefresh,
+  flowStates,
+  flowStatesFailed,
   connectedEdgeId,
   receiveStatus,
   onConnect,
@@ -47,6 +53,7 @@ export function AliveEdgeList({
   const locale = useLocale();
   const t = useTranslations("Webrtc.aliveEdges");
   const tStatus = useTranslations("Webrtc.connectionStatus");
+  const tFlow = useTranslations("FlowState");
 
   const formatLastSeen = (lastHeartbeatAt: Date | null): string =>
     lastHeartbeatAt
@@ -96,6 +103,9 @@ export function AliveEdgeList({
           {t(`connection.${connectionNotice}`)}
         </p>
       )}
+      {flowStatesFailed ? (
+        <p className="text-sm text-destructive">{tFlow("error")}</p>
+      ) : null}
       {status === "error" && error ? (
         <p role="alert" className="text-sm text-destructive">
           {error}
@@ -138,17 +148,40 @@ export function AliveEdgeList({
                     )}
                     <span className="font-medium break-all">{name}</span>
                   </span>
-                  {isCamera && linkedPointNames.length > 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      {t("linkedPoint", { name: linkedPointNames.join(", ") })}
-                    </span>
-                  )}
-                  {!isCamera && (
-                    <span className="text-xs text-muted-foreground">
-                      {t("lastSeen", {
-                        time: formatLastSeen(edge.lastHeartbeatAt),
-                      })}
-                    </span>
+                  {isCamera ? (
+                    linkedPointNames.length > 0 ? (
+                      <span className="text-xs text-muted-foreground">
+                        {t("linkedPoint", {
+                          name: linkedPointNames.join(", "),
+                        })}
+                      </span>
+                    ) : null
+                  ) : (
+                    <>
+                      {edge.observationPoints.length > 0 ? (
+                        <fieldset
+                          aria-label={t("observationPoints")}
+                          className="mt-1 flex flex-col gap-1 text-sm"
+                        >
+                          {edge.observationPoints.map((point) => (
+                            <div key={point.observationPointId}>
+                              {point.name}
+                              <FlowStateNotes
+                                state={flowStates?.get(
+                                  point.observationPointId,
+                                )}
+                                className="text-xs"
+                              />
+                            </div>
+                          ))}
+                        </fieldset>
+                      ) : null}
+                      <span className="text-xs text-muted-foreground">
+                        {t("lastSeen", {
+                          time: formatLastSeen(edge.lastHeartbeatAt),
+                        })}
+                      </span>
+                    </>
                   )}
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">

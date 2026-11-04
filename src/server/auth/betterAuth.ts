@@ -9,6 +9,7 @@ import { rootOrigin } from "@/lib/control/tenant";
 import { discoveryUrl } from "./discovery";
 import { loginErrorUrl, loginHandoff, PROVIDER_ID } from "./login";
 import { machineSessionPlugin } from "./machineSession";
+import { tenantOnboarding } from "./onboarding";
 
 export const SESSION_COOKIE = "__Host-tolo.session_token";
 
@@ -249,6 +250,7 @@ export function authOptions(env: AuthEnv, lock?: SessionLock) {
       toloSession,
       loginHandoff(authLock),
       machineSessionPlugin(authLock, { issuer: env.issuer }),
+      tenantOnboarding,
     ],
   } satisfies BetterAuthOptions;
 }

@@ -35,6 +35,16 @@ const EVENT = "fedcba9876543210";
 const TOKEN_ENDPOINT = "https://idp.test/oauth2/token";
 const MINUTE = 60 * 1000;
 
+function jwtWithScope(scope: string) {
+  const part = (value: object) =>
+    Buffer.from(JSON.stringify(value)).toString("base64url");
+  return `${part({ alg: "RS256" })}.${part({ scope })}.signature`;
+}
+
+const OWNER_TENANT_ACCESS = jwtWithScope(
+  "openid tenant.read tenant.write events.read events.manage events.operate events.report",
+);
+
 function inProcessLock(): SessionLock {
   const tails = new Map<string, Promise<unknown>>();
   return (sessionId, task) => {
@@ -142,7 +152,7 @@ async function storedTenantAccess(auth: TestAuth, sessionId: string) {
 }
 
 const validTokens = () => ({
-  accessToken: "tenant-access-1",
+  accessToken: OWNER_TENANT_ACCESS,
   refreshToken: "refresh-1",
   accessTokenExpiresAt: new Date(Date.now() + 10 * MINUTE),
 });
@@ -213,7 +223,7 @@ describe("tenant_access", () => {
 
     await expect(
       sessionAuth.accessToken(headers, TENANT, tenantAccess),
-    ).resolves.toBe("tenant-access-1");
+    ).resolves.toBe(OWNER_TENANT_ACCESS);
     expect(idp).toHaveLength(0);
   });
 
@@ -268,7 +278,7 @@ describe("tenant_access", () => {
     ).resolves.toBe("access-from-other-refresh");
     await expect(
       sessionAuth.accessToken(onTenant.headers, TENANT, tenantAccess),
-    ).resolves.toBe("tenant-access-1");
+    ).resolves.toBe(OWNER_TENANT_ACCESS);
     expect(idp.map(({ form }) => form.get("refresh_token"))).toEqual([
       "other-refresh",
     ]);
@@ -345,13 +355,53 @@ describe("event_access", () => {
     );
     expect(Object.fromEntries(idp[0].form)).toEqual({
       grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
-      subject_token: "tenant-access-1",
+      subject_token: OWNER_TENANT_ACCESS,
       subject_token_type: "urn:ietf:params:oauth:token-type:access_token",
       resource: `https://api.tolo.test/tenants/${TENANT}/events/${EVENT}`,
       audience: "backend-api",
-      scope:
-        "tenant.read events.read events.manage events.operate events.report",
+      scope: "events.read events.manage events.operate events.report",
     });
+  });
+
+  it("requests only the event scopes that the session's tenant_access carries", async () => {
+    const { auth, sessionAuth } = createTestAuth();
+    const idp = idpTokenEndpoint();
+    const { headers } = await signIn(auth, {
+      tokens: {
+        ...validTokens(),
+        accessToken: jwtWithScope(
+          "openid tenant.read events.read events.report",
+        ),
+      },
+    });
+
+    await sessionAuth.accessToken(headers, TENANT, {
+      type: "event_access",
+      eventId: EVENT,
+      client: "console",
+    });
+
+    expect(idp[0].form.get("scope")).toBe("events.read events.report");
+  });
+
+  it("does not exchange a tenant_access that carries no event scope", async () => {
+    const { auth, sessionAuth } = createTestAuth();
+    const idp = idpTokenEndpoint();
+    const { headers } = await signIn(auth, {
+      tokens: {
+        ...validTokens(),
+        accessToken: jwtWithScope("openid tenant.read"),
+      },
+    });
+
+    await expect(
+      sessionAuth.accessToken(headers, TENANT, {
+        type: "event_access",
+        eventId: EVENT,
+        client: "console",
+      }),
+    ).rejects.toThrow("carries no event scope");
+    expect(idp).toHaveLength(0);
   });
 
   it("refuses the edge client for staff sessions", async () => {

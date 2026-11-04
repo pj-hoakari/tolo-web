@@ -22,11 +22,15 @@ import {
   GuestComponent,
 } from "@pj-hoakari/tolo-guest-client-es/tolo/guest/v1/guest_pb";
 import {
+  FlowHistoryTier,
+  FlowObservationState,
   MeasurementSource,
   type CameraLink as ProtoCameraLink,
   type EdgeDevice as ProtoEdgeDevice,
   EdgeDeviceKind as ProtoEdgeDeviceKind,
   EventType as ProtoEventType,
+  type FlowElementState as ProtoFlowElementState,
+  FlowJudgement as ProtoFlowJudgement,
   type ObservationPoint as ProtoObservationPoint,
   type ObservationSettings as ProtoObservationSettings,
 } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
@@ -40,6 +44,12 @@ import {
   EventStatus as ProtoEventStatus,
 } from "@pj-hoakari/tolo-tenant-management-connect-es/tolo/tenant/v1/tenant_pb";
 import { z } from "zod";
+import type {
+  FlowElementState,
+  FlowHistory,
+  FlowJudgement,
+  FlowObservation,
+} from "@/features/flowState/type";
 import {
   type GraphViolation,
   graphDataSchema,
@@ -68,9 +78,10 @@ import {
   sampleObservationDevicesWire,
 } from "@/mocks/fixtures/edges";
 import {
-  afterJoinPath,
+  authMockingEnabled,
   getRegistrationToken,
   getViewer,
+  prepareOnboarding,
   requestTenantId,
   type Viewer,
 } from "./auth";
@@ -108,14 +119,15 @@ import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
 import { guestPageClient } from "./guest";
 import { fromGuideMapResponse } from "./guideMap";
-import { issueRegistrationToken } from "./idp";
 import {
   consoleEdgeDeviceClient,
   consoleObservationSettingsClient,
+  consoleStatusQueryClient,
   edgeEdgeDeviceClient,
   edgeMeasurementIngestClient,
   listEdgeDevicesWithAccessToken,
 } from "./observation";
+import { claimTenantOwnership } from "./registration";
 import {
   connectionSignalingClient,
   consoleSignalingClient,
@@ -280,6 +292,10 @@ const registerEdgeDeviceInput = z
     }
   });
 
+export type RegisterTenantResult =
+  | { type: "created"; subdomain: string }
+  | { type: "authorize"; next: string };
+
 export interface ObservationPoint {
   observationPointId: string;
   name: string;
@@ -416,6 +432,40 @@ function toObservationSettings(
     eventType:
       EVENT_TYPES.find((t) => PROTO_EVENT_TYPES[t] === settings.eventType) ??
       null,
+  };
+}
+
+const FLOW_OBSERVATIONS: Partial<
+  Record<FlowObservationState, FlowObservation>
+> = {
+  [FlowObservationState.UNOBSERVED]: "unobserved",
+  [FlowObservationState.INVALID]: "invalid",
+  [FlowObservationState.HOLD]: "hold",
+  [FlowObservationState.STALE]: "stale",
+  [FlowObservationState.OK]: "ok",
+};
+
+const FLOW_HISTORIES: Partial<Record<FlowHistoryTier, FlowHistory>> = {
+  [FlowHistoryTier.NONE]: "none",
+  [FlowHistoryTier.WINDOW_ONLY]: "windowOnly",
+  [FlowHistoryTier.SHORT]: "short",
+  [FlowHistoryTier.ESTABLISHED]: "established",
+};
+
+const FLOW_JUDGEMENTS: Partial<Record<ProtoFlowJudgement, FlowJudgement>> = {
+  [ProtoFlowJudgement.SURGE]: "surge",
+  [ProtoFlowJudgement.HIGH_STAGNATION]: "highStagnation",
+  [ProtoFlowJudgement.COMBINED]: "combined",
+  [ProtoFlowJudgement.PUNCTURE]: "puncture",
+};
+
+function toFlowElementState(state: ProtoFlowElementState): FlowElementState {
+  return {
+    targetKey: state.targetKey,
+    observation: FLOW_OBSERVATIONS[state.observation] ?? null,
+    history: FLOW_HISTORIES[state.history] ?? null,
+    linePoints: state.linePoints,
+    skipped: state.skipped.flatMap((j) => FLOW_JUDGEMENTS[j] ?? []),
   };
 }
 
@@ -784,43 +834,54 @@ export const router = {
         z.object({
           name: z.string().trim().min(1),
           subdomain: z.string().trim().min(1),
-          ownerEmail: z.email(),
           ownerDisplayName: displayName,
         }),
       )
-      .handler(
-        async ({ input }): Promise<{ tenantId: string; subdomain: string }> => {
-          try {
-            const started =
-              await tenantRegistrationClient.startTenantRegistration({
-                name: input.name,
-                contractPlan: "standard",
-              });
-            if (!started.tenant) {
-              throw new Error("StartTenantRegistration returned no tenant");
-            }
-            const token = await issueRegistrationToken(input.ownerEmail);
-            const claimed = await tenantRegistrationClient.claimTenantOwnership(
+      .handler(async ({ input }): Promise<RegisterTenantResult> => {
+        const start = async () => {
+          const started =
+            await tenantRegistrationClient.startTenantRegistration({
+              name: input.name,
+              contractPlan: "standard",
+            });
+          if (!started.tenant) {
+            throw new Error("StartTenantRegistration returned no tenant");
+          }
+          return {
+            tenantId: started.tenant.tenantId,
+            ownershipClaimToken: started.ownershipClaimToken,
+            expiresAt: started.expiresAt
+              ? timestampDate(started.expiresAt)
+              : new Date(Date.now() + 60 * 60 * 1000),
+          };
+        };
+        try {
+          if (!authMockingEnabled()) {
+            const next = await prepareOnboarding(
               {
-                tenantId: started.tenant.tenantId,
-                ownershipClaimToken: started.ownershipClaimToken,
+                name: input.name,
                 subdomain: input.subdomain,
                 displayName: input.ownerDisplayName,
               },
-              { headers: { Authorization: `Bearer ${token}` } },
+              start,
             );
-            if (!claimed.tenant) {
-              throw new Error("ClaimTenantOwnership returned no tenant");
-            }
-            return {
-              tenantId: claimed.tenant.tenantId,
-              subdomain: claimed.tenant.subdomain,
-            };
-          } catch (err) {
-            throw toORPCError(err);
+            return { type: "authorize", next };
           }
-        },
-      ),
+          const started = await start();
+          const subdomain = await claimTenantOwnership(
+            {
+              tenantId: started.tenantId,
+              ownershipClaimToken: started.ownershipClaimToken,
+              subdomain: input.subdomain,
+              displayName: input.ownerDisplayName,
+            },
+            await getRegistrationToken(),
+          );
+          return { type: "created", subdomain };
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
     listEvents: os
       .input(
         z.object({
@@ -982,6 +1043,7 @@ export const router = {
       const invitationToken = await pendingInvitationToken();
       const tenantId = await requestTenantId();
       if (!invitationToken || !tenantId) throw new ORPCError("NOT_FOUND");
+      if (!authMockingEnabled()) return { next: "/auth/join" };
       const registrationToken = await getRegistrationToken();
       try {
         await relationRegistrationClient.acceptTenantInvitation(
@@ -989,13 +1051,13 @@ export const router = {
           { headers: { Authorization: `Bearer ${registrationToken}` } },
         );
       } catch (err) {
-        if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
-          throw new ORPCError("UNAUTHORIZED");
+        if (err instanceof ConnectError && err.code === Code.PermissionDenied) {
+          throw new ORPCError("FORBIDDEN");
         }
         throw toORPCError(err);
       }
       await forgetInvitation();
-      return { next: afterJoinPath() };
+      return { next: "/management" };
     }),
     revokeInvitation: os
       .input(z.object({ tenantId: publicId, invitationId: z.string().min(1) }))
@@ -1446,6 +1508,27 @@ export const router = {
               await edgeEdgeDeviceClient.listEdgeDeviceObservationPoints(input);
             return {
               observationPoints: res.observationPoints.map(toObservationPoint),
+            };
+          } catch (err) {
+            throw toORPCError(err);
+          }
+        },
+      ),
+    getFlowElementStates: os
+      .input(z.object({ eventId: z.string().min(1) }))
+      .handler(
+        async ({
+          input,
+        }): Promise<{ flowElementStates: FlowElementState[] }> => {
+          if (observationMocking()) {
+            return { flowElementStates: [] };
+          }
+          try {
+            const res = await consoleStatusQueryClient.getEventOverview(input);
+            return {
+              flowElementStates: (res.overview?.flowElementStates ?? []).map(
+                toFlowElementState,
+              ),
             };
           } catch (err) {
             throw toORPCError(err);

@@ -1,6 +1,6 @@
 import { GuestPage } from "../_components/GuestPage";
 
-export { generateMetadata } from "../page";
+export { generateMetadata, viewport } from "../page";
 
 export default async function TenantGuestFromQr({
   params,

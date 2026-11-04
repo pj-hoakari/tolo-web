@@ -6,7 +6,6 @@
     "title": "टेनेन्ट सिर्जना गर्नुहोस्",
     "name": "टेनेन्टको नाम",
     "subdomain": "सबडोमेन",
-    "ownerEmail": "मालिकको इमेल ठेगाना",
     "ownerDisplayName": "मालिकको देखिने नाम",
     "ownerDisplayNameDescription": "टेनेन्टका सदस्यहरूलाई देखिने नाम। बढीमा 64 अक्षर।",
     "submit": "सिर्जना गर्नुहोस्",
@@ -274,6 +273,50 @@
       "retry": "पुनः प्रयास"
     }
   },
+  "FlowState": {
+    "error": "निर्णयको अवस्था ल्याउन सकिएन",
+    "skipped": "निर्णय गर्न सकिँदैन: {judgements}",
+    "judgement": {
+      "surge": "अचानक वृद्धि",
+      "highStagnation": "जमघट चेतावनी",
+      "combined": "संयुक्त ट्रिगर",
+      "puncture": "पंक्चर"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "अवलोकन आइरहेको छैन",
+        "action": "उपकरण चलिरहेको छ कि जाँच्नुहोस्, रोकिएको भए पुनः सुरु गर्नुहोस्"
+      },
+      "invalid": {
+        "label": "अवलोकन गरिएका मान अमान्य छन्",
+        "action": "क्यामेराको कोण र छेक्ने वस्तु जस्ता जडान पुनरावलोकन गर्नुहोस्"
+      },
+      "hold": {
+        "label": "मापन आइरहेको छैन र मान रोकिएका छन्",
+        "action": "केही बेर पर्खनुहोस्, जारी रहे उपकरण पुनः सुरु गर्नुहोस्"
+      },
+      "stale": {
+        "label": "अवलोकन पुरानो भएको छ",
+        "action": "केही बेर पर्खनुहोस्, जारी रहे उपकरण पुनः सुरु गर्नुहोस्"
+      },
+      "noHistory": {
+        "label": "निर्णयका लागि अझै इतिहास छैन",
+        "action": "इतिहास जम्मा नहुन्जेल केही बेर पर्खनुहोस्"
+      },
+      "windowOnlyHistory": {
+        "label": "दीर्घकालीन इतिहास छैन; हालका मापनबाट मात्र निर्णय गरिँदैछ",
+        "action": "इतिहास जम्मा नहुन्जेल केही बेर पर्खनुहोस्"
+      },
+      "shortHistory": {
+        "label": "इतिहास ४ घण्टाभन्दा कम छ",
+        "action": "इतिहास जम्मा नहुन्जेल केही बेर पर्खनुहोस्"
+      },
+      "intermittentLine": {
+        "label": "हालका प्रवाह मापन {count} वटा मात्र छन्",
+        "action": "उपकरणले मापन जारी राखेको छ कि जाँच्नुहोस्, रोकिएको भए पुनः सुरु गर्नुहोस्"
+      }
+    }
+  },
   "Webrtc": {
     "connectionStatus": {
       "idle": "जोडिएको छैन",
@@ -319,7 +362,8 @@
         "authorized": "The camera connection delegation was saved.",
         "login_required": "Reauthorizing the camera connection requires a staff login. Use “Authorize observation page connection” again.",
         "failed": "Could not authorize the camera connection. Try again."
-      }
+      },
+      "observationPoints": "अवलोकन बिन्दु"
     },
     "receiver": {
       "stoppedTitle": "अवलोकन रोकियो",
@@ -457,7 +501,11 @@
       "count": "लाइन {index}: forward {forward} / backward {backward}",
       "namedCount": "{name}: forward {forward} / backward {backward}",
       "nameLabel": "छानिएको लाइनको नाम",
-      "namePlaceholder": "जस्तै: हल A प्रवेशद्वार, उत्तर करिडोर"
+      "namePlaceholder": "जस्तै: हल A प्रवेशद्वार, उत्तर करिडोर",
+      "areaWidthLabel": "छानिएको लाइनको क्षेत्रको चौडाइ (%)",
+      "areaWidthDescription": "लाइनलाई केन्द्र बनाएर बनेको पट्टीको पूरा चौडाइ, भिडियोको छोटो भुजाको प्रतिशतमा। पट्टीभित्र भएका मानिसहरूलाई लाइनको नाम भएको अवलोकन बिन्दुमा गनिन्छ।",
+      "reRegisterNote": "लाइन सारेको वा क्षेत्रको चौडाइ बदलेको अवलोकन बिन्दुको मानिस गणनाको इतिहास नयाँ सुरु गर्न त्यो अवलोकन बिन्दु फेरि दर्ता गर्नुहोस्।",
+      "areaOverlapWarning": "\"{first}\" र \"{second}\" का क्षेत्रहरू खप्टिएका छन्। खप्टिएको ठाउँका मानिसहरू दुवै अवलोकन बिन्दुमा गनिन्छन्।"
     }
   },
   "Observation": {
@@ -554,6 +602,8 @@
   },
   "Guest": {
     "pageSubtitle": "पाहुना पृष्ठ",
+    "showOnMap": "नक्सामा हेर्नुहोस्",
+    "showOnMapLabel": "{place} नक्सामा हेर्नुहोस्",
     "waitingNumber": {
       "title": "हालको प्रतीक्षा संख्या",
       "unit": "जना"
@@ -602,13 +652,11 @@
     },
     "guideMap": {
       "title": "मार्गदर्शन नक्सा",
-      "hint": "गन्तव्य छान्नुभयो भने बाटो देखिन्छ",
       "currentLocation": "तपाईं यहाँ हुनुहुन्छ",
       "destinationsLabel": "गन्तव्यहरू",
       "expand": "नक्सा ठूलो पार्नुहोस्",
       "collapse": "नक्सा सानो पार्नुहोस्",
-      "search": "गन्तव्य खोज्नुहोस्",
-      "noResults": "नतिजा छैन",
+      "selectDestination": "गन्तव्य छान्नुहोस्",
       "reset": "रिसेट",
       "goal": "गन्तव्य",
       "rideTo": "{via} बाट {floor} सम्म",
@@ -621,17 +669,16 @@
       "walkStep": "{floor}: {from} → {to}",
       "rideStep": "{via}: {from} → {to}",
       "noRoute": "यो गन्तव्यसम्मको बाटो भेटिएन",
-      "zoomInHint": "ठूलो बनाउन नक्सा ट्याप गर्नुहोस्",
       "zoomOutHint": "सार्न तान्नुहोस् · पूरै हेर्न ट्याप गर्नुहोस्",
       "closed": " (बन्द)",
       "crowdAvoided": "यो मार्गले भीडभाड भएका ठाउँहरू छल्छ",
       "crowdRerouted": "भीडको अवस्था बदलिएकाले मार्ग परिवर्तन गरियो",
       "crowdThroughDanger": "यो मार्ग खतरनाक रूपमा भीड भएको ठाउँबाट जान्छ। कृपया कर्मचारीको निर्देशन पालना गर्नुहोस्",
-      "crowdLegend": "भीड"
+      "crowdLegend": "भीड",
+      "stepsLabel": "मार्ग निर्देशन",
+      "nextFloor": "अर्को: {floor} को मार्ग"
     },
     "floor": {
-      "title": "हालको तल्ला",
-      "placeholderName": "१ तल्ला",
       "selectLabel": "देखाउने तल्ला"
     },
     "congestion": {
@@ -643,7 +690,9 @@
       },
       "danger": "खतरा",
       "updatedAt": "{time} मा अद्यावधिक",
-      "empty": "भीडको जानकारी अझै छैन"
+      "empty": "भीडको जानकारी अझै छैन",
+      "floorRange": "{from}–{to}",
+      "floorJoin": ", "
     },
     "loading": "लोड हुँदैछ…",
     "loadError": "जानकारी ल्याउन सकिएन"
@@ -699,6 +748,22 @@
       "submit": "लग इन गर्नुहोस्",
       "invalidCredentials": "ID वा पासवर्ड मिलेन।",
       "failed": "लग इन गर्न सकिएन। फेरि प्रयास गर्दा पनि भएन भने, आफ्नो टेनेन्टको पृष्ठबाट फेरि सुरु गर्नुहोस्।"
+    },
+    "signup": {
+      "title": "खाता बनाउनुहोस्",
+      "description": "यस टेनेन्टमा प्रयोग गर्ने खाताको ID र पासवर्ड छान्नुहोस्।",
+      "loginDescription": "यस टेनेन्टमा पहिले नै खाता छ भने, त्यसको ID र पासवर्डले लग इन गर्नुहोस्।",
+      "usernameLabel": "ID",
+      "usernameDescription": "५० अक्षरसम्म, खाली ठाउँ बिना।",
+      "passwordLabel": "पासवर्ड",
+      "passwordDescription": "कम्तीमा ८ अक्षर र बढीमा ७२ बाइट।",
+      "submit": "खाता बनाउनुहोस्",
+      "invalidUsername": "ID खाली ठाउँ बिना १ देखि ५० अक्षरको हुनुपर्छ।",
+      "lengthOutOfRange": "पासवर्ड कम्तीमा ८ अक्षर र बढीमा ७२ बाइटको हुनुपर्छ।",
+      "usernameTaken": "यो ID पहिले नै प्रयोगमा छ। अर्को ID छान्नुहोस्।",
+      "failed": "खाता बनाउन सकिएन। यो जारी रहेमा, सुरुबाट फेरि गर्नुहोस्।",
+      "useExistingAccount": "पहिले नै भएको खाताबाट लग इन गर्नुहोस्",
+      "createAccount": "नयाँ खाता बनाउनुहोस्"
     },
     "loggedOut": {
       "title": "लग आउट भयो",

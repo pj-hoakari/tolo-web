@@ -25,6 +25,10 @@ import {
   EdgeDeviceKind,
   EdgeDeviceSchema,
   EventType,
+  FlowHistoryTier,
+  FlowJudgement,
+  FlowObservationState,
+  GetEventOverviewResponseSchema,
   GetObservationSettingsResponseSchema,
   HeartbeatResponseSchema,
   ListEdgeDeviceObservationPointsResponseSchema,
@@ -40,10 +44,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
 import { sampleObservationDevicesWire } from "@/mocks/fixtures/edges";
 import {
-  afterJoinPath,
+  authMockingEnabled,
   getAccessToken,
   getRegistrationToken,
   getViewer,
+  prepareOnboarding,
   requestTenantId,
 } from "./auth";
 import {
@@ -61,11 +66,12 @@ import {
 } from "./auth/machineSessionRevocation";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { guestPageClient } from "./guest";
-import { issueRegistrationToken } from "./idp";
 import * as observationModule from "./observation";
+
 import {
   consoleEdgeDeviceClient,
   consoleObservationSettingsClient,
+  consoleStatusQueryClient,
   edgeEdgeDeviceClient,
   edgeMeasurementIngestClient,
 } from "./observation";
@@ -112,7 +118,7 @@ vi.mock("./tenantManagement", () => ({
   relationRegistrationClient: { acceptTenantInvitation: vi.fn() },
 }));
 vi.mock("./auth", () => ({
-  afterJoinPath: vi.fn(),
+  authMockingEnabled: vi.fn(),
   getAccessToken: vi.fn(),
   getRegistrationToken: vi.fn(),
   getViewer: vi.fn(async () => ({
@@ -120,6 +126,7 @@ vi.mock("./auth", () => ({
     userId: "user-1",
     tenantId: "0123456789abcdef",
   })),
+  prepareOnboarding: vi.fn(),
   requestTenantId: vi.fn(),
 }));
 vi.mock("./auth/connection", () => ({
@@ -151,7 +158,6 @@ vi.mock("./auth/invitation", () => ({
   forgetInvitation: vi.fn(),
   pendingInvitationToken: vi.fn(),
 }));
-vi.mock("./idp", () => ({ issueRegistrationToken: vi.fn() }));
 
 const eventId = "fedcba9876543210";
 const [device] = sampleObservationDevicesWire;
@@ -280,71 +286,113 @@ describe("graph.saveGraph", () => {
 
 describe("tenant.register", () => {
   const tenantId = "0123456789abcdef";
+  const expiresAt = new Date("2026-11-04T00:00:00.000Z");
   const register = () =>
     call(router.tenant.register, {
       name: "Acme",
       subdomain: "acme",
-      ownerEmail: "owner@example.com",
       ownerDisplayName: " Owner ",
     });
-
-  it("starts a registration with the standard plan, then claims it with a registration token issued to the owner and the owner's trimmed display name", async () => {
-    const start = vi
+  const started = () =>
+    vi
       .mocked(tenantRegistrationClient.startTenantRegistration)
       .mockResolvedValue({
         tenant: { tenantId },
         ownershipClaimToken: "claim-token",
+        expiresAt: timestampFromDate(expiresAt),
       } as never);
-    const issue = vi
-      .mocked(issueRegistrationToken)
-      .mockResolvedValue("registration-token");
-    const claim = vi
-      .mocked(tenantRegistrationClient.claimTenantOwnership)
-      .mockResolvedValue({ tenant: { tenantId, subdomain: "acme" } } as never);
 
-    await expect(register()).resolves.toEqual({ tenantId, subdomain: "acme" });
+  describe("with the real IdP", () => {
+    it("keeps the provisional tenant and the owner's input for the registration authorization and sends the browser to start it, without claiming the tenant yet", async () => {
+      vi.mocked(authMockingEnabled).mockReturnValue(false);
+      const start = started();
+      const prepare = vi
+        .mocked(prepareOnboarding)
+        .mockImplementation(async (_, startRegistration) => {
+          await startRegistration();
+          return "/onboarding/start";
+        });
 
-    expect(start).toHaveBeenCalledWith({
-      name: "Acme",
-      contractPlan: "standard",
-    });
-    expect(issue).toHaveBeenCalledWith("owner@example.com");
-    expect(claim).toHaveBeenCalledWith(
-      {
+      await expect(register()).resolves.toEqual({
+        type: "authorize",
+        next: "/onboarding/start",
+      });
+
+      expect(prepare).toHaveBeenCalledWith(
+        { name: "Acme", subdomain: "acme", displayName: "Owner" },
+        expect.any(Function),
+      );
+      await expect(prepare.mock.calls[0][1]()).resolves.toEqual({
         tenantId,
         ownershipClaimToken: "claim-token",
-        subdomain: "acme",
-        displayName: "Owner",
-      },
-      { headers: { Authorization: "Bearer registration-token" } },
-    );
-    expect(start.mock.invocationCallOrder[0]).toBeLessThan(
-      issue.mock.invocationCallOrder[0],
-    );
-    expect(issue.mock.invocationCallOrder[0]).toBeLessThan(
-      claim.mock.invocationCallOrder[0],
-    );
+        expiresAt,
+      });
+      expect(start).toHaveBeenCalledWith({
+        name: "Acme",
+        contractPlan: "standard",
+      });
+      expect(getRegistrationToken).not.toHaveBeenCalled();
+      expect(
+        tenantRegistrationClient.claimTenantOwnership,
+      ).not.toHaveBeenCalled();
+    });
   });
 
-  it("passes a taken subdomain to the browser as a conflict without the server message", async () => {
-    vi.mocked(
-      tenantRegistrationClient.startTenantRegistration,
-    ).mockResolvedValue({
-      tenant: { tenantId },
-      ownershipClaimToken: "claim-token",
-    } as never);
-    vi.mocked(issueRegistrationToken).mockResolvedValue("registration-token");
-    vi.mocked(tenantRegistrationClient.claimTenantOwnership).mockRejectedValue(
-      new ConnectError("subdomain is taken", Code.AlreadyExists),
-    );
+  describe("with AUTH_MOCKING", () => {
+    it("starts a registration with the standard plan, then claims it at once with the mock user's registration token and the owner's trimmed display name", async () => {
+      vi.mocked(authMockingEnabled).mockReturnValue(true);
+      const start = started();
+      const issue = vi
+        .mocked(getRegistrationToken)
+        .mockResolvedValue("registration-token");
+      const claim = vi
+        .mocked(tenantRegistrationClient.claimTenantOwnership)
+        .mockResolvedValue({
+          tenant: { tenantId, subdomain: "acme" },
+        } as never);
 
-    const error = await register().catch((e: unknown) => e);
+      await expect(register()).resolves.toEqual({
+        type: "created",
+        subdomain: "acme",
+      });
 
-    expect(error).toBeInstanceOf(ORPCError);
-    expect(error).toMatchObject({ code: "CONFLICT" });
-    expect((error as ORPCError<string, unknown>).message).not.toContain(
-      "subdomain is taken",
-    );
+      expect(start).toHaveBeenCalledWith({
+        name: "Acme",
+        contractPlan: "standard",
+      });
+      expect(claim).toHaveBeenCalledWith(
+        {
+          tenantId,
+          ownershipClaimToken: "claim-token",
+          subdomain: "acme",
+          displayName: "Owner",
+        },
+        { headers: { Authorization: "Bearer registration-token" } },
+      );
+      expect(start.mock.invocationCallOrder[0]).toBeLessThan(
+        issue.mock.invocationCallOrder[0],
+      );
+      expect(prepareOnboarding).not.toHaveBeenCalled();
+    });
+
+    it("passes a taken subdomain to the browser as a conflict without the server message", async () => {
+      vi.mocked(authMockingEnabled).mockReturnValue(true);
+      started();
+      vi.mocked(getRegistrationToken).mockResolvedValue("registration-token");
+      vi.mocked(
+        tenantRegistrationClient.claimTenantOwnership,
+      ).mockRejectedValue(
+        new ConnectError("subdomain is taken", Code.AlreadyExists),
+      );
+
+      const error = await register().catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ORPCError);
+      expect(error).toMatchObject({ code: "CONFLICT" });
+      expect((error as ORPCError<string, unknown>).message).not.toContain(
+        "subdomain is taken",
+      );
+    });
   });
 });
 
@@ -598,10 +646,22 @@ describe("tenant.acceptInvitation", () => {
     vi.mocked(pendingInvitationToken).mockResolvedValue("invitation-token");
     vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
     vi.mocked(getRegistrationToken).mockResolvedValue("registration-token");
-    vi.mocked(afterJoinPath).mockReturnValue("/management");
+    vi.mocked(authMockingEnabled).mockReturnValue(true);
   };
 
-  it("accepts the kept invitation for the tenant of the host with a registration token, forgets it, and returns where to go next", async () => {
+  it("with the real IdP, sends the browser to start the registration authorization on this host without accepting yet", async () => {
+    pending();
+    vi.mocked(authMockingEnabled).mockReturnValue(false);
+
+    await expect(accept()).resolves.toEqual({ next: "/auth/join" });
+    expect(getRegistrationToken).not.toHaveBeenCalled();
+    expect(
+      relationRegistrationClient.acceptTenantInvitation,
+    ).not.toHaveBeenCalled();
+    expect(forgetInvitation).not.toHaveBeenCalled();
+  });
+
+  it("with AUTH_MOCKING, accepts the kept invitation for the tenant of the host with a registration token, forgets it, and continues on the management page", async () => {
     pending();
     const acceptTenantInvitation = vi
       .mocked(relationRegistrationClient.acceptTenantInvitation)
@@ -633,7 +693,7 @@ describe("tenant.acceptInvitation", () => {
   );
 
   it.each([
-    ["an unusable invitation", Code.Unauthenticated, "UNAUTHORIZED"],
+    ["an unusable invitation", Code.PermissionDenied, "FORBIDDEN"],
     ["an existing membership", Code.FailedPrecondition, "PRECONDITION_FAILED"],
   ])(
     "passes the refusal of %s to the browser by its code without the server message and keeps the invitation",
@@ -1272,6 +1332,55 @@ describe("observation settings", () => {
     expect((error as ORPCError<string, unknown>).message).not.toContain(
       "history_window_days",
     );
+  });
+});
+
+describe("observation.getFlowElementStates", () => {
+  it("returns the flow element states of the latest cycle with the axes as names and unspecified values as null", async () => {
+    const get = vi
+      .spyOn(consoleStatusQueryClient, "getEventOverview")
+      .mockResolvedValue(
+        create(GetEventOverviewResponseSchema, {
+          overview: {
+            flowElementStates: [
+              {
+                targetKey: "node:gate",
+                observation: FlowObservationState.HOLD,
+                history: FlowHistoryTier.WINDOW_ONLY,
+                linePoints: 1,
+                skipped: [
+                  FlowJudgement.SURGE,
+                  FlowJudgement.UNSPECIFIED,
+                  FlowJudgement.PUNCTURE,
+                ],
+              },
+              { targetKey: "edge:hall" },
+            ],
+          },
+        }),
+      );
+
+    await expect(
+      call(router.observation.getFlowElementStates, { eventId }),
+    ).resolves.toEqual({
+      flowElementStates: [
+        {
+          targetKey: "node:gate",
+          observation: "hold",
+          history: "windowOnly",
+          linePoints: 1,
+          skipped: ["surge", "puncture"],
+        },
+        {
+          targetKey: "edge:hall",
+          observation: null,
+          history: null,
+          linePoints: 0,
+          skipped: [],
+        },
+      ],
+    });
+    expect(get).toHaveBeenCalledWith({ eventId });
   });
 });
 

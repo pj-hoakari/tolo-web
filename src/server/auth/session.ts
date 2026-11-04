@@ -8,8 +8,12 @@ const ABSOLUTE_LIFETIME_MS = 12 * 60 * 60 * 1000;
 const EXPIRY_MARGIN_MS = 5_000;
 const TENANT_ACCESS_TOKEN = "tenantAccessToken";
 const EVENT_ACCESS_TOKEN = "eventAccessToken";
-const STAFF_EVENT_SCOPES =
-  "tenant.read events.read events.manage events.operate events.report";
+const EVENT_SCOPES = [
+  "events.read",
+  "events.manage",
+  "events.operate",
+  "events.report",
+];
 
 const tokenExchangeResponse = z.object({
   access_token: z.string(),
@@ -41,6 +45,25 @@ type ClientCredentials = {
   clientId: string;
   clientSecret: string;
 };
+
+const scopeClaim = z.object({ scope: z.string() });
+
+export function tokenScopes(accessToken: string): Set<string> {
+  const payload = accessToken.split(".")[1] ?? "";
+  const { scope } = scopeClaim.parse(
+    JSON.parse(Buffer.from(payload, "base64url").toString("utf8")),
+  );
+  return new Set(scope.split(" "));
+}
+
+function eventScopes(tenantAccessToken: string): string {
+  const granted = tokenScopes(tenantAccessToken);
+  const scopes = EVENT_SCOPES.filter((name) => granted.has(name));
+  if (scopes.length === 0) {
+    throw new Error("the session's tenant_access carries no event scope");
+  }
+  return scopes.join(" ");
+}
 
 type SessionLogin = {
   sessionId: string;
@@ -184,9 +207,10 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
     if (stored && stored.expiresAt.getTime() - Date.now() > EXPIRY_MARGIN_MS) {
       return stored.accessToken;
     }
+    const subjectToken = await tenantAccess(login.sessionId, client);
     const params: Record<string, string> = {
       grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
-      subject_token: await tenantAccess(login.sessionId, client),
+      subject_token: subjectToken,
       subject_token_type: "urn:ietf:params:oauth:token-type:access_token",
       resource: `https://${env.resourceHost}/tenants/${login.tenantId}/events/${encodeURIComponent(eventId)}`,
       audience: "backend-api",
@@ -195,7 +219,7 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
       params.scope = "events.report";
       params.edge_device_id = login.edgeDeviceId as string;
     } else {
-      params.scope = STAFF_EVENT_SCOPES;
+      params.scope = eventScopes(subjectToken);
     }
     const response = await postToTokenEndpoint(client, params);
     if (!response.ok) {

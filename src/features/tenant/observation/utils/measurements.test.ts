@@ -10,10 +10,11 @@ const line = (id: string, name: string) => ({
   name,
   p1: { x: 0, y: 0 },
   p2: { x: 1, y: 0 },
+  areaWidth: 0.1,
 });
 
 describe("buildWindowMeasurements", () => {
-  it("reports per observation point the crossings counted within the window", () => {
+  it("同じカメラの 2 つの観測点には、それぞれのエリアで数えた人数の平均が入る", () => {
     const windowStart = new Date("2026-10-10T00:00:00Z");
     const windowEnd = new Date("2026-10-10T00:00:30Z");
     const pointIdByLineId = mapLinesToObservationPoints(
@@ -38,7 +39,10 @@ describe("buildWindowMeasurements", () => {
           c: { forward: 9, backward: 9 },
           d: { forward: 0, backward: 0 },
         },
-        detectedPeople: { frames: 10, people: 40 },
+        detectedPeople: {
+          "0000000000000001": { frames: 10, people: 30 },
+          "0000000000000002": { frames: 10, people: 10 },
+        },
       },
       current: {
         lineCounts: {
@@ -47,7 +51,10 @@ describe("buildWindowMeasurements", () => {
           c: { forward: 1, backward: 0 },
           d: { forward: 7, backward: 7 },
         },
-        detectedPeople: { frames: 14, people: 50 },
+        detectedPeople: {
+          "0000000000000001": { frames: 14, people: 38 },
+          "0000000000000002": { frames: 14, people: 12 },
+        },
       },
       windowStart,
       windowEnd,
@@ -60,7 +67,7 @@ describe("buildWindowMeasurements", () => {
         windowEnd,
         countIn: 4,
         countOut: 4,
-        meanDetectedPeople: 2.5,
+        meanDetectedPeople: 2,
       },
       {
         observationPointId: "0000000000000002",
@@ -68,7 +75,7 @@ describe("buildWindowMeasurements", () => {
         windowEnd,
         countIn: 1,
         countOut: 0,
-        meanDetectedPeople: 2.5,
+        meanDetectedPeople: 0.5,
       },
     ]);
   });
@@ -84,8 +91,14 @@ describe("buildWindowMeasurements", () => {
   ])("%s", (_label, current, expected) => {
     const [measurement] = buildWindowMeasurements({
       pointIdByLineId: new Map([["a", "0000000000000001"]]),
-      previous: { lineCounts: {}, detectedPeople: { frames: 3, people: 6 } },
-      current: { lineCounts: {}, detectedPeople: current },
+      previous: {
+        lineCounts: {},
+        detectedPeople: { "0000000000000001": { frames: 3, people: 6 } },
+      },
+      current: {
+        lineCounts: {},
+        detectedPeople: { "0000000000000001": current },
+      },
       windowStart: new Date("2026-10-10T00:00:00Z"),
       windowEnd: new Date("2026-10-10T00:00:30Z"),
     });

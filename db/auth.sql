@@ -18,11 +18,19 @@ create table if not exists "tenantAccessToken" ("id" text not null primary key, 
 
 create table if not exists "eventAccessToken" ("id" text not null primary key, "sessionId" text not null references "session" ("id") on delete cascade, "eventId" text not null, "accessToken" text not null, "expiresAt" timestamptz not null);
 
-create table if not exists "pendingLogin" ("id" text not null primary key, "tenantId" text not null, "host" text not null, "hostGeneration" integer not null default 0, "browserHash" text not null, "bindingHash" text not null, "returnPath" text not null, "expiresAt" timestamptz not null, "codeHash" text unique, "userId" text, "subject" text, "accessToken" text, "refreshToken" text, "accessTokenExpiresAt" timestamptz, "idToken" text);
+create table if not exists "pendingLogin" ("id" text not null primary key, "kind" text not null, "tenantId" text not null, "host" text not null, "hostGeneration" integer not null default 0, "browserHash" text not null, "bindingHash" text not null, "returnPath" text not null, "expiresAt" timestamptz not null, "codeHash" text unique, "userId" text, "subject" text, "accessToken" text, "refreshToken" text, "accessTokenExpiresAt" timestamptz, "idToken" text, "stateHash" text unique, "codeVerifier" text);
+
+create table if not exists "tenantRegistration" ("id" text not null primary key, "tenantId" text not null, "ownershipClaimToken" text not null, "name" text not null, "subdomain" text not null, "displayName" text not null, "bindingHash" text not null unique, "expiresAt" timestamptz not null);
+
+alter table "pendingLogin" add column if not exists "kind" text not null default 'login';
 
 alter table "pendingLogin" add column if not exists "hostGeneration" integer not null default 0;
 
 alter table "pendingLogin" add column if not exists "browserHash" text;
+
+alter table "pendingLogin" add column if not exists "stateHash" text;
+
+alter table "pendingLogin" add column if not exists "codeVerifier" text;
 
 create table if not exists "browserHostState" ("id" text not null primary key, "host" text not null, "browserHash" text not null, "generation" integer not null default 0, "machineAt" timestamptz, "updatedAt" timestamptz not null);
 

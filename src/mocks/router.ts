@@ -1,6 +1,7 @@
 import type { CommonORPCErrorCode } from "@orpc/client";
 import { ORPCError, os } from "@orpc/server";
 import { z } from "zod";
+import type { FlowElementState } from "@/features/flowState/type";
 import {
   type GraphViolation,
   graphDataSchema,
@@ -35,6 +36,7 @@ import type {
   GuestMessage,
   GuestQueue,
   RegisteredEdgeDevice,
+  RegisterTenantResult,
 } from "@/server/router";
 import {
   registeredEdgeDeviceWire,
@@ -72,6 +74,8 @@ export type MockRouterOverrides = {
   };
   getObservationSettingsError?: boolean;
   updateObservationSettingsError?: CommonORPCErrorCode;
+  flowElementStates?: FlowElementState[];
+  getFlowElementStatesError?: boolean;
   /** graph.getGraph が返すグラフ（未指定なら PLACEHOLDER_GRAPH） */
   graph?: GraphData;
   getGraphError?: boolean;
@@ -135,6 +139,8 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     requestCameraConnectionError,
     getObservationSettingsError = false,
     updateObservationSettingsError,
+    flowElementStates = [],
+    getFlowElementStatesError = false,
     graph = PLACEHOLDER_GRAPH,
     getGraphError = false,
     saveGraphError,
@@ -383,6 +389,16 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           });
         }
       }),
+      getFlowElementStates: os
+        .input(z.object({ eventId: z.string().min(1) }))
+        .handler(
+          async (): Promise<{ flowElementStates: FlowElementState[] }> => {
+            if (getFlowElementStatesError) {
+              throw new ORPCError("INTERNAL_SERVER_ERROR");
+            }
+            return { flowElementStates };
+          },
+        ),
       getSettings: os
         .input(z.object({ eventId: z.string().min(1) }))
         .handler(async ({ input }): Promise<ObservationSettings> => {
@@ -424,22 +440,17 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           z.object({
             name: z.string().trim().min(1),
             subdomain: z.string().trim().min(1),
-            ownerEmail: z.email(),
             ownerDisplayName: z.string().trim().min(1).max(64),
           }),
         )
-        .handler(
-          async ({
-            input,
-          }): Promise<{ tenantId: string; subdomain: string }> => {
-            if (registerTenantError !== undefined) {
-              throw new ORPCError(registerTenantError, {
-                message: MOCK_SERVER_MESSAGE,
-              });
-            }
-            return { tenantId: "00000000000000a1", subdomain: input.subdomain };
-          },
-        ),
+        .handler(async ({ input }): Promise<RegisterTenantResult> => {
+          if (registerTenantError !== undefined) {
+            throw new ORPCError(registerTenantError, {
+              message: MOCK_SERVER_MESSAGE,
+            });
+          }
+          return { type: "created", subdomain: input.subdomain };
+        }),
       listEvents: os
         .input(
           z.object({

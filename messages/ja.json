@@ -6,7 +6,6 @@
     "title": "テナントを作成",
     "name": "テナント名",
     "subdomain": "サブドメイン名",
-    "ownerEmail": "オーナーのメールアドレス",
     "ownerDisplayName": "オーナーの表示名",
     "ownerDisplayNameDescription": "テナントのメンバーに表示する名前です。64 文字まで入力できます。",
     "submit": "作成",
@@ -274,6 +273,50 @@
       "retry": "再試行"
     }
   },
+  "FlowState": {
+    "error": "判定の状態を取得できませんでした",
+    "skipped": "{judgements}を判定できません",
+    "judgement": {
+      "surge": "急増",
+      "highStagnation": "停滞警戒",
+      "combined": "組合せ発火",
+      "puncture": "パンク"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "観測が届いていません",
+        "action": "端末が動いているか確かめ、止まっていれば再起動してください"
+      },
+      "invalid": {
+        "label": "観測値が無効です",
+        "action": "カメラの向きや遮るものなど、設置を見直してください"
+      },
+      "hold": {
+        "label": "計測値が届かず、値が止まっています",
+        "action": "しばらく待ち、続くときは端末を再起動してください"
+      },
+      "stale": {
+        "label": "観測が古くなっています",
+        "action": "しばらく待ち、続くときは端末を再起動してください"
+      },
+      "noHistory": {
+        "label": "判定に使う履歴がまだありません",
+        "action": "履歴がたまるまでしばらく待ってください"
+      },
+      "windowOnlyHistory": {
+        "label": "長期の履歴がなく、直近の計測値だけで判定しています",
+        "action": "履歴がたまるまでしばらく待ってください"
+      },
+      "shortHistory": {
+        "label": "履歴が 4 時間分たまっていません",
+        "action": "履歴がたまるまでしばらく待ってください"
+      },
+      "intermittentLine": {
+        "label": "直近の流量の計測値が {count} 点しかありません",
+        "action": "端末が計測を続けているか確かめ、止まっていれば再起動してください"
+      }
+    }
+  },
   "Webrtc": {
     "connectionStatus": {
       "idle": "未接続",
@@ -319,7 +362,8 @@
         "authorized": "カメラ接続の委任を保存しました。",
         "login_required": "カメラ接続の認可にはスタッフの再ログインが必要です。もう一度「観測ページの接続を許可」からやり直してください。",
         "failed": "カメラ接続の認可に失敗しました。もう一度お試しください。"
-      }
+      },
+      "observationPoints": "観測点"
     },
     "receiver": {
       "stoppedTitle": "観測が停止しました",
@@ -457,7 +501,11 @@
       "count": "ライン {index}: forward {forward} / backward {backward}",
       "namedCount": "{name}: forward {forward} / backward {backward}",
       "nameLabel": "選択ラインの名前",
-      "namePlaceholder": "例：ホールA入口、連絡通路北側"
+      "namePlaceholder": "例：ホールA入口、連絡通路北側",
+      "areaWidthLabel": "選択ラインのエリアの幅（%）",
+      "areaWidthDescription": "ラインを中心にした帯の全幅を、画面の短辺に対する割合で指定します。帯の中にいる人を、ラインの名前の観測点の人数として数えます。",
+      "reRegisterNote": "ラインの位置やエリアの幅を変えた観測点は、人数の履歴を切り直すために観測点を登録し直してください。",
+      "areaOverlapWarning": "「{first}」と「{second}」のエリアが重なっています。重なった場所にいる人は両方の観測点に数えます。"
     }
   },
   "Observation": {
@@ -554,6 +602,8 @@
   },
   "Guest": {
     "pageSubtitle": "ゲストページ",
+    "showOnMap": "地図で見る",
+    "showOnMapLabel": "{place}を地図で見る",
     "waitingNumber": {
       "title": "現在の待ち人数",
       "unit": "人"
@@ -602,13 +652,11 @@
     },
     "guideMap": {
       "title": "案内マップ",
-      "hint": "目的地を選択すると経路が表示されます",
       "currentLocation": "現在地",
       "destinationsLabel": "目的地",
       "expand": "地図を拡大",
       "collapse": "地図を縮小",
-      "search": "目的地を検索",
-      "noResults": "見つかりませんでした",
+      "selectDestination": "目的地を選んでください",
       "reset": "リセット",
       "goal": "目的地",
       "rideTo": "{via}で{floor}へ",
@@ -621,17 +669,16 @@
       "walkStep": "{floor}：{from} → {to}",
       "rideStep": "{via}で {from} → {to}",
       "noRoute": "この目的地への経路が見つかりませんでした",
-      "zoomInHint": "地図をタップで拡大",
       "zoomOutHint": "ドラッグで移動・タップで全体表示",
       "closed": "（通行止め）",
       "crowdAvoided": "混雑している所を避けたルートです",
       "crowdRerouted": "混雑状況が変わったため、ルートを変更しました",
       "crowdThroughDanger": "混雑で危険な場所を通らないと行けません。スタッフの案内に従ってください",
-      "crowdLegend": "混雑"
+      "crowdLegend": "混雑",
+      "stepsLabel": "道順",
+      "nextFloor": "次へ：{floor}の道順"
     },
     "floor": {
-      "title": "現在のフロア",
-      "placeholderName": "1F",
       "selectLabel": "表示するフロア"
     },
     "congestion": {
@@ -643,7 +690,9 @@
       },
       "danger": "危険",
       "updatedAt": "{time} 更新",
-      "empty": "混雑の情報はまだありません"
+      "empty": "混雑の情報はまだありません",
+      "floorRange": "{from}〜{to}",
+      "floorJoin": "・"
     },
     "loading": "読み込み中…",
     "loadError": "情報を取得できませんでした"
@@ -699,6 +748,22 @@
       "submit": "ログイン",
       "invalidCredentials": "ID またはパスワードが違います。",
       "failed": "ログインできませんでした。もう一度試しても続くときは、利用していたテナントのページからやり直してください。"
+    },
+    "signup": {
+      "title": "アカウントを作成",
+      "description": "このテナントで使うアカウントの ID とパスワードを決めてください。",
+      "loginDescription": "このテナントのアカウントを持っているときは、その ID とパスワードでログインしてください。",
+      "usernameLabel": "ID",
+      "usernameDescription": "50 文字まで。空白は使えません。",
+      "passwordLabel": "パスワード",
+      "passwordDescription": "8 文字以上、72 バイト以内です。",
+      "submit": "アカウントを作成",
+      "invalidUsername": "ID は空白を含まない 50 文字以内にしてください。",
+      "lengthOutOfRange": "パスワードは 8 文字以上、72 バイト以内にしてください。",
+      "usernameTaken": "この ID は既に使われています。別の ID を指定してください。",
+      "failed": "アカウントを作成できませんでした。もう一度試しても続くときは、最初からやり直してください。",
+      "useExistingAccount": "作成済みのアカウントでログインする",
+      "createAccount": "新しいアカウントを作成する"
     },
     "loggedOut": {
       "title": "ログアウトしました",

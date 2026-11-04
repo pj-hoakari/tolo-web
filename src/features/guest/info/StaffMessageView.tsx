@@ -29,7 +29,7 @@ export function StaffMessageView({
   });
 
   if (messages.length === 0) {
-    return <p className="text-sm text-primary/55">{emptyText}</p>;
+    return <p className="text-sm text-primary/70">{emptyText}</p>;
   }
 
   return (
@@ -45,7 +45,7 @@ export function StaffMessageView({
           {message.deliveredAt && (
             <time
               dateTime={message.deliveredAt}
-              className="mt-3 block text-right text-xs text-primary/55"
+              className="mt-3 block text-right text-xs text-primary/70"
             >
               {dateFormatter.format(new Date(message.deliveredAt))}
             </time>

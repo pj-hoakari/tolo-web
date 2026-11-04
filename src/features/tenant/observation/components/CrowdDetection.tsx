@@ -16,6 +16,7 @@ import { useVideoSender } from "@/features/tenant/webrtc/hooks/useVideoSender";
 import { clearCameraConnectionAutoStart } from "@/features/tenant/webrtc/utils/cameraConnection";
 import { orpc } from "@/lib/orpc";
 import { cn } from "@/lib/utils";
+import { useCrowdDetectionLoop } from "../hooks/useCrowdDetectionLoop";
 import { useCrowdVideoSources } from "../hooks/useCrowdVideoSources";
 import { useEspCameraAutoStart } from "../hooks/useEspCameraAutoStart";
 import { useMultiCameraDetectionLoop } from "../hooks/useMultiCameraDetectionLoop";
@@ -257,6 +258,44 @@ export function CrowdDetection({
     settingsStore: selectedSettingsStore,
   });
 
+  const reportingCameras = useMemo<
+    ObservationReportingCamera[] | undefined
+  >(() => {
+    if (effectiveMode !== "esp") {
+      return undefined;
+    }
+    return cameras.flatMap((camera) => {
+      if (!camera.observationPointId) {
+        return [];
+      }
+      const cameraResultStore = cameraResultStores.get(camera.edgeDeviceId);
+      const cameraSettingsStore = cameraSettingsStores.get(camera.edgeDeviceId);
+      if (!cameraResultStore || !cameraSettingsStore) {
+        return [];
+      }
+      return [
+        {
+          key: camera.edgeDeviceId,
+          observationPointId: camera.observationPointId,
+          settingsStore: cameraSettingsStore,
+          resultStore: cameraResultStore,
+        },
+      ];
+    });
+  }, [effectiveMode, cameras, cameraResultStores, cameraSettingsStores]);
+
+  const { unregistered, pointIdByName } = useObservationReporting({
+    enabled: canReport,
+    eventId,
+    edgeDeviceId,
+    listening: API_MOCKING_ENABLED || edgeId !== null,
+    status,
+    settingsStore,
+    resultStore,
+    cameras: reportingCameras,
+    isFresh,
+  });
+
   const handleCameraPhase = useCallback(
     (key: string, phase: CameraCyclePhase, cause?: unknown) => {
       const error =
@@ -286,7 +325,7 @@ export function CrowdDetection({
   }, [status]);
 
   useMultiCameraDetectionLoop({
-    sources: videoSources,
+    sources: effectiveMode === "esp" ? videoSources : new Map(),
     selectedKey,
     isFresh,
     overlayCanvasRef,
@@ -303,42 +342,19 @@ export function CrowdDetection({
     onDetectionFrame: sendDetectionFrame,
   });
 
-  const reportingCameras = useMemo<
-    ObservationReportingCamera[] | undefined
-  >(() => {
-    if (effectiveMode !== "esp") {
-      return undefined;
-    }
-    return cameras.flatMap((camera) => {
-      if (!camera.observationPointId) {
-        return [];
-      }
-      const cameraResultStore = cameraResultStores.get(camera.edgeDeviceId);
-      const cameraSettingsStore = cameraSettingsStores.get(camera.edgeDeviceId);
-      if (!cameraResultStore || !cameraSettingsStore) {
-        return [];
-      }
-      return [
-        {
-          key: camera.edgeDeviceId,
-          observationPointId: camera.observationPointId,
-          settingsStore: cameraSettingsStore,
-          resultStore: cameraResultStore,
-        },
-      ];
-    });
-  }, [effectiveMode, cameras, cameraResultStores, cameraSettingsStores]);
-
-  const { unregistered } = useObservationReporting({
-    enabled: canReport,
-    eventId,
-    edgeDeviceId,
-    listening: API_MOCKING_ENABLED || edgeId !== null,
-    status,
-    settingsStore,
+  useCrowdDetectionLoop({
+    videoRef,
+    overlayCanvasRef,
+    lineCanvasRef,
+    status: effectiveMode === "dev" ? status : "idle",
+    settingsStore: selectedSettingsStore,
+    viewStateStore: selectedViewStateStore,
     resultStore,
-    cameras: reportingCameras,
-    isFresh,
+    observationPointIdByName: pointIdByName,
+    onBroadcastStreamChange: setBroadcastStream,
+    onDetectionFrame: sendDetectionFrame,
+    onDetectionError: (cause) =>
+      handleCameraPhase(selectedKey ?? LOCAL_SOURCE_KEY, "error", cause),
   });
 
   const handleSourceChange = useCallback((factory: CrowdVideoSourceFactory) => {

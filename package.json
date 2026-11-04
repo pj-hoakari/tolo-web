@@ -34,7 +34,7 @@
     "@pj-hoakari/tolo-tenant-management-connect-es": "0.6.0-dev",
     "@pj-hoakari/web-crowd-detection-utils": "^0.7.0",
     "@xyflow/react": "^12.11.0",
-    "better-auth": "1.7.14",
+    "better-auth": "1.7.15",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "firebase": "^13.0.0",

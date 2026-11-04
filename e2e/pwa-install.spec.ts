@@ -239,7 +239,7 @@ test.describe("online standalone app", () => {
   test.use({ viewport: { width: 1600, height: 1000 } });
   test.beforeEach(async ({ page }) => emulateStandalone(page));
 
-  test("guest search works and the next launch restores its public tenant URL", async ({
+  test("guest destination selection works and the next launch restores its public tenant URL", async ({
     page,
   }) => {
     await page.goto("/event/test/guest");
@@ -247,10 +247,11 @@ test.describe("online standalone app", () => {
       page.getByRole("heading", { level: 1, name: "0123456789abcdef" }),
     ).toBeVisible();
     await expect(installButton(page)).toHaveCount(0);
-    const search = page.getByRole("textbox", { name: "目的地を検索" });
-    await search.fill("204");
-    await page.getByRole("button", { name: /204/ }).click();
-    await expect(search).toHaveValue("");
+    // 目的地はプルダウンから選ぶ
+    const destination = page.getByRole("button", { name: /目的地/ });
+    await destination.click();
+    await page.getByRole("option", { name: "204", exact: true }).click();
+    await expect(destination).toContainText("204");
     await expect(
       page.getByRole("button", { name: "リセット", exact: true }),
     ).toBeVisible();
@@ -348,7 +349,11 @@ test.describe("online standalone app", () => {
     ).toBeEnabled();
     await expect(installButton(page)).toHaveCount(0);
     await page.getByRole("button", { name: "詳細調整", exact: true }).click();
-    await expect(page.getByRole("spinbutton")).toHaveCount(3);
+    await expect(
+      page.getByRole("spinbutton", {
+        name: /^(検出感度|追跡のつながりやすさ|検出間隔 ms)$/,
+      }),
+    ).toHaveCount(3);
     await page.getByRole("button", { name: "画面ロック", exact: true }).click();
     await expect(
       page.getByRole("heading", { level: 2, name: "画面ロック中" }),

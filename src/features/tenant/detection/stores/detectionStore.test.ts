@@ -7,6 +7,7 @@ import {
   applySettings,
   createCameraDetectionStoreMaps,
   createDetectionStores,
+  DEFAULT_AREA_WIDTH,
   type DetectionSettings,
   INITIAL_SETTINGS,
   normalizeCountingLineDirection,
@@ -25,12 +26,14 @@ describe("カウントラインの forward 方向", () => {
         name: "入口",
         p1: { x: 0.8, y: 0.7 },
         p2: { x: 0.2, y: 0.3 },
+        areaWidth: 0.1,
       }),
     ).toEqual({
       id: "line-2",
       name: "入口",
       p1: { x: 0.2, y: 0.3 },
       p2: { x: 0.8, y: 0.7 },
+      areaWidth: 0.1,
     });
   });
 
@@ -42,6 +45,7 @@ describe("カウントラインの forward 方向", () => {
       normalizeCountingLineDirection({
         id: "line-2",
         name: "",
+        areaWidth: 0.1,
         ...points,
       }),
     ).toEqual({
@@ -49,6 +53,7 @@ describe("カウントラインの forward 方向", () => {
       name: "",
       p1: { x: 0.5, y: 0.8 },
       p2: { x: 0.49, y: 0.2 },
+      areaWidth: 0.1,
     });
   });
 
@@ -59,18 +64,20 @@ describe("カウントラインの forward 方向", () => {
         name: "出口",
         p1: { x: 0, y: 0.6 },
         p2: { x: 1, y: 0.6 },
+        areaWidth: 0.1,
       }),
     ).toEqual({
       id: "line-1",
       name: "出口",
       p1: { x: 1, y: 0.6 },
       p2: { x: 0, y: 0.6 },
+      areaWidth: 0.1,
     });
   });
 });
 
 describe("applyCountingLines", () => {
-  it("0〜1 の範囲に丸める", () => {
+  it("座標は 0〜1、エリアの幅は 0.01〜1 の範囲に丸める", () => {
     const { settingsStore } = createDetectionStores();
 
     applyCountingLines(settingsStore, [
@@ -79,6 +86,7 @@ describe("applyCountingLines", () => {
         name: "",
         p1: { x: -0.5, y: 0.2 },
         p2: { x: 1.5, y: 0.2 },
+        areaWidth: 2,
       },
     ]);
 
@@ -88,6 +96,7 @@ describe("applyCountingLines", () => {
         name: "",
         p1: { x: 0, y: 0.2 },
         p2: { x: 1, y: 0.2 },
+        areaWidth: 1,
       },
     ]);
   });
@@ -141,6 +150,7 @@ describe("applySettings", () => {
           name: "通路",
           p1: { x: -1, y: 0.5 },
           p2: { x: 2, y: 0.5 },
+          areaWidth: 0,
         },
       ],
     });
@@ -156,6 +166,7 @@ describe("applySettings", () => {
           name: "通路",
           p1: { x: 0, y: 0.5 },
           p2: { x: 1, y: 0.5 },
+          areaWidth: 0.01,
         },
       ],
     });
@@ -183,6 +194,7 @@ describe("parseDetectionSettings", () => {
         name: "ホールA入口",
         p1: { x: 0, y: 0.6 },
         p2: { x: 1, y: 0.6 },
+        areaWidth: 0.25,
       },
     ],
   };
@@ -203,6 +215,18 @@ describe("parseDetectionSettings", () => {
     });
   });
 
+  it("エリアの幅を持たない相手のラインは既定の幅として通す", () => {
+    const legacy = structuredClone(valid);
+    const [{ areaWidth: _areaWidth, ...line }] = legacy.countingLines;
+
+    expect(
+      parseDetectionSettings({ ...legacy, countingLines: [line] }),
+    ).toEqual({
+      ...valid,
+      countingLines: [{ ...line, areaWidth: DEFAULT_AREA_WIDTH }],
+    });
+  });
+
   it("余計なキーは落とす", () => {
     const parsed = parseDetectionSettings({
       ...structuredClone(valid),
@@ -220,6 +244,13 @@ describe("parseDetectionSettings", () => {
     [
       "ライン名が文字列でない",
       { ...valid, countingLines: [{ ...valid.countingLines[0], name: 123 }] },
+    ],
+    [
+      "エリアの幅が数値でない",
+      {
+        ...valid,
+        countingLines: [{ ...valid.countingLines[0], areaWidth: "0.1" }],
+      },
     ],
     [
       "座標が欠けたライン",
@@ -364,6 +395,7 @@ describe("カメラごとの設定と画面操作の状態", () => {
       {
         id: "camera-a-line",
         name: "入口",
+        areaWidth: 0.1,
         p1: { x: 0.1, y: 0.2 },
         p2: { x: 0.9, y: 0.8 },
       },

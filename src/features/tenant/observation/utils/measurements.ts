@@ -1,4 +1,5 @@
 import {
+  type DetectedPeopleTally,
   type DetectionCountingLineSetting,
   type DetectionResult,
   INITIAL_DETECTED_PEOPLE,
@@ -21,8 +22,8 @@ function delta(previous: number, current: number): number {
 }
 
 function meanDetectedPeople(
-  previous: ResultSnapshot["detectedPeople"],
-  current: ResultSnapshot["detectedPeople"],
+  previous: DetectedPeopleTally,
+  current: DetectedPeopleTally,
 ): number | undefined {
   const base =
     current.frames >= previous.frames ? previous : INITIAL_DETECTED_PEOPLE;
@@ -68,14 +69,14 @@ export function buildWindowMeasurements({
   windowStart: Date;
   windowEnd: Date;
 }): WindowMeasurement[] {
-  const mean = meanDetectedPeople(
-    previous.detectedPeople,
-    current.detectedPeople,
-  );
   const byPoint = new Map<string, WindowMeasurement>();
   for (const [lineId, observationPointId] of pointIdByLineId) {
     const before = previous.lineCounts[lineId] ?? INITIAL_LINE_COUNT;
     const after = current.lineCounts[lineId] ?? INITIAL_LINE_COUNT;
+    const mean = meanDetectedPeople(
+      previous.detectedPeople[observationPointId] ?? INITIAL_DETECTED_PEOPLE,
+      current.detectedPeople[observationPointId] ?? INITIAL_DETECTED_PEOPLE,
+    );
     const measurement = byPoint.get(observationPointId) ?? {
       observationPointId,
       windowStart,
