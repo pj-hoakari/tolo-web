@@ -194,6 +194,9 @@ export function createConnectionAuth(
     (Number(process.env.AUTH_CONNECTION_TTL_SECONDS) > 0
       ? Number(process.env.AUTH_CONNECTION_TTL_SECONDS) * 1000
       : DEFAULT_AUTHORIZATION_TTL_MS);
+  // The local auth mock uses a synthetic staff subject, while the real IdP
+  // login still returns the seeded user. Keep the real subject match strict.
+  const requireStaffMatch = process.env.AUTH_MOCKING !== "enabled";
 
   function environment(redirectUri?: string): ConnectionEnvironment {
     const { issuer, connectionClientId, connectionClientSecret, resourceHost } =
@@ -670,6 +673,7 @@ export function createConnectionAuth(
       });
       if (!response.ok) {
         await response.text();
+        console.error("connection token exchange failed", response.status);
         return finish("failed");
       }
       let tokens: z.infer<typeof tokenResponse>;
@@ -683,9 +687,10 @@ export function createConnectionAuth(
       try {
         subject = await verifyIdToken(env, tokens.id_token, pending.nonce);
       } catch {
+        console.error("connection id token verification failed");
         return finish("failed");
       }
-      if (subject !== pending.staffSub) {
+      if (requireStaffMatch && subject !== pending.staffSub) {
         return finish("failed");
       }
       const saved = await saveAuthorizationIfCurrent(pending, tokens, subject);
