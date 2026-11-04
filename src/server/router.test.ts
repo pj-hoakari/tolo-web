@@ -36,7 +36,7 @@ import {
 } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
 import { Role } from "@pj-hoakari/tolo-tenant-management-connect-es/tolo/relation/v1/relation_pb";
 import { EventStatus as ProtoEventStatus } from "@pj-hoakari/tolo-tenant-management-connect-es/tolo/tenant/v1/tenant_pb";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
 import { sampleObservationDevicesWire } from "@/mocks/fixtures/edges";
 import {
@@ -55,6 +55,10 @@ import {
   withCameraConnectionAuthorization,
 } from "./auth/connection";
 import { forgetInvitation, pendingInvitationToken } from "./auth/invitation";
+import {
+  revokeMachineSessionsForEdge,
+  revokeMachineSessionsForEvent,
+} from "./auth/machineSessionRevocation";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { guestPageClient } from "./guest";
 import { issueRegistrationToken } from "./idp";
@@ -134,6 +138,15 @@ vi.mock("./auth/connection", () => ({
   deleteConnectionDelegationsForPage: vi.fn(),
   withCameraConnectionAuthorization: vi.fn(),
 }));
+vi.mock("./auth/eventLifecycle", () => ({
+  withEventLifecycle: vi.fn((_eventId: string, task: () => Promise<unknown>) =>
+    task(),
+  ),
+}));
+vi.mock("./auth/machineSessionRevocation", () => ({
+  revokeMachineSessionsForEvent: vi.fn(),
+  revokeMachineSessionsForEdge: vi.fn(),
+}));
 vi.mock("./auth/invitation", () => ({
   forgetInvitation: vi.fn(),
   pendingInvitationToken: vi.fn(),
@@ -142,6 +155,13 @@ vi.mock("./idp", () => ({ issueRegistrationToken: vi.fn() }));
 
 const eventId = "fedcba9876543210";
 const [device] = sampleObservationDevicesWire;
+
+beforeEach(() => {
+  vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+  vi.mocked(tenantManagementClient.listEvents).mockResolvedValue({
+    events: [{ eventId, name: "Event", status: ProtoEventStatus.OPEN }],
+  } as never);
+});
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -1099,6 +1119,10 @@ describe("observation.unregisterEdgeDevice", () => {
 
     await expect(unregister("0123456789abcdee")).resolves.toBeUndefined();
     expect(order).toEqual(["list", "revoke", "unregister"]);
+    expect(revokeMachineSessionsForEdge).toHaveBeenCalledWith(
+      eventId,
+      "0123456789abcdee",
+    );
     expect(deleteConnectionDelegationsForCamera).toHaveBeenCalledWith(
       eventId,
       "0123456789abcdee",
@@ -1429,6 +1453,7 @@ describe("tenant.archiveEvent camera revocation", () => {
       call(router.tenant.archiveEvent, { eventId }),
     ).resolves.toEqual({ eventId, name: "Event", status: "archived" });
     expect(order).toEqual(["list", "revoke", "revoke", "delete", "transition"]);
+    expect(revokeMachineSessionsForEvent).toHaveBeenCalledWith(eventId);
     expect(globalThis.fetch).toHaveBeenCalledWith(
       "https://idp.test/api/device-authorization/revoke",
       expect.objectContaining({

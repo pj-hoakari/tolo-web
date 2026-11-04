@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getViewer, requestTenantId } from "@/server/auth";
 import { browserCookieValue } from "@/server/auth/browser";
 import { getConnectionAuth } from "@/server/auth/connection";
+import { withEventLifecycle } from "@/server/auth/eventLifecycle";
 import { sameHostPath } from "@/server/auth/login";
 import {
   getMachineAuth,
@@ -9,6 +10,7 @@ import {
   machineResultPath,
 } from "@/server/auth/machine";
 import { delegatedPageCameras } from "@/server/cameraDelegation";
+import { requireApprovableEvent } from "@/server/eventStatus";
 
 export const dynamic = "force-dynamic";
 
@@ -47,51 +49,57 @@ export async function GET(request: Request) {
   }
 
   try {
-    const cameraIds = await delegatedPageCameras(eventId, pageEdgeDeviceId);
-    if (!cameraIds) {
-      return backTo(request, "/auth/error?error=machine_page_not_found");
-    }
-    const connection = getConnectionAuth();
-    const authorized = await connection.hasAuthorization({
-      tenantId,
-      eventId,
-      pageEdgeDeviceId,
-    });
-    if (!authorized) {
-      const failed = connectionNotice(url.searchParams.get("cameraConnection"));
-      if (failed) return backTo(request, machineResultPath(returnPath, failed));
-      const returnTo = `${url.pathname}${url.search}`;
-      const query = new URLSearchParams({
+    return await withEventLifecycle(eventId, async () => {
+      await requireApprovableEvent(eventId);
+      const cameraIds = await delegatedPageCameras(eventId, pageEdgeDeviceId);
+      if (!cameraIds) {
+        return backTo(request, "/auth/error?error=machine_page_not_found");
+      }
+      const connection = getConnectionAuth();
+      const authorized = await connection.hasAuthorization({
+        tenantId,
         eventId,
         pageEdgeDeviceId,
-        return: returnTo,
       });
-      return backTo(request, `/api/auth/connection/start?${query}`);
-    }
+      if (!authorized) {
+        const failed = connectionNotice(
+          url.searchParams.get("cameraConnection"),
+        );
+        if (failed)
+          return backTo(request, machineResultPath(returnPath, failed));
+        const returnTo = `${url.pathname}${url.search}`;
+        const query = new URLSearchParams({
+          eventId,
+          pageEdgeDeviceId,
+          return: returnTo,
+        });
+        return backTo(request, `/api/auth/connection/start?${query}`);
+      }
 
-    const started = await getMachineAuth().start({
-      tenantId,
-      eventId,
-      pageEdgeDeviceId,
-      staffSub: viewer.userId,
-      host: request.headers.get("host") ?? url.host,
-      returnPath,
-      browserCookie: browserCookieValue(request.headers.get("cookie")),
-    });
-    const response = NextResponse.redirect(started.location, 302);
-    response.cookies.set(
-      started.binding.name,
-      started.binding.value,
-      started.binding.attributes,
-    );
-    if (started.browser) {
+      const started = await getMachineAuth().start({
+        tenantId,
+        eventId,
+        pageEdgeDeviceId,
+        staffSub: viewer.userId,
+        host: request.headers.get("host") ?? url.host,
+        returnPath,
+        browserCookie: browserCookieValue(request.headers.get("cookie")),
+      });
+      const response = NextResponse.redirect(started.location, 302);
       response.cookies.set(
-        started.browser.name,
-        started.browser.value,
-        started.browser.attributes,
+        started.binding.name,
+        started.binding.value,
+        started.binding.attributes,
       );
-    }
-    return response;
+      if (started.browser) {
+        response.cookies.set(
+          started.browser.name,
+          started.browser.value,
+          started.browser.attributes,
+        );
+      }
+      return response;
+    });
   } catch (error) {
     console.error(
       "failed to start the observation page machine session",

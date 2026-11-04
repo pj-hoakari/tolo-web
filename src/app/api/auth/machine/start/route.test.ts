@@ -20,6 +20,14 @@ vi.mock("@/server/auth/machine", async (importOriginal) => ({
 vi.mock("@/server/cameraDelegation", () => ({
   delegatedPageCameras: vi.fn(),
 }));
+vi.mock("@/server/auth/eventLifecycle", () => ({
+  withEventLifecycle: vi.fn((_eventId: string, task: () => Promise<unknown>) =>
+    task(),
+  ),
+}));
+vi.mock("@/server/eventStatus", () => ({
+  requireApprovableEvent: vi.fn(),
+}));
 
 const TENANT = "0123456789abcdef";
 const EVENT = "fedcba9876543210";

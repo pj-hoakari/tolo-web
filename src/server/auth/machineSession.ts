@@ -224,11 +224,19 @@ export function machineSessionPlugin(
   } satisfies BetterAuthPlugin;
 }
 
+function machineLogoutOrigin(handoff: PendingMachineHandoff): string {
+  const origin = new URL(rootOrigin());
+  const tenant = new URL(`http://${handoff.host}`);
+  if (tenant.port) origin.port = tenant.port;
+  return origin.origin;
+}
+
 async function machineLogoutURL(
   handoff: PendingMachineHandoff,
   discovery: ReturnType<typeof idpDiscovery>,
 ): Promise<string> {
-  const fallback = new URL(`${rootOrigin()}/auth/logged-out`);
+  const loggedOut = `${machineLogoutOrigin(handoff)}/auth/logged-out`;
+  const fallback = new URL(loggedOut);
   fallback.searchParams.set("state", machineLogoutState(handoff));
   if (!handoff.idToken) return fallback.href;
   try {
@@ -236,10 +244,7 @@ async function machineLogoutURL(
     if (!end_session_endpoint) return fallback.href;
     const target = new URL(end_session_endpoint);
     target.searchParams.set("id_token_hint", handoff.idToken);
-    target.searchParams.set(
-      "post_logout_redirect_uri",
-      `${rootOrigin()}/auth/logged-out`,
-    );
+    target.searchParams.set("post_logout_redirect_uri", loggedOut);
     target.searchParams.set("state", machineLogoutState(handoff));
     return target.href;
   } catch {
