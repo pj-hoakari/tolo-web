@@ -349,7 +349,11 @@ test.describe("online standalone app", () => {
     ).toBeEnabled();
     await expect(installButton(page)).toHaveCount(0);
     await page.getByRole("button", { name: "詳細調整", exact: true }).click();
-    await expect(page.getByRole("spinbutton")).toHaveCount(3);
+    await expect(
+      page.getByRole("spinbutton", {
+        name: /^(検出感度|追跡のつながりやすさ|検出間隔 ms)$/,
+      }),
+    ).toHaveCount(3);
     await page.getByRole("button", { name: "画面ロック", exact: true }).click();
     await expect(
       page.getByRole("heading", { level: 2, name: "画面ロック中" }),
