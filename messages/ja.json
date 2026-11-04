@@ -380,6 +380,8 @@
       "title": "ESP32 カメラの初期設定",
       "description": "「{name}」({id}) に Wi-Fi と接続先を書き込みます。",
       "reapprovalNotice": "一時停止中のカメラの認可をやり直します。この操作で一時停止が解除され、端末が再び接続できるようになります。",
+      "reapprovalDescription": "「{name}」({id}) のデバイス認可をやり直します。",
+      "reapprovalStart": "認可をやり直す",
       "trigger": "設定",
       "wifiSsidLabel": "Wi-Fi SSID",
       "wifiPasswordLabel": "Wi-Fi パスワード",
