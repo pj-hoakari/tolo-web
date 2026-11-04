@@ -1906,7 +1906,7 @@ packages:
       '@connectrpc/connect': ^2.1.1
 
   '@pj-hoakari/tolo-observation-client-es@file:vendor/pj-hoakari-tolo-observation-client-es-0.1.0.tgz':
-    resolution: {integrity: sha512-4rJqwvYiMTBZIu+6axDH/L6g+vnpDPl3qxwTA9JRyK6sbpkC11MQIKKKP0aCjYF8LMhDVD92WD82VFXqslCjfg==, tarball: file:vendor/pj-hoakari-tolo-observation-client-es-0.1.0.tgz}
+    resolution: {integrity: sha512-TeC7+y75jLN+HsvTMqi62qVQYtEIbgGlzzNl9YSZxEyoHBDDYxhdO9aPXMESf3kQWScbEiTPGUtEAPI6vEmY0g==, tarball: file:vendor/pj-hoakari-tolo-observation-client-es-0.1.0.tgz}
     version: 0.1.0
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
