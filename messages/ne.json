@@ -344,7 +344,8 @@
       "openHere": "यो उपकरणमा खोल्नुहोस्",
       "openHereLabel": "“{name}” यो उपकरणमा खोल्नुहोस्",
       "unregister": "दर्ता हटाउनुहोस्",
-      "unregisterLabel": "“{name}” को दर्ता हटाउनुहोस्"
+      "unregisterLabel": "“{name}” को दर्ता हटाउनुहोस्",
+      "observationPoints": "अवलोकन बिन्दु"
     },
     "receiver": {
       "stoppedTitle": "अवलोकन रोकियो",

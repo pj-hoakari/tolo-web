@@ -1,4 +1,5 @@
 import { useLocale, useTranslations } from "next-intl";
+import { cn } from "@/lib/utils";
 import type { FlowElementState, FlowHistory, FlowObservation } from "./type";
 
 type FlowIssue =
@@ -38,15 +39,22 @@ function flowIssuesOf(state: FlowElementState): FlowIssue[] {
 
 export function FlowStateNotes({
   state,
+  className,
 }: {
   state: FlowElementState | undefined;
+  className?: string;
 }) {
   const t = useTranslations("FlowState");
   const locale = useLocale();
   if (!state) return null;
   const issues = flowIssuesOf(state);
   return (
-    <span className="mt-0.5 block space-y-0.5 text-[9px] text-amber-700 dark:text-amber-400">
+    <span
+      className={cn(
+        "mt-0.5 block space-y-0.5 text-[9px] text-amber-700 dark:text-amber-400",
+        className,
+      )}
+    >
       {issues.map((issue) => (
         <span key={issue} className="block">
           <span className="block font-medium">

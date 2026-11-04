@@ -344,7 +344,8 @@
       "openHere": "Abrir en este dispositivo",
       "openHereLabel": "Abrir «{name}» en este dispositivo",
       "unregister": "Dar de baja",
-      "unregisterLabel": "Dar de baja «{name}»"
+      "unregisterLabel": "Dar de baja «{name}»",
+      "observationPoints": "Puntos de observación"
     },
     "receiver": {
       "stoppedTitle": "La observación se detuvo",

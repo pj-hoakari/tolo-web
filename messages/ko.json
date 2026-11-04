@@ -344,7 +344,8 @@
       "openHere": "이 단말에서 열기",
       "openHereLabel": "“{name}”을(를) 이 단말에서 열기",
       "unregister": "등록 해제",
-      "unregisterLabel": "“{name}” 등록 해제"
+      "unregisterLabel": "“{name}” 등록 해제",
+      "observationPoints": "관측점"
     },
     "receiver": {
       "stoppedTitle": "관측이 중지되었습니다",

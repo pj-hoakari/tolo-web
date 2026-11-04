@@ -344,7 +344,8 @@
       "openHere": "この端末で開く",
       "openHereLabel": "「{name}」をこの端末で開く",
       "unregister": "登録解除",
-      "unregisterLabel": "「{name}」の登録を解除"
+      "unregisterLabel": "「{name}」の登録を解除",
+      "observationPoints": "観測点"
     },
     "receiver": {
       "stoppedTitle": "観測が停止しました",

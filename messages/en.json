@@ -344,7 +344,8 @@
       "openHere": "Open on this device",
       "openHereLabel": "Open “{name}” on this device",
       "unregister": "Unregister",
-      "unregisterLabel": "Unregister “{name}”"
+      "unregisterLabel": "Unregister “{name}”",
+      "observationPoints": "Observation points"
     },
     "receiver": {
       "stoppedTitle": "Observation stopped",
