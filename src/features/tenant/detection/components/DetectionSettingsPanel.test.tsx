@@ -29,6 +29,7 @@ const renderPanel = () => {
     <DetectionSettingsPanel
       settingsStore={stores.settingsStore}
       viewStateStore={stores.viewStateStore}
+      resultStore={stores.resultStore}
     />,
     { wrapper: IntlTestProvider },
   );

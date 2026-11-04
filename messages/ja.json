@@ -417,7 +417,11 @@
       "count": "ライン {index}: forward {forward} / backward {backward}",
       "namedCount": "{name}: forward {forward} / backward {backward}",
       "nameLabel": "選択ラインの名前",
-      "namePlaceholder": "例：ホールA入口、連絡通路北側"
+      "namePlaceholder": "例：ホールA入口、連絡通路北側",
+      "areaWidthLabel": "選択ラインのエリアの幅（%）",
+      "areaWidthDescription": "ラインを中心にした帯の全幅を、画面の短辺に対する割合で指定します。帯の中にいる人を、ラインの名前の観測点の人数として数えます。",
+      "reRegisterNote": "ラインの位置やエリアの幅を変えた観測点は、人数の履歴を切り直すために観測点を登録し直してください。",
+      "areaOverlapWarning": "「{first}」と「{second}」のエリアが重なっています。重なった場所にいる人は両方の観測点に数えます。"
     }
   },
   "Observation": {

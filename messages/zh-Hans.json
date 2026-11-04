@@ -417,7 +417,11 @@
       "count": "线 {index}：forward {forward} / backward {backward}",
       "namedCount": "{name}：forward {forward} / backward {backward}",
       "nameLabel": "所选线的名称",
-      "namePlaceholder": "例如：A厅入口、北侧连廊"
+      "namePlaceholder": "例如：A厅入口、北侧连廊",
+      "areaWidthLabel": "所选线的区域宽度（%）",
+      "areaWidthDescription": "以线为中心的带状区域的总宽度，以画面短边的百分比表示。带内的人计入与线同名的观测点。",
+      "reRegisterNote": "移动了线或更改了区域宽度的观测点，请重新登记该观测点，以重新开始人数记录。",
+      "areaOverlapWarning": "“{first}”和“{second}”的区域重叠。位于重叠处的人会同时计入两个观测点。"
     }
   },
   "Observation": {

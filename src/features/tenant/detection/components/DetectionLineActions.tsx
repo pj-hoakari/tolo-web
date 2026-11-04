@@ -8,6 +8,7 @@ import { Input, TextField } from "@/components/ui/textfield";
 import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
 import {
   applyCountingLines,
+  DEFAULT_AREA_WIDTH,
   DEFAULT_COUNTING_LINES,
   type DetectionSettingsStore,
   type DetectionViewStateStore,
@@ -61,6 +62,49 @@ function SelectedLineNameFieldComponent({
 }
 
 const SelectedLineNameField = memo(SelectedLineNameFieldComponent);
+
+function SelectedLineAreaWidthFieldComponent({
+  settingsStore,
+  viewStateStore,
+}: LineActionsProps) {
+  const selectedLineId = useStore(viewStateStore, selectSelectedLineId);
+  const selectSelectedLineAreaWidth = useCallback(
+    (state: ReturnType<DetectionSettingsStore["getState"]>) =>
+      state.countingLines.find((line) => line.id === selectedLineId)
+        ?.areaWidth ?? DEFAULT_AREA_WIDTH,
+    [selectedLineId],
+  );
+  const areaWidth = useStore(settingsStore, selectSelectedLineAreaWidth);
+  const t = useTranslations("Detection.lines");
+
+  const updateAreaWidth = (percent: number) => {
+    const { countingLines } = settingsStore.getState();
+    applyCountingLines(
+      settingsStore,
+      countingLines.map((line) =>
+        line.id === selectedLineId
+          ? { ...line, areaWidth: percent / 100 }
+          : line,
+      ),
+    );
+  };
+
+  return (
+    <TextField className="flex w-full flex-col gap-2 sm:max-w-xs">
+      <Label>{t("areaWidthLabel")}</Label>
+      <Input
+        type="number"
+        min={1}
+        max={100}
+        step={1}
+        value={Math.round(areaWidth * 100)}
+        onChange={(event) => updateAreaWidth(Number(event.currentTarget.value))}
+      />
+    </TextField>
+  );
+}
+
+const SelectedLineAreaWidthField = memo(SelectedLineAreaWidthFieldComponent);
 
 function DetectionLineCreationModeToggleComponent({
   viewStateStore,
@@ -213,6 +257,10 @@ function DetectionLineActionsComponent({
   return (
     <div className="flex w-full flex-wrap items-end gap-3">
       <SelectedLineNameField
+        settingsStore={settingsStore}
+        viewStateStore={viewStateStore}
+      />
+      <SelectedLineAreaWidthField
         settingsStore={settingsStore}
         viewStateStore={viewStateStore}
       />
