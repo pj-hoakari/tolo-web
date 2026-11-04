@@ -7,6 +7,7 @@ import {
   type Line,
   type LineCount,
   LineCrossingCounter,
+  type Point,
 } from "@pj-hoakari/web-crowd-detection-utils/line-crossing";
 import { isWebGpuAvailable } from "@pj-hoakari/web-crowd-detection-utils/onnx";
 import {
@@ -138,6 +139,14 @@ export function initializeCrowdDetector(): Promise<CrowdDetector> {
   return detectorPromise;
 }
 
+export function footPoint({
+  x1,
+  x2,
+  y2,
+}: Pick<TrackedBox, "x1" | "x2" | "y2">): Point {
+  return { x: (x1 + x2) / 2, y: y2 };
+}
+
 export async function detectCrowdFrame(
   video: HTMLVideoElement,
   options: CrowdDetectionOptions,
@@ -165,10 +174,7 @@ export async function detectCrowdFrame(
   const countingLines = options.countingLines;
   const trackedPoints = trackedDetections.map((detection) => ({
     trackId: detection.trackId,
-    point: {
-      x: (detection.x1 + detection.x2) / 2,
-      y: detection.y2,
-    },
+    point: footPoint(detection),
   }));
 
   lineCrossingCounter.update(trackedPoints, countingLines, {

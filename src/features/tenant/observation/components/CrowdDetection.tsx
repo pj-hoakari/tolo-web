@@ -55,6 +55,15 @@ export function CrowdDetection({
     settingsStore,
   });
 
+  const { unregistered, pointIdByName } = useObservationReporting({
+    eventId,
+    edgeDeviceId,
+    listening: edgeId !== null,
+    status,
+    settingsStore,
+    resultStore,
+  });
+
   useCrowdDetectionLoop({
     videoRef,
     overlayCanvasRef,
@@ -63,18 +72,10 @@ export function CrowdDetection({
     settingsStore,
     viewStateStore,
     resultStore,
+    observationPointIdByName: pointIdByName,
     onBroadcastStreamChange: setBroadcastStream,
     onDetectionFrame: sendDetectionFrame,
     onDetectionError: reportDetectionError,
-  });
-
-  const { unregistered } = useObservationReporting({
-    eventId,
-    edgeDeviceId,
-    listening: edgeId !== null,
-    status,
-    settingsStore,
-    resultStore,
   });
 
   const handleSourceChange = useCallback((factory: CrowdVideoSourceFactory) => {

@@ -25,8 +25,10 @@ import {
 import {
   type CrowdDetectionFrame,
   detectCrowdFrame,
+  footPoint,
   resetCrowdLineCount,
 } from "../utils/detectCrowd";
+import { countPeopleByObservationPoint } from "../utils/measurements";
 import type { DetectCrowdStatus } from "./useDetectCrowd";
 
 function syncCanvasSize(
@@ -76,6 +78,7 @@ export type UseCrowdDetectionLoopParams = {
   settingsStore: DetectionSettingsStore;
   viewStateStore: DetectionViewStateStore;
   resultStore: DetectionResultStore;
+  observationPointIdByName: ReadonlyMap<string, string> | null;
   onBroadcastStreamChange: (stream: MediaStream | null) => void;
   onDetectionFrame: (frame: DetectionOverlayFrame | null) => void;
   onDetectionError: (cause: unknown) => void;
@@ -99,12 +102,17 @@ export function useCrowdDetectionLoop({
   settingsStore,
   viewStateStore,
   resultStore,
+  observationPointIdByName,
   onBroadcastStreamChange,
   onDetectionFrame,
   onDetectionError,
 }: UseCrowdDetectionLoopParams): void {
   const broadcastRef = useRef<BroadcastStreamHandle | null>(null);
   const latestFrameRef = useRef<CrowdDetectionFrame | null>(null);
+  const pointIdByNameRef = useRef(observationPointIdByName);
+  useEffect(() => {
+    pointIdByNameRef.current = observationPointIdByName;
+  }, [observationPointIdByName]);
 
   // カウントラインが変わったら通過数を数え直す
   useEffect(() => {
@@ -209,7 +217,24 @@ export function useCrowdDetectionLoop({
           trackedCount: frame.detections.length,
           fps,
         });
-        recordDetectedPeople(resultStore, frame.detections.length);
+        const pointIdByName = pointIdByNameRef.current;
+        const linesByPoint = new Map<string, DetectionOverlayLine[]>();
+        for (const line of countingLines) {
+          const pointId = pointIdByName?.get(line.name);
+          if (pointId) {
+            linesByPoint.set(pointId, [
+              ...(linesByPoint.get(pointId) ?? []),
+              line,
+            ]);
+          }
+        }
+        recordDetectedPeople(
+          resultStore,
+          countPeopleByObservationPoint(
+            frame.detections.map(footPoint),
+            linesByPoint,
+          ),
+        );
         onDetectionFrame(
           toDetectionOverlayFrame(
             frame,

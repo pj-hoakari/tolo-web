@@ -33,7 +33,10 @@ export function useObservationReporting({
   status: DetectCrowdStatus;
   settingsStore: DetectionSettingsStore;
   resultStore: DetectionResultStore;
-}): { unregistered: boolean } {
+}): {
+  unregistered: boolean;
+  pointIdByName: ReadonlyMap<string, string> | null;
+} {
   const [unregistered, setUnregistered] = useState(false);
   const [pointIdByName, setPointIdByName] = useState<ReadonlyMap<
     string,
@@ -167,5 +170,5 @@ export function useObservationReporting({
     unregistered,
   ]);
 
-  return { unregistered };
+  return { unregistered, pointIdByName };
 }
