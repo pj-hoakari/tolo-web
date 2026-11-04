@@ -179,51 +179,13 @@ offer を書き、ESP の `jpeg` DataChannel を canvas 経由で映像化し、
 ESP の `edgeDeviceId` は 16 桁小文字 hex とする。`?camera=` を省くと従来どおりブラウザの
 カメラを使う。ESP は登録・Heartbeat を持たないため、観測デバイス一覧には出ない。
 
-ESP がホスト PC の LAN に直接届かない場合は、ESP 用の TryCloudflare トンネルを2本立てる。
-通常の compose を起動したあとで実行する。
-
-```bash
-docker compose up -d --build
-task esp-tunnel        # edge-bridge 用と Firestore/Auth 用の URL を表示
-task esp-tunnel:stop
-```
-
-表示された `esp-edge-tunnel` の URL を ESP の `signaling` に、
-`esp-emulator-tunnel` の URL を `cloud` の Firestore / Auth に設定する。
-TryCloudflare の URL は再起動のたびに変わる。このトンネルはメール認証を付けていない
-開発用で、Firestore/Auth エミュレータを外部へ公開する点に注意する。
-
 観測ページは ESP セッションの console 用 Firestore トークンを使う。同じイベント内の
 スタッフページに console 相当の書き込み権限が渡る点は、PoC の割り切りである。将来は
 edge-bridge にカメラ専用ロールを追加するか、BFF で権限を絞る。
 
 ### スマートフォンから開く
 
-スマートフォンなど別の端末からは、Cloudflare の Quick Tunnel が発行する HTTPS の URL で開きます。カメラと画面の常時点灯は、HTTPS か `localhost` で開いたページでしか使えません。LAN の IP アドレスを http で開いても、観測ページのカメラは起動できません。
-
-Quick Tunnel はローカルの環境をインターネットに公開します。そのため、メール認証を必須にしています。ページを開いた人は `TUNNEL_ALLOWED_MAIL` に指定したアドレスで届くワンタイム PIN を入力して入ります。開く人にもトンネルを立てる人にも、Cloudflare のアカウントは要りません。
-
-`.env` に次を設定します。
-
-```bash
-TUNNEL_ALLOWED_MAIL=alice@example.com,bob@example.com
-```
-
-トンネルの URL にはテナントのサブドメイン名を付けられないので、トンネルで開くテナントを 1 つに固定します。そのテナントのサブドメイン名を `TUNNEL_SUBDOMAIN` に指定します。既定は `test` で、上のトークンのテナントに対応します。`TUNNEL_ALLOWED_MAIL` には、許可するアドレスをカンマで区切って並べます。`*@example.com` と書くと、そのドメインのアドレスをすべて許可します。
-
-`task tunnel` で、`compose.tunnel.yaml` を重ねて起動します。トンネルがつながると、URL を表示します。起動したあとで URL を確かめるときは、`task tunnel:url` を実行します。`task` は mise で入ります。
-
-```bash
-task tunnel
-```
-
-観測ページは `https://{発行された URL}/event/fedcba9876543210/observation/{edgeDeviceId}` で開きます。URL は起動のたびに変わります。トンネルを止めると、全員がアクセスできなくなります。
-
-```bash
-task tunnel:stop
-```
-
-`tunnel-proxy`（Caddy）がトンネルからの通信を Firebase エミュレータと `web` に振り分けます。HTTPS で開いたページは、ページと同じオリジンを通してエミュレータに接続します。
+カメラと画面の常時点灯は HTTPS か `localhost` で開いたページでしか使えません。LAN の IP アドレスを HTTP で開いても、観測ページのカメラは起動できません。別端末から開く場合は、LAN 内に HTTPS のリバースプロキシを用意してください。開発環境をインターネットへ公開する手順はこのリポジトリでは扱いません。
 
 ## テナントのイベント管理ページ
 
