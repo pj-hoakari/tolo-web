@@ -182,8 +182,8 @@ importers:
         specifier: ^1.14.6
         version: 1.16.1(ws@8.22.1)
       '@pj-hoakari/tolo-edge-bridge-client-es':
-        specifier: file:vendor/pj-hoakari-tolo-edge-bridge-client-es-0.1.0.tgz
-        version: file:vendor/pj-hoakari-tolo-edge-bridge-client-es-0.1.0.tgz(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
+        specifier: 0.6.0-rc
+        version: 0.6.0-rc(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
       '@pj-hoakari/tolo-graph-authoring-client-es':
         specifier: 0.4.0-rc
         version: 0.4.0-rc(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
@@ -191,8 +191,8 @@ importers:
         specifier: 0.2.0-rc
         version: 0.2.0-rc(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
       '@pj-hoakari/tolo-observation-client-es':
-        specifier: file:vendor/pj-hoakari-tolo-observation-client-es-0.1.0.tgz
-        version: file:vendor/pj-hoakari-tolo-observation-client-es-0.1.0.tgz(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
+        specifier: 0.8.0-rc
+        version: 0.8.0-rc(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
       '@pj-hoakari/tolo-tenant-management-connect-es':
         specifier: 0.6.0-dev
         version: 0.6.0-dev(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
@@ -1889,9 +1889,8 @@ packages:
     resolution: {integrity: sha512-7FNeNl8NCE7aINx7WXiKQrPYZWC/hvrTsmk6zmxbI7LTXE7hVek/n8AfVgpe2y82zl3w0HvCHN0bVKMBoJcC0w==}
     engines: {node: '>= 10.0.0'}
 
-  '@pj-hoakari/tolo-edge-bridge-client-es@file:vendor/pj-hoakari-tolo-edge-bridge-client-es-0.1.0.tgz':
-    resolution: {integrity: sha512-M4Q+vbsOn+ZghBGriz+arpadx/MyGT1paXGjx9rxgimGB7d8/2SBvFyc3Zg95JDNgn4GWKK9+qa+G1TXGwNKOg==, tarball: file:vendor/pj-hoakari-tolo-edge-bridge-client-es-0.1.0.tgz}
-    version: 0.1.0
+  '@pj-hoakari/tolo-edge-bridge-client-es@0.6.0-rc':
+    resolution: {integrity: sha512-heQ8do1MPya1fUQlSTsf5q5AiS+Ur8/VCiuOxJ/nfir2riUU37QjRLMy6pmouaEXliY04GGvUFmzsl9Y/KPHXg==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-edge-bridge-client-es/0.6.0-rc/a307ec1f42583b72faa782968e2d4ab1c514d9e0}
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
@@ -1905,9 +1904,8 @@ packages:
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
-  '@pj-hoakari/tolo-observation-client-es@file:vendor/pj-hoakari-tolo-observation-client-es-0.1.0.tgz':
-    resolution: {integrity: sha512-TeC7+y75jLN+HsvTMqi62qVQYtEIbgGlzzNl9YSZxEyoHBDDYxhdO9aPXMESf3kQWScbEiTPGUtEAPI6vEmY0g==, tarball: file:vendor/pj-hoakari-tolo-observation-client-es-0.1.0.tgz}
-    version: 0.1.0
+  '@pj-hoakari/tolo-observation-client-es@0.8.0-rc':
+    resolution: {integrity: sha512-CEWcENgD4abZOPtbfNXF62lRenhFYpk4TUhAPjrfafqL73efXUEYyV/7LS+t8wwm6Ucwqz1f4v2iH0iljMCAsw==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-observation-client-es/0.8.0-rc/0ace77df81d37499ce398ce6894d70520ddc4eb1}
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
@@ -7000,7 +6998,7 @@ snapshots:
       '@parcel/watcher-win32-arm64': 2.6.0
       '@parcel/watcher-win32-x64': 2.6.0
 
-  '@pj-hoakari/tolo-edge-bridge-client-es@file:vendor/pj-hoakari-tolo-edge-bridge-client-es-0.1.0.tgz(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
+  '@pj-hoakari/tolo-edge-bridge-client-es@0.6.0-rc(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
     dependencies:
       '@bufbuild/protobuf': 2.16.0
       '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.16.0)
@@ -7015,7 +7013,7 @@ snapshots:
       '@bufbuild/protobuf': 2.16.0
       '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.16.0)
 
-  '@pj-hoakari/tolo-observation-client-es@file:vendor/pj-hoakari-tolo-observation-client-es-0.1.0.tgz(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
+  '@pj-hoakari/tolo-observation-client-es@0.8.0-rc(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
     dependencies:
       '@bufbuild/protobuf': 2.16.0
       '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.16.0)
