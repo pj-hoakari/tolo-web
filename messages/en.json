@@ -306,18 +306,18 @@
       "linkedPoint": "Linked point: {name}",
       "provision": "Provision",
       "provisionLabel": "Provision “{name}”",
-      "authorizeConnection": "Authorize camera connection",
+      "authorizeConnection": "Authorize observation page connection",
       "useAsMachine": "Use as observation page",
       "useAsMachineLabel": "Use {name} as an observation page",
-      "authorizeConnectionLabel": "Authorize the camera connection for “{name}”",
-      "cameraConnectionHint": "Opening the observation page as staff starts the connection authorization automatically. On an observation page device (machine session), a staff member must reauthorize it here.",
+      "authorizeConnectionLabel": "Authorize the observation page connection for “{name}”",
+      "cameraConnectionHint": "Staff sessions start the connection authorization automatically when the observation page opens. For a machine session, use “Authorize observation page connection” in this screen to reauthorize.",
       "stop": "Stop",
       "stopLabel": "Temporarily stop “{name}”",
-      "reapprove": "Re-approve",
-      "reapproveLabel": "Re-approve “{name}”",
+      "reapprove": "Redo camera authorization",
+      "reapproveLabel": "Redo camera authorization for “{name}”",
       "connection": {
         "authorized": "The camera connection delegation was saved.",
-        "login_required": "Staff sign-in is required to authorize the camera connection. Start again from “Authorize camera connection”.",
+        "login_required": "Reauthorizing the camera connection requires a staff login. Use “Authorize observation page connection” again.",
         "failed": "Could not authorize the camera connection. Try again."
       }
     },
@@ -358,7 +358,7 @@
       "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
       "edgeDeviceIdLabel": "Edge device ID",
       "openProvisioning": "Open provisioning",
-      "authorizeConnection": "Authorize camera connection"
+      "authorizeConnection": "Authorize observation page connection"
     },
     "unregisterEdge": {
       "title": "Unregister observation device",
@@ -370,7 +370,7 @@
     },
     "stopCamera": {
       "title": "Temporarily stop the camera",
-      "description": "Temporarily stop “{name}”. The device stays registered, and you can resume it by re-approving.",
+      "description": "Stops the stream from “{name}” temporarily. The registration remains; redo the camera authorization to resume.",
       "cancel": "Cancel",
       "confirm": "Stop temporarily",
       "failed": "Could not stop the camera.",
@@ -379,7 +379,7 @@
     "cameraProvision": {
       "title": "ESP32 camera provisioning",
       "description": "Write the Wi-Fi and connection settings to “{name}” ({id}).",
-      "reapprovalNotice": "This re-approves a temporarily stopped camera. It clears the temporary stop and lets the device connect again.",
+      "reapprovalNotice": "Redoes the authorization for the temporarily stopped camera. This clears the stop and lets the device connect again.",
       "trigger": "Provision",
       "wifiSsidLabel": "Wi-Fi SSID",
       "wifiPasswordLabel": "Wi-Fi password",
@@ -509,9 +509,9 @@
       "detection": "Person detection failed",
       "unregistered": "This observation device has been unregistered",
       "modelLoad": "Failed to load the detection model ({status}: {path})",
-      "connectionAuthorizationRequired": "Camera connection authorization is missing. Authorize the camera connection again.",
+      "connectionAuthorizationRequired": "The camera connection is not authorized. Reauthorize it with “Authorize observation page connection”.",
       "connectionAuthorizationAutoStart": "Camera connection authorization is required. Moving to the authorization page.",
-      "connectionAuthorizationMachine": "Camera connection authorization is missing. A staff member must reauthorize it from the management screen.",
+      "connectionAuthorizationMachine": "The camera connection is not authorized. A staff member must reauthorize it with “Authorize observation page connection” in the management screen.",
       "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "Camera access is not allowed. Allow camera access in your browser settings.",

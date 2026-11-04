@@ -59,7 +59,7 @@ test("マシンの観測ページは認可を開始せず、スタッフによ�
   await expect(
     page.getByRole("alert").filter({
       hasText:
-        "スタッフが管理画面の「カメラ接続を許可」から再認可してください。",
+        "スタッフが管理画面の「観測ページの接続を許可」から再認可してください。",
     }),
   ).toBeVisible();
   await page.waitForTimeout(500);

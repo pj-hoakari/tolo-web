@@ -214,7 +214,9 @@ describe("CameraProvisioningDialog", () => {
 
     renderDialog(transport, 2_000, { reapproval: true });
     openDialog();
-    expect(screen.getByText(/一時停止中のカメラを再承認します/)).toBeTruthy();
+    expect(
+      screen.getByText(/一時停止中のカメラの認可をやり直します/),
+    ).toBeTruthy();
     fillWifi();
     start();
 

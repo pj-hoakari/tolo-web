@@ -306,18 +306,18 @@
       "linkedPoint": "紐づけ先: {name}",
       "provision": "設定",
       "provisionLabel": "「{name}」を設定",
-      "authorizeConnection": "カメラ接続を許可",
+      "authorizeConnection": "観測ページの接続を許可",
       "useAsMachine": "観測ページ端末にする",
       "useAsMachineLabel": "{name} を観測ページ端末にする",
-      "authorizeConnectionLabel": "「{name}」のカメラ接続を許可",
-      "cameraConnectionHint": "スタッフが観測ページを開くと接続認可は自動で始まります。観測ページ端末（マシンセッション）では、この画面からスタッフが再認可してください。",
+      "authorizeConnectionLabel": "「{name}」を含む観測ページの接続を許可",
+      "cameraConnectionHint": "スタッフが観測ページを開くと接続認可は自動で始まります。観測ページ端末（マシンセッション）では、この画面の「観測ページの接続を許可」からスタッフが再認可してください。",
       "stop": "停止",
       "stopLabel": "「{name}」を一時停止",
-      "reapprove": "再承認",
-      "reapproveLabel": "「{name}」を再承認",
+      "reapprove": "カメラの認可をやり直す",
+      "reapproveLabel": "「{name}」のカメラ認可をやり直す",
       "connection": {
         "authorized": "カメラ接続の委任を保存しました。",
-        "login_required": "カメラ接続の認可にはスタッフの再ログインが必要です。もう一度「カメラ接続を許可」からやり直してください。",
+        "login_required": "カメラ接続の認可にはスタッフの再ログインが必要です。もう一度「観測ページの接続を許可」からやり直してください。",
         "failed": "カメラ接続の認可に失敗しました。もう一度お試しください。"
       }
     },
@@ -358,7 +358,7 @@
       "cameraRegistered": "「{name}」をカメラとして登録しました。初期設定を開き、端末に設定を書き込んでください。",
       "edgeDeviceIdLabel": "エッジデバイス ID",
       "openProvisioning": "初期設定を開く",
-      "authorizeConnection": "カメラ接続を許可"
+      "authorizeConnection": "観測ページの接続を許可"
     },
     "unregisterEdge": {
       "title": "観測デバイスの登録を解除",
@@ -370,7 +370,7 @@
     },
     "stopCamera": {
       "title": "カメラを一時停止",
-      "description": "「{name}」の配信を一時停止します。登録は解除されず、再承認すると再開できます。",
+      "description": "「{name}」の配信を一時停止します。登録は解除されず、カメラの認可をやり直すと再開できます。",
       "cancel": "キャンセル",
       "confirm": "一時停止する",
       "failed": "カメラを一時停止できませんでした。",
@@ -379,7 +379,7 @@
     "cameraProvision": {
       "title": "ESP32 カメラの初期設定",
       "description": "「{name}」({id}) に Wi-Fi と接続先を書き込みます。",
-      "reapprovalNotice": "一時停止中のカメラを再承認します。この操作で一時停止が解除され、端末が再び接続できるようになります。",
+      "reapprovalNotice": "一時停止中のカメラの認可をやり直します。この操作で一時停止が解除され、端末が再び接続できるようになります。",
       "trigger": "設定",
       "wifiSsidLabel": "Wi-Fi SSID",
       "wifiPasswordLabel": "Wi-Fi パスワード",
@@ -509,9 +509,9 @@
       "detection": "人検出処理に失敗しました",
       "unregistered": "この観測デバイスは登録解除されています",
       "modelLoad": "検出モデルの読み込みに失敗しました（{status}: {path}）",
-      "connectionAuthorizationRequired": "カメラ接続の認可がありません。「カメラ接続を許可」から再認可してください。",
+      "connectionAuthorizationRequired": "カメラ接続の認可がありません。「観測ページの接続を許可」から再認可してください。",
       "connectionAuthorizationAutoStart": "カメラ接続の認可が必要なため、認可画面へ移動します。",
-      "connectionAuthorizationMachine": "カメラ接続の認可がありません。スタッフが管理画面の「カメラ接続を許可」から再認可してください。",
+      "connectionAuthorizationMachine": "カメラ接続の認可がありません。スタッフが管理画面の「観測ページの接続を許可」から再認可してください。",
       "cameraNotDelegated": "このカメラは観測ページの接続委任に含まれていません。",
       "camera": {
         "permissionDenied": "カメラの使用が許可されていません。ブラウザの設定でカメラへのアクセスを許可してください。",

@@ -88,7 +88,7 @@ describe("CameraConnectionAuthorizationNotice", () => {
 
     expect(start).not.toHaveBeenCalled();
     expect(screen.getByRole("alert").textContent).toContain(
-      "スタッフが管理画面の「カメラ接続を許可」から再認可してください。",
+      "スタッフが管理画面の「観測ページの接続を許可」から再認可してください。",
     );
   });
 
@@ -98,7 +98,7 @@ describe("CameraConnectionAuthorizationNotice", () => {
 
     expect(start).toHaveBeenCalledOnce();
     expect(screen.getByRole("alert").textContent).toContain(
-      "スタッフが管理画面の「カメラ接続を許可」から再認可してください。",
+      "スタッフが管理画面の「観測ページの接続を許可」から再認可してください。",
     );
   });
 });

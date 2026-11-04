@@ -241,7 +241,9 @@ describe("AliveEdgeList", () => {
       camera.getByRole("button", { name: "「ESP32 カメラ」を設定" }),
     ).toBeTruthy();
     expect(
-      camera.getByRole("button", { name: "「ESP32 カメラ」を再承認" }),
+      camera.getByRole("button", {
+        name: "「ESP32 カメラ」のカメラ認可をやり直す",
+      }),
     ).toBeTruthy();
     expect(
       camera.getByRole("button", { name: "「ESP32 カメラ」を一時停止" }),
@@ -251,15 +253,19 @@ describe("AliveEdgeList", () => {
     ).toBeTruthy();
   });
 
-  it("カメラの再承認ボタンで一時停止の解除を明示した初期設定ダイアログを開く", () => {
+  it("カメラの認可をやり直すボタンで一時停止の解除を明示した初期設定ダイアログを開く", () => {
     renderList("idle");
 
     fireEvent.click(
-      screen.getByRole("button", { name: "「ESP32 カメラ」を再承認" }),
+      screen.getByRole("button", {
+        name: "「ESP32 カメラ」のカメラ認可をやり直す",
+      }),
     );
 
     expect(screen.getByRole("dialog")).toBeTruthy();
-    expect(screen.getByText(/一時停止中のカメラを再承認します/)).toBeTruthy();
+    expect(
+      screen.getByText(/一時停止中のカメラの認可をやり直します/),
+    ).toBeTruthy();
   });
 
   it("カメラを一時停止すると登録は解除せず一覧の更新を求める", async () => {

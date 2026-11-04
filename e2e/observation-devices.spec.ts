@@ -11,6 +11,7 @@ const edgeA = "入口カメラ";
 const edgeB = "3b9d77f41e2a5c08";
 const offlineEdge = "ホールカメラ";
 const cameraEdge = "ESP32 カメラ";
+const cameraObservationPoint = "入口";
 const secondCameraEdge = "ESP32 カメラ 2";
 
 const main = (page: Page) => page.getByRole("main");
@@ -129,18 +130,20 @@ test("未接続の観測デバイスの行には接続ボタンと登録解除�
   ).toBeEnabled();
 });
 
-test("カメラの行には設定・再承認・一時停止・登録解除だけを表示する", async ({
+test("カメラの行には設定・カメラの認可をやり直す・一時停止・登録解除だけを表示する", async ({
   page,
 }) => {
   const row = cameraRow(page);
   await expect(row).toContainText("カメラ");
-  await expect(row).toContainText(`紐づけ先: ${edgeA}`);
+  await expect(row).toContainText(`紐づけ先: ${cameraObservationPoint}`);
   await expect(row.getByRole("button")).toHaveCount(4);
   await expect(
     row.getByRole("button", { name: `「${cameraEdge}」を設定` }),
   ).toBeVisible();
   await expect(
-    row.getByRole("button", { name: `「${cameraEdge}」を再承認` }),
+    row.getByRole("button", {
+      name: `「${cameraEdge}」のカメラ認可をやり直す`,
+    }),
   ).toBeVisible();
   await expect(
     row.getByRole("button", { name: `「${cameraEdge}」を一時停止` }),
@@ -161,18 +164,22 @@ test("カメラの設定ボタンで初期設定ダイアログを開く", async
 
   const dialog = page.getByRole("dialog");
   await expect(dialog).toContainText("ESP32 カメラの初期設定");
-  await expect(dialog).not.toContainText("一時停止中のカメラを再承認します");
+  await expect(dialog).not.toContainText(
+    "一時停止中のカメラの認可をやり直します",
+  );
 });
 
-test("カメラの再承認ボタンで一時停止解除の注意を表示する", async ({ page }) => {
+test("カメラの認可をやり直すボタンで一時停止解除の注意を表示する", async ({
+  page,
+}) => {
   await cameraRow(page)
-    .getByRole("button", { name: `「${cameraEdge}」を再承認` })
+    .getByRole("button", { name: `「${cameraEdge}」のカメラ認可をやり直す` })
     .click();
 
   const dialog = page.getByRole("dialog");
   await expect(dialog).toContainText("ESP32 カメラの初期設定");
   await expect(dialog).toContainText(
-    "一時停止中のカメラを再承認します。この操作で一時停止が解除され、端末が再び接続できるようになります。",
+    "一時停止中のカメラの認可をやり直します。この操作で一時停止が解除され、端末が再び接続できるようになります。",
   );
 });
 
