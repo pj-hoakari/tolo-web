@@ -191,6 +191,12 @@ export function useMultiCameraDetectionLoop({
   onBroadcastStreamChange,
   onDetectionFrame,
 }: MultiCameraDetectionLoopParams): void {
+  const videosRef = useRef(
+    new Map<
+      string,
+      { descriptor: VideoSourceDescriptor; video: HTMLVideoElement }
+    >(),
+  );
   const broadcastRef = useRef<BroadcastStreamHandle | null>(null);
   const broadcastKeyRef = useRef<string | null>(null);
   const detectionStatesRef = useRef<Map<string, CrowdDetectionState>>(
@@ -219,6 +225,23 @@ export function useMultiCameraDetectionLoop({
     broadcastRef.current = null;
     onBroadcastStreamChange(null);
   }, [onBroadcastStreamChange]);
+
+  const releaseSources = useCallback(() => {
+    disposeBroadcast();
+    broadcastKeyRef.current = null;
+    for (const { video } of videosRef.current.values())
+      disposeHiddenVideo(video);
+    videosRef.current.clear();
+    for (const state of detectionStatesRef.current.values())
+      resetCrowdTracking(state);
+    detectionStatesRef.current.clear();
+    latestOverlayFramesRef.current.clear();
+  }, [disposeBroadcast]);
+
+  useEffect(() => {
+    if (status !== "detecting") releaseSources();
+  }, [status, releaseSources]);
+  useEffect(() => () => releaseSources(), [releaseSources]);
 
   // カウントラインが変わったら、そのカメラの通過数だけを数え直す
   useEffect(() => {
@@ -395,48 +418,40 @@ export function useMultiCameraDetectionLoop({
   ]);
 
   useEffect(() => {
-    if (status !== "detecting" || sources.size === 0) {
+    if (status !== "detecting") {
       return;
     }
 
     let cancelled = false;
     let renderRafId = 0;
     const hiddenVideos = new Map<string, HTMLVideoElement>();
-    const detectionStates = new Map<string, CrowdDetectionState>();
+    const detectionStates = detectionStatesRef.current;
     const lastDetectionAt = new Map<string, number>();
 
+    for (const [key, entry] of videosRef.current) {
+      if (sources.get(key) === entry.descriptor) continue;
+      disposeHiddenVideo(entry.video);
+      videosRef.current.delete(key);
+      const state = detectionStates.get(key);
+      if (state) resetCrowdTracking(state);
+      detectionStates.delete(key);
+      latestOverlayFramesRef.current.delete(key);
+      if (broadcastKeyRef.current === key) {
+        disposeBroadcast();
+        broadcastKeyRef.current = null;
+      }
+    }
     for (const [key, descriptor] of sources) {
-      hiddenVideos.set(key, createHiddenVideo(descriptor));
-      detectionStates.set(key, createCrowdDetectionState());
+      let entry = videosRef.current.get(key);
+      if (!entry) {
+        entry = { descriptor, video: createHiddenVideo(descriptor) };
+        videosRef.current.set(key, entry);
+        detectionStates.set(key, createCrowdDetectionState());
+      }
+      hiddenVideos.set(key, entry.video);
     }
-    detectionStatesRef.current = detectionStates;
-    latestOverlayFramesRef.current.clear();
 
-    // この回の検出開始時点から、カメラごとのラインで数え直す
-    for (const [key, store] of cameraResultStores) {
-      const cameraSettings = selectCameraSettingsStore(
-        key,
-        cameraSettingsStores,
-        settingsStore,
-      ).getState();
-      applyLineCounts(
-        store,
-        createInitialLineCounts(cameraSettings.countingLines),
-      );
-      applyMetrics(store, INITIAL_METRICS);
-      resetDetectedPeople(store);
-    }
-    const selectedSettings = selectCameraSettingsStore(
-      selectedKeyRef.current,
-      cameraSettingsStores,
-      settingsStore,
-    ).getState();
-    applyLineCounts(
-      resultStore,
-      createInitialLineCounts(selectedSettings.countingLines),
-    );
-    applyMetrics(resultStore, INITIAL_METRICS);
-    resetDetectedPeople(resultStore);
+    if (sources.size === 0) return;
 
     const updateCameraResult = (
       key: string,
@@ -635,19 +650,6 @@ export function useMultiCameraDetectionLoop({
     return () => {
       cancelled = true;
       cancelAnimationFrame(renderRafId);
-      disposeBroadcast();
-      broadcastKeyRef.current = null;
-      onDetectionFrameRef.current(null);
-      for (const state of detectionStates.values()) {
-        resetCrowdTracking(state);
-      }
-      if (detectionStatesRef.current === detectionStates) {
-        detectionStatesRef.current = new Map();
-      }
-      latestOverlayFramesRef.current.clear();
-      for (const video of hiddenVideos.values()) {
-        disposeHiddenVideo(video);
-      }
     };
   }, [
     status,

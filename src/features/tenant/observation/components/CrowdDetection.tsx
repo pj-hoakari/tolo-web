@@ -97,6 +97,9 @@ export function CrowdDetection({
           ? "esp"
           : "dev";
 
+  const sourceErrorRef = useRef<(key: string, cause: unknown) => void>(
+    () => {},
+  );
   const sourceSpecs = useMemo<CameraSourceSpec[]>(() => {
     if (effectiveMode === "dev") {
       return [
@@ -125,6 +128,8 @@ export function CrowdDetection({
                 edgeDeviceId: camera.edgeDeviceId,
                 firebaseConfig,
                 label,
+                onError: (cause) =>
+                  sourceErrorRef.current(camera.edgeDeviceId, cause),
                 requestConnection: () =>
                   orpc.signaling.requestCameraConnection({
                     eventId,
@@ -186,6 +191,8 @@ export function CrowdDetection({
     error,
     cameraConnectionError: videoConnectionError,
     sourceStates,
+    reportSourceError,
+    retryCamera,
     selectedKey,
     selectSource,
     start,
@@ -194,6 +201,10 @@ export function CrowdDetection({
     sourceSpecs,
     effectiveMode === "esp" ? initialCameraId : LOCAL_SOURCE_KEY,
   );
+
+  useEffect(() => {
+    sourceErrorRef.current = reportSourceError;
+  }, [reportSourceError]);
 
   const connectionAuthorizationError =
     cameraListConnectionError?.code === "CONNECTION_AUTHORIZATION_REQUIRED"
@@ -243,7 +254,7 @@ export function CrowdDetection({
     eventId,
     edgeDeviceId,
     stream: canReport && !API_MOCKING_ENABLED ? broadcastStream : null,
-    settingsStore,
+    settingsStore: selectedSettingsStore,
   });
 
   const handleCameraPhase = useCallback(
@@ -336,7 +347,7 @@ export function CrowdDetection({
   }, []);
 
   const cameraErrors =
-    effectiveMode === "esp" && !connectionAuthorizationError
+    effectiveMode === "esp"
       ? sourceStates.filter((state) => state.status === "error")
       : [];
   const cameraErrorKeys = new Set(cameraErrors.map((state) => state.key));
@@ -349,8 +360,22 @@ export function CrowdDetection({
           {t("unregistered")}
         </p>
       )}
+      {cameraListConnectionError?.cameraEdgeDeviceId && (
+        <p role="alert" className="text-destructive">
+          {t("cameraSource", {
+            camera: cameraListConnectionError.cameraEdgeDeviceId,
+            error: t("connectionAuthorizationMachine"),
+          })}
+        </p>
+      )}
       <CameraConnectionAuthorizationNotice
-        error={connectionAuthorizationError}
+        error={
+          cameraListConnectionError?.cameraEdgeDeviceId
+            ? videoConnectionError?.code === "CONNECTION_AUTHORIZATION_REQUIRED"
+              ? videoConnectionError
+              : null
+            : connectionAuthorizationError
+        }
         eventId={eventId}
         pageEdgeDeviceId={edgeDeviceId}
       />
@@ -436,12 +461,21 @@ export function CrowdDetection({
           (entry) => entry.edgeDeviceId === state.key,
         );
         return (
-          <p key={state.key} role="alert" className="text-destructive">
-            {t("cameraSource", {
-              camera: camera?.name || state.key,
-              error: state.error ?? "",
-            })}
-          </p>
+          <div key={state.key} className="flex items-center gap-2">
+            <p role="alert" className="text-destructive">
+              {t("cameraSource", {
+                camera: camera?.name || state.key,
+                error: state.error ?? "",
+              })}
+            </p>
+            <Button
+              variant="secondary"
+              size="sm"
+              onPress={() => retryCamera(state.key)}
+            >
+              {tControls("retryCamera", { camera: camera?.name || state.key })}
+            </Button>
+          </div>
         );
       })}
       <CrowdDetectionView

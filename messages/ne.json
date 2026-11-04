@@ -465,7 +465,8 @@
       "stop": "रोक्नुहोस्",
       "loading": "सुरु हुँदै…",
       "retry": "पुनः जडान गर्नुहोस्",
-      "observeOnThisDevice": "यस उपकरणमा अवलोकन गर्नुहोस्"
+      "observeOnThisDevice": "यस उपकरणमा अवलोकन गर्नुहोस्",
+      "retryCamera": "{camera} पुनः जडान गर्नुहोस्"
     },
     "cameraSelector": {
       "label": "क्यामेरा"

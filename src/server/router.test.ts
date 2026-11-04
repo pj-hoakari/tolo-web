@@ -2028,6 +2028,7 @@ describe("camera.listDelegatedCameras", () => {
       cameras: [
         {
           ...wireCamera,
+          connectionAuthorized: true,
           observationPointId: "1111111111111111",
         },
       ],
@@ -2072,6 +2073,7 @@ describe("camera.listDelegatedCameras", () => {
       cameras: [
         {
           ...wireCamera,
+          connectionAuthorized: true,
           observationPointId: "1111111111111111",
         },
       ],
@@ -2129,7 +2131,46 @@ describe("camera.listDelegatedCameras", () => {
     });
   });
 
-  it("asks a staff viewer to reauthorize when a linked camera is missing from the stored delegation", async () => {
+  it("returns both linked cameras with independent connection authorization", async () => {
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(connectionDelegationCameraIds).mockResolvedValue([
+      linkedCamera.edgeDeviceId,
+    ]);
+    const page = create(EdgeDeviceSchema, {
+      ...protoPageWithCamera,
+      cameraLinks: [
+        ...protoPageWithCamera.cameraLinks,
+        {
+          ...protoPageWithCamera.cameraLinks[0],
+          cameraEdgeDeviceId: unlinkedCamera.edgeDeviceId,
+          observationPointId: "2222222222222222",
+        },
+      ],
+    });
+    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockResolvedValue(
+      create(ListEdgeDevicesResponseSchema, {
+        devices: [page, linkedCamera, unlinkedCamera],
+      }),
+    );
+    const { cameras } = await call(router.camera.listDelegatedCameras, {
+      eventId,
+      pageEdgeDeviceId: page.edgeDeviceId,
+    });
+    expect(
+      cameras.map(({ edgeDeviceId, connectionAuthorized }) => ({
+        edgeDeviceId,
+        connectionAuthorized,
+      })),
+    ).toEqual([
+      { edgeDeviceId: linkedCamera.edgeDeviceId, connectionAuthorized: true },
+      {
+        edgeDeviceId: unlinkedCamera.edgeDeviceId,
+        connectionAuthorized: false,
+      },
+    ]);
+  });
+
+  it("marks a missing staff delegation unauthorized without rejecting other cameras", async () => {
     vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
     vi.mocked(connectionDelegationCameraIds).mockResolvedValue([
       unlinkedCamera.edgeDeviceId,
@@ -2145,15 +2186,13 @@ describe("camera.listDelegatedCameras", () => {
         eventId,
         pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
       }),
-    ).rejects.toMatchObject({
-      code: "PRECONDITION_FAILED",
-      data: {
-        code: "CONNECTION_AUTHORIZATION_REQUIRED",
-        viewerType: "staff",
-        eventId,
-        pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
-        cameraEdgeDeviceId: linkedCamera.edgeDeviceId,
-      },
+    ).resolves.toMatchObject({
+      cameras: [
+        {
+          edgeDeviceId: linkedCamera.edgeDeviceId,
+          connectionAuthorized: false,
+        },
+      ],
     });
   });
 
@@ -2182,7 +2221,7 @@ describe("camera.listDelegatedCameras", () => {
     });
   });
 
-  it("asks a machine viewer to have staff reauthorize when a linked camera is missing from the stored delegation", async () => {
+  it("marks a missing machine delegation unauthorized without rejecting the list", async () => {
     vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
     vi.mocked(getViewer).mockResolvedValue({
       type: "machine",
@@ -2209,15 +2248,13 @@ describe("camera.listDelegatedCameras", () => {
         eventId,
         pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
       }),
-    ).rejects.toMatchObject({
-      code: "PRECONDITION_FAILED",
-      data: {
-        code: "CONNECTION_AUTHORIZATION_REQUIRED",
-        viewerType: "machine",
-        eventId,
-        pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
-        cameraEdgeDeviceId: linkedCamera.edgeDeviceId,
-      },
+    ).resolves.toMatchObject({
+      cameras: [
+        {
+          edgeDeviceId: linkedCamera.edgeDeviceId,
+          connectionAuthorized: false,
+        },
+      ],
     });
   });
 });

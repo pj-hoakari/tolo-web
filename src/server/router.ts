@@ -302,6 +302,7 @@ export interface RegisteredEdgeDevice {
 }
 
 export interface DelegatedCamera extends EdgeDevice {
+  connectionAuthorized: boolean;
   observationPointId: string;
 }
 
@@ -1257,25 +1258,15 @@ export const router = {
             devices,
             input.pageEdgeDeviceId,
           );
+          let delegatedCameraIds: string[] | null | undefined = [];
           if (cameras.length > 0) {
-            const delegatedCameraIds = await connectionDelegationCameraIds(
+            delegatedCameraIds = await connectionDelegationCameraIds(
               tenantId,
               input.eventId,
               input.pageEdgeDeviceId,
             );
             if (delegatedCameraIds === null) {
               throw connectionAuthorizationRequiredError(viewer, errorContext);
-            }
-            const missing = delegatedCameraIds
-              ? cameras.find(
-                  (camera) => !delegatedCameraIds.includes(camera.edgeDeviceId),
-                )
-              : undefined;
-            if (missing) {
-              throw connectionAuthorizationRequiredError(viewer, {
-                ...errorContext,
-                cameraEdgeDeviceId: missing.edgeDeviceId,
-              });
             }
           }
           const observationPointByCamera = new Map(
@@ -1287,6 +1278,8 @@ export const router = {
           return {
             cameras: cameras.map((camera) => ({
               ...camera,
+              connectionAuthorized:
+                delegatedCameraIds?.includes(camera.edgeDeviceId) ?? true,
               observationPointId:
                 observationPointByCamera.get(camera.edgeDeviceId) ?? "",
             })),

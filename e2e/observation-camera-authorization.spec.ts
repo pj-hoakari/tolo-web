@@ -57,12 +57,31 @@ test("マシンの観測ページは認可を開始せず、スタッフによ�
   await page.goto(samplePagePath);
 
   await expect(
-    page.getByRole("alert").filter({
-      hasText:
-        "スタッフが管理画面の「観測ページの接続を許可」から再認可してください。",
-    }),
+    page.getByText(
+      "カメラ接続の認可がありません。スタッフが管理画面の「観測ページの接続を許可」から再認可してください。",
+      { exact: true },
+    ),
   ).toBeVisible();
   await page.waitForTimeout(500);
   expect(requests).toHaveLength(0);
   expect(page.url()).toContain(samplePagePath);
+});
+
+test("カメラごとの再接続ボタンを日本語と英語で表示する", async ({
+  page,
+  context,
+}) => {
+  await setConnectionAuthorizationError(page, "machine");
+  for (const [locale, buttonName] of [
+    ["ja", "ESP32 カメラ に再接続"],
+    ["en", "Reconnect ESP32 カメラ"],
+  ]) {
+    await context.addCookies([
+      { name: "NEXT_LOCALE", value: locale, url: "http://test.localhost:3100" },
+    ]);
+    await page.goto(samplePagePath);
+    await expect(
+      page.getByRole("button", { name: buttonName, exact: true }),
+    ).toBeVisible();
+  }
 });

@@ -50,11 +50,27 @@ export function useObservationPageCameras({
         if (cancelled) {
           return;
         }
-        const next = delegated.map((camera) => ({
-          edgeDeviceId: camera.edgeDeviceId,
-          name: camera.name,
-          observationPointId: camera.observationPointId,
-        }));
+        const unauthorized = delegated.find(
+          (camera) => !camera.connectionAuthorized,
+        );
+        setConnectionError(
+          unauthorized
+            ? {
+                code: "CONNECTION_AUTHORIZATION_REQUIRED",
+                viewerType: null,
+                eventId,
+                pageEdgeDeviceId,
+                cameraEdgeDeviceId: unauthorized.edgeDeviceId,
+              }
+            : null,
+        );
+        const next = delegated
+          .filter((camera) => camera.connectionAuthorized)
+          .map((camera) => ({
+            edgeDeviceId: camera.edgeDeviceId,
+            name: camera.name,
+            observationPointId: camera.observationPointId,
+          }));
         setCameras(next);
         setInitialCameraId(
           next.some((camera) => camera.edgeDeviceId === requestedCameraId)

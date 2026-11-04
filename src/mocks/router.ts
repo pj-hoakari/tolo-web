@@ -221,6 +221,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             input,
           }): Promise<{
             cameras: {
+              connectionAuthorized: boolean;
               edgeDeviceId: string;
               name: string;
               observationPointId: string;
@@ -249,6 +250,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
                     observationPointByCamera.has(device.edgeDeviceId),
                 )
                 .map((device) => ({
+                  connectionAuthorized: true,
                   edgeDeviceId: device.edgeDeviceId,
                   name: device.name,
                   observationPointId:

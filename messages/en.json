@@ -465,7 +465,8 @@
       "stop": "Stop",
       "loading": "Starting…",
       "retry": "Reconnect",
-      "observeOnThisDevice": "Observe on this device"
+      "observeOnThisDevice": "Observe on this device",
+      "retryCamera": "Reconnect {camera}"
     },
     "cameraSelector": {
       "label": "Camera"

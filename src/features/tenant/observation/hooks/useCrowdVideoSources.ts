@@ -45,6 +45,8 @@ export type UseCrowdVideoSourcesResult = {
   selectSource: (key: string) => void;
   start: () => void;
   stop: () => void;
+  retryCamera: (cameraEdgeId: string) => void;
+  reportSourceError: (cameraEdgeId: string, cause: unknown) => void;
   reportDetectionError: (cause: unknown) => void;
 };
 
@@ -82,6 +84,8 @@ export function useCrowdVideoSources(
   const lastFrameAtRef = useRef<Map<string, number | null>>(new Map());
   const descriptorsRef = useRef<Map<string, VideoSourceDescriptor>>(new Map());
   const operationIdRef = useRef(0);
+  const retryingRef = useRef(new Set<string>());
+  const connectionErrorsRef = useRef(new Map<string, CameraConnectionError>());
 
   const [descriptors, setDescriptors] = useState<
     Map<string, VideoSourceDescriptor>
@@ -168,6 +172,8 @@ export function useCrowdVideoSources(
       source.close();
     }
     openedRef.current = [];
+    retryingRef.current.clear();
+    connectionErrorsRef.current.clear();
     sourceByKeyRef.current = new Map();
     lastFrameAtRef.current = new Map();
     descriptorsRef.current = new Map();
@@ -228,11 +234,14 @@ export function useCrowdVideoSources(
     descriptorsRef.current = nextDescriptors;
     setDescriptors(nextDescriptors);
     setSourceStates(nextStates);
+    connectionErrorsRef.current = new Map(
+      opened.flatMap((entry) => {
+        const error = cameraConnectionError(entry.error);
+        return error ? [[entry.cameraEdgeId, error] as const] : [];
+      }),
+    );
     setConnectionError(
-      opened
-        .map((entry) => cameraConnectionError(entry.error))
-        .find((entry): entry is CameraConnectionError => entry !== null) ??
-        null,
+      connectionErrorsRef.current.values().next().value ?? null,
     );
     publishFreshness();
 
@@ -271,6 +280,94 @@ export function useCrowdVideoSources(
     }
     setStatus("detecting");
   }, [closeSources, describeError, initialSelectedKey, publishFreshness, t]);
+
+  const reportSourceError = useCallback(
+    (key: string, cause: unknown) => {
+      const connection = cameraConnectionError(cause);
+      if (connection) {
+        connectionErrorsRef.current.set(key, {
+          ...connection,
+          cameraEdgeDeviceId: key,
+        });
+        setConnectionError(
+          connectionErrorsRef.current.values().next().value ?? null,
+        );
+      }
+      sourceByKeyRef.current.get(key)?.close();
+      sourceByKeyRef.current.delete(key);
+      const nextDescriptors = new Map(descriptorsRef.current);
+      nextDescriptors.delete(key);
+      descriptorsRef.current = nextDescriptors;
+      setDescriptors(nextDescriptors);
+      setSourceStates((previous) =>
+        previous.map((state) =>
+          state.key === key
+            ? { key, status: "error", error: describeError(cause) }
+            : state,
+        ),
+      );
+      publishFreshness();
+    },
+    [describeError, publishFreshness],
+  );
+
+  const retryCamera = useCallback(
+    async (key: string) => {
+      const spec = specsRef.current.find((entry) => entry.cameraEdgeId === key);
+      if (!spec || retryingRef.current.has(key)) return;
+      const operationId = operationIdRef.current;
+      retryingRef.current.add(key);
+      sourceByKeyRef.current.get(key)?.close();
+      sourceByKeyRef.current.delete(key);
+      const nextDescriptors = new Map(descriptorsRef.current);
+      nextDescriptors.delete(key);
+      descriptorsRef.current = nextDescriptors;
+      setDescriptors(nextDescriptors);
+      setSourceStates((previous) =>
+        previous.map((state) =>
+          state.key === key ? { key, status: "opening", error: null } : state,
+        ),
+      );
+      let source: CrowdVideoSource | undefined;
+      try {
+        source = spec.createSource();
+        openedRef.current.push(source);
+        const descriptor = await source.open();
+        if (operationId !== operationIdRef.current) {
+          source.close();
+          return;
+        }
+        sourceByKeyRef.current.set(key, source);
+        const nextDescriptors = new Map(descriptorsRef.current);
+        nextDescriptors.set(key, descriptor);
+        descriptorsRef.current = nextDescriptors;
+        setDescriptors(nextDescriptors);
+        setSourceStates((previous) =>
+          previous.map((state) =>
+            state.key === key ? { key, status: "ready", error: null } : state,
+          ),
+        );
+        connectionErrorsRef.current.delete(key);
+        setConnectionError(
+          connectionErrorsRef.current.values().next().value ?? null,
+        );
+        publishFreshness();
+        await initializeCrowdDetector();
+        if (operationId === operationIdRef.current) {
+          setError(null);
+          setStatus("detecting");
+        }
+      } catch (cause) {
+        source?.close();
+        if (operationId === operationIdRef.current)
+          reportSourceError(key, cause);
+      } finally {
+        if (operationId === operationIdRef.current)
+          retryingRef.current.delete(key);
+      }
+    },
+    [publishFreshness, reportSourceError],
+  );
 
   const stop = useCallback(() => {
     operationIdRef.current += 1;
@@ -337,5 +434,9 @@ export function useCrowdVideoSources(
     },
     stop,
     reportDetectionError,
+    reportSourceError,
+    retryCamera: (key) => {
+      void retryCamera(key);
+    },
   };
 }

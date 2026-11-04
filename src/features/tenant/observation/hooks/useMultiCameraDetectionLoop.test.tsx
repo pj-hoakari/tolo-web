@@ -116,3 +116,45 @@ describe("useMultiCameraDetectionLoop", () => {
     },
   );
 });
+
+it("keeps the working camera video, tracking state and cumulative results when another source recovers", async () => {
+  const stores = createDetectionStores();
+  const camera = createDetectionStores();
+  const good = { kind: "objectUrl", url: "blob:good", loop: false } as const;
+  const params: MultiCameraDetectionLoopParams = {
+    ...stores,
+    sources: new Map([["good", good]]),
+    selectedKey: "good",
+    isFresh: () => false,
+    overlayCanvasRef: { current: null },
+    status: "detecting",
+    cameraSettingsStores: new Map([["good", camera.settingsStore]]),
+    cameraViewStateStores: new Map(),
+    cameraResultStores: new Map([["good", camera.resultStore]]),
+    onCameraPhase: vi.fn(),
+    onBroadcastStreamChange: vi.fn(),
+    onDetectionFrame: vi.fn(),
+  };
+  const { rerender } = renderHook(
+    (props) => useMultiCameraDetectionLoop(props),
+    { initialProps: params },
+  );
+  const video = document.querySelector("video");
+  camera.resultStore.setState({
+    lineCounts: { "line-1": { forward: 12, backward: 7 } },
+    detectedPeople: { frames: 10, people: 25 },
+  });
+  const counts = camera.resultStore.getState();
+  rerender({
+    ...params,
+    sources: new Map([
+      ["good", good],
+      ["recovered", { kind: "objectUrl", url: "blob:recovered", loop: false }],
+    ]),
+  });
+  await act(async () => {});
+  expect(document.querySelector("video")).toBe(video);
+  expect(camera.resultStore.getState()).toEqual(counts);
+  expect(resetCrowdTracking).not.toHaveBeenCalled();
+  expect(document.querySelectorAll("video")).toHaveLength(2);
+});

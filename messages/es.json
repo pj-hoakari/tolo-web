@@ -465,7 +465,8 @@
       "stop": "Detener",
       "loading": "Iniciando…",
       "retry": "Reconectar",
-      "observeOnThisDevice": "Observar en este dispositivo"
+      "observeOnThisDevice": "Observar en este dispositivo",
+      "retryCamera": "Reconectar {camera}"
     },
     "cameraSelector": {
       "label": "Cámara"

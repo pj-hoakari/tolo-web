@@ -1,5 +1,6 @@
 import { type Auth, signInWithCustomToken } from "firebase/auth";
 import type { DocumentReference, Firestore } from "firebase/firestore";
+import { cameraConnectionError } from "@/features/tenant/webrtc/utils/cameraConnection";
 import { ICE_SERVERS } from "@/features/tenant/webrtc/utils/config";
 import {
   getNamedAuth,
@@ -33,6 +34,7 @@ export type EspCameraSourceOptions = {
    */
   requestConnection: () => Promise<CameraConnection>;
   label?: string;
+  onError?: (cause: unknown) => void;
 };
 
 const APP_NAME_PREFIX = "esp-camera-console";
@@ -452,7 +454,16 @@ class EspCameraLink {
       }, 2_000);
     } catch (error) {
       console.error("[esp-camera] セッションの確立に失敗しました", error);
-      finish(true);
+      if (this.closed || generation !== this.generation) {
+        finish(false);
+        return;
+      }
+      if (cameraConnectionError(error)) {
+        finish(false);
+        this.options.onError?.(error);
+      } else {
+        finish(true);
+      }
     }
   }
 }

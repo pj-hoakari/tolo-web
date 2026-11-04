@@ -465,7 +465,8 @@
       "stop": "停止",
       "loading": "起動中…",
       "retry": "再接続",
-      "observeOnThisDevice": "この端末で観測する"
+      "observeOnThisDevice": "この端末で観測する",
+      "retryCamera": "{camera} に再接続"
     },
     "cameraSelector": {
       "label": "カメラ"
