@@ -22,9 +22,13 @@ import {
   GuestComponent,
 } from "@pj-hoakari/tolo-guest-client-es/tolo/guest/v1/guest_pb";
 import {
+  FlowHistoryTier,
+  FlowObservationState,
   MeasurementSource,
   type EdgeDevice as ProtoEdgeDevice,
   EventType as ProtoEventType,
+  type FlowElementState as ProtoFlowElementState,
+  FlowJudgement as ProtoFlowJudgement,
   type ObservationPoint as ProtoObservationPoint,
   type ObservationSettings as ProtoObservationSettings,
 } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
@@ -38,6 +42,12 @@ import {
   EventStatus as ProtoEventStatus,
 } from "@pj-hoakari/tolo-tenant-management-connect-es/tolo/tenant/v1/tenant_pb";
 import { z } from "zod";
+import type {
+  FlowElementState,
+  FlowHistory,
+  FlowJudgement,
+  FlowObservation,
+} from "@/features/flowState/type";
 import {
   type GraphViolation,
   graphDataSchema,
@@ -80,6 +90,7 @@ import { fromGuideMapResponse } from "./guideMap";
 import {
   consoleEdgeDeviceClient,
   consoleObservationSettingsClient,
+  consoleStatusQueryClient,
   edgeEdgeDeviceClient,
   edgeMeasurementIngestClient,
 } from "./observation";
@@ -171,6 +182,40 @@ function toObservationSettings(
     eventType:
       EVENT_TYPES.find((t) => PROTO_EVENT_TYPES[t] === settings.eventType) ??
       null,
+  };
+}
+
+const FLOW_OBSERVATIONS: Partial<
+  Record<FlowObservationState, FlowObservation>
+> = {
+  [FlowObservationState.UNOBSERVED]: "unobserved",
+  [FlowObservationState.INVALID]: "invalid",
+  [FlowObservationState.HOLD]: "hold",
+  [FlowObservationState.STALE]: "stale",
+  [FlowObservationState.OK]: "ok",
+};
+
+const FLOW_HISTORIES: Partial<Record<FlowHistoryTier, FlowHistory>> = {
+  [FlowHistoryTier.NONE]: "none",
+  [FlowHistoryTier.WINDOW_ONLY]: "windowOnly",
+  [FlowHistoryTier.SHORT]: "short",
+  [FlowHistoryTier.ESTABLISHED]: "established",
+};
+
+const FLOW_JUDGEMENTS: Partial<Record<ProtoFlowJudgement, FlowJudgement>> = {
+  [ProtoFlowJudgement.SURGE]: "surge",
+  [ProtoFlowJudgement.HIGH_STAGNATION]: "highStagnation",
+  [ProtoFlowJudgement.COMBINED]: "combined",
+  [ProtoFlowJudgement.PUNCTURE]: "puncture",
+};
+
+function toFlowElementState(state: ProtoFlowElementState): FlowElementState {
+  return {
+    targetKey: state.targetKey,
+    observation: FLOW_OBSERVATIONS[state.observation] ?? null,
+    history: FLOW_HISTORIES[state.history] ?? null,
+    linePoints: state.linePoints,
+    skipped: state.skipped.flatMap((j) => FLOW_JUDGEMENTS[j] ?? []),
   };
 }
 
@@ -830,6 +875,27 @@ export const router = {
               await edgeEdgeDeviceClient.listEdgeDeviceObservationPoints(input);
             return {
               observationPoints: res.observationPoints.map(toObservationPoint),
+            };
+          } catch (err) {
+            throw toORPCError(err);
+          }
+        },
+      ),
+    getFlowElementStates: os
+      .input(z.object({ eventId: z.string().min(1) }))
+      .handler(
+        async ({
+          input,
+        }): Promise<{ flowElementStates: FlowElementState[] }> => {
+          if (observationMocking()) {
+            return { flowElementStates: [] };
+          }
+          try {
+            const res = await consoleStatusQueryClient.getEventOverview(input);
+            return {
+              flowElementStates: (res.overview?.flowElementStates ?? []).map(
+                toFlowElementState,
+              ),
             };
           } catch (err) {
             throw toORPCError(err);

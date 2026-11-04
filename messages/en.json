@@ -273,6 +273,50 @@
       "retry": "Retry"
     }
   },
+  "FlowState": {
+    "error": "Failed to load the judgement status",
+    "skipped": "Cannot judge: {judgements}",
+    "judgement": {
+      "surge": "surge",
+      "highStagnation": "stagnation alert",
+      "combined": "combined trigger",
+      "puncture": "puncture"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "No observations are arriving",
+        "action": "Check that the device is running, and restart it if it has stopped"
+      },
+      "invalid": {
+        "label": "Observed values are invalid",
+        "action": "Review the setup, such as the camera angle and anything blocking it"
+      },
+      "hold": {
+        "label": "Measurements are not arriving and values are on hold",
+        "action": "Wait a while, and restart the device if this continues"
+      },
+      "stale": {
+        "label": "Observations are out of date",
+        "action": "Wait a while, and restart the device if this continues"
+      },
+      "noHistory": {
+        "label": "There is no history to judge with yet",
+        "action": "Wait a while for history to build up"
+      },
+      "windowOnlyHistory": {
+        "label": "No long-term history; judging only from recent measurements",
+        "action": "Wait a while for history to build up"
+      },
+      "shortHistory": {
+        "label": "Less than 4 hours of history",
+        "action": "Wait a while for history to build up"
+      },
+      "intermittentLine": {
+        "label": "Only {count} recent flow measurements",
+        "action": "Check that the device keeps measuring, and restart it if it has stopped"
+      }
+    }
+  },
   "Webrtc": {
     "connectionStatus": {
       "idle": "Not connected",
@@ -300,7 +344,8 @@
       "openHere": "Open on this device",
       "openHereLabel": "Open “{name}” on this device",
       "unregister": "Unregister",
-      "unregisterLabel": "Unregister “{name}”"
+      "unregisterLabel": "Unregister “{name}”",
+      "observationPoints": "Observation points"
     },
     "receiver": {
       "stoppedTitle": "Observation stopped",

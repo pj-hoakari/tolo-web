@@ -273,6 +273,50 @@
       "retry": "Reintentar"
     }
   },
+  "FlowState": {
+    "error": "No se pudo obtener el estado de evaluación",
+    "skipped": "No se puede evaluar: {judgements}",
+    "judgement": {
+      "surge": "aumento repentino",
+      "highStagnation": "alerta de estancamiento",
+      "combined": "activación combinada",
+      "puncture": "saturación"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "No llegan observaciones",
+        "action": "Compruebe que el dispositivo funciona y reinícielo si se ha detenido"
+      },
+      "invalid": {
+        "label": "Los valores observados no son válidos",
+        "action": "Revise la instalación, como el ángulo de la cámara o lo que la obstruye"
+      },
+      "hold": {
+        "label": "No llegan mediciones y los valores están en espera",
+        "action": "Espere un momento y reinicie el dispositivo si continúa"
+      },
+      "stale": {
+        "label": "Las observaciones están desactualizadas",
+        "action": "Espere un momento y reinicie el dispositivo si continúa"
+      },
+      "noHistory": {
+        "label": "Aún no hay historial para evaluar",
+        "action": "Espere a que se acumule historial"
+      },
+      "windowOnlyHistory": {
+        "label": "Sin historial a largo plazo; se evalúa solo con mediciones recientes",
+        "action": "Espere a que se acumule historial"
+      },
+      "shortHistory": {
+        "label": "Hay menos de 4 horas de historial",
+        "action": "Espere a que se acumule historial"
+      },
+      "intermittentLine": {
+        "label": "Solo hay {count} mediciones de flujo recientes",
+        "action": "Compruebe que el dispositivo sigue midiendo y reinícielo si se ha detenido"
+      }
+    }
+  },
   "Webrtc": {
     "connectionStatus": {
       "idle": "Sin conexión",
@@ -300,7 +344,8 @@
       "openHere": "Abrir en este dispositivo",
       "openHereLabel": "Abrir «{name}» en este dispositivo",
       "unregister": "Dar de baja",
-      "unregisterLabel": "Dar de baja «{name}»"
+      "unregisterLabel": "Dar de baja «{name}»",
+      "observationPoints": "Puntos de observación"
     },
     "receiver": {
       "stoppedTitle": "La observación se detuvo",

@@ -1,10 +1,14 @@
 "use client";
 
 import { useMemo } from "react";
+import { useFlowElementStates } from "@/features/flowState/useFlowElementStates";
 import { useEdgeDevices } from "@/features/tenant/webrtc/hooks/useEdgeDevices";
 import type { ObservationPointsSource } from "../components/observation";
 import type { GraphData } from "../type";
-import { collectObservationPointIds } from "../utils/observationPoints";
+import {
+  collectObservationPointIds,
+  flowStatesByObservationPoint,
+} from "../utils/observationPoints";
 
 /**
  * プロパティパネルに渡す観測点の選択肢を組み立てるフック。
@@ -32,5 +36,21 @@ export function useObservationPointSource({
     [graph],
   );
 
-  return { available, status, usedIds, onRefresh: refresh };
+  const flow = useFlowElementStates(eventId);
+  const flowStates = useMemo(
+    () => flowStatesByObservationPoint(graph.nodes, graph.edges, flow.states),
+    [graph, flow.states],
+  );
+
+  return {
+    available,
+    status,
+    usedIds,
+    flowStates,
+    flowStatesFailed: flow.failed,
+    onRefresh: () => {
+      refresh();
+      void flow.refresh();
+    },
+  };
 }
