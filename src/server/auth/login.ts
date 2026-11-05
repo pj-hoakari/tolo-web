@@ -251,10 +251,22 @@ export const loginHandoff = {
       async (ctx) => {
         ctx.setHeader("Referrer-Policy", "no-referrer");
         const { adapter, internalAdapter, authCookies, secret } = ctx.context;
+        const previous = await ctx.getSignedCookie(
+          authCookies.sessionToken.name,
+          secret,
+        );
+        const previousSession = previous
+          ? await internalAdapter.findSession(previous)
+          : null;
         const login = await adapter.consumeOne<PendingLogin>({
           model: PENDING_LOGIN,
           where: [{ field: "codeHash", value: sha256(ctx.body.code) }],
         });
+        if (previousSession?.session.kind === "machine") {
+          throw ctx.redirect(
+            loginErrorUrl(ctx.body.host, "machine_session_forbidden"),
+          );
+        }
         const presented = login && ctx.getCookie(binding(login.id).name);
         const user = login?.userId
           ? await internalAdapter.findUserById(login.userId)
@@ -273,10 +285,6 @@ export const loginHandoff = {
         ) {
           throw ctx.redirect(loginErrorUrl(ctx.body.host, "invalid_handoff"));
         }
-        const previous = await ctx.getSignedCookie(
-          authCookies.sessionToken.name,
-          secret,
-        );
         if (previous) await internalAdapter.deleteSession(previous);
         const session = await internalAdapter.createSession(user.id, false, {
           tenantId: login.tenantId,
@@ -426,10 +434,19 @@ export function createLoginFlow({ auth, env }: RealAuth) {
     },
 
     async start(request: Request, tenantId: string): Promise<Response> {
+      const host = request.headers.get("host") ?? "";
+      const current = await auth.api.getSession({
+        headers: request.headers,
+      });
+      if (current?.session.kind === "machine") {
+        return Response.redirect(
+          loginErrorUrl(host, "machine_session_forbidden"),
+          302,
+        );
+      }
       const returnPath = sameHostPath(
         new URL(request.url).searchParams.get("return") ?? "/",
       );
-      const host = request.headers.get("host") ?? "";
       if (!returnPath) {
         return Response.redirect(loginErrorUrl(host, "invalid_return"), 302);
       }
