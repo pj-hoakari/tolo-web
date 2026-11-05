@@ -29,15 +29,7 @@ import {
   type SessionLock,
   type SessionLocks,
 } from "./betterAuth";
-import {
-  BROWSER_COOKIE,
-  browserCookieValue,
-  browserHash,
-  newBrowserId,
-  signBrowserId,
-  verifyBrowserId,
-} from "./browser";
-import { hostLockKey } from "./hostState";
+import { hostLockKey } from "./locks";
 import { createLoginFlow } from "./login";
 import { MACHINE_BINDING_COOKIE } from "./machineSession";
 import { createSessionAuth } from "./session";
@@ -254,7 +246,6 @@ async function createTestAuth(
     tenantAccessToken: [],
     eventAccessToken: [],
     pendingLogin: [],
-    browserHostState: [],
     tenantRegistration: [],
   }),
   databaseHooks?: BetterAuthOptions["databaseHooks"],
@@ -327,14 +318,13 @@ async function completeMachineConversion(
     (await ctx.test.saveUser(ctx.test.createUser({ email, name: sub })));
   const code = randomBytes(16).toString("base64url");
   const binding = randomBytes(16).toString("base64url");
-  const presentedBrowser = browserCookieValue(cookie);
-  const browserId =
-    verifyBrowserId(presentedBrowser, env.secret) ?? newBrowserId();
-  const browser = browserHash(browserId);
-  const browserValue =
-    presentedBrowser && verifyBrowserId(presentedBrowser, env.secret)
-      ? presentedBrowser
-      : signBrowserId(browserId, env.secret);
+  const token = cookie
+    .split(/;\s*/)
+    .find((part) => part.startsWith(`${SESSION_COOKIE}=`))
+    ?.slice(SESSION_COOKIE.length + 1);
+  const staffSession = token
+    ? await ctx.internalAdapter.findSession(token)
+    : null;
   await ctx.adapter.create({
     model: "pendingMachineHandoff",
     data: {
@@ -348,7 +338,7 @@ async function completeMachineConversion(
       refreshToken: "machine-refresh",
       accessTokenExpiresAt: new Date(Date.now() + 60_000),
       host,
-      browserHash: browser,
+      staffSessionId: staffSession?.session.id,
       bindingHash: sha256(binding),
       returnPath: "/",
       expiresAt: new Date(Date.now() + 60_000),
@@ -358,7 +348,7 @@ async function completeMachineConversion(
     body: { code, host },
     headers: new Headers({
       host,
-      cookie: `${cookie ? `${cookie}; ` : ""}${BROWSER_COOKIE}=${browserValue}; ${MACHINE_BINDING_COOKIE}=${binding}`,
+      cookie: `${cookie ? `${cookie}; ` : ""}${MACHINE_BINDING_COOKIE}=${binding}`,
     }),
     asResponse: true,
   });
@@ -475,12 +465,6 @@ function sessionHeaders(jar: ReturnType<typeof cookieJar>) {
   return new Headers({ cookie: jar.header() });
 }
 
-function browserKey(jar: ReturnType<typeof cookieJar>): string {
-  const id = verifyBrowserId(jar.cookies.get(BROWSER_COOKIE), env.secret);
-  if (!id) throw new Error("the browser cookie is missing");
-  return hostLockKey(HOST, browserHash(id));
-}
-
 beforeEach(() => {
   vi.stubEnv("ROOT_DOMAIN", "tolo.test");
 });
@@ -529,13 +513,13 @@ describe("login handoff", () => {
     ).toEqual([]);
 
     const headers = sessionHeaders(login.tenantJar);
-    await expect(testAuth.sessionAuth.viewer(headers, TENANT)).resolves.toEqual(
-      {
-        type: "staff",
-        userId: "user-1",
-        tenantId: TENANT,
-      },
-    );
+    await expect(
+      testAuth.sessionAuth.viewer(headers, TENANT),
+    ).resolves.toMatchObject({
+      type: "staff",
+      userId: "user-1",
+      tenantId: TENANT,
+    });
     await expect(
       testAuth.sessionAuth.accessToken(headers, TENANT, {
         type: "tenant_access",
@@ -563,19 +547,6 @@ describe("login handoff", () => {
       .getSetCookie()
       .find((cookie) => cookie.startsWith("__Host-tolo.login."));
     expect(bindingCookie ?? "").toMatch(/^__Host-tolo\.login\.[^=]+=[^;]+;/);
-    const browserCookie = started.headers
-      .getSetCookie()
-      .find((cookie) => cookie.startsWith(`${BROWSER_COOKIE}=`));
-    expect(browserCookie?.split("; ")).toEqual(
-      expect.arrayContaining([
-        "Max-Age=31536000",
-        "Path=/",
-        "HttpOnly",
-        "Secure",
-        "SameSite=Lax",
-      ]),
-    );
-    expect(browserCookie ?? "").not.toMatch(/Domain/i);
     expect((bindingCookie ?? "").split("; ")).toEqual(
       expect.arrayContaining([
         "Max-Age=600",
@@ -720,32 +691,20 @@ describe("login handoff", () => {
     expect(await ctx.adapter.findMany({ model: "session" })).toHaveLength(1);
   });
 
-  it("keeps the browser id when the same browser starts another login", async () => {
+  it("starts another login on the same host without a separate browser identity", async () => {
     const provider = idp();
     const testAuth = await createTestAuth();
     const jar = await logInOn(testAuth, provider);
-    const browserValue = jar.cookies.get(BROWSER_COOKIE);
-    const browserId = verifyBrowserId(browserValue, env.secret);
-    expect(browserId).toBeTruthy();
 
     await authorizeAtIdp(testAuth, provider, { tenantJar: jar });
 
-    expect(jar.cookies.get(BROWSER_COOKIE)).toBe(browserValue);
     const ctx = await testAuth.auth.$context;
-    const pending = await ctx.adapter.findOne<{ browserHash: string }>({
+    const pending = await ctx.adapter.findOne<{ staffSessionId?: string }>({
       model: "pendingLogin",
       where: [{ field: "host", value: HOST }],
     });
-    expect(pending?.browserHash).toBe(browserHash(browserId as string));
-    expect(
-      await ctx.adapter.findMany({
-        model: "browserHostState",
-        where: [
-          { field: "host", value: HOST },
-          { field: "browserHash", value: browserHash(browserId as string) },
-        ],
-      }),
-    ).toHaveLength(1);
+    expect(pending?.staffSessionId).toBeTruthy();
+    expect(await ctx.adapter.findMany({ model: "session" })).toHaveLength(1);
   });
 
   it("accepts a code only once", async () => {
@@ -1036,7 +995,7 @@ describe("machine session protection", () => {
     expect(await ctx.adapter.findMany({ model: "pendingLogin" })).toEqual([]);
   });
 
-  it("converts only the current browser and leaves another browser's staff session and login alone", async () => {
+  it("converts only the current session and leaves another session alone", async () => {
     const provider = idp();
     const testAuth = await createTestAuth();
     const browserA = await logInOn(testAuth, provider);
@@ -1080,66 +1039,6 @@ describe("machine session protection", () => {
       1,
     );
     expect(await ctx.adapter.findMany({ model: "pendingLogin" })).toEqual([]);
-  });
-
-  it("serializes a handoff with machine conversion so the handoff is rejected", async () => {
-    const provider = idp();
-    const instrumented = instrumentedLock();
-    const testAuth = await createTestAuth(
-      undefined,
-      undefined,
-      instrumented.lock,
-    );
-    const login = await logInUntilHandoff(testAuth, provider);
-
-    const hold = instrumented.hold(browserKey(login.tenantJar));
-    const conversionQueued = instrumented.whenLockCalled();
-    const conversion = completeMachineConversion(testAuth, {
-      cookie: login.tenantJar.header(),
-    });
-    await conversionQueued;
-    const handoffQueued = instrumented.whenLockCalled();
-    const handedOff = handOff(testAuth, login.handoffUrl, login.tenantJar);
-    await handoffQueued;
-    await hold.release();
-    const [, response] = await Promise.all([conversion, handedOff]);
-
-    expect(loginErrorPage(response)).toMatchObject({
-      error: "machine_session_forbidden",
-    });
-    const ctx = await testAuth.auth.$context;
-    expect(
-      await ctx.adapter.findMany<{ kind: string }>({ model: "session" }),
-    ).toEqual([expect.objectContaining({ kind: "machine" })]);
-  });
-
-  it("removes a staff session created by a handoff that won the lock", async () => {
-    const provider = idp();
-    const instrumented = instrumentedLock();
-    const testAuth = await createTestAuth(
-      undefined,
-      undefined,
-      instrumented.lock,
-    );
-    const login = await logInUntilHandoff(testAuth, provider);
-
-    const hold = instrumented.hold(browserKey(login.tenantJar));
-    const handoffQueued = instrumented.whenLockCalled();
-    const handedOff = handOff(testAuth, login.handoffUrl, login.tenantJar);
-    await handoffQueued;
-    const conversionQueued = instrumented.whenLockCalled();
-    const conversion = completeMachineConversion(testAuth, {
-      cookie: login.tenantJar.header(),
-    });
-    await conversionQueued;
-    await hold.release();
-    const [response] = await Promise.all([handedOff, conversion]);
-
-    expect(response.status).toBe(200);
-    const ctx = await testAuth.auth.$context;
-    expect(
-      await ctx.adapter.findMany<{ kind: string }>({ model: "session" }),
-    ).toEqual([expect.objectContaining({ kind: "machine" })]);
   });
 });
 

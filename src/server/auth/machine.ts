@@ -8,12 +8,6 @@ import {
 import { z } from "zod";
 import { rootOrigin, tenantOrigin } from "@/lib/control/tenant";
 import { getRealAuth, type RealAuth } from "./betterAuth";
-import {
-  browserCookie,
-  browserHash,
-  newBrowserId,
-  verifyBrowserId,
-} from "./browser";
 import { idpDiscovery } from "./discovery";
 import {
   machineBindingCookie,
@@ -43,7 +37,7 @@ export interface MachineStartInput {
   staffSub: string;
   host: string;
   returnPath: string;
-  browserCookie?: string;
+  staffSessionId?: string;
 }
 
 export interface MachineStartResult {
@@ -52,11 +46,6 @@ export interface MachineStartResult {
     name: string;
     value: string;
     attributes: ReturnType<typeof machineBindingCookie>["attributes"];
-  };
-  browser?: {
-    name: string;
-    value: string;
-    attributes: ReturnType<typeof browserCookie>["attributes"];
   };
 }
 
@@ -78,7 +67,7 @@ type PendingMachine = {
   pageEdgeDeviceId: string;
   staffSub: string;
   host: string;
-  browserHash: string;
+  staffSessionId?: string;
   bindingHash: string;
   returnPath: string;
   redirectUri: string;
@@ -200,12 +189,6 @@ export function createMachineAuth(
       const env = environment();
       const store = await adapter();
       const now = new Date();
-      const existingBrowser = verifyBrowserId(
-        input.browserCookie,
-        realAuth.env.secret,
-      );
-      const browser = existingBrowser ?? newBrowserId();
-      const browserIdHash = browserHash(browser);
       await store.deleteMany({
         model: PENDING_MACHINE_AUTHORIZATION,
         where: [{ field: "expiresAt", operator: "lt", value: now }],
@@ -237,7 +220,7 @@ export function createMachineAuth(
           pageEdgeDeviceId: input.pageEdgeDeviceId,
           staffSub: input.staffSub,
           host: input.host,
-          browserHash: browserIdHash,
+          staffSessionId: input.staffSessionId,
           bindingHash: sha256(bindingValue),
           returnPath: input.returnPath,
           redirectUri: env.redirectUri,
@@ -266,9 +249,6 @@ export function createMachineAuth(
           ...machineBindingCookie(),
           value: bindingValue,
         },
-        ...(existingBrowser
-          ? {}
-          : { browser: browserCookie(browser, realAuth.env.secret) }),
       };
     },
 
@@ -340,7 +320,7 @@ export function createMachineAuth(
           idToken: tokens.id_token,
           accessTokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
           host: pending.host,
-          browserHash: pending.browserHash,
+          staffSessionId: pending.staffSessionId,
           bindingHash: pending.bindingHash,
           returnPath: pending.returnPath,
           expiresAt: new Date(Date.now() + HANDOFF_TTL_MS),

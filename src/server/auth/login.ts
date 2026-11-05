@@ -16,19 +16,8 @@ import { z } from "zod";
 import { challengeLogin } from "@/features/auth/idpLogin";
 import { rootOrigin, tenantOrigin } from "@/lib/control/tenant";
 import type { RealAuth, SessionLock } from "./betterAuth";
-import {
-  BROWSER_COOKIE,
-  browserCookie,
-  browserHash,
-  newBrowserId,
-  verifyBrowserId,
-} from "./browser";
 import { idpDiscovery } from "./discovery";
-import {
-  ensureHostState,
-  hostLockKey,
-  machineSessionExists,
-} from "./hostState";
+import { hostLockKey } from "./locks";
 
 export const PROVIDER_ID = "tolo-idp";
 const PENDING_LOGIN = "pendingLogin";
@@ -43,8 +32,7 @@ type PendingLogin = {
   kind: LoginKind;
   tenantId: string;
   host: string;
-  hostGeneration?: number | null;
-  browserHash: string;
+  staffSessionId?: string;
   bindingHash: string;
   returnPath: string;
   expiresAt: Date;
@@ -135,12 +123,7 @@ export function loginHandoff(lock: SessionLock) {
           kind: { type: "string", required: true },
           tenantId: { type: "string", required: true },
           host: { type: "string", required: true },
-          hostGeneration: {
-            type: "number",
-            required: false,
-            defaultValue: 0,
-          },
-          browserHash: { type: "string", required: true },
+          staffSessionId: { type: "string", required: false },
           bindingHash: { type: "string", required: true },
           returnPath: { type: "string", required: true },
           expiresAt: { type: "date", required: true },
@@ -239,44 +222,33 @@ export function loginHandoff(lock: SessionLock) {
           }),
         },
         async (ctx) => {
-          const { adapter, baseURL, secret } = ctx.context;
+          const { adapter, authCookies, baseURL, internalAdapter, secret } =
+            ctx.context;
           const value = randomToken();
-          const existingBrowser = verifyBrowserId(
-            ctx.getCookie(BROWSER_COOKIE),
+          const previous = await ctx.getSignedCookie(
+            authCookies.sessionToken.name,
             secret,
           );
-          const browserId = existingBrowser ?? newBrowserId();
-          if (!existingBrowser) {
-            const cookie = browserCookie(browserId, secret);
-            ctx.setCookie(cookie.name, cookie.value, cookie.attributes);
-          }
-          const browser = browserHash(browserId);
-          const login = await lock(
-            hostLockKey(ctx.body.host, browser),
-            async () => {
-              const hostState = await ensureHostState(
-                adapter,
-                ctx.body.host,
-                browser,
-              );
-              await adapter.deleteMany({
-                model: PENDING_LOGIN,
-                where: [
-                  { field: "expiresAt", operator: "lt", value: new Date() },
-                ],
-              });
-              return adapter.create<Omit<PendingLogin, "id">, PendingLogin>({
-                model: PENDING_LOGIN,
-                data: {
-                  ...ctx.body,
-                  browserHash: browser,
-                  hostGeneration: Number(hostState.generation),
-                  bindingHash: sha256(value),
-                  expiresAt: new Date(Date.now() + LOGIN_TTL_SECONDS * 1000),
-                },
-              });
-            },
-          );
+          const previousSession = previous
+            ? await internalAdapter.findSession(previous)
+            : null;
+          const login = await lock(hostLockKey(ctx.body.host), async () => {
+            await adapter.deleteMany({
+              model: PENDING_LOGIN,
+              where: [
+                { field: "expiresAt", operator: "lt", value: new Date() },
+              ],
+            });
+            return adapter.create<Omit<PendingLogin, "id">, PendingLogin>({
+              model: PENDING_LOGIN,
+              data: {
+                ...ctx.body,
+                staffSessionId: previousSession?.session.id,
+                bindingHash: sha256(value),
+                expiresAt: new Date(Date.now() + LOGIN_TTL_SECONDS * 1000),
+              },
+            });
+          });
           const cookie = binding(login.id);
           ctx.setCookie(cookie.name, value, cookie.attributes);
           throw ctx.redirect(
@@ -304,94 +276,75 @@ export function loginHandoff(lock: SessionLock) {
           const presented = login
             ? ctx.getCookie(binding(login.id).name)
             : undefined;
-          const browserId = verifyBrowserId(
-            ctx.getCookie(BROWSER_COOKIE),
-            secret,
-          );
-          const browser = browserId ? browserHash(browserId) : undefined;
-          const loginBrowser = login?.browserHash;
           const user = login?.userId
             ? await internalAdapter.findUserById(login.userId)
             : null;
-          return lock(
-            hostLockKey(ctx.body.host, loginBrowser ?? browser ?? "anonymous"),
-            async () => {
-              const previousSession = previous
-                ? await internalAdapter.findSession(previous)
-                : null;
-              const hostState = loginBrowser
-                ? await ensureHostState(adapter, ctx.body.host, loginBrowser)
-                : null;
-              if (
-                previousSession?.session.kind === "machine" ||
-                (hostState &&
-                  Number(hostState.generation) >
-                    Number(login?.hostGeneration ?? 0)) ||
-                (loginBrowser &&
-                  (await machineSessionExists(
-                    adapter,
-                    ctx.body.host,
-                    loginBrowser,
-                  )))
-              ) {
-                throw ctx.redirect(
-                  loginErrorUrl(ctx.body.host, "machine_session_forbidden"),
-                );
-              }
-              if (
-                login?.kind !== "login" ||
-                !login ||
-                !user ||
-                !login.subject ||
-                !login.accessToken ||
-                !login.refreshToken ||
-                !login.accessTokenExpiresAt ||
-                login.expiresAt <= new Date() ||
-                login.host !== ctx.body.host ||
-                !presented ||
-                sha256(presented) !== login.bindingHash ||
-                !browser ||
-                browser !== loginBrowser
-              ) {
-                throw ctx.redirect(
-                  loginErrorUrl(ctx.body.host, "invalid_handoff"),
-                );
-              }
-              if (previous) await internalAdapter.deleteSession(previous);
-              const session = await internalAdapter.createSession(
-                user.id,
-                false,
-                {
-                  tenantId: login.tenantId,
-                  kind: "staff",
-                  host: login.host,
-                  browserHash: loginBrowser,
-                },
+          return lock(hostLockKey(ctx.body.host), async () => {
+            const previousSession = previous
+              ? await internalAdapter.findSession(previous)
+              : null;
+            if (previousSession?.session.kind === "machine") {
+              throw ctx.redirect(
+                loginErrorUrl(ctx.body.host, "machine_session_forbidden"),
               );
-              await adapter.create({
-                model: TENANT_ACCESS_TOKEN,
-                data: {
-                  sessionId: session.id,
-                  subject: login.subject,
-                  accessToken: login.accessToken,
-                  refreshToken: login.refreshToken,
-                  accessTokenExpiresAt: login.accessTokenExpiresAt,
-                  idToken: login.idToken,
-                },
-              });
-              await setSessionCookie(ctx, { session, user }, false, {
-                maxAge: undefined,
-              });
-              expireCookie(ctx, binding(login.id));
-              const target = login.returnPath
-                .replaceAll("&", "&amp;")
-                .replaceAll('"', "&quot;");
-              return new Response(
-                `<!doctype html><meta http-equiv="refresh" content="0;url=${target}">`,
-                { headers: { "Content-Type": "text/html; charset=utf-8" } },
+            }
+            const originatingSession = login?.staffSessionId
+              ? await adapter.findOne<{ id: string }>({
+                  model: "session",
+                  where: [{ field: "id", value: login.staffSessionId }],
+                })
+              : null;
+            if (
+              login?.kind !== "login" ||
+              !login ||
+              (login.staffSessionId && !originatingSession) ||
+              !user ||
+              !login.subject ||
+              !login.accessToken ||
+              !login.refreshToken ||
+              !login.accessTokenExpiresAt ||
+              login.expiresAt <= new Date() ||
+              login.host !== ctx.body.host ||
+              !presented ||
+              sha256(presented) !== login.bindingHash
+            ) {
+              throw ctx.redirect(
+                loginErrorUrl(ctx.body.host, "invalid_handoff"),
               );
-            },
-          );
+            }
+            if (previous) await internalAdapter.deleteSession(previous);
+            const session = await internalAdapter.createSession(
+              user.id,
+              false,
+              {
+                tenantId: login.tenantId,
+                kind: "staff",
+                host: login.host,
+              },
+            );
+            await adapter.create({
+              model: TENANT_ACCESS_TOKEN,
+              data: {
+                sessionId: session.id,
+                subject: login.subject,
+                accessToken: login.accessToken,
+                refreshToken: login.refreshToken,
+                accessTokenExpiresAt: login.accessTokenExpiresAt,
+                idToken: login.idToken,
+              },
+            });
+            await setSessionCookie(ctx, { session, user }, false, {
+              maxAge: undefined,
+            });
+            expireCookie(ctx, binding(login.id));
+            const target = login.returnPath
+              .replaceAll("&", "&amp;")
+              .replaceAll('"', "&quot;");
+            return new Response(
+              `<!doctype html><meta http-equiv="refresh" content="0;url=${target}">`,
+              { headers: { "Content-Type": "text/html; charset=utf-8" } },
+            );
+          });
         },
       ),
       logOut: createAuthEndpoint.serverOnly({ method: "POST" }, async (ctx) => {
