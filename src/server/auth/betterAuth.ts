@@ -102,6 +102,7 @@ const toloSession = {
         eventId: { type: "string", required: true },
         pageEdgeDeviceId: { type: "string", required: true },
         cameraIds: { type: "string", required: true },
+        host: { type: "string", required: true },
         staffSub: { type: "string", required: true },
         returnPath: { type: "string", required: true },
         redirectUri: { type: "string", required: true },
@@ -151,6 +152,15 @@ const toloSession = {
         expiresAt: { type: "date", required: true },
       },
     },
+    browserHostState: {
+      fields: {
+        host: { type: "string", required: true },
+        browserHash: { type: "string", required: true },
+        generation: { type: "number", required: true, defaultValue: 0 },
+        machineAt: { type: "date", required: false },
+        updatedAt: { type: "date", required: true },
+      },
+    },
   },
   async onResponse(response) {
     const cookies = response.headers.getSetCookie();
@@ -169,7 +179,8 @@ const toloSession = {
   },
 } satisfies BetterAuthPlugin;
 
-export function authOptions(env: AuthEnv) {
+export function authOptions(env: AuthEnv, lock?: SessionLock) {
+  const authLock: SessionLock = lock ?? ((_, task) => task());
   const baseUrl = env.baseUrl ?? rootOrigin();
   return {
     secret: env.secret,
@@ -183,6 +194,8 @@ export function authOptions(env: AuthEnv) {
         tenantId: { type: "string", required: false, input: false },
         eventId: { type: "string", required: false, input: false },
         edgeDeviceId: { type: "string", required: false, input: false },
+        host: { type: "string", required: false, input: false },
+        browserHash: { type: "string", required: false, input: false },
         kind: {
           type: ["staff", "machine"],
           required: true,
@@ -235,44 +248,86 @@ export function authOptions(env: AuthEnv) {
         ],
       }),
       toloSession,
-      loginHandoff,
+      loginHandoff(authLock),
+      machineSessionPlugin(authLock, { issuer: env.issuer }),
       tenantOnboarding,
-      machineSessionPlugin,
     ],
   } satisfies BetterAuthOptions;
 }
 
 export type SessionLock = <T>(
-  sessionId: string,
+  key: string,
   task: () => Promise<T>,
 ) => Promise<T>;
 
+export type SessionLocks = <T>(
+  keys: string[],
+  task: () => Promise<T>,
+) => Promise<T>;
+
+export type SessionLocksDynamic = <T>(
+  initialKeys: string[],
+  selectMoreKeys: () => Promise<string[]>,
+  task: () => Promise<T>,
+) => Promise<T>;
+
+async function withAdvisoryLocks<T>(
+  pool: Pool,
+  keys: string[],
+  task: () => Promise<T>,
+  selectMoreKeys: () => Promise<string[]> = async () => [],
+): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const locked = new Set<string>();
+    const acquire = async (keys: string[]) => {
+      for (const key of [...new Set(keys)].sort()) {
+        if (locked.has(key)) continue;
+        await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [key]);
+        locked.add(key);
+      }
+    };
+    await acquire(keys);
+    await acquire(await selectMoreKeys());
+    return await task();
+  } finally {
+    await client.query("ROLLBACK").then(
+      () => client.release(),
+      (err: Error) => client.release(err),
+    );
+  }
+}
+
 export function advisoryLock(pool: Pool): SessionLock {
-  return async (sessionId, task) => {
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
-        sessionId,
-      ]);
-      return await task();
-    } finally {
-      await client.query("ROLLBACK").then(
-        () => client.release(),
-        (err: Error) => client.release(err),
-      );
-    }
-  };
+  return (key, task) => withAdvisoryLocks(pool, [key], task);
+}
+
+export function advisoryLockMany(pool: Pool): SessionLocks {
+  return (keys, task) => withAdvisoryLocks(pool, keys, task);
+}
+
+/** Select additional keys while holding the initial locks, using one connection.
+ * Callers must serialize target creation with the initial locks and re-read
+ * targets in task after the additional locks have been acquired.
+ */
+export function advisoryLockManyDynamic(pool: Pool): SessionLocksDynamic {
+  return (keys, selectMoreKeys, task) =>
+    withAdvisoryLocks(pool, keys, task, selectMoreKeys);
 }
 
 function createRealAuth(env: AuthEnv) {
+  const pool = new Pool({ connectionString: env.databaseUrl });
+  const lock = advisoryLock(pool);
   return {
     env,
     auth: betterAuth({
-      ...authOptions(env),
+      ...authOptions(env, lock),
       database: new Pool({ connectionString: env.databaseUrl }),
     }),
-    lock: advisoryLock(new Pool({ connectionString: env.databaseUrl })),
+    lock,
+    lockMany: advisoryLockMany(pool),
+    lockManyDynamic: advisoryLockManyDynamic(pool),
   };
 }
 

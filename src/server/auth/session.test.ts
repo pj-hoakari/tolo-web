@@ -63,6 +63,7 @@ function createTestAuth(
     verification: [],
     tenantAccessToken: [],
     eventAccessToken: [],
+    browserHostState: [],
   }),
   lock: SessionLock = inProcessLock(),
 ) {
