@@ -25,7 +25,9 @@ import {
   FlowHistoryTier,
   FlowObservationState,
   MeasurementSource,
+  type CameraLink as ProtoCameraLink,
   type EdgeDevice as ProtoEdgeDevice,
+  EdgeDeviceKind as ProtoEdgeDeviceKind,
   EventType as ProtoEventType,
   type FlowElementState as ProtoFlowElementState,
   FlowJudgement as ProtoFlowJudgement,
@@ -73,6 +75,7 @@ import {
 } from "@/features/tenant/management/settings/type";
 import {
   registeredEdgeDeviceWire,
+  sampleCameraDeviceWire,
   sampleEdgeDevicesWire,
 } from "@/mocks/fixtures/edges";
 import {
@@ -83,6 +86,12 @@ import {
 } from "./auth";
 import { forgetInvitation, pendingInvitationToken } from "./auth/invitation";
 import { eventIdKey } from "./authorize";
+import {
+  approveDeviceAuthorization,
+  type CameraProvisioningDefaults,
+  provisioningDefaults,
+  revokeDeviceAuthorization,
+} from "./camera";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
 import { guestPageClient } from "./guest";
@@ -115,15 +124,72 @@ export type RegisterTenantResult =
   | { type: "created"; subdomain: string }
   | { type: "authorize"; next: string };
 
+const registerEdgeDeviceInput = z
+  .object({
+    eventId: z.string().min(1),
+    name: z.string().trim().min(1),
+    kind: z.enum(["observation_page", "camera"]).default("observation_page"),
+    observationPointNames: z
+      .array(z.string().trim().min(1))
+      .refine((names) => new Set(names).size === names.length)
+      .default([]),
+    linkedObservationPointId: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      publicId.optional(),
+    ),
+  })
+  .superRefine((input, ctx) => {
+    if (input.kind === "camera") {
+      if (input.observationPointNames.length > 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["observationPointNames"],
+          message: "a camera edge device cannot own observation points",
+        });
+      }
+      if (!input.linkedObservationPointId) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["linkedObservationPointId"],
+          message: "a camera edge device needs one linked observation point",
+        });
+      }
+      return;
+    }
+    if (input.observationPointNames.length === 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["observationPointNames"],
+        message: "an observation page needs at least one observation point",
+      });
+    }
+    if (input.linkedObservationPointId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["linkedObservationPointId"],
+        message: "an observation page cannot link a camera observation point",
+      });
+    }
+  });
+
 export interface ObservationPoint {
   observationPointId: string;
   name: string;
 }
 
+export type EdgeDeviceKind = "observation_page" | "camera";
+
+export interface CameraLink {
+  cameraEdgeDeviceId: string;
+  observationPointId: string;
+}
+
 export interface EdgeDevice {
   edgeDeviceId: string;
   name: string;
-  online: boolean;
+  kind: EdgeDeviceKind;
+  cameraLinks: CameraLink[];
+  online: boolean | null;
   lastHeartbeatAt: string | null;
   observationPoints: ObservationPoint[];
 }
@@ -133,18 +199,48 @@ export interface RegisteredEdgeDevice {
   observationPagePath: string;
 }
 
+export type { CameraProvisioningDefaults };
+
+const EDGE_DEVICE_KINDS: Partial<Record<ProtoEdgeDeviceKind, EdgeDeviceKind>> =
+  {
+    [ProtoEdgeDeviceKind.OBSERVATION_PAGE]: "observation_page",
+    [ProtoEdgeDeviceKind.CAMERA]: "camera",
+  };
+
+const PROTO_EDGE_DEVICE_KINDS: Record<EdgeDeviceKind, ProtoEdgeDeviceKind> = {
+  observation_page: ProtoEdgeDeviceKind.OBSERVATION_PAGE,
+  camera: ProtoEdgeDeviceKind.CAMERA,
+};
+
+function toEdgeDeviceKind(kind: ProtoEdgeDeviceKind): EdgeDeviceKind {
+  return EDGE_DEVICE_KINDS[kind] ?? "observation_page";
+}
+
 function toObservationPoint(p: ProtoObservationPoint): ObservationPoint {
   return { observationPointId: p.observationPointId, name: p.name };
 }
 
+function toCameraLink(link: ProtoCameraLink): CameraLink {
+  return {
+    cameraEdgeDeviceId: link.cameraEdgeDeviceId,
+    observationPointId: link.observationPointId,
+  };
+}
+
 function toEdgeDevice(d: ProtoEdgeDevice): EdgeDevice {
+  const kind = toEdgeDeviceKind(d.kind);
   return {
     edgeDeviceId: d.edgeDeviceId,
     name: d.name,
-    online: d.online,
-    lastHeartbeatAt: d.lastHeartbeatAt
-      ? timestampDate(d.lastHeartbeatAt).toISOString()
-      : null,
+    kind,
+    cameraLinks: d.cameraLinks.map(toCameraLink),
+    online: kind === "camera" ? null : (d.online ?? null),
+    lastHeartbeatAt:
+      kind === "camera"
+        ? null
+        : d.lastHeartbeatAt
+          ? timestampDate(d.lastHeartbeatAt).toISOString()
+          : null,
     observationPoints: d.observationPoints.map(toObservationPoint),
   };
 }
@@ -152,6 +248,20 @@ function toEdgeDevice(d: ProtoEdgeDevice): EdgeDevice {
 async function listEdgeDevices(eventId: string): Promise<EdgeDevice[]> {
   const res = await consoleEdgeDeviceClient.listEdgeDevices({ eventId });
   return res.devices.map(toEdgeDevice);
+}
+
+async function revokeCameraGrants(eventId: string): Promise<void> {
+  const devices = observationMocking()
+    ? sampleEdgeDevicesWire
+    : await listEdgeDevices(eventId);
+  for (const device of devices) {
+    if (device.kind === "camera") {
+      await revokeDeviceAuthorization({
+        eventId,
+        edgeDeviceId: device.edgeDeviceId,
+      });
+    }
+  }
 }
 
 function observationMocking(): boolean {
@@ -531,6 +641,7 @@ export const router = {
       .input(z.object({ eventId: publicId }))
       .handler(async ({ input }): Promise<TenantEvent> => {
         try {
+          await revokeCameraGrants(input.eventId);
           const res = await tenantManagementClient.transitionEventStatus({
             eventId: input.eventId,
             to: ProtoEventStatus.ARCHIVED,
@@ -810,6 +921,45 @@ export const router = {
         issueFirestoreToken(edgeSignalingClient, input.eventId),
       ),
   },
+  camera: {
+    approveDeviceAuthorization: os
+      .input(
+        z.object({
+          eventId: z.string().min(1),
+          edgeDeviceId: publicId,
+          userCode: z.string().trim().min(1).max(64),
+        }),
+      )
+      .handler(async ({ input }): Promise<void> => {
+        try {
+          const devices = observationMocking()
+            ? [...sampleEdgeDevicesWire, sampleCameraDeviceWire]
+            : await listEdgeDevices(input.eventId);
+          const device = devices.find(
+            (d) => d.edgeDeviceId === input.edgeDeviceId,
+          );
+          if (!device) throw new ORPCError("NOT_FOUND");
+          if (device.kind !== "camera") {
+            throw new ORPCError("PRECONDITION_FAILED");
+          }
+          await approveDeviceAuthorization(input);
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    revokeDeviceAuthorization: os
+      .input(edgeDeviceInput)
+      .handler(async ({ input }): Promise<void> => {
+        try {
+          await revokeDeviceAuthorization(input);
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    provisioningDefaults: os.handler(
+      async (): Promise<CameraProvisioningDefaults> => provisioningDefaults(),
+    ),
+  },
   observation: {
     listEdgeDevices: os.input(z.object({ eventId: z.string().min(1) })).handler(
       async ({ input }): Promise<{ devices: EdgeDevice[] }> => ({
@@ -819,22 +969,19 @@ export const router = {
       }),
     ),
     registerEdgeDevice: os
-      .input(
-        z.object({
-          eventId: z.string().min(1),
-          name: z.string().trim().min(1),
-          observationPointNames: z
-            .array(z.string().trim().min(1))
-            .min(1)
-            .refine((names) => new Set(names).size === names.length),
-        }),
-      )
+      .input(registerEdgeDeviceInput)
       .handler(async ({ input }): Promise<RegisteredEdgeDevice> => {
         if (observationMocking()) {
           return registeredEdgeDeviceWire(input);
         }
         try {
-          const res = await consoleEdgeDeviceClient.registerEdgeDevice(input);
+          const res = await consoleEdgeDeviceClient.registerEdgeDevice({
+            eventId: input.eventId,
+            name: input.name,
+            observationPointNames: input.observationPointNames,
+            kind: PROTO_EDGE_DEVICE_KINDS[input.kind],
+            linkedObservationPointId: input.linkedObservationPointId ?? "",
+          });
           if (!res.device) {
             throw new Error("RegisterEdgeDevice returned no device");
           }
@@ -853,6 +1000,12 @@ export const router = {
           return;
         }
         try {
+          const device = (await listEdgeDevices(input.eventId)).find(
+            (d) => d.edgeDeviceId === input.edgeDeviceId,
+          );
+          if (device?.kind === "camera") {
+            await revokeDeviceAuthorization(input);
+          }
           await consoleEdgeDeviceClient.unregisterEdgeDevice(input);
         } catch (err) {
           throw toORPCError(err);
