@@ -25,10 +25,18 @@ export async function generateMetadata({
 
 export default async function TenantObservation({
   params,
+  searchParams,
 }: {
   params: Promise<{ tenantId: string; eventId: string; edgeDeviceId: string }>;
+  searchParams: Promise<{ camera?: string | string[] }>;
 }) {
   const { tenantId, eventId, edgeDeviceId } = await params;
+  const requestedCamera = (await searchParams).camera;
+  const requestedCameraId =
+    typeof requestedCamera === "string" &&
+    /^[0-9a-f]{16}$/.test(requestedCamera)
+      ? requestedCamera
+      : undefined;
   const t = await getTranslations("Observation");
 
   return (
@@ -49,6 +57,7 @@ export default async function TenantObservation({
               tenantId={tenantId}
               eventId={eventId}
               edgeDeviceId={edgeDeviceId}
+              requestedCameraId={requestedCameraId}
             />
           </main>
         </div>

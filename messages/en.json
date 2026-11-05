@@ -349,7 +349,14 @@
       "cameraBadge": "Camera",
       "linkedPoint": "Linked point: {name}",
       "provision": "Provision",
-      "provisionLabel": "Provision “{name}”"
+      "provisionLabel": "Provision “{name}”",
+      "authorizeConnection": "Authorize camera connection",
+      "authorizeConnectionLabel": "Authorize the camera connection for “{name}”",
+      "connection": {
+        "authorized": "The camera connection delegation was saved.",
+        "login_required": "Staff sign-in is required to authorize the camera connection. Start again from “Authorize camera connection”.",
+        "failed": "Could not authorize the camera connection. Try again."
+      }
     },
     "receiver": {
       "stoppedTitle": "Observation stopped",
@@ -387,7 +394,8 @@
       "noCameraPoints": "No observation point is available. Register an observation page device first.",
       "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
       "edgeDeviceIdLabel": "Edge device ID",
-      "openProvisioning": "Open provisioning"
+      "openProvisioning": "Open provisioning",
+      "authorizeConnection": "Authorize camera connection"
     },
     "unregisterEdge": {
       "title": "Unregister observation device",
@@ -489,6 +497,9 @@
       "stop": "Stop",
       "loading": "Starting…"
     },
+    "cameraSelector": {
+      "label": "Camera"
+    },
     "status": {
       "detection": "Detection status: {status}",
       "trackedCount": "Tracked people: {count}",
@@ -529,12 +540,15 @@
       "detection": "Person detection failed",
       "unregistered": "This observation device has been unregistered",
       "modelLoad": "Failed to load the detection model ({status}: {path})",
+      "connectionAuthorizationRequired": "Camera connection authorization is missing. Authorize the camera connection again.",
+      "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "Camera access is not allowed. Allow camera access in your browser settings.",
         "notFound": "No camera was found. Check that a camera is connected.",
         "unsupported": "The camera is not available in this browser or connection",
         "unavailable": "Could not start the camera"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "Video source",
@@ -545,7 +559,8 @@
       "camera": "Camera",
       "activeHint": " (switch after stopping)",
       "inactiveHint": " (applied on the next start)",
-      "hide": "Hide"
+      "hide": "Hide",
+      "espCamera": "ESP camera ({edgeId})"
     }
   },
   "ObservationDevices": {
