@@ -23,6 +23,7 @@ import {
   type DeviceAuthorizationMessage,
   type DeviceMessage,
   encodeConfigCommand,
+  encodeDeviceMessage,
   PROVISIONING_BAUD_RATE,
 } from "../provisioning/protocol";
 import {
@@ -97,6 +98,7 @@ type Props = {
   triggerAriaLabel?: string;
   triggerVariant?: ButtonProps["variant"];
   triggerSize?: ButtonProps["size"];
+  reapproval?: boolean;
 };
 
 export function CameraProvisioningDialog({
@@ -109,6 +111,7 @@ export function CameraProvisioningDialog({
   triggerAriaLabel,
   triggerVariant = "outline",
   triggerSize = "sm",
+  reapproval = false,
 }: Props) {
   const t = useTranslations("Webrtc.cameraProvision");
   const transport = useMemo(
@@ -145,7 +148,8 @@ export function CameraProvisioningDialog({
   }, [stop, transportProp]);
 
   const running = state.kind === "running";
-  const canStart = wifiSsid.trim() !== "" && wifiPassword !== "";
+  const canStart =
+    reapproval || (wifiSsid.trim() !== "" && wifiPassword !== "");
 
   function redact(message: string): string {
     if (!wifiPassword) return message;
@@ -215,6 +219,7 @@ export function CameraProvisioningDialog({
       eventId,
       edgeDeviceId,
       userCode,
+      ...(reapproval && { reapproval: true }),
     });
     if (runId !== runIdRef.current) return;
 
@@ -245,24 +250,58 @@ export function CameraProvisioningDialog({
     void transport.close();
   }
 
+  async function openProvisioningChannel(
+    runId: number,
+  ): Promise<SerialMessageChannel | null> {
+    setState({ kind: "running", step: "selecting" });
+    await transport.selectPort();
+    if (runId !== runIdRef.current) return null;
+
+    setState({ kind: "running", step: "opening" });
+    await transport.open({ baudRate: PROVISIONING_BAUD_RATE });
+    if (runId !== runIdRef.current) return null;
+
+    const channel = new SerialMessageChannel(transport);
+    channelRef.current = channel;
+    channel.start();
+    return channel;
+  }
+
   async function handleStart() {
     if (!canStart || availability !== "available") return;
     const runId = ++runIdRef.current;
     setManualCode("");
 
     try {
+      if (reapproval) {
+        const channel = await openProvisioningChannel(runId);
+        if (!channel) return;
+
+        setState({ kind: "running", step: "waitingAuthorization" });
+        await transport.writeLine(
+          encodeDeviceMessage({ type: "device_authorization" }),
+        );
+        if (runId !== runIdRef.current) return;
+
+        const authorization = await waitForAuthorizationCode(runId, channel, {
+          autoReconnect: true,
+        });
+        if (runId !== runIdRef.current) return;
+        if (!authorization) return;
+
+        await approveAndWait(
+          runId,
+          channel,
+          authorization.user_code,
+          authorization.verification_uri,
+        );
+        return;
+      }
+
       setState({ kind: "running", step: "selecting" });
       const defaults = await orpc.camera.provisioningDefaults();
-      await transport.selectPort();
-      if (runId !== runIdRef.current) return;
-
-      setState({ kind: "running", step: "opening" });
-      await transport.open({ baudRate: PROVISIONING_BAUD_RATE });
-      if (runId !== runIdRef.current) return;
-
-      const channel = new SerialMessageChannel(transport);
-      channelRef.current = channel;
-      channel.start();
+      const channel = await openProvisioningChannel(runId);
+      if (!channel) return;
 
       setState({ kind: "running", step: "writing" });
       await transport.writeLine(
@@ -367,6 +406,11 @@ export function CameraProvisioningDialog({
     channel.restart();
     setState({ kind: "running", step: "waitingAuthorization" });
     try {
+      if (reapproval) {
+        await transport.writeLine(
+          encodeDeviceMessage({ type: "device_authorization" }),
+        );
+      }
       const authorization = await waitForAuthorizationCode(runId, channel, {
         autoReconnect: true,
       });
@@ -429,9 +473,23 @@ export function CameraProvisioningDialog({
               <DialogHeader>
                 <DialogTitle>{t("title")}</DialogTitle>
                 <DialogDescription>
-                  {t("description", { name: edgeName, id: edgeDeviceId })}
+                  {reapproval
+                    ? t("reapprovalDescription", {
+                        name: edgeName,
+                        id: edgeDeviceId,
+                      })
+                    : t("description", { name: edgeName, id: edgeDeviceId })}
                 </DialogDescription>
               </DialogHeader>
+
+              {reapproval && (
+                <p
+                  role="status"
+                  className="rounded-md border p-3 text-sm text-muted-foreground"
+                >
+                  {t("reapprovalNotice")}
+                </p>
+              )}
 
               {availability === "unsupported" && (
                 <p role="alert" className="text-sm text-destructive">
@@ -447,22 +505,26 @@ export function CameraProvisioningDialog({
               {availability !== "unsupported" &&
                 availability !== "insecure" && (
                   <>
-                    <JollyTextField
-                      label={t("wifiSsidLabel")}
-                      value={wifiSsid}
-                      onChange={setWifiSsid}
-                      isDisabled={state.kind !== "idle"}
-                      autoComplete="off"
-                    />
-                    <JollyTextField
-                      label={t("wifiPasswordLabel")}
-                      description={t("wifiPasswordDescription")}
-                      value={wifiPassword}
-                      onChange={setWifiPassword}
-                      type="password"
-                      isDisabled={state.kind !== "idle"}
-                      autoComplete="new-password"
-                    />
+                    {!reapproval && (
+                      <>
+                        <JollyTextField
+                          label={t("wifiSsidLabel")}
+                          value={wifiSsid}
+                          onChange={setWifiSsid}
+                          isDisabled={state.kind !== "idle"}
+                          autoComplete="off"
+                        />
+                        <JollyTextField
+                          label={t("wifiPasswordLabel")}
+                          description={t("wifiPasswordDescription")}
+                          value={wifiPassword}
+                          onChange={setWifiPassword}
+                          type="password"
+                          isDisabled={state.kind !== "idle"}
+                          autoComplete="new-password"
+                        />
+                      </>
+                    )}
 
                     {running && (
                       <p
@@ -542,7 +604,7 @@ export function CameraProvisioningDialog({
                   availability !== "unsupported" &&
                   availability !== "insecure" && (
                     <Button onPress={handleStart} isDisabled={!canStart}>
-                      {t("start")}
+                      {reapproval ? t("reapprovalStart") : t("start")}
                     </Button>
                   )}
                 {state.kind === "manual" && (

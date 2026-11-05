@@ -2,13 +2,16 @@ import { getTranslations } from "next-intl/server";
 import { LocaleSelect } from "@/components/locale-select";
 import { PwaInstall } from "@/components/pwa/pwa-install";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Link } from "@/components/ui/link";
 import { LogoutButton } from "@/features/auth/LogoutButton";
 import { CrowdDetection } from "@/features/tenant/observation/components/CrowdDetection";
 import { ObservationSoftLock } from "@/features/tenant/observation/components/ObservationSoftLock";
 import { ScreenWakeControl } from "@/features/tenant/observation/components/ScreenWakeControl";
 import { ScreenWakeProvider } from "@/features/tenant/observation/components/ScreenWakeProvider";
 import { observationDevicePath } from "@/features/tenant/observation/routes";
+import { machineSessionPath } from "@/features/tenant/webrtc/utils/cameraConnection";
 import { getPwaMetadata } from "@/lib/pwa/manifest";
+import { getViewer } from "@/server/auth";
 
 export async function generateMetadata({
   params,
@@ -39,6 +42,12 @@ export default async function TenantObservation({
       ? requestedCamera
       : undefined;
   const t = await getTranslations("Observation");
+  const viewer = await getViewer();
+  const canReport =
+    (viewer.type === "machine" &&
+      viewer.eventId === eventId &&
+      viewer.edgeDeviceId === edgeDeviceId) ||
+    process.env.NEXT_PUBLIC_API_MOCKING === "enabled";
 
   return (
     <ScreenWakeProvider>
@@ -55,7 +64,20 @@ export default async function TenantObservation({
           </header>
           <main className="flex w-full flex-col items-center gap-4">
             <ScreenWakeControl />
+            {viewer.type === "staff" && (
+              <Link
+                variant="default"
+                href={machineSessionPath({
+                  eventId,
+                  pageEdgeDeviceId: edgeDeviceId,
+                  returnPath: observationDevicePath(eventId, edgeDeviceId),
+                })}
+              >
+                {t("controls.observeOnThisDevice")}
+              </Link>
+            )}
             <CrowdDetection
+              canReport={canReport}
               tenantId={tenantId}
               eventId={eventId}
               edgeDeviceId={edgeDeviceId}

@@ -23,6 +23,21 @@ export const sampleCameraDeviceWire: EdgeDevice = {
   observationPoints: [],
 };
 
+export const sampleSecondCameraDeviceWire: EdgeDevice = {
+  edgeDeviceId: "7a8b9c0d1e2f3041",
+  name: "ESP32 カメラ 2",
+  kind: "camera",
+  cameraLinks: [
+    {
+      cameraEdgeDeviceId: "7a8b9c0d1e2f3041",
+      observationPointId: "f1e2d3c4b5a69788",
+    },
+  ],
+  online: null,
+  lastHeartbeatAt: null,
+  observationPoints: [],
+};
+
 export const sampleEdgeDevicesWire: EdgeDevice[] = [
   {
     edgeDeviceId: "8c1f0e2a5d4b3c6e",
@@ -33,6 +48,7 @@ export const sampleEdgeDevicesWire: EdgeDevice[] = [
     lastHeartbeatAt: "2026-06-14T10:00:00.000Z",
     observationPoints: [
       { observationPointId: "a1b2c3d4e5f60718", name: "入口" },
+      { observationPointId: "f1e2d3c4b5a69788", name: "出口" },
     ],
   },
   {
@@ -116,25 +132,28 @@ export function registeredEdgeDeviceWire({
 
 /**
  * 観測ページが委任されたカメラを含む、モック用のエッジ端末一覧。
- * ページ自身の cameraLinks に sampleCameraDeviceWire が入る。
+ * ページ自身の cameraLinks に sampleCameraDeviceWire と
+ * sampleSecondCameraDeviceWire が入る。
  */
+const sampleObservationCameras = [
+  sampleCameraDeviceWire,
+  sampleSecondCameraDeviceWire,
+];
+
 export const sampleObservationDevicesWire: EdgeDevice[] = [
   {
     ...sampleEdgeDevicesWire[0],
-    cameraLinks: [
-      {
-        cameraEdgeDeviceId: sampleCameraDeviceWire.edgeDeviceId,
-        observationPointId:
-          sampleCameraDeviceWire.cameraLinks[0].observationPointId,
-      },
-    ],
+    cameraLinks: sampleObservationCameras.map((camera) => ({
+      cameraEdgeDeviceId: camera.edgeDeviceId,
+      observationPointId: camera.cameraLinks[0].observationPointId,
+    })),
   },
   ...sampleEdgeDevicesWire.slice(1),
-  sampleCameraDeviceWire,
+  ...sampleObservationCameras,
 ];
 
 export const sampleEdgeDeviceItems: EdgeDeviceItem[] =
-  sampleEdgeDevicesWire.map((device) => ({
+  sampleObservationDevicesWire.map((device) => ({
     ...device,
     lastHeartbeatAt: device.lastHeartbeatAt
       ? new Date(device.lastHeartbeatAt)

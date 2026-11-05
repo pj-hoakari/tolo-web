@@ -23,7 +23,7 @@ function idpIssuer(): string | undefined {
 
 async function postDeviceAuthorization(
   operation: "approve" | "revoke",
-  body: Record<string, string>,
+  body: Record<string, string | boolean>,
 ): Promise<void> {
   const issuer = idpIssuer();
   if (!issuer) {
@@ -58,25 +58,33 @@ async function postDeviceAuthorization(
   }
 }
 
-export async function approveDeviceAuthorization(input: {
-  eventId: string;
-  edgeDeviceId: string;
-  userCode: string;
-}): Promise<void> {
+export async function approveDeviceAuthorization(
+  input: {
+    eventId: string;
+    edgeDeviceId: string;
+    userCode: string;
+  },
+  options: { reapproval?: boolean } = {},
+): Promise<void> {
   await postDeviceAuthorization("approve", {
     user_code: input.userCode,
     event_id: input.eventId,
     edge_device_id: input.edgeDeviceId,
+    ...(options.reapproval && { reapproval: true }),
   });
 }
 
-export async function revokeDeviceAuthorization(input: {
-  eventId: string;
-  edgeDeviceId: string;
-}): Promise<void> {
+export async function revokeDeviceAuthorization(
+  input: {
+    eventId: string;
+    edgeDeviceId: string;
+  },
+  options: { permanent?: boolean } = {},
+): Promise<void> {
   await postDeviceAuthorization("revoke", {
     event_id: input.eventId,
     edge_device_id: input.edgeDeviceId,
+    permanent: options.permanent ?? true,
   });
 }
 

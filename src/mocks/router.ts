@@ -40,7 +40,7 @@ import type {
 } from "@/server/router";
 import {
   registeredEdgeDeviceWire,
-  sampleEdgeDevicesWire,
+  sampleObservationDevicesWire,
 } from "./fixtures/edges";
 import {
   sampleGuestCrowd,
@@ -52,19 +52,26 @@ import {
 export type MockRouterOverrides = {
   /** observation.listEdgeDevices が返すエッジ端末一覧（未指定なら sampleEdgeDevicesWire） */
   devices?: EdgeDevice[];
+  /** observation.listEdgeDevices を失敗させる（status: error の確認用） */
+  devicesError?: boolean;
   /** camera.approveDeviceAuthorization が呼ばれたときの記録用フック */
   approveDeviceAuthorization?: (input: {
     eventId: string;
     edgeDeviceId: string;
     userCode: string;
+    reapproval?: boolean;
   }) => void | Promise<void>;
-  /** observation.listEdgeDevices を失敗させる（status: error の確認用） */
-  devicesError?: boolean;
   registerEdgeDeviceError?: CommonORPCErrorCode;
   unregisterEdgeDeviceError?: CommonORPCErrorCode;
   listObservationPointsError?: CommonORPCErrorCode;
   heartbeatError?: CommonORPCErrorCode;
   reportMeasurementsError?: CommonORPCErrorCode;
+  requestCameraConnectionError?: {
+    viewerType: "staff" | "machine";
+    eventId?: string;
+    pageEdgeDeviceId?: string;
+    cameraEdgeDeviceId?: string;
+  };
   getObservationSettingsError?: boolean;
   updateObservationSettingsError?: CommonORPCErrorCode;
   flowElementStates?: FlowElementState[];
@@ -121,7 +128,7 @@ export const SAMPLE_MEMBERS: TenantMember[] = [
  */
 export function createMockRouter(overrides: MockRouterOverrides = {}) {
   const {
-    devices: initialDevices = sampleEdgeDevicesWire,
+    devices: initialDevices = sampleObservationDevicesWire,
     devicesError = false,
     approveDeviceAuthorization,
     registerEdgeDeviceError,
@@ -129,6 +136,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     listObservationPointsError,
     heartbeatError,
     reportMeasurementsError,
+    requestCameraConnectionError,
     getObservationSettingsError = false,
     updateObservationSettingsError,
     flowElementStates = [],
@@ -207,18 +215,77 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
         }),
     },
     camera: {
+      listDelegatedCameras: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            pageEdgeDeviceId: z.string().min(1),
+          }),
+        )
+        .handler(
+          async ({
+            input,
+          }): Promise<{
+            cameras: {
+              connectionAuthorized: boolean;
+              edgeDeviceId: string;
+              name: string;
+              observationPointId: string;
+            }[];
+          }> => {
+            const page = devices.find(
+              (device) => device.edgeDeviceId === input.pageEdgeDeviceId,
+            );
+            if (!page) {
+              throw new ORPCError("NOT_FOUND");
+            }
+            if (page.kind !== "observation_page") {
+              throw new ORPCError("PRECONDITION_FAILED");
+            }
+            const observationPointByCamera = new Map(
+              page.cameraLinks.map((link) => [
+                link.cameraEdgeDeviceId,
+                link.observationPointId,
+              ]),
+            );
+            return {
+              cameras: devices
+                .filter(
+                  (device) =>
+                    device.kind === "camera" &&
+                    observationPointByCamera.has(device.edgeDeviceId),
+                )
+                .map((device) => ({
+                  connectionAuthorized: true,
+                  edgeDeviceId: device.edgeDeviceId,
+                  name: device.name,
+                  observationPointId:
+                    observationPointByCamera.get(device.edgeDeviceId) ?? "",
+                })),
+            };
+          },
+        ),
       approveDeviceAuthorization: os
         .input(
           z.object({
             eventId: z.string().min(1),
             edgeDeviceId: z.string().min(1),
             userCode: z.string().trim().min(1),
+            reapproval: z.boolean().optional(),
           }),
         )
         .handler(async ({ input }): Promise<void> => {
           await approveDeviceAuthorization?.(input);
         }),
       revokeDeviceAuthorization: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            edgeDeviceId: z.string().min(1),
+          }),
+        )
+        .handler(async (): Promise<void> => {}),
+      stopDeviceAuthorization: os
         .input(
           z.object({
             eventId: z.string().min(1),
@@ -662,6 +729,22 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           }),
         )
         .handler(async ({ input }): Promise<CameraConnection> => {
+          if (requestCameraConnectionError) {
+            throw new ORPCError("PRECONDITION_FAILED", {
+              message: MOCK_SERVER_MESSAGE,
+              data: {
+                code: "CONNECTION_AUTHORIZATION_REQUIRED",
+                viewerType: requestCameraConnectionError.viewerType,
+                eventId: requestCameraConnectionError.eventId ?? input.eventId,
+                pageEdgeDeviceId:
+                  requestCameraConnectionError.pageEdgeDeviceId ??
+                  input.pageEdgeDeviceId,
+                cameraEdgeDeviceId:
+                  requestCameraConnectionError.cameraEdgeDeviceId ??
+                  input.cameraEdgeId,
+              },
+            });
+          }
           const page = devices.find(
             (d) => d.edgeDeviceId === input.pageEdgeDeviceId,
           );

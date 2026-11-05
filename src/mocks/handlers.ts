@@ -1,7 +1,7 @@
 import { RPCHandler } from "@orpc/server/fetch";
 import { http, passthrough, type RequestHandler } from "msw";
 import type { EdgeDevice } from "@/server/router";
-import { sampleEdgeDevicesWire } from "./fixtures/edges";
+import { sampleObservationDevicesWire } from "./fixtures/edges";
 import { createMockRouter, type MockRouterOverrides } from "./router";
 
 function orpcHandler(
@@ -39,5 +39,5 @@ export function edgesErrorHandlers(): RequestHandler[] {
 
 /** 既定: サンプルのエッジ端末一覧を返す */
 export const handlers: RequestHandler[] = edgesHandlers(
-  sampleEdgeDevicesWire,
+  sampleObservationDevicesWire,
 );
