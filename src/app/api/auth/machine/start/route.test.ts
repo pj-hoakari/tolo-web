@@ -57,6 +57,7 @@ beforeEach(() => {
     type: "staff",
     userId: "user-1",
     tenantId: TENANT,
+    sessionId: "staff-session",
   });
   vi.mocked(delegatedPageCameras).mockResolvedValue(["2222222222222222"]);
   vi.mocked(getConnectionAuth).mockReturnValue({
@@ -76,17 +77,6 @@ beforeEach(() => {
         maxAge: 600,
       },
     },
-    browser: {
-      name: "__Host-tolo.browser",
-      value: "browser",
-      attributes: {
-        path: "/",
-        secure: true,
-        httpOnly: true,
-        sameSite: "lax",
-        maxAge: 31_536_000,
-      },
-    },
   });
 });
 
@@ -98,12 +88,9 @@ describe("machine start route", () => {
     expect(response.headers.get("location")).toBe(
       "https://idp.test/oauth2/authorize?state=s",
     );
-    expect(response.headers.getSetCookie()).toEqual(
-      expect.arrayContaining([
-        expect.stringContaining("__Host-tolo.machine.binding=binding"),
-        expect.stringContaining("__Host-tolo.browser=browser"),
-      ]),
-    );
+    expect(response.headers.getSetCookie()).toEqual([
+      expect.stringContaining("__Host-tolo.machine.binding=binding"),
+    ]);
     expect(machine.start).toHaveBeenCalledWith({
       tenantId: TENANT,
       eventId: EVENT,
@@ -111,7 +98,7 @@ describe("machine start route", () => {
       staffSub: "user-1",
       host: HOST,
       returnPath: RETURN,
-      browserCookie: undefined,
+      staffSessionId: "staff-session",
     });
   });
 

@@ -174,7 +174,6 @@ function createTestConnection(
     connectionAuthorization: [],
     connectionEventAccess: [],
     connectionDelegationState: [],
-    browserHostState: [],
   }) as BetterAuthOptions["database"];
   const options = authOptions(env);
   const auth = betterAuth({ ...options, database });
