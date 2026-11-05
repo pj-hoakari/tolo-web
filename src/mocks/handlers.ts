@@ -38,6 +38,4 @@ export function edgesErrorHandlers(): RequestHandler[] {
 }
 
 /** 既定: サンプルのエッジ端末一覧を返す */
-export const handlers: RequestHandler[] = edgesHandlers(
-  sampleEdgeDevicesWire,
-);
+export const handlers: RequestHandler[] = edgesHandlers(sampleEdgeDevicesWire);
