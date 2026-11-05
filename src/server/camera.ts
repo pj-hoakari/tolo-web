@@ -9,6 +9,7 @@ const DEVICE_AUTHORIZATION_PATH = "/api/device-authorization";
 
 export interface CameraProvisioningDefaults {
   signalingUrl: string;
+  idpUrl: string;
   firebaseProjectId: string;
   firebaseApiKey: string;
   firestoreEmulatorHost: string | null;
@@ -85,6 +86,7 @@ export function provisioningDefaults(): CameraProvisioningDefaults {
       process.env.SIGNALING_PUBLIC_URL?.trim() ||
       process.env.SIGNALING_URL ||
       "http://127.0.0.1:8787",
+    idpUrl: idpIssuer() ?? "",
     firebaseProjectId: process.env.FIREBASE_PROJECT_ID || "tolo-signaling",
     firebaseApiKey: process.env.FIREBASE_API_KEY || "demo-tolo-web",
     firestoreEmulatorHost: process.env.FIRESTORE_EMULATOR_HOST || null,

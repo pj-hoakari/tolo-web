@@ -49,7 +49,11 @@ export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
 
   return (
     <div className="flex w-full flex-col items-center gap-4">
-      <RegisterEdgeDeviceForm eventId={eventId} onRegistered={refresh} />
+      <RegisterEdgeDeviceForm
+        eventId={eventId}
+        onRegistered={refresh}
+        edges={edges}
+      />
       <AliveEdgeList
         eventId={eventId}
         edges={edges}
