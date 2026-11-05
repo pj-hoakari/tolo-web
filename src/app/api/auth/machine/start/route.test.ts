@@ -20,6 +20,14 @@ vi.mock("@/server/auth/machine", async (importOriginal) => ({
 vi.mock("@/server/cameraDelegation", () => ({
   delegatedPageCameras: vi.fn(),
 }));
+vi.mock("@/server/auth/eventLifecycle", () => ({
+  withEventLifecycle: vi.fn((_eventId: string, task: () => Promise<unknown>) =>
+    task(),
+  ),
+}));
+vi.mock("@/server/eventStatus", () => ({
+  requireApprovableEvent: vi.fn(),
+}));
 
 const TENANT = "0123456789abcdef";
 const EVENT = "fedcba9876543210";
@@ -68,6 +76,17 @@ beforeEach(() => {
         maxAge: 600,
       },
     },
+    browser: {
+      name: "__Host-tolo.browser",
+      value: "browser",
+      attributes: {
+        path: "/",
+        secure: true,
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 31_536_000,
+      },
+    },
   });
 });
 
@@ -82,6 +101,7 @@ describe("machine start route", () => {
     expect(response.headers.getSetCookie()).toEqual(
       expect.arrayContaining([
         expect.stringContaining("__Host-tolo.machine.binding=binding"),
+        expect.stringContaining("__Host-tolo.browser=browser"),
       ]),
     );
     expect(machine.start).toHaveBeenCalledWith({
@@ -91,6 +111,7 @@ describe("machine start route", () => {
       staffSub: "user-1",
       host: HOST,
       returnPath: RETURN,
+      browserCookie: undefined,
     });
   });
 
