@@ -13,6 +13,7 @@ import {
   type RealAuth,
   SESSION_COOKIE,
   type SessionLock,
+  type SessionLocks,
 } from "./betterAuth";
 import { createSessionAuth } from "./session";
 
@@ -55,6 +56,17 @@ function inProcessLock(): SessionLock {
   };
 }
 
+function inProcessLockMany(lock: SessionLock): SessionLocks {
+  return async <T>(keys: string[], task: () => Promise<T>): Promise<T> => {
+    const sorted = [...new Set(keys)].sort();
+    const run = async (index: number): Promise<T> =>
+      index === sorted.length
+        ? task()
+        : lock(sorted[index], () => run(index + 1));
+    return run(0);
+  };
+}
+
 function createTestAuth(
   database: BetterAuthOptions["database"] = memoryAdapter({
     user: [],
@@ -80,6 +92,11 @@ function createTestAuth(
       auth: auth as unknown as RealAuth["auth"],
       env,
       lock,
+      lockMany: inProcessLockMany(lock),
+      lockManyDynamic: (keys, selectMoreKeys, task) =>
+        inProcessLockMany(lock)(keys, async () =>
+          inProcessLockMany(lock)(await selectMoreKeys(), task),
+        ),
     }),
   };
 }
@@ -342,9 +359,7 @@ describe("event_access", () => {
       subject_token_type: "urn:ietf:params:oauth:token-type:access_token",
       resource: `https://api.tolo.test/tenants/${TENANT}/events/${EVENT}`,
       audience: "backend-api",
-
-      scope:
-        "tenant.read events.read events.manage events.operate events.report",
+      scope: "events.read events.manage events.operate events.report",
     });
   });
 
@@ -364,7 +379,6 @@ describe("event_access", () => {
       type: "event_access",
       eventId: EVENT,
       client: "console",
-
     });
 
     expect(idp[0].form.get("scope")).toBe("events.read events.report");

@@ -7,9 +7,10 @@ import {
   verifyJwsAccessToken,
 } from "better-auth/oauth2";
 import { z } from "zod";
-import { rootOrigin } from "@/lib/control/tenant";
+import { rootOrigin, tenantOrigin } from "@/lib/control/tenant";
 import { getRealAuth, type RealAuth } from "./betterAuth";
 import { idpDiscovery } from "./discovery";
+import { sameHostPath } from "./login";
 
 const PENDING_CONNECTION = "pendingConnectionAuthorization";
 const CONNECTION_AUTHORIZATION = "connectionAuthorization";
@@ -37,6 +38,7 @@ export interface ConnectionAuthorizationInput {
   pageEdgeDeviceId: string;
   cameraIds: string[];
   staffSub: string;
+  host: string;
   returnPath: string;
 }
 
@@ -44,16 +46,6 @@ export interface ConnectionCallbackInput {
   code: string | undefined;
   state: string | undefined;
   error: string | undefined;
-  viewer:
-    | { type: "anonymous" }
-    | { type: "staff"; userId: string; tenantId: string }
-    | {
-        type: "machine";
-        userId: string;
-        tenantId: string;
-        eventId: string;
-        edgeDeviceId: string;
-      };
 }
 
 export interface ConnectionAuthorization {
@@ -82,6 +74,7 @@ type PendingConnection = {
   pageEdgeDeviceId: string;
   cameraIds: string;
   staffSub: string;
+  host: string;
   returnPath: string;
   redirectUri: string;
   generation: number;
@@ -115,7 +108,6 @@ type ConnectionEnvironment = {
 
 type Options = {
   redirectUri?: string;
-  requireStaffMatch?: boolean;
   authorizationTtlMs?: number;
 };
 
@@ -197,13 +189,14 @@ export function createConnectionAuth(
   options: Options = {},
 ) {
   const discovery = idpDiscovery(realAuth.env.issuer);
-  const requireStaffMatch =
-    options.requireStaffMatch ?? process.env.AUTH_MOCKING !== "enabled";
   const authorizationTtlMs =
     options.authorizationTtlMs ??
     (Number(process.env.AUTH_CONNECTION_TTL_SECONDS) > 0
       ? Number(process.env.AUTH_CONNECTION_TTL_SECONDS) * 1000
       : DEFAULT_AUTHORIZATION_TTL_MS);
+  // The local auth mock uses a synthetic staff subject, while the real IdP
+  // login still returns the seeded user. Keep the real subject match strict.
+  const requireStaffMatch = process.env.AUTH_MOCKING !== "enabled";
 
   function environment(redirectUri?: string): ConnectionEnvironment {
     const { issuer, connectionClientId, connectionClientSecret, resourceHost } =
@@ -313,54 +306,57 @@ export function createConnectionAuth(
       pending.eventId,
       pending.pageEdgeDeviceId,
     );
-    return realAuth.lock(connectionLockKey(key), async () => {
-      const state = await ensureState(store, key);
-      if (Number(state.generation) !== Number(pending.generation)) {
-        return false;
-      }
-      const now = new Date();
-      const values = {
-        connectionKey: key,
-        tenantId: pending.tenantId,
-        eventId: pending.eventId,
-        pageEdgeDeviceId: pending.pageEdgeDeviceId,
-        cameraIds: pending.cameraIds,
-        staffSub,
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token,
-        idToken: tokens.id_token ?? null,
-        accessTokenExpiresAt: new Date(
-          now.getTime() + tokens.expires_in * 1000,
-        ),
-        createdAt: now,
-        expiresAt: new Date(now.getTime() + authorizationTtlMs),
-      };
-      const existing = await store.findOne<ConnectionAuthorization>({
-        model: CONNECTION_AUTHORIZATION,
-        where: [{ field: "connectionKey", value: key }],
-      });
-      if (existing) {
-        await store.deleteMany({
-          model: CONNECTION_EVENT_ACCESS,
-          where: [{ field: "connectionAuthorizationId", value: existing.id }],
-        });
-        await store.update({
+    return realAuth.lockMany(
+      [connectionEventLockKey(pending.eventId), connectionLockKey(key)],
+      async () => {
+        const state = await ensureState(store, key);
+        if (Number(state.generation) !== Number(pending.generation)) {
+          return false;
+        }
+        const now = new Date();
+        const values = {
+          connectionKey: key,
+          tenantId: pending.tenantId,
+          eventId: pending.eventId,
+          pageEdgeDeviceId: pending.pageEdgeDeviceId,
+          cameraIds: pending.cameraIds,
+          staffSub,
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token,
+          idToken: tokens.id_token ?? null,
+          accessTokenExpiresAt: new Date(
+            now.getTime() + tokens.expires_in * 1000,
+          ),
+          createdAt: now,
+          expiresAt: new Date(now.getTime() + authorizationTtlMs),
+        };
+        const existing = await store.findOne<ConnectionAuthorization>({
           model: CONNECTION_AUTHORIZATION,
-          where: [{ field: "id", value: existing.id }],
-          update: values,
+          where: [{ field: "connectionKey", value: key }],
         });
-      } else {
-        await store.create<
-          Omit<ConnectionAuthorization, "id">,
-          ConnectionAuthorization
-        >({
-          model: CONNECTION_AUTHORIZATION,
-          data: values,
-        });
-      }
-      await advanceState(store, key, { deletedAt: null });
-      return true;
-    });
+        if (existing) {
+          await store.deleteMany({
+            model: CONNECTION_EVENT_ACCESS,
+            where: [{ field: "connectionAuthorizationId", value: existing.id }],
+          });
+          await store.update({
+            model: CONNECTION_AUTHORIZATION,
+            where: [{ field: "id", value: existing.id }],
+            update: values,
+          });
+        } else {
+          await store.create<
+            Omit<ConnectionAuthorization, "id">,
+            ConnectionAuthorization
+          >({
+            model: CONNECTION_AUTHORIZATION,
+            data: values,
+          });
+        }
+        await advanceState(store, key, { deletedAt: null });
+        return true;
+      },
+    );
   }
 
   async function postToTokenEndpoint(
@@ -461,9 +457,10 @@ export function createConnectionAuth(
     authorization: ConnectionAuthorization,
     env: ConnectionEnvironment,
     key: string,
+    cameraEdgeDeviceId?: string,
   ) {
     const store = await adapter();
-    const cacheKey = `${authorization.id}:${authorization.eventId}`;
+    const cacheKey = `${authorization.id}:${authorization.eventId}:${cameraEdgeDeviceId ?? ""}`;
     const cached = await store.findOne<ConnectionEventAccess>({
       model: CONNECTION_EVENT_ACCESS,
       where: [{ field: "cacheKey", value: cacheKey }],
@@ -471,14 +468,16 @@ export function createConnectionAuth(
     if (cached && cached.expiresAt.getTime() - Date.now() > EXPIRY_MARGIN_MS) {
       return cached.accessToken;
     }
-    const response = await postToTokenEndpoint(env, {
+    const params: Record<string, string> = {
       grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
       subject_token: await tenantAccess(authorization, env, key),
       subject_token_type: "urn:ietf:params:oauth:token-type:access_token",
       resource: `https://${env.resourceHost}/tenants/${authorization.tenantId}/events/${encodeURIComponent(authorization.eventId)}`,
       audience: "backend-api",
       scope: "events.read",
-    });
+    };
+    if (cameraEdgeDeviceId) params.edge_device_id = cameraEdgeDeviceId;
+    const response = await postToTokenEndpoint(env, params);
     if (!response.ok) {
       throw connectionError(
         CONNECTION_ERROR_CODES.eventAccessFailed,
@@ -513,6 +512,7 @@ export function createConnectionAuth(
 
   async function withCurrentAuthorization<T>(
     key: string,
+    eventId: string,
     cameraEdgeDeviceId: string | undefined,
     task: (
       authorization: ConnectionAuthorization,
@@ -520,33 +520,36 @@ export function createConnectionAuth(
     ) => Promise<T>,
   ): Promise<T> {
     const env = environment();
-    return realAuth.lock(connectionLockKey(key), async () => {
-      const store = await adapter();
-      const authorization = await store.findOne<ConnectionAuthorization>({
-        model: CONNECTION_AUTHORIZATION,
-        where: [{ field: "connectionKey", value: key }],
-      });
-      if (!authorization || authorization.expiresAt <= new Date()) {
-        if (authorization) {
-          await deleteAuthorizationRows(store, authorization.id);
-          await advanceState(store, key, { deletedAt: new Date() });
+    return realAuth.lockMany(
+      [connectionEventLockKey(eventId), connectionLockKey(key)],
+      async () => {
+        const store = await adapter();
+        const authorization = await store.findOne<ConnectionAuthorization>({
+          model: CONNECTION_AUTHORIZATION,
+          where: [{ field: "connectionKey", value: key }],
+        });
+        if (!authorization || authorization.expiresAt <= new Date()) {
+          if (authorization) {
+            await deleteAuthorizationRows(store, authorization.id);
+            await advanceState(store, key, { deletedAt: new Date() });
+          }
+          throw connectionError(
+            CONNECTION_ERROR_CODES.authorizationRequired,
+            "no camera connection authorization; authorize the camera connection",
+          );
         }
-        throw connectionError(
-          CONNECTION_ERROR_CODES.authorizationRequired,
-          "no camera connection authorization; authorize the camera connection",
-        );
-      }
-      if (
-        cameraEdgeDeviceId &&
-        !parseCameraIds(authorization.cameraIds).includes(cameraEdgeDeviceId)
-      ) {
-        throw connectionError(
-          CONNECTION_ERROR_CODES.cameraNotDelegated,
-          "the camera is not part of this page's connection delegation",
-        );
-      }
-      return task(authorization, env);
-    });
+        if (
+          cameraEdgeDeviceId &&
+          !parseCameraIds(authorization.cameraIds).includes(cameraEdgeDeviceId)
+        ) {
+          throw connectionError(
+            CONNECTION_ERROR_CODES.cameraNotDelegated,
+            "the camera is not part of this page's connection delegation",
+          );
+        }
+        return task(authorization, env);
+      },
+    );
   }
 
   return {
@@ -556,13 +559,17 @@ export function createConnectionAuth(
      */
     async start(input: ConnectionAuthorizationInput): Promise<string> {
       const env = environment();
+      if (!tenantOrigin(input.host) || !sameHostPath(input.returnPath)) {
+        throw new Error("invalid connection return destination");
+      }
       const key = connectionKey(
         input.tenantId,
         input.eventId,
         input.pageEdgeDeviceId,
       );
-      return realAuth.lock(connectionEventLockKey(input.eventId), () =>
-        realAuth.lock(connectionLockKey(key), async () => {
+      return realAuth.lockMany(
+        [connectionEventLockKey(input.eventId), connectionLockKey(key)],
+        async () => {
           const store = await adapter();
           const state = await ensureState(store, key);
           await store.deleteMany({
@@ -600,6 +607,7 @@ export function createConnectionAuth(
               pageEdgeDeviceId: input.pageEdgeDeviceId,
               cameraIds: JSON.stringify([...new Set(input.cameraIds)]),
               staffSub: input.staffSub,
+              host: input.host,
               returnPath: input.returnPath,
               redirectUri: env.redirectUri,
               generation: Number(state.generation),
@@ -623,7 +631,7 @@ export function createConnectionAuth(
           url.searchParams.set("code_challenge", challenge);
           url.searchParams.set("code_challenge_method", "S256");
           return url.href;
-        }),
+        },
       );
     },
 
@@ -638,11 +646,17 @@ export function createConnectionAuth(
         if (pending) await deletePending(pending.id);
         return `${rootOrigin()}/auth/error?error=connection_state_invalid`;
       }
+      const origin = tenantOrigin(pending.host);
+      const returnPath = sameHostPath(pending.returnPath);
+      if (!origin || !returnPath) {
+        await deletePending(pending.id);
+        return `${rootOrigin()}/auth/error?error=connection_state_invalid`;
+      }
       const finish = async (
         result: "authorized" | "login_required" | "failed",
       ) => {
         await deletePending(pending.id);
-        return connectionResultPath(pending.returnPath, result);
+        return new URL(connectionResultPath(returnPath, result), origin).href;
       };
       if (input.error) {
         return finish(
@@ -650,12 +664,6 @@ export function createConnectionAuth(
         );
       }
       if (!input.code) return finish("failed");
-      if (
-        input.viewer.type !== "staff" ||
-        input.viewer.tenantId !== pending.tenantId
-      ) {
-        return finish("login_required");
-      }
 
       const response = await postToTokenEndpoint(env, {
         grant_type: "authorization_code",
@@ -665,6 +673,7 @@ export function createConnectionAuth(
       });
       if (!response.ok) {
         await response.text();
+        console.error("connection token exchange failed", response.status);
         return finish("failed");
       }
       let tokens: z.infer<typeof tokenResponse>;
@@ -678,12 +687,10 @@ export function createConnectionAuth(
       try {
         subject = await verifyIdToken(env, tokens.id_token, pending.nonce);
       } catch {
+        console.error("connection id token verification failed");
         return finish("failed");
       }
-      if (
-        requireStaffMatch &&
-        (subject !== pending.staffSub || input.viewer.userId !== subject)
-      ) {
+      if (requireStaffMatch && subject !== pending.staffSub) {
         return finish("failed");
       }
       const saved = await saveAuthorizationIfCurrent(pending, tokens, subject);
@@ -713,6 +720,35 @@ export function createConnectionAuth(
     },
 
     /**
+     * 保存済みの委任に含まれるカメラだけを返す。委任がない、または期限切れなら
+     * null。トークンは返さない。
+     */
+    async delegatedCameraIds({
+      tenantId,
+      eventId,
+      pageEdgeDeviceId,
+    }: {
+      tenantId: string;
+      eventId: string;
+      pageEdgeDeviceId: string;
+    }): Promise<string[] | null> {
+      const store = await adapter();
+      const authorization = await store.findOne<ConnectionAuthorization>({
+        model: CONNECTION_AUTHORIZATION,
+        where: [
+          {
+            field: "connectionKey",
+            value: connectionKey(tenantId, eventId, pageEdgeDeviceId),
+          },
+        ],
+      });
+      if (!authorization || authorization.expiresAt <= new Date()) {
+        return null;
+      }
+      return parseCameraIds(authorization.cameraIds);
+    },
+
+    /**
      * 委任の保存済み tenant_access を必要なら Refresh し、events.read の
      * event_access へ交換して返す。ブラウザへは返さない。
      */
@@ -730,8 +766,10 @@ export function createConnectionAuth(
       const key = connectionKey(tenantId, eventId, pageEdgeDeviceId);
       return withCurrentAuthorization(
         key,
+        eventId,
         cameraEdgeDeviceId,
-        (authorization, env) => exchangeEventAccess(authorization, env, key),
+        (authorization, env) =>
+          exchangeEventAccess(authorization, env, key, cameraEdgeDeviceId),
       );
     },
 
@@ -757,14 +795,22 @@ export function createConnectionAuth(
       const key = connectionKey(tenantId, eventId, pageEdgeDeviceId);
       return withCurrentAuthorization(
         key,
+        eventId,
         cameraEdgeDeviceId,
         async (authorization, env) =>
-          task(await exchangeEventAccess(authorization, env, key)),
+          task(
+            await exchangeEventAccess(
+              authorization,
+              env,
+              key,
+              cameraEdgeDeviceId,
+            ),
+          ),
       );
     },
 
     async deleteForCamera(eventId: string, cameraEdgeDeviceId: string) {
-      return realAuth.lock(connectionEventLockKey(eventId), async () => {
+      const collectTargets = async () => {
         const { adapter: db } = await realAuth.auth.$context;
         const pending = await db.findMany<PendingConnection>({
           model: PENDING_CONNECTION,
@@ -797,8 +843,14 @@ export function createConnectionAuth(
             });
           }
         }
-        for (const key of targets.keys()) {
-          await realAuth.lock(connectionLockKey(key), async () => {
+        return targets;
+      };
+      return realAuth.lockManyDynamic(
+        [connectionEventLockKey(eventId)],
+        async () => [...(await collectTargets()).keys()].map(connectionLockKey),
+        async () => {
+          const targets = await collectTargets();
+          for (const key of targets.keys()) {
             const store = await adapter();
             let deletedAuthorization = false;
             const current = await store.findOne<ConnectionAuthorization>({
@@ -828,9 +880,9 @@ export function createConnectionAuth(
               key,
               deletedAuthorization ? { deletedAt: new Date() } : {},
             );
-          });
-        }
-      });
+          }
+        },
+      );
     },
 
     async addForCamera(
@@ -838,42 +890,52 @@ export function createConnectionAuth(
       pageEdgeDeviceId: string,
       cameraEdgeDeviceId: string,
     ) {
-      const { adapter: db } = await realAuth.auth.$context;
-      const rows = await db.findMany<ConnectionAuthorization>({
-        model: CONNECTION_AUTHORIZATION,
-        where: [
-          { field: "eventId", value: eventId },
-          { field: "pageEdgeDeviceId", value: pageEdgeDeviceId },
-        ],
-      });
-      for (const row of rows ?? []) {
-        if (parseCameraIds(row.cameraIds).includes(cameraEdgeDeviceId)) {
-          continue;
-        }
-        const key = row.connectionKey;
-        await realAuth.lock(connectionLockKey(key), async () => {
-          const store = await adapter();
-          const current = await store.findOne<ConnectionAuthorization>({
-            model: CONNECTION_AUTHORIZATION,
-            where: [{ field: "connectionKey", value: key }],
-          });
-          if (!current) return;
-          const cameraIds = parseCameraIds(current.cameraIds);
-          if (cameraIds.includes(cameraEdgeDeviceId)) return;
-          await store.update({
-            model: CONNECTION_AUTHORIZATION,
-            where: [{ field: "id", value: current.id }],
-            update: {
-              cameraIds: JSON.stringify([...cameraIds, cameraEdgeDeviceId]),
-            },
-          });
-          await advanceState(store, key);
+      const collectTargets = async () => {
+        const { adapter: db } = await realAuth.auth.$context;
+        const rows = await db.findMany<ConnectionAuthorization>({
+          model: CONNECTION_AUTHORIZATION,
+          where: [
+            { field: "eventId", value: eventId },
+            { field: "pageEdgeDeviceId", value: pageEdgeDeviceId },
+          ],
         });
-      }
+        return (rows ?? []).filter(
+          (row) => !parseCameraIds(row.cameraIds).includes(cameraEdgeDeviceId),
+        );
+      };
+      return realAuth.lockManyDynamic(
+        [connectionEventLockKey(eventId)],
+        async () =>
+          (await collectTargets()).map((row) =>
+            connectionLockKey(row.connectionKey),
+          ),
+        async () => {
+          const rows = await collectTargets();
+          for (const row of rows) {
+            const key = row.connectionKey;
+            const store = await adapter();
+            const current = await store.findOne<ConnectionAuthorization>({
+              model: CONNECTION_AUTHORIZATION,
+              where: [{ field: "connectionKey", value: key }],
+            });
+            if (!current) continue;
+            const cameraIds = parseCameraIds(current.cameraIds);
+            if (cameraIds.includes(cameraEdgeDeviceId)) continue;
+            await store.update({
+              model: CONNECTION_AUTHORIZATION,
+              where: [{ field: "id", value: current.id }],
+              update: {
+                cameraIds: JSON.stringify([...cameraIds, cameraEdgeDeviceId]),
+              },
+            });
+            await advanceState(store, key);
+          }
+        },
+      );
     },
 
     async deleteForPage(eventId: string, pageEdgeDeviceId: string) {
-      return realAuth.lock(connectionEventLockKey(eventId), async () => {
+      const collectTargets = async () => {
         const { adapter: db } = await realAuth.auth.$context;
         const pending = await db.findMany<PendingConnection>({
           model: PENDING_CONNECTION,
@@ -905,8 +967,14 @@ export function createConnectionAuth(
             pageEdgeDeviceId: row.pageEdgeDeviceId,
           });
         }
-        for (const [key, target] of targets) {
-          await realAuth.lock(connectionLockKey(key), async () => {
+        return targets;
+      };
+      return realAuth.lockManyDynamic(
+        [connectionEventLockKey(eventId)],
+        async () => [...(await collectTargets()).keys()].map(connectionLockKey),
+        async () => {
+          const targets = await collectTargets();
+          for (const [key, target] of targets) {
             const store = await adapter();
             const stale = await store.findMany<PendingConnection>({
               model: PENDING_CONNECTION,
@@ -928,13 +996,13 @@ export function createConnectionAuth(
             });
             if (current) await deleteAuthorizationRows(store, current.id);
             await advanceState(store, key, { deletedAt: new Date() });
-          });
-        }
-      });
+          }
+        },
+      );
     },
 
     async deleteForEvent(eventId: string) {
-      return realAuth.lock(connectionEventLockKey(eventId), async () => {
+      const collectTargets = async () => {
         const { adapter: db } = await realAuth.auth.$context;
         const pending = await db.findMany<PendingConnection>({
           model: PENDING_CONNECTION,
@@ -962,8 +1030,14 @@ export function createConnectionAuth(
             pageEdgeDeviceId: row.pageEdgeDeviceId,
           });
         }
-        for (const [key, target] of targets) {
-          await realAuth.lock(connectionLockKey(key), async () => {
+        return targets;
+      };
+      return realAuth.lockManyDynamic(
+        [connectionEventLockKey(eventId)],
+        async () => [...(await collectTargets()).keys()].map(connectionLockKey),
+        async () => {
+          const targets = await collectTargets();
+          for (const [key, target] of targets) {
             const store = await adapter();
             const stale = await store.findMany<PendingConnection>({
               model: PENDING_CONNECTION,
@@ -985,9 +1059,9 @@ export function createConnectionAuth(
             });
             if (current) await deleteAuthorizationRows(store, current.id);
             await advanceState(store, key, { deletedAt: new Date() });
-          });
-        }
-      });
+          }
+        },
+      );
     },
   };
 }
@@ -1019,6 +1093,24 @@ export async function connectionEventAccess(
     eventId,
     pageEdgeDeviceId,
     cameraEdgeDeviceId,
+  });
+}
+
+/**
+ * 保存済みの接続委任に含まれるカメラ ID を返す。接続用のデータストアが
+ * 設定されていなければ undefined、委任がなければ null。
+ */
+export async function connectionDelegationCameraIds(
+  tenantId: string,
+  eventId: string,
+  pageEdgeDeviceId: string,
+): Promise<string[] | null | undefined> {
+  const store = await existingConnectionStore();
+  if (!store) return undefined;
+  return createConnectionAuth(store).delegatedCameraIds({
+    tenantId,
+    eventId,
+    pageEdgeDeviceId,
   });
 }
 
