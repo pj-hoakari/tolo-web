@@ -139,6 +139,7 @@ function createTestAuth(
     pendingLogin: [],
     pendingMachineAuthorization: [],
     pendingMachineHandoff: [],
+    browserHostState: [],
   }),
 ) {
   const options = authOptions(env);
