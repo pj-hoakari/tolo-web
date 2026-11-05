@@ -6,6 +6,7 @@ import {
   type Route,
   test,
 } from "@playwright/test";
+import { sampleEdgeDevicesWire } from "@/mocks/fixtures/edges";
 import type { MockRouterOverrides } from "@/mocks/router";
 
 test.use({
@@ -101,6 +102,12 @@ const holdModelRequest = async (context: BrowserContext) => {
 };
 
 test.beforeEach(async ({ page, context }) => {
+  await context.addInitScript((devices) => {
+    sessionStorage.setItem(
+      "msw:overrides",
+      JSON.stringify({ devices }),
+    );
+  }, sampleEdgeDevicesWire);
   // 推論はモックに置き換えるため、有効な ONNX バイナリは不要。
   // 各テストの context.route で取得失敗や待機状態に上書きできる。
   await context.route("**/models/*.onnx", (route) =>
