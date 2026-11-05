@@ -271,6 +271,7 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
         type: "staff",
         userId: login.subject,
         tenantId: login.tenantId,
+        sessionId: login.sessionId,
       };
     },
 

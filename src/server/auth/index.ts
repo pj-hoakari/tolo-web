@@ -21,7 +21,7 @@ export { authMockingEnabled };
 
 export type Viewer =
   | { type: "anonymous" }
-  | { type: "staff"; userId: string; tenantId: string }
+  | { type: "staff"; userId: string; tenantId: string; sessionId?: string }
   | {
       type: "machine";
       userId: string;

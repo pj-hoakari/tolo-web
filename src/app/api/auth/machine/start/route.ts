@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getViewer, requestTenantId } from "@/server/auth";
-import { browserCookieValue } from "@/server/auth/browser";
 import { getConnectionAuth } from "@/server/auth/connection";
 import { withEventLifecycle } from "@/server/auth/eventLifecycle";
 import { sameHostPath } from "@/server/auth/login";
@@ -83,7 +82,7 @@ export async function GET(request: Request) {
         staffSub: viewer.userId,
         host: request.headers.get("host") ?? url.host,
         returnPath,
-        browserCookie: browserCookieValue(request.headers.get("cookie")),
+        staffSessionId: viewer.sessionId,
       });
       const response = NextResponse.redirect(started.location, 302);
       response.cookies.set(
@@ -91,13 +90,6 @@ export async function GET(request: Request) {
         started.binding.value,
         started.binding.attributes,
       );
-      if (started.browser) {
-        response.cookies.set(
-          started.browser.name,
-          started.browser.value,
-          started.browser.attributes,
-        );
-      }
       return response;
     });
   } catch (error) {

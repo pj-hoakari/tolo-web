@@ -16,7 +16,6 @@ import {
   type SessionLock,
   type SessionLocks,
 } from "./betterAuth";
-import { BROWSER_COOKIE } from "./browser";
 import { createMachineAuth, machineResultPath } from "./machine";
 import {
   MACHINE_BINDING_COOKIE,
@@ -165,7 +164,6 @@ function createTestAuth(
     pendingLogin: [],
     pendingMachineAuthorization: [],
     pendingMachineHandoff: [],
-    browserHostState: [],
   }),
 ) {
   const options = authOptions(env);
@@ -224,13 +222,7 @@ async function startMachine(
 }
 
 function machineCookies(started: Awaited<ReturnType<typeof startMachine>>) {
-  const cookies = [
-    `${MACHINE_BINDING_COOKIE}=${started.started.binding.value}`,
-  ];
-  if (started.started.browser) {
-    cookies.push(`${BROWSER_COOKIE}=${started.started.browser.value}`);
-  }
-  return cookies.join("; ");
+  return `${MACHINE_BINDING_COOKIE}=${started.started.binding.value}`;
 }
 
 async function handoff(test: TestAuth, location: string, cookie: string) {
@@ -275,16 +267,6 @@ describe("machine start", () => {
       authorizeUrl.searchParams.get("code_verifier"),
     );
     expect(started.binding.name).toBe(MACHINE_BINDING_COOKIE);
-    expect(started.browser).toMatchObject({
-      name: BROWSER_COOKIE,
-      attributes: {
-        path: "/",
-        secure: true,
-        httpOnly: true,
-        sameSite: "lax",
-        maxAge: 31_536_000,
-      },
-    });
     const ctx = await test.auth.$context;
     expect(
       await ctx.adapter.findMany({
@@ -401,7 +383,7 @@ describe("machine callback and handoff", () => {
     ).toHaveLength(0);
   });
 
-  it("keeps machine sessions for different browsers", async () => {
+  it("keeps multiple machine sessions", async () => {
     const provider = idp();
     const test = createTestAuth();
     await createUser(test.auth, "user-1@tolo-idp.local");
