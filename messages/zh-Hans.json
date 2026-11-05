@@ -349,7 +349,14 @@
       "cameraBadge": "Camera",
       "linkedPoint": "Linked point: {name}",
       "provision": "Provision",
-      "provisionLabel": "Provision “{name}”"
+      "provisionLabel": "Provision “{name}”",
+      "authorizeConnection": "Authorize camera connection",
+      "authorizeConnectionLabel": "Authorize the camera connection for “{name}”",
+      "connection": {
+        "authorized": "The camera connection delegation was saved.",
+        "login_required": "Staff sign-in is required to authorize the camera connection. Start again from “Authorize camera connection”.",
+        "failed": "Could not authorize the camera connection. Try again."
+      }
     },
     "receiver": {
       "stoppedTitle": "观测已停止",
@@ -387,7 +394,8 @@
       "noCameraPoints": "No observation point is available. Register an observation page device first.",
       "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
       "edgeDeviceIdLabel": "Edge device ID",
-      "openProvisioning": "Open provisioning"
+      "openProvisioning": "Open provisioning",
+      "authorizeConnection": "Authorize camera connection"
     },
     "unregisterEdge": {
       "title": "取消注册观测设备",
@@ -490,6 +498,9 @@
       "stop": "停止",
       "loading": "启动中…"
     },
+    "cameraSelector": {
+      "label": "摄像头"
+    },
     "status": {
       "detection": "检测状态：{status}",
       "trackedCount": "跟踪人数：{count}人",
@@ -530,12 +541,15 @@
       "detection": "人体检测处理失败",
       "unregistered": "此观测设备已取消注册",
       "modelLoad": "加载检测模型失败（{status}: {path}）",
+      "connectionAuthorizationRequired": "Camera connection authorization is missing. Authorize the camera connection again.",
+      "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "未允许使用摄像头。请在浏览器设置中允许访问摄像头。",
         "notFound": "未找到摄像头。请确认摄像头已连接。",
         "unsupported": "此浏览器或连接无法使用摄像头",
         "unavailable": "无法启动摄像头"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "视频源",
@@ -546,7 +560,8 @@
       "camera": "摄像头",
       "activeHint": "（停止后才能切换）",
       "inactiveHint": "（选择后启动时生效）",
-      "hide": "隐藏"
+      "hide": "隐藏",
+      "espCamera": "ESP 摄像头 ({edgeId})"
     }
   },
   "ObservationDevices": {
