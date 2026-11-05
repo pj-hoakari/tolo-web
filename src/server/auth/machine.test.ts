@@ -13,7 +13,10 @@ import {
   authOptions,
   type RealAuth,
   SESSION_COOKIE,
+  type SessionLock,
+  type SessionLocks,
 } from "./betterAuth";
+import { BROWSER_COOKIE } from "./browser";
 import { createMachineAuth, machineResultPath } from "./machine";
 import {
   MACHINE_BINDING_COOKIE,
@@ -66,6 +69,7 @@ function idp() {
         authorization_endpoint: "https://idp.test/oauth2/authorize",
         token_endpoint: TOKEN_ENDPOINT,
         jwks_uri: "https://idp.test/oauth2/jwks",
+        end_session_endpoint: "https://idp.test/connect/logout",
         id_token_signing_alg_values_supported: ["RS256"],
       }),
     ),
@@ -128,6 +132,28 @@ function idp() {
   };
 }
 
+function inProcessLock(): SessionLock {
+  const tails = new Map<string, Promise<unknown>>();
+  return (key, task) => {
+    const run = (tails.get(key) ?? Promise.resolve())
+      .catch(() => {})
+      .then(task);
+    tails.set(key, run);
+    return run;
+  };
+}
+
+function inProcessLockMany(lock: SessionLock): SessionLocks {
+  return async <T>(keys: string[], task: () => Promise<T>): Promise<T> => {
+    const sorted = [...new Set(keys)].sort();
+    const run = async (index: number): Promise<T> =>
+      index === sorted.length
+        ? task()
+        : lock(sorted[index], () => run(index + 1));
+    return run(0);
+  };
+}
+
 function createTestAuth(
   database: BetterAuthOptions["database"] = memoryAdapter({
     user: [],
@@ -148,10 +174,12 @@ function createTestAuth(
     database,
     plugins: [...options.plugins, testUtils()],
   });
+  const lock = inProcessLock();
   const realAuth = {
     auth: auth as unknown as RealAuth["auth"],
     env,
-    lock: (_: string, task: () => Promise<unknown>) => task(),
+    lock,
+    lockMany: inProcessLockMany(lock),
   } as RealAuth;
   return {
     auth,
@@ -195,8 +223,14 @@ async function startMachine(
   return { started, authorizeUrl, code, provider };
 }
 
-function bindingCookie(started: Awaited<ReturnType<typeof startMachine>>) {
-  return `${MACHINE_BINDING_COOKIE}=${started.started.binding.value}`;
+function machineCookies(started: Awaited<ReturnType<typeof startMachine>>) {
+  const cookies = [
+    `${MACHINE_BINDING_COOKIE}=${started.started.binding.value}`,
+  ];
+  if (started.started.browser) {
+    cookies.push(`${BROWSER_COOKIE}=${started.started.browser.value}`);
+  }
+  return cookies.join("; ");
 }
 
 async function handoff(test: TestAuth, location: string, cookie: string) {
@@ -232,7 +266,7 @@ describe("machine start", () => {
       scope: "openid events.report",
       resource: `https://api.tolo.test/tenants/${TENANT}`,
       audience: "backend-api",
-      prompt: "none",
+      prompt: "login",
       code_challenge_method: "S256",
     });
     expect(authorizeUrl.searchParams.get("state")).toBeTruthy();
@@ -241,6 +275,16 @@ describe("machine start", () => {
       authorizeUrl.searchParams.get("code_verifier"),
     );
     expect(started.binding.name).toBe(MACHINE_BINDING_COOKIE);
+    expect(started.browser).toMatchObject({
+      name: BROWSER_COOKIE,
+      attributes: {
+        path: "/",
+        secure: true,
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 31_536_000,
+      },
+    });
     const ctx = await test.auth.$context;
     expect(
       await ctx.adapter.findMany({
@@ -294,13 +338,26 @@ describe("machine callback and handoff", () => {
     const handedOff = await handoff(
       test,
       callback.location,
-      `${staffCookie}; ${bindingCookie(started)}`,
+      `${staffCookie}; ${machineCookies(started)}`,
     );
 
     expect(handedOff.status).toBe(302);
-    expect(handedOff.headers.get("location")).toBe(RETURN_PATH);
-    const machineCookies = cookiesFrom(handedOff);
-    const sessionCookie = machineCookies.find((cookie) =>
+    const logout = new URL(handedOff.headers.get("location") ?? "");
+    expect(`${logout.origin}${logout.pathname}`).toBe(
+      "https://idp.test/connect/logout",
+    );
+    expect(logout.searchParams.get("post_logout_redirect_uri")).toBe(
+      "https://tolo.test/auth/logged-out",
+    );
+    expect(logout.searchParams.get("id_token_hint")).toBeTruthy();
+    const state = JSON.parse(
+      Buffer.from(logout.searchParams.get("state") ?? "", "base64url").toString(
+        "utf8",
+      ),
+    );
+    expect(state).toEqual({ host: HOST, returnPath: RETURN_PATH });
+    const handoffCookies = cookiesFrom(handedOff);
+    const sessionCookie = handoffCookies.find((cookie) =>
       cookie.startsWith(`${SESSION_COOKIE}=`),
     );
     expect(sessionCookie).toBeTruthy();
@@ -344,6 +401,64 @@ describe("machine callback and handoff", () => {
     ).toHaveLength(0);
   });
 
+  it("keeps machine sessions for different browsers", async () => {
+    const provider = idp();
+    const test = createTestAuth();
+    await createUser(test.auth, "user-1@tolo-idp.local");
+
+    const first = await startMachine(test, "user-1", provider);
+    const firstCallback = await test.machine.callback({
+      code: first.code,
+      state: first.authorizeUrl.searchParams.get("state") ?? undefined,
+      error: undefined,
+    });
+    const firstHandoff = await handoff(
+      test,
+      firstCallback.location,
+      machineCookies(first),
+    );
+    expect(firstHandoff.status).toBe(302);
+
+    const second = await startMachine(test, "user-1", provider);
+    const secondCallback = await test.machine.callback({
+      code: second.code,
+      state: second.authorizeUrl.searchParams.get("state") ?? undefined,
+      error: undefined,
+    });
+    const secondHandoff = await handoff(
+      test,
+      secondCallback.location,
+      machineCookies(second),
+    );
+    expect(secondHandoff.status).toBe(302);
+
+    const ctx = await test.auth.$context;
+    const sessions = await ctx.adapter.findMany<{ kind: string }>({
+      model: "session",
+    });
+    expect(
+      sessions.filter((session) => session.kind === "machine"),
+    ).toHaveLength(2);
+    const firstSession = cookiesFrom(firstHandoff).find((cookie) =>
+      cookie.startsWith(`${SESSION_COOKIE}=`),
+    );
+    const secondSession = cookiesFrom(secondHandoff).find((cookie) =>
+      cookie.startsWith(`${SESSION_COOKIE}=`),
+    );
+    await expect(
+      test.sessionAuth.viewer(
+        onHost("https://x", HOST, firstSession ?? ""),
+        TENANT,
+      ),
+    ).resolves.toMatchObject({ type: "machine" });
+    await expect(
+      test.sessionAuth.viewer(
+        onHost("https://x", HOST, secondSession ?? ""),
+        TENANT,
+      ),
+    ).resolves.toMatchObject({ type: "machine" });
+  });
+
   it("rejects an ID token whose nonce or subject does not match the pending authorization", async () => {
     const provider = idp();
     const test = createTestAuth();
@@ -362,7 +477,7 @@ describe("machine callback and handoff", () => {
     );
   });
 
-  it("sends a prompt=none login_required back to the observation page", async () => {
+  it("sends a login_required result back to the observation page", async () => {
     const test = createTestAuth();
     const started = await startMachine(test);
 
