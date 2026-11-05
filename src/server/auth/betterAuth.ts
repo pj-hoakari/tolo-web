@@ -8,6 +8,7 @@ import { Pool } from "pg";
 import { rootOrigin } from "@/lib/control/tenant";
 import { discoveryUrl } from "./discovery";
 import { loginErrorUrl, loginHandoff, PROVIDER_ID } from "./login";
+import { machineSessionPlugin } from "./machineSession";
 import { tenantOnboarding } from "./onboarding";
 
 export const SESSION_COOKIE = "__Host-tolo.session_token";
@@ -22,8 +23,11 @@ const AUTH_ENV = {
 } as const;
 
 export type AuthEnv = Record<keyof typeof AUTH_ENV, string> & {
+  baseUrl?: string;
   connectionClientId: string;
   connectionClientSecret: string;
+  machineClientId: string;
+  machineClientSecret: string;
 };
 
 export function readAuthEnv(): AuthEnv {
@@ -37,10 +41,16 @@ export function readAuthEnv(): AuthEnv {
     ...(Object.fromEntries(
       Object.entries(AUTH_ENV).map(([key, name]) => [key, process.env[name]]),
     ) as Record<keyof typeof AUTH_ENV, string>),
+    baseUrl: process.env.AUTH_BASE_URL || undefined,
     connectionClientId:
       process.env.AUTH_IDP_CONNECTION_CLIENT_ID || "observation-connection",
     connectionClientSecret:
       process.env.AUTH_IDP_CONNECTION_CLIENT_SECRET ||
+      process.env.AUTH_IDP_CLIENT_SECRET ||
+      "",
+    machineClientId: process.env.AUTH_IDP_MACHINE_CLIENT_ID || "edge-page",
+    machineClientSecret:
+      process.env.AUTH_IDP_MACHINE_CLIENT_SECRET ||
       process.env.AUTH_IDP_CLIENT_SECRET ||
       "",
   };
@@ -151,16 +161,19 @@ const toloSession = {
 } satisfies BetterAuthPlugin;
 
 export function authOptions(env: AuthEnv) {
+  const baseUrl = env.baseUrl ?? rootOrigin();
   return {
     secret: env.secret,
-    baseURL: rootOrigin(),
-    trustedOrigins: [rootOrigin()],
+    baseURL: baseUrl,
+    trustedOrigins: [...new Set([rootOrigin(), baseUrl])],
     onAPIError: { errorURL: loginErrorUrl() },
     session: {
       expiresIn: 60 * 60,
       updateAge: 0,
       additionalFields: {
         tenantId: { type: "string", required: false, input: false },
+        eventId: { type: "string", required: false, input: false },
+        edgeDeviceId: { type: "string", required: false, input: false },
         kind: {
           type: ["staff", "machine"],
           required: true,
@@ -215,6 +228,7 @@ export function authOptions(env: AuthEnv) {
       toloSession,
       loginHandoff,
       tenantOnboarding,
+      machineSessionPlugin,
     ],
   } satisfies BetterAuthOptions;
 }

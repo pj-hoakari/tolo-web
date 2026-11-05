@@ -46,6 +46,7 @@ import {
   authMockingEnabled,
   getAccessToken,
   getRegistrationToken,
+  getViewer,
   prepareOnboarding,
   requestTenantId,
 } from "./auth";
@@ -58,6 +59,8 @@ import {
 import { forgetInvitation, pendingInvitationToken } from "./auth/invitation";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { guestPageClient } from "./guest";
+import { issueRegistrationToken } from "./idp";
+import * as observationModule from "./observation";
 import {
   consoleEdgeDeviceClient,
   consoleObservationSettingsClient,
@@ -111,6 +114,11 @@ vi.mock("./auth", () => ({
   authMockingEnabled: vi.fn(),
   getAccessToken: vi.fn(),
   getRegistrationToken: vi.fn(),
+  getViewer: vi.fn(async () => ({
+    type: "staff",
+    userId: "user-1",
+    tenantId: "0123456789abcdef",
+  })),
   prepareOnboarding: vi.fn(),
   requestTenantId: vi.fn(),
 }));
@@ -132,6 +140,11 @@ const [device] = sampleObservationDevicesWire;
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
+  vi.mocked(getViewer).mockResolvedValue({
+    type: "staff",
+    userId: "user-1",
+    tenantId: "0123456789abcdef",
+  });
 });
 
 describe("graph.saveGraph", () => {
@@ -1791,6 +1804,162 @@ describe("signaling.requestCameraConnection", () => {
     ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
     expect(request).not.toHaveBeenCalled();
     expect(issue).not.toHaveBeenCalled();
+  });
+});
+
+describe("camera.listDelegatedCameras", () => {
+  const linkedCamera = protoCamera;
+  const unlinkedCamera = create(EdgeDeviceSchema, {
+    edgeDeviceId: "0123456789abcdff",
+    name: "別のカメラ",
+    kind: EdgeDeviceKind.CAMERA,
+  });
+
+  it("returns only the page's linked cameras to staff through the console token", async () => {
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    const list = vi
+      .spyOn(consoleEdgeDeviceClient, "listEdgeDevices")
+      .mockResolvedValue(
+        create(ListEdgeDevicesResponseSchema, {
+          devices: [protoPageWithCamera, linkedCamera, unlinkedCamera],
+        }),
+      );
+
+    await expect(
+      call(router.camera.listDelegatedCameras, {
+        eventId,
+        pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
+      }),
+    ).resolves.toEqual({
+      cameras: [
+        {
+          ...wireCamera,
+          observationPointId: "1111111111111111",
+        },
+      ],
+    });
+    expect(list).toHaveBeenCalledOnce();
+  });
+
+  it("uses the connection authorization's events.read token for a machine session", async () => {
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(getViewer).mockResolvedValue({
+      type: "machine",
+      userId: "user-1",
+      tenantId: "0123456789abcdef",
+      eventId,
+      edgeDeviceId: protoPageWithCamera.edgeDeviceId,
+    });
+    vi.mocked(connectionEventAccess).mockResolvedValue("connection-token");
+    const list = vi
+      .spyOn(consoleEdgeDeviceClient, "listEdgeDevices")
+      .mockResolvedValue(
+        create(ListEdgeDevicesResponseSchema, {
+          devices: [protoPageWithCamera, linkedCamera, unlinkedCamera],
+        }),
+      );
+    const delegated = vi
+      .spyOn(observationModule, "listEdgeDevicesWithAccessToken")
+      .mockResolvedValue(
+        create(ListEdgeDevicesResponseSchema, {
+          devices: [protoPageWithCamera, linkedCamera, unlinkedCamera],
+        }),
+      );
+
+    await expect(
+      call(router.camera.listDelegatedCameras, {
+        eventId,
+        pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
+      }),
+    ).resolves.toEqual({
+      cameras: [
+        {
+          ...wireCamera,
+          observationPointId: "1111111111111111",
+        },
+      ],
+    });
+    expect(delegated).toHaveBeenCalledWith(eventId, "connection-token");
+    expect(list).not.toHaveBeenCalled();
+  });
+
+  it("refuses a machine session that asks for another page", async () => {
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(getViewer).mockResolvedValue({
+      type: "machine",
+      userId: "user-1",
+      tenantId: "0123456789abcdef",
+      eventId,
+      edgeDeviceId: "aaaaaaaaaaaaaaaa",
+    });
+
+    await expect(
+      call(router.camera.listDelegatedCameras, {
+        eventId,
+        pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("passes a missing connection authorization to the caller", async () => {
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(getViewer).mockResolvedValue({
+      type: "machine",
+      userId: "user-1",
+      tenantId: "0123456789abcdef",
+      eventId,
+      edgeDeviceId: protoPageWithCamera.edgeDeviceId,
+    });
+    vi.mocked(connectionEventAccess).mockRejectedValue(
+      new ORPCError("PRECONDITION_FAILED", {
+        data: { code: "CONNECTION_AUTHORIZATION_REQUIRED" },
+      }),
+    );
+
+    await expect(
+      call(router.camera.listDelegatedCameras, {
+        eventId,
+        pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
+      }),
+    ).rejects.toMatchObject({
+      code: "PRECONDITION_FAILED",
+      data: { code: "CONNECTION_AUTHORIZATION_REQUIRED" },
+    });
+  });
+});
+
+describe("machine session procedure allowlist", () => {
+  const machine = (edgeDeviceId = protoPageWithCamera.edgeDeviceId) =>
+    vi.mocked(getViewer).mockResolvedValue({
+      type: "machine",
+      userId: "user-1",
+      tenantId: "0123456789abcdef",
+      eventId,
+      edgeDeviceId,
+    });
+
+  it("refuses ListEdgeDevices even though the device is in the session", async () => {
+    machine();
+    const list = vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices");
+
+    await expect(
+      call(router.observation.listEdgeDevices, { eventId }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(list).not.toHaveBeenCalled();
+  });
+
+  it("refuses a camera connection for another observation page", async () => {
+    machine();
+    const list = vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices");
+
+    await expect(
+      call(router.signaling.requestCameraConnection, {
+        eventId,
+        pageEdgeDeviceId: "aaaaaaaaaaaaaaaa",
+        cameraEdgeId: protoCamera.edgeDeviceId,
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(list).not.toHaveBeenCalled();
   });
 });
 

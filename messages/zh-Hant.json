@@ -351,6 +351,8 @@
       "provision": "Provision",
       "provisionLabel": "Provision “{name}”",
       "authorizeConnection": "Authorize camera connection",
+      "useAsMachine": "Use as observation page",
+      "useAsMachineLabel": "Use {name} as an observation page",
       "authorizeConnectionLabel": "Authorize the camera connection for “{name}”",
       "connection": {
         "authorized": "The camera connection delegation was saved.",
