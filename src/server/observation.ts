@@ -45,3 +45,23 @@ export const edgeMeasurementIngestClient = createClient(
   MeasurementIngestService,
   edgeTransport,
 );
+
+export async function listEdgeDevicesWithAccessToken(
+  eventId: string,
+  accessToken: string,
+) {
+  const client = createClient(
+    EdgeDeviceService,
+    createConnectTransport({
+      baseUrl: process.env.GATEWAY_URL ?? "http://127.0.0.1:8080",
+      httpVersion: "1.1",
+      interceptors: [
+        (next) => async (req) => {
+          req.header.set("Authorization", `Bearer ${accessToken}`);
+          return next(req);
+        },
+      ],
+    }),
+  );
+  return client.listEdgeDevices({ eventId });
+}

@@ -5,6 +5,10 @@ import { server } from "@/mocks/server";
 import { POST } from "./route";
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/server/auth", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/server/auth")>()),
+  getViewer: async () => ({ type: "anonymous" }),
+}));
 
 const call = (headers: Record<string, string>) =>
   POST(

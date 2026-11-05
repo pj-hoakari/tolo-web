@@ -41,6 +41,11 @@ type EventAccessToken = {
   expiresAt: Date;
 };
 
+type ClientCredentials = {
+  clientId: string;
+  clientSecret: string;
+};
+
 const scopeClaim = z.object({ scope: z.string() });
 
 export function tokenScopes(accessToken: string): Set<string> {
@@ -60,6 +65,15 @@ function eventScopes(tenantAccessToken: string): string {
   return scopes.join(" ");
 }
 
+type SessionLogin = {
+  sessionId: string;
+  subject: string;
+  tenantId: string;
+  kind: "staff" | "machine";
+  eventId?: string | null;
+  edgeDeviceId?: string | null;
+};
+
 function oauthError(body: string): unknown {
   try {
     return JSON.parse(body).error;
@@ -70,12 +84,26 @@ function oauthError(body: string): unknown {
 
 export function createSessionAuth({ auth, env, lock }: RealAuth) {
   const discovery = idpDiscovery(env.issuer);
+  const staffClient = {
+    clientId: env.clientId,
+    clientSecret: env.clientSecret,
+  };
+  const machineClient = {
+    clientId: env.machineClientId,
+    clientSecret: env.machineClientSecret,
+  };
 
-  async function postToTokenEndpoint(params: Record<string, string>) {
+  async function postToTokenEndpoint(
+    client: ClientCredentials,
+    params: Record<string, string>,
+  ) {
     return fetch((await discovery()).token_endpoint, {
       method: "POST",
       headers: {
-        authorization: encodeBasicCredentials(env.clientId, env.clientSecret),
+        authorization: encodeBasicCredentials(
+          client.clientId,
+          client.clientSecret,
+        ),
         "content-type": "application/x-www-form-urlencoded",
         accept: "application/json",
       },
@@ -91,7 +119,10 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
     });
   }
 
-  async function staffLogin(headers: Headers, tenantId: string | undefined) {
+  async function sessionLogin(
+    headers: Headers,
+    tenantId: string | undefined,
+  ): Promise<SessionLogin | null> {
     if (!tenantId) return null;
     const current = await auth.api.getSession({ headers });
     if (
@@ -101,26 +132,28 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
     ) {
       return null;
     }
-    if (current.session.kind !== "staff") {
-      throw new Error("machine sessions are not supported yet");
-    }
+    const kind = current.session.kind === "machine" ? "machine" : "staff";
     const stored = await storedTenantAccess(current.session.id);
-    return stored
-      ? { sessionId: current.session.id, subject: stored.subject, tenantId }
-      : null;
+    if (!stored) return null;
+    return {
+      sessionId: current.session.id,
+      subject: stored.subject,
+      tenantId,
+      kind,
+      eventId: current.session.eventId,
+      edgeDeviceId: current.session.edgeDeviceId,
+    };
   }
 
-  type StaffLogin = NonNullable<Awaited<ReturnType<typeof staffLogin>>>;
-
-  async function tenantAccess(sessionId: string) {
+  async function tenantAccess(sessionId: string, client: ClientCredentials) {
     const stored = await storedTenantAccess(sessionId);
-    if (!stored) throw new Error("no staff session for this host");
+    if (!stored) throw new Error("no session tokens for this host");
     if (stored.accessTokenExpiresAt.getTime() - Date.now() > EXPIRY_MARGIN_MS) {
       return stored.accessToken;
     }
     const { adapter } = await auth.$context;
     const where = [{ field: "sessionId", value: sessionId }];
-    const response = await postToTokenEndpoint({
+    const response = await postToTokenEndpoint(client, {
       grant_type: "refresh_token",
       refresh_token: stored.refreshToken,
     });
@@ -151,7 +184,17 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
     return access_token;
   }
 
-  async function eventAccess(login: StaffLogin, eventId: string) {
+  async function eventAccess(
+    login: SessionLogin,
+    eventId: string,
+    client: ClientCredentials,
+  ) {
+    const machine = login.kind === "machine";
+    if (machine && (!login.edgeDeviceId || login.eventId !== eventId)) {
+      throw new Error(
+        "machine sessions can only request event_access for their own event",
+      );
+    }
     const { adapter } = await auth.$context;
     const where = [
       { field: "sessionId", value: login.sessionId },
@@ -164,15 +207,21 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
     if (stored && stored.expiresAt.getTime() - Date.now() > EXPIRY_MARGIN_MS) {
       return stored.accessToken;
     }
-    const subjectToken = await tenantAccess(login.sessionId);
-    const response = await postToTokenEndpoint({
+    const subjectToken = await tenantAccess(login.sessionId, client);
+    const params: Record<string, string> = {
       grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
       subject_token: subjectToken,
       subject_token_type: "urn:ietf:params:oauth:token-type:access_token",
       resource: `https://${env.resourceHost}/tenants/${login.tenantId}/events/${encodeURIComponent(eventId)}`,
       audience: "backend-api",
-      scope: eventScopes(subjectToken),
-    });
+    };
+    if (machine) {
+      params.scope = "events.report";
+      params.edge_device_id = login.edgeDeviceId as string;
+    } else {
+      params.scope = eventScopes(subjectToken);
+    }
+    const response = await postToTokenEndpoint(client, params);
     if (!response.ok) {
       throw new Error(
         `token exchange for event ${eventId} failed with ${response.status}: ${await response.text()}`,
@@ -201,8 +250,23 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
       headers: Headers,
       tenantId: string | undefined,
     ): Promise<Viewer> {
-      const login = await staffLogin(headers, tenantId);
+      const login = await sessionLogin(headers, tenantId);
       if (!login) return { type: "anonymous" };
+      if (login.kind === "machine") {
+        if (
+          typeof login.eventId !== "string" ||
+          typeof login.edgeDeviceId !== "string"
+        ) {
+          return { type: "anonymous" };
+        }
+        return {
+          type: "machine",
+          userId: login.subject,
+          tenantId: login.tenantId,
+          eventId: login.eventId,
+          edgeDeviceId: login.edgeDeviceId,
+        };
+      }
       return {
         type: "staff",
         userId: login.subject,
@@ -215,17 +279,33 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
       tenantId: string | undefined,
       request: AccessTokenRequest,
     ): Promise<string> {
-      if (request.type === "event_access" && request.client === "edge") {
-        throw new Error(
-          "event_access for the edge client is not supported yet",
+      const login = await sessionLogin(headers, tenantId);
+      if (!login) throw new Error("no session for this host");
+      if (request.type === "tenant_access") {
+        return lock(login.sessionId, () =>
+          tenantAccess(
+            login.sessionId,
+            login.kind === "machine" ? machineClient : staffClient,
+          ),
         );
       }
-      const login = await staffLogin(headers, tenantId);
-      if (!login) throw new Error("no staff session for this host");
+      if (login.kind === "machine") {
+        if (request.client === "console") {
+          throw new Error(
+            "console event_access is not available for machine sessions",
+          );
+        }
+        return lock(login.sessionId, () =>
+          eventAccess(login, request.eventId, machineClient),
+        );
+      }
+      if (request.client === "edge") {
+        throw new Error(
+          "event_access for the edge client is only available to machine sessions",
+        );
+      }
       return lock(login.sessionId, () =>
-        request.type === "tenant_access"
-          ? tenantAccess(login.sessionId)
-          : eventAccess(login, request.eventId),
+        eventAccess(login, request.eventId, staffClient),
       );
     },
   };
