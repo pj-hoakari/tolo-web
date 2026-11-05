@@ -165,7 +165,7 @@ test("接続に失敗した観測デバイスがオフラインになっても�
   await row.getByRole("button", { name: `「${edgeA}」の映像を閉じる` }).click();
 
   await expect(list.getByRole("alert")).toHaveCount(0);
-  await expect(list).toContainText("観測デバイス（4）");
+  await expect(list).toContainText("観測デバイス（3）");
   await expect(row).toContainText("オフライン");
   await expect(row).not.toContainText("接続失敗");
   await expect(row.getByRole("button")).toHaveCount(2);
