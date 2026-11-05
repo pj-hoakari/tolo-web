@@ -10,6 +10,8 @@ const devices = vi.hoisted((): EdgeDevice[] => [
   {
     edgeDeviceId: "aaaaaaaaaaaaaaaa",
     name: "入口カメラ",
+    kind: "observation_page",
+    cameraLinks: [],
     online: true,
     lastHeartbeatAt: "2026-06-14T10:00:00.000Z",
     observationPoints: [
@@ -20,6 +22,8 @@ const devices = vi.hoisted((): EdgeDevice[] => [
   {
     edgeDeviceId: "bbbbbbbbbbbbbbbb",
     name: "ホールカメラ",
+    kind: "observation_page",
+    cameraLinks: [],
     online: false,
     lastHeartbeatAt: "2026-06-14T09:00:00.000Z",
     observationPoints: [
