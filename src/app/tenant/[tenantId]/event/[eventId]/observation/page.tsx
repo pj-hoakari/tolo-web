@@ -6,6 +6,7 @@ import { Link } from "@/components/ui/link";
 import { managementPath } from "@/features/tenant/management/routes";
 import { observationPath } from "@/features/tenant/observation/routes";
 import { ConnectedEdges } from "@/features/tenant/webrtc/components/ConnectedEdges";
+import { cameraConnectionNotice } from "@/features/tenant/webrtc/utils/cameraConnection";
 import { getPwaMetadata } from "@/lib/pwa/manifest";
 
 export async function generateMetadata({
@@ -19,10 +20,15 @@ export async function generateMetadata({
 
 export default async function TenantObservationDevices({
   params,
+  searchParams,
 }: {
   params: Promise<{ tenantId: string; eventId: string }>;
+  searchParams: Promise<{ cameraConnection?: string | string[] }>;
 }) {
   const { tenantId, eventId } = await params;
+  const connectionNotice = cameraConnectionNotice(
+    (await searchParams).cameraConnection,
+  );
   const t = await getTranslations("ObservationDevices");
 
   return (
@@ -39,7 +45,11 @@ export default async function TenantObservationDevices({
         </div>
       </header>
       <main className="flex w-full flex-col items-center gap-4 px-10 py-3">
-        <ConnectedEdges tenantId={tenantId} eventId={eventId} />
+        <ConnectedEdges
+          tenantId={tenantId}
+          eventId={eventId}
+          connectionNotice={connectionNotice}
+        />
       </main>
     </div>
   );
