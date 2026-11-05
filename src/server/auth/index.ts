@@ -2,7 +2,7 @@ import "server-only";
 
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { resolveTenant } from "@/lib/control/tenant";
+import { resolveTenant, rootOrigin } from "@/lib/control/tenant";
 import { issueRegistrationToken } from "../idp";
 import { resolveTenantSubdomain } from "../tenantSubdomain";
 import { getRealAuth } from "./betterAuth";
@@ -110,9 +110,12 @@ export async function getRegistrationToken(): Promise<string> {
 }
 
 export async function requireStaff(returnPath: string): Promise<void> {
-  if ((await getViewer()).type !== "staff") {
-    redirect(`/auth/login?return=${encodeURIComponent(returnPath)}`);
+  const viewer = await getViewer();
+  if (viewer.type === "staff") return;
+  if (viewer.type === "machine") {
+    redirect(`${rootOrigin()}/auth/error?error=machine_session_forbidden`);
   }
+  redirect(`/auth/login?return=${encodeURIComponent(returnPath)}`);
 }
 
 const MOCK_TOKEN_ENV = {
