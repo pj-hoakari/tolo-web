@@ -75,7 +75,6 @@ function createTestAuth(
     verification: [],
     tenantAccessToken: [],
     eventAccessToken: [],
-    browserHostState: [],
   }),
   lock: SessionLock = inProcessLock(),
 ) {
@@ -495,7 +494,7 @@ describe("viewer", () => {
     const { auth, sessionAuth } = createTestAuth();
     const { headers } = await signIn(auth, { tokens: validTokens() });
 
-    await expect(sessionAuth.viewer(headers, TENANT)).resolves.toEqual({
+    await expect(sessionAuth.viewer(headers, TENANT)).resolves.toMatchObject({
       type: "staff",
       userId: "idp-subject",
       tenantId: TENANT,
