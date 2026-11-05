@@ -40,7 +40,7 @@ import type {
 } from "@/server/router";
 import {
   registeredEdgeDeviceWire,
-  sampleObservationDevicesWire,
+  sampleEdgeDevicesWire,
 } from "./fixtures/edges";
 import {
   sampleGuestCrowd,
@@ -121,7 +121,7 @@ export const SAMPLE_MEMBERS: TenantMember[] = [
  */
 export function createMockRouter(overrides: MockRouterOverrides = {}) {
   const {
-    devices: initialDevices = sampleObservationDevicesWire,
+    devices: initialDevices = sampleEdgeDevicesWire,
     devicesError = false,
     approveDeviceAuthorization,
     registerEdgeDeviceError,
