@@ -23,6 +23,8 @@ const env: AuthEnv = {
   resourceHost: "api.tolo.test",
   connectionClientId: "observation-connection",
   connectionClientSecret: "connection-secret",
+  machineClientId: "edge-page",
+  machineClientSecret: "machine-secret",
 };
 const TENANT = "0123456789abcdef";
 const EVENT = "fedcba9876543210";
