@@ -2,6 +2,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { getViewer, requestTenantId } from "@/server/auth";
 import { getConnectionAuth } from "@/server/auth/connection";
 import { delegatedPageCameras } from "@/server/cameraDelegation";
+import { requireApprovableEvent } from "@/server/eventStatus";
 import { GET } from "./route";
 
 vi.mock("server-only", () => ({}));
@@ -14,6 +15,12 @@ vi.mock("@/server/auth/connection", async (original) => ({
   getConnectionAuth: vi.fn(),
 }));
 vi.mock("@/server/cameraDelegation", () => ({ delegatedPageCameras: vi.fn() }));
+vi.mock("@/server/auth/eventLifecycle", () => ({
+  withEventLifecycle: vi.fn((_eventId: string, task: () => Promise<unknown>) =>
+    task(),
+  ),
+}));
+vi.mock("@/server/eventStatus", () => ({ requireApprovableEvent: vi.fn() }));
 const start = vi.fn();
 const eventId = "fedcba9876543210";
 const pageEdgeDeviceId = "1111111111111111";
@@ -42,6 +49,15 @@ beforeEach(() => {
   vi.mocked(delegatedPageCameras).mockResolvedValue(["camera"]);
   vi.mocked(getConnectionAuth).mockReturnValue({ start } as never);
   start.mockResolvedValue("https://idp.test/authorize");
+  vi.mocked(requireApprovableEvent).mockResolvedValue(undefined);
+});
+it("does not start authorization for an ended event", async () => {
+  vi.mocked(requireApprovableEvent).mockRejectedValue(new Error("event ended"));
+  expect((await GET(request())).headers.get("location")).toContain(
+    "cameraConnection=failed",
+  );
+  expect(delegatedPageCameras).not.toHaveBeenCalled();
+  expect(start).not.toHaveBeenCalled();
 });
 it("passes the request Host and validated return path to pending authorization", async () => {
   const response = await GET(request());

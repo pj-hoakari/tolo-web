@@ -11,7 +11,7 @@ const EVENT_STATUSES: Partial<Record<ProtoEventStatus, string>> = {
   [ProtoEventStatus.ARCHIVED]: "archived",
 };
 
-export async function requireApprovableEvent(eventId: string): Promise<void> {
+async function eventStatus(eventId: string): Promise<ProtoEventStatus> {
   const tenantId = await requestTenantId();
   if (!tenantId) throw new ORPCError("UNAUTHORIZED");
   const response = await tenantManagementClient.listEvents({
@@ -22,7 +22,18 @@ export async function requireApprovableEvent(eventId: string): Promise<void> {
     (candidate) => candidate.eventId === eventId,
   );
   if (!event) throw new ORPCError("NOT_FOUND");
-  const status = EVENT_STATUSES[event.status];
+  return event.status;
+}
+
+export async function requireArchivableEvent(eventId: string): Promise<void> {
+  const status = await eventStatus(eventId);
+  if (status !== ProtoEventStatus.DRAFT && status !== ProtoEventStatus.CLOSED) {
+    throw new ORPCError("PRECONDITION_FAILED");
+  }
+}
+
+export async function requireApprovableEvent(eventId: string): Promise<void> {
+  const status = EVENT_STATUSES[await eventStatus(eventId)];
   if (status === "closed" || status === "archived") {
     throw new ORPCError("PRECONDITION_FAILED");
   }

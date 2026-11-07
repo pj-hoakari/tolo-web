@@ -62,7 +62,7 @@ describe("device authorization", () => {
     );
   });
 
-  it("revokes with the event and edge device without a user code", async () => {
+  it("revokes permanently by default with the event and edge device without a user code", async () => {
     stubIdp();
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
@@ -73,10 +73,60 @@ describe("device authorization", () => {
     expect(fetchSpy).toHaveBeenCalledWith(
       "https://idp.test/api/device-authorization/revoke",
       expect.objectContaining({
+        headers: expect.objectContaining({
+          "X-Tolo-Staff-Token": "staff-token",
+        }),
         body: JSON.stringify({
           event_id: eventId,
           edge_device_id: edgeDeviceId,
           permanent: true,
+        }),
+      }),
+    );
+  });
+
+  it("stops a camera temporarily when permanent is false", async () => {
+    stubIdp();
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
+
+    await revokeDeviceAuthorization(
+      { eventId, edgeDeviceId },
+      { permanent: false },
+    );
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://idp.test/api/device-authorization/revoke",
+      expect.objectContaining({
+        body: JSON.stringify({
+          event_id: eventId,
+          edge_device_id: edgeDeviceId,
+          permanent: false,
+        }),
+      }),
+    );
+  });
+
+  it("sends an explicit reapproval only when requested", async () => {
+    stubIdp();
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
+
+    await approveDeviceAuthorization(
+      { eventId, edgeDeviceId, userCode: "ABCD-EFGH" },
+      { reapproval: true },
+    );
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://idp.test/api/device-authorization/approve",
+      expect.objectContaining({
+        body: JSON.stringify({
+          user_code: "ABCD-EFGH",
+          event_id: eventId,
+          edge_device_id: edgeDeviceId,
+          reapproval: true,
         }),
       }),
     );

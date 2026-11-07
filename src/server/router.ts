@@ -83,16 +83,24 @@ import {
   getViewer,
   prepareOnboarding,
   requestTenantId,
+  type Viewer,
 } from "./auth";
 import {
   addCameraToConnectionDelegation,
+  CONNECTION_ERROR_CODES,
+  connectionDelegationCameraIds,
   connectionEventAccess,
   deleteConnectionDelegationsForCamera,
   deleteConnectionDelegationsForEvent,
   deleteConnectionDelegationsForPage,
   withCameraConnectionAuthorization,
 } from "./auth/connection";
+import { withEventLifecycle } from "./auth/eventLifecycle";
 import { forgetInvitation, pendingInvitationToken } from "./auth/invitation";
+import {
+  revokeMachineSessionsForEdge,
+  revokeMachineSessionsForEvent,
+} from "./auth/machineSessionRevocation";
 import {
   connectionAccessTokenKey,
   eventIdKey,
@@ -106,6 +114,7 @@ import {
   revokeDeviceAuthorization,
 } from "./camera";
 import { cameraPageEdgeDeviceId, observationMocking } from "./cameraDelegation";
+import { requireApprovableEvent, requireArchivableEvent } from "./eventStatus";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
 import { guestPageClient } from "./guest";
@@ -163,15 +172,89 @@ const edgeDeviceInput = z.object({
   edgeDeviceId: publicId,
 });
 
-export type RegisterTenantResult =
-  | { type: "created"; subdomain: string }
-  | { type: "authorize"; next: string };
-
 const cameraConnectionInput = z.object({
   eventId: z.string().min(1),
   pageEdgeDeviceId: publicId,
   cameraEdgeId: publicId,
 });
+
+type CameraConnectionErrorContext = {
+  eventId: string;
+  pageEdgeDeviceId: string;
+  cameraEdgeDeviceId?: string;
+};
+
+type CameraConnectionErrorData = {
+  code: string;
+  viewerType: "staff" | "machine";
+  eventId: string;
+  pageEdgeDeviceId: string;
+  cameraEdgeDeviceId?: string;
+};
+
+function viewerType(viewer: Viewer): "staff" | "machine" {
+  return viewer.type === "machine" ? "machine" : "staff";
+}
+
+function connectionErrorData(
+  viewer: Viewer,
+  {
+    eventId,
+    pageEdgeDeviceId,
+    cameraEdgeDeviceId,
+  }: CameraConnectionErrorContext,
+  code: string,
+): CameraConnectionErrorData {
+  return {
+    code,
+    viewerType: viewerType(viewer),
+    eventId,
+    pageEdgeDeviceId,
+    ...(cameraEdgeDeviceId && { cameraEdgeDeviceId }),
+  };
+}
+
+function connectionAuthorizationRequiredError(
+  viewer: Viewer,
+  context: CameraConnectionErrorContext,
+): ORPCError<"PRECONDITION_FAILED", CameraConnectionErrorData> {
+  return new ORPCError("PRECONDITION_FAILED", {
+    message:
+      "no camera connection authorization; authorize the camera connection",
+    data: connectionErrorData(
+      viewer,
+      context,
+      CONNECTION_ERROR_CODES.authorizationRequired,
+    ),
+  });
+}
+
+function cameraNotDelegatedError(
+  viewer: Viewer,
+  context: CameraConnectionErrorContext,
+): ORPCError<"PRECONDITION_FAILED", CameraConnectionErrorData> {
+  return new ORPCError("PRECONDITION_FAILED", {
+    message: "the camera is not linked to the observation page",
+    data: connectionErrorData(
+      viewer,
+      context,
+      CONNECTION_ERROR_CODES.cameraNotDelegated,
+    ),
+  });
+}
+
+function asConnectionAuthorizationRequiredError(
+  err: unknown,
+  viewer: Viewer,
+  context: CameraConnectionErrorContext,
+): unknown {
+  if (!(err instanceof ORPCError)) return err;
+  const code = (err.data as { code?: unknown } | undefined)?.code;
+  return code === CONNECTION_ERROR_CODES.authorizationRequired ||
+    code === CONNECTION_ERROR_CODES.cameraNotDelegated
+    ? connectionAuthorizationRequiredError(viewer, context)
+    : err;
+}
 
 const registerEdgeDeviceInput = z
   .object({
@@ -221,6 +304,10 @@ const registerEdgeDeviceInput = z
     }
   });
 
+export type RegisterTenantResult =
+  | { type: "created"; subdomain: string }
+  | { type: "authorize"; next: string };
+
 export interface ObservationPoint {
   observationPointId: string;
   name: string;
@@ -249,7 +336,7 @@ export interface RegisteredEdgeDevice {
 }
 
 export interface DelegatedCamera extends EdgeDevice {
-  connectionAuthorized?: boolean;
+  connectionAuthorized: boolean;
   observationPointId: string;
 }
 
@@ -304,16 +391,34 @@ async function listEdgeDevices(eventId: string): Promise<EdgeDevice[]> {
   return res.devices.map(toEdgeDevice);
 }
 
+async function requireEventCamera(
+  eventId: string,
+  edgeDeviceId: string,
+): Promise<EdgeDevice> {
+  const devices = observationMocking()
+    ? sampleObservationDevicesWire
+    : await listEdgeDevices(eventId);
+  const device = devices.find((d) => d.edgeDeviceId === edgeDeviceId);
+  if (!device) throw new ORPCError("NOT_FOUND");
+  if (device.kind !== "camera") {
+    throw new ORPCError("PRECONDITION_FAILED");
+  }
+  return device;
+}
+
 async function revokeCameraGrants(eventId: string): Promise<void> {
   const devices = observationMocking()
     ? sampleObservationDevicesWire
     : await listEdgeDevices(eventId);
   for (const device of devices) {
     if (device.kind === "camera") {
-      await revokeDeviceAuthorization({
-        eventId,
-        edgeDeviceId: device.edgeDeviceId,
-      });
+      await revokeDeviceAuthorization(
+        {
+          eventId,
+          edgeDeviceId: device.edgeDeviceId,
+        },
+        { permanent: true },
+      );
     }
   }
 }
@@ -468,6 +573,7 @@ const ORPC_ERROR_CODES: Partial<Record<Code, string>> = {
   [Code.FailedPrecondition]: "PRECONDITION_FAILED",
   [Code.NotFound]: "NOT_FOUND",
   [Code.AlreadyExists]: "CONFLICT",
+  [Code.PermissionDenied]: "FORBIDDEN",
 };
 
 function toORPCError(err: unknown): unknown {
@@ -660,6 +766,8 @@ function delegatedCamera(
   devices: EdgeDevice[],
   pageEdgeDeviceId: string,
   cameraEdgeId: string,
+  viewer: Viewer,
+  eventId: string,
 ): EdgeDevice {
   const page = devices.find((d) => d.edgeDeviceId === pageEdgeDeviceId);
   if (!page) {
@@ -679,7 +787,11 @@ function delegatedCamera(
   if (
     !page.cameraLinks.some((link) => link.cameraEdgeDeviceId === cameraEdgeId)
   ) {
-    throw new ORPCError("PRECONDITION_FAILED");
+    throw cameraNotDelegatedError(viewer, {
+      eventId,
+      pageEdgeDeviceId,
+      cameraEdgeDeviceId: cameraEdgeId,
+    });
   }
   return camera;
 }
@@ -811,13 +923,17 @@ export const router = {
       .input(z.object({ eventId: publicId }))
       .handler(async ({ input }): Promise<TenantEvent> => {
         try {
-          await revokeCameraGrants(input.eventId);
-          await deleteConnectionDelegationsForEvent(input.eventId);
-          const res = await tenantManagementClient.transitionEventStatus({
-            eventId: input.eventId,
-            to: ProtoEventStatus.ARCHIVED,
+          return await withEventLifecycle(input.eventId, async () => {
+            await requireArchivableEvent(input.eventId);
+            await revokeCameraGrants(input.eventId);
+            await revokeMachineSessionsForEvent(input.eventId);
+            await deleteConnectionDelegationsForEvent(input.eventId);
+            const res = await tenantManagementClient.transitionEventStatus({
+              eventId: input.eventId,
+              to: ProtoEventStatus.ARCHIVED,
+            });
+            return toTenantEvent(res.event);
           });
-          return toTenantEvent(res.event);
         } catch (err) {
           throw toORPCError(err);
         }
@@ -826,11 +942,13 @@ export const router = {
       .input(z.object({ eventId: publicId }))
       .handler(async ({ input }): Promise<TenantEvent> => {
         try {
-          const res = await tenantManagementClient.transitionEventStatus({
-            eventId: input.eventId,
-            to: ProtoEventStatus.CLOSED,
+          return await withEventLifecycle(input.eventId, async () => {
+            const res = await tenantManagementClient.transitionEventStatus({
+              eventId: input.eventId,
+              to: ProtoEventStatus.CLOSED,
+            });
+            return toTenantEvent(res.event);
           });
-          return toTenantEvent(res.event);
         } catch (err) {
           throw toORPCError(err);
         }
@@ -1090,45 +1208,74 @@ export const router = {
         try {
           const tenantId = await requestTenantId();
           if (!tenantId) throw new ORPCError("UNAUTHORIZED");
-          const devices = await pageDevicesForViewer({
-            viewer: await getViewer(),
-            tenantId,
+          const viewer = await getViewer();
+          const errorContext = {
             eventId: input.eventId,
             pageEdgeDeviceId: input.pageEdgeDeviceId,
-          });
-          delegatedCamera(devices, input.pageEdgeDeviceId, input.cameraEdgeId);
-          return await withCameraConnectionAuthorization(
-            tenantId,
-            input.eventId,
+            cameraEdgeDeviceId: input.cameraEdgeId,
+          };
+          let devices: EdgeDevice[];
+          try {
+            devices = await pageDevicesForViewer({
+              viewer,
+              tenantId,
+              eventId: input.eventId,
+              pageEdgeDeviceId: input.pageEdgeDeviceId,
+            });
+          } catch (err) {
+            throw asConnectionAuthorizationRequiredError(
+              err,
+              viewer,
+              errorContext,
+            );
+          }
+          delegatedCamera(
+            devices,
             input.pageEdgeDeviceId,
             input.cameraEdgeId,
-            async (accessToken) => {
-              const context = {
-                contextValues: createContextValues()
-                  .set(eventIdKey, input.eventId)
-                  .set(tenantIdKey, tenantId)
-                  .set(pageEdgeDeviceIdKey, input.pageEdgeDeviceId)
-                  .set(connectionAccessTokenKey, accessToken),
-              };
-              const res = await connectionSignalingClient.requestConnection(
-                { edgeDeviceId: input.cameraEdgeId },
-                context,
-              );
-              const token = await requestBoundCameraToken(
-                input.eventId,
-                tenantId,
-                input.pageEdgeDeviceId,
-                input.cameraEdgeId,
-                res.sessionId,
-                accessToken,
-              );
-              return {
-                sessionId: res.sessionId,
-                firestoreToken: token.customToken,
-                expiresAt: token.expiresAt,
-              };
-            },
+            viewer,
+            input.eventId,
           );
+          try {
+            return await withCameraConnectionAuthorization(
+              tenantId,
+              input.eventId,
+              input.pageEdgeDeviceId,
+              input.cameraEdgeId,
+              async (accessToken) => {
+                const context = {
+                  contextValues: createContextValues()
+                    .set(eventIdKey, input.eventId)
+                    .set(tenantIdKey, tenantId)
+                    .set(pageEdgeDeviceIdKey, input.pageEdgeDeviceId)
+                    .set(connectionAccessTokenKey, accessToken),
+                };
+                const res = await connectionSignalingClient.requestConnection(
+                  { edgeDeviceId: input.cameraEdgeId },
+                  context,
+                );
+                const token = await requestBoundCameraToken(
+                  input.eventId,
+                  tenantId,
+                  input.pageEdgeDeviceId,
+                  input.cameraEdgeId,
+                  res.sessionId,
+                  accessToken,
+                );
+                return {
+                  sessionId: res.sessionId,
+                  firestoreToken: token.customToken,
+                  expiresAt: token.expiresAt,
+                };
+              },
+            );
+          } catch (err) {
+            throw asConnectionAuthorizationRequiredError(
+              err,
+              viewer,
+              errorContext,
+            );
+          }
         } catch (err) {
           throw toORPCError(err);
         }
@@ -1156,16 +1303,41 @@ export const router = {
         try {
           const tenantId = await requestTenantId();
           if (!tenantId) throw new ORPCError("UNAUTHORIZED");
-          const devices = await pageDevicesForViewer({
-            viewer: await getViewer(),
-            tenantId,
+          const viewer = await getViewer();
+          const errorContext = {
             eventId: input.eventId,
             pageEdgeDeviceId: input.pageEdgeDeviceId,
-          });
+          };
+          let devices: EdgeDevice[];
+          try {
+            devices = await pageDevicesForViewer({
+              viewer,
+              tenantId,
+              eventId: input.eventId,
+              pageEdgeDeviceId: input.pageEdgeDeviceId,
+            });
+          } catch (err) {
+            throw asConnectionAuthorizationRequiredError(
+              err,
+              viewer,
+              errorContext,
+            );
+          }
           const { page, cameras } = pageCameras(
             devices,
             input.pageEdgeDeviceId,
           );
+          let delegatedCameraIds: string[] | null | undefined = [];
+          if (cameras.length > 0) {
+            delegatedCameraIds = await connectionDelegationCameraIds(
+              tenantId,
+              input.eventId,
+              input.pageEdgeDeviceId,
+            );
+            if (delegatedCameraIds === null) {
+              throw connectionAuthorizationRequiredError(viewer, errorContext);
+            }
+          }
           const observationPointByCamera = new Map(
             page.cameraLinks.map((link) => [
               link.cameraEdgeDeviceId,
@@ -1175,6 +1347,8 @@ export const router = {
           return {
             cameras: cameras.map((camera) => ({
               ...camera,
+              connectionAuthorized:
+                delegatedCameraIds?.includes(camera.edgeDeviceId) ?? true,
               observationPointId:
                 observationPointByCamera.get(camera.edgeDeviceId) ?? "",
             })),
@@ -1194,18 +1368,12 @@ export const router = {
       )
       .handler(async ({ input }): Promise<void> => {
         try {
-          const devices = observationMocking()
-            ? sampleObservationDevicesWire
-            : await listEdgeDevices(input.eventId);
-          const device = devices.find(
-            (d) => d.edgeDeviceId === input.edgeDeviceId,
-          );
-          if (!device) throw new ORPCError("NOT_FOUND");
-          if (device.kind !== "camera") {
-            throw new ORPCError("PRECONDITION_FAILED");
-          }
-          await approveDeviceAuthorization(input, {
-            reapproval: input.reapproval === true,
+          await withEventLifecycle(input.eventId, async () => {
+            await requireApprovableEvent(input.eventId);
+            await requireEventCamera(input.eventId, input.edgeDeviceId);
+            await approveDeviceAuthorization(input, {
+              reapproval: input.reapproval === true,
+            });
           });
         } catch (err) {
           throw toORPCError(err);
@@ -1215,11 +1383,14 @@ export const router = {
       .input(edgeDeviceInput)
       .handler(async ({ input }): Promise<void> => {
         try {
-          await revokeDeviceAuthorization(input);
-          await deleteConnectionDelegationsForCamera(
-            input.eventId,
-            input.edgeDeviceId,
-          );
+          await withEventLifecycle(input.eventId, async () => {
+            await requireEventCamera(input.eventId, input.edgeDeviceId);
+            await revokeDeviceAuthorization(input, { permanent: true });
+            await deleteConnectionDelegationsForCamera(
+              input.eventId,
+              input.edgeDeviceId,
+            );
+          });
         } catch (err) {
           throw toORPCError(err);
         }
@@ -1228,21 +1399,14 @@ export const router = {
       .input(edgeDeviceInput)
       .handler(async ({ input }): Promise<void> => {
         try {
-          const devices = observationMocking()
-            ? sampleObservationDevicesWire
-            : await listEdgeDevices(input.eventId);
-          const device = devices.find(
-            (d) => d.edgeDeviceId === input.edgeDeviceId,
-          );
-          if (!device) throw new ORPCError("NOT_FOUND");
-          if (device.kind !== "camera") {
-            throw new ORPCError("PRECONDITION_FAILED");
-          }
-          await revokeDeviceAuthorization(input, { permanent: false });
-          await deleteConnectionDelegationsForCamera(
-            input.eventId,
-            input.edgeDeviceId,
-          );
+          await withEventLifecycle(input.eventId, async () => {
+            await requireEventCamera(input.eventId, input.edgeDeviceId);
+            await revokeDeviceAuthorization(input, { permanent: false });
+            await deleteConnectionDelegationsForCamera(
+              input.eventId,
+              input.edgeDeviceId,
+            );
+          });
         } catch (err) {
           throw toORPCError(err);
         }
@@ -1266,40 +1430,43 @@ export const router = {
           return registeredEdgeDeviceWire(input);
         }
         try {
-          const res = await consoleEdgeDeviceClient.registerEdgeDevice({
-            eventId: input.eventId,
-            name: input.name,
-            observationPointNames: input.observationPointNames,
-            kind: PROTO_EDGE_DEVICE_KINDS[input.kind],
-            linkedObservationPointId: input.linkedObservationPointId ?? "",
-          });
-          if (!res.device) {
-            throw new Error("RegisterEdgeDevice returned no device");
-          }
-          if (input.kind === "camera") {
-            try {
-              const pageEdgeDeviceId = await cameraPageEdgeDeviceId(
-                input.eventId,
-                res.device.edgeDeviceId,
-              );
-              if (pageEdgeDeviceId) {
-                await addCameraToConnectionDelegation(
+          return await withEventLifecycle(input.eventId, async () => {
+            await requireApprovableEvent(input.eventId);
+            const res = await consoleEdgeDeviceClient.registerEdgeDevice({
+              eventId: input.eventId,
+              name: input.name,
+              observationPointNames: input.observationPointNames,
+              kind: PROTO_EDGE_DEVICE_KINDS[input.kind],
+              linkedObservationPointId: input.linkedObservationPointId ?? "",
+            });
+            if (!res.device) {
+              throw new Error("RegisterEdgeDevice returned no device");
+            }
+            if (input.kind === "camera") {
+              try {
+                const pageEdgeDeviceId = await cameraPageEdgeDeviceId(
                   input.eventId,
-                  pageEdgeDeviceId,
                   res.device.edgeDeviceId,
                 );
+                if (pageEdgeDeviceId) {
+                  await addCameraToConnectionDelegation(
+                    input.eventId,
+                    pageEdgeDeviceId,
+                    res.device.edgeDeviceId,
+                  );
+                }
+              } catch (error) {
+                console.error(
+                  "failed to add the camera to the connection delegation",
+                  error,
+                );
               }
-            } catch (error) {
-              console.error(
-                "failed to add the camera to the connection delegation",
-                error,
-              );
             }
-          }
-          return {
-            device: toEdgeDevice(res.device),
-            observationPagePath: res.observationPagePath,
-          };
+            return {
+              device: toEdgeDevice(res.device),
+              observationPagePath: res.observationPagePath,
+            };
+          });
         } catch (err) {
           throw toORPCError(err);
         }
@@ -1311,22 +1478,28 @@ export const router = {
           return;
         }
         try {
-          const device = (await listEdgeDevices(input.eventId)).find(
-            (d) => d.edgeDeviceId === input.edgeDeviceId,
-          );
-          if (device?.kind === "camera") {
-            await revokeDeviceAuthorization(input);
-            await deleteConnectionDelegationsForCamera(
+          await withEventLifecycle(input.eventId, async () => {
+            const device = (await listEdgeDevices(input.eventId)).find(
+              (d) => d.edgeDeviceId === input.edgeDeviceId,
+            );
+            if (device?.kind === "camera") {
+              await revokeDeviceAuthorization(input, { permanent: true });
+              await deleteConnectionDelegationsForCamera(
+                input.eventId,
+                input.edgeDeviceId,
+              );
+            } else {
+              await deleteConnectionDelegationsForPage(
+                input.eventId,
+                input.edgeDeviceId,
+              );
+            }
+            await revokeMachineSessionsForEdge(
               input.eventId,
               input.edgeDeviceId,
             );
-          } else {
-            await deleteConnectionDelegationsForPage(
-              input.eventId,
-              input.edgeDeviceId,
-            );
-          }
-          await consoleEdgeDeviceClient.unregisterEdgeDevice(input);
+            await consoleEdgeDeviceClient.unregisterEdgeDevice(input);
+          });
         } catch (err) {
           throw toORPCError(err);
         }

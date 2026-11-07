@@ -308,6 +308,9 @@ export function advisoryLockManyDynamic(pool: Pool): SessionLocksDynamic {
 
 function createRealAuth(env: AuthEnv) {
   const pool = new Pool({ connectionString: env.databaseUrl });
+  // Lifecycle operations acquire other auth locks while holding this lock.
+  // A separate pool prevents outer lock holders from starving those inner locks.
+  const lifecyclePool = new Pool({ connectionString: env.databaseUrl });
   const lock = advisoryLock(pool);
   return {
     env,
@@ -316,6 +319,7 @@ function createRealAuth(env: AuthEnv) {
       database: new Pool({ connectionString: env.databaseUrl }),
     }),
     lock,
+    lifecycleLock: advisoryLock(lifecyclePool),
     lockMany: advisoryLockMany(pool),
     lockManyDynamic: advisoryLockManyDynamic(pool),
   };
