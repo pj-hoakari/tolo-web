@@ -17,7 +17,7 @@ import {
 } from "@/features/tenant/webrtc/utils/refs";
 import {
   clearSession,
-  createFirestorePollingSignalingChannel,
+  createFirestoreSignalingChannel,
 } from "@/features/tenant/webrtc/utils/signalingChannel";
 import type { CameraConnection } from "@/server/router";
 import type { CrowdVideoSource, VideoSourceDescriptor } from "./videoSource";
@@ -71,8 +71,8 @@ function waitForIceGathering(
  * DataChannel を MediaStream として取り出す。
  *
  * 管理 UI ↔ 観測ページの経路（onSnapshot）とは別の Firebase アプリを使い、
- * 観測ページ自身の edge サインインと共存させる。シグナリングは ESP と
- * 揃えてポーリングにする。
+ * 観測ページ自身の edge サインインと共存させる。シグナリングの受信には
+ * Firestore のリスナーを使う。
  *
  * ESP は ACK が 10 秒途絶えると peer を閉じ、こちらも接続が切れたら
  * 新しいセッションを作り直す。canvas / MediaStream は再接続をまたいで
@@ -298,7 +298,7 @@ class EspCameraLink {
         this.options.edgeDeviceId,
         sessionId,
       );
-      const channel = createFirestorePollingSignalingChannel({
+      const channel = createFirestoreSignalingChannel({
         signalsRef: signalsCollection(sessionRef),
         self: "console",
       });
@@ -339,6 +339,8 @@ class EspCameraLink {
         }
         switch (peer.connectionState) {
           case "connected":
+            unsubscribe?.();
+            unsubscribe = null;
             this.retryDelay = RECONNECT_BASE_MS;
             lastFrameAt = performance.now();
             if (answerTimer !== null) {
