@@ -345,7 +345,11 @@
       "openHereLabel": "「{name}」をこの端末で開く",
       "unregister": "登録解除",
       "unregisterLabel": "「{name}」の登録を解除",
-      "observationPoints": "観測点"
+      "observationPoints": "観測点",
+      "cameraBadge": "カメラ",
+      "linkedPoint": "紐づけ先: {name}",
+      "provision": "設定",
+      "provisionLabel": "「{name}」を設定"
     },
     "receiver": {
       "stoppedTitle": "観測が停止しました",
@@ -371,7 +375,19 @@
       "open": "この端末で開く",
       "failed": "観測デバイスを登録できませんでした。",
       "invalid": "デバイス名と観測点名を確認してください。",
-      "eventNotFound": "イベントが見つかりませんでした。"
+      "eventNotFound": "イベントが見つかりませんでした。",
+      "kindLabel": "種類",
+      "kind": {
+        "observation_page": "観測ページ",
+        "camera": "カメラ"
+      },
+      "cameraPointLabel": "紐づける観測点",
+      "cameraPointDescription": "カメラ方式の観測点を 1 つ選んでください",
+      "cameraPointPlaceholder": "観測点を選択",
+      "noCameraPoints": "紐づけられる観測点がありません。先に観測ページのデバイスを登録してください。",
+      "cameraRegistered": "「{name}」をカメラとして登録しました。初期設定を開き、端末に設定を書き込んでください。",
+      "edgeDeviceIdLabel": "エッジデバイス ID",
+      "openProvisioning": "初期設定を開く"
     },
     "unregisterEdge": {
       "title": "観測デバイスの登録を解除",
@@ -380,6 +396,49 @@
       "confirm": "登録を解除する",
       "failed": "登録を解除できませんでした。",
       "stale": "観測デバイスが見つからないか、既に登録が解除されています。一覧を更新してください。"
+    },
+    "cameraProvision": {
+      "title": "ESP32 カメラの初期設定",
+      "description": "「{name}」({id}) に Wi-Fi と接続先を書き込みます。",
+      "trigger": "設定",
+      "wifiSsidLabel": "Wi-Fi SSID",
+      "wifiPasswordLabel": "Wi-Fi パスワード",
+      "wifiPasswordDescription": "画面やログには表示しません",
+      "start": "書き込みを開始",
+      "retry": "再試行",
+      "close": "閉じる",
+      "unsupported": "このブラウザは Web Serial に対応していません。デスクトップ版の Chrome または Edge を使ってください。",
+      "insecure": "Web Serial は安全なコンテキスト（HTTPS または localhost）でのみ使えます。",
+      "steps": {
+        "selecting": "シリアルポートを選択しています…",
+        "opening": "シリアルポートを開いています…",
+        "writing": "設定を書き込んでいます…",
+        "waitingConfig": "端末の確認応答を待っています…",
+        "waitingAuthorization": "端末の認可コードを待っています…",
+        "reconnecting": "端末の再接続を待っています…",
+        "approving": "デバイス認可を承認しています…",
+        "waitingResult": "端末の認可結果を待っています…"
+      },
+      "confirmAuthorization": "このコードの端末を「{name}」として承認します。接続した端末を確認してください。",
+      "userCodeLabel": "ユーザーコード",
+      "verificationUri": "確認 URL: {uri}",
+      "complete": "「{name}」の初期設定が完了しました。ユーザーコード {userCode} を承認しました。",
+      "manualTitle": "ユーザーコードを受け取れませんでした",
+      "manualDescription": "端末に表示されたユーザーコードを入力して承認してください。",
+      "manualLabel": "ユーザーコード",
+      "manualSubmit": "承認する",
+      "configRejected": "端末が設定を拒否しました: {error}",
+      "configRejectedNoReason": "端末が設定を拒否しました。",
+      "deviceError": "端末からエラーが返されました: {error}",
+      "authorizationRejected": "端末の認可に失敗しました。",
+      "authorizationTimeout": "認可結果を待つ間にタイムアウトしました。",
+      "timeout": "端末から応答がありませんでした。接続を確認して再試行してください。",
+      "failed": "初期設定に失敗しました。接続を確認して再試行してください。",
+      "notConnected": "シリアルポートが開かれていません。最初からやり直してください。",
+      "reconnectTitle": "シリアルポートが切断されました",
+      "reconnectDescription": "端末が再起動した可能性があります。ポートを選択し直して再接続してください。",
+      "reconnectFailed": "シリアルポートを開けませんでした。もう一度ポートを選択してください。",
+      "reconnectPort": "ポートを再接続"
     }
   },
   "Detection": {

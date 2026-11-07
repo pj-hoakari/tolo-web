@@ -51,6 +51,12 @@ import {
 export type MockRouterOverrides = {
   /** observation.listEdgeDevices が返すエッジ端末一覧（未指定なら sampleEdgeDevicesWire） */
   devices?: EdgeDevice[];
+  /** camera.approveDeviceAuthorization が呼ばれたときの記録用フック */
+  approveDeviceAuthorization?: (input: {
+    eventId: string;
+    edgeDeviceId: string;
+    userCode: string;
+  }) => void | Promise<void>;
   /** observation.listEdgeDevices を失敗させる（status: error の確認用） */
   devicesError?: boolean;
   registerEdgeDeviceError?: CommonORPCErrorCode;
@@ -116,6 +122,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
   const {
     devices: initialDevices = sampleEdgeDevicesWire,
     devicesError = false,
+    approveDeviceAuthorization,
     registerEdgeDeviceError,
     unregisterEdgeDeviceError,
     listObservationPointsError,
@@ -207,7 +214,9 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             userCode: z.string().trim().min(1),
           }),
         )
-        .handler(async (): Promise<void> => {}),
+        .handler(async ({ input }): Promise<void> => {
+          await approveDeviceAuthorization?.(input);
+        }),
       revokeDeviceAuthorization: os
         .input(
           z.object({
@@ -219,6 +228,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
       provisioningDefaults: os.handler(
         async (): Promise<CameraProvisioningDefaults> => ({
           signalingUrl: "http://127.0.0.1:8787",
+          idpUrl: "",
           firebaseProjectId: "demo-tolo",
           firebaseApiKey: "demo-tolo-web",
           firestoreEmulatorHost: "127.0.0.1:8080",
