@@ -309,11 +309,12 @@ test.describe("online standalone app", () => {
     await expect(page).toHaveURL("/event/test/management");
   });
 
-  test("observation/device can be unlocked, configured, and locked again", async ({
+  test("observation page can be unlocked, configured, and locked again", async ({
     page,
     request,
   }) => {
-    const publicPath = "/event/test/observation/device";
+    // カメラ未割当の観測ページ。ローカルカメラの起動ボタンを確認する。
+    const publicPath = "/event/test/observation/3b9d77f41e2a5c08";
     await page.goto(publicPath);
     await expect(
       page.getByRole("heading", {
