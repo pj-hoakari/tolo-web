@@ -146,6 +146,18 @@ const os = baseOs.use(async ({ procedure, next }) => {
   return next();
 });
 
+async function observationDeviceForViewer<
+  T extends { eventId: string; edgeDeviceId: string },
+>(input: T): Promise<T> {
+  const viewer = await getViewer();
+  if (viewer.type !== "machine") return input;
+  return {
+    ...input,
+    eventId: viewer.eventId,
+    edgeDeviceId: viewer.edgeDeviceId,
+  };
+}
+
 const edgeDeviceInput = z.object({
   eventId: z.string().min(1),
   edgeDeviceId: publicId,
@@ -1298,6 +1310,7 @@ export const router = {
         async ({
           input,
         }): Promise<{ observationPoints: ObservationPoint[] }> => {
+          input = await observationDeviceForViewer(input);
           if (observationMocking()) {
             const device = sampleObservationDevicesWire.find(
               (d) => d.edgeDeviceId === input.edgeDeviceId,
@@ -1389,6 +1402,7 @@ export const router = {
         }),
       )
       .handler(async ({ input }): Promise<void> => {
+        input = await observationDeviceForViewer(input);
         if (observationMocking()) {
           return;
         }
@@ -1414,6 +1428,7 @@ export const router = {
         }),
       )
       .handler(async ({ input }): Promise<void> => {
+        input = await observationDeviceForViewer(input);
         if (observationMocking()) {
           return;
         }

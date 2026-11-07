@@ -263,7 +263,12 @@ export function createMachineAuth(
       }
       const finish = async (result: MachineSessionResult) => {
         await deletePending(pending.id);
-        return { location: machineResultPath(pending.returnPath, result) };
+        const target = tenantOrigin(pending.host);
+        return {
+          location: target
+            ? `${target}${machineResultPath(pending.returnPath, result)}`
+            : `${rootOrigin()}/auth/error?error=machine_state_invalid`,
+        };
       };
       if (input.error) {
         return finish(
