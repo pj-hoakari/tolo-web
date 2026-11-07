@@ -7,6 +7,7 @@ import {
   createDetectionStores,
   DEFAULT_LINE_ID,
   INITIAL_SETTINGS,
+  recordDetectedPeople,
 } from "@/features/tenant/detection/stores/detectionStore";
 import {
   type ObservationReportingCamera,
@@ -266,6 +267,71 @@ describe("複数カメラの計測報告", () => {
       }),
     );
   }
+
+  it("カメラで記録した人数を紐づく観測点の平均人数として送る", async () => {
+    const camera = createCamera("first", "a1b2c3d4e5f60718");
+    renderCameraReporting([camera]);
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    act(() => {
+      recordDetectedPeople(camera.resultStore, 4);
+      recordDetectedPeople(camera.resultStore, 0);
+    });
+    await act(() => vi.advanceTimersByTimeAsync(REPORT_INTERVAL_MS));
+    expect(reportMeasurements).toHaveBeenCalledWith(
+      expect.objectContaining({
+        measurements: [
+          expect.objectContaining({
+            observationPointId: camera.observationPointId,
+            meanDetectedPeople: 2,
+          }),
+        ],
+      }),
+    );
+  });
+
+  it("映像が停止する直前の通過数を復帰後に重複させず報告する", async () => {
+    let fresh = true;
+    const camera = createCamera("first", "a1b2c3d4e5f60718");
+    renderCameraReporting([camera], { isFresh: () => fresh });
+    await act(() => vi.advanceTimersByTimeAsync(2_000));
+    act(() => setLineCounts(camera, 3, 0));
+    fresh = false;
+    await act(() => vi.advanceTimersByTimeAsync(2_000));
+    fresh = true;
+    await act(() => vi.advanceTimersByTimeAsync(1_000));
+    act(() => setLineCounts(camera, 5, 0));
+    await act(() => vi.advanceTimersByTimeAsync(25_000));
+    const measurements = (
+      reportMeasurements.mock.calls[0][0] as {
+        measurements: { countIn: number }[];
+      }
+    ).measurements;
+    expect(measurements.map((m) => m.countIn)).toEqual([3, 2]);
+  });
+
+  it("ライン変更でカウントがリセットされても変更前の通過数を残す", async () => {
+    const camera = createCamera("first", "a1b2c3d4e5f60718");
+    renderCameraReporting([camera]);
+    await act(() => vi.advanceTimersByTimeAsync(1_000));
+    act(() => {
+      setLineCounts(camera, 3, 0);
+      camera.settingsStore.setState((state) => ({
+        countingLines: state.countingLines.map((line) => ({
+          ...line,
+          name: "changed",
+        })),
+      }));
+      setLineCounts(camera, 0, 0);
+      setLineCounts(camera, 2, 0);
+    });
+    await act(() => vi.advanceTimersByTimeAsync(29_000));
+    const measurements = (
+      reportMeasurements.mock.calls[0][0] as {
+        measurements: { countIn: number }[];
+      }
+    ).measurements;
+    expect(measurements.map((m) => m.countIn)).toEqual([3, 2]);
+  });
 
   it("camera ごとの通過数を cameraLinks の観測点へ対応づけて送る", async () => {
     const first = createCamera("first", "a1b2c3d4e5f60718");

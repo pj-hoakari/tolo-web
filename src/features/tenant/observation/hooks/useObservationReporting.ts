@@ -67,6 +67,8 @@ export function useObservationReporting({
     string
   > | null>(null);
   const unsentRef = useRef<WindowMeasurement[][]>([]);
+  const isFreshRef = useRef(isFresh);
+  isFreshRef.current = isFresh;
   const reportContextRef = useRef({ eventId, edgeDeviceId });
 
   useEffect(() => {
@@ -160,6 +162,7 @@ export function useObservationReporting({
     isFresh,
   ]);
 
+  const reportingPointIdByName = cameras ? null : pointIdByName;
   useEffect(() => {
     if (!enabled || status !== "detecting" || unregistered) {
       return;
@@ -168,66 +171,135 @@ export function useObservationReporting({
       if (cameras.every((camera) => camera.observationPointId === "")) {
         return;
       }
-    } else if (!pointIdByName) {
+    } else if (!reportingPointIdByName) {
       return;
     }
 
     let windowStart = new Date();
     let previous = resultStore.getState();
-    const previousByCamera = new Map<string, DetectionResult>();
+    type CameraWindow = {
+      previous: DetectionResult;
+      latest: DetectionResult;
+      start: Date;
+      lastResultAt: Date;
+      fresh: boolean;
+      lines: ReturnType<DetectionSettingsStore["getState"]>["countingLines"];
+    };
+    const cameraWindows = new Map<string, CameraWindow>();
+    const subscriptions: (() => void)[] = [];
+    const pending: WindowMeasurement[] = [];
+
+    const finishCameraWindow = (
+      camera: ObservationReportingCamera,
+      end: Date,
+    ) => {
+      const window = cameraWindows.get(camera.key);
+      if (!window?.fresh || !camera.observationPointId) return;
+      pending.push(
+        ...buildWindowMeasurements({
+          pointIdByLineId: mapLinesToObservationPoint(
+            window.lines,
+            camera.observationPointId,
+          ),
+          previous: window.previous,
+          current: window.latest,
+          windowStart: window.start,
+          windowEnd: end,
+          detectedPeopleKey: "all",
+        }),
+      );
+      window.previous = window.latest;
+      window.start = end;
+    };
+
     for (const camera of cameras ?? []) {
-      previousByCamera.set(camera.key, camera.resultStore.getState());
+      const now = new Date();
+      const current = camera.resultStore.getState();
+      const window: CameraWindow = {
+        previous: current,
+        latest: current,
+        start: now,
+        lastResultAt: now,
+        fresh: isFreshRef.current(camera.key),
+        lines: camera.settingsStore.getState().countingLines,
+      };
+      cameraWindows.set(camera.key, window);
+      subscriptions.push(
+        camera.resultStore.subscribe((current, prior) => {
+          if (isFreshRef.current(camera.key)) {
+            if (!window.fresh) {
+              window.previous = prior;
+              window.start = new Date();
+              window.fresh = true;
+            }
+            window.latest = current;
+            window.lastResultAt = new Date();
+          }
+        }),
+      );
+      subscriptions.push(
+        camera.settingsStore.subscribe((current) => {
+          if (current.countingLines === window.lines) return;
+          finishCameraWindow(camera, new Date());
+          window.lines = current.countingLines;
+        }),
+      );
     }
 
-    const tick = () => {
-      const windowEnd = new Date();
-      let measurements: WindowMeasurement[];
-
-      if (cameras) {
-        measurements = [];
-        for (const camera of cameras) {
-          const current = camera.resultStore.getState();
-          const before = previousByCamera.get(camera.key) ?? current;
-          if (camera.observationPointId !== "" && isFresh(camera.key)) {
-            const countingLines = camera.settingsStore.getState().countingLines;
-            measurements.push(
-              ...buildWindowMeasurements({
-                pointIdByLineId: mapLinesToObservationPoint(
-                  countingLines,
-                  camera.observationPointId,
-                ),
-                previous: before,
-                current,
-                windowStart,
-                windowEnd,
-              }),
-            );
+    const observeFreshness = () => {
+      for (const camera of cameras ?? []) {
+        const window = cameraWindows.get(camera.key);
+        if (!window) continue;
+        const fresh = isFreshRef.current(camera.key);
+        if (window.fresh && !fresh) {
+          if (window.latest !== window.previous) {
+            finishCameraWindow(camera, window.lastResultAt);
           }
-          previousByCamera.set(camera.key, current);
+          window.fresh = false;
+        } else if (!window.fresh && fresh) {
+          const current = camera.resultStore.getState();
+          window.previous = current;
+          window.latest = current;
+          window.start = new Date();
+          window.lastResultAt = window.start;
+          window.fresh = true;
+        }
+      }
+    };
+
+    const tick = (closing = false) => {
+      const windowEnd = new Date();
+      observeFreshness();
+      if (cameras) {
+        for (const camera of cameras) {
+          const window = cameraWindows.get(camera.key);
+          if (!closing || window?.latest !== window?.previous) {
+            finishCameraWindow(camera, windowEnd);
+          }
         }
       } else {
         const current = resultStore.getState();
-        measurements = buildWindowMeasurements({
-          pointIdByLineId: mapLinesToObservationPoints(
-            settingsStore.getState().countingLines,
-            pointIdByName as ReadonlyMap<string, string>,
-          ),
-          previous,
-          current,
-          windowStart,
-          windowEnd,
-        });
+        pending.push(
+          ...buildWindowMeasurements({
+            pointIdByLineId: mapLinesToObservationPoints(
+              settingsStore.getState().countingLines,
+              reportingPointIdByName as ReadonlyMap<string, string>,
+            ),
+            previous,
+            current,
+            windowStart,
+            windowEnd,
+          }),
+        );
         previous = current;
       }
-
       windowStart = windowEnd;
+      const measurements = pending.splice(0);
       const unsent = unsentRef.current;
       const windows =
         measurements.length === 0 ? unsent : [...unsent, measurements];
       unsentRef.current = [];
-      if (windows.length === 0) {
-        return;
-      }
+      if (windows.length === 0) return;
       orpc.observation
         .reportMeasurements({
           eventId,
@@ -246,19 +318,26 @@ export function useObservationReporting({
         });
     };
 
-    const timer = setInterval(tick, REPORT_INTERVAL_MS);
-    return () => clearInterval(timer);
+    const freshnessTimer = cameras
+      ? setInterval(observeFreshness, 1_000)
+      : null;
+    const timer = setInterval(() => tick(), REPORT_INTERVAL_MS);
+    return () => {
+      clearInterval(timer);
+      if (freshnessTimer !== null) clearInterval(freshnessTimer);
+      for (const unsubscribe of subscriptions) unsubscribe();
+      if (cameras) tick(true);
+    };
   }, [
     enabled,
     eventId,
     edgeDeviceId,
-    pointIdByName,
+    reportingPointIdByName,
     status,
     settingsStore,
     resultStore,
     unregistered,
     cameras,
-    isFresh,
   ]);
 
   return { unregistered, pointIdByName };

@@ -62,20 +62,24 @@ export function buildWindowMeasurements({
   current,
   windowStart,
   windowEnd,
+  detectedPeopleKey,
 }: {
   pointIdByLineId: ReadonlyMap<string, string>;
   previous: ResultSnapshot;
   current: ResultSnapshot;
   windowStart: Date;
   windowEnd: Date;
+  detectedPeopleKey?: string;
 }): WindowMeasurement[] {
   const byPoint = new Map<string, WindowMeasurement>();
   for (const [lineId, observationPointId] of pointIdByLineId) {
     const before = previous.lineCounts[lineId] ?? INITIAL_LINE_COUNT;
     const after = current.lineCounts[lineId] ?? INITIAL_LINE_COUNT;
     const mean = meanDetectedPeople(
-      previous.detectedPeople[observationPointId] ?? INITIAL_DETECTED_PEOPLE,
-      current.detectedPeople[observationPointId] ?? INITIAL_DETECTED_PEOPLE,
+      previous.detectedPeople[detectedPeopleKey ?? observationPointId] ??
+        INITIAL_DETECTED_PEOPLE,
+      current.detectedPeople[detectedPeopleKey ?? observationPointId] ??
+        INITIAL_DETECTED_PEOPLE,
     );
     const measurement = byPoint.get(observationPointId) ?? {
       observationPointId,

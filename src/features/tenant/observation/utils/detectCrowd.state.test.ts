@@ -8,9 +8,10 @@ import {
   resetCrowdTracking,
 } from "./detectCrowd";
 
+const detect = vi.hoisted(() => vi.fn(async (): Promise<never[]> => []));
 vi.mock("@pj-hoakari/web-crowd-detection-utils/yolo", () => ({
   createYoloDetector: vi.fn(async () => ({
-    detect: vi.fn(async () => []),
+    detect,
   })),
 }));
 vi.mock("@pj-hoakari/web-crowd-detection-utils/onnx", () => ({
@@ -111,6 +112,51 @@ describe("per-camera crowd detection state", () => {
 });
 
 describe("detectCapturedCrowdFrame", () => {
+  it("直前の推論が終わるまで次の推論を開始せず、停止済みの追跡状態を更新しない", async () => {
+    detect.mockClear();
+    vi.stubEnv("NEXT_PUBLIC_CROWD_DETECTION_MOCKING", undefined);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("model")),
+    );
+    let finishFirst!: (value: never[]) => void;
+    detect.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishFirst = resolve;
+        }),
+    );
+    const first = createCrowdDetectionState();
+    const second = createCrowdDetectionState();
+    const update = vi.spyOn(first.tracker, "update");
+    let cancelled = false;
+    const options = {
+      confidenceThreshold: 0.15,
+      trackingDistanceThreshold: 0.8,
+      countingLines: [],
+    };
+    const firstResult = detectCapturedCrowdFrame(
+      capturedFrame,
+      options,
+      first,
+      () => cancelled,
+    );
+    const failure = expect(firstResult).rejects.toThrow("Detection cancelled");
+    await vi.waitFor(() => expect(finishFirst).toBeDefined());
+    const secondResult = detectCapturedCrowdFrame(
+      capturedFrame,
+      options,
+      second,
+    );
+    await Promise.resolve();
+    expect(detect).toHaveBeenCalledTimes(1);
+    cancelled = true;
+    finishFirst([]);
+    await failure;
+    await secondResult;
+    expect(detect).toHaveBeenCalledTimes(2);
+    expect(update).not.toHaveBeenCalled();
+  });
   it("updates only the tracker, line counter and background of the given state", async () => {
     vi.stubEnv("NEXT_PUBLIC_CROWD_DETECTION_MOCKING", undefined);
     vi.stubGlobal(
