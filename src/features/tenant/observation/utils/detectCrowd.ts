@@ -36,6 +36,17 @@ const STATIC_SUPPRESS_FACTOR = 0.3;
 type CrowdDetector = Pick<YoloDetector, "detect">;
 
 let detectorPromise: Promise<CrowdDetector> | null = null;
+// The detector reuses a single preprocessing buffer across detect calls.
+let detectorQueue: Promise<void> = Promise.resolve();
+
+async function runDetector<T>(run: () => Promise<T>): Promise<T> {
+  const result = detectorQueue.then(run);
+  detectorQueue = result.then(
+    () => undefined,
+    () => undefined,
+  );
+  return result;
+}
 
 /**
  * カメラごとに独立して持つ検出状態。
@@ -190,10 +201,17 @@ export async function detectCapturedCrowdFrame(
   captured: CapturedCrowdFrame,
   options: CrowdDetectionOptions,
   state: CrowdDetectionState = defaultState,
+  isCancelled: () => boolean = () => false,
 ): Promise<CrowdDetectionFrame> {
   const detector = await initializeCrowdDetector();
   const { imageData, params } = captured;
-  let detections = await detector.detect(imageData);
+  const detectionsOrNull = await runDetector(() =>
+    isCancelled() ? Promise.resolve(null) : detector.detect(imageData),
+  );
+  if (isCancelled() || detectionsOrNull === null) {
+    throw new Error("Detection cancelled");
+  }
+  let detections = detectionsOrNull;
   const backgroundReady = state.backgroundSubtractor.update(imageData);
 
   if (backgroundReady) {

@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tab, TabList, Tabs } from "@/components/ui/tabs";
 import { DetectionLineCreationModeToggle } from "@/features/tenant/detection/components/DetectionLineActions";
 import {
-  createCameraDetectionStoreMaps,
-  createDetectionResultStore,
+  createDetectionStores,
   useDetectionStores,
 } from "@/features/tenant/detection/stores/detectionStore";
 import { BroadcastIndicator } from "@/features/tenant/webrtc/components/BroadcastIndicator";
@@ -166,29 +165,38 @@ export function CrowdDetection({
     () => (effectiveMode === "esp" ? cameraKeys : []),
     [effectiveMode, cameraKeys],
   );
+  // A different observation page must not reuse the previous page's stores.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: page identity defines the registry lifetime.
+  const cameraStores = useMemo(
+    () => new Map<string, ReturnType<typeof createDetectionStores>>(),
+    [eventId, edgeDeviceId],
+  );
+  const cameraKeySignature = JSON.stringify(cameraKeys);
+  const espKeySignature = JSON.stringify(espCameraKeys);
   const {
     settingsStores: cameraSettingsStores,
     viewStateStores: cameraViewStateStores,
-  } = useMemo(
-    () => createCameraDetectionStoreMaps(espCameraKeys),
-    [espCameraKeys],
-  );
-  const cameraResultStores = useMemo(
-    () =>
-      new Map(
-        cameraKeys.map((key) => [
-          key,
-          createDetectionResultStore(
-            selectCameraSettingsStore(
-              key,
-              cameraSettingsStores,
-              settingsStore,
-            ).getState().countingLines,
-          ),
-        ]),
-      ),
-    [cameraKeys, cameraSettingsStores, settingsStore],
-  );
+    resultStores: cameraResultStores,
+  } = useMemo(() => {
+    const keys: string[] = JSON.parse(cameraKeySignature);
+    const espKeys = new Set<string>(JSON.parse(espKeySignature));
+    const settingsStores = new Map();
+    const viewStateStores = new Map();
+    const resultStores = new Map();
+    for (const key of keys) {
+      let stores = cameraStores.get(key);
+      if (!stores) {
+        stores = createDetectionStores();
+        cameraStores.set(key, stores);
+      }
+      if (espKeys.has(key)) {
+        settingsStores.set(key, stores.settingsStore);
+        viewStateStores.set(key, stores.viewStateStore);
+      }
+      resultStores.set(key, stores.resultStore);
+    }
+    return { settingsStores, viewStateStores, resultStores };
+  }, [cameraKeySignature, espKeySignature, cameraStores]);
 
   const {
     videoSource,

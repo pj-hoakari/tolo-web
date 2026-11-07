@@ -523,6 +523,7 @@ export function useMultiCameraDetectionLoop({
             captured,
             detectionOptions,
             state,
+            () => cancelled,
           );
           if (cancelled) {
             return;

@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => {
     retryCamera: vi.fn(),
     retryList: vi.fn(),
     listFailed: false,
+    refreshedList: false,
   };
 });
 vi.mock("firebase/firestore", () => ({ onSnapshot: vi.fn() }));
@@ -56,7 +57,11 @@ vi.mock("@/features/tenant/webrtc/utils/webrtcSender", () => ({
 }));
 vi.mock("../hooks/useObservationPageCameras", () => ({
   useObservationPageCameras: () => ({
-    cameras: mocks.listFailed ? [] : cameras,
+    cameras: mocks.listFailed
+      ? []
+      : mocks.refreshedList
+        ? [...cameras]
+        : cameras,
     initialCameraId: "one",
     status: mocks.listFailed ? "error" : "ready",
     cameraConnectionError: null,
@@ -123,6 +128,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
   mocks.sourceStates = [];
   mocks.listFailed = false;
+  mocks.refreshedList = false;
 });
 
 it("does not offer the local camera when the camera list fails", () => {
@@ -175,7 +181,7 @@ it("sends and receives settings for the selected ESP camera across tab switches"
     });
     return vi.fn();
   }) as unknown as typeof onSnapshot);
-  render(
+  const { rerender } = render(
     <CrowdDetection
       canReport
       tenantId="tenant"
@@ -202,6 +208,16 @@ it("sends and receives settings for the selected ESP camera across tab switches"
         }),
       }),
     ),
+  );
+  expect(read(channels[0])?.confidenceThreshold).toBe(0.7);
+  mocks.refreshedList = true;
+  rerender(
+    <CrowdDetection
+      canReport
+      tenantId="tenant"
+      eventId="event"
+      edgeDeviceId="page"
+    />,
   );
   expect(read(channels[0])?.confidenceThreshold).toBe(0.7);
   fireEvent.click(screen.getByRole("tab", { name: /Camera two/ }));
