@@ -1,10 +1,16 @@
-import type { ObservationPoint } from "@/server/router";
+import type {
+  CameraLink,
+  EdgeDeviceKind,
+  ObservationPoint,
+} from "@/server/router";
 
 /** ListEdgeDevices で取得したエッジ端末 */
 export type EdgeDeviceItem = {
   edgeDeviceId: string;
   name: string;
-  online: boolean;
+  kind: EdgeDeviceKind;
+  cameraLinks: CameraLink[];
+  online: boolean | null;
   // Heartbeat を一度も受けていなければ null
   lastHeartbeatAt: Date | null;
   observationPoints: ObservationPoint[];

@@ -1,13 +1,34 @@
 import type { EdgeDeviceItem } from "@/features/tenant/webrtc/type";
-import type { EdgeDevice, RegisteredEdgeDevice } from "@/server/router";
+import type {
+  EdgeDevice,
+  EdgeDeviceKind,
+  RegisteredEdgeDevice,
+} from "@/server/router";
 
 export const SAMPLE_TENANT_ID = "test";
 export const SAMPLE_EVENT_ID = "test";
+
+export const sampleCameraDeviceWire: EdgeDevice = {
+  edgeDeviceId: "d4e5f60718293a4b",
+  name: "ESP32 カメラ",
+  kind: "camera",
+  cameraLinks: [
+    {
+      cameraEdgeDeviceId: "d4e5f60718293a4b",
+      observationPointId: "a1b2c3d4e5f60718",
+    },
+  ],
+  online: null,
+  lastHeartbeatAt: null,
+  observationPoints: [],
+};
 
 export const sampleEdgeDevicesWire: EdgeDevice[] = [
   {
     edgeDeviceId: "8c1f0e2a5d4b3c6e",
     name: "入口カメラ",
+    kind: "observation_page",
+    cameraLinks: [],
     online: true,
     lastHeartbeatAt: "2026-06-14T10:00:00.000Z",
     observationPoints: [
@@ -17,6 +38,8 @@ export const sampleEdgeDevicesWire: EdgeDevice[] = [
   {
     edgeDeviceId: "3b9d77f41e2a5c08",
     name: "",
+    kind: "observation_page",
+    cameraLinks: [],
     online: true,
     lastHeartbeatAt: "2026-06-14T10:00:05.000Z",
     observationPoints: [
@@ -26,6 +49,8 @@ export const sampleEdgeDevicesWire: EdgeDevice[] = [
   {
     edgeDeviceId: "5e6f708192a3b4c5",
     name: "ホールカメラ",
+    kind: "observation_page",
+    cameraLinks: [],
     online: false,
     lastHeartbeatAt: "2026-06-14T09:00:00.000Z",
     observationPoints: [
@@ -40,17 +65,44 @@ const randomPublicId = () =>
 export function registeredEdgeDeviceWire({
   eventId,
   name,
+  kind = "observation_page",
   observationPointNames,
+  linkedObservationPointId,
 }: {
   eventId: string;
   name: string;
+  kind?: EdgeDeviceKind;
   observationPointNames: string[];
+  linkedObservationPointId?: string;
 }): RegisteredEdgeDevice {
   const edgeDeviceId = randomPublicId();
+  if (kind === "camera") {
+    return {
+      device: {
+        edgeDeviceId,
+        name,
+        kind,
+        cameraLinks: linkedObservationPointId
+          ? [
+              {
+                cameraEdgeDeviceId: edgeDeviceId,
+                observationPointId: linkedObservationPointId,
+              },
+            ]
+          : [],
+        online: null,
+        lastHeartbeatAt: null,
+        observationPoints: [],
+      },
+      observationPagePath: "",
+    };
+  }
   return {
     device: {
       edgeDeviceId,
       name,
+      kind,
+      cameraLinks: [],
       online: false,
       lastHeartbeatAt: null,
       observationPoints: observationPointNames.map((pointName) => ({

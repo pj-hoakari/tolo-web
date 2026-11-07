@@ -32,6 +32,8 @@ export function useEdgeDevices(params: {
         .map((device) => ({
           edgeDeviceId: device.edgeDeviceId,
           name: device.name,
+          kind: device.kind,
+          cameraLinks: device.cameraLinks,
           online: device.online,
           lastHeartbeatAt: device.lastHeartbeatAt
             ? new Date(device.lastHeartbeatAt)
