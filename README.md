@@ -158,6 +158,31 @@ docker compose up -d --build
 
 観測ページから映像を配信するには、`public/models` に人検出モデルが必要です（[人検出モデルセットアップ](docs/setup-for-detection-model.md)）。
 
+### ESP32 カメラを観測ページにつなぐ
+
+ESP32-S3 のファームウェア（`esp-edge-device`）は tolo-edge-bridge の Firestore
+シグナリングに edge ピアとして参加する。観測ページは ESP セッションの console 役として
+offer を書き、ESP の `jpeg` DataChannel を canvas 経由で映像化し、人検出を行ってから
+既存の管理UI向け経路で再配信する。ESP 経路のシグナリングは両端ともポーリングである。
+
+1. fakeidp で ESP 用の `event_access` を発行する（`client_id` は `edge-page`、
+   `tenant_id` / `event_id` は観測ページを開くイベントに合わせる）。
+2. ESP のシリアルコンソールで `signaling`、`cloud`、`token` を設定し、`reboot` する。
+   Firestore / Auth エミュレータのホストは、ESP から到達できる PC の LAN IP を指定する
+   （`127.0.0.1` は ESP 自身を指す）。手順は
+   `esp-edge-device/esp_webcam/README.md` の「tolo-edge-bridge 接続」を参照する。
+3. 観測ページ `http://test.localhost:3000/event/<eventId>/observation/<観測ページのedgeDeviceId>?camera=<ESPのedgeDeviceId>`
+   を開き、映像ソースを開始する。
+4. 観測デバイス管理ページから観測ページの edgeDeviceId を選ぶと、検出オーバーレイ付きの
+   映像が管理UIに届く。
+
+ESP の `edgeDeviceId` は 16 桁小文字 hex とする。`?camera=` を省くと従来どおりブラウザの
+カメラを使う。ESP は登録・Heartbeat を持たないため、観測デバイス一覧には出ない。
+
+観測ページは ESP セッションの console 用 Firestore トークンを使う。同じイベント内の
+スタッフページに console 相当の書き込み権限が渡る点は、PoC の割り切りである。将来は
+edge-bridge にカメラ専用ロールを追加するか、BFF で権限を絞る。
+
 ### スマートフォンから開く
 
 スマートフォンなど別の端末からは、Cloudflare の Quick Tunnel が発行する HTTPS の URL で開きます。カメラと画面の常時点灯は、HTTPS か `localhost` で開いたページでしか使えません。LAN の IP アドレスを http で開いても、観測ページのカメラは起動できません。
