@@ -1,5 +1,6 @@
 "use client";
 
+import { RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -33,9 +34,12 @@ export function RestoreEventButton({ event, onRestored }: Props) {
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="contents">
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p
+          role="alert"
+          className="col-span-2 row-start-2 text-sm text-destructive"
+        >
           {error}
         </p>
       )}
@@ -44,8 +48,10 @@ export function RestoreEventButton({ event, onRestored }: Props) {
         size="sm"
         onPress={restore}
         isDisabled={submitting}
+        className="col-start-2 row-start-1 h-10 w-10 justify-self-end px-0"
       >
-        {t("button")}
+        <RotateCcw aria-hidden className="size-4" />
+        <span className="sr-only">{t("button")}</span>
       </Button>
     </div>
   );

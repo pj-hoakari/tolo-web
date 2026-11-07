@@ -13,6 +13,8 @@ import {
 } from "@/features/guest/pageComponents";
 import {
   ARCHIVABLE_STATUSES,
+  EVENT_STATUS_TRANSITIONS,
+  EVENT_STATUSES,
   RESTORABLE_STATUSES,
   type TenantEvent,
 } from "@/features/tenant/management/events/type";
@@ -81,6 +83,7 @@ export type MockRouterOverrides = {
   guestComponents?: GuestPageComponent[];
   guideMap?: GuestGuideMap;
   getGuideMapError?: boolean;
+  transitionEventStatusError?: CommonORPCErrorCode;
 };
 
 export const MOCK_SERVER_MESSAGE = "message from the mock server";
@@ -140,6 +143,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     guestComponents = [...DEFAULT_GUEST_PAGE_COMPONENTS],
     guideMap,
     getGuideMapError = false,
+    transitionEventStatusError,
   } = overrides;
 
   const events: TenantEvent[] = [
@@ -374,6 +378,24 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             status: "draft",
           };
           events.push(event);
+          return event;
+        }),
+      transitionEventStatus: os
+        .input(
+          z.object({ eventId: z.string().min(1), to: z.enum(EVENT_STATUSES) }),
+        )
+        .handler(async ({ input }): Promise<TenantEvent> => {
+          if (transitionEventStatusError !== undefined) {
+            throw new ORPCError(transitionEventStatusError, {
+              message: MOCK_SERVER_MESSAGE,
+            });
+          }
+          const event = events.find((item) => item.eventId === input.eventId);
+          if (!event) throw new ORPCError("NOT_FOUND");
+          if (!EVENT_STATUS_TRANSITIONS[event.status].includes(input.to)) {
+            throw new ORPCError("PRECONDITION_FAILED");
+          }
+          event.status = input.to;
           return event;
         }),
       archiveEvent: os

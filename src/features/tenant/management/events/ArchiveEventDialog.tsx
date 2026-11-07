@@ -1,5 +1,6 @@
 "use client";
 
+import { Archive, Ellipsis } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -10,8 +11,8 @@ import {
   DialogHeader,
   DialogOverlay,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import { Menu, MenuItem, MenuPopover, MenuTrigger } from "@/components/ui/menu";
 import { errorMessageKey } from "@/lib/errorMessageKey";
 import { orpc } from "@/lib/orpc";
 import { EVENT_ERROR_MESSAGES } from "./errorMessages";
@@ -20,13 +21,15 @@ import type { TenantEvent } from "./type";
 type Props = {
   event: TenantEvent;
   onArchived: () => void;
+  actionsLabel: string;
 };
 
-export function ArchiveEventDialog({ event, onArchived }: Props) {
+export function ArchiveEventDialog({ event, onArchived, actionsLabel }: Props) {
   const t = useTranslations("TenantManagement.archive");
   const tError = useTranslations("TenantManagement");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   async function archive(close: () => void) {
     setSubmitting(true);
@@ -43,11 +46,36 @@ export function ArchiveEventDialog({ event, onArchived }: Props) {
   }
 
   return (
-    <DialogTrigger onOpenChange={(open) => open && setError(null)}>
-      <Button variant="outline" size="sm">
-        {t("button")}
-      </Button>
-      <DialogOverlay isDismissable={!submitting}>
+    <>
+      <MenuTrigger>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-10"
+          aria-label={actionsLabel}
+        >
+          <Ellipsis aria-hidden className="size-4" />
+        </Button>
+        <MenuPopover placement="bottom end">
+          <Menu aria-label={actionsLabel}>
+            <MenuItem
+              textValue={t("button")}
+              onAction={() => {
+                setError(null);
+                setIsOpen(true);
+              }}
+            >
+              <Archive aria-hidden className="size-4" />
+              {t("button")}
+            </MenuItem>
+          </Menu>
+        </MenuPopover>
+      </MenuTrigger>
+      <DialogOverlay
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        isDismissable={!submitting}
+      >
         <DialogContent role="alertdialog" closeButton={false}>
           {({ close }) => (
             <>
@@ -82,6 +110,6 @@ export function ArchiveEventDialog({ event, onArchived }: Props) {
           )}
         </DialogContent>
       </DialogOverlay>
-    </DialogTrigger>
+    </>
   );
 }
