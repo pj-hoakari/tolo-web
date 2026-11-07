@@ -53,6 +53,7 @@ type ProvisioningState =
       verificationUri?: string;
     }
   | { kind: "manual" }
+  | { kind: "confirm"; userCode: string; verificationUri: string }
   | { kind: "reconnect"; message?: string }
   | { kind: "complete"; userCode: string }
   | { kind: "failed"; message: string; userCode?: string };
@@ -127,12 +128,39 @@ export function CameraProvisioningDialog({
   const [state, setState] = useState<ProvisioningState>({ kind: "idle" });
   const channelRef = useRef<SerialMessageChannel | null>(null);
   const runIdRef = useRef(0);
+  const portOperationRef = useRef<Promise<void> | null>(null);
+  const cleanupRef = useRef<Promise<void> | null>(null);
+  const [cleaningUp, setCleaningUp] = useState(false);
+
+  async function portOperation(operation: () => Promise<void>) {
+    const pending = operation();
+    portOperationRef.current = pending;
+    try {
+      await pending;
+    } finally {
+      if (portOperationRef.current === pending) portOperationRef.current = null;
+    }
+  }
 
   const stop = useCallback(() => {
     runIdRef.current += 1;
-    channelRef.current?.stop();
+    const channel = channelRef.current;
+    channel?.stop();
     channelRef.current = null;
-    void transport.close();
+    if (cleanupRef.current) return;
+    const pending = portOperationRef.current;
+    if (!pending && !channel && !transport.isOpen()) return;
+    setCleaningUp(true);
+    const cleanup = (async () => {
+      try {
+        await pending?.catch(() => {});
+        await transport.close();
+      } finally {
+        cleanupRef.current = null;
+        setCleaningUp(false);
+      }
+    })();
+    cleanupRef.current = cleanup;
   }, [transport]);
 
   useEffect(() => () => stop(), [stop]);
@@ -167,13 +195,26 @@ export function CameraProvisioningDialog({
   async function waitForAuthorizationCode(
     runId: number,
     channel: SerialMessageChannel,
-    { autoReconnect }: { autoReconnect: boolean },
+    {
+      autoReconnect,
+      retryCode = true,
+    }: { autoReconnect: boolean; retryCode?: boolean },
   ): Promise<DeviceAuthorizationMessage | null> {
     try {
       return await waitForMessage(channel, "device_authorization", timeoutMs);
     } catch (error) {
       if (runId !== runIdRef.current) return null;
       if (error instanceof ProvisioningTimeoutError) {
+        if (retryCode && transport.isOpen()) {
+          await transport.writeLine(
+            encodeDeviceMessage({ type: "device_authorization" }),
+          );
+          if (runId !== runIdRef.current) return null;
+          return waitForAuthorizationCode(runId, channel, {
+            autoReconnect,
+            retryCode: false,
+          });
+        }
         setState({ kind: "manual" });
         return null;
       }
@@ -190,7 +231,9 @@ export function CameraProvisioningDialog({
     if (runId !== runIdRef.current) return null;
 
     try {
-      await transport.reopen({ baudRate: PROVISIONING_BAUD_RATE });
+      await portOperation(() =>
+        transport.reopen({ baudRate: PROVISIONING_BAUD_RATE }),
+      );
     } catch {
       if (runId !== runIdRef.current) return null;
       setState({ kind: "reconnect" });
@@ -200,6 +243,9 @@ export function CameraProvisioningDialog({
 
     channel.restart();
     setState({ kind: "running", step: "waitingAuthorization" });
+    await transport.writeLine(
+      encodeDeviceMessage({ type: "device_authorization" }),
+    );
     return waitForAuthorizationCode(runId, channel, { autoReconnect: false });
   }
 
@@ -245,20 +291,20 @@ export function CameraProvisioningDialog({
     }
     setState({ kind: "complete", userCode });
     setWifiPassword("");
-    channelRef.current?.stop();
-    channelRef.current = null;
-    void transport.close();
+    stop();
   }
 
   async function openProvisioningChannel(
     runId: number,
   ): Promise<SerialMessageChannel | null> {
     setState({ kind: "running", step: "selecting" });
-    await transport.selectPort();
+    await portOperation(() => transport.selectPort());
     if (runId !== runIdRef.current) return null;
 
     setState({ kind: "running", step: "opening" });
-    await transport.open({ baudRate: PROVISIONING_BAUD_RATE });
+    await portOperation(() =>
+      transport.open({ baudRate: PROVISIONING_BAUD_RATE }),
+    );
     if (runId !== runIdRef.current) return null;
 
     const channel = new SerialMessageChannel(transport);
@@ -268,7 +314,13 @@ export function CameraProvisioningDialog({
   }
 
   async function handleStart() {
-    if (!canStart || availability !== "available") return;
+    if (
+      !canStart ||
+      cleaningUp ||
+      cleanupRef.current ||
+      availability !== "available"
+    )
+      return;
     const runId = ++runIdRef.current;
     setManualCode("");
 
@@ -289,19 +341,19 @@ export function CameraProvisioningDialog({
         if (runId !== runIdRef.current) return;
         if (!authorization) return;
 
-        await approveAndWait(
-          runId,
-          channel,
-          authorization.user_code,
-          authorization.verification_uri,
-        );
+        setState({
+          kind: "confirm",
+          userCode: authorization.user_code,
+          verificationUri: authorization.verification_uri,
+        });
         return;
       }
 
       setState({ kind: "running", step: "selecting" });
-      const defaults = await orpc.camera.provisioningDefaults();
       const channel = await openProvisioningChannel(runId);
       if (!channel) return;
+      const defaults = await orpc.camera.provisioningDefaults();
+      if (runId !== runIdRef.current) return;
 
       setState({ kind: "running", step: "writing" });
       await transport.writeLine(
@@ -343,12 +395,11 @@ export function CameraProvisioningDialog({
       if (runId !== runIdRef.current) return;
       if (!authorization) return;
 
-      await approveAndWait(
-        runId,
-        channel,
-        authorization.user_code,
-        authorization.verification_uri,
-      );
+      setState({
+        kind: "confirm",
+        userCode: authorization.user_code,
+        verificationUri: authorization.verification_uri,
+      });
     } catch (error) {
       if (runId !== runIdRef.current) return;
       if (error instanceof ProvisioningStoppedError) return;
@@ -357,7 +408,10 @@ export function CameraProvisioningDialog({
   }
 
   async function handleManualApprove() {
-    const userCode = manualCode.trim();
+    const userCode =
+      state.kind === "confirm" ? state.userCode : manualCode.trim();
+    const verificationUri =
+      state.kind === "confirm" ? state.verificationUri : "";
     const channel = channelRef.current;
     if (!userCode) return;
     if (!channel) {
@@ -366,7 +420,7 @@ export function CameraProvisioningDialog({
     }
     const runId = runIdRef.current;
     try {
-      await approveAndWait(runId, channel, userCode, "");
+      await approveAndWait(runId, channel, userCode, verificationUri);
     } catch (error) {
       if (runId !== runIdRef.current) return;
       if (error instanceof ProvisioningStoppedError) return;
@@ -391,10 +445,12 @@ export function CameraProvisioningDialog({
     const runId = runIdRef.current;
     try {
       setState({ kind: "running", step: "selecting" });
-      await transport.selectPort();
+      await portOperation(() => transport.selectPort());
       if (runId !== runIdRef.current) return;
       setState({ kind: "running", step: "opening" });
-      await transport.open({ baudRate: PROVISIONING_BAUD_RATE });
+      await portOperation(() =>
+        transport.open({ baudRate: PROVISIONING_BAUD_RATE }),
+      );
     } catch (error) {
       if (runId !== runIdRef.current) return;
       if (error instanceof ProvisioningStoppedError) return;
@@ -406,22 +462,19 @@ export function CameraProvisioningDialog({
     channel.restart();
     setState({ kind: "running", step: "waitingAuthorization" });
     try {
-      if (reapproval) {
-        await transport.writeLine(
-          encodeDeviceMessage({ type: "device_authorization" }),
-        );
-      }
+      await transport.writeLine(
+        encodeDeviceMessage({ type: "device_authorization" }),
+      );
       const authorization = await waitForAuthorizationCode(runId, channel, {
         autoReconnect: true,
       });
       if (runId !== runIdRef.current) return;
       if (!authorization) return;
-      await approveAndWait(
-        runId,
-        channel,
-        authorization.user_code,
-        authorization.verification_uri,
-      );
+      setState({
+        kind: "confirm",
+        userCode: authorization.user_code,
+        verificationUri: authorization.verification_uri,
+      });
     } catch (error) {
       if (runId !== runIdRef.current) return;
       if (error instanceof ProvisioningStoppedError) return;
@@ -439,13 +492,17 @@ export function CameraProvisioningDialog({
   }
 
   const userCode =
-    state.kind === "running" || state.kind === "complete"
+    state.kind === "running" ||
+    state.kind === "complete" ||
+    state.kind === "confirm"
       ? state.userCode
       : state.kind === "failed"
         ? state.userCode
         : undefined;
   const verificationUri =
-    state.kind === "running" ? state.verificationUri : undefined;
+    state.kind === "running" || state.kind === "confirm"
+      ? state.verificationUri
+      : undefined;
 
   return (
     <DialogTrigger
@@ -537,6 +594,11 @@ export function CameraProvisioningDialog({
 
                     {userCode && (
                       <div className="flex flex-col gap-1 rounded-md border p-3">
+                        {state.kind === "confirm" && (
+                          <p className="text-sm">
+                            {t("confirmAuthorization", { name: edgeName })}
+                          </p>
+                        )}
                         <span className="text-xs text-muted-foreground">
                           {t("userCodeLabel")}
                         </span>
@@ -603,7 +665,10 @@ export function CameraProvisioningDialog({
                 {state.kind === "idle" &&
                   availability !== "unsupported" &&
                   availability !== "insecure" && (
-                    <Button onPress={handleStart} isDisabled={!canStart}>
+                    <Button
+                      onPress={handleStart}
+                      isDisabled={!canStart || cleaningUp}
+                    >
                       {reapproval ? t("reapprovalStart") : t("start")}
                     </Button>
                   )}
@@ -612,6 +677,11 @@ export function CameraProvisioningDialog({
                     onPress={handleManualApprove}
                     isDisabled={!manualCode.trim()}
                   >
+                    {t("manualSubmit")}
+                  </Button>
+                )}
+                {state.kind === "confirm" && (
+                  <Button onPress={handleManualApprove}>
                     {t("manualSubmit")}
                   </Button>
                 )}

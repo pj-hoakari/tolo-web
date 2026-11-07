@@ -445,6 +445,7 @@
         "approving": "デバイス認可を承認しています…",
         "waitingResult": "端末の認可結果を待っています…"
       },
+      "confirmAuthorization": "このコードの端末を「{name}」として承認します。接続した端末を確認してください。",
       "userCodeLabel": "ユーザーコード",
       "verificationUri": "確認 URL: {uri}",
       "complete": "「{name}」の初期設定が完了しました。ユーザーコード {userCode} を承認しました。",
