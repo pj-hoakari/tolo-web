@@ -429,6 +429,7 @@
         "approving": "Approving the device authorization…",
         "waitingResult": "Waiting for the device authorization result…"
       },
+      "confirmAuthorization": "Autoriza el dispositivo con este código como «{name}». Comprueba el dispositivo conectado.",
       "userCodeLabel": "User code",
       "verificationUri": "Verification URL: {uri}",
       "complete": "Provisioning for “{name}” is complete. Approved user code {userCode}.",
