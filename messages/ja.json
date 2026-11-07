@@ -494,6 +494,8 @@
   },
   "Observation": {
     "title": "{tenantId} 観測ページ",
+    "machineSessionFailed": "観測ページの認可に失敗しました。",
+    "machineSessionRetry": "もう一度認可する",
     "controls": {
       "start": "カメラを起動",
       "stop": "停止",

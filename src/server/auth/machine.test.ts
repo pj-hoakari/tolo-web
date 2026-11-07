@@ -455,7 +455,7 @@ describe("machine callback and handoff", () => {
     });
 
     expect(wrongSubject.location).toBe(
-      machineResultPath(RETURN_PATH, "failed"),
+      `https://${HOST}${machineResultPath(RETURN_PATH, "failed")}`,
     );
   });
 
@@ -470,7 +470,7 @@ describe("machine callback and handoff", () => {
     });
 
     expect(callback.location).toBe(
-      machineResultPath(RETURN_PATH, "login_required"),
+      `https://${HOST}${machineResultPath(RETURN_PATH, "login_required")}`,
     );
   });
 

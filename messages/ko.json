@@ -494,6 +494,8 @@
   },
   "Observation": {
     "title": "{tenantId} 관측 페이지",
+    "machineSessionFailed": "관측 페이지를 승인하지 못했습니다.",
+    "machineSessionRetry": "다시 승인",
     "controls": {
       "start": "카메라 시작",
       "stop": "중지",

@@ -494,6 +494,8 @@
   },
   "Observation": {
     "title": "{tenantId} Observación",
+    "machineSessionFailed": "No se pudo autorizar la página de observación.",
+    "machineSessionRetry": "Volver a autorizar",
     "controls": {
       "start": "Iniciar cámara",
       "stop": "Detener",
