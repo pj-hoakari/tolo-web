@@ -80,3 +80,30 @@ it.each([
     }
   },
 );
+
+it("shows only the retry action when machine authorization fails", async () => {
+  vi.mocked(getViewer).mockResolvedValue({
+    type: "staff",
+    userId: "staff",
+    tenantId: "tenant",
+  });
+  render(
+    await TenantObservation({
+      params: Promise.resolve({
+        tenantId: "tenant",
+        eventId: "event",
+        edgeDeviceId: "edge",
+      }),
+      searchParams: Promise.resolve({ machineSession: "failed" }),
+    }),
+  );
+  expect(screen.getByRole("alert").textContent).toContain(
+    "machineSessionFailed",
+  );
+  expect(
+    screen.getByRole("link", { name: "machineSessionRetry" }),
+  ).toBeTruthy();
+  expect(
+    screen.queryByRole("link", { name: "controls.observeOnThisDevice" }),
+  ).toBeNull();
+});
