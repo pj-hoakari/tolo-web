@@ -2,11 +2,14 @@ import { getTranslations } from "next-intl/server";
 import { LocaleSelect } from "@/components/locale-select";
 import { PwaInstall } from "@/components/pwa/pwa-install";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Link } from "@/components/ui/link";
+import { LogoutButton } from "@/features/auth/LogoutButton";
 import { CrowdDetection } from "@/features/tenant/observation/components/CrowdDetection";
 import { ObservationSoftLock } from "@/features/tenant/observation/components/ObservationSoftLock";
 import { ScreenWakeControl } from "@/features/tenant/observation/components/ScreenWakeControl";
 import { ScreenWakeProvider } from "@/features/tenant/observation/components/ScreenWakeProvider";
 import { observationDevicePath } from "@/features/tenant/observation/routes";
+import { machineSessionPath } from "@/features/tenant/webrtc/utils/cameraConnection";
 import { getPwaMetadata } from "@/lib/pwa/manifest";
 
 export async function generateMetadata({
@@ -28,10 +31,14 @@ export default async function TenantObservation({
   searchParams,
 }: {
   params: Promise<{ tenantId: string; eventId: string; edgeDeviceId: string }>;
-  searchParams: Promise<{ camera?: string | string[] }>;
+  searchParams: Promise<{
+    camera?: string | string[];
+    machineSession?: string | string[];
+  }>;
 }) {
   const { tenantId, eventId, edgeDeviceId } = await params;
-  const requestedCamera = (await searchParams).camera;
+  const query = await searchParams;
+  const requestedCamera = query.camera;
   const requestedCameraId =
     typeof requestedCamera === "string" &&
     /^[0-9a-f]{16}$/.test(requestedCamera)
@@ -49,9 +56,26 @@ export default async function TenantObservation({
               <PwaInstall compact />
               <LocaleSelect />
               <ThemeToggle />
+              <LogoutButton />
             </div>
           </header>
           <main className="flex w-full flex-col items-center gap-4">
+            {(query.machineSession === "failed" ||
+              query.machineSession === "login_required") && (
+              <div role="alert" className="flex flex-col items-center gap-2">
+                <p>{t("machineSessionFailed")}</p>
+                <Link
+                  href={machineSessionPath({
+                    eventId,
+                    pageEdgeDeviceId: edgeDeviceId,
+                    returnPath: observationDevicePath(eventId, edgeDeviceId),
+                  })}
+                  variant="outline"
+                >
+                  {t("machineSessionRetry")}
+                </Link>
+              </div>
+            )}
             <ScreenWakeControl />
             <CrowdDetection
               tenantId={tenantId}

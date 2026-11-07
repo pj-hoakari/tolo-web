@@ -1,14 +1,20 @@
-import { generateKeyPairSync, sign } from "node:crypto";
+import { createHash, generateKeyPairSync, sign } from "node:crypto";
 import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
 import { HttpResponse, http } from "msw";
+import type { Pool } from "pg";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { server } from "@/mocks/server";
 import {
   type AuthEnv,
+  advisoryLock,
+  advisoryLockMany,
+  advisoryLockManyDynamic,
   authOptions,
   type RealAuth,
   type SessionLock,
+  type SessionLocks,
+  type SessionLocksDynamic,
 } from "./betterAuth";
 import { createConnectionAuth } from "./connection";
 
@@ -23,13 +29,20 @@ const env: AuthEnv = {
   resourceHost: "api.tolo.test",
   connectionClientId: "observation-connection",
   connectionClientSecret: "connection-secret",
+  machineClientId: "edge-page",
+  machineClientSecret: "machine-secret",
 };
 const TENANT = "0123456789abcdef";
 const EVENT = "fedcba9876543210";
 const PAGE = "1111111111111111";
 const CAMERA = "2222222222222222";
 const OTHER_CAMERA = "3333333333333333";
+const CONNECTION_LOCK_KEY = `connection:${TENANT}:${EVENT}:${PAGE}`;
+const EVENT_LOCK_KEY = `connection-event:${EVENT}`;
 const TOKEN_ENDPOINT = "https://idp.test/oauth2/token";
+
+const sha256 = (value: string) =>
+  createHash("sha256").update(value).digest("base64url");
 
 const { privateKey, publicKey } = generateKeyPairSync("rsa", {
   modulusLength: 2048,
@@ -54,7 +67,39 @@ function inProcessLock(): SessionLock {
   };
 }
 
-function idp() {
+function inProcessLockMany(lock: SessionLock): SessionLocks {
+  return async <T>(keys: string[], task: () => Promise<T>): Promise<T> => {
+    const sorted = [...new Set(keys)].sort();
+    const run = async (index: number): Promise<T> =>
+      index === sorted.length
+        ? task()
+        : lock(sorted[index], () => run(index + 1));
+    return run(0);
+  };
+}
+
+function instrumentedLock() {
+  const base = inProcessLock();
+  const listeners: {
+    predicate: (key: string) => boolean;
+    resolve: () => void;
+  }[] = [];
+  const lock: SessionLock = (key, task) => {
+    const index = listeners.findIndex((listener) => listener.predicate(key));
+    if (index >= 0) listeners.splice(index, 1)[0].resolve();
+    return base(key, task);
+  };
+  return {
+    lock,
+    lockMany: inProcessLockMany(lock),
+    whenLockCalled: (predicate: (key: string) => boolean = () => true) =>
+      new Promise<void>((resolve) => {
+        listeners.push({ predicate, resolve });
+      }),
+  };
+}
+
+function idp(subject = "idp-staff") {
   const requests: { form: URLSearchParams; authorization: string | null }[] =
     [];
   let exchanged = 0;
@@ -92,7 +137,7 @@ function idp() {
         id_token: signIdToken({
           iss: "https://idp.test",
           aud: "observation-connection",
-          sub: "idp-staff",
+          sub: subject,
           nonce,
           iat: now,
           exp: now + 300,
@@ -111,7 +156,12 @@ function idp() {
   };
 }
 
-function createTestConnection() {
+function createTestConnection(
+  lock: SessionLock = inProcessLock(),
+  lockMany: SessionLocks = inProcessLockMany(lock),
+  lockManyDynamic: SessionLocksDynamic = (keys, selectMoreKeys, task) =>
+    lockMany(keys, async () => lockMany(await selectMoreKeys(), task)),
+) {
   const database = memoryAdapter({
     user: [],
     session: [],
@@ -123,19 +173,22 @@ function createTestConnection() {
     pendingConnectionAuthorization: [],
     connectionAuthorization: [],
     connectionEventAccess: [],
+    connectionDelegationState: [],
   }) as BetterAuthOptions["database"];
   const options = authOptions(env);
   const auth = betterAuth({ ...options, database });
   const realAuth = {
     auth: auth as unknown as RealAuth["auth"],
     env,
-    lock: inProcessLock(),
+    lock,
+    lockMany,
+    lockManyDynamic,
   } as RealAuth;
   return {
     auth,
+    realAuth,
     connection: createConnectionAuth(realAuth, {
       redirectUri: "https://web.test/api/auth/connection/callback",
-      requireStaffMatch: true,
     }),
   };
 }
@@ -153,6 +206,7 @@ async function start(
     pageEdgeDeviceId: PAGE,
     cameraIds,
     staffSub: "idp-staff",
+    host: "acme.localhost:3000",
     returnPath: `/event/${EVENT}/observation`,
   });
   provider?.setNonce(new URL(location).searchParams.get("nonce"));
@@ -165,15 +219,13 @@ async function callback(
   {
     code = "code-1",
     error,
-    viewer = { type: "staff" as const, userId: "idp-staff", tenantId: TENANT },
   }: {
     code?: string;
     error?: string;
-    viewer?: Parameters<TestConnection["connection"]["callback"]>[0]["viewer"];
   } = {},
 ) {
   const state = new URL(location).searchParams.get("state") ?? "";
-  return connection.callback({ code, state, error, viewer });
+  return connection.callback({ code, state, error });
 }
 
 async function storedAuthorization(auth: TestConnection["auth"]) {
@@ -182,6 +234,38 @@ async function storedAuthorization(auth: TestConnection["auth"]) {
     model: "connectionAuthorization",
     where: [{ field: "tenantId", value: TENANT }],
   });
+}
+
+async function holdConnectionLock(test: TestConnection) {
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const held = test.realAuth.lock(CONNECTION_LOCK_KEY, async () => {
+    await gate;
+  });
+  return {
+    async release() {
+      release();
+      await held;
+    },
+  };
+}
+
+async function holdEventLock(test: TestConnection) {
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const held = test.realAuth.lock(EVENT_LOCK_KEY, async () => {
+    await gate;
+  });
+  return {
+    async release() {
+      release();
+      await held;
+    },
+  };
 }
 
 beforeEach(() => {
@@ -203,6 +287,157 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllEnvs();
+});
+
+function fakePool(max = Number.POSITIVE_INFINITY) {
+  const lockKeys: string[] = [];
+  let active = 0;
+  let maxActive = 0;
+  const waiting: (() => void)[] = [];
+  const client = {
+    query: async (text: string, values?: unknown[]) => {
+      if (text.includes("pg_advisory_xact_lock")) {
+        lockKeys.push(String(values?.[0]));
+      }
+      return { rows: [] };
+    },
+    release: () => {
+      active -= 1;
+      waiting.shift()?.();
+    },
+  };
+  return {
+    pool: {
+      connect: async () => {
+        if (active >= max) {
+          await new Promise<void>((resolve) => waiting.push(resolve));
+        }
+        active += 1;
+        maxActive = Math.max(maxActive, active);
+        return client;
+      },
+    } as unknown as Pool,
+    lockKeys,
+    maxActive: () => maxActive,
+  };
+}
+
+describe("advisory locks", () => {
+  it("acquires multiple keys on one connection in sorted order", async () => {
+    const fake = fakePool();
+
+    await advisoryLockMany(fake.pool)(["z", "a", "m", "a"], async () => {});
+
+    expect(fake.lockKeys).toEqual(["a", "m", "z"]);
+    expect(fake.maxActive()).toBe(1);
+  });
+
+  it("selects additional locks under the initial lock on the same connection", async () => {
+    const fake = fakePool(1);
+    const task = vi.fn(async () => {
+      expect(fake.lockKeys).toEqual(["event", "a", "z"]);
+      return "done";
+    });
+    await expect(
+      advisoryLockManyDynamic(fake.pool)(
+        ["event"],
+        async () => {
+          expect(fake.lockKeys).toEqual(["event"]);
+          return ["z", "event", "a", "a"];
+        },
+        task,
+      ),
+    ).resolves.toBe("done");
+    expect(task).toHaveBeenCalledOnce();
+    expect(fake.maxActive()).toBe(1);
+  });
+
+  it.each(["select", "task"])(
+    "releases the connection when %s fails",
+    async (stage) => {
+      const fake = fakePool(1);
+      const lock = advisoryLockManyDynamic(fake.pool);
+      const error = new Error("failed");
+      const task = vi.fn(async () => {
+        if (stage === "task") throw error;
+      });
+      await expect(
+        lock(
+          ["event"],
+          async () => {
+            if (stage === "select") throw error;
+            return ["connection"];
+          },
+          task,
+        ),
+      ).rejects.toBe(error);
+      if (stage === "select") expect(task).not.toHaveBeenCalled();
+      await expect(
+        lock(
+          ["event"],
+          async () => [],
+          async () => "released",
+        ),
+      ).resolves.toBe("released");
+      expect(fake.maxActive()).toBe(1);
+    },
+  );
+
+  it.each([
+    "deleteForCamera",
+    "addForCamera",
+    "deleteForPage",
+    "deleteForEvent",
+  ] as const)(
+    "%s completes with a single pooled connection",
+    async (operation) => {
+      const fake = fakePool(1);
+      const test = createTestConnection(
+        advisoryLock(fake.pool),
+        advisoryLockMany(fake.pool),
+        advisoryLockManyDynamic(fake.pool),
+      );
+      const provider = idp();
+      await callback(test, await start(test.connection, provider));
+      fake.lockKeys.length = 0;
+
+      if (operation === "addForCamera") {
+        await test.connection.addForCamera(EVENT, PAGE, OTHER_CAMERA);
+        expect(
+          JSON.parse(String((await storedAuthorization(test.auth))?.cameraIds)),
+        ).toEqual([CAMERA, OTHER_CAMERA]);
+      } else {
+        if (operation === "deleteForCamera")
+          await test.connection.deleteForCamera(EVENT, CAMERA);
+        if (operation === "deleteForPage")
+          await test.connection.deleteForPage(EVENT, PAGE);
+        if (operation === "deleteForEvent")
+          await test.connection.deleteForEvent(EVENT);
+        expect(await storedAuthorization(test.auth)).toBeNull();
+      }
+      expect(fake.lockKeys).toEqual([EVENT_LOCK_KEY, CONNECTION_LOCK_KEY]);
+      expect(fake.maxActive()).toBe(1);
+    },
+  );
+
+  it("runs concurrent starts and stops without deadlocking", async () => {
+    const fake = fakePool();
+    const test = createTestConnection(
+      advisoryLock(fake.pool),
+      advisoryLockMany(fake.pool),
+      advisoryLockManyDynamic(fake.pool),
+    );
+
+    await expect(
+      Promise.all([
+        start(test.connection),
+        start(test.connection, undefined, [CAMERA, OTHER_CAMERA]),
+        test.connection.deleteForCamera(EVENT, CAMERA),
+        test.connection.deleteForEvent(EVENT),
+      ]),
+    ).resolves.toHaveLength(4);
+    expect(fake.maxActive()).toBeLessThanOrEqual(4);
+  }, 15_000);
 });
 
 describe("connection authorization start", () => {
@@ -241,6 +476,7 @@ describe("connection authorization start", () => {
       pageEdgeDeviceId: PAGE,
       cameraIds: JSON.stringify([CAMERA]),
       staffSub: "idp-staff",
+      host: "acme.localhost:3000",
       returnPath: `/event/${EVENT}/observation`,
       redirectUri: "https://web.test/api/auth/connection/callback",
     });
@@ -262,14 +498,14 @@ describe("connection authorization start", () => {
 });
 
 describe("connection authorization callback", () => {
-  it("exchanges the code with the connection client and stores the delegation", async () => {
+  it("exchanges the code without a viewer session and returns to the starting tenant", async () => {
     const test = createTestConnection();
     const provider = idp();
     const location = await start(test.connection, provider);
     const redirect = await callback(test, location);
 
     expect(redirect).toBe(
-      `/event/${EVENT}/observation?cameraConnection=authorized`,
+      `http://acme.localhost:3000/event/${EVENT}/observation?cameraConnection=authorized`,
     );
     expect(provider.requests).toHaveLength(1);
     expect(provider.requests[0].authorization).toBe(
@@ -280,7 +516,9 @@ describe("connection authorization callback", () => {
       code: "code-1",
       redirect_uri: "https://web.test/api/auth/connection/callback",
     });
-    expect(provider.requests[0].form.get("code_verifier")).toBeTruthy();
+    expect(sha256(provider.requests[0].form.get("code_verifier") ?? "")).toBe(
+      new URL(location).searchParams.get("code_challenge"),
+    );
 
     expect(await storedAuthorization(test.auth)).toMatchObject({
       tenantId: TENANT,
@@ -302,18 +540,12 @@ describe("connection authorization callback", () => {
 
   it("refuses a callback whose subject does not match the delegated staff", async () => {
     const test = createTestConnection();
-    const provider = idp();
+    const provider = idp("another-staff");
     const location = await start(test.connection, provider);
-    const redirect = await callback(test, location, {
-      viewer: {
-        type: "staff",
-        userId: "another-staff",
-        tenantId: TENANT,
-      },
-    });
+    const redirect = await callback(test, location);
 
     expect(redirect).toBe(
-      `/event/${EVENT}/observation?cameraConnection=failed`,
+      `http://acme.localhost:3000/event/${EVENT}/observation?cameraConnection=failed`,
     );
     expect(await storedAuthorization(test.auth)).toBeNull();
   });
@@ -327,8 +559,39 @@ describe("connection authorization callback", () => {
     });
 
     expect(redirect).toBe(
-      `/event/${EVENT}/observation?cameraConnection=login_required`,
+      `http://acme.localhost:3000/event/${EVENT}/observation?cameraConnection=login_required`,
     );
+    expect(await storedAuthorization(test.auth)).toBeNull();
+  });
+
+  it("rejects an ID token with a different nonce", async () => {
+    const test = createTestConnection();
+    const provider = idp();
+    const location = await start(test.connection, provider);
+    provider.setNonce("wrong-nonce");
+    expect(await callback(test, location)).toContain("cameraConnection=failed");
+    expect(await storedAuthorization(test.auth)).toBeNull();
+  });
+
+  it.each([
+    { host: "evil.test", returnPath: "/safe" },
+    { host: "localhost:3000", returnPath: "/safe" },
+    { host: "acme.localhost:3000", returnPath: "//evil.test/" },
+    { host: "acme.localhost:3000", returnPath: "/\\evil.test/" },
+  ])("rejects an unsafe pending destination: %j", async (destination) => {
+    const test = createTestConnection();
+    const provider = idp();
+    const location = await start(test.connection, provider);
+    const { adapter } = await test.auth.$context;
+    await adapter.update({
+      model: "pendingConnectionAuthorization",
+      where: [{ field: "eventId", value: EVENT }],
+      update: destination,
+    });
+    expect(await callback(test, location)).toBe(
+      "http://localhost/auth/error?error=connection_state_invalid",
+    );
+    expect(provider.requests).toHaveLength(0);
     expect(await storedAuthorization(test.auth)).toBeNull();
   });
 
@@ -338,11 +601,257 @@ describe("connection authorization callback", () => {
       code: "code-1",
       state: "unknown",
       error: undefined,
-      viewer: { type: "staff", userId: "idp-staff", tenantId: TENANT },
     });
     expect(redirect).toBe(
       "http://localhost/auth/error?error=connection_state_invalid",
     );
+  });
+
+  it("rejects a callback when a camera is stopped while the first authorization is pending", async () => {
+    const test = createTestConnection();
+    const provider = idp();
+    const location = await start(test.connection, provider, [
+      CAMERA,
+      OTHER_CAMERA,
+    ]);
+
+    await test.connection.deleteForCamera(EVENT, CAMERA);
+    const redirect = await callback(test, location);
+
+    expect(redirect).toBe(
+      `http://acme.localhost:3000/event/${EVENT}/observation?cameraConnection=failed`,
+    );
+    expect(await storedAuthorization(test.auth)).toBeNull();
+    const { adapter } = await test.auth.$context;
+    expect(
+      await adapter.findMany({
+        model: "pendingConnectionAuthorization",
+      }),
+    ).toEqual([]);
+  });
+
+  it("does not save a delegation when a stop races the initial pending creation", async () => {
+    const test = createTestConnection();
+    const provider = idp();
+    const { adapter } = await test.auth.$context;
+    const originalCreate = adapter.create.bind(adapter);
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let paused!: () => void;
+    const reached = new Promise<void>((resolve) => {
+      paused = resolve;
+    });
+    adapter.create = (async (args) => {
+      if (args.model === "pendingConnectionAuthorization") {
+        paused();
+        await gate;
+      }
+      return originalCreate(args);
+    }) as typeof adapter.create;
+
+    const started = start(test.connection, provider, [CAMERA]);
+    await reached;
+    const stopping = test.connection.deleteForCamera(EVENT, CAMERA);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    release();
+    const location = await started;
+    await stopping;
+
+    const redirect = await callback(test, location);
+
+    expect(redirect).toBe(
+      `http://acme.localhost:3000/event/${EVENT}/observation?cameraConnection=failed`,
+    );
+    expect(await storedAuthorization(test.auth)).toBeNull();
+    expect(
+      await adapter.findMany({ model: "pendingConnectionAuthorization" }),
+    ).toEqual([]);
+  });
+
+  it("does not save a pending authorization that a deletion overtakes", async () => {
+    const instrumented = instrumentedLock();
+    const test = createTestConnection(instrumented.lock, instrumented.lockMany);
+    const provider = idp();
+    const { adapter } = await test.auth.$context;
+    const state = "pending-state-before-delete";
+    const nonce = "pending-nonce-before-delete";
+    provider.setNonce(nonce);
+
+    const holdStarted = instrumented.whenLockCalled(
+      (key) => key === EVENT_LOCK_KEY,
+    );
+    const hold = await holdEventLock(test);
+    await holdStarted;
+
+    const deleteQueued = instrumented.whenLockCalled(
+      (key) => key === EVENT_LOCK_KEY,
+    );
+    const deletion = test.connection.deleteForPage(EVENT, PAGE);
+    await deleteQueued;
+
+    await adapter.create({
+      model: "pendingConnectionAuthorization",
+      data: {
+        stateHash: sha256(state),
+        codeVerifier: "pending-verifier",
+        nonce,
+        tenantId: TENANT,
+        eventId: EVENT,
+        pageEdgeDeviceId: PAGE,
+        cameraIds: JSON.stringify([CAMERA]),
+        staffSub: "idp-staff",
+        host: "acme.localhost:3000",
+        returnPath: `/event/${EVENT}/observation`,
+        redirectUri: "https://web.test/api/auth/connection/callback",
+        generation: 0,
+        expiresAt: new Date(Date.now() + 60_000),
+      },
+    });
+
+    let releaseSave!: () => void;
+    const saveGate = new Promise<void>((resolve) => {
+      releaseSave = resolve;
+    });
+    let savePaused!: () => void;
+    const saveReached = new Promise<void>((resolve) => {
+      savePaused = resolve;
+    });
+    let pauseSave = true;
+    const originalFindOne = adapter.findOne.bind(adapter);
+    adapter.findOne = (async (args) => {
+      if (pauseSave && args.model === "connectionAuthorization") {
+        pauseSave = false;
+        savePaused();
+        await saveGate;
+      }
+      return originalFindOne(args);
+    }) as typeof adapter.findOne;
+
+    const callbackDone = test.connection.callback({
+      code: "code-1",
+      state,
+      error: undefined,
+    });
+    const callbackQueued = instrumented.whenLockCalled(
+      (key) => key === EVENT_LOCK_KEY,
+    );
+    const outcome = await Promise.race([
+      saveReached.then(() => "save" as const),
+      callbackQueued.then(() => "event" as const),
+    ]);
+    pauseSave = false;
+    await hold.release();
+    await deletion;
+    if (outcome === "save") releaseSave();
+
+    expect(await callbackDone).toBe(
+      `http://acme.localhost:3000/event/${EVENT}/observation?cameraConnection=failed`,
+    );
+    expect(await storedAuthorization(test.auth)).toBeNull();
+    expect(
+      await adapter.findMany({ model: "pendingConnectionAuthorization" }),
+    ).toEqual([]);
+    await expect(
+      test.connection.withAuthorization(
+        {
+          tenantId: TENANT,
+          eventId: EVENT,
+          pageEdgeDeviceId: PAGE,
+          cameraEdgeDeviceId: CAMERA,
+        },
+        async () => "connection-token",
+      ),
+    ).rejects.toMatchObject({
+      code: "PRECONDITION_FAILED",
+      data: { code: "CONNECTION_AUTHORIZATION_REQUIRED" },
+    });
+  });
+
+  it("keeps a normal start, stop, and callback working", async () => {
+    const test = createTestConnection();
+    const provider = idp();
+    const location = await start(test.connection, provider, [CAMERA]);
+
+    const redirect = await callback(test, location);
+
+    expect(redirect).toBe(
+      `http://acme.localhost:3000/event/${EVENT}/observation?cameraConnection=authorized`,
+    );
+    expect(await storedAuthorization(test.auth)).toMatchObject({
+      cameraIds: JSON.stringify([CAMERA]),
+    });
+    await test.connection.deleteForCamera(EVENT, CAMERA);
+    expect(await storedAuthorization(test.auth)).toBeNull();
+  });
+
+  it("cancels a pending authorization on a page stop and accepts a fresh start", async () => {
+    const test = createTestConnection();
+    const provider = idp();
+    const pending = await start(test.connection, provider, [CAMERA]);
+
+    await test.connection.deleteForPage(EVENT, PAGE);
+    const refused = await callback(test, pending);
+
+    expect(refused).toBe(
+      "http://localhost/auth/error?error=connection_state_invalid",
+    );
+    expect(await storedAuthorization(test.auth)).toBeNull();
+
+    const fresh = await callback(
+      test,
+      await start(test.connection, provider, [CAMERA]),
+    );
+    expect(fresh).toBe(
+      `http://acme.localhost:3000/event/${EVENT}/observation?cameraConnection=authorized`,
+    );
+    expect(await storedAuthorization(test.auth)).toMatchObject({
+      cameraIds: JSON.stringify([CAMERA]),
+    });
+  });
+
+  it("rejects a reauthorization callback that would restore a stopped camera", async () => {
+    const test = createTestConnection();
+    const provider = idp();
+    await callback(
+      test,
+      await start(test.connection, provider, [CAMERA, OTHER_CAMERA]),
+    );
+    const reauthorization = await start(test.connection, provider, [
+      CAMERA,
+      OTHER_CAMERA,
+    ]);
+
+    await test.connection.deleteForCamera(EVENT, CAMERA);
+    const redirect = await callback(test, reauthorization);
+
+    expect(redirect).toBe(
+      `http://acme.localhost:3000/event/${EVENT}/observation?cameraConnection=failed`,
+    );
+    const stored = await storedAuthorization(test.auth);
+    expect(stored).toMatchObject({
+      cameraIds: JSON.stringify([OTHER_CAMERA]),
+    });
+  });
+
+  it("accepts a normal reauthorization", async () => {
+    const test = createTestConnection();
+    const provider = idp();
+    await callback(test, await start(test.connection, provider, [CAMERA]));
+    const reauthorization = await start(test.connection, provider, [
+      CAMERA,
+      OTHER_CAMERA,
+    ]);
+
+    const redirect = await callback(test, reauthorization);
+
+    expect(redirect).toBe(
+      `http://acme.localhost:3000/event/${EVENT}/observation?cameraConnection=authorized`,
+    );
+    expect(await storedAuthorization(test.auth)).toMatchObject({
+      cameraIds: JSON.stringify([CAMERA, OTHER_CAMERA]),
+    });
   });
 });
 
@@ -386,7 +895,33 @@ describe("connection event_access", () => {
       resource: `https://api.tolo.test/tenants/${TENANT}/events/${EVENT}`,
       audience: "backend-api",
       scope: "events.read",
+      edge_device_id: CAMERA,
     });
+  });
+
+  it("keeps unbound and camera-bound event access in separate cache entries", async () => {
+    const test = await authorized();
+    const unbound = await test.connection.eventAccess({
+      tenantId: TENANT,
+      eventId: EVENT,
+      pageEdgeDeviceId: PAGE,
+    });
+    const bound = await test.connection.eventAccess({
+      tenantId: TENANT,
+      eventId: EVENT,
+      pageEdgeDeviceId: PAGE,
+      cameraEdgeDeviceId: CAMERA,
+    });
+
+    expect(unbound).toBe("connection-event-1");
+    expect(bound).toBe("connection-event-2");
+    expect(
+      test.provider.requests.filter(
+        ({ form }) =>
+          form.get("grant_type") ===
+          "urn:ietf:params:oauth:grant-type:token-exchange",
+      ),
+    ).toHaveLength(2);
   });
 
   it("rejects a camera that is not in the stored delegation without exchanging", async () => {
@@ -515,7 +1050,7 @@ describe("connection delegation cleanup", () => {
         pageEdgeDeviceId: PAGE,
         cameraEdgeDeviceId: OTHER_CAMERA,
       }),
-    ).resolves.toBe("connection-event-1");
+    ).resolves.toBe("connection-event-2");
   });
 
   it("deletes the authorization and cached event access when the last camera is removed", async () => {
@@ -537,6 +1072,83 @@ describe("connection delegation cleanup", () => {
     expect(await storedCameraIds(test)).toEqual([CAMERA]);
   });
 
+  it("refuses a connection request after the camera was stopped", async () => {
+    const test = await authorized();
+    await test.connection.deleteForCamera(EVENT, CAMERA);
+    let ran = false;
+
+    await expect(
+      test.connection.withAuthorization(
+        {
+          tenantId: TENANT,
+          eventId: EVENT,
+          pageEdgeDeviceId: PAGE,
+          cameraEdgeDeviceId: CAMERA,
+        },
+        async () => {
+          ran = true;
+          return "connection-token";
+        },
+      ),
+    ).rejects.toMatchObject({
+      code: "PRECONDITION_FAILED",
+      data: { code: "CONNECTION_AUTHORIZATION_REQUIRED" },
+    });
+    expect(ran).toBe(false);
+  });
+
+  it("serializes a connection request with a stop so no request starts after the stop", async () => {
+    const instrumented = instrumentedLock();
+    const test = createTestConnection(instrumented.lock, instrumented.lockMany);
+    const provider = idp();
+    await callback(test, await start(test.connection, provider));
+
+    const holdStarted = instrumented.whenLockCalled();
+    const hold = await holdConnectionLock(test);
+    await holdStarted;
+
+    const deleteStarted = instrumented.whenLockCalled(
+      (key) => key === CONNECTION_LOCK_KEY,
+    );
+    const deletion = test.connection.deleteForCamera(EVENT, CAMERA);
+    await deleteStarted;
+
+    let ran = false;
+    const requestStarted = instrumented.whenLockCalled();
+    const request = test.connection
+      .withAuthorization(
+        {
+          tenantId: TENANT,
+          eventId: EVENT,
+          pageEdgeDeviceId: PAGE,
+          cameraEdgeDeviceId: CAMERA,
+        },
+        async () => {
+          ran = true;
+          return "connection-token";
+        },
+      )
+      .then(
+        (token) => ({ ok: true as const, token }),
+        (error: unknown) => ({ ok: false as const, error }),
+      );
+    await requestStarted;
+
+    await hold.release();
+    await deletion;
+    const result = await request;
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toMatchObject({
+        code: "PRECONDITION_FAILED",
+        data: { code: "CONNECTION_AUTHORIZATION_REQUIRED" },
+      });
+    }
+    expect(ran).toBe(false);
+    expect(await storedAuthorization(test.auth)).toBeNull();
+  });
+
   it("adds a camera to an existing delegation without reauthorization", async () => {
     const test = await authorized();
     await test.connection.addForCamera(EVENT, PAGE, OTHER_CAMERA);
@@ -549,8 +1161,96 @@ describe("connection delegation cleanup", () => {
         pageEdgeDeviceId: PAGE,
         cameraEdgeDeviceId: OTHER_CAMERA,
       }),
-    ).resolves.toBe("connection-event-1");
+    ).resolves.toBe("connection-event-2");
     expect(test.provider.refreshed()).toBe(0);
+  });
+
+  it("rejects a camera removed while its connection request is waiting", async () => {
+    const instrumented = instrumentedLock();
+    const test = createTestConnection(instrumented.lock, instrumented.lockMany);
+    const provider = idp();
+    await callback(
+      test,
+      await start(test.connection, provider, [CAMERA, OTHER_CAMERA]),
+    );
+    await test.connection.eventAccess({
+      tenantId: TENANT,
+      eventId: EVENT,
+      pageEdgeDeviceId: PAGE,
+    });
+
+    const holdStarted = instrumented.whenLockCalled();
+    const hold = await holdConnectionLock(test);
+    await holdStarted;
+
+    const deleteStarted = instrumented.whenLockCalled(
+      (key) => key === CONNECTION_LOCK_KEY,
+    );
+    const deletion = test.connection.deleteForCamera(EVENT, CAMERA);
+    await deleteStarted;
+
+    const accessStarted = instrumented.whenLockCalled(
+      (key) => key === EVENT_LOCK_KEY,
+    );
+    const access = test.connection.eventAccess({
+      tenantId: TENANT,
+      eventId: EVENT,
+      pageEdgeDeviceId: PAGE,
+      cameraEdgeDeviceId: CAMERA,
+    });
+    const settled = access.then(
+      (token) => ({ ok: true as const, token }),
+      (error: unknown) => ({ ok: false as const, error }),
+    );
+    await accessStarted;
+    await hold.release();
+    await deletion;
+
+    const result = await settled;
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toMatchObject({
+        code: "PRECONDITION_FAILED",
+        data: { code: "CAMERA_NOT_DELEGATED" },
+      });
+    }
+    expect(await storedCameraIds(test)).toEqual([OTHER_CAMERA]);
+  });
+
+  it("connects a camera added while its connection request is waiting", async () => {
+    const instrumented = instrumentedLock();
+    const test = createTestConnection(instrumented.lock, instrumented.lockMany);
+    const provider = idp();
+    await callback(test, await start(test.connection, provider, [CAMERA]));
+
+    const holdStarted = instrumented.whenLockCalled();
+    const hold = await holdConnectionLock(test);
+    await holdStarted;
+
+    const addStarted = instrumented.whenLockCalled();
+    const addition = test.connection.addForCamera(EVENT, PAGE, OTHER_CAMERA);
+    await addStarted;
+
+    const accessStarted = instrumented.whenLockCalled(
+      (key) => key === EVENT_LOCK_KEY,
+    );
+    const access = test.connection.eventAccess({
+      tenantId: TENANT,
+      eventId: EVENT,
+      pageEdgeDeviceId: PAGE,
+      cameraEdgeDeviceId: OTHER_CAMERA,
+    });
+    const settled = access.then(
+      (token) => ({ ok: true as const, token }),
+      (error: unknown) => ({ ok: false as const, error }),
+    );
+    await accessStarted;
+    await hold.release();
+    await addition;
+
+    const result = await settled;
+    expect(result.ok).toBe(true);
+    expect(await storedCameraIds(test)).toEqual([CAMERA, OTHER_CAMERA]);
   });
 
   it("does nothing when no authorization exists to add a camera to", async () => {

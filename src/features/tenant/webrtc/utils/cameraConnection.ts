@@ -43,6 +43,23 @@ export function cameraConnectionPath({
   return `/api/auth/connection/start?${query}`;
 }
 
+export function machineSessionPath({
+  eventId,
+  pageEdgeDeviceId,
+  returnPath,
+}: {
+  eventId: string;
+  pageEdgeDeviceId: string;
+  returnPath: string;
+}): string {
+  const query = new URLSearchParams({
+    eventId,
+    pageEdgeDeviceId,
+    return: returnPath,
+  });
+  return `/api/auth/machine/start?${query}`;
+}
+
 export type CameraConnectionNotice = "authorized" | "login_required" | "failed";
 
 export function cameraConnectionNotice(

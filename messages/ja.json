@@ -351,6 +351,8 @@
       "provision": "設定",
       "provisionLabel": "「{name}」を設定",
       "authorizeConnection": "カメラ接続を許可",
+      "useAsMachine": "観測ページ端末にする",
+      "useAsMachineLabel": "{name} を観測ページ端末にする",
       "authorizeConnectionLabel": "「{name}」のカメラ接続を許可",
       "connection": {
         "authorized": "カメラ接続の委任を保存しました。",
@@ -493,6 +495,8 @@
   },
   "Observation": {
     "title": "{tenantId} 観測ページ",
+    "machineSessionFailed": "観測ページの認可に失敗しました。",
+    "machineSessionRetry": "もう一度認可する",
     "controls": {
       "start": "カメラを起動",
       "stop": "停止",

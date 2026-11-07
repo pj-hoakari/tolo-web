@@ -351,6 +351,8 @@
       "provision": "Provision",
       "provisionLabel": "Provision “{name}”",
       "authorizeConnection": "Authorize camera connection",
+      "useAsMachine": "Use as observation page",
+      "useAsMachineLabel": "Use {name} as an observation page",
       "authorizeConnectionLabel": "Authorize the camera connection for “{name}”",
       "connection": {
         "authorized": "The camera connection delegation was saved.",
@@ -493,6 +495,8 @@
   },
   "Observation": {
     "title": "{tenantId} अवलोकन पृष्ठ",
+    "machineSessionFailed": "अवलोकन पृष्ठ अधिकृत गर्न सकिएन।",
+    "machineSessionRetry": "फेरि अधिकृत गर्नुहोस्",
     "controls": {
       "start": "क्यामेरा सुरु गर्नुहोस्",
       "stop": "रोक्नुहोस्",
