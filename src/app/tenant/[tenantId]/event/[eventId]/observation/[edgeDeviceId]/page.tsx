@@ -11,6 +11,7 @@ import { ScreenWakeProvider } from "@/features/tenant/observation/components/Scr
 import { observationDevicePath } from "@/features/tenant/observation/routes";
 import { machineSessionPath } from "@/features/tenant/webrtc/utils/cameraConnection";
 import { getPwaMetadata } from "@/lib/pwa/manifest";
+import { getViewer } from "@/server/auth";
 
 export async function generateMetadata({
   params,
@@ -39,12 +40,21 @@ export default async function TenantObservation({
   const { tenantId, eventId, edgeDeviceId } = await params;
   const query = await searchParams;
   const requestedCamera = query.camera;
+  const machineFailed =
+    query.machineSession === "failed" ||
+    query.machineSession === "login_required";
   const requestedCameraId =
     typeof requestedCamera === "string" &&
     /^[0-9a-f]{16}$/.test(requestedCamera)
       ? requestedCamera
       : undefined;
   const t = await getTranslations("Observation");
+  const viewer = await getViewer();
+  const canReport =
+    (viewer.type === "machine" &&
+      viewer.eventId === eventId &&
+      viewer.edgeDeviceId === edgeDeviceId) ||
+    process.env.NEXT_PUBLIC_API_MOCKING === "enabled";
 
   return (
     <ScreenWakeProvider>
@@ -60,8 +70,7 @@ export default async function TenantObservation({
             </div>
           </header>
           <main className="flex w-full flex-col items-center gap-4">
-            {(query.machineSession === "failed" ||
-              query.machineSession === "login_required") && (
+            {machineFailed && (
               <div role="alert" className="flex flex-col items-center gap-2">
                 <p>{t("machineSessionFailed")}</p>
                 <Link
@@ -77,7 +86,20 @@ export default async function TenantObservation({
               </div>
             )}
             <ScreenWakeControl />
+            {viewer.type === "staff" && !machineFailed && (
+              <Link
+                variant="default"
+                href={machineSessionPath({
+                  eventId,
+                  pageEdgeDeviceId: edgeDeviceId,
+                  returnPath: observationDevicePath(eventId, edgeDeviceId),
+                })}
+              >
+                {t("controls.observeOnThisDevice")}
+              </Link>
+            )}
             <CrowdDetection
+              canReport={canReport}
               tenantId={tenantId}
               eventId={eventId}
               edgeDeviceId={edgeDeviceId}

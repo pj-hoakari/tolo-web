@@ -1159,6 +1159,7 @@ describe("observation.unregisterEdgeDevice", () => {
         body: JSON.stringify({
           event_id: eventId,
           edge_device_id: "0123456789abcdee",
+          permanent: true,
         }),
       }),
     );

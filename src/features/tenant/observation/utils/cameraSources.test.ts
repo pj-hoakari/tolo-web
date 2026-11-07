@@ -132,11 +132,13 @@ describe("openCameraSources", () => {
       label: "failed",
       open: vi.fn().mockRejectedValue(new Error("camera unavailable")),
       close: closeFailed,
+      lastFrameAt: () => null,
     };
     const opened: CrowdVideoSource = {
       label: "opened",
       open: vi.fn().mockResolvedValue(descriptor),
       close: vi.fn(),
+      lastFrameAt: () => performance.now(),
     };
 
     const results = await openCameraSources([

@@ -99,6 +99,7 @@ type Props = {
   triggerAriaLabel?: string;
   triggerVariant?: ButtonProps["variant"];
   triggerSize?: ButtonProps["size"];
+  reapproval?: boolean;
 };
 
 export function CameraProvisioningDialog({
@@ -111,6 +112,7 @@ export function CameraProvisioningDialog({
   triggerAriaLabel,
   triggerVariant = "outline",
   triggerSize = "sm",
+  reapproval = false,
 }: Props) {
   const t = useTranslations("Webrtc.cameraProvision");
   const transport = useMemo(
@@ -174,7 +176,8 @@ export function CameraProvisioningDialog({
   }, [stop, transportProp]);
 
   const running = state.kind === "running";
-  const canStart = wifiSsid.trim() !== "" && wifiPassword !== "";
+  const canStart =
+    reapproval || (wifiSsid.trim() !== "" && wifiPassword !== "");
 
   function redact(message: string): string {
     if (!wifiPassword) return message;
@@ -262,6 +265,7 @@ export function CameraProvisioningDialog({
       eventId,
       edgeDeviceId,
       userCode,
+      ...(reapproval && { reapproval: true }),
     });
     if (runId !== runIdRef.current) return;
 
@@ -321,6 +325,30 @@ export function CameraProvisioningDialog({
     setManualCode("");
 
     try {
+      if (reapproval) {
+        const channel = await openProvisioningChannel(runId);
+        if (!channel) return;
+
+        setState({ kind: "running", step: "waitingAuthorization" });
+        await transport.writeLine(
+          encodeDeviceMessage({ type: "device_authorization" }),
+        );
+        if (runId !== runIdRef.current) return;
+
+        const authorization = await waitForAuthorizationCode(runId, channel, {
+          autoReconnect: true,
+        });
+        if (runId !== runIdRef.current) return;
+        if (!authorization) return;
+
+        setState({
+          kind: "confirm",
+          userCode: authorization.user_code,
+          verificationUri: authorization.verification_uri,
+        });
+        return;
+      }
+
       setState({ kind: "running", step: "selecting" });
       const channel = await openProvisioningChannel(runId);
       if (!channel) return;
@@ -502,9 +530,23 @@ export function CameraProvisioningDialog({
               <DialogHeader>
                 <DialogTitle>{t("title")}</DialogTitle>
                 <DialogDescription>
-                  {t("description", { name: edgeName, id: edgeDeviceId })}
+                  {reapproval
+                    ? t("reapprovalDescription", {
+                        name: edgeName,
+                        id: edgeDeviceId,
+                      })
+                    : t("description", { name: edgeName, id: edgeDeviceId })}
                 </DialogDescription>
               </DialogHeader>
+
+              {reapproval && (
+                <p
+                  role="status"
+                  className="rounded-md border p-3 text-sm text-muted-foreground"
+                >
+                  {t("reapprovalNotice")}
+                </p>
+              )}
 
               {availability === "unsupported" && (
                 <p role="alert" className="text-sm text-destructive">
@@ -520,22 +562,26 @@ export function CameraProvisioningDialog({
               {availability !== "unsupported" &&
                 availability !== "insecure" && (
                   <>
-                    <JollyTextField
-                      label={t("wifiSsidLabel")}
-                      value={wifiSsid}
-                      onChange={setWifiSsid}
-                      isDisabled={state.kind !== "idle"}
-                      autoComplete="off"
-                    />
-                    <JollyTextField
-                      label={t("wifiPasswordLabel")}
-                      description={t("wifiPasswordDescription")}
-                      value={wifiPassword}
-                      onChange={setWifiPassword}
-                      type="password"
-                      isDisabled={state.kind !== "idle"}
-                      autoComplete="new-password"
-                    />
+                    {!reapproval && (
+                      <>
+                        <JollyTextField
+                          label={t("wifiSsidLabel")}
+                          value={wifiSsid}
+                          onChange={setWifiSsid}
+                          isDisabled={state.kind !== "idle"}
+                          autoComplete="off"
+                        />
+                        <JollyTextField
+                          label={t("wifiPasswordLabel")}
+                          description={t("wifiPasswordDescription")}
+                          value={wifiPassword}
+                          onChange={setWifiPassword}
+                          type="password"
+                          isDisabled={state.kind !== "idle"}
+                          autoComplete="new-password"
+                        />
+                      </>
+                    )}
 
                     {running && (
                       <p
@@ -623,7 +669,7 @@ export function CameraProvisioningDialog({
                       onPress={handleStart}
                       isDisabled={!canStart || cleaningUp}
                     >
-                      {t("start")}
+                      {reapproval ? t("reapprovalStart") : t("start")}
                     </Button>
                   )}
                 {state.kind === "manual" && (

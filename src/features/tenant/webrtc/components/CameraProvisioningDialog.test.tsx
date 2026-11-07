@@ -110,7 +110,11 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function renderDialog(transport: FakeTransport, timeoutMs = 2_000) {
+function renderDialog(
+  transport: FakeTransport,
+  timeoutMs = 2_000,
+  options: { reapproval?: boolean } = {},
+) {
   render(
     <CameraProvisioningDialog
       eventId="e"
@@ -119,6 +123,7 @@ function renderDialog(transport: FakeTransport, timeoutMs = 2_000) {
       transport={transport}
       timeoutMs={timeoutMs}
       triggerLabel="設定を開く"
+      reapproval={options.reapproval}
     />,
     { wrapper: IntlTestProvider },
   );
@@ -148,6 +153,7 @@ function recordApprovals() {
     eventId: string;
     edgeDeviceId: string;
     userCode: string;
+    reapproval?: boolean;
   }[] = [];
   server.use(
     ...createOrpcHandlers({
@@ -201,6 +207,47 @@ describe("CameraProvisioningDialog", () => {
     });
     expect(approvals).toEqual([
       { eventId: "e", edgeDeviceId, userCode: "ABCD-EFGH" },
+    ]);
+  });
+
+  it("sends an explicit device authorization command for reapproval", async () => {
+    const transport = new FakeTransport();
+    const approvals = recordApprovals();
+    transport.push(
+      message({
+        type: "device_authorization",
+        user_code: "ABCD-EFGH",
+        verification_uri: "https://idp.example/device",
+        expires_in: 600,
+      }),
+    );
+    transport.push(message({ type: "authorization_result", ok: true }));
+
+    renderDialog(transport, 2_000, { reapproval: true });
+    openDialog();
+    expect(
+      screen.getByText(/一時停止中のカメラの認可をやり直します/),
+    ).toBeTruthy();
+    expect(screen.queryByRole("textbox", { name: "Wi-Fi SSID" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "認可をやり直す" }));
+    await screen.findByRole("button", { name: "承認する" });
+    expect(approvals).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: "承認する" }));
+
+    expect(
+      await screen.findByText(/初期設定が完了しました/, {}, { timeout: 3_000 }),
+    ).toBeTruthy();
+    expect(transport.written).toHaveLength(1);
+    expect(JSON.parse(transport.written[0])).toEqual({
+      type: "device_authorization",
+    });
+    expect(approvals).toEqual([
+      {
+        eventId: "e",
+        edgeDeviceId,
+        userCode: "ABCD-EFGH",
+        reapproval: true,
+      },
     ]);
   });
 

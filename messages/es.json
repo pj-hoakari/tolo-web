@@ -345,20 +345,25 @@
       "openHereLabel": "Abrir «{name}» en este dispositivo",
       "unregister": "Dar de baja",
       "unregisterLabel": "Dar de baja «{name}»",
-      "observationPoints": "Puntos de observación",
       "cameraBadge": "Camera",
       "linkedPoint": "Linked point: {name}",
       "provision": "Provision",
       "provisionLabel": "Provision “{name}”",
-      "authorizeConnection": "Authorize camera connection",
+      "authorizeConnection": "Authorize observation page connection",
       "useAsMachine": "Use as observation page",
       "useAsMachineLabel": "Use {name} as an observation page",
-      "authorizeConnectionLabel": "Authorize the camera connection for “{name}”",
+      "authorizeConnectionLabel": "Authorize the observation page connection for “{name}”",
+      "cameraConnectionHint": "Staff sessions start the connection authorization automatically when the observation page opens. For a machine session, use “Authorize observation page connection” in this screen to reauthorize.",
+      "stop": "Stop",
+      "stopLabel": "Temporarily stop “{name}”",
+      "reapprove": "Redo camera authorization",
+      "reapproveLabel": "Redo camera authorization for “{name}”",
       "connection": {
         "authorized": "The camera connection delegation was saved.",
-        "login_required": "Staff sign-in is required to authorize the camera connection. Start again from “Authorize camera connection”.",
+        "login_required": "Reauthorizing the camera connection requires a staff login. Use “Authorize observation page connection” again.",
         "failed": "Could not authorize the camera connection. Try again."
-      }
+      },
+      "observationPoints": "Puntos de observación"
     },
     "receiver": {
       "stoppedTitle": "La observación se detuvo",
@@ -397,7 +402,7 @@
       "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
       "edgeDeviceIdLabel": "Edge device ID",
       "openProvisioning": "Open provisioning",
-      "authorizeConnection": "Authorize camera connection"
+      "authorizeConnection": "Authorize observation page connection"
     },
     "unregisterEdge": {
       "title": "Dar de baja el dispositivo de observación",
@@ -407,9 +412,20 @@
       "failed": "No se pudo dar de baja el dispositivo de observación.",
       "stale": "No se encontró el dispositivo de observación o ya está dado de baja. Actualiza la lista."
     },
+    "stopCamera": {
+      "title": "Temporarily stop the camera",
+      "description": "Stops the stream from “{name}” temporarily. The registration remains; redo the camera authorization to resume.",
+      "cancel": "Cancel",
+      "confirm": "Stop temporarily",
+      "failed": "Could not stop the camera.",
+      "stale": "The camera was not found or does not belong to this event. Refresh the list."
+    },
     "cameraProvision": {
       "title": "ESP32 camera provisioning",
       "description": "Write the Wi-Fi and connection settings to “{name}” ({id}).",
+      "reapprovalNotice": "Redoes the authorization for the temporarily stopped camera. This clears the stop and lets the device connect again.",
+      "reapprovalDescription": "Redo the device authorization for “{name}” ({id}).",
+      "reapprovalStart": "Redo authorization",
       "trigger": "Provision",
       "wifiSsidLabel": "Wi-Fi SSID",
       "wifiPasswordLabel": "Wi-Fi password",
@@ -500,7 +516,10 @@
     "controls": {
       "start": "Iniciar cámara",
       "stop": "Detener",
-      "loading": "Iniciando…"
+      "loading": "Iniciando…",
+      "retry": "Reconectar",
+      "observeOnThisDevice": "Observar en este dispositivo",
+      "retryCamera": "Reconectar {camera}"
     },
     "cameraSelector": {
       "label": "Cámara"
@@ -545,7 +564,9 @@
       "detection": "Falló la detección de personas",
       "unregistered": "Este dispositivo de observación se ha dado de baja",
       "modelLoad": "No se pudo cargar el modelo de detección ({status}: {path})",
-      "connectionAuthorizationRequired": "Camera connection authorization is missing. Authorize the camera connection again.",
+      "connectionAuthorizationRequired": "The camera connection is not authorized. Reauthorize it with “Authorize observation page connection”.",
+      "connectionAuthorizationAutoStart": "Camera connection authorization is required. Moving to the authorization page.",
+      "connectionAuthorizationMachine": "The camera connection is not authorized. A staff member must reauthorize it with “Authorize observation page connection” in the management screen.",
       "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "No se permite el acceso a la cámara. Permite el acceso a la cámara en la configuración del navegador.",
@@ -566,6 +587,16 @@
       "inactiveHint": " (se aplica al iniciar)",
       "hide": "Ocultar",
       "espCamera": "Cámara ESP ({edgeId})"
+    },
+    "cameraStatus": {
+      "label": "{camera}: {status}",
+      "waiting": "En espera",
+      "stale": "Sin vídeo",
+      "capturing": "Capturando",
+      "inferring": "Detectando",
+      "ready": "Detectando",
+      "error": "Error",
+      "errorDetail": "{camera}: {error}"
     }
   },
   "ObservationDevices": {
@@ -739,7 +770,8 @@
     },
     "loggedOut": {
       "title": "Has cerrado la sesión",
-      "login": "Volver a iniciar sesión"
+      "login": "Volver a iniciar sesión",
+      "toObservation": "Back to the observation page"
     },
     "logout": "Cerrar sesión"
   },

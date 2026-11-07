@@ -1,5 +1,6 @@
 import { type Auth, signInWithCustomToken } from "firebase/auth";
 import type { DocumentReference, Firestore } from "firebase/firestore";
+import { cameraConnectionError } from "@/features/tenant/webrtc/utils/cameraConnection";
 import { ICE_SERVERS } from "@/features/tenant/webrtc/utils/config";
 import {
   getNamedAuth,
@@ -33,6 +34,7 @@ export type EspCameraSourceOptions = {
    */
   requestConnection: () => Promise<CameraConnection>;
   label?: string;
+  onError?: (cause: unknown) => void;
 };
 
 const APP_NAME_PREFIX = "esp-camera-console";
@@ -92,6 +94,7 @@ class EspCameraLink {
 
   private closed = false;
   private generation = 0;
+  private lastDecodedFrameAt: number | null = null;
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
   private retryDelay = RECONNECT_BASE_MS;
   private closeCurrent: (() => void) | null = null;
@@ -118,6 +121,7 @@ class EspCameraLink {
     }
     this.pendingConnection = connection;
 
+    this.lastDecodedFrameAt = null;
     this.canvas = document.createElement("canvas");
     const context = this.canvas.getContext("2d");
     if (!context) {
@@ -153,10 +157,15 @@ class EspCameraLink {
     }
     this.closeCurrent?.();
     this.closeCurrent = null;
+    this.lastDecodedFrameAt = null;
     for (const track of this.stream?.getTracks() ?? []) {
       track.stop();
     }
     this.pendingConnection = null;
+  }
+
+  lastFrameAt(): number | null {
+    return this.lastDecodedFrameAt;
   }
 
   private scheduleReconnect(): void {
@@ -199,6 +208,7 @@ class EspCameraLink {
       }
       finished = true;
       sessionActive = false;
+      this.lastDecodedFrameAt = null;
       if (answerTimer !== null) clearTimeout(answerTimer);
       if (connectTimer !== null) clearTimeout(connectTimer);
       if (frameTimer !== null) clearInterval(frameTimer);
@@ -254,7 +264,8 @@ class EspCameraLink {
           }
           this.context.drawImage(bitmap, 0, 0);
           this.track.requestFrame();
-          lastFrameAt = performance.now();
+          this.lastDecodedFrameAt = performance.now();
+          lastFrameAt = this.lastDecodedFrameAt;
           if (jpegChannel?.readyState === "open") {
             jpegChannel.send(`ACK:${frame.id}`);
           }
@@ -446,7 +457,16 @@ class EspCameraLink {
       }, 2_000);
     } catch (error) {
       console.error("[esp-camera] セッションの確立に失敗しました", error);
-      finish(true);
+      if (this.closed || generation !== this.generation) {
+        finish(false);
+        return;
+      }
+      if (cameraConnectionError(error)) {
+        finish(false);
+        this.options.onError?.(error);
+      } else {
+        finish(true);
+      }
     }
   }
 }
@@ -463,6 +483,9 @@ export function createEspCameraVideoSource(
     },
     close() {
       link.close();
+    },
+    lastFrameAt() {
+      return link.lastFrameAt();
     },
   };
 }

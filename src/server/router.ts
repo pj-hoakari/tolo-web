@@ -249,6 +249,7 @@ export interface RegisteredEdgeDevice {
 }
 
 export interface DelegatedCamera extends EdgeDevice {
+  connectionAuthorized?: boolean;
   observationPointId: string;
 }
 
@@ -1188,6 +1189,7 @@ export const router = {
           eventId: z.string().min(1),
           edgeDeviceId: publicId,
           userCode: z.string().trim().min(1).max(64),
+          reapproval: z.boolean().optional(),
         }),
       )
       .handler(async ({ input }): Promise<void> => {
@@ -1202,7 +1204,9 @@ export const router = {
           if (device.kind !== "camera") {
             throw new ORPCError("PRECONDITION_FAILED");
           }
-          await approveDeviceAuthorization(input);
+          await approveDeviceAuthorization(input, {
+            reapproval: input.reapproval === true,
+          });
         } catch (err) {
           throw toORPCError(err);
         }
@@ -1212,6 +1216,29 @@ export const router = {
       .handler(async ({ input }): Promise<void> => {
         try {
           await revokeDeviceAuthorization(input);
+          await deleteConnectionDelegationsForCamera(
+            input.eventId,
+            input.edgeDeviceId,
+          );
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
+    stopDeviceAuthorization: os
+      .input(edgeDeviceInput)
+      .handler(async ({ input }): Promise<void> => {
+        try {
+          const devices = observationMocking()
+            ? sampleObservationDevicesWire
+            : await listEdgeDevices(input.eventId);
+          const device = devices.find(
+            (d) => d.edgeDeviceId === input.edgeDeviceId,
+          );
+          if (!device) throw new ORPCError("NOT_FOUND");
+          if (device.kind !== "camera") {
+            throw new ORPCError("PRECONDITION_FAILED");
+          }
+          await revokeDeviceAuthorization(input, { permanent: false });
           await deleteConnectionDelegationsForCamera(
             input.eventId,
             input.edgeDeviceId,

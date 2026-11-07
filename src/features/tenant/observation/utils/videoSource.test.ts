@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CameraAccessError, createCameraVideoSource } from "./videoSource";
+import {
+  CameraAccessError,
+  createCameraVideoSource,
+  FRAME_STALE_AFTER_MS,
+  isFrameFresh,
+} from "./videoSource";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -46,5 +51,16 @@ describe("createCameraVideoSource", () => {
     await expect(createCameraVideoSource().open()).rejects.toMatchObject({
       reason: "unsupported",
     });
+  });
+});
+
+describe("isFrameFresh", () => {
+  it("treats a frame as fresh until the staleness threshold and stale after it", () => {
+    const now = 100_000;
+
+    expect(isFrameFresh(now - 1_000, now)).toBe(true);
+    expect(isFrameFresh(now - FRAME_STALE_AFTER_MS, now)).toBe(true);
+    expect(isFrameFresh(now - FRAME_STALE_AFTER_MS - 1, now)).toBe(false);
+    expect(isFrameFresh(null, now)).toBe(false);
   });
 });
