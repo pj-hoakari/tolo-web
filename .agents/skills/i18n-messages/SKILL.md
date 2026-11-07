@@ -87,6 +87,7 @@ return <FooView label={t("title")} />;
 ユーティリティ・純粋関数・ストア・型定義に表示文字列を置かない。**メッセージキーを返し、描画境界で翻訳する。**
 
 参考実装:
+
 - `src/features/tenant/management/graph/nodeTypes.ts`
   検証結果・通知が `messageKey` を持ち、`NoticeTranslator`（`useTranslations("Graph.notices")` をそのまま渡せる関数型）を引数で注入する。
 
@@ -144,6 +145,7 @@ renderHook(() => useGraphEditor(initial), { wrapper: IntlTestProvider });
 ## Storybook
 
 `.storybook/preview.tsx` の decorator が `NextIntlClientProvider` を張るので、story 側の対応は不要。ツールバーの **Locale** で全ロケールを切り替えて確認できる。
+
 - 特定 story だけロケールを変えたいときは `globals: { locale: "ko" }` を指定する。
 - 新しいロケールを増やしたら `.storybook/messages.ts` の import とマップにも追加する（漏れは `satisfies` で型エラーになる）。
 
