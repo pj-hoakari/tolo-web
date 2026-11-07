@@ -510,6 +510,8 @@
   },
   "Observation": {
     "title": "{tenantId} 观测页面",
+    "machineSessionFailed": "无法授权观测页面。",
+    "machineSessionRetry": "重新授权",
     "controls": {
       "start": "启动摄像头",
       "stop": "停止",

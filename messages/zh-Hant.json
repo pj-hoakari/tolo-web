@@ -510,6 +510,8 @@
   },
   "Observation": {
     "title": "{tenantId} 觀測頁面",
+    "machineSessionFailed": "無法授權觀測頁面。",
+    "machineSessionRetry": "重新授權",
     "controls": {
       "start": "啟動攝影機",
       "stop": "停止",
