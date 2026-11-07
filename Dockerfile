@@ -7,7 +7,6 @@ WORKDIR /app
 
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-COPY vendor ./vendor
 RUN --mount=type=secret,id=npm_token \
     env "npm_config_//npm.pkg.github.com/:_authToken=$(cat /run/secrets/npm_token)" \
         pnpm install --frozen-lockfile
