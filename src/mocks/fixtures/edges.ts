@@ -114,6 +114,25 @@ export function registeredEdgeDeviceWire({
   };
 }
 
+/**
+ * 観測ページが委任されたカメラを含む、モック用のエッジ端末一覧。
+ * ページ自身の cameraLinks に sampleCameraDeviceWire が入る。
+ */
+export const sampleObservationDevicesWire: EdgeDevice[] = [
+  {
+    ...sampleEdgeDevicesWire[0],
+    cameraLinks: [
+      {
+        cameraEdgeDeviceId: sampleCameraDeviceWire.edgeDeviceId,
+        observationPointId:
+          sampleCameraDeviceWire.cameraLinks[0].observationPointId,
+      },
+    ],
+  },
+  ...sampleEdgeDevicesWire.slice(1),
+  sampleCameraDeviceWire,
+];
+
 export const sampleEdgeDeviceItems: EdgeDeviceItem[] =
   sampleEdgeDevicesWire.map((device) => ({
     ...device,

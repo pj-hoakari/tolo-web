@@ -3,6 +3,7 @@ import { z } from "zod";
 const idpMetadata = z.object({
   authorization_endpoint: z.string(),
   token_endpoint: z.string(),
+  jwks_uri: z.string().optional(),
   end_session_endpoint: z.string().optional(),
 });
 

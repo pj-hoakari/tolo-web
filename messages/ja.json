@@ -349,7 +349,14 @@
       "cameraBadge": "カメラ",
       "linkedPoint": "紐づけ先: {name}",
       "provision": "設定",
-      "provisionLabel": "「{name}」を設定"
+      "provisionLabel": "「{name}」を設定",
+      "authorizeConnection": "カメラ接続を許可",
+      "authorizeConnectionLabel": "「{name}」のカメラ接続を許可",
+      "connection": {
+        "authorized": "カメラ接続の委任を保存しました。",
+        "login_required": "カメラ接続の認可にはスタッフの再ログインが必要です。もう一度「カメラ接続を許可」からやり直してください。",
+        "failed": "カメラ接続の認可に失敗しました。もう一度お試しください。"
+      }
     },
     "receiver": {
       "stoppedTitle": "観測が停止しました",
@@ -387,7 +394,8 @@
       "noCameraPoints": "紐づけられる観測点がありません。先に観測ページのデバイスを登録してください。",
       "cameraRegistered": "「{name}」をカメラとして登録しました。初期設定を開き、端末に設定を書き込んでください。",
       "edgeDeviceIdLabel": "エッジデバイス ID",
-      "openProvisioning": "初期設定を開く"
+      "openProvisioning": "初期設定を開く",
+      "authorizeConnection": "カメラ接続を許可"
     },
     "unregisterEdge": {
       "title": "観測デバイスの登録を解除",
@@ -490,6 +498,9 @@
       "stop": "停止",
       "loading": "起動中…"
     },
+    "cameraSelector": {
+      "label": "カメラ"
+    },
     "status": {
       "detection": "検出状態: {status}",
       "trackedCount": "追跡中人数: {count}人",
@@ -530,12 +541,15 @@
       "detection": "人検出処理に失敗しました",
       "unregistered": "この観測デバイスは登録解除されています",
       "modelLoad": "検出モデルの読み込みに失敗しました（{status}: {path}）",
+      "connectionAuthorizationRequired": "カメラ接続の認可がありません。「カメラ接続を許可」から再認可してください。",
+      "cameraNotDelegated": "このカメラは観測ページの接続委任に含まれていません。",
       "camera": {
         "permissionDenied": "カメラの使用が許可されていません。ブラウザの設定でカメラへのアクセスを許可してください。",
         "notFound": "カメラが見つかりません。カメラが接続されているか確認してください。",
         "unsupported": "このブラウザまたは接続ではカメラを利用できません",
         "unavailable": "カメラを起動できませんでした"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "映像ソース",
@@ -546,7 +560,8 @@
       "camera": "カメラ",
       "activeHint": "（切替は停止後）",
       "inactiveHint": "（選択後に起動で反映）",
-      "hide": "非表示"
+      "hide": "非表示",
+      "espCamera": "ESP カメラ ({edgeId})"
     }
   },
   "ObservationDevices": {

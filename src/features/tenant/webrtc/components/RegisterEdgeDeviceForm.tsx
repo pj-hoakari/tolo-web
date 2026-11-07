@@ -6,10 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
 import { JollySelect, SelectItem } from "@/components/ui/select";
 import { JollyTextField } from "@/components/ui/textfield";
+import { observationPath } from "@/features/tenant/observation/routes";
 import { type ErrorMessageKeys, errorMessageKey } from "@/lib/errorMessageKey";
 import { orpc } from "@/lib/orpc";
 import type { EdgeDevice, EdgeDeviceKind } from "@/server/router";
 import type { EdgeDeviceItem } from "../type";
+import {
+  cameraConnectionPath,
+  pageForObservationPoint,
+} from "../utils/cameraConnection";
 import { CameraProvisioningDialog } from "./CameraProvisioningDialog";
 
 type Registration =
@@ -20,6 +25,7 @@ type Registration =
       device: EdgeDevice;
       path: string | null;
       url: string | null;
+      connectionPath: string | null;
       copied: boolean;
     }
   | { kind: "failed"; message: string };
@@ -69,6 +75,7 @@ type Props = {
   eventId: string;
   onRegistered: () => void;
   edges?: EdgeDeviceItem[];
+  connectionReturnPath?: string;
 };
 
 const NO_EDGES: EdgeDeviceItem[] = [];
@@ -77,6 +84,7 @@ export function RegisterEdgeDeviceForm({
   eventId,
   onRegistered,
   edges = NO_EDGES,
+  connectionReturnPath,
 }: Props) {
   const t = useTranslations("Webrtc.registerEdge");
   const format = useFormatter();
@@ -120,6 +128,10 @@ export function RegisterEdgeDeviceForm({
             kind === "camera" ? (linkedPointId ?? undefined) : undefined,
         });
       const isCamera = device.kind === "camera";
+      const owningPage =
+        isCamera && linkedPointId
+          ? pageForObservationPoint(edges, linkedPointId)
+          : undefined;
       setRegistration({
         kind: "registered",
         device,
@@ -127,6 +139,14 @@ export function RegisterEdgeDeviceForm({
         url: isCamera
           ? null
           : new URL(observationPagePath, window.location.origin).href,
+        connectionPath:
+          isCamera && owningPage
+            ? cameraConnectionPath({
+                eventId,
+                pageEdgeDeviceId: owningPage.edgeDeviceId,
+                returnPath: connectionReturnPath ?? observationPath(eventId),
+              })
+            : null,
         copied: false,
       });
       setName("");
@@ -240,7 +260,16 @@ export function RegisterEdgeDeviceForm({
                 value={registration.device.edgeDeviceId}
                 isReadOnly
               />
-              <div className="flex justify-end">
+              <div className="flex flex-wrap justify-end gap-2">
+                {registration.connectionPath && (
+                  <Link
+                    href={registration.connectionPath}
+                    variant="outline"
+                    size="sm"
+                  >
+                    {t("authorizeConnection")}
+                  </Link>
+                )}
                 <CameraProvisioningDialog
                   eventId={eventId}
                   edgeDeviceId={registration.device.edgeDeviceId}

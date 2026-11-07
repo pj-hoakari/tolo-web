@@ -27,6 +27,7 @@ import {
   type ObservationSettings,
 } from "@/features/tenant/management/settings/type";
 import type {
+  CameraConnection,
   CameraProvisioningDefaults,
   EdgeDevice,
   FirestoreToken,
@@ -652,6 +653,40 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             sessionId: `mock-session_${input.edgeId}`,
           }),
         ),
+      requestCameraConnection: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            pageEdgeDeviceId: z.string().min(1),
+            cameraEdgeId: z.string().min(1),
+          }),
+        )
+        .handler(async ({ input }): Promise<CameraConnection> => {
+          const page = devices.find(
+            (d) => d.edgeDeviceId === input.pageEdgeDeviceId,
+          );
+          if (page?.kind !== "observation_page") {
+            throw new ORPCError(page ? "PRECONDITION_FAILED" : "NOT_FOUND");
+          }
+          const camera = devices.find(
+            (d) => d.edgeDeviceId === input.cameraEdgeId,
+          );
+          if (camera?.kind !== "camera") {
+            throw new ORPCError(camera ? "PRECONDITION_FAILED" : "NOT_FOUND");
+          }
+          if (
+            !page.cameraLinks.some(
+              (link) => link.cameraEdgeDeviceId === input.cameraEdgeId,
+            )
+          ) {
+            throw new ORPCError("PRECONDITION_FAILED");
+          }
+          return {
+            sessionId: `mock-session_${input.cameraEdgeId}`,
+            firestoreToken: `mock-camera-token_${input.cameraEdgeId}`,
+            expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+          };
+        }),
       issueConsoleFirestoreToken: os
         .input(z.object({ eventId: z.string().min(1) }))
         .handler(

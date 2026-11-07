@@ -349,7 +349,14 @@
       "cameraBadge": "Camera",
       "linkedPoint": "Linked point: {name}",
       "provision": "Provision",
-      "provisionLabel": "Provision “{name}”"
+      "provisionLabel": "Provision “{name}”",
+      "authorizeConnection": "Authorize camera connection",
+      "authorizeConnectionLabel": "Authorize the camera connection for “{name}”",
+      "connection": {
+        "authorized": "The camera connection delegation was saved.",
+        "login_required": "Staff sign-in is required to authorize the camera connection. Start again from “Authorize camera connection”.",
+        "failed": "Could not authorize the camera connection. Try again."
+      }
     },
     "receiver": {
       "stoppedTitle": "अवलोकन रोकियो",
@@ -387,7 +394,8 @@
       "noCameraPoints": "No observation point is available. Register an observation page device first.",
       "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
       "edgeDeviceIdLabel": "Edge device ID",
-      "openProvisioning": "Open provisioning"
+      "openProvisioning": "Open provisioning",
+      "authorizeConnection": "Authorize camera connection"
     },
     "unregisterEdge": {
       "title": "अवलोकन उपकरणको दर्ता हटाउनुहोस्",
@@ -490,6 +498,9 @@
       "stop": "रोक्नुहोस्",
       "loading": "सुरु हुँदै…"
     },
+    "cameraSelector": {
+      "label": "क्यामेरा"
+    },
     "status": {
       "detection": "पहिचान स्थिति: {status}",
       "trackedCount": "ट्र्याक भइरहेका मानिस: {count}",
@@ -530,12 +541,15 @@
       "detection": "मानिस पहिचान प्रक्रिया असफल भयो",
       "unregistered": "यो अवलोकन उपकरणको दर्ता रद्द गरिएको छ",
       "modelLoad": "पहिचान मोडेल लोड गर्न सकिएन ({status}: {path})",
+      "connectionAuthorizationRequired": "Camera connection authorization is missing. Authorize the camera connection again.",
+      "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "क्यामेरा प्रयोग गर्न अनुमति छैन। ब्राउजर सेटिङमा क्यामेरा पहुँच अनुमति दिनुहोस्।",
         "notFound": "क्यामेरा भेटिएन। क्यामेरा जोडिएको छ कि छैन जाँच गर्नुहोस्।",
         "unsupported": "यो ब्राउजर वा जडानमा क्यामेरा प्रयोग गर्न सकिँदैन",
         "unavailable": "क्यामेरा सुरु गर्न सकिएन"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "भिडियो स्रोत",
@@ -546,7 +560,8 @@
       "camera": "क्यामेरा",
       "activeHint": "(रोकेपछि मात्र बदलिन्छ)",
       "inactiveHint": "(छानेपछि सुरु गर्दा लागू हुन्छ)",
-      "hide": "लुकाउनुहोस्"
+      "hide": "लुकाउनुहोस्",
+      "espCamera": "ESP क्यामेरा ({edgeId})"
     }
   },
   "ObservationDevices": {

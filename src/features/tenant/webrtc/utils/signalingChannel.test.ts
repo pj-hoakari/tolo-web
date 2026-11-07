@@ -29,4 +29,28 @@ describe("Firestore のシグナリングチャネル", () => {
       createdAt: "server-timestamp",
     });
   });
+
+  it("RTCSessionDescription インスタンスを plain object にして書く", () => {
+    const signalsRef = collection(db, "signals");
+    const channel = createFirestoreSignalingChannel({
+      signalsRef,
+      self: "console",
+    });
+    const description = {
+      type: "offer" as RTCSdpType,
+      sdp: "v=0",
+      toJSON: () => ({ type: "offer", sdp: "v=0" }),
+    };
+
+    channel.send({ kind: "description", description });
+
+    expect(addDoc).toHaveBeenCalledWith(signalsRef, {
+      from: "console",
+      payload: {
+        kind: "description",
+        description: { type: "offer", sdp: "v=0" },
+      },
+      createdAt: "server-timestamp",
+    });
+  });
 });
