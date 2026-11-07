@@ -40,6 +40,9 @@ export default async function TenantObservation({
   const { tenantId, eventId, edgeDeviceId } = await params;
   const query = await searchParams;
   const requestedCamera = query.camera;
+  const machineFailed =
+    query.machineSession === "failed" ||
+    query.machineSession === "login_required";
   const requestedCameraId =
     typeof requestedCamera === "string" &&
     /^[0-9a-f]{16}$/.test(requestedCamera)
@@ -67,8 +70,7 @@ export default async function TenantObservation({
             </div>
           </header>
           <main className="flex w-full flex-col items-center gap-4">
-            {(query.machineSession === "failed" ||
-              query.machineSession === "login_required") && (
+            {machineFailed && (
               <div role="alert" className="flex flex-col items-center gap-2">
                 <p>{t("machineSessionFailed")}</p>
                 <Link
@@ -84,7 +86,7 @@ export default async function TenantObservation({
               </div>
             )}
             <ScreenWakeControl />
-            {viewer.type === "staff" && (
+            {viewer.type === "staff" && !machineFailed && (
               <Link
                 variant="default"
                 href={machineSessionPath({
