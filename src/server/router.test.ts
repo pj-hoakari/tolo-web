@@ -2403,6 +2403,41 @@ describe("machine session procedure allowlist", () => {
       edgeDeviceId,
     });
 
+  it("uses the machine session identity for observation requests", async () => {
+    machine();
+    const points = vi
+      .spyOn(edgeEdgeDeviceClient, "listEdgeDeviceObservationPoints")
+      .mockResolvedValue(create(ListEdgeDeviceObservationPointsResponseSchema));
+    const heartbeat = vi
+      .spyOn(edgeEdgeDeviceClient, "heartbeat")
+      .mockResolvedValue(create(HeartbeatResponseSchema));
+    const report = vi
+      .spyOn(edgeMeasurementIngestClient, "reportMeasurements")
+      .mockResolvedValue(create(ReportMeasurementsResponseSchema));
+    const requested = {
+      eventId: "aaaaaaaaaaaaaaaa",
+      edgeDeviceId: "bbbbbbbbbbbbbbbb",
+    };
+    const bound = { eventId, edgeDeviceId: protoPageWithCamera.edgeDeviceId };
+
+    await call(router.observation.listObservationPoints, requested);
+    await call(router.observation.heartbeat, {
+      ...requested,
+      activeObservationPointIds: [],
+    });
+    await call(router.observation.reportMeasurements, {
+      ...requested,
+      measurements: [],
+    });
+
+    expect(points).toHaveBeenCalledWith(bound);
+    expect(heartbeat).toHaveBeenCalledWith({
+      ...bound,
+      activeObservationPointIds: [],
+    });
+    expect(report).toHaveBeenCalledWith({ ...bound, measurements: [] });
+  });
+
   it("refuses ListEdgeDevices even though the device is in the session", async () => {
     machine();
     const list = vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices");

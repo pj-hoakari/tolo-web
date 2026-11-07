@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/components/ui/link";
 import { AuthScreen } from "@/features/auth/AuthScreen";
@@ -10,23 +11,18 @@ export default async function LoggedOut({
   searchParams: Promise<{ state?: string | string[] }>;
 }) {
   const { state } = await searchParams;
-  const value = typeof state === "string" ? state : undefined;
-  const machineReturn = value ? parseMachineReturn(value) : undefined;
-  const origin = value ? tenantOrigin(value) : undefined;
+  const machineReturn =
+    typeof state === "string" ? parseMachineReturn(state) : undefined;
+  if (machineReturn) redirect(machineReturn);
+  const origin = typeof state === "string" ? tenantOrigin(state) : undefined;
   const t = await getTranslations("Auth.loggedOut");
 
   return (
     <AuthScreen title={t("title")}>
-      {machineReturn ? (
-        <Link href={machineReturn} variant="default">
-          {t("toObservation")}
+      {origin && (
+        <Link href={`${origin}/management`} variant="default">
+          {t("login")}
         </Link>
-      ) : (
-        origin && (
-          <Link href={`${origin}/management`} variant="default">
-            {t("login")}
-          </Link>
-        )
       )}
     </AuthScreen>
   );
@@ -40,9 +36,8 @@ function parseMachineReturn(state: string): string | undefined {
     if (
       typeof parsed.host !== "string" ||
       typeof parsed.returnPath !== "string"
-    ) {
+    )
       return undefined;
-    }
     const origin = tenantOrigin(parsed.host);
     const path = sameHostPath(parsed.returnPath);
     return origin && path ? `${origin}${path}` : undefined;
