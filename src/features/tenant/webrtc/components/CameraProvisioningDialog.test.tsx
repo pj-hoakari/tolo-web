@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createOrpcHandlers } from "@/mocks/handlers";
 import { server } from "@/mocks/server";
@@ -178,6 +184,12 @@ describe("CameraProvisioningDialog", () => {
     openDialog();
     fillWifi();
     start();
+    // Port selection must begin during the user gesture, before any RPC.
+    expect(transport.selected).toBe(true);
+
+    await screen.findByRole("button", { name: "承認する" });
+    expect(approvals).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: "承認する" }));
 
     expect(
       await screen.findByText(/初期設定が完了しました/, {}, { timeout: 3_000 }),
@@ -218,6 +230,9 @@ describe("CameraProvisioningDialog", () => {
     ).toBeTruthy();
     expect(screen.queryByRole("textbox", { name: "Wi-Fi SSID" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "認可をやり直す" }));
+    await screen.findByRole("button", { name: "承認する" });
+    expect(approvals).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: "承認する" }));
 
     expect(
       await screen.findByText(/初期設定が完了しました/, {}, { timeout: 3_000 }),
@@ -286,6 +301,28 @@ describe("CameraProvisioningDialog", () => {
     ]);
   });
 
+  it("requests the code again if it was missed without a port disconnect", async () => {
+    const transport = new FakeTransport();
+    const approvals = recordApprovals();
+    transport.push(message({ type: "config_result", ok: true }));
+    renderDialog(transport, 100);
+    openDialog();
+    fillWifi();
+    start();
+    await waitFor(() =>
+      expect(
+        transport.written.some(
+          (line) => JSON.parse(line).type === "device_authorization",
+        ),
+      ).toBe(true),
+    );
+    transport.push(
+      message({ type: "device_authorization", user_code: "ABCD-EFGH" }),
+    );
+    await screen.findByRole("button", { name: "承認する" });
+    expect(approvals).toEqual([]);
+  });
+
   it("reopens the port automatically when the device reboots after the config result", async () => {
     const transport = new FakeTransport();
     const approvals = recordApprovals();
@@ -309,10 +346,17 @@ describe("CameraProvisioningDialog", () => {
     transport.push(message({ type: "authorization_result", ok: true }));
 
     expect(await screen.findByText("端末の再接続を待っています…")).toBeTruthy();
+    await screen.findByRole("button", { name: "承認する" });
+    expect(approvals).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: "承認する" }));
+
     expect(
       await screen.findByText(/初期設定が完了しました/, {}, { timeout: 3_000 }),
     ).toBeTruthy();
     expect(transport.reopenAttempts).toBe(1);
+    expect(transport.written.map((line) => JSON.parse(line).type)).toContain(
+      "device_authorization",
+    );
     expect(approvals).toEqual([
       { eventId: "e", edgeDeviceId, userCode: "ABCD-EFGH" },
     ]);
@@ -351,6 +395,10 @@ describe("CameraProvisioningDialog", () => {
     expect(transport.reopenAttempts).toBe(1);
 
     fireEvent.click(screen.getByRole("button", { name: "ポートを再接続" }));
+
+    await screen.findByRole("button", { name: "承認する" });
+    expect(approvals).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: "承認する" }));
 
     expect(
       await screen.findByText(/初期設定が完了しました/, {}, { timeout: 3_000 }),
@@ -431,6 +479,7 @@ describe("CameraProvisioningDialog", () => {
     );
     transport.push(message({ type: "authorization_result", ok: true }));
 
+    fireEvent.click(await screen.findByRole("button", { name: "承認する" }));
     await screen.findByText(/初期設定が完了しました/, {}, { timeout: 3_000 });
 
     expect(document.body.textContent).not.toContain(password);
@@ -464,6 +513,7 @@ describe("CameraProvisioningDialog", () => {
     fillWifi("reception", password);
     start();
 
+    fireEvent.click(await screen.findByRole("button", { name: "承認する" }));
     await screen.findByText(/初期設定が完了しました/, {}, { timeout: 3_000 });
 
     expect(document.body.textContent).not.toContain(password);
@@ -492,5 +542,27 @@ describe("CameraProvisioningDialog", () => {
     expect(
       screen.getByText(/このブラウザは Web Serial に対応していません/),
     ).toBeTruthy();
+  });
+
+  it("closes a port whose open completes after the dialog is closed", async () => {
+    const transport = new FakeTransport();
+    let finishOpen!: () => void;
+    const originalOpen = transport.open.bind(transport);
+    vi.spyOn(transport, "open").mockImplementation(async (options) => {
+      await new Promise<void>((resolve) => {
+        finishOpen = resolve;
+      });
+      await originalOpen(options);
+    });
+
+    renderDialog(transport);
+    openDialog();
+    fillWifi();
+    start();
+    await waitFor(() => expect(finishOpen).toBeDefined());
+    fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+    finishOpen();
+    await waitFor(() => expect(transport.closed).toBe(true));
+    expect(transport.isOpen()).toBe(false);
   });
 });

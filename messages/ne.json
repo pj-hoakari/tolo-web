@@ -445,6 +445,7 @@
         "approving": "Approving the device authorization…",
         "waitingResult": "Waiting for the device authorization result…"
       },
+      "confirmAuthorization": "यो कोड भएको उपकरणलाई “{name}” का रूपमा स्वीकृत गर्नुहोस्। जडान गरिएको उपकरण जाँच गर्नुहोस्।",
       "userCodeLabel": "User code",
       "verificationUri": "Verification URL: {uri}",
       "complete": "Provisioning for “{name}” is complete. Approved user code {userCode}.",
