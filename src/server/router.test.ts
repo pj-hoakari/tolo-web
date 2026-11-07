@@ -1505,6 +1505,11 @@ describe("observation credentials by caller", () => {
 });
 
 describe("tenant.archiveEvent camera revocation", () => {
+  beforeEach(() => {
+    vi.mocked(tenantManagementClient.listEvents).mockResolvedValue({
+      events: [{ eventId, name: "Event", status: ProtoEventStatus.CLOSED }],
+    } as never);
+  });
   const stubIdp = () => {
     vi.stubEnv("AUTH_IDP_ISSUER", "https://idp.test");
     vi.stubEnv("AUTH_IDP_CLIENT_ID", "console-ui");
@@ -1523,6 +1528,27 @@ describe("tenant.archiveEvent camera revocation", () => {
     vi.mocked(tenantManagementClient.transitionEventStatus).mockResolvedValue({
       event: { eventId, name: "Event", status },
     } as never);
+
+  it.each([
+    ProtoEventStatus.OPEN,
+    ProtoEventStatus.LOCKED,
+    ProtoEventStatus.ARCHIVED,
+  ])(
+    "rejects an invalid transition before revoking anything (status %s)",
+    async (status) => {
+      vi.mocked(tenantManagementClient.listEvents).mockResolvedValue({
+        events: [{ eventId, name: "Event", status }],
+      } as never);
+      const list = vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices");
+      await expect(
+        call(router.tenant.archiveEvent, { eventId }),
+      ).rejects.toMatchObject({
+        code: "PRECONDITION_FAILED",
+      });
+      expect(list).not.toHaveBeenCalled();
+      expect(revokeMachineSessionsForEvent).not.toHaveBeenCalled();
+    },
+  );
 
   it("revokes every camera grant before archiving the event", async () => {
     stubIdp();

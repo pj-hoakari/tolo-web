@@ -114,7 +114,7 @@ import {
   revokeDeviceAuthorization,
 } from "./camera";
 import { cameraPageEdgeDeviceId, observationMocking } from "./cameraDelegation";
-import { requireApprovableEvent } from "./eventStatus";
+import { requireApprovableEvent, requireArchivableEvent } from "./eventStatus";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
 import { guestPageClient } from "./guest";
@@ -924,6 +924,7 @@ export const router = {
       .handler(async ({ input }): Promise<TenantEvent> => {
         try {
           return await withEventLifecycle(input.eventId, async () => {
+            await requireArchivableEvent(input.eventId);
             await revokeCameraGrants(input.eventId);
             await revokeMachineSessionsForEvent(input.eventId);
             await deleteConnectionDelegationsForEvent(input.eventId);

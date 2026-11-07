@@ -91,6 +91,7 @@ function createTestAuth(
       auth: auth as unknown as RealAuth["auth"],
       env,
       lock,
+      lifecycleLock: lock,
       lockMany: inProcessLockMany(lock),
       lockManyDynamic: (keys, selectMoreKeys, task) =>
         inProcessLockMany(lock)(keys, async () =>

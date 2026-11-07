@@ -16,5 +16,5 @@ export async function withEventLifecycle<T>(
   task: () => Promise<T>,
 ): Promise<T> {
   if (!process.env.AUTH_DATABASE_URL) return task();
-  return getRealAuth().lock(eventLifecycleLockKey(eventId), task);
+  return getRealAuth().lifecycleLock(eventLifecycleLockKey(eventId), task);
 }

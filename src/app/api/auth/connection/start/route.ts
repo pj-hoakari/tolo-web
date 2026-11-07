@@ -4,8 +4,10 @@ import {
   connectionResultPath,
   getConnectionAuth,
 } from "@/server/auth/connection";
+import { withEventLifecycle } from "@/server/auth/eventLifecycle";
 import { sameHostPath } from "@/server/auth/login";
 import { delegatedPageCameras } from "@/server/cameraDelegation";
+import { requireApprovableEvent } from "@/server/eventStatus";
 
 export const dynamic = "force-dynamic";
 
@@ -40,20 +42,23 @@ export async function GET(request: Request) {
   }
 
   try {
-    const cameraIds = await delegatedPageCameras(eventId, pageEdgeDeviceId);
-    if (!cameraIds) {
-      return backTo(request, "/auth/error?error=connection_page_not_found");
-    }
-    const location = await getConnectionAuth().start({
-      tenantId,
-      eventId,
-      pageEdgeDeviceId,
-      cameraIds,
-      staffSub: viewer.userId,
-      host: request.headers.get("host") ?? "",
-      returnPath,
+    return await withEventLifecycle(eventId, async () => {
+      await requireApprovableEvent(eventId);
+      const cameraIds = await delegatedPageCameras(eventId, pageEdgeDeviceId);
+      if (!cameraIds) {
+        return backTo(request, "/auth/error?error=connection_page_not_found");
+      }
+      const location = await getConnectionAuth().start({
+        tenantId,
+        eventId,
+        pageEdgeDeviceId,
+        cameraIds,
+        staffSub: viewer.userId,
+        host: request.headers.get("host") ?? "",
+        returnPath,
+      });
+      return NextResponse.redirect(location, 302);
     });
-    return NextResponse.redirect(location, 302);
   } catch (error) {
     console.error("failed to start the camera connection authorization", error);
     return backTo(request, connectionResultPath(returnPath, "failed"));
