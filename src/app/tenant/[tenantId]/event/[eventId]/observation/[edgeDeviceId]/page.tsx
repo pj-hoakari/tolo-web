@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { LocaleSelect } from "@/components/locale-select";
 import { PwaInstall } from "@/components/pwa/pwa-install";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LogoutButton } from "@/features/auth/LogoutButton";
 import { CrowdDetection } from "@/features/tenant/observation/components/CrowdDetection";
 import { ObservationSoftLock } from "@/features/tenant/observation/components/ObservationSoftLock";
 import { ScreenWakeControl } from "@/features/tenant/observation/components/ScreenWakeControl";
@@ -49,6 +50,7 @@ export default async function TenantObservation({
               <PwaInstall compact />
               <LocaleSelect />
               <ThemeToggle />
+              <LogoutButton />
             </div>
           </header>
           <main className="flex w-full flex-col items-center gap-4">

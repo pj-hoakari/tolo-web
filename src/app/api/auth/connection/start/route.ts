@@ -50,6 +50,7 @@ export async function GET(request: Request) {
       pageEdgeDeviceId,
       cameraIds,
       staffSub: viewer.userId,
+      host: request.headers.get("host") ?? "",
       returnPath,
     });
     return NextResponse.redirect(location, 302);

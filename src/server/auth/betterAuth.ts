@@ -8,6 +8,7 @@ import { Pool } from "pg";
 import { rootOrigin } from "@/lib/control/tenant";
 import { discoveryUrl } from "./discovery";
 import { loginErrorUrl, loginHandoff, PROVIDER_ID } from "./login";
+import { machineSessionPlugin } from "./machineSession";
 import { tenantOnboarding } from "./onboarding";
 
 export const SESSION_COOKIE = "__Host-tolo.session_token";
@@ -22,8 +23,11 @@ const AUTH_ENV = {
 } as const;
 
 export type AuthEnv = Record<keyof typeof AUTH_ENV, string> & {
+  baseUrl?: string;
   connectionClientId: string;
   connectionClientSecret: string;
+  machineClientId: string;
+  machineClientSecret: string;
 };
 
 export function readAuthEnv(): AuthEnv {
@@ -37,10 +41,16 @@ export function readAuthEnv(): AuthEnv {
     ...(Object.fromEntries(
       Object.entries(AUTH_ENV).map(([key, name]) => [key, process.env[name]]),
     ) as Record<keyof typeof AUTH_ENV, string>),
+    baseUrl: process.env.AUTH_BASE_URL || undefined,
     connectionClientId:
       process.env.AUTH_IDP_CONNECTION_CLIENT_ID || "observation-connection",
     connectionClientSecret:
       process.env.AUTH_IDP_CONNECTION_CLIENT_SECRET ||
+      process.env.AUTH_IDP_CLIENT_SECRET ||
+      "",
+    machineClientId: process.env.AUTH_IDP_MACHINE_CLIENT_ID || "edge-page",
+    machineClientSecret:
+      process.env.AUTH_IDP_MACHINE_CLIENT_SECRET ||
       process.env.AUTH_IDP_CLIENT_SECRET ||
       "",
   };
@@ -92,10 +102,20 @@ const toloSession = {
         eventId: { type: "string", required: true },
         pageEdgeDeviceId: { type: "string", required: true },
         cameraIds: { type: "string", required: true },
+        host: { type: "string", required: true },
         staffSub: { type: "string", required: true },
         returnPath: { type: "string", required: true },
         redirectUri: { type: "string", required: true },
+        generation: { type: "number", required: true },
         expiresAt: { type: "date", required: true },
+      },
+    },
+    connectionDelegationState: {
+      fields: {
+        connectionKey: { type: "string", required: true, unique: true },
+        generation: { type: "number", required: true },
+        deletedAt: { type: "date", required: false },
+        updatedAt: { type: "date", required: true },
       },
     },
     connectionAuthorization: {
@@ -150,17 +170,22 @@ const toloSession = {
   },
 } satisfies BetterAuthPlugin;
 
-export function authOptions(env: AuthEnv) {
+export function authOptions(env: AuthEnv, lock?: SessionLock) {
+  const authLock: SessionLock = lock ?? ((_, task) => task());
+  const baseUrl = env.baseUrl ?? rootOrigin();
   return {
     secret: env.secret,
-    baseURL: rootOrigin(),
-    trustedOrigins: [rootOrigin()],
+    baseURL: baseUrl,
+    trustedOrigins: [...new Set([rootOrigin(), baseUrl])],
     onAPIError: { errorURL: loginErrorUrl() },
     session: {
       expiresIn: 60 * 60,
       updateAge: 0,
       additionalFields: {
         tenantId: { type: "string", required: false, input: false },
+        eventId: { type: "string", required: false, input: false },
+        edgeDeviceId: { type: "string", required: false, input: false },
+        host: { type: "string", required: false, input: false },
         kind: {
           type: ["staff", "machine"],
           required: true,
@@ -213,43 +238,86 @@ export function authOptions(env: AuthEnv) {
         ],
       }),
       toloSession,
-      loginHandoff,
+      loginHandoff(authLock),
+      machineSessionPlugin(authLock, { issuer: env.issuer }),
       tenantOnboarding,
     ],
   } satisfies BetterAuthOptions;
 }
 
 export type SessionLock = <T>(
-  sessionId: string,
+  key: string,
   task: () => Promise<T>,
 ) => Promise<T>;
 
+export type SessionLocks = <T>(
+  keys: string[],
+  task: () => Promise<T>,
+) => Promise<T>;
+
+export type SessionLocksDynamic = <T>(
+  initialKeys: string[],
+  selectMoreKeys: () => Promise<string[]>,
+  task: () => Promise<T>,
+) => Promise<T>;
+
+async function withAdvisoryLocks<T>(
+  pool: Pool,
+  keys: string[],
+  task: () => Promise<T>,
+  selectMoreKeys: () => Promise<string[]> = async () => [],
+): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const locked = new Set<string>();
+    const acquire = async (keys: string[]) => {
+      for (const key of [...new Set(keys)].sort()) {
+        if (locked.has(key)) continue;
+        await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [key]);
+        locked.add(key);
+      }
+    };
+    await acquire(keys);
+    await acquire(await selectMoreKeys());
+    return await task();
+  } finally {
+    await client.query("ROLLBACK").then(
+      () => client.release(),
+      (err: Error) => client.release(err),
+    );
+  }
+}
+
 export function advisoryLock(pool: Pool): SessionLock {
-  return async (sessionId, task) => {
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
-        sessionId,
-      ]);
-      return await task();
-    } finally {
-      await client.query("ROLLBACK").then(
-        () => client.release(),
-        (err: Error) => client.release(err),
-      );
-    }
-  };
+  return (key, task) => withAdvisoryLocks(pool, [key], task);
+}
+
+export function advisoryLockMany(pool: Pool): SessionLocks {
+  return (keys, task) => withAdvisoryLocks(pool, keys, task);
+}
+
+/** Select additional keys while holding the initial locks, using one connection.
+ * Callers must serialize target creation with the initial locks and re-read
+ * targets in task after the additional locks have been acquired.
+ */
+export function advisoryLockManyDynamic(pool: Pool): SessionLocksDynamic {
+  return (keys, selectMoreKeys, task) =>
+    withAdvisoryLocks(pool, keys, task, selectMoreKeys);
 }
 
 function createRealAuth(env: AuthEnv) {
+  const pool = new Pool({ connectionString: env.databaseUrl });
+  const lock = advisoryLock(pool);
   return {
     env,
     auth: betterAuth({
-      ...authOptions(env),
+      ...authOptions(env, lock),
       database: new Pool({ connectionString: env.databaseUrl }),
     }),
-    lock: advisoryLock(new Pool({ connectionString: env.databaseUrl })),
+    lock,
+    lockMany: advisoryLockMany(pool),
+    lockManyDynamic: advisoryLockManyDynamic(pool),
   };
 }
 
