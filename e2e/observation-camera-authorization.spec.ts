@@ -5,6 +5,37 @@ import type { MockRouterOverrides } from "@/mocks/router";
 const samplePagePath = "/event/test/observation/8c1f0e2a5d4b3c6e";
 const pageEdgeDeviceId = "8c1f0e2a5d4b3c6e";
 
+test("カメラ一覧の取得失敗時は内蔵カメラを使わず、再取得できる", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    sessionStorage.setItem("msw:overrides", JSON.stringify({ devices: [] }));
+  });
+  await page.goto(samplePagePath);
+  await page
+    .getByRole("textbox", { name: "解除コード", exact: true })
+    .fill("1234");
+  await page.getByRole("textbox", { name: "解除コード（確認）" }).fill("1234");
+  await page.getByRole("button", { name: "設定して解除" }).click();
+  await expect(
+    page
+      .getByRole("alert")
+      .filter({ hasText: "映像ソースの取得に失敗しました" }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "カメラを起動" })).toHaveCount(
+    0,
+  );
+
+  await page.evaluate((devices) => {
+    sessionStorage.setItem("msw:overrides", JSON.stringify({ devices }));
+    window.dispatchEvent(new Event("msw:overrides"));
+  }, sampleObservationDevicesWire);
+  await page.getByRole("button", { name: "再接続", exact: true }).click();
+  await expect(
+    page.getByRole("tab", { name: /ESP32 カメラ/ }).first(),
+  ).toBeVisible();
+});
+
 const setConnectionAuthorizationError = async (
   page: Page,
   viewerType: "staff" | "machine",

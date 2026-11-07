@@ -79,6 +79,7 @@ export function CrowdDetection({
     initialCameraId,
     status: camerasStatus,
     cameraConnectionError: cameraListConnectionError,
+    retry: retryCameraList,
   } = useObservationPageCameras({
     eventId,
     pageEdgeDeviceId: edgeDeviceId,
@@ -97,11 +98,16 @@ export function CrowdDetection({
         : cameras.length > 0
           ? "esp"
           : "dev";
+  const cameraListFailed =
+    sourceMode !== "dev" &&
+    (camerasStatus === "error" ||
+      (cameras.length === 0 && cameraListConnectionError !== null));
 
   const sourceErrorRef = useRef<(key: string, cause: unknown) => void>(
     () => {},
   );
   const sourceSpecs = useMemo<CameraSourceSpec[]>(() => {
+    if (cameraListFailed) return [];
     if (effectiveMode === "dev") {
       return [
         { cameraEdgeId: LOCAL_SOURCE_KEY, createSource: devSourceFactory },
@@ -142,6 +148,7 @@ export function CrowdDetection({
     });
   }, [
     effectiveMode,
+    cameraListFailed,
     cameras,
     devSourceFactory,
     tenantId,
@@ -224,7 +231,7 @@ export function CrowdDetection({
   }, [status, connectionAuthorizationError, eventId, edgeDeviceId]);
 
   useEspCameraAutoStart({
-    enabled: effectiveMode === "esp",
+    enabled: effectiveMode === "esp" && !cameraListFailed,
     cameraIds: espCameraKeys,
     start,
   });
@@ -395,6 +402,16 @@ export function CrowdDetection({
         eventId={eventId}
         pageEdgeDeviceId={edgeDeviceId}
       />
+      {cameraListFailed && !connectionAuthorizationError && (
+        <div className="flex items-center gap-2">
+          <p role="alert" className="text-destructive">
+            {t("videoSource")}
+          </p>
+          <Button variant="secondary" size="sm" onPress={retryCameraList}>
+            {tControls("retry")}
+          </Button>
+        </div>
+      )}
       {status === "detecting" && (
         <div className="flex w-full max-w-3xl justify-end px-4 sm:px-0">
           <DetectionLineCreationModeToggle
@@ -412,18 +429,19 @@ export function CrowdDetection({
           }
         />
       )}
-      {effectiveMode === "dev" ? (
-        <CrowdDetectionControls
-          status={status}
-          onStart={start}
-          onStop={stop}
-          disabled={camerasStatus === "loading"}
-        />
-      ) : status === "error" ? (
-        <Button type="button" variant="secondary" size="sm" onPress={start}>
-          {tControls("retry")}
-        </Button>
-      ) : null}
+      {!cameraListFailed &&
+        (effectiveMode === "dev" ? (
+          <CrowdDetectionControls
+            status={status}
+            onStart={start}
+            onStop={stop}
+            disabled={camerasStatus === "loading"}
+          />
+        ) : status === "error" ? (
+          <Button type="button" variant="secondary" size="sm" onPress={start}>
+            {tControls("retry")}
+          </Button>
+        ) : null)}
       {effectiveMode === "esp" && cameras.length > 0 && (
         <Tabs
           selectedKey={selectedKey ?? undefined}

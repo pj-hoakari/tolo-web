@@ -17,6 +17,19 @@ vi.mock("../utils/detectCrowd", () => ({
 }));
 afterEach(cleanup);
 
+it("retries a failed camera list request", async () => {
+  vi.mocked(orpc.camera.listDelegatedCameras)
+    .mockRejectedValueOnce(new Error("offline"))
+    .mockResolvedValueOnce({ cameras: [] });
+  const { result } = renderHook(() =>
+    useObservationPageCameras({ eventId: "event", pageEdgeDeviceId: "page" }),
+  );
+  await waitFor(() => expect(result.current.status).toBe("error"));
+  act(() => result.current.retry());
+  await waitFor(() => expect(result.current.status).toBe("ready"));
+  expect(orpc.camera.listDelegatedCameras).toHaveBeenCalledTimes(2);
+});
+
 it("connects the authorized camera when another linked camera is paused", async () => {
   vi.mocked(orpc.camera.listDelegatedCameras).mockResolvedValue({
     cameras: [

@@ -24,6 +24,8 @@ const mocks = vi.hoisted(() => {
     stream: {} as MediaStream,
     sourceStates: [] as { key: string; status: "error"; error: string }[],
     retryCamera: vi.fn(),
+    retryList: vi.fn(),
+    listFailed: false,
   };
 });
 vi.mock("firebase/firestore", () => ({ onSnapshot: vi.fn() }));
@@ -54,10 +56,11 @@ vi.mock("@/features/tenant/webrtc/utils/webrtcSender", () => ({
 }));
 vi.mock("../hooks/useObservationPageCameras", () => ({
   useObservationPageCameras: () => ({
-    cameras,
+    cameras: mocks.listFailed ? [] : cameras,
     initialCameraId: "one",
-    status: "ready",
+    status: mocks.listFailed ? "error" : "ready",
     cameraConnectionError: null,
+    retry: mocks.retryList,
   }),
 }));
 vi.mock("../hooks/useEspCameraAutoStart", () => ({
@@ -119,6 +122,26 @@ afterEach(() => {
   vi.clearAllMocks();
   vi.unstubAllEnvs();
   mocks.sourceStates = [];
+  mocks.listFailed = false;
+});
+
+it("does not offer the local camera when the camera list fails", () => {
+  mocks.listFailed = true;
+  render(
+    <CrowdDetection
+      canReport={false}
+      tenantId="tenant"
+      eventId="event"
+      edgeDeviceId="page"
+    />,
+    { wrapper: IntlTestProvider },
+  );
+  expect(screen.getByRole("alert").textContent).toContain(
+    "映像ソースの取得に失敗しました",
+  );
+  fireEvent.click(screen.getByRole("button", { name: "再接続" }));
+  expect(mocks.retryList).toHaveBeenCalledOnce();
+  expect(screen.queryByRole("button", { name: "カメラを起動" })).toBeNull();
 });
 
 it("sends and receives settings for the selected ESP camera across tab switches", async () => {

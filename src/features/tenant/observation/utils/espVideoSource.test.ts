@@ -2,6 +2,7 @@
 import { ORPCError } from "@orpc/client";
 import { signInWithCustomToken } from "firebase/auth";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createFirestoreSignalingChannel } from "@/features/tenant/webrtc/utils/signalingChannel";
 import type { CameraConnection } from "@/server/router";
 import { createEspCameraVideoSource } from "./espVideoSource";
 
@@ -18,7 +19,7 @@ vi.mock("@/features/tenant/webrtc/utils/refs", () => ({
 }));
 vi.mock("@/features/tenant/webrtc/utils/signalingChannel", () => ({
   clearSession: vi.fn(async () => {}),
-  createFirestorePollingSignalingChannel: vi.fn(() => ({
+  createFirestoreSignalingChannel: vi.fn(() => ({
     send: vi.fn(),
     listen: () => vi.fn(),
   })),
@@ -69,6 +70,45 @@ const options = {
 };
 
 describe("ESP camera reconnect", () => {
+  it("stops listening to signaling after the peer connects", async () => {
+    const unsubscribe = vi.fn();
+    vi.mocked(createFirestoreSignalingChannel).mockReturnValueOnce({
+      send: vi.fn(),
+      listen: () => unsubscribe,
+    });
+    class Peer extends EventTarget {
+      connectionState = "new";
+      iceGatheringState = "complete";
+      localDescription = { type: "offer", sdp: "offer" };
+      createDataChannel = vi.fn();
+      close = vi.fn();
+      createOffer = vi.fn(async () => this.localDescription);
+      setLocalDescription = vi.fn(async () => {});
+    }
+    let peer: Peer | undefined;
+    vi.stubGlobal(
+      "RTCPeerConnection",
+      class extends Peer {
+        constructor() {
+          super();
+          peer = this;
+        }
+      },
+    );
+    const source = createEspCameraVideoSource({
+      ...options,
+      requestConnection: vi.fn().mockResolvedValue(connection),
+    });
+    await source.open();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(unsubscribe).not.toHaveBeenCalled();
+    if (!peer) throw new Error("peer was not created");
+    peer.connectionState = "connected";
+    peer.dispatchEvent(new Event("connectionstatechange"));
+    expect(unsubscribe).toHaveBeenCalledOnce();
+    source.close();
+    expect(unsubscribe).toHaveBeenCalledOnce();
+  });
   it.each(["CONNECTION_AUTHORIZATION_REQUIRED", "CAMERA_NOT_DELEGATED"])(
     "stops retry timers for %s",
     async (code) => {

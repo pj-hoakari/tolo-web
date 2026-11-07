@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   type CameraConnectionError,
   cameraConnectionError,
@@ -16,6 +16,7 @@ export type UseObservationPageCamerasResult = {
   status: ObservationPageCamerasStatus;
   error: string | null;
   cameraConnectionError: CameraConnectionError | null;
+  retry: () => void;
 };
 
 /**
@@ -37,7 +38,11 @@ export function useObservationPageCameras({
   const [error, setError] = useState<string | null>(null);
   const [connectionError, setConnectionError] =
     useState<CameraConnectionError | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => setAttempt((value) => value + 1), []);
 
+  // Changing the attempt starts a fresh request after the user selects retry.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt is the explicit retry trigger.
   useEffect(() => {
     let cancelled = false;
     setStatus("loading");
@@ -96,7 +101,7 @@ export function useObservationPageCameras({
     return () => {
       cancelled = true;
     };
-  }, [eventId, pageEdgeDeviceId, requestedCameraId]);
+  }, [eventId, pageEdgeDeviceId, requestedCameraId, attempt]);
 
   return {
     cameras,
@@ -104,5 +109,6 @@ export function useObservationPageCameras({
     status,
     error,
     cameraConnectionError: connectionError,
+    retry,
   };
 }

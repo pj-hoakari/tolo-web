@@ -208,6 +208,7 @@ class EspCameraLink {
       }
       finished = true;
       sessionActive = false;
+      this.lastDecodedFrameAt = null;
       if (answerTimer !== null) clearTimeout(answerTimer);
       if (connectTimer !== null) clearTimeout(connectTimer);
       if (frameTimer !== null) clearInterval(frameTimer);
