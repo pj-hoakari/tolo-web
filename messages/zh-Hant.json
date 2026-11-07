@@ -427,6 +427,7 @@
         "approving": "Approving the device authorization…",
         "waitingResult": "Waiting for the device authorization result…"
       },
+      "confirmAuthorization": "將此代碼對應的裝置核准為「{name}」。請確認連接的裝置。",
       "userCodeLabel": "User code",
       "verificationUri": "Verification URL: {uri}",
       "complete": "Provisioning for “{name}” is complete. Approved user code {userCode}.",

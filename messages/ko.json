@@ -427,6 +427,7 @@
         "approving": "Approving the device authorization…",
         "waitingResult": "Waiting for the device authorization result…"
       },
+      "confirmAuthorization": "이 코드의 기기를 “{name}”(으)로 승인합니다. 연결된 기기를 확인하세요.",
       "userCodeLabel": "User code",
       "verificationUri": "Verification URL: {uri}",
       "complete": "Provisioning for “{name}” is complete. Approved user code {userCode}.",
