@@ -9,11 +9,11 @@ import type { ConnectionStatus, EdgeDeviceItem } from "../type";
 import {
   type CameraConnectionNotice,
   cameraConnectionPath,
-  machineSessionPath,
   pageForCamera,
 } from "../utils/cameraConnection";
 import { isActiveConnection } from "../utils/connectionStatus";
 import { CameraProvisioningDialog } from "./CameraProvisioningDialog";
+import { StopCameraDialog } from "./StopCameraDialog";
 import { UnregisterEdgeDeviceDialog } from "./UnregisterEdgeDeviceDialog";
 
 export type AliveEdgeListProps = {
@@ -61,6 +61,9 @@ export function AliveEdgeList({
       : t("unknownTime");
 
   const observationPointNames = new Map<string, string>();
+  const hasCameraWithPage = edges.some(
+    (edge) => edge.kind === "camera" && pageForCamera(edges, edge.edgeDeviceId),
+  );
   for (const edge of edges) {
     if (edge.kind !== "observation_page") continue;
     for (const point of edge.observationPoints) {
@@ -83,9 +86,11 @@ export function AliveEdgeList({
           {t("refresh")}
         </Button>
       </div>
-      {flowStatesFailed ? (
-        <p className="text-sm text-destructive">{tFlow("error")}</p>
-      ) : null}
+      {hasCameraWithPage && (
+        <p className="text-sm text-muted-foreground">
+          {t("cameraConnectionHint")}
+        </p>
+      )}
       {connectionNotice && (
         <p
           role={connectionNotice === "authorized" ? "status" : "alert"}
@@ -98,6 +103,9 @@ export function AliveEdgeList({
           {t(`connection.${connectionNotice}`)}
         </p>
       )}
+      {flowStatesFailed ? (
+        <p className="text-sm text-destructive">{tFlow("error")}</p>
+      ) : null}
       {status === "error" && error ? (
         <p role="alert" className="text-sm text-destructive">
           {error}
@@ -140,34 +148,41 @@ export function AliveEdgeList({
                     )}
                     <span className="font-medium break-all">{name}</span>
                   </span>
-                  {isCamera && linkedPointNames.length > 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      {t("linkedPoint", { name: linkedPointNames.join(", ") })}
-                    </span>
+                  {isCamera ? (
+                    linkedPointNames.length > 0 ? (
+                      <span className="text-xs text-muted-foreground">
+                        {t("linkedPoint", {
+                          name: linkedPointNames.join(", "),
+                        })}
+                      </span>
+                    ) : null
+                  ) : (
+                    <>
+                      {edge.observationPoints.length > 0 ? (
+                        <fieldset
+                          aria-label={t("observationPoints")}
+                          className="mt-1 flex flex-col gap-1 text-sm"
+                        >
+                          {edge.observationPoints.map((point) => (
+                            <div key={point.observationPointId}>
+                              {point.name}
+                              <FlowStateNotes
+                                state={flowStates?.get(
+                                  point.observationPointId,
+                                )}
+                                className="text-xs"
+                              />
+                            </div>
+                          ))}
+                        </fieldset>
+                      ) : null}
+                      <span className="text-xs text-muted-foreground">
+                        {t("lastSeen", {
+                          time: formatLastSeen(edge.lastHeartbeatAt),
+                        })}
+                      </span>
+                    </>
                   )}
-                  {!isCamera && (
-                    <span className="text-xs text-muted-foreground">
-                      {t("lastSeen", {
-                        time: formatLastSeen(edge.lastHeartbeatAt),
-                      })}
-                    </span>
-                  )}
-                  {!isCamera && edge.observationPoints.length > 0 ? (
-                    <fieldset
-                      aria-label={t("observationPoints")}
-                      className="mt-1 flex flex-col gap-1 text-sm"
-                    >
-                      {edge.observationPoints.map((point) => (
-                        <div key={point.observationPointId}>
-                          {point.name}
-                          <FlowStateNotes
-                            state={flowStates?.get(point.observationPointId)}
-                            className="text-xs"
-                          />
-                        </div>
-                      ))}
-                    </fieldset>
-                  ) : null}
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">
                   {!isCamera && !edge.online && (
@@ -234,31 +249,30 @@ export function AliveEdgeList({
                       {t("authorizeConnection")}
                     </Link>
                   )}
-                  {!isCamera && (
-                    <Link
-                      href={machineSessionPath({
-                        eventId,
-                        pageEdgeDeviceId: edge.edgeDeviceId,
-                        returnPath: observationDevicePath(
-                          eventId,
-                          edge.edgeDeviceId,
-                        ),
-                      })}
-                      variant="outline"
-                      size="sm"
-                      aria-label={t("useAsMachineLabel", { name })}
-                    >
-                      {t("useAsMachine")}
-                    </Link>
-                  )}
                   {isCamera && (
-                    <CameraProvisioningDialog
-                      eventId={eventId}
-                      edgeDeviceId={edge.edgeDeviceId}
-                      edgeName={name}
-                      triggerLabel={t("provision")}
-                      triggerAriaLabel={t("provisionLabel", { name })}
-                    />
+                    <>
+                      <CameraProvisioningDialog
+                        eventId={eventId}
+                        edgeDeviceId={edge.edgeDeviceId}
+                        edgeName={name}
+                        triggerLabel={t("provision")}
+                        triggerAriaLabel={t("provisionLabel", { name })}
+                      />
+                      <CameraProvisioningDialog
+                        eventId={eventId}
+                        edgeDeviceId={edge.edgeDeviceId}
+                        edgeName={name}
+                        triggerLabel={t("reapprove")}
+                        triggerAriaLabel={t("reapproveLabel", { name })}
+                        reapproval
+                      />
+                      <StopCameraDialog
+                        eventId={eventId}
+                        edgeDeviceId={edge.edgeDeviceId}
+                        name={name}
+                        onStopped={onUnregistered}
+                      />
+                    </>
                   )}
                   <UnregisterEdgeDeviceDialog
                     eventId={eventId}

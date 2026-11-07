@@ -345,20 +345,25 @@
       "openHereLabel": "在此裝置上開啟「{name}」",
       "unregister": "取消註冊",
       "unregisterLabel": "取消註冊「{name}」",
-      "observationPoints": "觀測點",
       "cameraBadge": "Camera",
       "linkedPoint": "Linked point: {name}",
       "provision": "Provision",
       "provisionLabel": "Provision “{name}”",
-      "authorizeConnection": "Authorize camera connection",
+      "authorizeConnection": "Authorize observation page connection",
       "useAsMachine": "Use as observation page",
       "useAsMachineLabel": "Use {name} as an observation page",
-      "authorizeConnectionLabel": "Authorize the camera connection for “{name}”",
+      "authorizeConnectionLabel": "Authorize the observation page connection for “{name}”",
+      "cameraConnectionHint": "Staff sessions start the connection authorization automatically when the observation page opens. For a machine session, use “Authorize observation page connection” in this screen to reauthorize.",
+      "stop": "Stop",
+      "stopLabel": "Temporarily stop “{name}”",
+      "reapprove": "Redo camera authorization",
+      "reapproveLabel": "Redo camera authorization for “{name}”",
       "connection": {
         "authorized": "The camera connection delegation was saved.",
-        "login_required": "Staff sign-in is required to authorize the camera connection. Start again from “Authorize camera connection”.",
+        "login_required": "Reauthorizing the camera connection requires a staff login. Use “Authorize observation page connection” again.",
         "failed": "Could not authorize the camera connection. Try again."
-      }
+      },
+      "observationPoints": "觀測點"
     },
     "receiver": {
       "stoppedTitle": "觀測已停止",
@@ -397,7 +402,7 @@
       "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
       "edgeDeviceIdLabel": "Edge device ID",
       "openProvisioning": "Open provisioning",
-      "authorizeConnection": "Authorize camera connection"
+      "authorizeConnection": "Authorize observation page connection"
     },
     "unregisterEdge": {
       "title": "取消註冊觀測裝置",
@@ -407,9 +412,20 @@
       "failed": "無法取消註冊。",
       "stale": "找不到觀測裝置或該觀測裝置已取消註冊。請重新整理清單。"
     },
+    "stopCamera": {
+      "title": "Temporarily stop the camera",
+      "description": "Stops the stream from “{name}” temporarily. The registration remains; redo the camera authorization to resume.",
+      "cancel": "Cancel",
+      "confirm": "Stop temporarily",
+      "failed": "Could not stop the camera.",
+      "stale": "The camera was not found or does not belong to this event. Refresh the list."
+    },
     "cameraProvision": {
       "title": "ESP32 camera provisioning",
       "description": "Write the Wi-Fi and connection settings to “{name}” ({id}).",
+      "reapprovalNotice": "Redoes the authorization for the temporarily stopped camera. This clears the stop and lets the device connect again.",
+      "reapprovalDescription": "Redo the device authorization for “{name}” ({id}).",
+      "reapprovalStart": "Redo authorization",
       "trigger": "Provision",
       "wifiSsidLabel": "Wi-Fi SSID",
       "wifiPasswordLabel": "Wi-Fi password",
@@ -497,7 +513,10 @@
     "controls": {
       "start": "啟動攝影機",
       "stop": "停止",
-      "loading": "啟動中…"
+      "loading": "啟動中…",
+      "retry": "重新連線",
+      "observeOnThisDevice": "在此裝置上觀測",
+      "retryCamera": "重新連線 {camera}"
     },
     "cameraSelector": {
       "label": "攝影機"
@@ -542,7 +561,9 @@
       "detection": "人體偵測處理失敗",
       "unregistered": "此觀測裝置已取消註冊",
       "modelLoad": "載入偵測模型失敗（{status}: {path}）",
-      "connectionAuthorizationRequired": "Camera connection authorization is missing. Authorize the camera connection again.",
+      "connectionAuthorizationRequired": "The camera connection is not authorized. Reauthorize it with “Authorize observation page connection”.",
+      "connectionAuthorizationAutoStart": "Camera connection authorization is required. Moving to the authorization page.",
+      "connectionAuthorizationMachine": "The camera connection is not authorized. A staff member must reauthorize it with “Authorize observation page connection” in the management screen.",
       "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "未允許使用攝影機。請在瀏覽器設定中允許存取攝影機。",
@@ -563,6 +584,16 @@
       "inactiveHint": "（選擇後啟動時生效）",
       "hide": "隱藏",
       "espCamera": "ESP 攝影機 ({edgeId})"
+    },
+    "cameraStatus": {
+      "label": "{camera}: {status}",
+      "waiting": "等待中",
+      "stale": "沒有影片",
+      "capturing": "拍攝中",
+      "inferring": "偵測中",
+      "ready": "偵測中",
+      "error": "錯誤",
+      "errorDetail": "{camera}: {error}"
     }
   },
   "ObservationDevices": {
@@ -736,7 +767,8 @@
     },
     "loggedOut": {
       "title": "已登出",
-      "login": "再次登入"
+      "login": "再次登入",
+      "toObservation": "Back to the observation page"
     },
     "logout": "登出"
   },

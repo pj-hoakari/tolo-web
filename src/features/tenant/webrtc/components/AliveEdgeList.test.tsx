@@ -217,7 +217,7 @@ describe("AliveEdgeList", () => {
     ).toBeTruthy();
   });
 
-  it("オフラインの端末の行には観測ページを開くリンクを出し、各観測ページには端末にするリンクを出す", () => {
+  it("オフラインの端末の行には観測ページを開くリンクを出す", () => {
     renderList("idle");
 
     expect(
@@ -225,13 +225,6 @@ describe("AliveEdgeList", () => {
         .getByRole("link", { name: "「倉庫カメラ」をこの端末で開く" })
         .getAttribute("href"),
     ).toBe("/event/e/observation/edge-c");
-    expect(
-      within(row("ホールカメラ") as HTMLElement)
-        .getByRole("link", { name: "ホールカメラ を観測ページ端末にする" })
-        .getAttribute("href"),
-    ).toBe(
-      "/api/auth/machine/start?eventId=e&pageEdgeDeviceId=edge-b&return=%2Fevent%2Fe%2Fobservation%2Fedge-b",
-    );
   });
 
   it("カメラの行にバッジと紐づけ先を表示し、稼働状態と接続と観測ページリンクを出さない", () => {
@@ -248,8 +241,50 @@ describe("AliveEdgeList", () => {
       camera.getByRole("button", { name: "「ESP32 カメラ」を設定" }),
     ).toBeTruthy();
     expect(
+      camera.getByRole("button", {
+        name: "「ESP32 カメラ」のカメラ認可をやり直す",
+      }),
+    ).toBeTruthy();
+    expect(
+      camera.getByRole("button", { name: "「ESP32 カメラ」を一時停止" }),
+    ).toBeTruthy();
+    expect(
       camera.getByRole("button", { name: "「ESP32 カメラ」の登録を解除" }),
     ).toBeTruthy();
+  });
+
+  it("カメラの認可をやり直すボタンで一時停止の解除を明示した初期設定ダイアログを開く", () => {
+    renderList("idle");
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "「ESP32 カメラ」のカメラ認可をやり直す",
+      }),
+    );
+
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(
+      screen.getByText(/一時停止中のカメラの認可をやり直します/),
+    ).toBeTruthy();
+  });
+
+  it("カメラを一時停止すると登録は解除せず一覧の更新を求める", async () => {
+    const onUnregistered = vi.fn();
+    renderList("idle", vi.fn(), { onUnregistered });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "「ESP32 カメラ」を一時停止" }),
+    );
+    const dialog = screen.getByRole("alertdialog");
+    expect(dialog.textContent).toContain(
+      "「ESP32 カメラ」の配信を一時停止します。",
+    );
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "一時停止する" }),
+    );
+
+    await waitFor(() => expect(onUnregistered).toHaveBeenCalledOnce());
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
   });
 
   it("カメラの設定ボタンで初期設定ダイアログを開く", () => {
