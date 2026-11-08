@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tab, TabList, Tabs } from "@/components/ui/tabs";
+import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
 import { DetectionLineCreationModeToggle } from "@/features/tenant/detection/components/DetectionLineActions";
 import {
   createDetectionStores,
@@ -36,6 +37,12 @@ import {
 } from "../utils/cameraStatus";
 import { createEspCameraVideoSource } from "../utils/espVideoSource";
 import { createMockCameraVideoSource } from "../utils/mockVideoSource";
+import {
+  type ObservationMode,
+  readObservationMode,
+  resolveContinuousKey,
+  writeObservationMode,
+} from "../utils/observationMode";
 import {
   type CrowdVideoSourceFactory,
   createCameraVideoSource,
@@ -134,6 +141,7 @@ export function CrowdDetection({
                 edgeDeviceId: camera.edgeDeviceId,
                 firebaseConfig,
                 label,
+                observationMode: readObservationMode(camera.edgeDeviceId),
                 onError: (cause) =>
                   sourceErrorRef.current(camera.edgeDeviceId, cause),
                 requestConnection: () =>
@@ -221,6 +229,31 @@ export function CrowdDetection({
   useEffect(() => {
     sourceErrorRef.current = reportSourceError;
   }, [reportSourceError]);
+
+  const [observationModes, setObservationModes] = useState<
+    Record<string, ObservationMode>
+  >({});
+  useEffect(() => {
+    const keys: string[] = JSON.parse(cameraKeySignature);
+    setObservationModes(
+      Object.fromEntries(keys.map((key) => [key, readObservationMode(key)])),
+    );
+  }, [cameraKeySignature]);
+  const changeObservationMode = (key: string, mode: ObservationMode) => {
+    writeObservationMode(key, mode);
+    setObservationModes((previous) => ({ ...previous, [key]: mode }));
+    if (videoSources.has(key)) {
+      retryCamera(key);
+    }
+  };
+  const continuousKey =
+    effectiveMode === "esp"
+      ? resolveContinuousKey(
+          selectedKey,
+          videoSources.keys(),
+          (key) => observationModes[key] === "continuous",
+        )
+      : null;
 
   const connectionAuthorizationError =
     cameraListConnectionError?.code === "CONNECTION_AUTHORIZATION_REQUIRED"
@@ -342,6 +375,7 @@ export function CrowdDetection({
   useMultiCameraDetectionLoop({
     sources: effectiveMode === "esp" ? videoSources : new Map(),
     selectedKey,
+    continuousKey,
     isFresh,
     overlayCanvasRef,
     lineCanvasRef,
@@ -497,6 +531,26 @@ export function CrowdDetection({
             })}
           </TabList>
         </Tabs>
+      )}
+      {effectiveMode === "esp" && selectedKey && (
+        <ToggleButtonGroup
+          aria-label={tControls("observationMode")}
+          selectionMode="single"
+          disallowEmptySelection
+          selectedKeys={[observationModes[selectedKey] ?? "burst"]}
+          onSelectionChange={(keys) => {
+            const next = [...keys][0] as ObservationMode | undefined;
+            if (next) changeObservationMode(selectedKey, next);
+          }}
+          className="w-full max-w-3xl justify-start px-4 sm:px-0"
+        >
+          <Toggle id="burst" variant="outline" size="sm">
+            {tControls("burstObservation")}
+          </Toggle>
+          <Toggle id="continuous" variant="outline" size="sm">
+            {tControls("continuousObservation")}
+          </Toggle>
+        </ToggleButtonGroup>
       )}
       {cameraErrors.map((state) => {
         const camera = cameras.find(

@@ -29,6 +29,7 @@ export const CAMERA_STATUS_DOT_CLASS: Record<CameraStatusKey, string> = {
   inferring: "bg-emerald-500",
   ready: "bg-emerald-500",
   waiting: "bg-muted-foreground",
+  skipped: "bg-muted-foreground",
   stale: "bg-amber-500",
   error: "bg-destructive",
 };

@@ -519,7 +519,10 @@
       "loading": "起動中…",
       "retry": "再接続",
       "observeOnThisDevice": "この端末で観測する",
-      "retryCamera": "{camera} に再接続"
+      "retryCamera": "{camera} に再接続",
+      "observationMode": "観測方式",
+      "burstObservation": "バースト観測",
+      "continuousObservation": "連続観測"
     },
     "cameraSelector": {
       "label": "カメラ"
@@ -591,6 +594,7 @@
     "cameraStatus": {
       "label": "{camera}: {status}",
       "waiting": "待機中",
+      "skipped": "スキップ中（連続観測を優先）",
       "stale": "映像が届いていません",
       "capturing": "撮影中",
       "inferring": "検出中",

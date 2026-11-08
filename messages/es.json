@@ -519,7 +519,10 @@
       "loading": "Iniciando…",
       "retry": "Reconectar",
       "observeOnThisDevice": "Observar en este dispositivo",
-      "retryCamera": "Reconectar {camera}"
+      "retryCamera": "Reconectar {camera}",
+      "observationMode": "Modo de observación",
+      "burstObservation": "Ráfaga",
+      "continuousObservation": "Continua"
     },
     "cameraSelector": {
       "label": "Cámara"
@@ -591,6 +594,7 @@
     "cameraStatus": {
       "label": "{camera}: {status}",
       "waiting": "En espera",
+      "skipped": "Omitida (observación continua en uso)",
       "stale": "Sin vídeo",
       "capturing": "Capturando",
       "inferring": "Detectando",

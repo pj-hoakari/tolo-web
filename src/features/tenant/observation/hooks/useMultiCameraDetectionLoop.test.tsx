@@ -158,3 +158,49 @@ it("keeps the working camera video, tracking state and cumulative results when a
   expect(resetCrowdTracking).not.toHaveBeenCalled();
   expect(document.querySelectorAll("video")).toHaveLength(2);
 });
+
+it("infers only the continuous camera one frame at a time and skips burst cameras", async () => {
+  const stores = createDetectionStores();
+  vi.spyOn(HTMLMediaElement.prototype, "readyState", "get").mockReturnValue(
+    HTMLMediaElement.HAVE_CURRENT_DATA,
+  );
+  vi.spyOn(HTMLVideoElement.prototype, "videoWidth", "get").mockReturnValue(
+    640,
+  );
+  vi.spyOn(HTMLVideoElement.prototype, "videoHeight", "get").mockReturnValue(
+    480,
+  );
+  stores.settingsStore.setState({ detectionInterval: 100 });
+  const onCameraPhase = vi.fn();
+  renderHook(() =>
+    useMultiCameraDetectionLoop({
+      ...stores,
+      sources: new Map([
+        ["burst", { kind: "objectUrl", url: "blob:burst", loop: false }],
+        ["continuous", { kind: "objectUrl", url: "blob:cont", loop: false }],
+      ]),
+      selectedKey: "burst",
+      continuousKey: "continuous",
+      isFresh: () => true,
+      overlayCanvasRef: { current: null },
+      status: "detecting",
+      cameraSettingsStores: new Map(),
+      cameraViewStateStores: new Map(),
+      cameraResultStores: new Map(),
+      onCameraPhase,
+      onBroadcastStreamChange: vi.fn(),
+      onDetectionFrame: vi.fn(),
+    }),
+  );
+  await act(async () => {});
+  expect(captureCrowdFrame).toHaveBeenCalledOnce();
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(100);
+  });
+  expect(captureCrowdFrame).toHaveBeenCalledTimes(2);
+  expect(onCameraPhase.mock.calls).toEqual([
+    ["burst", "skipped"],
+    ["continuous", "ready", undefined],
+    ["continuous", "ready", undefined],
+  ]);
+});

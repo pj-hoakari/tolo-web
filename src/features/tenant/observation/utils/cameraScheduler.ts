@@ -15,6 +15,7 @@ export type CameraCyclePhase =
   | "capturing"
   | "inferring"
   | "ready"
+  | "skipped"
   | "error";
 
 export type CameraCycleOutcome = {

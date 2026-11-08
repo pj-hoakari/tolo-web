@@ -519,7 +519,10 @@
       "loading": "시작 중…",
       "retry": "다시 연결",
       "observeOnThisDevice": "이 기기에서 관측하기",
-      "retryCamera": "{camera} 다시 연결"
+      "retryCamera": "{camera} 다시 연결",
+      "observationMode": "관측 방식",
+      "burstObservation": "버스트 관측",
+      "continuousObservation": "연속 관측"
     },
     "cameraSelector": {
       "label": "카메라"
@@ -591,6 +594,7 @@
     "cameraStatus": {
       "label": "{camera}: {status}",
       "waiting": "대기 중",
+      "skipped": "건너뜀 (연속 관측 우선)",
       "stale": "영상 없음",
       "capturing": "촬영 중",
       "inferring": "감지 중",

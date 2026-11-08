@@ -519,7 +519,10 @@
       "loading": "啟動中…",
       "retry": "重新連線",
       "observeOnThisDevice": "在此裝置上觀測",
-      "retryCamera": "重新連線 {camera}"
+      "retryCamera": "重新連線 {camera}",
+      "observationMode": "觀測方式",
+      "burstObservation": "突發觀測",
+      "continuousObservation": "連續觀測"
     },
     "cameraSelector": {
       "label": "攝影機"
@@ -591,6 +594,7 @@
     "cameraStatus": {
       "label": "{camera}: {status}",
       "waiting": "等待中",
+      "skipped": "已略過（優先連續觀測）",
       "stale": "沒有影片",
       "capturing": "拍攝中",
       "inferring": "偵測中",

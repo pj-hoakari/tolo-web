@@ -519,7 +519,10 @@
       "loading": "启动中…",
       "retry": "重新连接",
       "observeOnThisDevice": "在此设备上观测",
-      "retryCamera": "重新连接 {camera}"
+      "retryCamera": "重新连接 {camera}",
+      "observationMode": "观测方式",
+      "burstObservation": "突发观测",
+      "continuousObservation": "连续观测"
     },
     "cameraSelector": {
       "label": "摄像头"
@@ -591,6 +594,7 @@
     "cameraStatus": {
       "label": "{camera}: {status}",
       "waiting": "等待中",
+      "skipped": "已跳过（优先连续观测）",
       "stale": "没有视频",
       "capturing": "拍摄中",
       "inferring": "检测中",

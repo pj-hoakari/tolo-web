@@ -142,6 +142,7 @@ export type MultiCameraDetectionLoopParams = {
   /** 開いた全カメラの映像ソース。選択中以外も検出に使う。 */
   sources: ReadonlyMap<string, VideoSourceDescriptor>;
   selectedKey: string | null;
+  continuousKey?: string | null;
   /** カメラの映像が新しく届いているか。false のカメラは取得も推論も飛ばす。 */
   isFresh: (key: string) => boolean;
   overlayCanvasRef: RefObject<HTMLCanvasElement | null>;
@@ -177,6 +178,7 @@ export type MultiCameraDetectionLoopParams = {
 export function useMultiCameraDetectionLoop({
   sources,
   selectedKey,
+  continuousKey = null,
   isFresh,
   overlayCanvasRef,
   lineCanvasRef,
@@ -531,11 +533,30 @@ export function useMultiCameraDetectionLoop({
           updateCameraResult(key, video, frame, detectionOptions.countingLines);
         },
         onPhase: (phase, error) => {
-          if (!cancelled) {
+          if (
+            !cancelled &&
+            !(
+              key === continuousKey &&
+              (phase === "capturing" || phase === "inferring")
+            )
+          ) {
             onCameraPhaseRef.current(key, phase, error);
           }
         },
       });
+    }
+
+    const cycleCameras =
+      continuousKey === null
+        ? scheduledCameras
+        : scheduledCameras.filter((camera) => camera.key === continuousKey);
+    if (continuousKey !== null) {
+      for (const camera of scheduledCameras) {
+        if (camera.key !== continuousKey) {
+          latestOverlayFramesRef.current.delete(camera.key);
+          onCameraPhaseRef.current(camera.key, "skipped");
+        }
+      }
     }
 
     const wait = (ms: number): Promise<void> =>
@@ -545,8 +566,8 @@ export function useMultiCameraDetectionLoop({
 
     const runLoop = async () => {
       while (!cancelled) {
-        await runCameraSchedulerCycle(scheduledCameras, {
-          frameCount: CAMERA_FRAME_COUNT,
+        await runCameraSchedulerCycle(cycleCameras, {
+          frameCount: continuousKey === null ? CAMERA_FRAME_COUNT : 1,
           frameIntervalMs: CAMERA_FRAME_INTERVAL_MS,
           wait,
           isCancelled: () => cancelled,
@@ -555,9 +576,9 @@ export function useMultiCameraDetectionLoop({
           return;
         }
         // 直列スケジューラは全カメラを 1 周するため、周回後の待機は
-        // 選択中のカメラの検出間隔に合わせる。
+        // 選択中のカメラ（連続観測では連続観測のカメラ）の検出間隔に合わせる。
         const pause = selectCameraSettingsStore(
-          selectedKeyRef.current,
+          continuousKey ?? selectedKeyRef.current,
           cameraSettingsStores,
           settingsStore,
         ).getState().detectionInterval;
@@ -630,6 +651,15 @@ export function useMultiCameraDetectionLoop({
           }
         }
 
+        const source = selectedVideo.srcObject;
+        if (
+          broadcastRef.current?.stream.getVideoTracks()[0]?.readyState ===
+            "ended" &&
+          source instanceof MediaStream &&
+          source.getVideoTracks().some((track) => track.readyState === "live")
+        ) {
+          disposeBroadcast();
+        }
         if (!broadcastRef.current) {
           const broadcast = createBroadcastStream(selectedVideo);
           if (broadcast) {
@@ -655,6 +685,7 @@ export function useMultiCameraDetectionLoop({
   }, [
     status,
     sources,
+    continuousKey,
     isFresh,
     settingsStore,
     viewStateStore,

@@ -519,7 +519,10 @@
       "loading": "Starting…",
       "retry": "Reconnect",
       "observeOnThisDevice": "Observe on this device",
-      "retryCamera": "Reconnect {camera}"
+      "retryCamera": "Reconnect {camera}",
+      "observationMode": "Observation mode",
+      "burstObservation": "Burst",
+      "continuousObservation": "Continuous"
     },
     "cameraSelector": {
       "label": "Camera"
@@ -591,6 +594,7 @@
     "cameraStatus": {
       "label": "{camera}: {status}",
       "waiting": "Waiting",
+      "skipped": "Skipped (continuous observation in use)",
       "stale": "No video",
       "capturing": "Capturing",
       "inferring": "Detecting",

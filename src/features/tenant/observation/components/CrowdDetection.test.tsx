@@ -27,6 +27,11 @@ const mocks = vi.hoisted(() => {
     retryList: vi.fn(),
     listFailed: false,
     refreshedList: false,
+    videoSources: new Map([
+      ["one", {}],
+      ["two", {}],
+    ]),
+    continuousKey: undefined as string | null | undefined,
   };
 });
 vi.mock("firebase/firestore", () => ({ onSnapshot: vi.fn() }));
@@ -83,6 +88,7 @@ vi.mock("../hooks/useCrowdVideoSources", async () => {
         sourceStates: mocks.sourceStates,
         retryCamera: mocks.retryCamera,
         freshness: new Map(),
+        videoSources: mocks.videoSources,
         reportSourceError: vi.fn(),
       };
     },
@@ -93,9 +99,12 @@ vi.mock("../hooks/useMultiCameraDetectionLoop", async () => {
   return {
     useMultiCameraDetectionLoop: ({
       onBroadcastStreamChange,
+      continuousKey,
     }: {
       onBroadcastStreamChange: (stream: MediaStream) => void;
+      continuousKey: string | null;
     }) => {
+      mocks.continuousKey = continuousKey;
       useEffect(
         () => onBroadcastStreamChange(mocks.stream),
         [onBroadcastStreamChange],
@@ -129,6 +138,7 @@ afterEach(() => {
   mocks.sourceStates = [];
   mocks.listFailed = false;
   mocks.refreshedList = false;
+  window.localStorage.clear();
 });
 
 it("does not offer the local camera when the camera list fails", () => {
@@ -259,4 +269,29 @@ it("offers a per-camera reconnect button while the other camera is detecting", (
       .getByRole("tab", { name: /Camera one/ })
       .getAttribute("aria-selected"),
   ).toBe("true");
+});
+
+it("persists the per-camera observation mode and reconnects that camera", () => {
+  window.localStorage.setItem("tolo:observation-mode:two", "continuous");
+  render(
+    <CrowdDetection
+      canReport={false}
+      tenantId="tenant"
+      eventId="event"
+      edgeDeviceId="page"
+    />,
+    { wrapper: IntlTestProvider },
+  );
+  expect(mocks.continuousKey).toBe("two");
+  expect(
+    screen
+      .getByRole("radio", { name: "バースト観測" })
+      .getAttribute("aria-checked"),
+  ).toBe("true");
+  fireEvent.click(screen.getByRole("radio", { name: "連続観測" }));
+  expect(window.localStorage.getItem("tolo:observation-mode:one")).toBe(
+    "continuous",
+  );
+  expect(mocks.retryCamera).toHaveBeenCalledExactlyOnceWith("one");
+  expect(mocks.continuousKey).toBe("one");
 });
