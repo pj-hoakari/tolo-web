@@ -168,13 +168,13 @@ importers:
     dependencies:
       '@bufbuild/protobuf':
         specifier: ^2.12.0
-        version: 2.16.0
+        version: 2.17.0
       '@connectrpc/connect':
         specifier: ^2.1.2
-        version: 2.3.0(@bufbuild/protobuf@2.16.0)
+        version: 2.3.0(@bufbuild/protobuf@2.17.0)
       '@connectrpc/connect-node':
         specifier: ^2.1.2
-        version: 2.3.0(@bufbuild/protobuf@2.16.0)(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
+        version: 2.3.0(@bufbuild/protobuf@2.17.0)(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
       '@orpc/client':
         specifier: ^1.14.6
         version: 1.16.1
@@ -183,19 +183,19 @@ importers:
         version: 1.16.1(ws@8.22.1)
       '@pj-hoakari/tolo-edge-bridge-client-es':
         specifier: 0.6.0
-        version: 0.6.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
+        version: 0.6.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
       '@pj-hoakari/tolo-graph-authoring-client-es':
         specifier: 0.5.0
-        version: 0.5.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
+        version: 0.5.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
       '@pj-hoakari/tolo-guest-client-es':
         specifier: 0.2.1
-        version: 0.2.1(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
+        version: 0.2.1(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
       '@pj-hoakari/tolo-observation-client-es':
         specifier: 0.9.0
-        version: 0.9.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
+        version: 0.9.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
       '@pj-hoakari/tolo-tenant-management-connect-es':
         specifier: 0.8.0
-        version: 0.8.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
+        version: 0.8.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
       '@pj-hoakari/web-crowd-detection-utils':
         specifier: ^0.7.0
         version: 0.7.0
@@ -651,8 +651,8 @@ packages:
     resolution: {integrity: sha512-0GEz8qJWokkUVYQYRukmkSHIFNoBH8QTreeHrAFbvz1XFYc3Y+puhMs8PQ5x8GNugiC2l5jvDBXKLbBIByeSBw==}
     hasBin: true
 
-  '@bufbuild/protobuf@2.16.0':
-    resolution: {integrity: sha512-FWa0sPlqYGJgpTs6OxBRcL/AW4JT0OIO+W1ajerluoTVh8CV0B7XM1qsNCRgnkSCkRCgOICKHRQlY17jrsm0+Q==}
+  '@bufbuild/protobuf@2.17.0':
+    resolution: {integrity: sha512-hcPkSz6D7MiTU/5VBBhK+kxaYDoOdQ6yJRFJ3kS8Nydp+VZXfg1vrpABKPNod8bXMufsVCmiUJVIKFzCzta4uw==}
 
   '@chromatic-com/storybook@5.6.0':
     resolution: {integrity: sha512-Z7YMtr9DVwegQeWcBeQaiK5dLcAvgpX53Qr/eGGYTyAEqTb1meUr5VQNq1wmst0Lj+gT6lQEco0PuFfUuf3jzA==}
@@ -5828,7 +5828,7 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
-  '@bufbuild/protobuf@2.16.0': {}
+  '@bufbuild/protobuf@2.17.0': {}
 
   '@chromatic-com/storybook@5.6.0(storybook@10.6.5(@types/react@19.3.0)(react@19.3.1))':
     dependencies:
@@ -5842,14 +5842,14 @@ snapshots:
       - '@chromatic-com/playwright'
       - '@chromatic-com/vitest'
 
-  '@connectrpc/connect-node@2.3.0(@bufbuild/protobuf@2.16.0)(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
+  '@connectrpc/connect-node@2.3.0(@bufbuild/protobuf@2.17.0)(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))':
     dependencies:
-      '@bufbuild/protobuf': 2.16.0
-      '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.16.0)
+      '@bufbuild/protobuf': 2.17.0
+      '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.17.0)
 
-  '@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0)':
+  '@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0)':
     dependencies:
-      '@bufbuild/protobuf': 2.16.0
+      '@bufbuild/protobuf': 2.17.0
 
   '@csstools/color-helpers@6.1.2': {}
 
@@ -6928,30 +6928,30 @@ snapshots:
       '@parcel/watcher-win32-arm64': 2.6.0
       '@parcel/watcher-win32-x64': 2.6.0
 
-  '@pj-hoakari/tolo-edge-bridge-client-es@0.6.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
+  '@pj-hoakari/tolo-edge-bridge-client-es@0.6.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))':
     dependencies:
-      '@bufbuild/protobuf': 2.16.0
-      '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.16.0)
+      '@bufbuild/protobuf': 2.17.0
+      '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.17.0)
 
-  '@pj-hoakari/tolo-graph-authoring-client-es@0.5.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
+  '@pj-hoakari/tolo-graph-authoring-client-es@0.5.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))':
     dependencies:
-      '@bufbuild/protobuf': 2.16.0
-      '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.16.0)
+      '@bufbuild/protobuf': 2.17.0
+      '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.17.0)
 
-  '@pj-hoakari/tolo-guest-client-es@0.2.1(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
+  '@pj-hoakari/tolo-guest-client-es@0.2.1(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))':
     dependencies:
-      '@bufbuild/protobuf': 2.16.0
-      '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.16.0)
+      '@bufbuild/protobuf': 2.17.0
+      '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.17.0)
 
-  '@pj-hoakari/tolo-observation-client-es@0.9.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
+  '@pj-hoakari/tolo-observation-client-es@0.9.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))':
     dependencies:
-      '@bufbuild/protobuf': 2.16.0
-      '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.16.0)
+      '@bufbuild/protobuf': 2.17.0
+      '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.17.0)
 
-  '@pj-hoakari/tolo-tenant-management-connect-es@0.8.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
+  '@pj-hoakari/tolo-tenant-management-connect-es@0.8.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))':
     dependencies:
-      '@bufbuild/protobuf': 2.16.0
-      '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.16.0)
+      '@bufbuild/protobuf': 2.17.0
+      '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.17.0)
 
   '@pj-hoakari/web-crowd-detection-utils@0.7.0':
     dependencies:
