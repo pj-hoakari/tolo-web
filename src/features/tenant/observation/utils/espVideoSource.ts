@@ -21,6 +21,7 @@ import {
   createFirestoreSignalingChannel,
 } from "@/features/tenant/webrtc/utils/signalingChannel";
 import type { CameraConnection } from "@/server/router";
+import type { ObservationMode } from "./observationMode";
 import type { CrowdVideoSource, VideoSourceDescriptor } from "./videoSource";
 
 export type EspCameraSourceOptions = {
@@ -34,6 +35,7 @@ export type EspCameraSourceOptions = {
    */
   requestConnection: () => Promise<CameraConnection>;
   label?: string;
+  observationMode?: ObservationMode;
   onError?: (cause: unknown) => void;
 };
 
@@ -44,6 +46,30 @@ const ANSWER_TIMEOUT_MS = 20_000;
 const CONNECT_TIMEOUT_MS = 25_000;
 const FRAME_STALL_MS = 12_000;
 const DISCONNECT_GRACE_MS = 5_000;
+const noop = () => {};
+
+function h264Rank(codec: RTCRtpCodec): number {
+  const fmtp = codec.sdpFmtpLine ?? "";
+  const packetized = fmtp.includes("packetization-mode=1");
+  if (packetized && fmtp.includes("profile-level-id=42e01f")) return 0;
+  return packetized ? 1 : 2;
+}
+
+function preferH264(transceiver: RTCRtpTransceiver): void {
+  if (
+    typeof RTCRtpReceiver === "undefined" ||
+    typeof RTCRtpReceiver.getCapabilities !== "function" ||
+    typeof transceiver.setCodecPreferences !== "function"
+  ) {
+    return;
+  }
+  const codecs = (RTCRtpReceiver.getCapabilities("video")?.codecs ?? [])
+    .filter((codec) => codec.mimeType.toLowerCase() === "video/h264")
+    .sort((a, b) => h264Rank(a) - h264Rank(b));
+  if (codecs.length > 0) {
+    transceiver.setCodecPreferences(codecs);
+  }
+}
 
 function waitForIceGathering(
   pc: RTCPeerConnection,
@@ -122,6 +148,11 @@ class EspCameraLink {
     this.pendingConnection = connection;
 
     this.lastDecodedFrameAt = null;
+    if (this.continuous) {
+      this.stream = new MediaStream();
+      void this.connect();
+      return { kind: "stream", stream: this.stream };
+    }
     this.canvas = document.createElement("canvas");
     const context = this.canvas.getContext("2d");
     if (!context) {
@@ -166,6 +197,17 @@ class EspCameraLink {
 
   lastFrameAt(): number | null {
     return this.lastDecodedFrameAt;
+  }
+
+  private get continuous(): boolean {
+    return this.options.observationMode === "continuous";
+  }
+
+  private replaceTrack(track: MediaStreamTrack): void {
+    for (const previous of this.stream.getVideoTracks()) {
+      this.stream.removeTrack(previous);
+    }
+    this.stream.addTrack(track);
   }
 
   private scheduleReconnect(): void {
@@ -321,6 +363,16 @@ class EspCameraLink {
       // SCTP を交渉するためのダミーチャネル。ESP は接続後に `jpeg` を作る。
       peer.createDataChannel("control");
 
+      let framesDecoded = 0;
+      if (this.continuous) {
+        preferH264(peer.addTransceiver("video", { direction: "recvonly" }));
+        peer.addEventListener("track", (event) => {
+          if (sessionActive && event.track.kind === "video") {
+            this.replaceTrack(event.track);
+          }
+        });
+      }
+
       peer.addEventListener("datachannel", (event) => {
         const incoming = event.channel;
         if (incoming.label !== "jpeg") {
@@ -446,6 +498,22 @@ class EspCameraLink {
       frameTimer = setInterval(() => {
         if (!sessionActive) {
           return;
+        }
+        if (this.continuous && peer.connectionState === "connected") {
+          void peer.getStats().then((report) => {
+            for (const stats of report.values()) {
+              if (
+                sessionActive &&
+                stats.type === "inbound-rtp" &&
+                stats.kind === "video" &&
+                stats.framesDecoded > framesDecoded
+              ) {
+                framesDecoded = stats.framesDecoded;
+                this.lastDecodedFrameAt = performance.now();
+                lastFrameAt = this.lastDecodedFrameAt;
+              }
+            }
+          }, noop);
         }
         if (
           peer.connectionState === "connected" &&

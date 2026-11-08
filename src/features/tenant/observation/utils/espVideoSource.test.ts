@@ -176,3 +176,124 @@ describe("ESP camera reconnect", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 });
+
+describe("ESP camera observation mode", () => {
+  const h264 = (fmtp: string) => ({
+    mimeType: "video/H264",
+    clockRate: 90000,
+    sdpFmtpLine: fmtp,
+  });
+  const baseline = h264(
+    "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f",
+  );
+  const high = h264(
+    "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=640034",
+  );
+  const singleNal = h264(
+    "level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f",
+  );
+
+  function stubPeer() {
+    const setCodecPreferences = vi.fn();
+    const peers: Peer[] = [];
+    class Peer extends EventTarget {
+      connectionState = "new";
+      iceGatheringState = "complete";
+      localDescription = { type: "offer", sdp: "offer" };
+      createDataChannel = vi.fn();
+      addTransceiver = vi.fn(() => ({ setCodecPreferences }));
+      close = vi.fn();
+      createOffer = vi.fn(async () => this.localDescription);
+      setLocalDescription = vi.fn(async () => {});
+      getStats = vi.fn(async () => new Map());
+      constructor() {
+        super();
+        peers.push(this);
+      }
+    }
+    vi.stubGlobal("RTCPeerConnection", Peer);
+    vi.stubGlobal(
+      "MediaStream",
+      class {
+        private tracks: MediaStreamTrack[] = [];
+        getTracks = () => [...this.tracks];
+        getVideoTracks = () => [...this.tracks];
+        addTrack = (track: MediaStreamTrack) => this.tracks.push(track);
+        removeTrack = (track: MediaStreamTrack) => {
+          this.tracks = this.tracks.filter((entry) => entry !== track);
+        };
+      },
+    );
+    vi.stubGlobal("RTCRtpReceiver", {
+      getCapabilities: () => ({
+        codecs: [
+          { mimeType: "video/VP8", clockRate: 90000 },
+          singleNal,
+          high,
+          baseline,
+        ],
+      }),
+    });
+    return { peers, setCodecPreferences };
+  }
+
+  it("keeps the burst offer free of video transceivers", async () => {
+    const { peers } = stubPeer();
+    const source = createEspCameraVideoSource({
+      ...options,
+      requestConnection: vi.fn().mockResolvedValue(connection),
+    });
+    await source.open();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(peers[0]?.createDataChannel).toHaveBeenCalledWith("control");
+    expect(peers[0]?.addTransceiver).not.toHaveBeenCalled();
+    source.close();
+  });
+
+  it("receives H.264 video as a stream in continuous mode", async () => {
+    const { peers, setCodecPreferences } = stubPeer();
+    const source = createEspCameraVideoSource({
+      ...options,
+      observationMode: "continuous",
+      requestConnection: vi.fn().mockResolvedValue(connection),
+    });
+    const descriptor = await source.open();
+    await vi.advanceTimersByTimeAsync(0);
+    const peer = peers[0];
+    if (!peer || descriptor.kind !== "stream") throw new Error("not opened");
+    expect(peer.createDataChannel).toHaveBeenCalledWith("control");
+    expect(peer.addTransceiver).toHaveBeenCalledWith("video", {
+      direction: "recvonly",
+    });
+    expect(setCodecPreferences).toHaveBeenCalledWith([
+      baseline,
+      high,
+      singleNal,
+    ]);
+
+    const first = {
+      kind: "video",
+      stop: vi.fn(),
+    } as unknown as MediaStreamTrack;
+    const second = {
+      kind: "video",
+      stop: vi.fn(),
+    } as unknown as MediaStreamTrack;
+    for (const track of [first, second]) {
+      peer.dispatchEvent(Object.assign(new Event("track"), { track }));
+    }
+    expect(descriptor.stream.getVideoTracks()).toEqual([second]);
+
+    expect(source.lastFrameAt()).toBeNull();
+    peer.connectionState = "connected";
+    peer.dispatchEvent(new Event("connectionstatechange"));
+    peer.getStats.mockResolvedValue(
+      new Map([
+        ["v", { type: "inbound-rtp", kind: "video", framesDecoded: 3 }],
+      ]),
+    );
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(source.lastFrameAt()).not.toBeNull();
+    source.close();
+  });
+});
