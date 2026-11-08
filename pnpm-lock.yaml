@@ -182,20 +182,20 @@ importers:
         specifier: ^1.14.6
         version: 1.16.1(ws@8.22.1)
       '@pj-hoakari/tolo-edge-bridge-client-es':
-        specifier: 0.6.0-rc
-        version: 0.6.0-rc(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
+        specifier: 0.6.0
+        version: 0.6.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
       '@pj-hoakari/tolo-graph-authoring-client-es':
-        specifier: 0.4.0-rc
-        version: 0.4.0-rc(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
+        specifier: 0.5.0
+        version: 0.5.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
       '@pj-hoakari/tolo-guest-client-es':
-        specifier: 0.2.0-rc
-        version: 0.2.0-rc(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
+        specifier: 0.2.1
+        version: 0.2.1(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
       '@pj-hoakari/tolo-observation-client-es':
-        specifier: 0.8.0-rc
-        version: 0.8.0-rc(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
+        specifier: 0.9.0
+        version: 0.9.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
       '@pj-hoakari/tolo-tenant-management-connect-es':
-        specifier: 0.6.0-dev
-        version: 0.6.0-dev(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
+        specifier: 0.8.0
+        version: 0.8.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))
       '@pj-hoakari/web-crowd-detection-utils':
         specifier: ^0.7.0
         version: 0.7.0
@@ -1892,28 +1892,28 @@ packages:
     resolution: {integrity: sha512-7FNeNl8NCE7aINx7WXiKQrPYZWC/hvrTsmk6zmxbI7LTXE7hVek/n8AfVgpe2y82zl3w0HvCHN0bVKMBoJcC0w==}
     engines: {node: '>= 10.0.0'}
 
-  '@pj-hoakari/tolo-edge-bridge-client-es@0.6.0-rc':
-    resolution: {integrity: sha512-heQ8do1MPya1fUQlSTsf5q5AiS+Ur8/VCiuOxJ/nfir2riUU37QjRLMy6pmouaEXliY04GGvUFmzsl9Y/KPHXg==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-edge-bridge-client-es/0.6.0-rc/a307ec1f42583b72faa782968e2d4ab1c514d9e0}
+  '@pj-hoakari/tolo-edge-bridge-client-es@0.6.0':
+    resolution: {integrity: sha512-LqYE1o0zVVGFVz5c01ieN7HaAsJvLMEmo5egf83nJVIcgszekOBKBrJaruoOQM85c6ZXX3Q8S1FMFKxmL6a0sA==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-edge-bridge-client-es/0.6.0/6e6057bd4b72c749c422a4814e370072bb4e5562}
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
-  '@pj-hoakari/tolo-graph-authoring-client-es@0.4.0-rc':
-    resolution: {integrity: sha512-Jab+fl+XZH+WObIXGVCNZN8aKqKHieZC43y0mVuWmaLR+vxb57KaQK+85nA66Oc1/y/ZbvMACwDkVfpbcPwU4g==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-graph-authoring-client-es/0.4.0-rc/53f1e46a4217b6b29d03af380deb04216f480382}
+  '@pj-hoakari/tolo-graph-authoring-client-es@0.5.0':
+    resolution: {integrity: sha512-xJuGxH0pAMz+bKfzKes632UdsVjO/1cpmEJSac/WX4xiTq+lgMlKqsgUaAIBXcQ1YLcvXQdk5KJSKVEAWk0ceQ==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-graph-authoring-client-es/0.5.0/b41ee9f3bc774cc2ae1d763069025e6d4469511a}
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
-  '@pj-hoakari/tolo-guest-client-es@0.2.0-rc':
-    resolution: {integrity: sha512-W3FteA6xJEX00PxAw2ZRNcVK4yogLuYJ0PtX1CzRxBTai33WtXc1NFF40Zn3SKQDxmpbvegoYSYqMrKLdvjy2Q==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-guest-client-es/0.2.0-rc/c89a1b44a82d2cc3d1b89ee4d3e5170b5e4bacb2}
+  '@pj-hoakari/tolo-guest-client-es@0.2.1':
+    resolution: {integrity: sha512-EvmfkOq7tDEHWnKV+yhX9ha0KZnlBzRFiiqDr3hzPii4gXDTColsUsd1Z2kFC1OaDr/26CHo/aikzwle1xlaSQ==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-guest-client-es/0.2.1/8e0efb8fadee112f17989ee45206bb51097ebd95}
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
-  '@pj-hoakari/tolo-observation-client-es@0.8.0-rc':
-    resolution: {integrity: sha512-CEWcENgD4abZOPtbfNXF62lRenhFYpk4TUhAPjrfafqL73efXUEYyV/7LS+t8wwm6Ucwqz1f4v2iH0iljMCAsw==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-observation-client-es/0.8.0-rc/0ace77df81d37499ce398ce6894d70520ddc4eb1}
+  '@pj-hoakari/tolo-observation-client-es@0.9.0':
+    resolution: {integrity: sha512-v07R471zFvaCGRk79YEIXafm5QDH/aDnwfVziOR0BXgUm2E6GxJ7QVXKSnbt1KQty9TqlxUYnG1z7BGMvg36cA==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-observation-client-es/0.9.0/8aefd3929838e5c96603b2d2d7b33b190fddc5f7}
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
-  '@pj-hoakari/tolo-tenant-management-connect-es@0.6.0-dev':
-    resolution: {integrity: sha512-sRJuhdwjk91HtD7/2JBv93kRzVKZbQsO/Ed0NAcssIoOIF7naXsHlyXk0fYijN0mFrDGmYiR1UsbkLhGVeljUg==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-tenant-management-connect-es/0.6.0-dev/e35c0c005a85ec6f85641c2f3bbac965639d0b24}
+  '@pj-hoakari/tolo-tenant-management-connect-es@0.8.0':
+    resolution: {integrity: sha512-dNyS05IWs8gJyj1Zx0d/uXi3xCfAq0ivrOgcsoqgBb5VK7J/8y4nykzRPpQ6v7UD/+EJ3gcT24QSyd16i1C2IQ==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-tenant-management-connect-es/0.8.0/8914c587a0a223ec561f39718f1aa710ec0e3d04}
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
@@ -6928,27 +6928,27 @@ snapshots:
       '@parcel/watcher-win32-arm64': 2.6.0
       '@parcel/watcher-win32-x64': 2.6.0
 
-  '@pj-hoakari/tolo-edge-bridge-client-es@0.6.0-rc(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
+  '@pj-hoakari/tolo-edge-bridge-client-es@0.6.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
     dependencies:
       '@bufbuild/protobuf': 2.16.0
       '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.16.0)
 
-  '@pj-hoakari/tolo-graph-authoring-client-es@0.4.0-rc(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
+  '@pj-hoakari/tolo-graph-authoring-client-es@0.5.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
     dependencies:
       '@bufbuild/protobuf': 2.16.0
       '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.16.0)
 
-  '@pj-hoakari/tolo-guest-client-es@0.2.0-rc(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
+  '@pj-hoakari/tolo-guest-client-es@0.2.1(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
     dependencies:
       '@bufbuild/protobuf': 2.16.0
       '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.16.0)
 
-  '@pj-hoakari/tolo-observation-client-es@0.8.0-rc(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
+  '@pj-hoakari/tolo-observation-client-es@0.9.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
     dependencies:
       '@bufbuild/protobuf': 2.16.0
       '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.16.0)
 
-  '@pj-hoakari/tolo-tenant-management-connect-es@0.6.0-dev(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
+  '@pj-hoakari/tolo-tenant-management-connect-es@0.8.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.16.0))':
     dependencies:
       '@bufbuild/protobuf': 2.16.0
       '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.16.0)
