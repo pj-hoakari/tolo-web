@@ -3,6 +3,10 @@ import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { Code, ConnectError } from "@connectrpc/connect";
 import { call, ORPCError } from "@orpc/server";
 import {
+  IssueFirestoreTokenResponseSchema,
+  RequestConnectionResponseSchema,
+} from "@pj-hoakari/tolo-edge-bridge-client-es/tolo/edgebridge/v1/signaling_pb";
+import {
   ElementKind,
   GraphViolationsSchema,
   ViolationKind,
@@ -17,6 +21,8 @@ import {
   OpenGuestPageResponseSchema,
 } from "@pj-hoakari/tolo-guest-client-es/tolo/guest/v1/guest_pb";
 import {
+  CameraLinkSchema,
+  EdgeDeviceKind,
   EdgeDeviceSchema,
   EventType,
   FlowHistoryTier,
@@ -33,18 +39,35 @@ import {
   UpdateObservationSettingsResponseSchema,
 } from "@pj-hoakari/tolo-observation-client-es/tolo/observation/v1/observation_pb";
 import { Role } from "@pj-hoakari/tolo-tenant-management-connect-es/tolo/relation/v1/relation_pb";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { EventStatus as ProtoEventStatus } from "@pj-hoakari/tolo-tenant-management-connect-es/tolo/tenant/v1/tenant_pb";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
-import { sampleEdgeDevicesWire } from "@/mocks/fixtures/edges";
+import { sampleObservationDevicesWire } from "@/mocks/fixtures/edges";
 import {
   authMockingEnabled,
+  getAccessToken,
   getRegistrationToken,
+  getViewer,
   prepareOnboarding,
   requestTenantId,
 } from "./auth";
+import {
+  addCameraToConnectionDelegation,
+  connectionDelegationCameraIds,
+  connectionEventAccess,
+  deleteConnectionDelegationsForCamera,
+  deleteConnectionDelegationsForEvent,
+  withCameraConnectionAuthorization,
+} from "./auth/connection";
 import { forgetInvitation, pendingInvitationToken } from "./auth/invitation";
+import {
+  revokeMachineSessionsForEdge,
+  revokeMachineSessionsForEvent,
+} from "./auth/machineSessionRevocation";
 import { graphAuthoringClient } from "./graphAuthoring";
 import { guestPageClient } from "./guest";
+import * as observationModule from "./observation";
+
 import {
   consoleEdgeDeviceClient,
   consoleObservationSettingsClient,
@@ -53,9 +76,11 @@ import {
   edgeMeasurementIngestClient,
 } from "./observation";
 import { router } from "./router";
+import { connectionSignalingClient } from "./signaling";
 import {
   relationAdminClient,
   relationRegistrationClient,
+  tenantManagementClient,
   tenantRegistrationClient,
 } from "./tenantManagement";
 
@@ -65,13 +90,21 @@ vi.hoisted(() => {
 vi.mock("server-only", () => ({}));
 vi.mock(
   "@pj-hoakari/tolo-tenant-management-connect-es/tolo/tenant/v1/tenant_pb",
-  () => ({ EventStatus: {}, TenantService: { methods: [] } }),
+  () => ({
+    EventStatus: { DRAFT: 1, OPEN: 2, LOCKED: 3, CLOSED: 4, ARCHIVED: 5 },
+    TenantService: { methods: [] },
+  }),
 );
 
 vi.mock("./tenantManagement", () => ({
   tenantRegistrationClient: {
     startTenantRegistration: vi.fn(),
     claimTenantOwnership: vi.fn(),
+  },
+  tenantManagementClient: {
+    listEvents: vi.fn(),
+    createEvent: vi.fn(),
+    transitionEventStatus: vi.fn(),
   },
   relationAdminClient: {
     listMemberships: vi.fn(),
@@ -86,9 +119,40 @@ vi.mock("./tenantManagement", () => ({
 }));
 vi.mock("./auth", () => ({
   authMockingEnabled: vi.fn(),
+  getAccessToken: vi.fn(),
   getRegistrationToken: vi.fn(),
+  getViewer: vi.fn(async () => ({
+    type: "staff",
+    userId: "user-1",
+    tenantId: "0123456789abcdef",
+  })),
   prepareOnboarding: vi.fn(),
   requestTenantId: vi.fn(),
+}));
+vi.mock("./auth/connection", () => ({
+  addCameraToConnectionDelegation: vi.fn(),
+  CONNECTION_ERROR_CODES: {
+    authorizationRequired: "CONNECTION_AUTHORIZATION_REQUIRED",
+    cameraNotDelegated: "CAMERA_NOT_DELEGATED",
+    notConfigured: "CONNECTION_NOT_CONFIGURED",
+    refreshFailed: "CONNECTION_REFRESH_FAILED",
+    eventAccessFailed: "CONNECTION_EVENT_ACCESS_FAILED",
+  },
+  connectionDelegationCameraIds: vi.fn(),
+  connectionEventAccess: vi.fn(),
+  deleteConnectionDelegationsForCamera: vi.fn(),
+  deleteConnectionDelegationsForEvent: vi.fn(),
+  deleteConnectionDelegationsForPage: vi.fn(),
+  withCameraConnectionAuthorization: vi.fn(),
+}));
+vi.mock("./auth/eventLifecycle", () => ({
+  withEventLifecycle: vi.fn((_eventId: string, task: () => Promise<unknown>) =>
+    task(),
+  ),
+}));
+vi.mock("./auth/machineSessionRevocation", () => ({
+  revokeMachineSessionsForEvent: vi.fn(),
+  revokeMachineSessionsForEdge: vi.fn(),
 }));
 vi.mock("./auth/invitation", () => ({
   forgetInvitation: vi.fn(),
@@ -96,11 +160,24 @@ vi.mock("./auth/invitation", () => ({
 }));
 
 const eventId = "fedcba9876543210";
-const [device] = sampleEdgeDevicesWire;
+const [device] = sampleObservationDevicesWire;
+
+beforeEach(() => {
+  vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+  vi.mocked(tenantManagementClient.listEvents).mockResolvedValue({
+    events: [{ eventId, name: "Event", status: ProtoEventStatus.OPEN }],
+  } as never);
+});
 
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
+  vi.mocked(connectionDelegationCameraIds).mockReset();
+  vi.mocked(getViewer).mockResolvedValue({
+    type: "staff",
+    userId: "user-1",
+    tenantId: "0123456789abcdef",
+  });
 });
 
 describe("graph.saveGraph", () => {
@@ -643,6 +720,7 @@ describe("tenant.acceptInvitation", () => {
 const protoDevice = create(EdgeDeviceSchema, {
   edgeDeviceId: "0123456789abcdef",
   name: "受付カメラ",
+  kind: EdgeDeviceKind.OBSERVATION_PAGE,
   online: false,
   lastHeartbeatAt: timestampFromDate(new Date("2026-06-14T10:00:00.000Z")),
   observationPoints: [{ observationPointId: "1111111111111111", name: "受付" }],
@@ -650,10 +728,49 @@ const protoDevice = create(EdgeDeviceSchema, {
 const wireDevice = {
   edgeDeviceId: "0123456789abcdef",
   name: "受付カメラ",
+  kind: "observation_page",
+  cameraLinks: [],
   online: false,
   lastHeartbeatAt: "2026-06-14T10:00:00.000Z",
   observationPoints: [{ observationPointId: "1111111111111111", name: "受付" }],
 };
+const protoCamera = create(EdgeDeviceSchema, {
+  edgeDeviceId: "0123456789abcdee",
+  name: "ESP32 カメラ",
+  kind: EdgeDeviceKind.CAMERA,
+  online: true,
+  lastHeartbeatAt: timestampFromDate(new Date("2026-06-14T10:00:00.000Z")),
+  cameraLinks: [
+    {
+      cameraEdgeDeviceId: "0123456789abcdee",
+      observationPointId: "1111111111111111",
+    },
+  ],
+});
+const wireCamera = {
+  edgeDeviceId: "0123456789abcdee",
+  name: "ESP32 カメラ",
+  kind: "camera",
+  cameraLinks: [
+    {
+      cameraEdgeDeviceId: "0123456789abcdee",
+      observationPointId: "1111111111111111",
+    },
+  ],
+  online: null,
+  lastHeartbeatAt: null,
+  observationPoints: [],
+};
+
+const protoPageWithCamera = create(EdgeDeviceSchema, {
+  ...protoDevice,
+  cameraLinks: [
+    create(CameraLinkSchema, {
+      cameraEdgeDeviceId: protoCamera.edgeDeviceId,
+      observationPointId: "1111111111111111",
+    }),
+  ],
+});
 
 describe("guest", () => {
   it("opens the guest page with the QR location and session and returns the known components in order", async () => {
@@ -840,8 +957,12 @@ describe("guest", () => {
 });
 
 describe("observation.registerEdgeDevice", () => {
-  const register = (input: { name: string; observationPointNames: string[] }) =>
-    call(router.observation.registerEdgeDevice, { eventId, ...input });
+  const register = (input: {
+    name: string;
+    kind?: "observation_page" | "camera";
+    observationPointNames: string[];
+    linkedObservationPointId?: string;
+  }) => call(router.observation.registerEdgeDevice, { eventId, ...input });
 
   it("registers the trimmed names with the console credentials and returns the device and its observation page path", async () => {
     const consoleRegister = vi
@@ -855,7 +976,11 @@ describe("observation.registerEdgeDevice", () => {
     const edgeRegister = vi.spyOn(edgeEdgeDeviceClient, "registerEdgeDevice");
 
     await expect(
-      register({ name: " 受付カメラ ", observationPointNames: [" 受付 "] }),
+      register({
+        name: " 受付カメラ ",
+        observationPointNames: [" 受付 "],
+        linkedObservationPointId: "",
+      }),
     ).resolves.toEqual({
       device: wireDevice,
       observationPagePath: `/event/${eventId}/observation/0123456789abcdef`,
@@ -864,8 +989,71 @@ describe("observation.registerEdgeDevice", () => {
       eventId,
       name: "受付カメラ",
       observationPointNames: ["受付"],
+      kind: EdgeDeviceKind.OBSERVATION_PAGE,
+      linkedObservationPointId: "",
     });
     expect(edgeRegister).not.toHaveBeenCalled();
+  });
+
+  it("registers a camera with one linked observation point and no point names", async () => {
+    vi.mocked(addCameraToConnectionDelegation).mockClear();
+    const consoleRegister = vi
+      .spyOn(consoleEdgeDeviceClient, "registerEdgeDevice")
+      .mockResolvedValue(
+        create(RegisterEdgeDeviceResponseSchema, {
+          device: protoCamera,
+          observationPagePath: "",
+        }),
+      );
+    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockResolvedValue(
+      create(ListEdgeDevicesResponseSchema, {
+        devices: [protoPageWithCamera, protoCamera],
+      }),
+    );
+
+    await expect(
+      register({
+        name: " ESP32 カメラ ",
+        kind: "camera",
+        observationPointNames: [],
+        linkedObservationPointId: "1111111111111111",
+      }),
+    ).resolves.toEqual({ device: wireCamera, observationPagePath: "" });
+    expect(consoleRegister).toHaveBeenCalledWith({
+      eventId,
+      name: "ESP32 カメラ",
+      observationPointNames: [],
+      kind: EdgeDeviceKind.CAMERA,
+      linkedObservationPointId: "1111111111111111",
+    });
+    expect(addCameraToConnectionDelegation).toHaveBeenCalledWith(
+      eventId,
+      protoDevice.edgeDeviceId,
+      protoCamera.edgeDeviceId,
+    );
+  });
+
+  it("registers a camera without adding a delegation when no observation page owns it", async () => {
+    vi.mocked(addCameraToConnectionDelegation).mockClear();
+    vi.spyOn(consoleEdgeDeviceClient, "registerEdgeDevice").mockResolvedValue(
+      create(RegisterEdgeDeviceResponseSchema, {
+        device: protoCamera,
+        observationPagePath: "",
+      }),
+    );
+    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockResolvedValue(
+      create(ListEdgeDevicesResponseSchema, { devices: [protoCamera] }),
+    );
+
+    await expect(
+      register({
+        name: "ESP32 カメラ",
+        kind: "camera",
+        observationPointNames: [],
+        linkedObservationPointId: "1111111111111111",
+      }),
+    ).resolves.toEqual({ device: wireCamera, observationPagePath: "" });
+    expect(addCameraToConnectionDelegation).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -873,6 +1061,23 @@ describe("observation.registerEdgeDevice", () => {
     { name: "受付カメラ", observationPointNames: [] },
     { name: "受付カメラ", observationPointNames: [" "] },
     { name: "受付カメラ", observationPointNames: ["受付", " 受付"] },
+    {
+      name: "ESP32 カメラ",
+      kind: "camera",
+      observationPointNames: ["受付"],
+      linkedObservationPointId: "1111111111111111",
+    },
+    {
+      name: "ESP32 カメラ",
+      kind: "camera",
+      observationPointNames: [],
+    },
+    {
+      name: "受付カメラ",
+      kind: "observation_page",
+      observationPointNames: ["受付"],
+      linkedObservationPointId: "1111111111111111",
+    },
   ])(
     "rejects %j as a bad request without reaching the gateway",
     async (input) => {
@@ -881,7 +1086,7 @@ describe("observation.registerEdgeDevice", () => {
         "registerEdgeDevice",
       );
 
-      await expect(register(input)).rejects.toMatchObject({
+      await expect(register(input as never)).rejects.toMatchObject({
         code: "BAD_REQUEST",
       });
       expect(consoleRegister).not.toHaveBeenCalled();
@@ -906,13 +1111,25 @@ describe("observation.registerEdgeDevice", () => {
 });
 
 describe("observation.unregisterEdgeDevice", () => {
-  const unregister = () =>
+  const unregister = (edgeDeviceId = "0123456789abcdef") =>
     call(router.observation.unregisterEdgeDevice, {
       eventId,
-      edgeDeviceId: "0123456789abcdef",
+      edgeDeviceId,
     });
 
-  it("unregisters with the console credentials", async () => {
+  const stubIdp = () => {
+    vi.stubEnv("AUTH_IDP_ISSUER", "https://idp.test");
+    vi.stubEnv("AUTH_IDP_CLIENT_ID", "console-ui");
+    vi.stubEnv("AUTH_IDP_CLIENT_SECRET", "console-secret");
+    vi.mocked(getAccessToken).mockResolvedValue("staff-token");
+  };
+
+  it("unregisters an observation page with the console credentials without revoking a device authorization", async () => {
+    const consoleList = vi
+      .spyOn(consoleEdgeDeviceClient, "listEdgeDevices")
+      .mockResolvedValue(
+        create(ListEdgeDevicesResponseSchema, { devices: [protoDevice] }),
+      );
     const consoleUnregister = vi
       .spyOn(consoleEdgeDeviceClient, "unregisterEdgeDevice")
       .mockResolvedValue(
@@ -922,16 +1139,99 @@ describe("observation.unregisterEdgeDevice", () => {
       edgeEdgeDeviceClient,
       "unregisterEdgeDevice",
     );
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
 
     await expect(unregister()).resolves.toBeUndefined();
+    expect(consoleList).toHaveBeenCalledWith({ eventId });
     expect(consoleUnregister).toHaveBeenCalledWith({
       eventId,
       edgeDeviceId: "0123456789abcdef",
     });
     expect(edgeUnregister).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("revokes the camera device authorization before unregistering it", async () => {
+    stubIdp();
+    const order: string[] = [];
+    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockImplementation(
+      async () => {
+        order.push("list");
+        return create(ListEdgeDevicesResponseSchema, {
+          devices: [protoCamera],
+        });
+      },
+    );
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async () => {
+        order.push("revoke");
+        return new Response(null, { status: 204 });
+      });
+    const consoleUnregister = vi
+      .spyOn(consoleEdgeDeviceClient, "unregisterEdgeDevice")
+      .mockImplementation(async () => {
+        order.push("unregister");
+        return create(UnregisterEdgeDeviceResponseSchema, {
+          device: protoCamera,
+        });
+      });
+
+    await expect(unregister("0123456789abcdee")).resolves.toBeUndefined();
+    expect(order).toEqual(["list", "revoke", "unregister"]);
+    expect(revokeMachineSessionsForEdge).toHaveBeenCalledWith(
+      eventId,
+      "0123456789abcdee",
+    );
+    expect(deleteConnectionDelegationsForCamera).toHaveBeenCalledWith(
+      eventId,
+      "0123456789abcdee",
+    );
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://idp.test/api/device-authorization/revoke",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          event_id: eventId,
+          edge_device_id: "0123456789abcdee",
+          permanent: true,
+        }),
+      }),
+    );
+    expect(consoleUnregister).toHaveBeenCalledOnce();
+  });
+
+  it("does not unregister a camera when the device authorization cannot be revoked", async () => {
+    stubIdp();
+    const order: string[] = [];
+    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockImplementation(
+      async () => {
+        order.push("list");
+        return create(ListEdgeDevicesResponseSchema, {
+          devices: [protoCamera],
+        });
+      },
+    );
+    vi.spyOn(globalThis, "fetch").mockImplementation(async () => {
+      order.push("revoke");
+      return new Response("idp unavailable", { status: 503 });
+    });
+    const consoleUnregister = vi.spyOn(
+      consoleEdgeDeviceClient,
+      "unregisterEdgeDevice",
+    );
+
+    await expect(unregister("0123456789abcdee")).rejects.toMatchObject({
+      code: "BAD_GATEWAY",
+    });
+    expect(order).toEqual(["list", "revoke"]);
+    expect(consoleUnregister).not.toHaveBeenCalled();
   });
 
   it("passes an already unregistered device to the browser as a rejected precondition", async () => {
+    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockResolvedValue(
+      create(ListEdgeDevicesResponseSchema, { devices: [protoDevice] }),
+    );
     vi.spyOn(consoleEdgeDeviceClient, "unregisterEdgeDevice").mockRejectedValue(
       new ConnectError("edge device is unregistered", Code.FailedPrecondition),
     );
@@ -1100,6 +1400,18 @@ describe("observation credentials by caller", () => {
     expect(edgeList).not.toHaveBeenCalled();
   });
 
+  it("maps camera devices with their kind, camera links, and no online value", async () => {
+    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockResolvedValue(
+      create(ListEdgeDevicesResponseSchema, {
+        devices: [protoDevice, protoCamera],
+      }),
+    );
+
+    await expect(
+      call(router.observation.listEdgeDevices, { eventId }),
+    ).resolves.toEqual({ devices: [wireDevice, wireCamera] });
+  });
+
   it("lists the observation points of the edge device with the edge credentials", async () => {
     const edgeList = vi
       .spyOn(edgeEdgeDeviceClient, "listEdgeDeviceObservationPoints")
@@ -1192,6 +1504,991 @@ describe("observation credentials by caller", () => {
   });
 });
 
+describe("tenant.archiveEvent camera revocation", () => {
+  beforeEach(() => {
+    vi.mocked(tenantManagementClient.listEvents).mockResolvedValue({
+      events: [{ eventId, name: "Event", status: ProtoEventStatus.CLOSED }],
+    } as never);
+  });
+  const stubIdp = () => {
+    vi.stubEnv("AUTH_IDP_ISSUER", "https://idp.test");
+    vi.stubEnv("AUTH_IDP_CLIENT_ID", "console-ui");
+    vi.stubEnv("AUTH_IDP_CLIENT_SECRET", "console-secret");
+    vi.mocked(getAccessToken).mockResolvedValue("staff-token");
+  };
+
+  const camera = (edgeDeviceId: string) =>
+    create(EdgeDeviceSchema, {
+      edgeDeviceId,
+      name: "ESP32 カメラ",
+      kind: EdgeDeviceKind.CAMERA,
+    });
+
+  const transitioned = (status: number) =>
+    vi.mocked(tenantManagementClient.transitionEventStatus).mockResolvedValue({
+      event: { eventId, name: "Event", status },
+    } as never);
+
+  it.each([
+    ProtoEventStatus.OPEN,
+    ProtoEventStatus.LOCKED,
+    ProtoEventStatus.ARCHIVED,
+  ])(
+    "rejects an invalid transition before revoking anything (status %s)",
+    async (status) => {
+      vi.mocked(tenantManagementClient.listEvents).mockResolvedValue({
+        events: [{ eventId, name: "Event", status }],
+      } as never);
+      const list = vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices");
+      await expect(
+        call(router.tenant.archiveEvent, { eventId }),
+      ).rejects.toMatchObject({
+        code: "PRECONDITION_FAILED",
+      });
+      expect(list).not.toHaveBeenCalled();
+      expect(revokeMachineSessionsForEvent).not.toHaveBeenCalled();
+    },
+  );
+
+  it("revokes every camera grant before archiving the event", async () => {
+    stubIdp();
+    const order: string[] = [];
+    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockImplementation(
+      async () => {
+        order.push("list");
+        return create(ListEdgeDevicesResponseSchema, {
+          devices: [
+            protoDevice,
+            camera("0123456789abcdee"),
+            camera("0123456789abcdff"),
+          ],
+        });
+      },
+    );
+    vi.spyOn(globalThis, "fetch").mockImplementation(async () => {
+      order.push("revoke");
+      return new Response(null, { status: 204 });
+    });
+    vi.mocked(deleteConnectionDelegationsForEvent).mockImplementation(
+      async () => {
+        order.push("delete");
+      },
+    );
+    transitioned(5);
+    vi.mocked(tenantManagementClient.transitionEventStatus).mockImplementation(
+      async () => {
+        order.push("transition");
+        return {
+          event: { eventId, name: "Event", status: 5 },
+        } as never;
+      },
+    );
+
+    await expect(
+      call(router.tenant.archiveEvent, { eventId }),
+    ).resolves.toEqual({ eventId, name: "Event", status: "archived" });
+    expect(order).toEqual(["list", "revoke", "revoke", "delete", "transition"]);
+    expect(revokeMachineSessionsForEvent).toHaveBeenCalledWith(eventId);
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "https://idp.test/api/device-authorization/revoke",
+      expect.objectContaining({
+        body: JSON.stringify({
+          event_id: eventId,
+          edge_device_id: "0123456789abcdee",
+          permanent: true,
+        }),
+      }),
+    );
+  });
+
+  it("does not archive the event when any camera grant cannot be revoked", async () => {
+    stubIdp();
+    const order: string[] = [];
+    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockImplementation(
+      async () => {
+        order.push("list");
+        return create(ListEdgeDevicesResponseSchema, {
+          devices: [camera("0123456789abcdee"), camera("0123456789abcdff")],
+        });
+      },
+    );
+    vi.spyOn(globalThis, "fetch").mockImplementation(async () => {
+      order.push("revoke");
+      return new Response("idp unavailable", { status: 503 });
+    });
+    const transition = vi.mocked(tenantManagementClient.transitionEventStatus);
+
+    await expect(
+      call(router.tenant.archiveEvent, { eventId }),
+    ).rejects.toMatchObject({ code: "BAD_GATEWAY" });
+    expect(order).toEqual(["list", "revoke"]);
+    expect(transition).not.toHaveBeenCalled();
+  });
+
+  it("does not re-authorize cameras when restoring an archived event", async () => {
+    const list = vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices");
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    transitioned(4);
+
+    await expect(
+      call(router.tenant.restoreEvent, { eventId }),
+    ).resolves.toEqual({ eventId, name: "Event", status: "closed" });
+    expect(list).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("camera", () => {
+  const stubIdp = () => {
+    vi.stubEnv("AUTH_IDP_ISSUER", "https://idp.test");
+    vi.stubEnv("AUTH_IDP_CLIENT_ID", "console-ui");
+    vi.stubEnv("AUTH_IDP_CLIENT_SECRET", "console-secret");
+    vi.mocked(getAccessToken).mockResolvedValue("staff-token");
+  };
+
+  const approvableEvent = (status = ProtoEventStatus.OPEN) => {
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(tenantManagementClient.listEvents).mockResolvedValue({
+      events: [{ eventId, name: "Event", status }],
+    } as never);
+  };
+
+  const listCameras = (devices = [protoCamera]) =>
+    vi
+      .spyOn(consoleEdgeDeviceClient, "listEdgeDevices")
+      .mockResolvedValue(create(ListEdgeDevicesResponseSchema, { devices }));
+
+  it("approves a registered camera after checking that it belongs to the event", async () => {
+    stubIdp();
+    approvableEvent();
+    listCameras();
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
+
+    await expect(
+      call(router.camera.approveDeviceAuthorization, {
+        eventId,
+        edgeDeviceId: "0123456789abcdee",
+        userCode: "ABCD-EFGH",
+      }),
+    ).resolves.toBeUndefined();
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://idp.test/api/device-authorization/approve",
+      expect.objectContaining({
+        body: JSON.stringify({
+          user_code: "ABCD-EFGH",
+          event_id: eventId,
+          edge_device_id: "0123456789abcdee",
+        }),
+      }),
+    );
+  });
+
+  it("approves with an explicit reapproval when the staff asks for it", async () => {
+    stubIdp();
+    approvableEvent();
+    listCameras();
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
+
+    await call(router.camera.approveDeviceAuthorization, {
+      eventId,
+      edgeDeviceId: "0123456789abcdee",
+      userCode: "ABCD-EFGH",
+      reapproval: true,
+    });
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://idp.test/api/device-authorization/approve",
+      expect.objectContaining({
+        body: JSON.stringify({
+          user_code: "ABCD-EFGH",
+          event_id: eventId,
+          edge_device_id: "0123456789abcdee",
+          reapproval: true,
+        }),
+      }),
+    );
+  });
+
+  it.each([
+    ["closed", ProtoEventStatus.CLOSED],
+    ["archived", ProtoEventStatus.ARCHIVED],
+  ])("refuses to approve a camera in a %s event", async (_, status) => {
+    stubIdp();
+    approvableEvent(status);
+    const list = listCameras();
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await expect(
+      call(router.camera.approveDeviceAuthorization, {
+        eventId,
+        edgeDeviceId: "0123456789abcdee",
+        userCode: "ABCD-EFGH",
+      }),
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+    expect(list).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("refuses to approve when the event state cannot be fetched", async () => {
+    stubIdp();
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(tenantManagementClient.listEvents).mockRejectedValue(
+      new ConnectError("tenant-management unavailable", Code.Unavailable),
+    );
+    const list = listCameras();
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await expect(
+      call(router.camera.approveDeviceAuthorization, {
+        eventId,
+        edgeDeviceId: "0123456789abcdee",
+        userCode: "ABCD-EFGH",
+      }),
+    ).rejects.toBeInstanceOf(ConnectError);
+    expect(list).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("refuses to approve an observation page device", async () => {
+    stubIdp();
+    approvableEvent();
+    listCameras([protoDevice]);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await expect(
+      call(router.camera.approveDeviceAuthorization, {
+        eventId,
+        edgeDeviceId: "0123456789abcdef",
+        userCode: "ABCD-EFGH",
+      }),
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("revokes a registered camera permanently", async () => {
+    stubIdp();
+    listCameras();
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
+
+    await expect(
+      call(router.camera.revokeDeviceAuthorization, {
+        eventId,
+        edgeDeviceId: "0123456789abcdee",
+      }),
+    ).resolves.toBeUndefined();
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://idp.test/api/device-authorization/revoke",
+      expect.objectContaining({
+        body: JSON.stringify({
+          event_id: eventId,
+          edge_device_id: "0123456789abcdee",
+          permanent: true,
+        }),
+      }),
+    );
+    expect(deleteConnectionDelegationsForCamera).toHaveBeenCalledWith(
+      eventId,
+      "0123456789abcdee",
+    );
+  });
+
+  it("stops a registered camera temporarily without unregistering it", async () => {
+    stubIdp();
+    listCameras();
+    const unregister = vi.spyOn(
+      consoleEdgeDeviceClient,
+      "unregisterEdgeDevice",
+    );
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
+
+    await expect(
+      call(router.camera.stopDeviceAuthorization, {
+        eventId,
+        edgeDeviceId: "0123456789abcdee",
+      }),
+    ).resolves.toBeUndefined();
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://idp.test/api/device-authorization/revoke",
+      expect.objectContaining({
+        body: JSON.stringify({
+          event_id: eventId,
+          edge_device_id: "0123456789abcdee",
+          permanent: false,
+        }),
+      }),
+    );
+    expect(unregister).not.toHaveBeenCalled();
+    expect(deleteConnectionDelegationsForCamera).toHaveBeenCalledWith(
+      eventId,
+      "0123456789abcdee",
+    );
+  });
+
+  it("refuses to revoke a camera that is not registered in the event", async () => {
+    stubIdp();
+    listCameras([protoDevice]);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await expect(
+      call(router.camera.revokeDeviceAuthorization, {
+        eventId,
+        edgeDeviceId: "0123456789abcdee",
+      }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("refuses to revoke a device whose kind is not a camera", async () => {
+    stubIdp();
+    listCameras([protoDevice]);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await expect(
+      call(router.camera.stopDeviceAuthorization, {
+        eventId,
+        edgeDeviceId: "0123456789abcdef",
+      }),
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("refuses to revoke when the staff has no event access", async () => {
+    stubIdp();
+    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockRejectedValue(
+      new ConnectError("event role is required", Code.PermissionDenied),
+    );
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await expect(
+      call(router.camera.revokeDeviceAuthorization, {
+        eventId,
+        edgeDeviceId: "0123456789abcdee",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("returns non-secret provisioning defaults", async () => {
+    vi.stubEnv("SIGNALING_PUBLIC_URL", "https://signaling.example");
+    vi.stubEnv("FIREBASE_PROJECT_ID", "project-1");
+    vi.stubEnv("FIREBASE_API_KEY", "api-key-1");
+    vi.stubEnv("FIRESTORE_EMULATOR_HOST", "firestore:8080");
+    vi.stubEnv("FIREBASE_AUTH_EMULATOR_HOST", "auth:9099");
+    vi.stubEnv("AUTH_IDP_ISSUER", "https://idp.test/");
+    vi.stubEnv("AUTH_IDP_CLIENT_SECRET", "must-not-leak");
+
+    await expect(
+      call(router.camera.provisioningDefaults, undefined),
+    ).resolves.toEqual({
+      signalingUrl: "https://signaling.example",
+      idpUrl: "https://idp.test",
+      firebaseProjectId: "project-1",
+      firebaseApiKey: "api-key-1",
+      firestoreEmulatorHost: "firestore:8080",
+      firebaseAuthEmulatorHost: "auth:9099",
+    });
+  });
+});
+
+describe("signaling.requestCameraConnection", () => {
+  const expiresAt = new Date("2026-06-14T10:05:00.000Z");
+
+  const stubs = (devices = [protoPageWithCamera, protoCamera]) => {
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(connectionEventAccess).mockResolvedValue("connection-token");
+    vi.mocked(withCameraConnectionAuthorization).mockImplementation(
+      async (_tenantId, _eventId, _pageEdgeDeviceId, _cameraEdgeId, task) =>
+        task("connection-token"),
+    );
+    const list = vi
+      .spyOn(consoleEdgeDeviceClient, "listEdgeDevices")
+      .mockResolvedValue(create(ListEdgeDevicesResponseSchema, { devices }));
+    const request = vi
+      .spyOn(connectionSignalingClient, "requestConnection")
+      .mockResolvedValue(
+        create(RequestConnectionResponseSchema, { sessionId: "session-1" }),
+      );
+    const issue = vi
+      .spyOn(connectionSignalingClient, "issueFirestoreToken")
+      .mockResolvedValue(
+        create(IssueFirestoreTokenResponseSchema, {
+          firebaseCustomToken: "bound-custom-token",
+          expiresAt: timestampFromDate(expiresAt),
+        }),
+      );
+    return { list, request, issue };
+  };
+
+  it("creates a session for a linked camera and returns only the bound custom token", async () => {
+    const { request, issue } = stubs();
+
+    const result = await call(router.signaling.requestCameraConnection, {
+      eventId,
+      pageEdgeDeviceId: protoDevice.edgeDeviceId,
+      cameraEdgeId: protoCamera.edgeDeviceId,
+    });
+
+    expect(result).toEqual({
+      sessionId: "session-1",
+      firestoreToken: "bound-custom-token",
+      expiresAt,
+    });
+    expect(Object.keys(result).sort()).toEqual([
+      "expiresAt",
+      "firestoreToken",
+      "sessionId",
+    ]);
+    expect(withCameraConnectionAuthorization).toHaveBeenCalledWith(
+      "0123456789abcdef",
+      eventId,
+      protoDevice.edgeDeviceId,
+      protoCamera.edgeDeviceId,
+      expect.any(Function),
+    );
+    expect(request).toHaveBeenCalledWith(
+      { edgeDeviceId: protoCamera.edgeDeviceId },
+      expect.anything(),
+    );
+    expect(issue).toHaveBeenCalledWith(
+      {
+        edgeDeviceId: protoCamera.edgeDeviceId,
+        sessionId: "session-1",
+      },
+      expect.anything(),
+    );
+  });
+
+  it("asks a staff viewer to reauthorize when the stored authorization is missing", async () => {
+    const { request, issue } = stubs();
+    vi.mocked(withCameraConnectionAuthorization).mockRejectedValue(
+      new ORPCError("PRECONDITION_FAILED", {
+        data: { code: "CONNECTION_AUTHORIZATION_REQUIRED" },
+      }),
+    );
+
+    await expect(
+      call(router.signaling.requestCameraConnection, {
+        eventId,
+        pageEdgeDeviceId: protoDevice.edgeDeviceId,
+        cameraEdgeId: protoCamera.edgeDeviceId,
+      }),
+    ).rejects.toMatchObject({
+      code: "PRECONDITION_FAILED",
+      data: {
+        code: "CONNECTION_AUTHORIZATION_REQUIRED",
+        viewerType: "staff",
+        eventId,
+        pageEdgeDeviceId: protoDevice.edgeDeviceId,
+        cameraEdgeDeviceId: protoCamera.edgeDeviceId,
+      },
+    });
+    expect(request).not.toHaveBeenCalled();
+    expect(issue).not.toHaveBeenCalled();
+  });
+
+  it("asks for reauthorization when a linked camera is missing from the stored delegation", async () => {
+    const { request, issue } = stubs();
+    vi.mocked(withCameraConnectionAuthorization).mockRejectedValue(
+      new ORPCError("PRECONDITION_FAILED", {
+        data: { code: "CAMERA_NOT_DELEGATED" },
+      }),
+    );
+
+    await expect(
+      call(router.signaling.requestCameraConnection, {
+        eventId,
+        pageEdgeDeviceId: protoDevice.edgeDeviceId,
+        cameraEdgeId: protoCamera.edgeDeviceId,
+      }),
+    ).rejects.toMatchObject({
+      code: "PRECONDITION_FAILED",
+      data: {
+        code: "CONNECTION_AUTHORIZATION_REQUIRED",
+        viewerType: "staff",
+        eventId,
+        pageEdgeDeviceId: protoDevice.edgeDeviceId,
+        cameraEdgeDeviceId: protoCamera.edgeDeviceId,
+      },
+    });
+    expect(request).not.toHaveBeenCalled();
+    expect(issue).not.toHaveBeenCalled();
+  });
+
+  it("asks a machine viewer to have staff reauthorize without starting a connection", async () => {
+    const { request, issue } = stubs();
+    vi.mocked(getViewer).mockResolvedValue({
+      type: "machine",
+      userId: "user-1",
+      tenantId: "0123456789abcdef",
+      eventId,
+      edgeDeviceId: protoDevice.edgeDeviceId,
+    });
+    vi.spyOn(
+      observationModule,
+      "listEdgeDevicesWithAccessToken",
+    ).mockResolvedValue(
+      create(ListEdgeDevicesResponseSchema, {
+        devices: [protoPageWithCamera, protoCamera],
+      }),
+    );
+    vi.mocked(withCameraConnectionAuthorization).mockRejectedValue(
+      new ORPCError("PRECONDITION_FAILED", {
+        data: { code: "CONNECTION_AUTHORIZATION_REQUIRED" },
+      }),
+    );
+
+    await expect(
+      call(router.signaling.requestCameraConnection, {
+        eventId,
+        pageEdgeDeviceId: protoDevice.edgeDeviceId,
+        cameraEdgeId: protoCamera.edgeDeviceId,
+      }),
+    ).rejects.toMatchObject({
+      code: "PRECONDITION_FAILED",
+      data: {
+        code: "CONNECTION_AUTHORIZATION_REQUIRED",
+        viewerType: "machine",
+        eventId,
+        pageEdgeDeviceId: protoDevice.edgeDeviceId,
+        cameraEdgeDeviceId: protoCamera.edgeDeviceId,
+      },
+    });
+    expect(request).not.toHaveBeenCalled();
+    expect(issue).not.toHaveBeenCalled();
+  });
+
+  it("rejects a camera missing from the event before calling Edge Bridge", async () => {
+    const { request, issue } = stubs([protoDevice, protoCamera]);
+
+    await expect(
+      call(router.signaling.requestCameraConnection, {
+        eventId,
+        pageEdgeDeviceId: protoDevice.edgeDeviceId,
+        cameraEdgeId: "0123456789abcdff",
+      }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(request).not.toHaveBeenCalled();
+    expect(issue).not.toHaveBeenCalled();
+  });
+
+  it("rejects a camera that exists but is not listed in the page's cameraLinks", async () => {
+    const otherCamera = create(EdgeDeviceSchema, {
+      ...protoCamera,
+      edgeDeviceId: "0123456789abcdff",
+    });
+    const page = create(EdgeDeviceSchema, {
+      ...protoDevice,
+      cameraLinks: [
+        create(CameraLinkSchema, {
+          cameraEdgeDeviceId: otherCamera.edgeDeviceId,
+          observationPointId: "1111111111111111",
+        }),
+      ],
+    });
+    const { request, issue } = stubs([page, protoCamera, otherCamera]);
+
+    await expect(
+      call(router.signaling.requestCameraConnection, {
+        eventId,
+        pageEdgeDeviceId: page.edgeDeviceId,
+        cameraEdgeId: protoCamera.edgeDeviceId,
+      }),
+    ).rejects.toMatchObject({
+      code: "PRECONDITION_FAILED",
+      data: {
+        code: "CAMERA_NOT_DELEGATED",
+        viewerType: "staff",
+        eventId,
+        pageEdgeDeviceId: page.edgeDeviceId,
+        cameraEdgeDeviceId: protoCamera.edgeDeviceId,
+      },
+    });
+    expect(request).not.toHaveBeenCalled();
+    expect(issue).not.toHaveBeenCalled();
+  });
+
+  it("rejects a page edge device that is missing from the event", async () => {
+    const { request, issue } = stubs([protoCamera]);
+
+    await expect(
+      call(router.signaling.requestCameraConnection, {
+        eventId,
+        pageEdgeDeviceId: protoDevice.edgeDeviceId,
+        cameraEdgeId: protoCamera.edgeDeviceId,
+      }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(request).not.toHaveBeenCalled();
+    expect(issue).not.toHaveBeenCalled();
+  });
+
+  it("rejects a page edge device whose kind is a camera", async () => {
+    const { request, issue } = stubs([protoCamera]);
+
+    await expect(
+      call(router.signaling.requestCameraConnection, {
+        eventId,
+        pageEdgeDeviceId: protoCamera.edgeDeviceId,
+        cameraEdgeId: protoCamera.edgeDeviceId,
+      }),
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+    expect(request).not.toHaveBeenCalled();
+    expect(issue).not.toHaveBeenCalled();
+  });
+
+  it("rejects a camera edge device whose kind is an observation page", async () => {
+    const { request, issue } = stubs([protoPageWithCamera]);
+
+    await expect(
+      call(router.signaling.requestCameraConnection, {
+        eventId,
+        pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
+        cameraEdgeId: protoPageWithCamera.edgeDeviceId,
+      }),
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+    expect(request).not.toHaveBeenCalled();
+    expect(issue).not.toHaveBeenCalled();
+  });
+});
+
+describe("camera.listDelegatedCameras", () => {
+  const linkedCamera = protoCamera;
+  const unlinkedCamera = create(EdgeDeviceSchema, {
+    edgeDeviceId: "0123456789abcdff",
+    name: "別のカメラ",
+    kind: EdgeDeviceKind.CAMERA,
+  });
+
+  it("returns only the page's linked cameras to staff through the console token", async () => {
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(connectionDelegationCameraIds).mockResolvedValue([
+      linkedCamera.edgeDeviceId,
+    ]);
+    const list = vi
+      .spyOn(consoleEdgeDeviceClient, "listEdgeDevices")
+      .mockResolvedValue(
+        create(ListEdgeDevicesResponseSchema, {
+          devices: [protoPageWithCamera, linkedCamera, unlinkedCamera],
+        }),
+      );
+
+    await expect(
+      call(router.camera.listDelegatedCameras, {
+        eventId,
+        pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
+      }),
+    ).resolves.toEqual({
+      cameras: [
+        {
+          ...wireCamera,
+          connectionAuthorized: true,
+          observationPointId: "1111111111111111",
+        },
+      ],
+    });
+    expect(list).toHaveBeenCalledOnce();
+  });
+
+  it("uses the connection authorization's events.read token for a machine session", async () => {
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(getViewer).mockResolvedValue({
+      type: "machine",
+      userId: "user-1",
+      tenantId: "0123456789abcdef",
+      eventId,
+      edgeDeviceId: protoPageWithCamera.edgeDeviceId,
+    });
+    vi.mocked(connectionEventAccess).mockResolvedValue("connection-token");
+    vi.mocked(connectionDelegationCameraIds).mockResolvedValue([
+      linkedCamera.edgeDeviceId,
+    ]);
+    const list = vi
+      .spyOn(consoleEdgeDeviceClient, "listEdgeDevices")
+      .mockResolvedValue(
+        create(ListEdgeDevicesResponseSchema, {
+          devices: [protoPageWithCamera, linkedCamera, unlinkedCamera],
+        }),
+      );
+    const delegated = vi
+      .spyOn(observationModule, "listEdgeDevicesWithAccessToken")
+      .mockResolvedValue(
+        create(ListEdgeDevicesResponseSchema, {
+          devices: [protoPageWithCamera, linkedCamera, unlinkedCamera],
+        }),
+      );
+
+    await expect(
+      call(router.camera.listDelegatedCameras, {
+        eventId,
+        pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
+      }),
+    ).resolves.toEqual({
+      cameras: [
+        {
+          ...wireCamera,
+          connectionAuthorized: true,
+          observationPointId: "1111111111111111",
+        },
+      ],
+    });
+    expect(delegated).toHaveBeenCalledWith(eventId, "connection-token");
+    expect(list).not.toHaveBeenCalled();
+  });
+
+  it("refuses a machine session that asks for another page", async () => {
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(getViewer).mockResolvedValue({
+      type: "machine",
+      userId: "user-1",
+      tenantId: "0123456789abcdef",
+      eventId,
+      edgeDeviceId: "aaaaaaaaaaaaaaaa",
+    });
+
+    await expect(
+      call(router.camera.listDelegatedCameras, {
+        eventId,
+        pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("passes a missing connection authorization to the caller", async () => {
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(getViewer).mockResolvedValue({
+      type: "machine",
+      userId: "user-1",
+      tenantId: "0123456789abcdef",
+      eventId,
+      edgeDeviceId: protoPageWithCamera.edgeDeviceId,
+    });
+    vi.mocked(connectionEventAccess).mockRejectedValue(
+      new ORPCError("PRECONDITION_FAILED", {
+        data: { code: "CONNECTION_AUTHORIZATION_REQUIRED" },
+      }),
+    );
+
+    await expect(
+      call(router.camera.listDelegatedCameras, {
+        eventId,
+        pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
+      }),
+    ).rejects.toMatchObject({
+      code: "PRECONDITION_FAILED",
+      data: {
+        code: "CONNECTION_AUTHORIZATION_REQUIRED",
+        viewerType: "machine",
+        eventId,
+        pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
+      },
+    });
+  });
+
+  it("returns both linked cameras with independent connection authorization", async () => {
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(connectionDelegationCameraIds).mockResolvedValue([
+      linkedCamera.edgeDeviceId,
+    ]);
+    const page = create(EdgeDeviceSchema, {
+      ...protoPageWithCamera,
+      cameraLinks: [
+        ...protoPageWithCamera.cameraLinks,
+        {
+          ...protoPageWithCamera.cameraLinks[0],
+          cameraEdgeDeviceId: unlinkedCamera.edgeDeviceId,
+          observationPointId: "2222222222222222",
+        },
+      ],
+    });
+    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockResolvedValue(
+      create(ListEdgeDevicesResponseSchema, {
+        devices: [page, linkedCamera, unlinkedCamera],
+      }),
+    );
+    const { cameras } = await call(router.camera.listDelegatedCameras, {
+      eventId,
+      pageEdgeDeviceId: page.edgeDeviceId,
+    });
+    expect(
+      cameras.map(({ edgeDeviceId, connectionAuthorized }) => ({
+        edgeDeviceId,
+        connectionAuthorized,
+      })),
+    ).toEqual([
+      { edgeDeviceId: linkedCamera.edgeDeviceId, connectionAuthorized: true },
+      {
+        edgeDeviceId: unlinkedCamera.edgeDeviceId,
+        connectionAuthorized: false,
+      },
+    ]);
+  });
+
+  it("marks a missing staff delegation unauthorized without rejecting other cameras", async () => {
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(connectionDelegationCameraIds).mockResolvedValue([
+      unlinkedCamera.edgeDeviceId,
+    ]);
+    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockResolvedValue(
+      create(ListEdgeDevicesResponseSchema, {
+        devices: [protoPageWithCamera, linkedCamera, unlinkedCamera],
+      }),
+    );
+
+    await expect(
+      call(router.camera.listDelegatedCameras, {
+        eventId,
+        pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
+      }),
+    ).resolves.toMatchObject({
+      cameras: [
+        {
+          edgeDeviceId: linkedCamera.edgeDeviceId,
+          connectionAuthorized: false,
+        },
+      ],
+    });
+  });
+
+  it("asks a staff viewer to reauthorize when no connection authorization is stored", async () => {
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(connectionDelegationCameraIds).mockResolvedValue(null);
+    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockResolvedValue(
+      create(ListEdgeDevicesResponseSchema, {
+        devices: [protoPageWithCamera, linkedCamera, unlinkedCamera],
+      }),
+    );
+
+    await expect(
+      call(router.camera.listDelegatedCameras, {
+        eventId,
+        pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
+      }),
+    ).rejects.toMatchObject({
+      code: "PRECONDITION_FAILED",
+      data: {
+        code: "CONNECTION_AUTHORIZATION_REQUIRED",
+        viewerType: "staff",
+        eventId,
+        pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
+      },
+    });
+  });
+
+  it("marks a missing machine delegation unauthorized without rejecting the list", async () => {
+    vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
+    vi.mocked(getViewer).mockResolvedValue({
+      type: "machine",
+      userId: "user-1",
+      tenantId: "0123456789abcdef",
+      eventId,
+      edgeDeviceId: protoPageWithCamera.edgeDeviceId,
+    });
+    vi.mocked(connectionEventAccess).mockResolvedValue("connection-token");
+    vi.mocked(connectionDelegationCameraIds).mockResolvedValue([
+      unlinkedCamera.edgeDeviceId,
+    ]);
+    vi.spyOn(
+      observationModule,
+      "listEdgeDevicesWithAccessToken",
+    ).mockResolvedValue(
+      create(ListEdgeDevicesResponseSchema, {
+        devices: [protoPageWithCamera, linkedCamera, unlinkedCamera],
+      }),
+    );
+
+    await expect(
+      call(router.camera.listDelegatedCameras, {
+        eventId,
+        pageEdgeDeviceId: protoPageWithCamera.edgeDeviceId,
+      }),
+    ).resolves.toMatchObject({
+      cameras: [
+        {
+          edgeDeviceId: linkedCamera.edgeDeviceId,
+          connectionAuthorized: false,
+        },
+      ],
+    });
+  });
+});
+
+describe("machine session procedure allowlist", () => {
+  const machine = (edgeDeviceId = protoPageWithCamera.edgeDeviceId) =>
+    vi.mocked(getViewer).mockResolvedValue({
+      type: "machine",
+      userId: "user-1",
+      tenantId: "0123456789abcdef",
+      eventId,
+      edgeDeviceId,
+    });
+
+  it("uses the machine session identity for observation requests", async () => {
+    machine();
+    const points = vi
+      .spyOn(edgeEdgeDeviceClient, "listEdgeDeviceObservationPoints")
+      .mockResolvedValue(create(ListEdgeDeviceObservationPointsResponseSchema));
+    const heartbeat = vi
+      .spyOn(edgeEdgeDeviceClient, "heartbeat")
+      .mockResolvedValue(create(HeartbeatResponseSchema));
+    const report = vi
+      .spyOn(edgeMeasurementIngestClient, "reportMeasurements")
+      .mockResolvedValue(create(ReportMeasurementsResponseSchema));
+    const requested = {
+      eventId: "aaaaaaaaaaaaaaaa",
+      edgeDeviceId: "bbbbbbbbbbbbbbbb",
+    };
+    const bound = { eventId, edgeDeviceId: protoPageWithCamera.edgeDeviceId };
+
+    await call(router.observation.listObservationPoints, requested);
+    await call(router.observation.heartbeat, {
+      ...requested,
+      activeObservationPointIds: [],
+    });
+    await call(router.observation.reportMeasurements, {
+      ...requested,
+      measurements: [],
+    });
+
+    expect(points).toHaveBeenCalledWith(bound);
+    expect(heartbeat).toHaveBeenCalledWith({
+      ...bound,
+      activeObservationPointIds: [],
+    });
+    expect(report).toHaveBeenCalledWith({ ...bound, measurements: [] });
+  });
+
+  it("refuses ListEdgeDevices even though the device is in the session", async () => {
+    machine();
+    const list = vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices");
+
+    await expect(
+      call(router.observation.listEdgeDevices, { eventId }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(list).not.toHaveBeenCalled();
+  });
+
+  it("refuses a camera connection for another observation page", async () => {
+    machine();
+    const list = vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices");
+
+    await expect(
+      call(router.signaling.requestCameraConnection, {
+        eventId,
+        pageEdgeDeviceId: "aaaaaaaaaaaaaaaa",
+        cameraEdgeId: protoCamera.edgeDeviceId,
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(list).not.toHaveBeenCalled();
+  });
+});
+
 describe("observation procedures with OBSERVATION_API_MOCKING", () => {
   it("answer with the sample edge devices without reaching the gateway in development", async () => {
     vi.stubEnv("NODE_ENV", "development");
@@ -1199,7 +2496,7 @@ describe("observation procedures with OBSERVATION_API_MOCKING", () => {
 
     await expect(
       call(router.observation.listEdgeDevices, { eventId }),
-    ).resolves.toEqual({ devices: sampleEdgeDevicesWire });
+    ).resolves.toEqual({ devices: sampleObservationDevicesWire });
     await expect(
       call(router.observation.listObservationPoints, {
         eventId,

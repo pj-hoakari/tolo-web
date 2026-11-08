@@ -345,6 +345,24 @@
       "openHereLabel": "在此设备上打开“{name}”",
       "unregister": "取消注册",
       "unregisterLabel": "取消注册“{name}”",
+      "cameraBadge": "Camera",
+      "linkedPoint": "Linked point: {name}",
+      "provision": "Provision",
+      "provisionLabel": "Provision “{name}”",
+      "authorizeConnection": "Authorize observation page connection",
+      "useAsMachine": "Use as observation page",
+      "useAsMachineLabel": "Use {name} as an observation page",
+      "authorizeConnectionLabel": "Authorize the observation page connection for “{name}”",
+      "cameraConnectionHint": "Staff sessions start the connection authorization automatically when the observation page opens. For a machine session, use “Authorize observation page connection” in this screen to reauthorize.",
+      "stop": "Stop",
+      "stopLabel": "Temporarily stop “{name}”",
+      "reapprove": "Redo camera authorization",
+      "reapproveLabel": "Redo camera authorization for “{name}”",
+      "connection": {
+        "authorized": "The camera connection delegation was saved.",
+        "login_required": "Reauthorizing the camera connection requires a staff login. Use “Authorize observation page connection” again.",
+        "failed": "Could not authorize the camera connection. Try again."
+      },
       "observationPoints": "观测点"
     },
     "receiver": {
@@ -371,7 +389,20 @@
       "open": "在此设备上打开",
       "failed": "无法注册观测设备。",
       "invalid": "请检查设备名称和观测点名称。",
-      "eventNotFound": "未找到活动。"
+      "eventNotFound": "未找到活动。",
+      "kindLabel": "Kind",
+      "kind": {
+        "observation_page": "Observation page",
+        "camera": "Camera"
+      },
+      "cameraPointLabel": "Linked observation point",
+      "cameraPointDescription": "Choose the camera-method observation point for this camera",
+      "cameraPointPlaceholder": "Select an observation point",
+      "noCameraPoints": "No observation point is available. Register an observation page device first.",
+      "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
+      "edgeDeviceIdLabel": "Edge device ID",
+      "openProvisioning": "Open provisioning",
+      "authorizeConnection": "Authorize observation page connection"
     },
     "unregisterEdge": {
       "title": "取消注册观测设备",
@@ -380,6 +411,60 @@
       "confirm": "取消注册",
       "failed": "无法取消注册。",
       "stale": "未找到观测设备或该观测设备已取消注册。请刷新列表。"
+    },
+    "stopCamera": {
+      "title": "Temporarily stop the camera",
+      "description": "Stops the stream from “{name}” temporarily. The registration remains; redo the camera authorization to resume.",
+      "cancel": "Cancel",
+      "confirm": "Stop temporarily",
+      "failed": "Could not stop the camera.",
+      "stale": "The camera was not found or does not belong to this event. Refresh the list."
+    },
+    "cameraProvision": {
+      "title": "ESP32 camera provisioning",
+      "description": "Write the Wi-Fi and connection settings to “{name}” ({id}).",
+      "reapprovalNotice": "Redoes the authorization for the temporarily stopped camera. This clears the stop and lets the device connect again.",
+      "reapprovalDescription": "Redo the device authorization for “{name}” ({id}).",
+      "reapprovalStart": "Redo authorization",
+      "trigger": "Provision",
+      "wifiSsidLabel": "Wi-Fi SSID",
+      "wifiPasswordLabel": "Wi-Fi password",
+      "wifiPasswordDescription": "Never shown in the page or logs",
+      "start": "Start writing",
+      "retry": "Retry",
+      "close": "Close",
+      "unsupported": "This browser does not support Web Serial. Use desktop Chrome or Edge.",
+      "insecure": "Web Serial is only available in a secure context (HTTPS or localhost).",
+      "steps": {
+        "selecting": "Selecting the serial port…",
+        "opening": "Opening the serial port…",
+        "writing": "Writing the settings…",
+        "waitingConfig": "Waiting for the device to confirm the settings…",
+        "waitingAuthorization": "Waiting for the device authorization code…",
+        "reconnecting": "Reconnecting to the device…",
+        "approving": "Approving the device authorization…",
+        "waitingResult": "Waiting for the device authorization result…"
+      },
+      "confirmAuthorization": "将此代码对应的设备批准为“{name}”。请确认连接的设备。",
+      "userCodeLabel": "User code",
+      "verificationUri": "Verification URL: {uri}",
+      "complete": "Provisioning for “{name}” is complete. Approved user code {userCode}.",
+      "manualTitle": "Could not receive the user code",
+      "manualDescription": "Enter the user code shown by the device and approve it.",
+      "manualLabel": "User code",
+      "manualSubmit": "Approve",
+      "configRejected": "The device rejected the settings: {error}",
+      "configRejectedNoReason": "The device rejected the settings.",
+      "deviceError": "The device returned an error: {error}",
+      "authorizationRejected": "The device authorization failed.",
+      "authorizationTimeout": "Timed out while waiting for the authorization result.",
+      "timeout": "The device did not respond. Check the connection and retry.",
+      "failed": "Provisioning failed. Check the connection and retry.",
+      "notConnected": "The serial port is not open. Start again.",
+      "reconnectTitle": "The serial port was disconnected",
+      "reconnectDescription": "The device may have restarted. Select the port again to reconnect.",
+      "reconnectFailed": "Could not open the serial port. Select the port again.",
+      "reconnectPort": "Reconnect port"
     }
   },
   "Detection": {
@@ -426,10 +511,18 @@
   },
   "Observation": {
     "title": "{tenantId} 观测页面",
+    "machineSessionFailed": "无法授权观测页面。",
+    "machineSessionRetry": "重新授权",
     "controls": {
       "start": "启动摄像头",
       "stop": "停止",
-      "loading": "启动中…"
+      "loading": "启动中…",
+      "retry": "重新连接",
+      "observeOnThisDevice": "在此设备上观测",
+      "retryCamera": "重新连接 {camera}"
+    },
+    "cameraSelector": {
+      "label": "摄像头"
     },
     "status": {
       "detection": "检测状态：{status}",
@@ -471,12 +564,17 @@
       "detection": "人体检测处理失败",
       "unregistered": "此观测设备已取消注册",
       "modelLoad": "加载检测模型失败（{status}: {path}）",
+      "connectionAuthorizationRequired": "The camera connection is not authorized. Reauthorize it with “Authorize observation page connection”.",
+      "connectionAuthorizationAutoStart": "Camera connection authorization is required. Moving to the authorization page.",
+      "connectionAuthorizationMachine": "The camera connection is not authorized. A staff member must reauthorize it with “Authorize observation page connection” in the management screen.",
+      "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "未允许使用摄像头。请在浏览器设置中允许访问摄像头。",
         "notFound": "未找到摄像头。请确认摄像头已连接。",
         "unsupported": "此浏览器或连接无法使用摄像头",
         "unavailable": "无法启动摄像头"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "视频源",
@@ -487,7 +585,18 @@
       "camera": "摄像头",
       "activeHint": "（停止后才能切换）",
       "inactiveHint": "（选择后启动时生效）",
-      "hide": "隐藏"
+      "hide": "隐藏",
+      "espCamera": "ESP 摄像头 ({edgeId})"
+    },
+    "cameraStatus": {
+      "label": "{camera}: {status}",
+      "waiting": "等待中",
+      "stale": "没有视频",
+      "capturing": "拍摄中",
+      "inferring": "检测中",
+      "ready": "检测中",
+      "error": "错误",
+      "errorDetail": "{camera}: {error}"
     }
   },
   "ObservationDevices": {
@@ -661,7 +770,8 @@
     },
     "loggedOut": {
       "title": "已退出登录",
-      "login": "再次登录"
+      "login": "再次登录",
+      "toObservation": "Back to the observation page"
     },
     "logout": "退出登录"
   },

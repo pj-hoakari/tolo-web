@@ -11,7 +11,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createOrpcHandlers } from "@/mocks/handlers";
 import { server } from "@/mocks/server";
 import { IntlTestProvider } from "@/test/IntlTestProvider";
-import type { ConnectionStatus } from "../type";
+import type { ConnectionStatus, EdgeDeviceItem } from "../type";
 import { AliveEdgeList } from "./AliveEdgeList";
 
 afterEach(cleanup);
@@ -23,33 +23,54 @@ const renderList = (
     connectedOnline = true,
     onUnregistered = vi.fn(),
   }: { connectedOnline?: boolean; onUnregistered?: () => void } = {},
-) =>
-  render(
+) => {
+  const edges: EdgeDeviceItem[] = [
+    {
+      edgeDeviceId: "edge-a",
+      name: "入口カメラ",
+      kind: "observation_page",
+      cameraLinks: [],
+      online: connectedOnline,
+      lastHeartbeatAt: null,
+      observationPoints: [],
+    },
+    {
+      edgeDeviceId: "edge-b",
+      name: "ホールカメラ",
+      kind: "observation_page",
+      cameraLinks: [],
+      online: true,
+      lastHeartbeatAt: null,
+      observationPoints: [],
+    },
+    {
+      edgeDeviceId: "edge-c",
+      name: "倉庫カメラ",
+      kind: "observation_page",
+      cameraLinks: [],
+      online: false,
+      lastHeartbeatAt: new Date("2026-06-14T09:00:00.000Z"),
+      observationPoints: [{ observationPointId: "point-c", name: "倉庫" }],
+    },
+    {
+      edgeDeviceId: "camera-a",
+      name: "ESP32 カメラ",
+      kind: "camera",
+      cameraLinks: [
+        {
+          cameraEdgeDeviceId: "camera-a",
+          observationPointId: "point-c",
+        },
+      ],
+      online: null,
+      lastHeartbeatAt: null,
+      observationPoints: [],
+    },
+  ];
+  return render(
     <AliveEdgeList
       eventId="e"
-      edges={[
-        {
-          edgeDeviceId: "edge-a",
-          name: "入口カメラ",
-          online: connectedOnline,
-          lastHeartbeatAt: null,
-          observationPoints: [],
-        },
-        {
-          edgeDeviceId: "edge-b",
-          name: "ホールカメラ",
-          online: true,
-          lastHeartbeatAt: null,
-          observationPoints: [],
-        },
-        {
-          edgeDeviceId: "edge-c",
-          name: "倉庫カメラ",
-          online: false,
-          lastHeartbeatAt: new Date("2026-06-14T09:00:00.000Z"),
-          observationPoints: [],
-        },
-      ]}
+      edges={edges}
       status="ready"
       error={null}
       onRefresh={vi.fn()}
@@ -61,6 +82,7 @@ const renderList = (
     />,
     { wrapper: IntlTestProvider },
   );
+};
 
 const row = (name: string) =>
   screen
@@ -195,7 +217,7 @@ describe("AliveEdgeList", () => {
     ).toBeTruthy();
   });
 
-  it("オフラインの端末の行にだけ、その端末の観測ページを開くリンクを出す", () => {
+  it("オフラインの端末の行には観測ページを開くリンクを出す", () => {
     renderList("idle");
 
     expect(
@@ -203,9 +225,77 @@ describe("AliveEdgeList", () => {
         .getByRole("link", { name: "「倉庫カメラ」をこの端末で開く" })
         .getAttribute("href"),
     ).toBe("/event/e/observation/edge-c");
+  });
+
+  it("カメラの行にバッジと紐づけ先を表示し、稼働状態と接続と観測ページリンクを出さない", () => {
+    renderList("idle");
+
+    const camera = within(row("ESP32 カメラ") as HTMLElement);
+    expect(camera.getByText("カメラ")).toBeTruthy();
+    expect(camera.getByText("紐づけ先: 倉庫")).toBeTruthy();
+    expect(camera.queryByText("オフライン")).toBeNull();
+    expect(camera.queryByText(/最終応答/)).toBeNull();
+    expect(camera.queryByRole("button", { name: /に接続$/ })).toBeNull();
+    expect(camera.queryByRole("link")).toBeNull();
     expect(
-      within(row("ホールカメラ") as HTMLElement).queryByRole("link"),
-    ).toBeNull();
+      camera.getByRole("button", { name: "「ESP32 カメラ」を設定" }),
+    ).toBeTruthy();
+    expect(
+      camera.getByRole("button", {
+        name: "「ESP32 カメラ」のカメラ認可をやり直す",
+      }),
+    ).toBeTruthy();
+    expect(
+      camera.getByRole("button", { name: "「ESP32 カメラ」を一時停止" }),
+    ).toBeTruthy();
+    expect(
+      camera.getByRole("button", { name: "「ESP32 カメラ」の登録を解除" }),
+    ).toBeTruthy();
+  });
+
+  it("カメラの認可をやり直すボタンで一時停止の解除を明示した初期設定ダイアログを開く", () => {
+    renderList("idle");
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "「ESP32 カメラ」のカメラ認可をやり直す",
+      }),
+    );
+
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(
+      screen.getByText(/一時停止中のカメラの認可をやり直します/),
+    ).toBeTruthy();
+  });
+
+  it("カメラを一時停止すると登録は解除せず一覧の更新を求める", async () => {
+    const onUnregistered = vi.fn();
+    renderList("idle", vi.fn(), { onUnregistered });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "「ESP32 カメラ」を一時停止" }),
+    );
+    const dialog = screen.getByRole("alertdialog");
+    expect(dialog.textContent).toContain(
+      "「ESP32 カメラ」の配信を一時停止します。",
+    );
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "一時停止する" }),
+    );
+
+    await waitFor(() => expect(onUnregistered).toHaveBeenCalledOnce());
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+  });
+
+  it("カメラの設定ボタンで初期設定ダイアログを開く", () => {
+    renderList("idle");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "「ESP32 カメラ」を設定" }),
+    );
+
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(screen.getByText("ESP32 カメラの初期設定")).toBeTruthy();
   });
 
   it("登録解除を確認すると端末の登録を解除し、一覧の更新を求める", async () => {

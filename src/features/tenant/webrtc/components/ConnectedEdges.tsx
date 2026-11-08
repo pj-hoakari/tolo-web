@@ -6,8 +6,10 @@ import { useGraph } from "@/features/graph";
 import { DetectionLineCountList } from "@/features/tenant/detection/components/DetectionLineCountList";
 import { DetectionSettingsPanel } from "@/features/tenant/detection/components/DetectionSettingsPanel";
 import { flowStatesByObservationPoint } from "@/features/tenant/management/graph/utils/observationPoints";
+import { observationPath } from "@/features/tenant/observation/routes";
 import { useEdgeDevices } from "../hooks/useEdgeDevices";
 import { useVideoReceiver } from "../hooks/useVideoReceiver";
+import type { CameraConnectionNotice } from "../utils/cameraConnection";
 import { AliveEdgeList } from "./AliveEdgeList";
 import { RegisterEdgeDeviceForm } from "./RegisterEdgeDeviceForm";
 import { VideoReceiverView } from "./VideoReceiverView";
@@ -15,9 +17,14 @@ import { VideoReceiverView } from "./VideoReceiverView";
 export type ConnectedEdgesProps = {
   tenantId: string;
   eventId: string;
+  connectionNotice?: CameraConnectionNotice | null;
 };
 
-export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
+export function ConnectedEdges({
+  tenantId,
+  eventId,
+  connectionNotice,
+}: ConnectedEdgesProps) {
   const { edges, status, error, refresh } = useEdgeDevices({ eventId });
   const loaded = useGraph({ tenantId, eventId });
   const flow = useFlowElementStates(eventId);
@@ -49,7 +56,12 @@ export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
 
   return (
     <div className="flex w-full flex-col items-center gap-4">
-      <RegisterEdgeDeviceForm eventId={eventId} onRegistered={refresh} />
+      <RegisterEdgeDeviceForm
+        eventId={eventId}
+        onRegistered={refresh}
+        edges={edges}
+        connectionReturnPath={observationPath(eventId)}
+      />
       <AliveEdgeList
         eventId={eventId}
         edges={edges}
@@ -67,6 +79,8 @@ export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
         onConnect={connect}
         onDisconnect={disconnect}
         onUnregistered={refresh}
+        connectionReturnPath={observationPath(eventId)}
+        connectionNotice={connectionNotice}
       />
       {connectedEdgeId && (
         <div className="flex w-full flex-col items-center gap-2">

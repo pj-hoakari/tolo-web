@@ -10,6 +10,16 @@ import { type AccessTokenRequest, getAccessToken } from "./auth";
 
 export const eventIdKey = createContextKey("", { description: "eventId" });
 
+export const tenantIdKey = createContextKey("", { description: "tenantId" });
+
+export const pageEdgeDeviceIdKey = createContextKey("", {
+  description: "pageEdgeDeviceId",
+});
+
+export const connectionAccessTokenKey = createContextKey("", {
+  description: "connection event_access",
+});
+
 function authorize(
   toRequest: (req: UnaryRequest | StreamRequest) => AccessTokenRequest,
 ): Interceptor {
