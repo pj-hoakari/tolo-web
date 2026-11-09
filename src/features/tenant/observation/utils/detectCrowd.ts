@@ -7,10 +7,12 @@ import {
   type Line,
   type LineCount,
   LineCrossingCounter,
+  type Point,
 } from "@pj-hoakari/web-crowd-detection-utils/line-crossing";
 import { isWebGpuAvailable } from "@pj-hoakari/web-crowd-detection-utils/onnx";
 import {
   createLetterboxCapturer,
+  type LetterboxCaptureResult,
   reverseLetterboxBoxes,
 } from "@pj-hoakari/web-crowd-detection-utils/source";
 import {
@@ -34,14 +36,51 @@ const STATIC_SUPPRESS_FACTOR = 0.3;
 type CrowdDetector = Pick<YoloDetector, "detect">;
 
 let detectorPromise: Promise<CrowdDetector> | null = null;
-let capturer: ReturnType<typeof createLetterboxCapturer> | null = null;
-const tracker = new BYTETracker();
-const lineCrossingCounter = new LineCrossingCounter();
-const backgroundSubtractor = new BackgroundSubtractor({
-  width: INPUT_SIZE,
-  height: INPUT_SIZE,
-  alpha: 0.005,
-});
+// The detector reuses a single preprocessing buffer across detect calls.
+let detectorQueue: Promise<void> = Promise.resolve();
+
+async function runDetector<T>(run: () => Promise<T>): Promise<T> {
+  const result = detectorQueue.then(run);
+  detectorQueue = result.then(
+    () => undefined,
+    () => undefined,
+  );
+  return result;
+}
+
+/**
+ * カメラごとに独立して持つ検出状態。
+ *
+ * 検出器（ONNX セッション）はモジュールで共有し、追跡・ライン計数・
+ * 背景差分・前処理はこの状態ごとに分ける。
+ */
+export type CrowdDetectionState = {
+  tracker: BYTETracker;
+  lineCrossingCounter: LineCrossingCounter;
+  backgroundSubtractor: BackgroundSubtractor;
+  capturer: ReturnType<typeof createLetterboxCapturer> | null;
+};
+
+export function createCrowdDetectionState(): CrowdDetectionState {
+  return {
+    tracker: new BYTETracker(),
+    lineCrossingCounter: new LineCrossingCounter(),
+    backgroundSubtractor: new BackgroundSubtractor({
+      width: INPUT_SIZE,
+      height: INPUT_SIZE,
+      alpha: 0.005,
+    }),
+    capturer: null,
+  };
+}
+
+/**
+ * 既存の単一カメラ呼び出し（`useDetectCrowd` など）がそのまま使える
+ * 既定の状態。複数カメラではカメラごとに `createCrowdDetectionState` を作る。
+ */
+const defaultState = createCrowdDetectionState();
+
+export type CapturedCrowdFrame = LetterboxCaptureResult;
 
 export type TrackedDetection = TrackedBox & Pick<Detection, "classId">;
 export type CrowdCountingLine = Line;
@@ -138,18 +177,45 @@ export function initializeCrowdDetector(): Promise<CrowdDetector> {
   return detectorPromise;
 }
 
-export async function detectCrowdFrame(
+export function footPoint({
+  x1,
+  x2,
+  y2,
+}: Pick<TrackedBox, "x1" | "x2" | "y2">): Point {
+  return { x: (x1 + x2) / 2, y: y2 };
+}
+
+/**
+ * 映像から 1 フレームを取得する。取得と推論を分け、複数カメラの
+ * スケジューラが「5 枚取得してから推論する」順序を守れるようにする。
+ */
+export function captureCrowdFrame(
   video: HTMLVideoElement,
+  state: CrowdDetectionState = defaultState,
+): CapturedCrowdFrame {
+  state.capturer ??= createLetterboxCapturer({ inputSize: INPUT_SIZE });
+  return state.capturer.capture(video);
+}
+
+export async function detectCapturedCrowdFrame(
+  captured: CapturedCrowdFrame,
   options: CrowdDetectionOptions,
+  state: CrowdDetectionState = defaultState,
+  isCancelled: () => boolean = () => false,
 ): Promise<CrowdDetectionFrame> {
   const detector = await initializeCrowdDetector();
-  capturer ??= createLetterboxCapturer({ inputSize: INPUT_SIZE });
-  const { imageData, params } = capturer.capture(video);
-  let detections = await detector.detect(imageData);
-  const backgroundReady = backgroundSubtractor.update(imageData);
+  const { imageData, params } = captured;
+  const detectionsOrNull = await runDetector(() =>
+    isCancelled() ? Promise.resolve(null) : detector.detect(imageData),
+  );
+  if (isCancelled() || detectionsOrNull === null) {
+    throw new Error("Detection cancelled");
+  }
+  let detections = detectionsOrNull;
+  const backgroundReady = state.backgroundSubtractor.update(imageData);
 
   if (backgroundReady) {
-    detections = backgroundSubtractor.suppressStatic(
+    detections = state.backgroundSubtractor.suppressStatic(
       detections,
       STATIC_SUPPRESS_FACTOR,
     );
@@ -160,18 +226,15 @@ export async function detectCrowdFrame(
   );
 
   const sourceDetections = reverseLetterboxBoxes(detections, params);
-  tracker.matchThresh = options.trackingDistanceThreshold;
-  const trackedDetections = tracker.update(sourceDetections);
+  state.tracker.matchThresh = options.trackingDistanceThreshold;
+  const trackedDetections = state.tracker.update(sourceDetections);
   const countingLines = options.countingLines;
   const trackedPoints = trackedDetections.map((detection) => ({
     trackId: detection.trackId,
-    point: {
-      x: (detection.x1 + detection.x2) / 2,
-      y: detection.y2,
-    },
+    point: footPoint(detection),
   }));
 
-  lineCrossingCounter.update(trackedPoints, countingLines, {
+  state.lineCrossingCounter.update(trackedPoints, countingLines, {
     assist: {
       enabled: true,
       rescueDistance: params.sourceWidth * (60 / INPUT_SIZE),
@@ -181,23 +244,39 @@ export async function detectCrowdFrame(
   return {
     detections: trackedDetections,
     detectedCount: sourceDetections.length,
-    totalTrackedCount: tracker.totalCount,
+    totalTrackedCount: state.tracker.totalCount,
     countingLines,
     lineCounts: Object.fromEntries(
       countingLines.map((line) => [
         line.id,
-        lineCrossingCounter.getLineCount(line.id),
+        state.lineCrossingCounter.getLineCount(line.id),
       ]),
     ),
   };
 }
 
-export function resetCrowdTracking(): void {
-  tracker.reset();
-  lineCrossingCounter.reset();
-  backgroundSubtractor.reset();
+export async function detectCrowdFrame(
+  video: HTMLVideoElement,
+  options: CrowdDetectionOptions,
+  state: CrowdDetectionState = defaultState,
+): Promise<CrowdDetectionFrame> {
+  return detectCapturedCrowdFrame(
+    captureCrowdFrame(video, state),
+    options,
+    state,
+  );
 }
 
-export function resetCrowdLineCount(): void {
-  lineCrossingCounter.reset();
+export function resetCrowdTracking(
+  state: CrowdDetectionState = defaultState,
+): void {
+  state.tracker.reset();
+  state.lineCrossingCounter.reset();
+  state.backgroundSubtractor.reset();
+}
+
+export function resetCrowdLineCount(
+  state: CrowdDetectionState = defaultState,
+): void {
+  state.lineCrossingCounter.reset();
 }

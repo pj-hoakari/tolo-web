@@ -15,18 +15,23 @@ import {
   createVideoFileSource,
 } from "../utils/videoSource";
 
-type SourceMode = "camera" | "file";
+type SourceMode = "camera" | "file" | "esp";
 
 export type DevVideoSourcePanelProps = {
   status: DetectCrowdStatus;
   onSourceChange: (factory: CrowdVideoSourceFactory) => void;
+  /** 指定すると ESP カメラへ切り替えるボタンを出す */
+  espEdgeId?: string;
+  onEspSelect?: () => void;
 };
 
 function DevVideoSourcePanelComponent({
   status,
   onSourceChange,
+  espEdgeId,
+  onEspSelect,
 }: DevVideoSourcePanelProps) {
-  const [mode, setMode] = useState<SourceMode>("camera");
+  const [mode, setMode] = useState<SourceMode>(espEdgeId ? "esp" : "camera");
   const [file, setFile] = useState<File | null>(null);
   const [loop, setLoop] = useState(true);
   const [hidden, setHidden] = useState(false);
@@ -42,6 +47,15 @@ function DevVideoSourcePanelComponent({
     setMode("camera");
     setFile(null);
     onSourceChange(createCameraVideoSource);
+  };
+
+  const handleEspSelect = () => {
+    if (!onEspSelect) {
+      return;
+    }
+    setMode("esp");
+    setFile(null);
+    onEspSelect();
   };
 
   const handleFileSelect = (files: FileList | null) => {
@@ -92,6 +106,19 @@ function DevVideoSourcePanelComponent({
             {t("loop")}
           </Checkbox>
 
+          {espEdgeId && onEspSelect && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onPress={handleEspSelect}
+              isDisabled={isActive || mode === "esp"}
+              className="self-start"
+            >
+              {t("espCamera", { edgeId: espEdgeId })}
+            </Button>
+          )}
+
           <div>
             <Button
               type="button"
@@ -107,7 +134,12 @@ function DevVideoSourcePanelComponent({
 
           <p className="text-xs break-all">
             {t("current", {
-              source: mode === "file" && file ? file.name : t("camera"),
+              source:
+                mode === "esp"
+                  ? t("espCamera", { edgeId: espEdgeId ?? "" })
+                  : mode === "file" && file
+                    ? file.name
+                    : t("camera"),
             })}
             {isActive ? t("activeHint") : t("inactiveHint")}
           </p>

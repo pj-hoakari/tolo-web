@@ -13,6 +13,7 @@ import {
   type RealAuth,
   SESSION_COOKIE,
   type SessionLock,
+  type SessionLocks,
 } from "./betterAuth";
 import { createSessionAuth } from "./session";
 
@@ -23,12 +24,26 @@ const env: AuthEnv = {
   clientId: "console-ui",
   clientSecret: "console-secret",
   resourceHost: "api.tolo.test",
+  connectionClientId: "observation-connection",
+  connectionClientSecret: "connection-secret",
+  machineClientId: "edge-page",
+  machineClientSecret: "machine-secret",
 };
 const TENANT = "0123456789abcdef";
 const OTHER_TENANT = "1111111111111111";
 const EVENT = "fedcba9876543210";
 const TOKEN_ENDPOINT = "https://idp.test/oauth2/token";
 const MINUTE = 60 * 1000;
+
+function jwtWithScope(scope: string) {
+  const part = (value: object) =>
+    Buffer.from(JSON.stringify(value)).toString("base64url");
+  return `${part({ alg: "RS256" })}.${part({ scope })}.signature`;
+}
+
+const OWNER_TENANT_ACCESS = jwtWithScope(
+  "openid tenant.read tenant.write events.read events.manage events.operate events.report",
+);
 
 function inProcessLock(): SessionLock {
   const tails = new Map<string, Promise<unknown>>();
@@ -38,6 +53,17 @@ function inProcessLock(): SessionLock {
       .then(task);
     tails.set(sessionId, run);
     return run;
+  };
+}
+
+function inProcessLockMany(lock: SessionLock): SessionLocks {
+  return async <T>(keys: string[], task: () => Promise<T>): Promise<T> => {
+    const sorted = [...new Set(keys)].sort();
+    const run = async (index: number): Promise<T> =>
+      index === sorted.length
+        ? task()
+        : lock(sorted[index], () => run(index + 1));
+    return run(0);
   };
 }
 
@@ -65,6 +91,12 @@ function createTestAuth(
       auth: auth as unknown as RealAuth["auth"],
       env,
       lock,
+      lifecycleLock: lock,
+      lockMany: inProcessLockMany(lock),
+      lockManyDynamic: (keys, selectMoreKeys, task) =>
+        inProcessLockMany(lock)(keys, async () =>
+          inProcessLockMany(lock)(await selectMoreKeys(), task),
+        ),
     }),
   };
 }
@@ -77,6 +109,9 @@ async function signIn(
     tenantId = TENANT,
     userId,
     tokens,
+    kind = "staff",
+    eventId,
+    edgeDeviceId,
   }: {
     tenantId?: string;
     userId?: string;
@@ -85,12 +120,15 @@ async function signIn(
       refreshToken: string;
       accessTokenExpiresAt: Date;
     };
+    kind?: "staff" | "machine";
+    eventId?: string;
+    edgeDeviceId?: string;
   } = {},
 ) {
   const ctx = await auth.$context;
   const login = await ctx.test.login({
     userId: userId ?? (await ctx.test.saveUser(ctx.test.createUser())).id,
-    session: { tenantId, kind: "staff" },
+    session: { tenantId, kind, eventId, edgeDeviceId },
   });
   if (tokens) {
     await ctx.adapter.create({
@@ -114,7 +152,7 @@ async function storedTenantAccess(auth: TestAuth, sessionId: string) {
 }
 
 const validTokens = () => ({
-  accessToken: "tenant-access-1",
+  accessToken: OWNER_TENANT_ACCESS,
   refreshToken: "refresh-1",
   accessTokenExpiresAt: new Date(Date.now() + 10 * MINUTE),
 });
@@ -185,7 +223,7 @@ describe("tenant_access", () => {
 
     await expect(
       sessionAuth.accessToken(headers, TENANT, tenantAccess),
-    ).resolves.toBe("tenant-access-1");
+    ).resolves.toBe(OWNER_TENANT_ACCESS);
     expect(idp).toHaveLength(0);
   });
 
@@ -240,7 +278,7 @@ describe("tenant_access", () => {
     ).resolves.toBe("access-from-other-refresh");
     await expect(
       sessionAuth.accessToken(onTenant.headers, TENANT, tenantAccess),
-    ).resolves.toBe("tenant-access-1");
+    ).resolves.toBe(OWNER_TENANT_ACCESS);
     expect(idp.map(({ form }) => form.get("refresh_token"))).toEqual([
       "other-refresh",
     ]);
@@ -291,7 +329,7 @@ describe("tenant_access", () => {
 
     await expect(
       sessionAuth.accessToken(headers, TENANT, tenantAccess),
-    ).rejects.toThrow("no staff session");
+    ).rejects.toThrow("no session for this host");
   });
 });
 
@@ -317,16 +355,58 @@ describe("event_access", () => {
     );
     expect(Object.fromEntries(idp[0].form)).toEqual({
       grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
-      subject_token: "tenant-access-1",
+      subject_token: OWNER_TENANT_ACCESS,
       subject_token_type: "urn:ietf:params:oauth:token-type:access_token",
       resource: `https://api.tolo.test/tenants/${TENANT}/events/${EVENT}`,
       audience: "backend-api",
+      scope: "events.read events.manage events.operate events.report",
     });
   });
 
-  it("refuses the edge client until machine sessions exist", async () => {
+  it("requests only the event scopes that the session's tenant_access carries", async () => {
     const { auth, sessionAuth } = createTestAuth();
-    const { headers } = await signIn(auth);
+    const idp = idpTokenEndpoint();
+    const { headers } = await signIn(auth, {
+      tokens: {
+        ...validTokens(),
+        accessToken: jwtWithScope(
+          "openid tenant.read events.read events.report",
+        ),
+      },
+    });
+
+    await sessionAuth.accessToken(headers, TENANT, {
+      type: "event_access",
+      eventId: EVENT,
+      client: "console",
+    });
+
+    expect(idp[0].form.get("scope")).toBe("events.read events.report");
+  });
+
+  it("does not exchange a tenant_access that carries no event scope", async () => {
+    const { auth, sessionAuth } = createTestAuth();
+    const idp = idpTokenEndpoint();
+    const { headers } = await signIn(auth, {
+      tokens: {
+        ...validTokens(),
+        accessToken: jwtWithScope("openid tenant.read"),
+      },
+    });
+
+    await expect(
+      sessionAuth.accessToken(headers, TENANT, {
+        type: "event_access",
+        eventId: EVENT,
+        client: "console",
+      }),
+    ).rejects.toThrow("carries no event scope");
+    expect(idp).toHaveLength(0);
+  });
+
+  it("refuses the edge client for staff sessions", async () => {
+    const { auth, sessionAuth } = createTestAuth();
+    const { headers } = await signIn(auth, { tokens: validTokens() });
 
     await expect(
       sessionAuth.accessToken(headers, TENANT, {
@@ -334,7 +414,79 @@ describe("event_access", () => {
         eventId: EVENT,
         client: "edge",
       }),
-    ).rejects.toThrow("not supported yet");
+    ).rejects.toThrow("only available to machine sessions");
+  });
+});
+
+describe("machine sessions", () => {
+  it("refreshes and exchanges with the edge-page client, the session event, and its edge_device_id", async () => {
+    const { auth, sessionAuth } = createTestAuth();
+    const idp = idpTokenEndpoint();
+    const { headers } = await signIn(auth, {
+      kind: "machine",
+      eventId: EVENT,
+      edgeDeviceId: "1111111111111111",
+      tokens: expiredTokens(),
+    });
+
+    await expect(
+      sessionAuth.accessToken(headers, TENANT, { type: "tenant_access" }),
+    ).resolves.toBe("access-from-refresh-1");
+    expect(idp[0].authorization).toBe(
+      `Basic ${Buffer.from("edge-page:machine-secret").toString("base64")}`,
+    );
+
+    await expect(
+      sessionAuth.accessToken(headers, TENANT, {
+        type: "event_access",
+        eventId: EVENT,
+        client: "edge",
+      }),
+    ).resolves.toBe("event-token-2");
+    expect(Object.fromEntries(idp[1].form)).toEqual({
+      grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
+      subject_token: "access-from-refresh-1",
+      subject_token_type: "urn:ietf:params:oauth:token-type:access_token",
+      resource: `https://api.tolo.test/tenants/${TENANT}/events/${EVENT}`,
+      audience: "backend-api",
+      scope: "events.report",
+      edge_device_id: "1111111111111111",
+    });
+    expect(idp[1].authorization).toBe(
+      `Basic ${Buffer.from("edge-page:machine-secret").toString("base64")}`,
+    );
+  });
+
+  it("refuses console event_access, another event, and the edge client for staff sessions", async () => {
+    const { auth, sessionAuth } = createTestAuth();
+    const machine = await signIn(auth, {
+      kind: "machine",
+      eventId: EVENT,
+      edgeDeviceId: "1111111111111111",
+      tokens: validTokens(),
+    });
+
+    await expect(sessionAuth.viewer(machine.headers, TENANT)).resolves.toEqual({
+      type: "machine",
+      userId: "idp-subject",
+      tenantId: TENANT,
+      eventId: EVENT,
+      edgeDeviceId: "1111111111111111",
+    });
+    await expect(
+      sessionAuth.accessToken(machine.headers, TENANT, {
+        type: "event_access",
+        eventId: EVENT,
+        client: "console",
+      }),
+    ).rejects.toThrow("not available for machine sessions");
+    await expect(
+      sessionAuth.accessToken(machine.headers, TENANT, {
+        type: "event_access",
+        eventId: "aaaaaaaaaaaaaaaa",
+        client: "edge",
+      }),
+    ).rejects.toThrow("own event");
   });
 });
 
@@ -343,7 +495,7 @@ describe("viewer", () => {
     const { auth, sessionAuth } = createTestAuth();
     const { headers } = await signIn(auth, { tokens: validTokens() });
 
-    await expect(sessionAuth.viewer(headers, TENANT)).resolves.toEqual({
+    await expect(sessionAuth.viewer(headers, TENANT)).resolves.toMatchObject({
       type: "staff",
       userId: "idp-subject",
       tenantId: TENANT,

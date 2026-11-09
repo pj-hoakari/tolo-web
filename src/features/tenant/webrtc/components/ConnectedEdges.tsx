@@ -1,9 +1,15 @@
 "use client";
 
+import { useMemo } from "react";
+import { useFlowElementStates } from "@/features/flowState/useFlowElementStates";
+import { useGraph } from "@/features/graph";
 import { DetectionLineCountList } from "@/features/tenant/detection/components/DetectionLineCountList";
 import { DetectionSettingsPanel } from "@/features/tenant/detection/components/DetectionSettingsPanel";
+import { flowStatesByObservationPoint } from "@/features/tenant/management/graph/utils/observationPoints";
+import { observationPath } from "@/features/tenant/observation/routes";
 import { useEdgeDevices } from "../hooks/useEdgeDevices";
 import { useVideoReceiver } from "../hooks/useVideoReceiver";
+import type { CameraConnectionNotice } from "../utils/cameraConnection";
 import { AliveEdgeList } from "./AliveEdgeList";
 import { RegisterEdgeDeviceForm } from "./RegisterEdgeDeviceForm";
 import { VideoReceiverView } from "./VideoReceiverView";
@@ -11,10 +17,28 @@ import { VideoReceiverView } from "./VideoReceiverView";
 export type ConnectedEdgesProps = {
   tenantId: string;
   eventId: string;
+  connectionNotice?: CameraConnectionNotice | null;
 };
 
-export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
+export function ConnectedEdges({
+  tenantId,
+  eventId,
+  connectionNotice,
+}: ConnectedEdgesProps) {
   const { edges, status, error, refresh } = useEdgeDevices({ eventId });
+  const loaded = useGraph({ tenantId, eventId });
+  const flow = useFlowElementStates(eventId);
+  const flowStates = useMemo(
+    () =>
+      loaded.graph
+        ? flowStatesByObservationPoint(
+            loaded.graph.nodes,
+            loaded.graph.edges,
+            flow.states,
+          )
+        : undefined,
+    [loaded.graph, flow.states],
+  );
   const {
     status: receiveStatus,
     error: receiveError,
@@ -32,18 +56,31 @@ export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
 
   return (
     <div className="flex w-full flex-col items-center gap-4">
-      <RegisterEdgeDeviceForm eventId={eventId} onRegistered={refresh} />
+      <RegisterEdgeDeviceForm
+        eventId={eventId}
+        onRegistered={refresh}
+        edges={edges}
+        connectionReturnPath={observationPath(eventId)}
+      />
       <AliveEdgeList
         eventId={eventId}
         edges={edges}
         status={status}
         error={error}
-        onRefresh={refresh}
+        onRefresh={() => {
+          refresh();
+          loaded.refresh();
+          void flow.refresh();
+        }}
+        flowStates={flowStates}
+        flowStatesFailed={flow.failed || loaded.status === "error"}
         connectedEdgeId={connectedEdgeId}
         receiveStatus={receiveStatus}
         onConnect={connect}
         onDisconnect={disconnect}
         onUnregistered={refresh}
+        connectionReturnPath={observationPath(eventId)}
+        connectionNotice={connectionNotice}
       />
       {connectedEdgeId && (
         <div className="flex w-full flex-col items-center gap-2">
@@ -65,6 +102,7 @@ export function ConnectedEdges({ tenantId, eventId }: ConnectedEdgesProps) {
               <DetectionSettingsPanel
                 settingsStore={stores.settingsStore}
                 viewStateStore={stores.viewStateStore}
+                resultStore={stores.resultStore}
               />
             </>
           )}

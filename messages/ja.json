@@ -6,7 +6,6 @@
     "title": "テナントを作成",
     "name": "テナント名",
     "subdomain": "サブドメイン名",
-    "ownerEmail": "オーナーのメールアドレス",
     "ownerDisplayName": "オーナーの表示名",
     "ownerDisplayNameDescription": "テナントのメンバーに表示する名前です。64 文字まで入力できます。",
     "submit": "作成",
@@ -327,6 +326,50 @@
       "retry": "再試行"
     }
   },
+  "FlowState": {
+    "error": "判定の状態を取得できませんでした",
+    "skipped": "{judgements}を判定できません",
+    "judgement": {
+      "surge": "急増",
+      "highStagnation": "停滞警戒",
+      "combined": "組合せ発火",
+      "puncture": "パンク"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "観測が届いていません",
+        "action": "端末が動いているか確かめ、止まっていれば再起動してください"
+      },
+      "invalid": {
+        "label": "観測値が無効です",
+        "action": "カメラの向きや遮るものなど、設置を見直してください"
+      },
+      "hold": {
+        "label": "計測値が届かず、値が止まっています",
+        "action": "しばらく待ち、続くときは端末を再起動してください"
+      },
+      "stale": {
+        "label": "観測が古くなっています",
+        "action": "しばらく待ち、続くときは端末を再起動してください"
+      },
+      "noHistory": {
+        "label": "判定に使う履歴がまだありません",
+        "action": "履歴がたまるまでしばらく待ってください"
+      },
+      "windowOnlyHistory": {
+        "label": "長期の履歴がなく、直近の計測値だけで判定しています",
+        "action": "履歴がたまるまでしばらく待ってください"
+      },
+      "shortHistory": {
+        "label": "履歴が 4 時間分たまっていません",
+        "action": "履歴がたまるまでしばらく待ってください"
+      },
+      "intermittentLine": {
+        "label": "直近の流量の計測値が {count} 点しかありません",
+        "action": "端末が計測を続けているか確かめ、止まっていれば再起動してください"
+      }
+    }
+  },
   "Webrtc": {
     "connectionStatus": {
       "idle": "未接続",
@@ -354,7 +397,26 @@
       "openHere": "この端末で開く",
       "openHereLabel": "「{name}」をこの端末で開く",
       "unregister": "登録解除",
-      "unregisterLabel": "「{name}」の登録を解除"
+      "unregisterLabel": "「{name}」の登録を解除",
+      "cameraBadge": "カメラ",
+      "linkedPoint": "紐づけ先: {name}",
+      "provision": "設定",
+      "provisionLabel": "「{name}」を設定",
+      "authorizeConnection": "観測ページの接続を許可",
+      "useAsMachine": "観測ページ端末にする",
+      "useAsMachineLabel": "{name} を観測ページ端末にする",
+      "authorizeConnectionLabel": "「{name}」を含む観測ページの接続を許可",
+      "cameraConnectionHint": "スタッフが観測ページを開くと接続認可は自動で始まります。観測ページ端末（マシンセッション）では、この画面の「観測ページの接続を許可」からスタッフが再認可してください。",
+      "stop": "停止",
+      "stopLabel": "「{name}」を一時停止",
+      "reapprove": "カメラの認可をやり直す",
+      "reapproveLabel": "「{name}」のカメラ認可をやり直す",
+      "connection": {
+        "authorized": "カメラ接続の委任を保存しました。",
+        "login_required": "カメラ接続の認可にはスタッフの再ログインが必要です。もう一度「観測ページの接続を許可」からやり直してください。",
+        "failed": "カメラ接続の認可に失敗しました。もう一度お試しください。"
+      },
+      "observationPoints": "観測点"
     },
     "receiver": {
       "stoppedTitle": "観測が停止しました",
@@ -380,7 +442,20 @@
       "open": "この端末で開く",
       "failed": "観測デバイスを登録できませんでした。",
       "invalid": "デバイス名と観測点名を確認してください。",
-      "eventNotFound": "イベントが見つかりませんでした。"
+      "eventNotFound": "イベントが見つかりませんでした。",
+      "kindLabel": "種類",
+      "kind": {
+        "observation_page": "観測ページ",
+        "camera": "カメラ"
+      },
+      "cameraPointLabel": "紐づける観測点",
+      "cameraPointDescription": "カメラ方式の観測点を 1 つ選んでください",
+      "cameraPointPlaceholder": "観測点を選択",
+      "noCameraPoints": "紐づけられる観測点がありません。先に観測ページのデバイスを登録してください。",
+      "cameraRegistered": "「{name}」をカメラとして登録しました。初期設定を開き、端末に設定を書き込んでください。",
+      "edgeDeviceIdLabel": "エッジデバイス ID",
+      "openProvisioning": "初期設定を開く",
+      "authorizeConnection": "観測ページの接続を許可"
     },
     "unregisterEdge": {
       "title": "観測デバイスの登録を解除",
@@ -389,6 +464,60 @@
       "confirm": "登録を解除する",
       "failed": "登録を解除できませんでした。",
       "stale": "観測デバイスが見つからないか、既に登録が解除されています。一覧を更新してください。"
+    },
+    "stopCamera": {
+      "title": "カメラを一時停止",
+      "description": "「{name}」の配信を一時停止します。登録は解除されず、カメラの認可をやり直すと再開できます。",
+      "cancel": "キャンセル",
+      "confirm": "一時停止する",
+      "failed": "カメラを一時停止できませんでした。",
+      "stale": "カメラが見つからないか、このイベントのカメラではありません。一覧を更新してください。"
+    },
+    "cameraProvision": {
+      "title": "ESP32 カメラの初期設定",
+      "description": "「{name}」({id}) に Wi-Fi と接続先を書き込みます。",
+      "reapprovalNotice": "一時停止中のカメラの認可をやり直します。この操作で一時停止が解除され、端末が再び接続できるようになります。",
+      "reapprovalDescription": "「{name}」({id}) のデバイス認可をやり直します。",
+      "reapprovalStart": "認可をやり直す",
+      "trigger": "設定",
+      "wifiSsidLabel": "Wi-Fi SSID",
+      "wifiPasswordLabel": "Wi-Fi パスワード",
+      "wifiPasswordDescription": "画面やログには表示しません",
+      "start": "書き込みを開始",
+      "retry": "再試行",
+      "close": "閉じる",
+      "unsupported": "このブラウザは Web Serial に対応していません。デスクトップ版の Chrome または Edge を使ってください。",
+      "insecure": "Web Serial は安全なコンテキスト（HTTPS または localhost）でのみ使えます。",
+      "steps": {
+        "selecting": "シリアルポートを選択しています…",
+        "opening": "シリアルポートを開いています…",
+        "writing": "設定を書き込んでいます…",
+        "waitingConfig": "端末の確認応答を待っています…",
+        "waitingAuthorization": "端末の認可コードを待っています…",
+        "reconnecting": "端末の再接続を待っています…",
+        "approving": "デバイス認可を承認しています…",
+        "waitingResult": "端末の認可結果を待っています…"
+      },
+      "confirmAuthorization": "このコードの端末を「{name}」として承認します。接続した端末を確認してください。",
+      "userCodeLabel": "ユーザーコード",
+      "verificationUri": "確認 URL: {uri}",
+      "complete": "「{name}」の初期設定が完了しました。ユーザーコード {userCode} を承認しました。",
+      "manualTitle": "ユーザーコードを受け取れませんでした",
+      "manualDescription": "端末に表示されたユーザーコードを入力して承認してください。",
+      "manualLabel": "ユーザーコード",
+      "manualSubmit": "承認する",
+      "configRejected": "端末が設定を拒否しました: {error}",
+      "configRejectedNoReason": "端末が設定を拒否しました。",
+      "deviceError": "端末からエラーが返されました: {error}",
+      "authorizationRejected": "端末の認可に失敗しました。",
+      "authorizationTimeout": "認可結果を待つ間にタイムアウトしました。",
+      "timeout": "端末から応答がありませんでした。接続を確認して再試行してください。",
+      "failed": "初期設定に失敗しました。接続を確認して再試行してください。",
+      "notConnected": "シリアルポートが開かれていません。最初からやり直してください。",
+      "reconnectTitle": "シリアルポートが切断されました",
+      "reconnectDescription": "端末が再起動した可能性があります。ポートを選択し直して再接続してください。",
+      "reconnectFailed": "シリアルポートを開けませんでした。もう一度ポートを選択してください。",
+      "reconnectPort": "ポートを再接続"
     }
   },
   "Detection": {
@@ -426,15 +555,27 @@
       "count": "ライン {index}: forward {forward} / backward {backward}",
       "namedCount": "{name}: forward {forward} / backward {backward}",
       "nameLabel": "選択ラインの名前",
-      "namePlaceholder": "例：ホールA入口、連絡通路北側"
+      "namePlaceholder": "例：ホールA入口、連絡通路北側",
+      "areaWidthLabel": "選択ラインのエリアの幅（%）",
+      "areaWidthDescription": "ラインを中心にした帯の全幅を、画面の短辺に対する割合で指定します。帯の中にいる人を、ラインの名前の観測点の人数として数えます。",
+      "reRegisterNote": "ラインの位置やエリアの幅を変えた観測点は、人数の履歴を切り直すために観測点を登録し直してください。",
+      "areaOverlapWarning": "「{first}」と「{second}」のエリアが重なっています。重なった場所にいる人は両方の観測点に数えます。"
     }
   },
   "Observation": {
     "title": "{tenantId} 観測ページ",
+    "machineSessionFailed": "観測ページの認可に失敗しました。",
+    "machineSessionRetry": "もう一度認可する",
     "controls": {
       "start": "カメラを起動",
       "stop": "停止",
-      "loading": "起動中…"
+      "loading": "起動中…",
+      "retry": "再接続",
+      "observeOnThisDevice": "この端末で観測する",
+      "retryCamera": "{camera} に再接続"
+    },
+    "cameraSelector": {
+      "label": "カメラ"
     },
     "status": {
       "detection": "検出状態: {status}",
@@ -476,12 +617,17 @@
       "detection": "人検出処理に失敗しました",
       "unregistered": "この観測デバイスは登録解除されています",
       "modelLoad": "検出モデルの読み込みに失敗しました（{status}: {path}）",
+      "connectionAuthorizationRequired": "カメラ接続の認可がありません。「観測ページの接続を許可」から再認可してください。",
+      "connectionAuthorizationAutoStart": "カメラ接続の認可が必要なため、認可画面へ移動します。",
+      "connectionAuthorizationMachine": "カメラ接続の認可がありません。スタッフが管理画面の「観測ページの接続を許可」から再認可してください。",
+      "cameraNotDelegated": "このカメラは観測ページの接続委任に含まれていません。",
       "camera": {
         "permissionDenied": "カメラの使用が許可されていません。ブラウザの設定でカメラへのアクセスを許可してください。",
         "notFound": "カメラが見つかりません。カメラが接続されているか確認してください。",
         "unsupported": "このブラウザまたは接続ではカメラを利用できません",
         "unavailable": "カメラを起動できませんでした"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "映像ソース",
@@ -492,7 +638,18 @@
       "camera": "カメラ",
       "activeHint": "（切替は停止後）",
       "inactiveHint": "（選択後に起動で反映）",
-      "hide": "非表示"
+      "hide": "非表示",
+      "espCamera": "ESP カメラ ({edgeId})"
+    },
+    "cameraStatus": {
+      "label": "{camera}: {status}",
+      "waiting": "待機中",
+      "stale": "映像が届いていません",
+      "capturing": "撮影中",
+      "inferring": "検出中",
+      "ready": "検出中",
+      "error": "エラー",
+      "errorDetail": "{camera}: {error}"
     }
   },
   "ObservationDevices": {
@@ -501,6 +658,8 @@
   },
   "Guest": {
     "pageSubtitle": "ゲストページ",
+    "showOnMap": "地図で見る",
+    "showOnMapLabel": "{place}を地図で見る",
     "waitingNumber": {
       "title": "現在の待ち人数",
       "unit": "人"
@@ -549,13 +708,11 @@
     },
     "guideMap": {
       "title": "案内マップ",
-      "hint": "目的地を選択すると経路が表示されます",
       "currentLocation": "現在地",
       "destinationsLabel": "目的地",
       "expand": "地図を拡大",
       "collapse": "地図を縮小",
-      "search": "目的地を検索",
-      "noResults": "見つかりませんでした",
+      "selectDestination": "目的地を選んでください",
       "reset": "リセット",
       "goal": "目的地",
       "rideTo": "{via}で{floor}へ",
@@ -568,17 +725,16 @@
       "walkStep": "{floor}：{from} → {to}",
       "rideStep": "{via}で {from} → {to}",
       "noRoute": "この目的地への経路が見つかりませんでした",
-      "zoomInHint": "地図をタップで拡大",
       "zoomOutHint": "ドラッグで移動・タップで全体表示",
       "closed": "（通行止め）",
       "crowdAvoided": "混雑している所を避けたルートです",
       "crowdRerouted": "混雑状況が変わったため、ルートを変更しました",
       "crowdThroughDanger": "混雑で危険な場所を通らないと行けません。スタッフの案内に従ってください",
-      "crowdLegend": "混雑"
+      "crowdLegend": "混雑",
+      "stepsLabel": "道順",
+      "nextFloor": "次へ：{floor}の道順"
     },
     "floor": {
-      "title": "現在のフロア",
-      "placeholderName": "1F",
       "selectLabel": "表示するフロア"
     },
     "congestion": {
@@ -590,7 +746,9 @@
       },
       "danger": "危険",
       "updatedAt": "{time} 更新",
-      "empty": "混雑の情報はまだありません"
+      "empty": "混雑の情報はまだありません",
+      "floorRange": "{from}〜{to}",
+      "floorJoin": "・"
     },
     "loading": "読み込み中…",
     "loadError": "情報を取得できませんでした"
@@ -647,9 +805,26 @@
       "invalidCredentials": "ID またはパスワードが違います。",
       "failed": "ログインできませんでした。もう一度試しても続くときは、利用していたテナントのページからやり直してください。"
     },
+    "signup": {
+      "title": "アカウントを作成",
+      "description": "このテナントで使うアカウントの ID とパスワードを決めてください。",
+      "loginDescription": "このテナントのアカウントを持っているときは、その ID とパスワードでログインしてください。",
+      "usernameLabel": "ID",
+      "usernameDescription": "50 文字まで。空白は使えません。",
+      "passwordLabel": "パスワード",
+      "passwordDescription": "8 文字以上、72 バイト以内です。",
+      "submit": "アカウントを作成",
+      "invalidUsername": "ID は空白を含まない 50 文字以内にしてください。",
+      "lengthOutOfRange": "パスワードは 8 文字以上、72 バイト以内にしてください。",
+      "usernameTaken": "この ID は既に使われています。別の ID を指定してください。",
+      "failed": "アカウントを作成できませんでした。もう一度試しても続くときは、最初からやり直してください。",
+      "useExistingAccount": "作成済みのアカウントでログインする",
+      "createAccount": "新しいアカウントを作成する"
+    },
     "loggedOut": {
       "title": "ログアウトしました",
-      "login": "もう一度ログインする"
+      "login": "もう一度ログインする",
+      "toObservation": "観測ページに戻る"
     },
     "logout": "ログアウト"
   },

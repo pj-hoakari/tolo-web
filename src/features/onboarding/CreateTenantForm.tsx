@@ -7,7 +7,10 @@ import { Link } from "@/components/ui/link";
 import { JollyTextField } from "@/components/ui/textfield";
 import { errorMessageKey } from "@/lib/errorMessageKey";
 import { orpc } from "@/lib/orpc";
-import { REGISTER_TENANT_ERROR_MESSAGES } from "./errorMessages";
+import {
+  type OnboardingError,
+  REGISTER_TENANT_ERROR_MESSAGES,
+} from "./errorMessages";
 
 type State =
   | { status: "editing"; error: string | null }
@@ -19,13 +22,29 @@ function tenantUrl(subdomain: string): string {
   return `${location.protocol}//${subdomain}.${host}/`;
 }
 
-export function CreateTenantForm() {
+export type PendingTenant = {
+  name: string;
+  subdomain: string;
+  displayName: string;
+};
+
+export function CreateTenantForm({
+  pending,
+  error = null,
+}: {
+  pending?: PendingTenant;
+  error?: OnboardingError | null;
+}) {
   const t = useTranslations("Onboarding");
-  const [name, setName] = useState("");
-  const [subdomain, setSubdomain] = useState("");
-  const [ownerEmail, setOwnerEmail] = useState("");
-  const [ownerDisplayName, setOwnerDisplayName] = useState("");
-  const [state, setState] = useState<State>({ status: "editing", error: null });
+  const [name, setName] = useState(pending?.name ?? "");
+  const [subdomain, setSubdomain] = useState(pending?.subdomain ?? "");
+  const [ownerDisplayName, setOwnerDisplayName] = useState(
+    pending?.displayName ?? "",
+  );
+  const [state, setState] = useState<State>({
+    status: "editing",
+    error: error && t(error),
+  });
 
   if (state.status === "done") {
     return (
@@ -44,13 +63,16 @@ export function CreateTenantForm() {
     e.preventDefault();
     setState({ status: "submitting" });
     try {
-      const tenant = await orpc.tenant.register({
+      const result = await orpc.tenant.register({
         name,
         subdomain,
-        ownerEmail,
         ownerDisplayName,
       });
-      setState({ status: "done", tenantUrl: tenantUrl(tenant.subdomain) });
+      if (result.type === "authorize") {
+        location.assign(result.next);
+        return;
+      }
+      setState({ status: "done", tenantUrl: tenantUrl(result.subdomain) });
     } catch (err) {
       setState({
         status: "editing",
@@ -65,19 +87,12 @@ export function CreateTenantForm() {
         label={t("name")}
         value={name}
         onChange={setName}
-        isDisabled={submitting}
+        isDisabled={submitting || !!pending}
       />
       <JollyTextField
         label={t("subdomain")}
         value={subdomain}
         onChange={setSubdomain}
-        isDisabled={submitting}
-      />
-      <JollyTextField
-        label={t("ownerEmail")}
-        type="email"
-        value={ownerEmail}
-        onChange={setOwnerEmail}
         isDisabled={submitting}
       />
       <JollyTextField
@@ -100,7 +115,6 @@ export function CreateTenantForm() {
           submitting ||
           !name.trim() ||
           !subdomain.trim() ||
-          !ownerEmail.trim() ||
           !ownerDisplayName.trim()
         }
       >

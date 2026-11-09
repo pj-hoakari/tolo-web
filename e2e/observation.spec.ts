@@ -6,6 +6,10 @@ import {
   type Route,
   test,
 } from "@playwright/test";
+import {
+  sampleEdgeDevicesWire,
+  sampleObservationDevicesWire,
+} from "@/mocks/fixtures/edges";
 import type { MockRouterOverrides } from "@/mocks/router";
 
 test.use({
@@ -31,6 +35,12 @@ const setUpUnlockCode = async (page: Page, value: string) => {
   await expect(lockButton(page)).toBeVisible();
 };
 
+const unlockPage = async (page: Page, value: string) => {
+  await code(page).fill(value);
+  await page.getByRole("button", { name: "ロック解除" }).click();
+  await expect(lockButton(page)).toBeVisible();
+};
+
 const startButton = (page: Page) =>
   page.getByRole("button", { name: "カメラを起動" });
 const stopButton = (page: Page) =>
@@ -49,6 +59,10 @@ const presetGroup = (page: Page, title: string) =>
     .last();
 const lineCreationToggle = (page: Page) =>
   page.getByRole("radio", { name: "ライン生成" });
+const areaWidth = (page: Page) =>
+  page.getByRole("spinbutton", { name: "選択ラインのエリアの幅（%）" });
+const areaOverlapWarning = (page: Page) =>
+  page.getByRole("alert").filter({ hasText: "エリアが重なっています" });
 
 const canvasPoint = async (page: Page, u: number, v: number) => {
   const canvas = page.locator("canvas").first();
@@ -81,13 +95,19 @@ const overrideMock = async (
   page: Page,
   overrides: Pick<
     MockRouterOverrides,
-    "listObservationPointsError" | "heartbeatError" | "reportMeasurementsError"
+    | "devices"
+    | "listObservationPointsError"
+    | "heartbeatError"
+    | "reportMeasurementsError"
   >,
 ) => {
-  await page.evaluate((value) => {
-    sessionStorage.setItem("msw:overrides", value);
-    window.dispatchEvent(new Event("msw:overrides"));
-  }, JSON.stringify(overrides));
+  await page.evaluate(
+    (value) => {
+      sessionStorage.setItem("msw:overrides", value);
+      window.dispatchEvent(new Event("msw:overrides"));
+    },
+    JSON.stringify({ devices: sampleEdgeDevicesWire, ...overrides }),
+  );
 };
 
 const holdModelRequest = async (context: BrowserContext) => {
@@ -105,6 +125,14 @@ test.beforeEach(async ({ page, context }) => {
       body: "mock-model",
     }),
   );
+  // このファイルのテストはローカルカメラ（dev モード）を対象にする。
+  // 委任カメラを外しておき、ESP モードの自動接続とタブは
+  // observation-multi-camera.spec.ts で確認する。
+  await page.addInitScript((devices) => {
+    if (!sessionStorage.getItem("msw:overrides")) {
+      sessionStorage.setItem("msw:overrides", JSON.stringify({ devices }));
+    }
+  }, sampleEdgeDevicesWire);
   await page.goto("/event/test/observation/8c1f0e2a5d4b3c6e");
   await expect(
     page.getByRole("heading", {
@@ -112,6 +140,26 @@ test.beforeEach(async ({ page, context }) => {
       name: "0123456789abcdef 観測ページ",
     }),
   ).toBeVisible();
+});
+
+test("この端末で観測する導線は開始元ページへ戻り、選択言語で表示される", async ({
+  page,
+}) => {
+  await setUpUnlockCode(page, "1234");
+  const link = page.getByRole("link", { name: "この端末で観測する" });
+  const href = await link.getAttribute("href");
+  const url = new URL(href ?? "", page.url());
+  expect(url.pathname).toBe("/api/auth/machine/start");
+  expect(Object.fromEntries(url.searchParams)).toEqual({
+    eventId: "test",
+    pageEdgeDeviceId: "8c1f0e2a5d4b3c6e",
+    return: "/event/test/observation/8c1f0e2a5d4b3c6e",
+  });
+  await page.getByRole("button", { name: "言語を切り替え" }).click();
+  await page.getByRole("menuitemradio", { name: "English" }).click();
+  await expect(
+    page.getByRole("link", { name: "Observe on this device" }),
+  ).toHaveAttribute("href", href ?? "");
 });
 
 test.describe("画面ロック", () => {
@@ -347,12 +395,41 @@ test.describe("検出設定", () => {
   }
 
   test("詳細調整を閉じると入力欄が消える", async ({ page }) => {
+    const advancedFields = page.getByRole("spinbutton", {
+      name: /^(検出感度|追跡のつながりやすさ|検出間隔 ms)$/,
+    });
     await page.getByRole("button", { name: "詳細調整" }).click();
-    await expect(page.getByRole("spinbutton")).toHaveCount(3);
+    await expect(advancedFields).toHaveCount(3);
 
     await page.getByRole("button", { name: "詳細調整を閉じる" }).click();
 
-    await expect(page.getByRole("spinbutton")).toHaveCount(0);
+    await expect(advancedFields).toHaveCount(0);
+  });
+
+  for (const { input, value } of [
+    { input: "0", value: "1" },
+    { input: "250", value: "100" },
+    { input: "25", value: "25" },
+  ]) {
+    test(`選択ラインのエリアの幅は既定で 10% で、${input} を入れると ${value} になる`, async ({
+      page,
+    }) => {
+      await expect(areaWidth(page)).toHaveValue("10");
+
+      await areaWidth(page).fill(input);
+
+      await expect(areaWidth(page)).toHaveValue(value);
+    });
+  }
+
+  test("観測点のエリアを変えたら観測点を登録し直すよう案内する", async ({
+    page,
+  }) => {
+    await expect(
+      page.getByText(
+        "ラインの位置やエリアの幅を変えた観測点は、人数の履歴を切り直すために観測点を登録し直してください。",
+      ),
+    ).toBeVisible();
   });
 });
 
@@ -409,6 +486,54 @@ test.describe("カウントライン", () => {
     await expect(
       page.getByRole("button", { name: "ホールA入口を編集" }),
     ).toBeVisible();
+  });
+
+  test("違う名前のラインのエリアが重なると警告が出て、ラインを離すと警告が消える", async ({
+    page,
+  }) => {
+    await lineName(page).fill("ゲート");
+    await lineCreationToggle(page).click();
+    await dragOnCanvas(page, [0.2, 0.58], [0.5, 0.58]);
+    await expect(page.getByRole("radio", { name: "編集モード" })).toBeChecked();
+    await lineName(page).fill("ホール");
+
+    await expect(areaOverlapWarning(page)).toHaveText(
+      "「ゲート」と「ホール」のエリアが重なっています。重なった場所にいる人は両方の観測点に数えます。",
+    );
+
+    await dragOnCanvas(page, [0.35, 0.58], [0.35, 0.2]);
+
+    await expect(areaOverlapWarning(page)).toHaveCount(0);
+  });
+
+  test("重なったラインを同じ名前にすると、同じ観測点のエリアになり警告が消える", async ({
+    page,
+  }) => {
+    await lineName(page).fill("ゲート");
+    await lineCreationToggle(page).click();
+    await dragOnCanvas(page, [0.2, 0.58], [0.5, 0.58]);
+    await expect(page.getByRole("radio", { name: "編集モード" })).toBeChecked();
+    await lineName(page).fill("ホール");
+    await expect(areaOverlapWarning(page)).toBeVisible();
+
+    await lineName(page).fill("ゲート");
+
+    await expect(areaOverlapWarning(page)).toHaveCount(0);
+  });
+
+  test("選択ラインのエリアの幅を広げると、離れた違う名前のラインのエリアと重なって警告が出る", async ({
+    page,
+  }) => {
+    await lineName(page).fill("ゲート");
+    await addLine(page);
+    await lineName(page).fill("ホール");
+    await expect(areaOverlapWarning(page)).toHaveCount(0);
+
+    await areaWidth(page).fill("100");
+
+    await expect(areaOverlapWarning(page)).toBeVisible();
+    await page.getByRole("button", { name: "ゲートを編集" }).click();
+    await expect(areaWidth(page)).toHaveValue("10");
   });
 
   test("停止すると停止ボタンとラインのモード切り替えを非表示にする", async ({
@@ -567,6 +692,7 @@ test.describe("検出の開始", () => {
   test("カメラの使用が拒否されるとブラウザの文言ではなく翻訳済みの理由が表示される", async ({
     page,
   }) => {
+    await overrideMock(page, { devices: sampleEdgeDevicesWire });
     await page.addInitScript(() => {
       navigator.mediaDevices.getUserMedia = () =>
         Promise.reject(
@@ -615,17 +741,35 @@ test.describe("計測値の送信", () => {
     return windows;
   };
 
+  const startEspDetection = async (page: Page) => {
+    await overrideMock(page, { devices: sampleObservationDevicesWire });
+    await page.reload();
+    await unlockPage(page, "1234");
+    await expect(page.getByRole("tab").first()).toHaveAttribute(
+      "aria-selected",
+      "true",
+      { timeout: 20_000 },
+    );
+    await expect
+      .poll(
+        async () => {
+          const labels = await page.getByRole("tab").allTextContents();
+          return labels.some((label) => /撮影中|検出中/.test(label));
+        },
+        { timeout: 20_000 },
+      )
+      .toBe(true);
+  };
+
   test.beforeEach(async ({ page }) => {
     await page.clock.install();
     await setUpUnlockCode(page, "1234");
-    await lineName(page).fill("入口");
-    await startButton(page).click();
-    await expect(page.getByText("検出状態: 検出中")).toBeVisible();
   });
 
   test("送信に失敗したウィンドウの計測値は開始と終了の時刻を変えずに次の送信に含めて再送する", async ({
     page,
   }) => {
+    await startEspDetection(page);
     const windows = sentWindows(page);
     await overrideMock(page, {
       reportMeasurementsError: "SERVICE_UNAVAILABLE",
@@ -633,18 +777,24 @@ test.describe("計測値の送信", () => {
     await page.clock.fastForward(REPORT_INTERVAL_MS);
     await expect.poll(() => windows.length).toBe(1);
 
-    await overrideMock(page, {});
+    await overrideMock(page, { devices: sampleObservationDevicesWire });
     await page.clock.fastForward(REPORT_INTERVAL_MS);
     await expect.poll(() => windows.length).toBe(2);
 
-    expect(windows[1]).toHaveLength(2);
-    expect(windows[1][0]).toEqual(windows[0][0]);
-    expect(windows[1][1].windowStart).toBe(windows[0][0].windowEnd);
+    expect(windows[1]).toHaveLength(4);
+    expect(windows[1].slice(0, 2)).toEqual(windows[0]);
+    expect(windows[1].slice(2).map(({ windowStart }) => windowStart)).toEqual([
+      windows[0][0].windowEnd,
+      windows[0][1].windowEnd,
+    ]);
   });
 
   test("送信に失敗したウィンドウの計測値は検出を停止して再開した後の送信に含めて再送する", async ({
     page,
   }) => {
+    await lineName(page).fill("入口");
+    await startButton(page).click();
+    await expect(page.getByText("検出状態: 検出中")).toBeVisible();
     const windows = sentWindows(page);
     await overrideMock(page, {
       reportMeasurementsError: "SERVICE_UNAVAILABLE",
@@ -667,14 +817,19 @@ test.describe("計測値の送信", () => {
   test("送信に成功したウィンドウの計測値は次の送信に含めない", async ({
     page,
   }) => {
+    await startEspDetection(page);
     const windows = sentWindows(page);
     await page.clock.fastForward(REPORT_INTERVAL_MS);
     await page.clock.fastForward(REPORT_INTERVAL_MS);
     await expect.poll(() => windows.length).toBe(2);
 
-    expect(windows[1]).toEqual([
-      { windowStart: windows[0][0].windowEnd, windowEnd: expect.any(String) },
-    ]);
+    expect(windows[1]).toHaveLength(2);
+    expect(windows[1]).toEqual(
+      windows[0].map(() => ({
+        windowStart: windows[0][0].windowEnd,
+        windowEnd: expect.any(String),
+      })),
+    );
   });
 });
 

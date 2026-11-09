@@ -21,6 +21,7 @@ export type CrowdDetectionViewProps = {
   settingsStore: DetectionSettingsStore;
   resultStore: DetectionResultStore;
   viewStateStore: DetectionViewStateStore;
+  showDetectionStatus?: boolean;
 };
 
 /**
@@ -36,6 +37,7 @@ function CrowdDetectionViewComponent({
   settingsStore,
   resultStore,
   viewStateStore,
+  showDetectionStatus = true,
 }: CrowdDetectionViewProps) {
   return (
     <div className="flex w-full flex-col items-center gap-2">
@@ -53,10 +55,15 @@ function CrowdDetectionViewComponent({
         resultStore={resultStore}
         viewStateStore={viewStateStore}
       />
-      <DetectionStatusPanel status={status} resultStore={resultStore} />
+      <DetectionStatusPanel
+        status={status}
+        resultStore={resultStore}
+        showDetectionStatus={showDetectionStatus}
+      />
       <DetectionSettingsPanel
         settingsStore={settingsStore}
         viewStateStore={viewStateStore}
+        resultStore={resultStore}
         showLineCreationModeToggle={false}
       />
       {status === "error" && error && (

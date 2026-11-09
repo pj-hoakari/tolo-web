@@ -1,4 +1,9 @@
-import { generateKeyPairSync, sign } from "node:crypto";
+import {
+  createHash,
+  generateKeyPairSync,
+  randomBytes,
+  sign,
+} from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
@@ -21,8 +26,12 @@ import {
   authOptions,
   type RealAuth,
   SESSION_COOKIE,
+  type SessionLock,
+  type SessionLocks,
 } from "./betterAuth";
+import { hostLockKey } from "./locks";
 import { createLoginFlow } from "./login";
+import { MACHINE_BINDING_COOKIE } from "./machineSession";
 import { createSessionAuth } from "./session";
 
 const env: AuthEnv = {
@@ -32,6 +41,10 @@ const env: AuthEnv = {
   clientId: "console-ui",
   clientSecret: "console-secret",
   resourceHost: "api.tolo.test",
+  connectionClientId: "observation-connection",
+  connectionClientSecret: "connection-secret",
+  machineClientId: "edge-page",
+  machineClientSecret: "machine-secret",
 };
 const TENANT = "0123456789abcdef";
 const OTHER_TENANT = "1111111111111111";
@@ -50,11 +63,18 @@ function signIdToken(claims: Record<string, unknown>): string {
   return `${input}.${sign("RSA-SHA256", Buffer.from(input), privateKey).toString("base64url")}`;
 }
 
-type Grant = { sub: string; nonce: string; tenantId: string };
+type Grant = {
+  sub: string;
+  nonce: string;
+  tenantId: string;
+  scope: string;
+  codeChallenge: string;
+};
 
 function idp() {
   const grants = new Map<string, Grant>();
   const issued = new Map<string, { accessToken: string; idToken: string }>();
+  const tokenRequests: URLSearchParams[] = [];
   const subjects = new Map<string, string>();
   server.use(
     http.get("https://idp.test/.well-known/openid-configuration", () =>
@@ -72,11 +92,26 @@ function idp() {
       HttpResponse.json({ keys: [jwk] }),
     ),
     http.post("https://idp.test/oauth2/token", async ({ request }) => {
-      const grant = grants.get(
-        new URLSearchParams(await request.text()).get("code") ?? "",
-      );
+      const params = new URLSearchParams(await request.text());
+      tokenRequests.push(params);
+      const grant = grants.get(params.get("code") ?? "");
       if (!grant) {
         return HttpResponse.json({ error: "invalid_grant" }, { status: 400 });
+      }
+      if (grant.scope === "tenant.join") {
+        if (
+          createHash("sha256")
+            .update(params.get("code_verifier") ?? "")
+            .digest("base64url") !== grant.codeChallenge
+        ) {
+          return HttpResponse.json({ error: "invalid_grant" }, { status: 400 });
+        }
+        return HttpResponse.json({
+          access_token: `registration-${grant.sub}`,
+          token_type: "Bearer",
+          scope: "tenant.join",
+          expires_in: 300,
+        });
       }
       const now = Math.floor(Date.now() / 1000);
       const tokens = {
@@ -110,6 +145,7 @@ function idp() {
   );
   return {
     issued,
+    tokenRequests,
     authorize(url: URL, sub: string) {
       const code = `code-${grants.size}`;
       const tenantId = url.searchParams.get("resource")?.split("/").at(-1);
@@ -117,11 +153,70 @@ function idp() {
         sub,
         nonce: url.searchParams.get("nonce") ?? "",
         tenantId: tenantId ?? "",
+        scope: url.searchParams.get("scope") ?? "",
+        codeChallenge: url.searchParams.get("code_challenge") ?? "",
       });
       return code;
     },
   };
 }
+
+function inProcessLock(): SessionLock {
+  const tails = new Map<string, Promise<unknown>>();
+  return (key, task) => {
+    const run = (tails.get(key) ?? Promise.resolve())
+      .catch(() => {})
+      .then(task);
+    tails.set(key, run);
+    return run;
+  };
+}
+
+function inProcessLockMany(lock: SessionLock = inProcessLock()): SessionLocks {
+  return async <T>(keys: string[], task: () => Promise<T>): Promise<T> => {
+    const sorted = [...new Set(keys)].sort();
+    const run = async (index: number): Promise<T> =>
+      index === sorted.length
+        ? task()
+        : lock(sorted[index], () => run(index + 1));
+    return run(0);
+  };
+}
+
+function instrumentedLock() {
+  const base = inProcessLock();
+  const listeners: (() => void)[] = [];
+  const lock: SessionLock = (key, task) => {
+    const run = base(key, task);
+    listeners.shift()?.();
+    return run;
+  };
+  return {
+    lock,
+    hold(key: string) {
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const held = lock(key, async () => {
+        await gate;
+      });
+      return {
+        async release() {
+          release();
+          await held;
+        },
+      };
+    },
+    whenLockCalled: () =>
+      new Promise<void>((resolve) => {
+        listeners.push(resolve);
+      }),
+  };
+}
+
+const sha256 = (value: string) =>
+  createHash("sha256").update(value).digest("base64url");
 
 function cookieJar() {
   const cookies = new Map<string, string>();
@@ -151,10 +246,12 @@ async function createTestAuth(
     tenantAccessToken: [],
     eventAccessToken: [],
     pendingLogin: [],
+    tenantRegistration: [],
   }),
   databaseHooks?: BetterAuthOptions["databaseHooks"],
+  lock: SessionLock = inProcessLock(),
 ) {
-  const options = authOptions(env);
+  const options = authOptions(env, lock);
   const auth = betterAuth({
     ...options,
     database,
@@ -164,7 +261,8 @@ async function createTestAuth(
   const realAuth = {
     auth: auth as unknown as RealAuth["auth"],
     env,
-    lock: (_: string, task: () => Promise<unknown>) => task(),
+    lock,
+    lockMany: inProcessLockMany(lock),
   } as RealAuth;
   await auth.$context;
   return {
@@ -175,6 +273,87 @@ async function createTestAuth(
 }
 
 type TestAuth = Awaited<ReturnType<typeof createTestAuth>>;
+
+async function createMachineSession(
+  testAuth: TestAuth,
+  { sub = "user-1", tenantId = TENANT } = {},
+) {
+  const ctx = await testAuth.auth.$context;
+  const email = `${sub}@tolo-idp.local`;
+  const existing = await ctx.internalAdapter.findUserByEmail(email);
+  const user =
+    existing?.user ??
+    (await ctx.test.saveUser(ctx.test.createUser({ email, name: sub })));
+  const machine = await ctx.test.login({
+    userId: user.id,
+    session: {
+      tenantId,
+      kind: "machine",
+      eventId: "fedcba9876543210",
+      edgeDeviceId: "1111111111111111",
+    },
+  });
+  await ctx.adapter.create({
+    model: "tenantAccessToken",
+    data: {
+      sessionId: machine.session.id,
+      subject: sub,
+      accessToken: "machine-tenant",
+      refreshToken: "machine-refresh",
+      accessTokenExpiresAt: new Date(Date.now() + 60_000),
+    },
+  });
+  return machine;
+}
+
+async function completeMachineConversion(
+  testAuth: TestAuth,
+  { sub = "user-1", tenantId = TENANT, host = HOST, cookie = "" } = {},
+) {
+  const ctx = await testAuth.auth.$context;
+  const email = `${sub}@tolo-idp.local`;
+  const existing = await ctx.internalAdapter.findUserByEmail(email);
+  const user =
+    existing?.user ??
+    (await ctx.test.saveUser(ctx.test.createUser({ email, name: sub })));
+  const code = randomBytes(16).toString("base64url");
+  const binding = randomBytes(16).toString("base64url");
+  const token = cookie
+    .split(/;\s*/)
+    .find((part) => part.startsWith(`${SESSION_COOKIE}=`))
+    ?.slice(SESSION_COOKIE.length + 1);
+  const staffSession = token
+    ? await ctx.internalAdapter.findSession(token)
+    : null;
+  await ctx.adapter.create({
+    model: "pendingMachineHandoff",
+    data: {
+      codeHash: sha256(code),
+      tenantId,
+      eventId: "fedcba9876543210",
+      edgeDeviceId: "1111111111111111",
+      userId: user.id,
+      subject: sub,
+      accessToken: "machine-tenant-access",
+      refreshToken: "machine-refresh",
+      accessTokenExpiresAt: new Date(Date.now() + 60_000),
+      host,
+      staffSessionId: staffSession?.session.id,
+      bindingHash: sha256(binding),
+      returnPath: "/",
+      expiresAt: new Date(Date.now() + 60_000),
+    },
+  });
+  const response = await testAuth.auth.api.completeMachineSession({
+    body: { code, host },
+    headers: new Headers({
+      host,
+      cookie: `${cookie ? `${cookie}; ` : ""}${MACHINE_BINDING_COOKIE}=${binding}`,
+    }),
+    asResponse: true,
+  });
+  return { response, user };
+}
 
 function onHost(url: string, host: string, cookie: string) {
   return new Request(url, { headers: { host, cookie } });
@@ -334,13 +513,13 @@ describe("login handoff", () => {
     ).toEqual([]);
 
     const headers = sessionHeaders(login.tenantJar);
-    await expect(testAuth.sessionAuth.viewer(headers, TENANT)).resolves.toEqual(
-      {
-        type: "staff",
-        userId: "user-1",
-        tenantId: TENANT,
-      },
-    );
+    await expect(
+      testAuth.sessionAuth.viewer(headers, TENANT),
+    ).resolves.toMatchObject({
+      type: "staff",
+      userId: "user-1",
+      tenantId: TENANT,
+    });
     await expect(
       testAuth.sessionAuth.accessToken(headers, TENANT, {
         type: "tenant_access",
@@ -364,9 +543,11 @@ describe("login handoff", () => {
     expect(started.headers.get("location")).toMatch(
       /^https:\/\/tolo\.test\/auth\/begin\?login=/,
     );
-    const [bindingCookie] = started.headers.getSetCookie();
-    expect(bindingCookie).toMatch(/^__Host-tolo\.login\.[^=]+=[^;]+;/);
-    expect(bindingCookie.split("; ")).toEqual(
+    const bindingCookie = started.headers
+      .getSetCookie()
+      .find((cookie) => cookie.startsWith("__Host-tolo.login."));
+    expect(bindingCookie ?? "").toMatch(/^__Host-tolo\.login\.[^=]+=[^;]+;/);
+    expect((bindingCookie ?? "").split("; ")).toEqual(
       expect.arrayContaining([
         "Max-Age=600",
         "Path=/",
@@ -375,7 +556,7 @@ describe("login handoff", () => {
         "SameSite=Lax",
       ]),
     );
-    expect(bindingCookie).not.toMatch(/Domain/i);
+    expect(bindingCookie ?? "").not.toMatch(/Domain/i);
     expect(Object.fromEntries(authorizeUrl.searchParams)).toMatchObject({
       client_id: "console-ui",
       redirect_uri: "https://tolo.test/api/auth/callback/tolo-idp",
@@ -507,6 +688,22 @@ describe("login handoff", () => {
       testAuth.sessionAuth.viewer(sessionHeaders(again.tenantJar), TENANT),
     ).resolves.toMatchObject({ type: "staff" });
     const ctx = await testAuth.auth.$context;
+    expect(await ctx.adapter.findMany({ model: "session" })).toHaveLength(1);
+  });
+
+  it("starts another login on the same host without a separate browser identity", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const jar = await logInOn(testAuth, provider);
+
+    await authorizeAtIdp(testAuth, provider, { tenantJar: jar });
+
+    const ctx = await testAuth.auth.$context;
+    const pending = await ctx.adapter.findOne<{ staffSessionId?: string }>({
+      model: "pendingLogin",
+      where: [{ field: "host", value: HOST }],
+    });
+    expect(pending?.staffSessionId).toBeTruthy();
     expect(await ctx.adapter.findMany({ model: "session" })).toHaveLength(1);
   });
 
@@ -706,6 +903,413 @@ describe("login handoff", () => {
   });
 });
 
+describe("machine session protection", () => {
+  it("refuses to start a staff login when the host has a machine session", async () => {
+    idp();
+    const testAuth = await createTestAuth();
+    const machine = await createMachineSession(testAuth);
+    const cookie = machine.headers.get("cookie") ?? "";
+
+    const started = await testAuth.flow.start(
+      onHost(
+        `https://${HOST}/auth/login?return=${encodeURIComponent("/management")}`,
+        HOST,
+        cookie,
+      ),
+      TENANT,
+    );
+
+    expect(loginErrorPage(started)).toEqual({
+      status: 302,
+      page: "https://tolo.test/auth/error",
+      host: HOST,
+      error: "machine_session_forbidden",
+    });
+    const ctx = await testAuth.auth.$context;
+    expect(await ctx.adapter.findMany({ model: "pendingLogin" })).toEqual([]);
+    await expect(
+      testAuth.sessionAuth.viewer(new Headers({ cookie }), TENANT),
+    ).resolves.toMatchObject({ type: "machine" });
+  });
+
+  it("refuses a staff handoff that was started before the host became a machine session", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const login = await logInUntilHandoff(testAuth, provider);
+    const machine = await createMachineSession(testAuth);
+    for (const cookie of machine.cookies) {
+      login.tenantJar.cookies.set(cookie.name, cookie.value);
+    }
+
+    const handedOff = await handOff(
+      testAuth,
+      login.handoffUrl,
+      login.tenantJar,
+    );
+
+    expect(loginErrorPage(handedOff)).toEqual({
+      status: 302,
+      page: "https://tolo.test/auth/error",
+      host: HOST,
+      error: "machine_session_forbidden",
+    });
+    const ctx = await testAuth.auth.$context;
+    const sessions = await ctx.adapter.findMany<{ kind: string }>({
+      model: "session",
+    });
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0]).toMatchObject({ kind: "machine" });
+    expect(await ctx.adapter.findMany({ model: "pendingLogin" })).toEqual([]);
+    await expect(
+      testAuth.sessionAuth.viewer(sessionHeaders(login.tenantJar), TENANT),
+    ).resolves.toMatchObject({ type: "machine" });
+  });
+
+  it("rejects a handoff resumed with an old cookie after machine conversion", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const oldJar = await logInOn(testAuth, provider);
+    const login = await logInUntilHandoff(testAuth, provider, {
+      tenantJar: oldJar,
+    });
+
+    await completeMachineConversion(testAuth, { cookie: oldJar.header() });
+    const handedOff = await handOff(
+      testAuth,
+      login.handoffUrl,
+      login.tenantJar,
+    );
+
+    expect(loginErrorPage(handedOff)).toEqual({
+      status: 302,
+      page: "https://tolo.test/auth/error",
+      host: HOST,
+      error: "invalid_handoff",
+    });
+    const ctx = await testAuth.auth.$context;
+    const sessions = await ctx.adapter.findMany<{ kind: string }>({
+      model: "session",
+    });
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0]).toMatchObject({ kind: "machine" });
+    expect(await ctx.adapter.findMany({ model: "pendingLogin" })).toEqual([]);
+  });
+
+  it("converts only the current session and leaves another session alone", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const browserA = await logInOn(testAuth, provider);
+    const browserB = await logInOn(testAuth, provider);
+    const delayed = await logInUntilHandoff(testAuth, provider, {
+      tenantJar: browserA,
+    });
+
+    await completeMachineConversion(testAuth, { cookie: browserA.header() });
+
+    await expect(
+      testAuth.sessionAuth.viewer(sessionHeaders(browserB), TENANT),
+    ).resolves.toMatchObject({ type: "staff" });
+    const loginB = await logInUntilHandoff(testAuth, provider, {
+      tenantJar: browserB,
+    });
+    const handedOffB = await handOff(
+      testAuth,
+      loginB.handoffUrl,
+      loginB.tenantJar,
+    );
+    expect(handedOffB.status).toBe(200);
+
+    const handedOffA = await handOff(
+      testAuth,
+      delayed.handoffUrl,
+      delayed.tenantJar,
+    );
+    expect(loginErrorPage(handedOffA)).toMatchObject({
+      error: "invalid_handoff",
+    });
+
+    const ctx = await testAuth.auth.$context;
+    const sessions = await ctx.adapter.findMany<{ kind: string }>({
+      model: "session",
+    });
+    expect(
+      sessions.filter((session) => session.kind === "machine"),
+    ).toHaveLength(1);
+    expect(sessions.filter((session) => session.kind === "staff")).toHaveLength(
+      1,
+    );
+    expect(await ctx.adapter.findMany({ model: "pendingLogin" })).toEqual([]);
+  });
+});
+
+const SIGNUP_COOKIE = "__Host-tolo.signup";
+
+async function registerUntilHandoff(
+  testAuth: TestAuth,
+  provider: ReturnType<typeof idp>,
+  {
+    host = HOST,
+    tenantId = TENANT,
+    returnPath = "/invitation/handoff",
+    sub = "user-new",
+    startJar = cookieJar(),
+  } = {},
+) {
+  const rootJar = cookieJar();
+  const started = await testAuth.flow.startRegistration(
+    host,
+    tenantId,
+    returnPath,
+  );
+  startJar.store(started);
+  const begun = await testAuth.flow.begin(
+    onHost(started.headers.get("location") ?? "", "tolo.test", ""),
+  );
+  rootJar.store(begun);
+  const authorizeUrl = new URL(begun.headers.get("location") ?? "");
+  const signupShown = await testAuth.flow.signupPending(rootJar.header());
+  const code = provider.authorize(authorizeUrl, sub);
+  const completed = await testAuth.flow.registrationCallback(
+    onHost(
+      `https://tolo.test/api/auth/callback/tolo-idp?code=${code}&state=${authorizeUrl.searchParams.get("state")}`,
+      "tolo.test",
+      rootJar.header(),
+    ),
+  );
+  if (completed) rootJar.store(completed);
+  return {
+    started,
+    begun,
+    authorizeUrl,
+    signupShown,
+    completed,
+    handoffUrl: completed?.headers.get("location") ?? "",
+    rootJar,
+    startJar,
+  };
+}
+
+function take(
+  { flow }: TestAuth,
+  url: string,
+  jar: ReturnType<typeof cookieJar>,
+  host = HOST,
+) {
+  return flow.takeRegistration(onHost(url, host, jar.header()));
+}
+
+describe("registration authorization", () => {
+  it("asks the IdP for a registration token of the tenant alone, and marks the login page for signup", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const { started, begun, authorizeUrl, signupShown } =
+      await registerUntilHandoff(testAuth, provider);
+
+    expect(started.headers.get("location")).toMatch(
+      /^https:\/\/tolo\.test\/auth\/begin\?login=/,
+    );
+    expect(
+      started.headers
+        .getSetCookie()
+        .some((cookie) => /^__Host-tolo\.login\.[^=]+=[^;]+;/.test(cookie)),
+    ).toBe(true);
+    expect(Object.fromEntries(authorizeUrl.searchParams)).toEqual({
+      response_type: "code",
+      client_id: "console-ui",
+      redirect_uri: "https://tolo.test/api/auth/callback/tolo-idp",
+      scope: "tenant.join",
+      resource: `https://api.tolo.test/tenants/${TENANT}`,
+      audience: "backend-api",
+      state: expect.any(String),
+      code_challenge: expect.any(String),
+      code_challenge_method: "S256",
+    });
+    expect(
+      begun.headers
+        .getSetCookie()
+        .find((cookie) => cookie.startsWith(`${SIGNUP_COOKIE}=`))
+        ?.split("; "),
+    ).toEqual(
+      expect.arrayContaining([
+        "Max-Age=600",
+        "Path=/",
+        "HttpOnly",
+        "Secure",
+        "SameSite=Lax",
+      ]),
+    );
+    expect(signupShown).toBe(true);
+  });
+
+  it("does not mark the login page for signup on a plain login, and clears a mark left by an abandoned registration", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const abandoned = cookieJar();
+    abandoned.store(
+      await testAuth.flow.begin(
+        onHost(
+          (
+            await testAuth.flow.startRegistration(HOST, TENANT, "/x")
+          ).headers.get("location") ?? "",
+          "tolo.test",
+          "",
+        ),
+      ),
+    );
+    expect(await testAuth.flow.signupPending(abandoned.header())).toBe(true);
+
+    const { begun } = await authorizeAtIdp(testAuth, provider);
+    abandoned.store(begun);
+
+    expect(await testAuth.flow.signupPending(abandoned.header())).toBe(false);
+    expect(await testAuth.flow.signupPending("")).toBe(false);
+  });
+
+  it("exchanges the code with PKCE and hands the registration token to the host that started it, keeping nothing on the root domain", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const { completed, handoffUrl, startJar, rootJar } =
+      await registerUntilHandoff(testAuth, provider);
+
+    expect(completed?.status).toBe(302);
+    expect(completed?.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(handoffUrl).toMatch(
+      /^https:\/\/acme\.tolo\.test\/invitation\/handoff\?code=/,
+    );
+    expect(provider.tokenRequests.at(-1)?.get("redirect_uri")).toBe(
+      "https://tolo.test/api/auth/callback/tolo-idp",
+    );
+    expect(rootJar.cookies.has(SIGNUP_COOKIE)).toBe(false);
+    const ctx = await testAuth.auth.$context;
+    expect(await ctx.adapter.findMany({ model: "session" })).toEqual([]);
+    expect(await ctx.adapter.findMany({ model: "user" })).toEqual([]);
+
+    const taken = await take(testAuth, handoffUrl, startJar);
+
+    expect(taken.registration).toEqual({
+      tenantId: TENANT,
+      token: "registration-user-new",
+    });
+    expect(taken.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(taken.headers.get("cache-control")).toBe("no-store");
+    expect(taken.headers.getSetCookie()).toEqual([
+      expect.stringMatching(/^__Host-tolo\.login\.[^=]+=; Max-Age=0;/),
+    ]);
+  });
+
+  it("hands a registration token over only once", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const { handoffUrl, startJar } = await registerUntilHandoff(
+      testAuth,
+      provider,
+    );
+
+    await take(testAuth, handoffUrl, startJar);
+
+    expect((await take(testAuth, handoffUrl, startJar)).registration).toBe(
+      undefined,
+    );
+  });
+
+  it.each([
+    ["another host", OTHER_HOST, true],
+    ["a browser without the binding cookie", HOST, false],
+  ])(
+    "refuses a registration token to %s and burns the code",
+    async (_, host, withBinding) => {
+      const provider = idp();
+      const testAuth = await createTestAuth();
+      const { handoffUrl, startJar } = await registerUntilHandoff(
+        testAuth,
+        provider,
+      );
+
+      const refused = await take(
+        testAuth,
+        handoffUrl,
+        withBinding ? startJar : cookieJar(),
+        host,
+      );
+
+      expect(refused.registration).toBe(undefined);
+      expect((await take(testAuth, handoffUrl, startJar)).registration).toBe(
+        undefined,
+      );
+    },
+  );
+
+  it("does not let the login handoff turn a registration code into a session", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const { handoffUrl, startJar } = await registerUntilHandoff(
+      testAuth,
+      provider,
+    );
+
+    const handedOff = await handOff(
+      testAuth,
+      handoffUrl.replace("/invitation/handoff", "/auth/handoff"),
+      startJar,
+    );
+
+    expect(loginErrorPage(handedOff)).toMatchObject({
+      status: 302,
+      error: "invalid_handoff",
+    });
+    const ctx = await testAuth.auth.$context;
+    expect(await ctx.adapter.findMany({ model: "session" })).toEqual([]);
+  });
+
+  it("leaves a callback whose state it did not issue to Better Auth", async () => {
+    idp();
+    const testAuth = await createTestAuth();
+
+    await expect(
+      testAuth.flow.registrationCallback(
+        onHost(
+          "https://tolo.test/api/auth/callback/tolo-idp?code=c&state=unknown",
+          "tolo.test",
+          "",
+        ),
+      ),
+    ).resolves.toBe(undefined);
+  });
+
+  it("sends an error the IdP returns for a registration to the error page with the host that started it", async () => {
+    idp();
+    const testAuth = await createTestAuth();
+    const rootJar = cookieJar();
+    const started = await testAuth.flow.startRegistration(
+      HOST,
+      TENANT,
+      "/invitation/handoff",
+    );
+    const begun = await testAuth.flow.begin(
+      onHost(started.headers.get("location") ?? "", "tolo.test", ""),
+    );
+    rootJar.store(begun);
+    const state = new URL(begun.headers.get("location") ?? "").searchParams.get(
+      "state",
+    );
+
+    const failed = await testAuth.flow.registrationCallback(
+      onHost(
+        `https://tolo.test/api/auth/callback/tolo-idp?error=access_denied&state=${state}`,
+        "tolo.test",
+        rootJar.header(),
+      ),
+    );
+
+    expect(loginErrorPage(failed as Response)).toEqual({
+      status: 302,
+      page: "https://tolo.test/auth/error",
+      host: HOST,
+      error: "access_denied",
+    });
+  });
+});
+
 describe("logout", () => {
   it("ends only this host's session and its tokens, then sends the browser to the IdP's end_session with that session's ID token", async () => {
     const provider = idp();
@@ -800,6 +1404,7 @@ describe("login page", () => {
 
     await expect(testAuth.flow.challengeLogin("challenge-1")).resolves.toEqual({
       endpoint: "https://idp.test/api/login",
+      signupEndpoint: "https://idp.test/api/signup",
       challenge: "challenge-1",
       resumeUrl: "https://idp.test/oauth2/authorize?challenge=challenge-1",
     });
@@ -889,5 +1494,23 @@ describe.skipIf(!process.env.AUTH_TEST_DATABASE_URL)("on PostgreSQL", () => {
     expect(await ctx.adapter.findMany({ model: "account" })).toEqual([
       expect.objectContaining({ accessToken: null, refreshToken: null }),
     ]);
+  });
+
+  it("hands a registration token over once", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth(pool());
+    const { handoffUrl, startJar } = await registerUntilHandoff(
+      testAuth,
+      provider,
+    );
+
+    const taken = await Promise.all([
+      take(testAuth, handoffUrl, startJar),
+      take(testAuth, handoffUrl, startJar),
+    ]);
+
+    expect(taken.map(({ registration }) => registration?.token).sort()).toEqual(
+      ["registration-user-new", undefined],
+    );
   });
 });

@@ -6,7 +6,6 @@
     "title": "Create a tenant",
     "name": "Tenant name",
     "subdomain": "Subdomain",
-    "ownerEmail": "Owner email address",
     "ownerDisplayName": "Owner display name",
     "ownerDisplayNameDescription": "The name shown to the tenant's members. Up to 64 characters.",
     "submit": "Create",
@@ -327,6 +326,50 @@
       "retry": "Retry"
     }
   },
+  "FlowState": {
+    "error": "Failed to load the judgement status",
+    "skipped": "Cannot judge: {judgements}",
+    "judgement": {
+      "surge": "surge",
+      "highStagnation": "stagnation alert",
+      "combined": "combined trigger",
+      "puncture": "puncture"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "No observations are arriving",
+        "action": "Check that the device is running, and restart it if it has stopped"
+      },
+      "invalid": {
+        "label": "Observed values are invalid",
+        "action": "Review the setup, such as the camera angle and anything blocking it"
+      },
+      "hold": {
+        "label": "Measurements are not arriving and values are on hold",
+        "action": "Wait a while, and restart the device if this continues"
+      },
+      "stale": {
+        "label": "Observations are out of date",
+        "action": "Wait a while, and restart the device if this continues"
+      },
+      "noHistory": {
+        "label": "There is no history to judge with yet",
+        "action": "Wait a while for history to build up"
+      },
+      "windowOnlyHistory": {
+        "label": "No long-term history; judging only from recent measurements",
+        "action": "Wait a while for history to build up"
+      },
+      "shortHistory": {
+        "label": "Less than 4 hours of history",
+        "action": "Wait a while for history to build up"
+      },
+      "intermittentLine": {
+        "label": "Only {count} recent flow measurements",
+        "action": "Check that the device keeps measuring, and restart it if it has stopped"
+      }
+    }
+  },
   "Webrtc": {
     "connectionStatus": {
       "idle": "Not connected",
@@ -354,7 +397,26 @@
       "openHere": "Open on this device",
       "openHereLabel": "Open “{name}” on this device",
       "unregister": "Unregister",
-      "unregisterLabel": "Unregister “{name}”"
+      "unregisterLabel": "Unregister “{name}”",
+      "cameraBadge": "Camera",
+      "linkedPoint": "Linked point: {name}",
+      "provision": "Provision",
+      "provisionLabel": "Provision “{name}”",
+      "authorizeConnection": "Authorize observation page connection",
+      "useAsMachine": "Use as observation page",
+      "useAsMachineLabel": "Use {name} as an observation page",
+      "authorizeConnectionLabel": "Authorize the observation page connection for “{name}”",
+      "cameraConnectionHint": "Staff sessions start the connection authorization automatically when the observation page opens. For a machine session, use “Authorize observation page connection” in this screen to reauthorize.",
+      "stop": "Stop",
+      "stopLabel": "Temporarily stop “{name}”",
+      "reapprove": "Redo camera authorization",
+      "reapproveLabel": "Redo camera authorization for “{name}”",
+      "connection": {
+        "authorized": "The camera connection delegation was saved.",
+        "login_required": "Reauthorizing the camera connection requires a staff login. Use “Authorize observation page connection” again.",
+        "failed": "Could not authorize the camera connection. Try again."
+      },
+      "observationPoints": "Observation points"
     },
     "receiver": {
       "stoppedTitle": "Observation stopped",
@@ -380,7 +442,20 @@
       "open": "Open on this device",
       "failed": "Could not register the observation device.",
       "invalid": "Check the device name and observation point names.",
-      "eventNotFound": "The event was not found."
+      "eventNotFound": "The event was not found.",
+      "kindLabel": "Kind",
+      "kind": {
+        "observation_page": "Observation page",
+        "camera": "Camera"
+      },
+      "cameraPointLabel": "Linked observation point",
+      "cameraPointDescription": "Choose the camera-method observation point for this camera",
+      "cameraPointPlaceholder": "Select an observation point",
+      "noCameraPoints": "No observation point is available. Register an observation page device first.",
+      "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
+      "edgeDeviceIdLabel": "Edge device ID",
+      "openProvisioning": "Open provisioning",
+      "authorizeConnection": "Authorize observation page connection"
     },
     "unregisterEdge": {
       "title": "Unregister observation device",
@@ -389,6 +464,60 @@
       "confirm": "Unregister",
       "failed": "Could not unregister the observation device.",
       "stale": "The observation device was not found or is already unregistered. Refresh the list."
+    },
+    "stopCamera": {
+      "title": "Temporarily stop the camera",
+      "description": "Stops the stream from “{name}” temporarily. The registration remains; redo the camera authorization to resume.",
+      "cancel": "Cancel",
+      "confirm": "Stop temporarily",
+      "failed": "Could not stop the camera.",
+      "stale": "The camera was not found or does not belong to this event. Refresh the list."
+    },
+    "cameraProvision": {
+      "title": "ESP32 camera provisioning",
+      "description": "Write the Wi-Fi and connection settings to “{name}” ({id}).",
+      "reapprovalNotice": "Redoes the authorization for the temporarily stopped camera. This clears the stop and lets the device connect again.",
+      "reapprovalDescription": "Redo the device authorization for “{name}” ({id}).",
+      "reapprovalStart": "Redo authorization",
+      "trigger": "Provision",
+      "wifiSsidLabel": "Wi-Fi SSID",
+      "wifiPasswordLabel": "Wi-Fi password",
+      "wifiPasswordDescription": "Never shown in the page or logs",
+      "start": "Start writing",
+      "retry": "Retry",
+      "close": "Close",
+      "unsupported": "This browser does not support Web Serial. Use desktop Chrome or Edge.",
+      "insecure": "Web Serial is only available in a secure context (HTTPS or localhost).",
+      "steps": {
+        "selecting": "Selecting the serial port…",
+        "opening": "Opening the serial port…",
+        "writing": "Writing the settings…",
+        "waitingConfig": "Waiting for the device to confirm the settings…",
+        "waitingAuthorization": "Waiting for the device authorization code…",
+        "reconnecting": "Reconnecting to the device…",
+        "approving": "Approving the device authorization…",
+        "waitingResult": "Waiting for the device authorization result…"
+      },
+      "confirmAuthorization": "Approve the device with this code as “{name}”. Check the connected device.",
+      "userCodeLabel": "User code",
+      "verificationUri": "Verification URL: {uri}",
+      "complete": "Provisioning for “{name}” is complete. Approved user code {userCode}.",
+      "manualTitle": "Could not receive the user code",
+      "manualDescription": "Enter the user code shown by the device and approve it.",
+      "manualLabel": "User code",
+      "manualSubmit": "Approve",
+      "configRejected": "The device rejected the settings: {error}",
+      "configRejectedNoReason": "The device rejected the settings.",
+      "deviceError": "The device returned an error: {error}",
+      "authorizationRejected": "The device authorization failed.",
+      "authorizationTimeout": "Timed out while waiting for the authorization result.",
+      "timeout": "The device did not respond. Check the connection and retry.",
+      "failed": "Provisioning failed. Check the connection and retry.",
+      "notConnected": "The serial port is not open. Start again.",
+      "reconnectTitle": "The serial port was disconnected",
+      "reconnectDescription": "The device may have restarted. Select the port again to reconnect.",
+      "reconnectFailed": "Could not open the serial port. Select the port again.",
+      "reconnectPort": "Reconnect port"
     }
   },
   "Detection": {
@@ -426,15 +555,27 @@
       "count": "Line {index}: forward {forward} / backward {backward}",
       "namedCount": "{name}: forward {forward} / backward {backward}",
       "nameLabel": "Selected line name",
-      "namePlaceholder": "e.g. Hall A entrance, north corridor"
+      "namePlaceholder": "e.g. Hall A entrance, north corridor",
+      "areaWidthLabel": "Area width of the selected line (%)",
+      "areaWidthDescription": "The full width of the band centered on the line, as a percentage of the shorter side of the video. People inside the band are counted for the observation point named after the line.",
+      "reRegisterNote": "If you move a line or change its area width, register its observation point again so its people count history starts over.",
+      "areaOverlapWarning": "The areas of \"{first}\" and \"{second}\" overlap. People in the overlap are counted for both observation points."
     }
   },
   "Observation": {
     "title": "{tenantId} Observation",
+    "machineSessionFailed": "Could not authorize the observation page.",
+    "machineSessionRetry": "Try authorization again",
     "controls": {
       "start": "Start camera",
       "stop": "Stop",
-      "loading": "Starting…"
+      "loading": "Starting…",
+      "retry": "Reconnect",
+      "observeOnThisDevice": "Observe on this device",
+      "retryCamera": "Reconnect {camera}"
+    },
+    "cameraSelector": {
+      "label": "Camera"
     },
     "status": {
       "detection": "Detection status: {status}",
@@ -476,12 +617,17 @@
       "detection": "Person detection failed",
       "unregistered": "This observation device has been unregistered",
       "modelLoad": "Failed to load the detection model ({status}: {path})",
+      "connectionAuthorizationRequired": "The camera connection is not authorized. Reauthorize it with “Authorize observation page connection”.",
+      "connectionAuthorizationAutoStart": "Camera connection authorization is required. Moving to the authorization page.",
+      "connectionAuthorizationMachine": "The camera connection is not authorized. A staff member must reauthorize it with “Authorize observation page connection” in the management screen.",
+      "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "Camera access is not allowed. Allow camera access in your browser settings.",
         "notFound": "No camera was found. Check that a camera is connected.",
         "unsupported": "The camera is not available in this browser or connection",
         "unavailable": "Could not start the camera"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "Video source",
@@ -492,7 +638,18 @@
       "camera": "Camera",
       "activeHint": " (switch after stopping)",
       "inactiveHint": " (applied on the next start)",
-      "hide": "Hide"
+      "hide": "Hide",
+      "espCamera": "ESP camera ({edgeId})"
+    },
+    "cameraStatus": {
+      "label": "{camera}: {status}",
+      "waiting": "Waiting",
+      "stale": "No video",
+      "capturing": "Capturing",
+      "inferring": "Detecting",
+      "ready": "Detecting",
+      "error": "Error",
+      "errorDetail": "{camera}: {error}"
     }
   },
   "ObservationDevices": {
@@ -501,6 +658,8 @@
   },
   "Guest": {
     "pageSubtitle": "Guest Page",
+    "showOnMap": "View on map",
+    "showOnMapLabel": "View {place} on the map",
     "waitingNumber": {
       "title": "People waiting",
       "unit": "people"
@@ -549,13 +708,11 @@
     },
     "guideMap": {
       "title": "Guide map",
-      "hint": "Select a destination to see the route",
       "currentLocation": "You are here",
       "destinationsLabel": "Destinations",
       "expand": "Enlarge the map",
       "collapse": "Shrink the map",
-      "search": "Search destination",
-      "noResults": "No results",
+      "selectDestination": "Choose a destination",
       "reset": "Reset",
       "goal": "Destination",
       "rideTo": "{via} to {floor}",
@@ -568,17 +725,16 @@
       "walkStep": "{floor}: {from} → {to}",
       "rideStep": "{via}: {from} → {to}",
       "noRoute": "No route to this destination was found",
-      "zoomInHint": "Tap the map to zoom in",
       "zoomOutHint": "Drag to move · tap to see the whole map",
       "closed": " (closed)",
       "crowdAvoided": "This route avoids crowded areas",
       "crowdRerouted": "The route was changed because crowd conditions changed",
       "crowdThroughDanger": "This route passes through a dangerously crowded area. Please follow the staff's directions",
-      "crowdLegend": "Crowd"
+      "crowdLegend": "Crowd",
+      "stepsLabel": "Directions",
+      "nextFloor": "Next: route on {floor}"
     },
     "floor": {
-      "title": "Current floor",
-      "placeholderName": "1F",
       "selectLabel": "Floor to show"
     },
     "congestion": {
@@ -590,7 +746,9 @@
       },
       "danger": "Danger",
       "updatedAt": "Updated {time}",
-      "empty": "No crowd information yet"
+      "empty": "No crowd information yet",
+      "floorRange": "{from}–{to}",
+      "floorJoin": ", "
     },
     "loading": "Loading…",
     "loadError": "Couldn't load this information"
@@ -647,9 +805,26 @@
       "invalidCredentials": "The ID or password is incorrect.",
       "failed": "Could not log in. If this keeps happening, start again from your tenant's page."
     },
+    "signup": {
+      "title": "Create an account",
+      "description": "Choose the ID and password for your account in this tenant.",
+      "loginDescription": "If you already have an account in this tenant, log in with its ID and password.",
+      "usernameLabel": "ID",
+      "usernameDescription": "Up to 50 characters, without spaces.",
+      "passwordLabel": "Password",
+      "passwordDescription": "At least 8 characters and at most 72 bytes.",
+      "submit": "Create account",
+      "invalidUsername": "The ID must be 1 to 50 characters without spaces.",
+      "lengthOutOfRange": "The password must be at least 8 characters and at most 72 bytes.",
+      "usernameTaken": "This ID is already taken. Choose another ID.",
+      "failed": "Could not create the account. If this keeps happening, start over.",
+      "useExistingAccount": "Log in with an existing account",
+      "createAccount": "Create a new account"
+    },
     "loggedOut": {
       "title": "You have logged out",
-      "login": "Log in again"
+      "login": "Log in again",
+      "toObservation": "Back to the observation page"
     },
     "logout": "Log out"
   },

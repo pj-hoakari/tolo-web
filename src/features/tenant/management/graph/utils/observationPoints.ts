@@ -1,3 +1,4 @@
+import type { FlowElementState } from "@/features/flowState/type";
 import type { GraphCanvasNode, GraphEdgeType } from "../type";
 import { isPointNode } from "../type";
 
@@ -19,4 +20,25 @@ export function collectObservationPointIds(
     for (const id of e.data?.observationPointIds ?? []) ids.add(id);
   }
   return ids;
+}
+
+export function flowStatesByObservationPoint(
+  nodes: GraphCanvasNode[],
+  edges: GraphEdgeType[],
+  states: readonly FlowElementState[],
+): Map<string, FlowElementState> {
+  const byTarget = new Map(states.map((s) => [s.targetKey, s]));
+  const anchors = [
+    ...nodes
+      .filter(isPointNode)
+      .map((n) => [`node:${n.id}`, n.data.observationPointIds] as const),
+    ...edges.map((e) => [`edge:${e.id}`, e.data?.observationPointIds] as const),
+  ];
+  const result = new Map<string, FlowElementState>();
+  for (const [targetKey, ids] of anchors) {
+    const state = byTarget.get(targetKey);
+    if (!state) continue;
+    for (const id of ids ?? []) result.set(id, state);
+  }
+  return result;
 }

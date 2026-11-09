@@ -1,5 +1,6 @@
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 import {
+  applyFrameSize,
   applyLineCounts,
   applyMetrics,
   areCountingLinesEqual,
@@ -13,6 +14,10 @@ import {
   resetDetectedPeople,
 } from "@/features/tenant/detection/stores/detectionStore";
 import {
+  countPeopleInAreas,
+  observationPointAreas,
+} from "@/features/tenant/detection/utils/observationAreas";
+import {
   type DetectionOverlayFrame,
   type DetectionOverlayLine,
   drawDetectionOverlay,
@@ -25,6 +30,7 @@ import {
 import {
   type CrowdDetectionFrame,
   detectCrowdFrame,
+  footPoint,
   resetCrowdLineCount,
 } from "../utils/detectCrowd";
 import type { DetectCrowdStatus } from "./useDetectCrowd";
@@ -76,6 +82,7 @@ export type UseCrowdDetectionLoopParams = {
   settingsStore: DetectionSettingsStore;
   viewStateStore: DetectionViewStateStore;
   resultStore: DetectionResultStore;
+  observationPointIdByName: ReadonlyMap<string, string> | null;
   onBroadcastStreamChange: (stream: MediaStream | null) => void;
   onDetectionFrame: (frame: DetectionOverlayFrame | null) => void;
   onDetectionError: (cause: unknown) => void;
@@ -99,12 +106,17 @@ export function useCrowdDetectionLoop({
   settingsStore,
   viewStateStore,
   resultStore,
+  observationPointIdByName,
   onBroadcastStreamChange,
   onDetectionFrame,
   onDetectionError,
 }: UseCrowdDetectionLoopParams): void {
   const broadcastRef = useRef<BroadcastStreamHandle | null>(null);
   const latestFrameRef = useRef<CrowdDetectionFrame | null>(null);
+  const pointIdByNameRef = useRef(observationPointIdByName);
+  useEffect(() => {
+    pointIdByNameRef.current = observationPointIdByName;
+  }, [observationPointIdByName]);
 
   // カウントラインが変わったら通過数を数え直す
   useEffect(() => {
@@ -209,7 +221,17 @@ export function useCrowdDetectionLoop({
           trackedCount: frame.detections.length,
           fps,
         });
-        recordDetectedPeople(resultStore, frame.detections.length);
+        applyFrameSize(resultStore, video.videoWidth, video.videoHeight);
+        recordDetectedPeople(
+          resultStore,
+          countPeopleInAreas(
+            frame.detections.map(footPoint),
+            observationPointAreas(
+              countingLines,
+              pointIdByNameRef.current ?? new Map(),
+            ),
+          ),
+        );
         onDetectionFrame(
           toDetectionOverlayFrame(
             frame,

@@ -1,6 +1,8 @@
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Checkbox, CheckboxGroup } from "@/components/ui/checkbox";
+import { FlowStateNotes } from "@/features/flowState/FlowStateNotes";
+import type { FlowElementState } from "@/features/flowState/type";
 import type { EdgeDevicesStatus } from "@/features/tenant/webrtc/hooks/useEdgeDevices";
 import { cn } from "@/lib/utils";
 import type { ObservationPoint } from "@/server/router";
@@ -16,6 +18,8 @@ export type ObservationPointsSource = {
   status?: EdgeDevicesStatus;
   /** いずれかの要素で使用中（＝他では選択不可）の観測点 ID 集合 */
   usedIds: ReadonlySet<string>;
+  flowStates?: ReadonlyMap<string, FlowElementState>;
+  flowStatesFailed?: boolean;
   onRefresh?: () => void;
 };
 
@@ -35,12 +39,15 @@ export function ObservationPointPicker({
   available,
   status,
   usedIds,
+  flowStates,
+  flowStatesFailed,
   onRefresh,
   onChange,
 }: ObservationPointPickerProps) {
   const rows = buildObservationPointRows(linkedIds, available);
   const loading = status === "loading";
   const t = useTranslations("Graph.observationPoints");
+  const tFlow = useTranslations("FlowState");
 
   return (
     <div>
@@ -62,6 +69,9 @@ export function ObservationPointPicker({
         ) : null}
       </div>
 
+      {flowStatesFailed ? (
+        <p className="mb-1 text-[10px] text-destructive">{tFlow("error")}</p>
+      ) : null}
       {status === "error" ? (
         <p className="text-[10px] text-destructive">{t("error")}</p>
       ) : rows.length === 0 ? (
@@ -111,6 +121,7 @@ export function ObservationPointPicker({
                       {t("offline")}
                     </span>
                   ) : null}
+                  <FlowStateNotes state={flowStates?.get(row.id)} />
                 </span>
               </Checkbox>
             );

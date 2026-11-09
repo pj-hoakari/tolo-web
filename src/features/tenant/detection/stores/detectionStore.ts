@@ -19,6 +19,7 @@ export type DetectionCountingLineSetting = {
   name: string;
   p1: DetectionPoint;
   p2: DetectionPoint;
+  areaWidth: number;
 };
 
 export type DetectionSettings = {
@@ -42,7 +43,13 @@ export type DetectedPeopleTally = {
 export type DetectionResult = {
   lineCounts: Record<string, DetectionLineCount>;
   metrics: DetectionMetrics;
-  detectedPeople: DetectedPeopleTally;
+  detectedPeople: Record<string, DetectedPeopleTally>;
+  frameSize: FrameSize | null;
+};
+
+export type FrameSize = {
+  width: number;
+  height: number;
 };
 
 /** 検出結果には影響しない画面操作の状態 */
@@ -59,12 +66,15 @@ export type NumberSettingKey =
 
 export const DEFAULT_LINE_ID = "line-1";
 
+export const DEFAULT_AREA_WIDTH = 0.1;
+
 export const DEFAULT_COUNTING_LINES: DetectionCountingLineSetting[] = [
   {
     id: DEFAULT_LINE_ID,
     name: "",
     p1: { x: 0, y: 0.6 },
     p2: { x: 1, y: 0.6 },
+    areaWidth: DEFAULT_AREA_WIDTH,
   },
 ];
 
@@ -77,6 +87,8 @@ export const INITIAL_DETECTED_PEOPLE: DetectedPeopleTally = {
   frames: 0,
   people: 0,
 };
+
+export const NO_DETECTED_PEOPLE: Record<string, DetectedPeopleTally> = {};
 
 export const INITIAL_SETTINGS: DetectionSettings = {
   confidenceThreshold: 0.15,
@@ -100,6 +112,12 @@ export function createInitialLineCounts(
 
 export function clampUnit(value: number): number {
   return Math.min(1, Math.max(0, value));
+}
+
+export function clampAreaWidth(value: number): number {
+  return Number.isFinite(value)
+    ? Math.min(1, Math.max(0.01, value))
+    : DEFAULT_AREA_WIDTH;
 }
 
 export function clampNumberSetting(
@@ -136,21 +154,74 @@ export type DetectionStores = {
   viewStateStore: DetectionViewStateStore;
 };
 
+export function createDetectionResultStore(
+  countingLines: DetectionCountingLineSetting[],
+): DetectionResultStore {
+  return createStore<DetectionResult>()(() => ({
+    lineCounts: createInitialLineCounts(countingLines),
+    metrics: INITIAL_METRICS,
+    detectedPeople: NO_DETECTED_PEOPLE,
+    frameSize: null,
+  }));
+}
+
+export function createDetectionSettingsStore(
+  settings: DetectionSettings = INITIAL_SETTINGS,
+): DetectionSettingsStore {
+  return createStore<DetectionSettings>()(() => ({
+    ...settings,
+    countingLines: settings.countingLines.map((line) => ({
+      ...line,
+      p1: { ...line.p1 },
+      p2: { ...line.p2 },
+    })),
+  }));
+}
+
+export function createDetectionViewStateStore(
+  countingLines: DetectionCountingLineSetting[] = INITIAL_SETTINGS.countingLines,
+): DetectionViewStateStore {
+  return createStore<DetectionViewState>()(() => ({
+    selectedLineId: countingLines[0]?.id ?? DEFAULT_LINE_ID,
+    editingLineId: countingLines[0]?.id ?? null,
+    lineCreationMode: false,
+  }));
+}
+
+export type CameraDetectionStoreMaps = {
+  settingsStores: ReadonlyMap<string, DetectionSettingsStore>;
+  viewStateStores: ReadonlyMap<string, DetectionViewStateStore>;
+};
+
+/**
+ * カメラごとの設定と画面操作の状態を作る。
+ *
+ * 検出器と ONNX セッションは共有したまま、カメラごとに独立した
+ * しきい値・検出間隔・カウントライン・編集対象を持たせる。
+ */
+export function createCameraDetectionStoreMaps(
+  cameraKeys: readonly string[],
+  settings: DetectionSettings = INITIAL_SETTINGS,
+): CameraDetectionStoreMaps {
+  const settingsStores = new Map<string, DetectionSettingsStore>();
+  const viewStateStores = new Map<string, DetectionViewStateStore>();
+  for (const key of cameraKeys) {
+    settingsStores.set(key, createDetectionSettingsStore(settings));
+    viewStateStores.set(
+      key,
+      createDetectionViewStateStore(settings.countingLines),
+    );
+  }
+  return { settingsStores, viewStateStores };
+}
+
 export function createDetectionStores(
   settings: DetectionSettings = INITIAL_SETTINGS,
 ): DetectionStores {
   return {
-    settingsStore: createStore<DetectionSettings>()(() => settings),
-    resultStore: createStore<DetectionResult>()(() => ({
-      lineCounts: createInitialLineCounts(settings.countingLines),
-      metrics: INITIAL_METRICS,
-      detectedPeople: INITIAL_DETECTED_PEOPLE,
-    })),
-    viewStateStore: createStore<DetectionViewState>()(() => ({
-      selectedLineId: settings.countingLines[0]?.id ?? DEFAULT_LINE_ID,
-      editingLineId: settings.countingLines[0]?.id ?? null,
-      lineCreationMode: false,
-    })),
+    settingsStore: createDetectionSettingsStore(settings),
+    resultStore: createDetectionResultStore(settings.countingLines),
+    viewStateStore: createDetectionViewStateStore(settings.countingLines),
   };
 }
 
@@ -204,7 +275,8 @@ export function areCountingLinesEqual(
         line.p1.x === other.p1.x &&
         line.p1.y === other.p1.y &&
         line.p2.x === other.p2.x &&
-        line.p2.y === other.p2.y
+        line.p2.y === other.p2.y &&
+        line.areaWidth === other.areaWidth
       );
     })
   );
@@ -237,6 +309,8 @@ export const selectLineCounts = (state: DetectionResult) => state.lineCounts;
 
 export const selectMetrics = (state: DetectionResult) => state.metrics;
 
+export const selectFrameSize = (state: DetectionResult) => state.frameSize;
+
 export const selectSelectedLineId = (state: DetectionViewState) =>
   state.selectedLineId;
 
@@ -256,6 +330,7 @@ export function clampCountingLines(
     name: line.name,
     p1: { x: clampUnit(line.p1.x), y: clampUnit(line.p1.y) },
     p2: { x: clampUnit(line.p2.x), y: clampUnit(line.p2.y) },
+    areaWidth: clampAreaWidth(line.areaWidth),
   }));
 }
 
@@ -368,18 +443,59 @@ export function applyMetrics(
   );
 }
 
+export function applyFrameSize(
+  store: DetectionResultStore,
+  width: number,
+  height: number,
+): void {
+  store.setState(
+    (current) =>
+      current.frameSize?.width === width && current.frameSize.height === height
+        ? current
+        : { ...current, frameSize: { width, height } },
+    true,
+  );
+}
+
 export function recordDetectedPeople(
   store: DetectionResultStore,
   people: number,
+): void;
+export function recordDetectedPeople(
+  store: DetectionResultStore,
+  peopleByPoint: ReadonlyMap<string, number>,
+): void;
+export function recordDetectedPeople(
+  store: DetectionResultStore,
+  input: number | ReadonlyMap<string, number>,
+): void {
+  const peopleByPoint =
+    typeof input === "number" ? new Map([["all", input]]) : input;
+  if (peopleByPoint.size === 0) {
+    return;
+  }
+  store.setState((current) => {
+    const detectedPeople = { ...current.detectedPeople };
+    for (const [pointId, people] of peopleByPoint) {
+      const tally = detectedPeople[pointId] ?? INITIAL_DETECTED_PEOPLE;
+      detectedPeople[pointId] = {
+        frames: tally.frames + 1,
+        people: tally.people + people,
+      };
+    }
+    return { ...current, detectedPeople };
+  }, true);
+}
+
+export function applyDetectedPeople(
+  store: DetectionResultStore,
+  detectedPeople: Record<string, DetectedPeopleTally>,
 ): void {
   store.setState(
-    (current) => ({
-      ...current,
-      detectedPeople: {
-        frames: current.detectedPeople.frames + 1,
-        people: current.detectedPeople.people + people,
-      },
-    }),
+    (current) =>
+      current.detectedPeople === detectedPeople
+        ? current
+        : { ...current, detectedPeople },
     true,
   );
 }
@@ -387,9 +503,9 @@ export function recordDetectedPeople(
 export function resetDetectedPeople(store: DetectionResultStore): void {
   store.setState(
     (current) =>
-      current.detectedPeople === INITIAL_DETECTED_PEOPLE
+      current.detectedPeople === NO_DETECTED_PEOPLE
         ? current
-        : { ...current, detectedPeople: INITIAL_DETECTED_PEOPLE },
+        : { ...current, detectedPeople: NO_DETECTED_PEOPLE },
     true,
   );
 }
@@ -468,19 +584,27 @@ function parseCountingLine(
   if (typeof value !== "object" || value === null) {
     return null;
   }
-  const { id, name, p1, p2 } = value as Partial<DetectionCountingLineSetting>;
+  const { id, name, p1, p2, areaWidth } =
+    value as Partial<DetectionCountingLineSetting>;
   const parsedP1 = parsePoint(p1);
   const parsedP2 = parsePoint(p2);
   if (
     typeof id !== "string" ||
     (name !== undefined && typeof name !== "string") ||
+    (areaWidth !== undefined && typeof areaWidth !== "number") ||
     !parsedP1 ||
     !parsedP2
   ) {
     return null;
   }
   // name 導入前の保存設定も引き続き読み込めるよう、欠落時は空名にする。
-  return { id, name: name ?? "", p1: parsedP1, p2: parsedP2 };
+  return {
+    id,
+    name: name ?? "",
+    p1: parsedP1,
+    p2: parsedP2,
+    areaWidth: areaWidth ?? DEFAULT_AREA_WIDTH,
+  };
 }
 
 export function parseDetectionSettings(

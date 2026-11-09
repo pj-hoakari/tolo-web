@@ -6,12 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
 import { type ErrorMessageKeys, errorMessageKey } from "@/lib/errorMessageKey";
 import { orpc } from "@/lib/orpc";
-
-type AcceptError = "unusable" | "cannotJoin" | "notFound" | "failed";
+import type { AcceptError } from "./acceptErrors";
 
 const ACCEPT_ERROR_MESSAGES = {
   byCode: {
-    UNAUTHORIZED: "unusable",
+    FORBIDDEN: "unusable",
     PRECONDITION_FAILED: "cannotJoin",
     NOT_FOUND: "notFound",
   },
@@ -23,9 +22,19 @@ type State =
   | { status: "accepting" }
   | { status: "failed"; error: AcceptError };
 
-export function AcceptInvitation({ host }: { host: string }) {
+export function AcceptInvitation({
+  host,
+  error: initialError,
+}: {
+  host: string;
+  error?: AcceptError;
+}) {
   const t = useTranslations("Invitation");
-  const [state, setState] = useState<State>({ status: "ready" });
+  const [state, setState] = useState<State>(
+    initialError
+      ? { status: "failed", error: initialError }
+      : { status: "ready" },
+  );
 
   async function accept() {
     setState({ status: "accepting" });

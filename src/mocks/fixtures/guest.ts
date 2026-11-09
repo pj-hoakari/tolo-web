@@ -20,11 +20,55 @@ export function sampleGuestCrowd(language: string): GuestCrowdSnapshot {
   return {
     takenAt: "2026-06-15T05:28:00.000Z",
     crowd: [
+      // エレベーターは全階で混雑して危険（どの階でもエレベーターを避けて階段で案内する）
       {
         id: "pointId:n_fc14f2f4",
         name: name({ ja: "1F エレベーター前", en: "1F elevators" }, language),
         level: "high",
         danger: true,
+      },
+      {
+        id: "pointId:n_a55dd9ce",
+        name: name({ ja: "2F エレベーター前", en: "2F elevators" }, language),
+        level: "high",
+        danger: true,
+      },
+      {
+        id: "pointId:n_8922e3d4",
+        name: name({ ja: "3F エレベーター前", en: "3F elevators" }, language),
+        level: "high",
+        danger: true,
+      },
+      {
+        id: "pointId:n_2785462e",
+        name: name({ ja: "4F エレベーター前", en: "4F elevators" }, language),
+        level: "high",
+        danger: true,
+      },
+      {
+        id: "pointId:n_341fadee",
+        name: name({ ja: "5F エレベーター前", en: "5F elevators" }, language),
+        level: "high",
+        danger: true,
+      },
+      {
+        id: "pointId:n_0dfb7c9e",
+        name: name({ ja: "6F エレベーター前", en: "6F elevators" }, language),
+        level: "high",
+        danger: true,
+      },
+      // 1F と 2F だけにある中央の階段はやや混雑（中）
+      {
+        id: "pointId:n_a150fd44",
+        name: name({ ja: "1F 中央階段", en: "1F center stairs" }, language),
+        level: "mid",
+        danger: false,
+      },
+      {
+        id: "pointId:n_00f19cc9",
+        name: name({ ja: "2F 中央階段", en: "2F center stairs" }, language),
+        level: "mid",
+        danger: false,
       },
       {
         id: "pointId:n_ca0bb1fc",

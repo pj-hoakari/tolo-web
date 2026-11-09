@@ -3,7 +3,10 @@ import { MOCK_SERVER_MESSAGE, type MockRouterOverrides } from "@/mocks/router";
 
 type MockOverrides = Pick<
   MockRouterOverrides,
-  "getObservationSettingsError" | "updateObservationSettingsError"
+  | "getObservationSettingsError"
+  | "updateObservationSettingsError"
+  | "flowElementStates"
+  | "getFlowElementStatesError"
 >;
 
 const pointA = "入口";
@@ -12,6 +15,11 @@ const offlinePoint = "ホール";
 const panel = (page: Page) => page.getByRole("complementary");
 const observationPoint = (page: Page, name: string) =>
   panel(page).getByRole("group", { name: "観測点" }).getByText(name);
+const observationPointRow = (page: Page, name: string) =>
+  panel(page)
+    .getByRole("group", { name: "観測点" })
+    .locator("label")
+    .filter({ hasText: name });
 const emptyNotice = "観測点を紐づけるポイントまたはルートを選択してください。";
 const booth = (page: Page) => page.getByTestId("rf__node-ph_booth");
 const settings = (page: Page) => page.getByRole("region", { name: "観測設定" });
@@ -327,4 +335,93 @@ test("ラベルの言語を English に切り替えるとポイントのラベ�
   await expect(
     page.getByRole("button", { name: "ラベルの言語（English）" }),
   ).toBeVisible();
+});
+
+test.describe("flow-control の判定できない状態", () => {
+  const route = (page: Page) => page.getByTestId("rf__edge-ph_e2");
+
+  test("履歴が足りない観測点には、判定できない理由と対処が表示される", async ({
+    page,
+  }) => {
+    await overrideMock(page, {
+      flowElementStates: [
+        {
+          targetKey: "node:ph_booth",
+          observation: "ok",
+          history: "none",
+          linePoints: 5,
+          skipped: ["surge", "highStagnation", "combined", "puncture"],
+        },
+      ],
+    });
+    await page.reload();
+    await booth(page).click();
+    await observationPoint(page, pointA).click();
+
+    const row = observationPointRow(page, pointA);
+    await expect(row).toContainText("判定に使う履歴がまだありません");
+    await expect(row).toContainText("履歴がたまるまでしばらく待ってください");
+    await expect(row).toContainText(
+      "急増、停滞警戒、組合せ発火、パンクを判定できません",
+    );
+  });
+
+  test("ルートの観測が止まり流量の計測値が足りない観測点には、それぞれの理由と端末を確かめる対処が表示される", async ({
+    page,
+  }) => {
+    await overrideMock(page, {
+      flowElementStates: [
+        {
+          targetKey: "edge:ph_e2",
+          observation: "hold",
+          history: "established",
+          linePoints: 1,
+          skipped: ["surge", "highStagnation", "combined", "puncture"],
+        },
+      ],
+    });
+    await page.reload();
+    await route(page).click({ force: true });
+    await observationPoint(page, pointB).click();
+
+    const row = observationPointRow(page, pointB);
+    await expect(row).toContainText("計測値が届かず、値が止まっています");
+    await expect(row).toContainText(
+      "しばらく待ち、続くときは端末を再起動してください",
+    );
+    await expect(row).toContainText("直近の流量の計測値が 1 点しかありません");
+    await expect(row).not.toContainText("履歴");
+  });
+
+  test("判定に問題のない観測点には何も表示されない", async ({ page }) => {
+    await overrideMock(page, {
+      flowElementStates: [
+        {
+          targetKey: "edge:ph_e2",
+          observation: "unobserved",
+          history: "none",
+          linePoints: 0,
+          skipped: [],
+        },
+      ],
+    });
+    await page.reload();
+    await booth(page).click();
+    await observationPoint(page, pointA).click();
+
+    await expect(
+      panel(page).getByRole("checkbox", { name: pointA }),
+    ).toBeChecked();
+    await expect(observationPointRow(page, pointA)).toHaveText(pointA);
+  });
+
+  test("判定の状態を取得できないときは、観測点の一覧に取得できなかった旨が表示される", async ({
+    page,
+  }) => {
+    await overrideMock(page, { getFlowElementStatesError: true });
+    await page.reload();
+    await booth(page).click();
+
+    await expect(panel(page)).toContainText("判定の状態を取得できませんでした");
+  });
 });
