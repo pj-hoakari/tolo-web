@@ -345,6 +345,24 @@
       "openHereLabel": "Abrir «{name}» en este dispositivo",
       "unregister": "Dar de baja",
       "unregisterLabel": "Dar de baja «{name}»",
+      "cameraBadge": "Camera",
+      "linkedPoint": "Linked point: {name}",
+      "provision": "Provision",
+      "provisionLabel": "Provision “{name}”",
+      "authorizeConnection": "Authorize observation page connection",
+      "useAsMachine": "Use as observation page",
+      "useAsMachineLabel": "Use {name} as an observation page",
+      "authorizeConnectionLabel": "Authorize the observation page connection for “{name}”",
+      "cameraConnectionHint": "Staff sessions start the connection authorization automatically when the observation page opens. For a machine session, use “Authorize observation page connection” in this screen to reauthorize.",
+      "stop": "Stop",
+      "stopLabel": "Temporarily stop “{name}”",
+      "reapprove": "Redo camera authorization",
+      "reapproveLabel": "Redo camera authorization for “{name}”",
+      "connection": {
+        "authorized": "The camera connection delegation was saved.",
+        "login_required": "Reauthorizing the camera connection requires a staff login. Use “Authorize observation page connection” again.",
+        "failed": "Could not authorize the camera connection. Try again."
+      },
       "observationPoints": "Puntos de observación"
     },
     "receiver": {
@@ -371,7 +389,20 @@
       "open": "Abrir en este dispositivo",
       "failed": "No se pudo registrar el dispositivo de observación.",
       "invalid": "Revisa el nombre del dispositivo y los nombres de los puntos de observación.",
-      "eventNotFound": "No se encontró el evento."
+      "eventNotFound": "No se encontró el evento.",
+      "kindLabel": "Kind",
+      "kind": {
+        "observation_page": "Observation page",
+        "camera": "Camera"
+      },
+      "cameraPointLabel": "Linked observation point",
+      "cameraPointDescription": "Choose the camera-method observation point for this camera",
+      "cameraPointPlaceholder": "Select an observation point",
+      "noCameraPoints": "No observation point is available. Register an observation page device first.",
+      "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
+      "edgeDeviceIdLabel": "Edge device ID",
+      "openProvisioning": "Open provisioning",
+      "authorizeConnection": "Authorize observation page connection"
     },
     "unregisterEdge": {
       "title": "Dar de baja el dispositivo de observación",
@@ -380,6 +411,60 @@
       "confirm": "Dar de baja",
       "failed": "No se pudo dar de baja el dispositivo de observación.",
       "stale": "No se encontró el dispositivo de observación o ya está dado de baja. Actualiza la lista."
+    },
+    "stopCamera": {
+      "title": "Temporarily stop the camera",
+      "description": "Stops the stream from “{name}” temporarily. The registration remains; redo the camera authorization to resume.",
+      "cancel": "Cancel",
+      "confirm": "Stop temporarily",
+      "failed": "Could not stop the camera.",
+      "stale": "The camera was not found or does not belong to this event. Refresh the list."
+    },
+    "cameraProvision": {
+      "title": "ESP32 camera provisioning",
+      "description": "Write the Wi-Fi and connection settings to “{name}” ({id}).",
+      "reapprovalNotice": "Redoes the authorization for the temporarily stopped camera. This clears the stop and lets the device connect again.",
+      "reapprovalDescription": "Redo the device authorization for “{name}” ({id}).",
+      "reapprovalStart": "Redo authorization",
+      "trigger": "Provision",
+      "wifiSsidLabel": "Wi-Fi SSID",
+      "wifiPasswordLabel": "Wi-Fi password",
+      "wifiPasswordDescription": "Never shown in the page or logs",
+      "start": "Start writing",
+      "retry": "Retry",
+      "close": "Close",
+      "unsupported": "This browser does not support Web Serial. Use desktop Chrome or Edge.",
+      "insecure": "Web Serial is only available in a secure context (HTTPS or localhost).",
+      "steps": {
+        "selecting": "Selecting the serial port…",
+        "opening": "Opening the serial port…",
+        "writing": "Writing the settings…",
+        "waitingConfig": "Waiting for the device to confirm the settings…",
+        "waitingAuthorization": "Waiting for the device authorization code…",
+        "reconnecting": "Reconnecting to the device…",
+        "approving": "Approving the device authorization…",
+        "waitingResult": "Waiting for the device authorization result…"
+      },
+      "confirmAuthorization": "Autoriza el dispositivo con este código como «{name}». Comprueba el dispositivo conectado.",
+      "userCodeLabel": "User code",
+      "verificationUri": "Verification URL: {uri}",
+      "complete": "Provisioning for “{name}” is complete. Approved user code {userCode}.",
+      "manualTitle": "Could not receive the user code",
+      "manualDescription": "Enter the user code shown by the device and approve it.",
+      "manualLabel": "User code",
+      "manualSubmit": "Approve",
+      "configRejected": "The device rejected the settings: {error}",
+      "configRejectedNoReason": "The device rejected the settings.",
+      "deviceError": "The device returned an error: {error}",
+      "authorizationRejected": "The device authorization failed.",
+      "authorizationTimeout": "Timed out while waiting for the authorization result.",
+      "timeout": "The device did not respond. Check the connection and retry.",
+      "failed": "Provisioning failed. Check the connection and retry.",
+      "notConnected": "The serial port is not open. Start again.",
+      "reconnectTitle": "The serial port was disconnected",
+      "reconnectDescription": "The device may have restarted. Select the port again to reconnect.",
+      "reconnectFailed": "Could not open the serial port. Select the port again.",
+      "reconnectPort": "Reconnect port"
     }
   },
   "Detection": {
@@ -426,10 +511,18 @@
   },
   "Observation": {
     "title": "{tenantId} Observación",
+    "machineSessionFailed": "No se pudo autorizar la página de observación.",
+    "machineSessionRetry": "Volver a autorizar",
     "controls": {
       "start": "Iniciar cámara",
       "stop": "Detener",
-      "loading": "Iniciando…"
+      "loading": "Iniciando…",
+      "retry": "Reconectar",
+      "observeOnThisDevice": "Observar en este dispositivo",
+      "retryCamera": "Reconectar {camera}"
+    },
+    "cameraSelector": {
+      "label": "Cámara"
     },
     "status": {
       "detection": "Estado de detección: {status}",
@@ -471,12 +564,17 @@
       "detection": "Falló la detección de personas",
       "unregistered": "Este dispositivo de observación se ha dado de baja",
       "modelLoad": "No se pudo cargar el modelo de detección ({status}: {path})",
+      "connectionAuthorizationRequired": "The camera connection is not authorized. Reauthorize it with “Authorize observation page connection”.",
+      "connectionAuthorizationAutoStart": "Camera connection authorization is required. Moving to the authorization page.",
+      "connectionAuthorizationMachine": "The camera connection is not authorized. A staff member must reauthorize it with “Authorize observation page connection” in the management screen.",
+      "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "No se permite el acceso a la cámara. Permite el acceso a la cámara en la configuración del navegador.",
         "notFound": "No se encontró ninguna cámara. Comprueba que haya una cámara conectada.",
         "unsupported": "La cámara no está disponible en este navegador o conexión",
         "unavailable": "No se pudo iniciar la cámara"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "Fuente de vídeo",
@@ -487,7 +585,18 @@
       "camera": "Cámara",
       "activeHint": " (cambia tras detener)",
       "inactiveHint": " (se aplica al iniciar)",
-      "hide": "Ocultar"
+      "hide": "Ocultar",
+      "espCamera": "Cámara ESP ({edgeId})"
+    },
+    "cameraStatus": {
+      "label": "{camera}: {status}",
+      "waiting": "En espera",
+      "stale": "Sin vídeo",
+      "capturing": "Capturando",
+      "inferring": "Detectando",
+      "ready": "Detectando",
+      "error": "Error",
+      "errorDetail": "{camera}: {error}"
     }
   },
   "ObservationDevices": {
@@ -661,7 +770,8 @@
     },
     "loggedOut": {
       "title": "Has cerrado la sesión",
-      "login": "Volver a iniciar sesión"
+      "login": "Volver a iniciar sesión",
+      "toObservation": "Back to the observation page"
     },
     "logout": "Cerrar sesión"
   },

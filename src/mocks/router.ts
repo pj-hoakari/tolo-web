@@ -27,6 +27,8 @@ import {
   type ObservationSettings,
 } from "@/features/tenant/management/settings/type";
 import type {
+  CameraConnection,
+  CameraProvisioningDefaults,
   EdgeDevice,
   FirestoreToken,
   GuestCrowdSnapshot,
@@ -38,7 +40,7 @@ import type {
 } from "@/server/router";
 import {
   registeredEdgeDeviceWire,
-  sampleEdgeDevicesWire,
+  sampleObservationDevicesWire,
 } from "./fixtures/edges";
 import {
   sampleGuestCrowd,
@@ -52,11 +54,24 @@ export type MockRouterOverrides = {
   devices?: EdgeDevice[];
   /** observation.listEdgeDevices を失敗させる（status: error の確認用） */
   devicesError?: boolean;
+  /** camera.approveDeviceAuthorization が呼ばれたときの記録用フック */
+  approveDeviceAuthorization?: (input: {
+    eventId: string;
+    edgeDeviceId: string;
+    userCode: string;
+    reapproval?: boolean;
+  }) => void | Promise<void>;
   registerEdgeDeviceError?: CommonORPCErrorCode;
   unregisterEdgeDeviceError?: CommonORPCErrorCode;
   listObservationPointsError?: CommonORPCErrorCode;
   heartbeatError?: CommonORPCErrorCode;
   reportMeasurementsError?: CommonORPCErrorCode;
+  requestCameraConnectionError?: {
+    viewerType: "staff" | "machine";
+    eventId?: string;
+    pageEdgeDeviceId?: string;
+    cameraEdgeDeviceId?: string;
+  };
   getObservationSettingsError?: boolean;
   updateObservationSettingsError?: CommonORPCErrorCode;
   flowElementStates?: FlowElementState[];
@@ -113,13 +128,15 @@ export const SAMPLE_MEMBERS: TenantMember[] = [
  */
 export function createMockRouter(overrides: MockRouterOverrides = {}) {
   const {
-    devices: initialDevices = sampleEdgeDevicesWire,
+    devices: initialDevices = sampleObservationDevicesWire,
     devicesError = false,
+    approveDeviceAuthorization,
     registerEdgeDeviceError,
     unregisterEdgeDeviceError,
     listObservationPointsError,
     heartbeatError,
     reportMeasurementsError,
+    requestCameraConnectionError,
     getObservationSettingsError = false,
     updateObservationSettingsError,
     flowElementStates = [],
@@ -197,6 +214,96 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           }
         }),
     },
+    camera: {
+      listDelegatedCameras: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            pageEdgeDeviceId: z.string().min(1),
+          }),
+        )
+        .handler(
+          async ({
+            input,
+          }): Promise<{
+            cameras: {
+              connectionAuthorized: boolean;
+              edgeDeviceId: string;
+              name: string;
+              observationPointId: string;
+            }[];
+          }> => {
+            const page = devices.find(
+              (device) => device.edgeDeviceId === input.pageEdgeDeviceId,
+            );
+            if (!page) {
+              throw new ORPCError("NOT_FOUND");
+            }
+            if (page.kind !== "observation_page") {
+              throw new ORPCError("PRECONDITION_FAILED");
+            }
+            const observationPointByCamera = new Map(
+              page.cameraLinks.map((link) => [
+                link.cameraEdgeDeviceId,
+                link.observationPointId,
+              ]),
+            );
+            return {
+              cameras: devices
+                .filter(
+                  (device) =>
+                    device.kind === "camera" &&
+                    observationPointByCamera.has(device.edgeDeviceId),
+                )
+                .map((device) => ({
+                  connectionAuthorized: true,
+                  edgeDeviceId: device.edgeDeviceId,
+                  name: device.name,
+                  observationPointId:
+                    observationPointByCamera.get(device.edgeDeviceId) ?? "",
+                })),
+            };
+          },
+        ),
+      approveDeviceAuthorization: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            edgeDeviceId: z.string().min(1),
+            userCode: z.string().trim().min(1),
+            reapproval: z.boolean().optional(),
+          }),
+        )
+        .handler(async ({ input }): Promise<void> => {
+          await approveDeviceAuthorization?.(input);
+        }),
+      revokeDeviceAuthorization: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            edgeDeviceId: z.string().min(1),
+          }),
+        )
+        .handler(async (): Promise<void> => {}),
+      stopDeviceAuthorization: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            edgeDeviceId: z.string().min(1),
+          }),
+        )
+        .handler(async (): Promise<void> => {}),
+      provisioningDefaults: os.handler(
+        async (): Promise<CameraProvisioningDefaults> => ({
+          signalingUrl: "http://127.0.0.1:8787",
+          idpUrl: "",
+          firebaseProjectId: "demo-tolo",
+          firebaseApiKey: "demo-tolo-web",
+          firestoreEmulatorHost: "127.0.0.1:8080",
+          firebaseAuthEmulatorHost: "127.0.0.1:9099",
+        }),
+      ),
+    },
     observation: {
       listEdgeDevices: os
         .input(z.object({ eventId: z.string().min(1) }))
@@ -213,7 +320,13 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           z.object({
             eventId: z.string().min(1),
             name: z.string().trim().min(1),
-            observationPointNames: z.array(z.string().trim().min(1)).min(1),
+            kind: z
+              .enum(["observation_page", "camera"])
+              .default("observation_page"),
+            observationPointNames: z
+              .array(z.string().trim().min(1))
+              .default([]),
+            linkedObservationPointId: z.string().optional(),
           }),
         )
         .handler(async ({ input }): Promise<RegisteredEdgeDevice> => {
@@ -607,6 +720,56 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             sessionId: `mock-session_${input.edgeId}`,
           }),
         ),
+      requestCameraConnection: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            pageEdgeDeviceId: z.string().min(1),
+            cameraEdgeId: z.string().min(1),
+          }),
+        )
+        .handler(async ({ input }): Promise<CameraConnection> => {
+          if (requestCameraConnectionError) {
+            throw new ORPCError("PRECONDITION_FAILED", {
+              message: MOCK_SERVER_MESSAGE,
+              data: {
+                code: "CONNECTION_AUTHORIZATION_REQUIRED",
+                viewerType: requestCameraConnectionError.viewerType,
+                eventId: requestCameraConnectionError.eventId ?? input.eventId,
+                pageEdgeDeviceId:
+                  requestCameraConnectionError.pageEdgeDeviceId ??
+                  input.pageEdgeDeviceId,
+                cameraEdgeDeviceId:
+                  requestCameraConnectionError.cameraEdgeDeviceId ??
+                  input.cameraEdgeId,
+              },
+            });
+          }
+          const page = devices.find(
+            (d) => d.edgeDeviceId === input.pageEdgeDeviceId,
+          );
+          if (page?.kind !== "observation_page") {
+            throw new ORPCError(page ? "PRECONDITION_FAILED" : "NOT_FOUND");
+          }
+          const camera = devices.find(
+            (d) => d.edgeDeviceId === input.cameraEdgeId,
+          );
+          if (camera?.kind !== "camera") {
+            throw new ORPCError(camera ? "PRECONDITION_FAILED" : "NOT_FOUND");
+          }
+          if (
+            !page.cameraLinks.some(
+              (link) => link.cameraEdgeDeviceId === input.cameraEdgeId,
+            )
+          ) {
+            throw new ORPCError("PRECONDITION_FAILED");
+          }
+          return {
+            sessionId: `mock-session_${input.cameraEdgeId}`,
+            firestoreToken: `mock-camera-token_${input.cameraEdgeId}`,
+            expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+          };
+        }),
       issueConsoleFirestoreToken: os
         .input(z.object({ eventId: z.string().min(1) }))
         .handler(

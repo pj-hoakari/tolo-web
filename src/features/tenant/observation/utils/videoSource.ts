@@ -6,10 +6,23 @@ export type VideoSourceDescriptor =
       readonly loop: boolean;
     };
 
+/** この時間だけ新しいフレームが届かなければ、映像は止まっているとみなす。 */
+export const FRAME_STALE_AFTER_MS = 15_000;
+
+export function isFrameFresh(
+  lastFrameAt: number | null,
+  now = performance.now(),
+  staleAfterMs = FRAME_STALE_AFTER_MS,
+): boolean {
+  return lastFrameAt !== null && now - lastFrameAt <= staleAfterMs;
+}
+
 export interface CrowdVideoSource {
   readonly label: string;
   open(): Promise<VideoSourceDescriptor>;
   close(): void;
+  /** 最後にフレームを描画した時刻。まだフレームがなければ null。 */
+  lastFrameAt(): number | null;
 }
 
 export type CrowdVideoSourceFactory = () => CrowdVideoSource;
@@ -74,6 +87,10 @@ export function createCameraVideoSource(): CrowdVideoSource {
       }
       stream = null;
     },
+    lastFrameAt() {
+      const track = stream?.getVideoTracks()[0];
+      return track?.readyState === "live" ? performance.now() : null;
+    },
   };
 }
 
@@ -99,6 +116,9 @@ export function createVideoFileSource(
         URL.revokeObjectURL(objectUrl);
         objectUrl = null;
       }
+    },
+    lastFrameAt() {
+      return objectUrl ? performance.now() : null;
     },
   };
 }

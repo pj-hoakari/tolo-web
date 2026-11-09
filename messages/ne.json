@@ -345,6 +345,24 @@
       "openHereLabel": "“{name}” यो उपकरणमा खोल्नुहोस्",
       "unregister": "दर्ता हटाउनुहोस्",
       "unregisterLabel": "“{name}” को दर्ता हटाउनुहोस्",
+      "cameraBadge": "Camera",
+      "linkedPoint": "Linked point: {name}",
+      "provision": "Provision",
+      "provisionLabel": "Provision “{name}”",
+      "authorizeConnection": "Authorize observation page connection",
+      "useAsMachine": "Use as observation page",
+      "useAsMachineLabel": "Use {name} as an observation page",
+      "authorizeConnectionLabel": "Authorize the observation page connection for “{name}”",
+      "cameraConnectionHint": "Staff sessions start the connection authorization automatically when the observation page opens. For a machine session, use “Authorize observation page connection” in this screen to reauthorize.",
+      "stop": "Stop",
+      "stopLabel": "Temporarily stop “{name}”",
+      "reapprove": "Redo camera authorization",
+      "reapproveLabel": "Redo camera authorization for “{name}”",
+      "connection": {
+        "authorized": "The camera connection delegation was saved.",
+        "login_required": "Reauthorizing the camera connection requires a staff login. Use “Authorize observation page connection” again.",
+        "failed": "Could not authorize the camera connection. Try again."
+      },
       "observationPoints": "अवलोकन बिन्दु"
     },
     "receiver": {
@@ -371,7 +389,20 @@
       "open": "यो उपकरणमा खोल्नुहोस्",
       "failed": "अवलोकन उपकरण दर्ता गर्न सकिएन।",
       "invalid": "उपकरणको नाम र अवलोकन बिन्दुका नामहरू जाँच गर्नुहोस्।",
-      "eventNotFound": "कार्यक्रम फेला परेन।"
+      "eventNotFound": "कार्यक्रम फेला परेन।",
+      "kindLabel": "Kind",
+      "kind": {
+        "observation_page": "Observation page",
+        "camera": "Camera"
+      },
+      "cameraPointLabel": "Linked observation point",
+      "cameraPointDescription": "Choose the camera-method observation point for this camera",
+      "cameraPointPlaceholder": "Select an observation point",
+      "noCameraPoints": "No observation point is available. Register an observation page device first.",
+      "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
+      "edgeDeviceIdLabel": "Edge device ID",
+      "openProvisioning": "Open provisioning",
+      "authorizeConnection": "Authorize observation page connection"
     },
     "unregisterEdge": {
       "title": "अवलोकन उपकरणको दर्ता हटाउनुहोस्",
@@ -380,6 +411,60 @@
       "confirm": "दर्ता हटाउनुहोस्",
       "failed": "दर्ता हटाउन सकिएन।",
       "stale": "अवलोकन उपकरण फेला परेन वा पहिले नै दर्ता हटाइएको छ। सूची ताजा गर्नुहोस्।"
+    },
+    "stopCamera": {
+      "title": "Temporarily stop the camera",
+      "description": "Stops the stream from “{name}” temporarily. The registration remains; redo the camera authorization to resume.",
+      "cancel": "Cancel",
+      "confirm": "Stop temporarily",
+      "failed": "Could not stop the camera.",
+      "stale": "The camera was not found or does not belong to this event. Refresh the list."
+    },
+    "cameraProvision": {
+      "title": "ESP32 camera provisioning",
+      "description": "Write the Wi-Fi and connection settings to “{name}” ({id}).",
+      "reapprovalNotice": "Redoes the authorization for the temporarily stopped camera. This clears the stop and lets the device connect again.",
+      "reapprovalDescription": "Redo the device authorization for “{name}” ({id}).",
+      "reapprovalStart": "Redo authorization",
+      "trigger": "Provision",
+      "wifiSsidLabel": "Wi-Fi SSID",
+      "wifiPasswordLabel": "Wi-Fi password",
+      "wifiPasswordDescription": "Never shown in the page or logs",
+      "start": "Start writing",
+      "retry": "Retry",
+      "close": "Close",
+      "unsupported": "This browser does not support Web Serial. Use desktop Chrome or Edge.",
+      "insecure": "Web Serial is only available in a secure context (HTTPS or localhost).",
+      "steps": {
+        "selecting": "Selecting the serial port…",
+        "opening": "Opening the serial port…",
+        "writing": "Writing the settings…",
+        "waitingConfig": "Waiting for the device to confirm the settings…",
+        "waitingAuthorization": "Waiting for the device authorization code…",
+        "reconnecting": "Reconnecting to the device…",
+        "approving": "Approving the device authorization…",
+        "waitingResult": "Waiting for the device authorization result…"
+      },
+      "confirmAuthorization": "यो कोड भएको उपकरणलाई “{name}” का रूपमा स्वीकृत गर्नुहोस्। जडान गरिएको उपकरण जाँच गर्नुहोस्।",
+      "userCodeLabel": "User code",
+      "verificationUri": "Verification URL: {uri}",
+      "complete": "Provisioning for “{name}” is complete. Approved user code {userCode}.",
+      "manualTitle": "Could not receive the user code",
+      "manualDescription": "Enter the user code shown by the device and approve it.",
+      "manualLabel": "User code",
+      "manualSubmit": "Approve",
+      "configRejected": "The device rejected the settings: {error}",
+      "configRejectedNoReason": "The device rejected the settings.",
+      "deviceError": "The device returned an error: {error}",
+      "authorizationRejected": "The device authorization failed.",
+      "authorizationTimeout": "Timed out while waiting for the authorization result.",
+      "timeout": "The device did not respond. Check the connection and retry.",
+      "failed": "Provisioning failed. Check the connection and retry.",
+      "notConnected": "The serial port is not open. Start again.",
+      "reconnectTitle": "The serial port was disconnected",
+      "reconnectDescription": "The device may have restarted. Select the port again to reconnect.",
+      "reconnectFailed": "Could not open the serial port. Select the port again.",
+      "reconnectPort": "Reconnect port"
     }
   },
   "Detection": {
@@ -426,10 +511,18 @@
   },
   "Observation": {
     "title": "{tenantId} अवलोकन पृष्ठ",
+    "machineSessionFailed": "अवलोकन पृष्ठ अधिकृत गर्न सकिएन।",
+    "machineSessionRetry": "फेरि अधिकृत गर्नुहोस्",
     "controls": {
       "start": "क्यामेरा सुरु गर्नुहोस्",
       "stop": "रोक्नुहोस्",
-      "loading": "सुरु हुँदै…"
+      "loading": "सुरु हुँदै…",
+      "retry": "पुनः जडान गर्नुहोस्",
+      "observeOnThisDevice": "यस उपकरणमा अवलोकन गर्नुहोस्",
+      "retryCamera": "{camera} पुनः जडान गर्नुहोस्"
+    },
+    "cameraSelector": {
+      "label": "क्यामेरा"
     },
     "status": {
       "detection": "पहिचान स्थिति: {status}",
@@ -471,12 +564,17 @@
       "detection": "मानिस पहिचान प्रक्रिया असफल भयो",
       "unregistered": "यो अवलोकन उपकरणको दर्ता रद्द गरिएको छ",
       "modelLoad": "पहिचान मोडेल लोड गर्न सकिएन ({status}: {path})",
+      "connectionAuthorizationRequired": "The camera connection is not authorized. Reauthorize it with “Authorize observation page connection”.",
+      "connectionAuthorizationAutoStart": "Camera connection authorization is required. Moving to the authorization page.",
+      "connectionAuthorizationMachine": "The camera connection is not authorized. A staff member must reauthorize it with “Authorize observation page connection” in the management screen.",
+      "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "क्यामेरा प्रयोग गर्न अनुमति छैन। ब्राउजर सेटिङमा क्यामेरा पहुँच अनुमति दिनुहोस्।",
         "notFound": "क्यामेरा भेटिएन। क्यामेरा जोडिएको छ कि छैन जाँच गर्नुहोस्।",
         "unsupported": "यो ब्राउजर वा जडानमा क्यामेरा प्रयोग गर्न सकिँदैन",
         "unavailable": "क्यामेरा सुरु गर्न सकिएन"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "भिडियो स्रोत",
@@ -487,7 +585,18 @@
       "camera": "क्यामेरा",
       "activeHint": "(रोकेपछि मात्र बदलिन्छ)",
       "inactiveHint": "(छानेपछि सुरु गर्दा लागू हुन्छ)",
-      "hide": "लुकाउनुहोस्"
+      "hide": "लुकाउनुहोस्",
+      "espCamera": "ESP क्यामेरा ({edgeId})"
+    },
+    "cameraStatus": {
+      "label": "{camera}: {status}",
+      "waiting": "प्रतीक्षामा",
+      "stale": "भिडियो आएको छैन",
+      "capturing": "क्याप्चर गर्दै",
+      "inferring": "पहिचान गर्दै",
+      "ready": "पहिचान गर्दै",
+      "error": "त्रुटि",
+      "errorDetail": "{camera}: {error}"
     }
   },
   "ObservationDevices": {
@@ -661,7 +770,8 @@
     },
     "loggedOut": {
       "title": "लग आउट भयो",
-      "login": "फेरि लग इन गर्नुहोस्"
+      "login": "फेरि लग इन गर्नुहोस्",
+      "toObservation": "Back to the observation page"
     },
     "logout": "लग आउट"
   },

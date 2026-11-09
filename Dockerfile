@@ -46,6 +46,8 @@ RUN groupadd --system --gid 1001 nodejs \
 COPY --from=build /app/public ./public
 COPY --from=build --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=build --chown=nextjs:nodejs /app/db ./db
+COPY --from=build --chown=nextjs:nodejs /app/scripts/migrate-auth-db.mjs ./scripts/migrate-auth-db.mjs
 USER nextjs
 EXPOSE 3000
 CMD ["node", "server.js"]

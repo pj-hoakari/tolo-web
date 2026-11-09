@@ -6,6 +6,10 @@ import {
   type Route,
   test,
 } from "@playwright/test";
+import {
+  sampleEdgeDevicesWire,
+  sampleObservationDevicesWire,
+} from "@/mocks/fixtures/edges";
 import type { MockRouterOverrides } from "@/mocks/router";
 
 test.use({
@@ -28,6 +32,12 @@ const setUpUnlockCode = async (page: Page, value: string) => {
   await code(page).fill(value);
   await confirmation(page).fill(value);
   await page.getByRole("button", { name: "設定して解除" }).click();
+  await expect(lockButton(page)).toBeVisible();
+};
+
+const unlockPage = async (page: Page, value: string) => {
+  await code(page).fill(value);
+  await page.getByRole("button", { name: "ロック解除" }).click();
   await expect(lockButton(page)).toBeVisible();
 };
 
@@ -85,13 +95,19 @@ const overrideMock = async (
   page: Page,
   overrides: Pick<
     MockRouterOverrides,
-    "listObservationPointsError" | "heartbeatError" | "reportMeasurementsError"
+    | "devices"
+    | "listObservationPointsError"
+    | "heartbeatError"
+    | "reportMeasurementsError"
   >,
 ) => {
-  await page.evaluate((value) => {
-    sessionStorage.setItem("msw:overrides", value);
-    window.dispatchEvent(new Event("msw:overrides"));
-  }, JSON.stringify(overrides));
+  await page.evaluate(
+    (value) => {
+      sessionStorage.setItem("msw:overrides", value);
+      window.dispatchEvent(new Event("msw:overrides"));
+    },
+    JSON.stringify({ devices: sampleEdgeDevicesWire, ...overrides }),
+  );
 };
 
 const holdModelRequest = async (context: BrowserContext) => {
@@ -109,6 +125,14 @@ test.beforeEach(async ({ page, context }) => {
       body: "mock-model",
     }),
   );
+  // このファイルのテストはローカルカメラ（dev モード）を対象にする。
+  // 委任カメラを外しておき、ESP モードの自動接続とタブは
+  // observation-multi-camera.spec.ts で確認する。
+  await page.addInitScript((devices) => {
+    if (!sessionStorage.getItem("msw:overrides")) {
+      sessionStorage.setItem("msw:overrides", JSON.stringify({ devices }));
+    }
+  }, sampleEdgeDevicesWire);
   await page.goto("/event/test/observation/8c1f0e2a5d4b3c6e");
   await expect(
     page.getByRole("heading", {
@@ -116,6 +140,26 @@ test.beforeEach(async ({ page, context }) => {
       name: "0123456789abcdef 観測ページ",
     }),
   ).toBeVisible();
+});
+
+test("この端末で観測する導線は開始元ページへ戻り、選択言語で表示される", async ({
+  page,
+}) => {
+  await setUpUnlockCode(page, "1234");
+  const link = page.getByRole("link", { name: "この端末で観測する" });
+  const href = await link.getAttribute("href");
+  const url = new URL(href ?? "", page.url());
+  expect(url.pathname).toBe("/api/auth/machine/start");
+  expect(Object.fromEntries(url.searchParams)).toEqual({
+    eventId: "test",
+    pageEdgeDeviceId: "8c1f0e2a5d4b3c6e",
+    return: "/event/test/observation/8c1f0e2a5d4b3c6e",
+  });
+  await page.getByRole("button", { name: "言語を切り替え" }).click();
+  await page.getByRole("menuitemradio", { name: "English" }).click();
+  await expect(
+    page.getByRole("link", { name: "Observe on this device" }),
+  ).toHaveAttribute("href", href ?? "");
 });
 
 test.describe("画面ロック", () => {
@@ -648,6 +692,7 @@ test.describe("検出の開始", () => {
   test("カメラの使用が拒否されるとブラウザの文言ではなく翻訳済みの理由が表示される", async ({
     page,
   }) => {
+    await overrideMock(page, { devices: sampleEdgeDevicesWire });
     await page.addInitScript(() => {
       navigator.mediaDevices.getUserMedia = () =>
         Promise.reject(
@@ -696,17 +741,35 @@ test.describe("計測値の送信", () => {
     return windows;
   };
 
+  const startEspDetection = async (page: Page) => {
+    await overrideMock(page, { devices: sampleObservationDevicesWire });
+    await page.reload();
+    await unlockPage(page, "1234");
+    await expect(page.getByRole("tab").first()).toHaveAttribute(
+      "aria-selected",
+      "true",
+      { timeout: 20_000 },
+    );
+    await expect
+      .poll(
+        async () => {
+          const labels = await page.getByRole("tab").allTextContents();
+          return labels.some((label) => /撮影中|検出中/.test(label));
+        },
+        { timeout: 20_000 },
+      )
+      .toBe(true);
+  };
+
   test.beforeEach(async ({ page }) => {
     await page.clock.install();
     await setUpUnlockCode(page, "1234");
-    await lineName(page).fill("入口");
-    await startButton(page).click();
-    await expect(page.getByText("検出状態: 検出中")).toBeVisible();
   });
 
   test("送信に失敗したウィンドウの計測値は開始と終了の時刻を変えずに次の送信に含めて再送する", async ({
     page,
   }) => {
+    await startEspDetection(page);
     const windows = sentWindows(page);
     await overrideMock(page, {
       reportMeasurementsError: "SERVICE_UNAVAILABLE",
@@ -714,18 +777,24 @@ test.describe("計測値の送信", () => {
     await page.clock.fastForward(REPORT_INTERVAL_MS);
     await expect.poll(() => windows.length).toBe(1);
 
-    await overrideMock(page, {});
+    await overrideMock(page, { devices: sampleObservationDevicesWire });
     await page.clock.fastForward(REPORT_INTERVAL_MS);
     await expect.poll(() => windows.length).toBe(2);
 
-    expect(windows[1]).toHaveLength(2);
-    expect(windows[1][0]).toEqual(windows[0][0]);
-    expect(windows[1][1].windowStart).toBe(windows[0][0].windowEnd);
+    expect(windows[1]).toHaveLength(4);
+    expect(windows[1].slice(0, 2)).toEqual(windows[0]);
+    expect(windows[1].slice(2).map(({ windowStart }) => windowStart)).toEqual([
+      windows[0][0].windowEnd,
+      windows[0][1].windowEnd,
+    ]);
   });
 
   test("送信に失敗したウィンドウの計測値は検出を停止して再開した後の送信に含めて再送する", async ({
     page,
   }) => {
+    await lineName(page).fill("入口");
+    await startButton(page).click();
+    await expect(page.getByText("検出状態: 検出中")).toBeVisible();
     const windows = sentWindows(page);
     await overrideMock(page, {
       reportMeasurementsError: "SERVICE_UNAVAILABLE",
@@ -748,14 +817,19 @@ test.describe("計測値の送信", () => {
   test("送信に成功したウィンドウの計測値は次の送信に含めない", async ({
     page,
   }) => {
+    await startEspDetection(page);
     const windows = sentWindows(page);
     await page.clock.fastForward(REPORT_INTERVAL_MS);
     await page.clock.fastForward(REPORT_INTERVAL_MS);
     await expect.poll(() => windows.length).toBe(2);
 
-    expect(windows[1]).toEqual([
-      { windowStart: windows[0][0].windowEnd, windowEnd: expect.any(String) },
-    ]);
+    expect(windows[1]).toHaveLength(2);
+    expect(windows[1]).toEqual(
+      windows[0].map(() => ({
+        windowStart: windows[0][0].windowEnd,
+        windowEnd: expect.any(String),
+      })),
+    );
   });
 });
 

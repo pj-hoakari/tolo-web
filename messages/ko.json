@@ -345,6 +345,24 @@
       "openHereLabel": "“{name}”을(를) 이 단말에서 열기",
       "unregister": "등록 해제",
       "unregisterLabel": "“{name}” 등록 해제",
+      "cameraBadge": "Camera",
+      "linkedPoint": "Linked point: {name}",
+      "provision": "Provision",
+      "provisionLabel": "Provision “{name}”",
+      "authorizeConnection": "Authorize observation page connection",
+      "useAsMachine": "Use as observation page",
+      "useAsMachineLabel": "Use {name} as an observation page",
+      "authorizeConnectionLabel": "Authorize the observation page connection for “{name}”",
+      "cameraConnectionHint": "Staff sessions start the connection authorization automatically when the observation page opens. For a machine session, use “Authorize observation page connection” in this screen to reauthorize.",
+      "stop": "Stop",
+      "stopLabel": "Temporarily stop “{name}”",
+      "reapprove": "Redo camera authorization",
+      "reapproveLabel": "Redo camera authorization for “{name}”",
+      "connection": {
+        "authorized": "The camera connection delegation was saved.",
+        "login_required": "Reauthorizing the camera connection requires a staff login. Use “Authorize observation page connection” again.",
+        "failed": "Could not authorize the camera connection. Try again."
+      },
       "observationPoints": "관측점"
     },
     "receiver": {
@@ -371,7 +389,20 @@
       "open": "이 단말에서 열기",
       "failed": "관측 장치를 등록할 수 없습니다.",
       "invalid": "장치 이름과 관측 지점 이름을 확인하세요.",
-      "eventNotFound": "이벤트를 찾을 수 없습니다."
+      "eventNotFound": "이벤트를 찾을 수 없습니다.",
+      "kindLabel": "Kind",
+      "kind": {
+        "observation_page": "Observation page",
+        "camera": "Camera"
+      },
+      "cameraPointLabel": "Linked observation point",
+      "cameraPointDescription": "Choose the camera-method observation point for this camera",
+      "cameraPointPlaceholder": "Select an observation point",
+      "noCameraPoints": "No observation point is available. Register an observation page device first.",
+      "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
+      "edgeDeviceIdLabel": "Edge device ID",
+      "openProvisioning": "Open provisioning",
+      "authorizeConnection": "Authorize observation page connection"
     },
     "unregisterEdge": {
       "title": "관측 장치 등록 해제",
@@ -380,6 +411,60 @@
       "confirm": "등록 해제하기",
       "failed": "등록을 해제할 수 없습니다.",
       "stale": "관측 장치를 찾을 수 없거나 이미 등록이 해제되었습니다. 목록을 새로 고치세요."
+    },
+    "stopCamera": {
+      "title": "Temporarily stop the camera",
+      "description": "Stops the stream from “{name}” temporarily. The registration remains; redo the camera authorization to resume.",
+      "cancel": "Cancel",
+      "confirm": "Stop temporarily",
+      "failed": "Could not stop the camera.",
+      "stale": "The camera was not found or does not belong to this event. Refresh the list."
+    },
+    "cameraProvision": {
+      "title": "ESP32 camera provisioning",
+      "description": "Write the Wi-Fi and connection settings to “{name}” ({id}).",
+      "reapprovalNotice": "Redoes the authorization for the temporarily stopped camera. This clears the stop and lets the device connect again.",
+      "reapprovalDescription": "Redo the device authorization for “{name}” ({id}).",
+      "reapprovalStart": "Redo authorization",
+      "trigger": "Provision",
+      "wifiSsidLabel": "Wi-Fi SSID",
+      "wifiPasswordLabel": "Wi-Fi password",
+      "wifiPasswordDescription": "Never shown in the page or logs",
+      "start": "Start writing",
+      "retry": "Retry",
+      "close": "Close",
+      "unsupported": "This browser does not support Web Serial. Use desktop Chrome or Edge.",
+      "insecure": "Web Serial is only available in a secure context (HTTPS or localhost).",
+      "steps": {
+        "selecting": "Selecting the serial port…",
+        "opening": "Opening the serial port…",
+        "writing": "Writing the settings…",
+        "waitingConfig": "Waiting for the device to confirm the settings…",
+        "waitingAuthorization": "Waiting for the device authorization code…",
+        "reconnecting": "Reconnecting to the device…",
+        "approving": "Approving the device authorization…",
+        "waitingResult": "Waiting for the device authorization result…"
+      },
+      "confirmAuthorization": "이 코드의 기기를 “{name}”(으)로 승인합니다. 연결된 기기를 확인하세요.",
+      "userCodeLabel": "User code",
+      "verificationUri": "Verification URL: {uri}",
+      "complete": "Provisioning for “{name}” is complete. Approved user code {userCode}.",
+      "manualTitle": "Could not receive the user code",
+      "manualDescription": "Enter the user code shown by the device and approve it.",
+      "manualLabel": "User code",
+      "manualSubmit": "Approve",
+      "configRejected": "The device rejected the settings: {error}",
+      "configRejectedNoReason": "The device rejected the settings.",
+      "deviceError": "The device returned an error: {error}",
+      "authorizationRejected": "The device authorization failed.",
+      "authorizationTimeout": "Timed out while waiting for the authorization result.",
+      "timeout": "The device did not respond. Check the connection and retry.",
+      "failed": "Provisioning failed. Check the connection and retry.",
+      "notConnected": "The serial port is not open. Start again.",
+      "reconnectTitle": "The serial port was disconnected",
+      "reconnectDescription": "The device may have restarted. Select the port again to reconnect.",
+      "reconnectFailed": "Could not open the serial port. Select the port again.",
+      "reconnectPort": "Reconnect port"
     }
   },
   "Detection": {
@@ -426,10 +511,18 @@
   },
   "Observation": {
     "title": "{tenantId} 관측 페이지",
+    "machineSessionFailed": "관측 페이지를 승인하지 못했습니다.",
+    "machineSessionRetry": "다시 승인",
     "controls": {
       "start": "카메라 시작",
       "stop": "중지",
-      "loading": "시작 중…"
+      "loading": "시작 중…",
+      "retry": "다시 연결",
+      "observeOnThisDevice": "이 기기에서 관측하기",
+      "retryCamera": "{camera} 다시 연결"
+    },
+    "cameraSelector": {
+      "label": "카메라"
     },
     "status": {
       "detection": "검출 상태: {status}",
@@ -471,12 +564,17 @@
       "detection": "사람 검출 처리에 실패했습니다",
       "unregistered": "이 관측 디바이스는 등록 해제되었습니다",
       "modelLoad": "검출 모델을 불러오지 못했습니다（{status}: {path}）",
+      "connectionAuthorizationRequired": "The camera connection is not authorized. Reauthorize it with “Authorize observation page connection”.",
+      "connectionAuthorizationAutoStart": "Camera connection authorization is required. Moving to the authorization page.",
+      "connectionAuthorizationMachine": "The camera connection is not authorized. A staff member must reauthorize it with “Authorize observation page connection” in the management screen.",
+      "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "카메라 사용이 허용되지 않았습니다. 브라우저 설정에서 카메라 접근을 허용해 주세요.",
         "notFound": "카메라를 찾을 수 없습니다. 카메라가 연결되어 있는지 확인해 주세요.",
         "unsupported": "이 브라우저 또는 연결에서는 카메라를 사용할 수 없습니다",
         "unavailable": "카메라를 시작할 수 없습니다"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "영상 소스",
@@ -487,7 +585,18 @@
       "camera": "카메라",
       "activeHint": "(중지 후 전환)",
       "inactiveHint": "(선택 후 시작 시 반영)",
-      "hide": "숨기기"
+      "hide": "숨기기",
+      "espCamera": "ESP 카메라 ({edgeId})"
+    },
+    "cameraStatus": {
+      "label": "{camera}: {status}",
+      "waiting": "대기 중",
+      "stale": "영상 없음",
+      "capturing": "촬영 중",
+      "inferring": "감지 중",
+      "ready": "감지 중",
+      "error": "오류",
+      "errorDetail": "{camera}: {error}"
     }
   },
   "ObservationDevices": {
@@ -661,7 +770,8 @@
     },
     "loggedOut": {
       "title": "로그아웃했습니다",
-      "login": "다시 로그인"
+      "login": "다시 로그인",
+      "toObservation": "Back to the observation page"
     },
     "logout": "로그아웃"
   },
