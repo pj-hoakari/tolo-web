@@ -13,6 +13,7 @@ description: src/features/guest/info に新しい GuestInfoComponent（ゲスト
 ゲストページでは「待ち人数」などの情報パーツを縦に並べて表示する。これらのパーツを受け取って並べる側のコンポーネント（コンテナなど）では、**`src/features/guest/info` 内で正しく定義されたコンポーネントだけ**を受け取れるように制限したい。
 
 ただしこれは「`src/features/guest/info` ディレクトリにあるか」というパスベースの制限ではなく、**型による制限**で実現する。具体的には、非公開の `unique symbol`（ブランド）を使った nominal typing を用いる。
+
 - `src/features/guest/info/type.ts` の `guestInfoBrand` は **export していない** `unique symbol`。
 - `GuestInfoComponent` 型はこのブランドキーを持つ必要があるため、外部モジュールからは構築できず、**必ず `defineGuestInfoComponent` を経由**しないとこの型の値を作れない。
 - 同じ `props`（`{ tenantId, eventId }`）を取る素のコンポーネントを書いても、ブランドが無いので `GuestInfoComponent` には代入できない（型エラー）。

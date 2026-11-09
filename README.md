@@ -150,6 +150,7 @@ docker compose up -d --build
 ### 開く URL
 
 テナントはサブドメイン名で決まります。サブドメイン名 `test` が上のトークンのテナント `0123456789abcdef` に対応します。上のトークンに対応する URL は次のとおりです。
+
 - 管理ページ: `http://test.localhost:3000/event/fedcba9876543210/management`
 - 観測デバイス管理ページ: `http://test.localhost:3000/event/fedcba9876543210/observation`
 - 観測デバイスの観測ページ: `http://test.localhost:3000/event/fedcba9876543210/observation/{edgeDeviceId}`
@@ -281,6 +282,7 @@ GATEWAY_URL=http://127.0.0.1:8080 NEXT_PUBLIC_API_MOCKING=disabled TENANT_SUBDOM
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
+
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
@@ -308,6 +310,7 @@ Tolo はオンライン専用の PWA としてインストールできます。N
 ### インストール
 
 各ページの「アプリをインストール」ボタンから、端末とブラウザに応じた案内を開けます。
+
 - Chrome / Edge: インストール確認画面を開ける場合は、案内内のボタンでブラウザの確認画面を開き、インストールを確定します。確認画面を開けない場合は表示されたブラウザメニューの手順に従ってください。
 - iPhone / iPad: Safari の共有メニューから「ホーム画面に追加」を選び、「追加」で確定します。
 - macOS Safari: 「ファイル」メニューの「Dock に追加」から追加します（対応する macOS / Safari が必要です）。
@@ -337,6 +340,7 @@ pnpm start
 ```
 
 自動テストではインストール案内・ブラウザイベント・起動先復帰、Manifest の必須項目、PNG の実寸と宣言寸法、テナントのルーティングを確認します。OS が管理するインストール確認画面は実機で確認してください。
+
 1. Chrome / Edge と Android Chrome、iPhone / iPad Safari で対象テナントのゲストページを開き、インストールボタンの案内に従って追加できることを確認します。
 2. ホーム画面やアプリ一覧から起動し、ブラウザのアドレスバーがないアプリ表示と、インストールしたページからの初回起動を確認します。Cookie / localStorage が引き継がれない環境でも起動先が保たれることを確認します。
 3. ゲスト、管理、グラフ編集、観測、端末別観測の各公開 URL をアプリ内で開き、画面表示・ページ遷移・オンライン API・既存操作が動作することを確認します。観測はカメラ権限と既存のモデル / API 設定も必要です。
