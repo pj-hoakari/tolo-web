@@ -31,11 +31,13 @@ Docker のビルド対象から `public/models/` は除外されているため�
 uv --version
 ```
 上記コマンドを実行してバージョンが表示されない場合，行う必要がある
+
 #### uvをインストール
 
 [Installation | uv](https://docs.astral.sh/uv/getting-started/installation/#__tabbed_1_1)
 
 Ubuntuの場合
+
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
