@@ -161,6 +161,9 @@ vi.mock("./auth/invitation", () => ({
 
 const eventId = "fedcba9876543210";
 const [device] = sampleObservationDevicesWire;
+const transitionEventStatus = vi.mocked(
+  tenantManagementClient.transitionEventStatus,
+);
 
 beforeEach(() => {
   vi.mocked(requestTenantId).mockResolvedValue("0123456789abcdef");
@@ -177,6 +180,54 @@ afterEach(() => {
     type: "staff",
     userId: "user-1",
     tenantId: "0123456789abcdef",
+  });
+  transitionEventStatus.mockReset();
+});
+
+describe("tenant.transitionEventStatus", () => {
+  it.each([
+    ["draft", ProtoEventStatus.DRAFT],
+    ["open", ProtoEventStatus.OPEN],
+    ["locked", ProtoEventStatus.LOCKED],
+    ["closed", ProtoEventStatus.CLOSED],
+  ] as const)(
+    "maps %s to the backend enum and returns the updated event",
+    async (to, protoStatus) => {
+      transitionEventStatus.mockResolvedValue({
+        event: { eventId, name: "Event A", status: protoStatus },
+      } as never);
+      const result = await call(router.tenant.transitionEventStatus, {
+        eventId,
+        to,
+      });
+      expect(transitionEventStatus).toHaveBeenCalledWith({
+        eventId,
+        to: protoStatus,
+      });
+      expect(result).toEqual({ eventId, name: "Event A", status: to });
+    },
+  );
+
+  it("passes a rejected transition back as a precondition error without the backend message", async () => {
+    transitionEventStatus.mockRejectedValue(
+      new ConnectError("private backend detail", Code.FailedPrecondition),
+    );
+    const error = await call(router.tenant.transitionEventStatus, {
+      eventId,
+      to: "open",
+    }).catch((err: unknown) => err);
+    expect(error).toMatchObject({ code: "PRECONDITION_FAILED" });
+    expect((error as Error).message).not.toContain("private backend detail");
+  });
+
+  it("rejects unknown target states before calling the backend", async () => {
+    await expect(
+      call(router.tenant.transitionEventStatus, {
+        eventId,
+        to: "unknown" as never,
+      }),
+    ).rejects.toThrow();
+    expect(transitionEventStatus).not.toHaveBeenCalled();
   });
 });
 
@@ -1506,10 +1557,22 @@ describe("observation credentials by caller", () => {
 
 describe("tenant.archiveEvent camera revocation", () => {
   beforeEach(() => {
+    vi.mocked(revokeMachineSessionsForEvent).mockClear();
     vi.mocked(tenantManagementClient.listEvents).mockResolvedValue({
       events: [{ eventId, name: "Event", status: ProtoEventStatus.CLOSED }],
     } as never);
   });
+  const archiveRoutes = [
+    {
+      name: "archiveEvent",
+      archive: () => call(router.tenant.archiveEvent, { eventId }),
+    },
+    {
+      name: "transitionEventStatus",
+      archive: () =>
+        call(router.tenant.transitionEventStatus, { eventId, to: "archived" }),
+    },
+  ];
   const stubIdp = () => {
     vi.stubEnv("AUTH_IDP_ISSUER", "https://idp.test");
     vi.stubEnv("AUTH_IDP_CLIENT_ID", "console-ui");
@@ -1550,80 +1613,91 @@ describe("tenant.archiveEvent camera revocation", () => {
     },
   );
 
-  it("revokes every camera grant before archiving the event", async () => {
-    stubIdp();
-    const order: string[] = [];
-    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockImplementation(
-      async () => {
-        order.push("list");
-        return create(ListEdgeDevicesResponseSchema, {
-          devices: [
-            protoDevice,
-            camera("0123456789abcdee"),
-            camera("0123456789abcdff"),
-          ],
-        });
-      },
-    );
-    vi.spyOn(globalThis, "fetch").mockImplementation(async () => {
-      order.push("revoke");
-      return new Response(null, { status: 204 });
-    });
-    vi.mocked(deleteConnectionDelegationsForEvent).mockImplementation(
-      async () => {
-        order.push("delete");
-      },
-    );
-    transitioned(5);
-    vi.mocked(tenantManagementClient.transitionEventStatus).mockImplementation(
-      async () => {
+  it.each(archiveRoutes)(
+    "revokes every camera grant before archiving via $name",
+    async ({ archive }) => {
+      stubIdp();
+      const order: string[] = [];
+      vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockImplementation(
+        async () => {
+          order.push("list");
+          return create(ListEdgeDevicesResponseSchema, {
+            devices: [
+              protoDevice,
+              camera("0123456789abcdee"),
+              camera("0123456789abcdff"),
+            ],
+          });
+        },
+      );
+      vi.spyOn(globalThis, "fetch").mockImplementation(async () => {
+        order.push("revoke");
+        return new Response(null, { status: 204 });
+      });
+      vi.mocked(deleteConnectionDelegationsForEvent).mockImplementation(
+        async () => {
+          order.push("delete");
+        },
+      );
+      transitionEventStatus.mockImplementation(async () => {
         order.push("transition");
         return {
-          event: { eventId, name: "Event", status: 5 },
+          event: { eventId, name: "Event", status: ProtoEventStatus.ARCHIVED },
         } as never;
-      },
-    );
+      });
 
-    await expect(
-      call(router.tenant.archiveEvent, { eventId }),
-    ).resolves.toEqual({ eventId, name: "Event", status: "archived" });
-    expect(order).toEqual(["list", "revoke", "revoke", "delete", "transition"]);
-    expect(revokeMachineSessionsForEvent).toHaveBeenCalledWith(eventId);
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      "https://idp.test/api/device-authorization/revoke",
-      expect.objectContaining({
-        body: JSON.stringify({
-          event_id: eventId,
-          edge_device_id: "0123456789abcdee",
-          permanent: true,
+      await expect(archive()).resolves.toEqual({
+        eventId,
+        name: "Event",
+        status: "archived",
+      });
+      expect(order).toEqual([
+        "list",
+        "revoke",
+        "revoke",
+        "delete",
+        "transition",
+      ]);
+      expect(transitionEventStatus).toHaveBeenCalledWith({
+        eventId,
+        to: ProtoEventStatus.ARCHIVED,
+      });
+      expect(revokeMachineSessionsForEvent).toHaveBeenCalledWith(eventId);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "https://idp.test/api/device-authorization/revoke",
+        expect.objectContaining({
+          body: JSON.stringify({
+            event_id: eventId,
+            edge_device_id: "0123456789abcdee",
+            permanent: true,
+          }),
         }),
-      }),
-    );
-  });
+      );
+    },
+  );
 
-  it("does not archive the event when any camera grant cannot be revoked", async () => {
-    stubIdp();
-    const order: string[] = [];
-    vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockImplementation(
-      async () => {
-        order.push("list");
-        return create(ListEdgeDevicesResponseSchema, {
-          devices: [camera("0123456789abcdee"), camera("0123456789abcdff")],
-        });
-      },
-    );
-    vi.spyOn(globalThis, "fetch").mockImplementation(async () => {
-      order.push("revoke");
-      return new Response("idp unavailable", { status: 503 });
-    });
-    const transition = vi.mocked(tenantManagementClient.transitionEventStatus);
-
-    await expect(
-      call(router.tenant.archiveEvent, { eventId }),
-    ).rejects.toMatchObject({ code: "BAD_GATEWAY" });
-    expect(order).toEqual(["list", "revoke"]);
-    expect(transition).not.toHaveBeenCalled();
-  });
+  it.each(archiveRoutes)(
+    "does not archive via $name when any camera grant cannot be revoked",
+    async ({ archive }) => {
+      stubIdp();
+      const order: string[] = [];
+      vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices").mockImplementation(
+        async () => {
+          order.push("list");
+          return create(ListEdgeDevicesResponseSchema, {
+            devices: [camera("0123456789abcdee"), camera("0123456789abcdff")],
+          });
+        },
+      );
+      vi.spyOn(globalThis, "fetch").mockImplementation(async () => {
+        order.push("revoke");
+        return new Response("idp unavailable", { status: 503 });
+      });
+      await expect(archive()).rejects.toMatchObject({ code: "BAD_GATEWAY" });
+      expect(order).toEqual(["list", "revoke"]);
+      expect(transitionEventStatus).not.toHaveBeenCalled();
+    },
+  );
 
   it("does not re-authorize cameras when restoring an archived event", async () => {
     const list = vi.spyOn(consoleEdgeDeviceClient, "listEdgeDevices");

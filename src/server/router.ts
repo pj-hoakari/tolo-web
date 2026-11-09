@@ -57,9 +57,10 @@ import {
 import type { GuestGuideMapGraph } from "@/features/guest/info/guideMapGraph";
 import type { LocalizedGuideMapLayout } from "@/features/guest/info/guideMapLayout";
 import type { GuestPageComponent } from "@/features/guest/pageComponents";
-import type {
-  EventStatus,
-  TenantEvent,
+import {
+  EVENT_STATUSES as EVENT_STATUS_VALUES,
+  type EventStatus,
+  type TenantEvent,
 } from "@/features/tenant/management/events/type";
 import type { GraphData } from "@/features/tenant/management/graph/type";
 import type {
@@ -489,6 +490,14 @@ const EVENT_STATUSES: Partial<Record<ProtoEventStatus, EventStatus>> = {
   [ProtoEventStatus.ARCHIVED]: "archived",
 };
 
+const PROTO_EVENT_STATUSES: Record<EventStatus, ProtoEventStatus> = {
+  draft: ProtoEventStatus.DRAFT,
+  open: ProtoEventStatus.OPEN,
+  locked: ProtoEventStatus.LOCKED,
+  closed: ProtoEventStatus.CLOSED,
+  archived: ProtoEventStatus.ARCHIVED,
+};
+
 function toTenantEvent(event: Event | undefined): TenantEvent {
   const status = event && EVENT_STATUSES[event.status];
   if (!event || !status) {
@@ -497,6 +506,25 @@ function toTenantEvent(event: Event | undefined): TenantEvent {
     );
   }
   return { eventId: event.eventId, name: event.name, status };
+}
+
+function transitionTenantEventStatus(
+  eventId: string,
+  to: ProtoEventStatus,
+): Promise<TenantEvent> {
+  return withEventLifecycle(eventId, async () => {
+    if (to === ProtoEventStatus.ARCHIVED) {
+      await requireArchivableEvent(eventId);
+      await revokeCameraGrants(eventId);
+      await revokeMachineSessionsForEvent(eventId);
+      await deleteConnectionDelegationsForEvent(eventId);
+    }
+    const res = await tenantManagementClient.transitionEventStatus({
+      eventId,
+      to,
+    });
+    return toTenantEvent(res.event);
+  });
 }
 
 const TENANT_ROLES: Partial<Record<Role, TenantRole>> = {
@@ -919,21 +947,26 @@ export const router = {
           throw toORPCError(err);
         }
       }),
+    transitionEventStatus: os
+      .input(z.object({ eventId: publicId, to: z.enum(EVENT_STATUS_VALUES) }))
+      .handler(async ({ input }): Promise<TenantEvent> => {
+        try {
+          return await transitionTenantEventStatus(
+            input.eventId,
+            PROTO_EVENT_STATUSES[input.to],
+          );
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
     archiveEvent: os
       .input(z.object({ eventId: publicId }))
       .handler(async ({ input }): Promise<TenantEvent> => {
         try {
-          return await withEventLifecycle(input.eventId, async () => {
-            await requireArchivableEvent(input.eventId);
-            await revokeCameraGrants(input.eventId);
-            await revokeMachineSessionsForEvent(input.eventId);
-            await deleteConnectionDelegationsForEvent(input.eventId);
-            const res = await tenantManagementClient.transitionEventStatus({
-              eventId: input.eventId,
-              to: ProtoEventStatus.ARCHIVED,
-            });
-            return toTenantEvent(res.event);
-          });
+          return await transitionTenantEventStatus(
+            input.eventId,
+            ProtoEventStatus.ARCHIVED,
+          );
         } catch (err) {
           throw toORPCError(err);
         }
@@ -942,13 +975,10 @@ export const router = {
       .input(z.object({ eventId: publicId }))
       .handler(async ({ input }): Promise<TenantEvent> => {
         try {
-          return await withEventLifecycle(input.eventId, async () => {
-            const res = await tenantManagementClient.transitionEventStatus({
-              eventId: input.eventId,
-              to: ProtoEventStatus.CLOSED,
-            });
-            return toTenantEvent(res.event);
-          });
+          return await transitionTenantEventStatus(
+            input.eventId,
+            ProtoEventStatus.CLOSED,
+          );
         } catch (err) {
           throw toORPCError(err);
         }
