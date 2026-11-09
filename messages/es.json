@@ -6,7 +6,6 @@
     "title": "Crear un inquilino",
     "name": "Nombre del inquilino",
     "subdomain": "Subdominio",
-    "ownerEmail": "Correo electrónico del propietario",
     "ownerDisplayName": "Nombre visible del propietario",
     "ownerDisplayNameDescription": "El nombre que ven los miembros del inquilino. Hasta 64 caracteres.",
     "submit": "Crear",
@@ -311,6 +310,50 @@
       "retry": "Reintentar"
     }
   },
+  "FlowState": {
+    "error": "No se pudo obtener el estado de evaluación",
+    "skipped": "No se puede evaluar: {judgements}",
+    "judgement": {
+      "surge": "aumento repentino",
+      "highStagnation": "alerta de estancamiento",
+      "combined": "activación combinada",
+      "puncture": "saturación"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "No llegan observaciones",
+        "action": "Compruebe que el dispositivo funciona y reinícielo si se ha detenido"
+      },
+      "invalid": {
+        "label": "Los valores observados no son válidos",
+        "action": "Revise la instalación, como el ángulo de la cámara o lo que la obstruye"
+      },
+      "hold": {
+        "label": "No llegan mediciones y los valores están en espera",
+        "action": "Espere un momento y reinicie el dispositivo si continúa"
+      },
+      "stale": {
+        "label": "Las observaciones están desactualizadas",
+        "action": "Espere un momento y reinicie el dispositivo si continúa"
+      },
+      "noHistory": {
+        "label": "Aún no hay historial para evaluar",
+        "action": "Espere a que se acumule historial"
+      },
+      "windowOnlyHistory": {
+        "label": "Sin historial a largo plazo; se evalúa solo con mediciones recientes",
+        "action": "Espere a que se acumule historial"
+      },
+      "shortHistory": {
+        "label": "Hay menos de 4 horas de historial",
+        "action": "Espere a que se acumule historial"
+      },
+      "intermittentLine": {
+        "label": "Solo hay {count} mediciones de flujo recientes",
+        "action": "Compruebe que el dispositivo sigue midiendo y reinícielo si se ha detenido"
+      }
+    }
+  },
   "Webrtc": {
     "connectionStatus": {
       "idle": "Sin conexión",
@@ -338,7 +381,26 @@
       "openHere": "Abrir en este dispositivo",
       "openHereLabel": "Abrir «{name}» en este dispositivo",
       "unregister": "Dar de baja",
-      "unregisterLabel": "Dar de baja «{name}»"
+      "unregisterLabel": "Dar de baja «{name}»",
+      "cameraBadge": "Camera",
+      "linkedPoint": "Linked point: {name}",
+      "provision": "Provision",
+      "provisionLabel": "Provision “{name}”",
+      "authorizeConnection": "Authorize observation page connection",
+      "useAsMachine": "Use as observation page",
+      "useAsMachineLabel": "Use {name} as an observation page",
+      "authorizeConnectionLabel": "Authorize the observation page connection for “{name}”",
+      "cameraConnectionHint": "Staff sessions start the connection authorization automatically when the observation page opens. For a machine session, use “Authorize observation page connection” in this screen to reauthorize.",
+      "stop": "Stop",
+      "stopLabel": "Temporarily stop “{name}”",
+      "reapprove": "Redo camera authorization",
+      "reapproveLabel": "Redo camera authorization for “{name}”",
+      "connection": {
+        "authorized": "The camera connection delegation was saved.",
+        "login_required": "Reauthorizing the camera connection requires a staff login. Use “Authorize observation page connection” again.",
+        "failed": "Could not authorize the camera connection. Try again."
+      },
+      "observationPoints": "Puntos de observación"
     },
     "receiver": {
       "stoppedTitle": "La observación se detuvo",
@@ -364,7 +426,20 @@
       "open": "Abrir en este dispositivo",
       "failed": "No se pudo registrar el dispositivo de observación.",
       "invalid": "Revisa el nombre del dispositivo y los nombres de los puntos de observación.",
-      "eventNotFound": "No se encontró el evento."
+      "eventNotFound": "No se encontró el evento.",
+      "kindLabel": "Kind",
+      "kind": {
+        "observation_page": "Observation page",
+        "camera": "Camera"
+      },
+      "cameraPointLabel": "Linked observation point",
+      "cameraPointDescription": "Choose the camera-method observation point for this camera",
+      "cameraPointPlaceholder": "Select an observation point",
+      "noCameraPoints": "No observation point is available. Register an observation page device first.",
+      "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
+      "edgeDeviceIdLabel": "Edge device ID",
+      "openProvisioning": "Open provisioning",
+      "authorizeConnection": "Authorize observation page connection"
     },
     "unregisterEdge": {
       "title": "Dar de baja el dispositivo de observación",
@@ -373,6 +448,60 @@
       "confirm": "Dar de baja",
       "failed": "No se pudo dar de baja el dispositivo de observación.",
       "stale": "No se encontró el dispositivo de observación o ya está dado de baja. Actualiza la lista."
+    },
+    "stopCamera": {
+      "title": "Temporarily stop the camera",
+      "description": "Stops the stream from “{name}” temporarily. The registration remains; redo the camera authorization to resume.",
+      "cancel": "Cancel",
+      "confirm": "Stop temporarily",
+      "failed": "Could not stop the camera.",
+      "stale": "The camera was not found or does not belong to this event. Refresh the list."
+    },
+    "cameraProvision": {
+      "title": "ESP32 camera provisioning",
+      "description": "Write the Wi-Fi and connection settings to “{name}” ({id}).",
+      "reapprovalNotice": "Redoes the authorization for the temporarily stopped camera. This clears the stop and lets the device connect again.",
+      "reapprovalDescription": "Redo the device authorization for “{name}” ({id}).",
+      "reapprovalStart": "Redo authorization",
+      "trigger": "Provision",
+      "wifiSsidLabel": "Wi-Fi SSID",
+      "wifiPasswordLabel": "Wi-Fi password",
+      "wifiPasswordDescription": "Never shown in the page or logs",
+      "start": "Start writing",
+      "retry": "Retry",
+      "close": "Close",
+      "unsupported": "This browser does not support Web Serial. Use desktop Chrome or Edge.",
+      "insecure": "Web Serial is only available in a secure context (HTTPS or localhost).",
+      "steps": {
+        "selecting": "Selecting the serial port…",
+        "opening": "Opening the serial port…",
+        "writing": "Writing the settings…",
+        "waitingConfig": "Waiting for the device to confirm the settings…",
+        "waitingAuthorization": "Waiting for the device authorization code…",
+        "reconnecting": "Reconnecting to the device…",
+        "approving": "Approving the device authorization…",
+        "waitingResult": "Waiting for the device authorization result…"
+      },
+      "confirmAuthorization": "Autoriza el dispositivo con este código como «{name}». Comprueba el dispositivo conectado.",
+      "userCodeLabel": "User code",
+      "verificationUri": "Verification URL: {uri}",
+      "complete": "Provisioning for “{name}” is complete. Approved user code {userCode}.",
+      "manualTitle": "Could not receive the user code",
+      "manualDescription": "Enter the user code shown by the device and approve it.",
+      "manualLabel": "User code",
+      "manualSubmit": "Approve",
+      "configRejected": "The device rejected the settings: {error}",
+      "configRejectedNoReason": "The device rejected the settings.",
+      "deviceError": "The device returned an error: {error}",
+      "authorizationRejected": "The device authorization failed.",
+      "authorizationTimeout": "Timed out while waiting for the authorization result.",
+      "timeout": "The device did not respond. Check the connection and retry.",
+      "failed": "Provisioning failed. Check the connection and retry.",
+      "notConnected": "The serial port is not open. Start again.",
+      "reconnectTitle": "The serial port was disconnected",
+      "reconnectDescription": "The device may have restarted. Select the port again to reconnect.",
+      "reconnectFailed": "Could not open the serial port. Select the port again.",
+      "reconnectPort": "Reconnect port"
     }
   },
   "Detection": {
@@ -410,15 +539,27 @@
       "count": "Línea {index}: forward {forward} / backward {backward}",
       "namedCount": "{name}: forward {forward} / backward {backward}",
       "nameLabel": "Nombre de la línea seleccionada",
-      "namePlaceholder": "p. ej., entrada del salón A, pasillo norte"
+      "namePlaceholder": "p. ej., entrada del salón A, pasillo norte",
+      "areaWidthLabel": "Ancho del área de la línea seleccionada (%)",
+      "areaWidthDescription": "Ancho total de la franja centrada en la línea, como porcentaje del lado más corto del video. Las personas dentro de la franja se cuentan para el punto de observación con el nombre de la línea.",
+      "reRegisterNote": "Si mueves una línea o cambias el ancho de su área, vuelve a registrar su punto de observación para reiniciar el historial de personas.",
+      "areaOverlapWarning": "Las áreas de «{first}» y «{second}» se superponen. Las personas en la superposición se cuentan para ambos puntos de observación."
     }
   },
   "Observation": {
     "title": "{tenantId} Observación",
+    "machineSessionFailed": "No se pudo autorizar la página de observación.",
+    "machineSessionRetry": "Volver a autorizar",
     "controls": {
       "start": "Iniciar cámara",
       "stop": "Detener",
-      "loading": "Iniciando…"
+      "loading": "Iniciando…",
+      "retry": "Reconectar",
+      "observeOnThisDevice": "Observar en este dispositivo",
+      "retryCamera": "Reconectar {camera}"
+    },
+    "cameraSelector": {
+      "label": "Cámara"
     },
     "status": {
       "detection": "Estado de detección: {status}",
@@ -460,12 +601,17 @@
       "detection": "Falló la detección de personas",
       "unregistered": "Este dispositivo de observación se ha dado de baja",
       "modelLoad": "No se pudo cargar el modelo de detección ({status}: {path})",
+      "connectionAuthorizationRequired": "The camera connection is not authorized. Reauthorize it with “Authorize observation page connection”.",
+      "connectionAuthorizationAutoStart": "Camera connection authorization is required. Moving to the authorization page.",
+      "connectionAuthorizationMachine": "The camera connection is not authorized. A staff member must reauthorize it with “Authorize observation page connection” in the management screen.",
+      "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "No se permite el acceso a la cámara. Permite el acceso a la cámara en la configuración del navegador.",
         "notFound": "No se encontró ninguna cámara. Comprueba que haya una cámara conectada.",
         "unsupported": "La cámara no está disponible en este navegador o conexión",
         "unavailable": "No se pudo iniciar la cámara"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "Fuente de vídeo",
@@ -476,7 +622,18 @@
       "camera": "Cámara",
       "activeHint": " (cambia tras detener)",
       "inactiveHint": " (se aplica al iniciar)",
-      "hide": "Ocultar"
+      "hide": "Ocultar",
+      "espCamera": "Cámara ESP ({edgeId})"
+    },
+    "cameraStatus": {
+      "label": "{camera}: {status}",
+      "waiting": "En espera",
+      "stale": "Sin vídeo",
+      "capturing": "Capturando",
+      "inferring": "Detectando",
+      "ready": "Detectando",
+      "error": "Error",
+      "errorDetail": "{camera}: {error}"
     }
   },
   "ObservationDevices": {
@@ -485,6 +642,8 @@
   },
   "Guest": {
     "pageSubtitle": "Página del visitante",
+    "showOnMap": "Ver en el mapa",
+    "showOnMapLabel": "Ver {place} en el mapa",
     "waitingNumber": {
       "title": "Personas en espera",
       "unit": "personas"
@@ -533,13 +692,11 @@
     },
     "guideMap": {
       "title": "Mapa de orientación",
-      "hint": "Selecciona un destino para ver la ruta",
       "currentLocation": "Estás aquí",
       "destinationsLabel": "Destinos",
       "expand": "Ampliar el mapa",
       "collapse": "Reducir el mapa",
-      "search": "Buscar destino",
-      "noResults": "Sin resultados",
+      "selectDestination": "Elige un destino",
       "reset": "Restablecer",
       "goal": "Destino",
       "rideTo": "{via} hasta {floor}",
@@ -552,17 +709,16 @@
       "walkStep": "{floor}: {from} → {to}",
       "rideStep": "{via}: {from} → {to}",
       "noRoute": "No se encontró una ruta a este destino",
-      "zoomInHint": "Toca el mapa para ampliar",
       "zoomOutHint": "Arrastra para mover · toca para ver todo",
       "closed": " (cerrado)",
       "crowdAvoided": "Esta ruta evita las zonas concurridas",
       "crowdRerouted": "La ruta ha cambiado porque cambió el nivel de aglomeración",
       "crowdThroughDanger": "Esta ruta pasa por una zona peligrosamente concurrida. Siga las indicaciones del personal",
-      "crowdLegend": "Aglomeración"
+      "crowdLegend": "Aglomeración",
+      "stepsLabel": "Indicaciones",
+      "nextFloor": "Siguiente: ruta en {floor}"
     },
     "floor": {
-      "title": "Planta actual",
-      "placeholderName": "Planta 1",
       "selectLabel": "Planta a mostrar"
     },
     "congestion": {
@@ -574,7 +730,9 @@
       },
       "danger": "Peligro",
       "updatedAt": "Actualizado a las {time}",
-      "empty": "Aún no hay información de afluencia"
+      "empty": "Aún no hay información de afluencia",
+      "floorRange": "{from}–{to}",
+      "floorJoin": ", "
     },
     "loading": "Cargando…",
     "loadError": "No se pudo obtener la información"
@@ -631,9 +789,26 @@
       "invalidCredentials": "El ID o la contraseña no son correctos.",
       "failed": "No se pudo iniciar sesión. Si vuelve a ocurrir, empieza de nuevo desde la página de tu inquilino."
     },
+    "signup": {
+      "title": "Crear una cuenta",
+      "description": "Elige el ID y la contraseña de tu cuenta en este inquilino.",
+      "loginDescription": "Si ya tienes una cuenta en este inquilino, inicia sesión con su ID y contraseña.",
+      "usernameLabel": "ID",
+      "usernameDescription": "Hasta 50 caracteres, sin espacios.",
+      "passwordLabel": "Contraseña",
+      "passwordDescription": "Al menos 8 caracteres y como máximo 72 bytes.",
+      "submit": "Crear cuenta",
+      "invalidUsername": "El ID debe tener de 1 a 50 caracteres, sin espacios.",
+      "lengthOutOfRange": "La contraseña debe tener al menos 8 caracteres y como máximo 72 bytes.",
+      "usernameTaken": "Este ID ya está en uso. Elige otro ID.",
+      "failed": "No se pudo crear la cuenta. Si sigue ocurriendo, empieza de nuevo.",
+      "useExistingAccount": "Iniciar sesión con una cuenta existente",
+      "createAccount": "Crear una cuenta nueva"
+    },
     "loggedOut": {
       "title": "Has cerrado la sesión",
-      "login": "Volver a iniciar sesión"
+      "login": "Volver a iniciar sesión",
+      "toObservation": "Back to the observation page"
     },
     "logout": "Cerrar sesión"
   },

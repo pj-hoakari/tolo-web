@@ -4,7 +4,9 @@ import { useLocale, useTranslations } from "next-intl";
 import { useCallback } from "react";
 import { orpc } from "@/lib/orpc";
 import { useGuestPolling } from "../useGuestPolling";
-import { CongestionView } from "./CongestionView";
+import { type CongestionArea, CongestionView } from "./CongestionView";
+import { groupCrowdByFloor } from "./groupCrowd";
+import { showOnGuideMap, useGuideMapPointIds } from "./guideMapLinkStore";
 import { defineGuestInfoComponent, type GuestInfoComponentProps } from "./type";
 
 function Congestion({ eventId }: GuestInfoComponentProps) {
@@ -18,7 +20,36 @@ function Congestion({ eventId }: GuestInfoComponentProps) {
     ),
   );
 
-  const areas = crowd.status === "ready" ? crowd.data.crowd : [];
+  // 同じ場所・同じ段階で階だけ違うものは 1 行にまとめる（例：1F〜6F エレベーター前）
+  const groups = groupCrowdByFloor(
+    crowd.status === "ready" ? crowd.data.crowd : [],
+    {
+      range: (from, to) => t("congestion.floorRange", { from, to }),
+      join: (parts) => parts.join(t("congestion.floorJoin")),
+    },
+  );
+  // 地図上にある場所（ポイント）は「地図で見る」で案内マップに出せる。id は "pointId:<ID>" か "routeId:<ID>"。
+  // まとめた行は、地図上にあるうちいちばん下の階の場所を見せる
+  const mapPointIds = useGuideMapPointIds();
+  const areas: CongestionArea[] = groups.map((group) => {
+    const pointId = group.members
+      .map((m) =>
+        m.id.startsWith("pointId:") ? m.id.slice("pointId:".length) : "",
+      )
+      .find((id) => id && mapPointIds.has(id));
+    return {
+      id: group.members.map((m) => m.id).join("|"),
+      name: group.name,
+      level: group.level,
+      danger: group.danger,
+      mapAction: pointId
+        ? {
+            ariaLabel: t("showOnMapLabel", { place: group.name }),
+            onPress: () => showOnGuideMap(pointId),
+          }
+        : undefined,
+    };
+  });
   const takenAt = crowd.status === "ready" ? crowd.data.takenAt : null;
   const message = {
     loading: t("loading"),

@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import {
+  applyFrameSize,
   applyLineCounts,
   applySettings,
   type DetectionStores,
@@ -148,6 +149,7 @@ export function useVideoReceiver({
       detectionFrameRef.current = frame;
       if (frame) {
         applyLineCounts(resultStore, frame.lineCounts);
+        applyFrameSize(resultStore, frame.width, frame.height);
       }
     },
     [resultStore],

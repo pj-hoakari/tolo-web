@@ -6,7 +6,6 @@
     "title": "테넌트 만들기",
     "name": "테넌트 이름",
     "subdomain": "서브도메인",
-    "ownerEmail": "소유자 이메일 주소",
     "ownerDisplayName": "소유자 표시 이름",
     "ownerDisplayNameDescription": "테넌트 멤버에게 표시되는 이름입니다. 64자까지 입력할 수 있습니다.",
     "submit": "만들기",
@@ -311,6 +310,50 @@
       "retry": "다시 시도"
     }
   },
+  "FlowState": {
+    "error": "판정 상태를 가져오지 못했습니다",
+    "skipped": "{judgements}을(를) 판정할 수 없습니다",
+    "judgement": {
+      "surge": "급증",
+      "highStagnation": "정체 경계",
+      "combined": "조합 발화",
+      "puncture": "펑크"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "관측이 들어오지 않습니다",
+        "action": "단말이 작동 중인지 확인하고, 멈췄다면 재시작하세요"
+      },
+      "invalid": {
+        "label": "관측값이 유효하지 않습니다",
+        "action": "카메라 방향이나 가리는 물체 등 설치를 점검하세요"
+      },
+      "hold": {
+        "label": "측정값이 들어오지 않아 값이 멈춰 있습니다",
+        "action": "잠시 기다리고, 계속되면 단말을 재시작하세요"
+      },
+      "stale": {
+        "label": "관측이 오래되었습니다",
+        "action": "잠시 기다리고, 계속되면 단말을 재시작하세요"
+      },
+      "noHistory": {
+        "label": "판정에 쓸 이력이 아직 없습니다",
+        "action": "이력이 쌓일 때까지 잠시 기다리세요"
+      },
+      "windowOnlyHistory": {
+        "label": "장기 이력이 없어 최근 측정값만으로 판정하고 있습니다",
+        "action": "이력이 쌓일 때까지 잠시 기다리세요"
+      },
+      "shortHistory": {
+        "label": "이력이 4시간 분량에 못 미칩니다",
+        "action": "이력이 쌓일 때까지 잠시 기다리세요"
+      },
+      "intermittentLine": {
+        "label": "최근 유량 측정값이 {count}개뿐입니다",
+        "action": "단말이 측정을 계속하는지 확인하고, 멈췄다면 재시작하세요"
+      }
+    }
+  },
   "Webrtc": {
     "connectionStatus": {
       "idle": "연결 안 됨",
@@ -338,7 +381,26 @@
       "openHere": "이 단말에서 열기",
       "openHereLabel": "“{name}”을(를) 이 단말에서 열기",
       "unregister": "등록 해제",
-      "unregisterLabel": "“{name}” 등록 해제"
+      "unregisterLabel": "“{name}” 등록 해제",
+      "cameraBadge": "Camera",
+      "linkedPoint": "Linked point: {name}",
+      "provision": "Provision",
+      "provisionLabel": "Provision “{name}”",
+      "authorizeConnection": "Authorize observation page connection",
+      "useAsMachine": "Use as observation page",
+      "useAsMachineLabel": "Use {name} as an observation page",
+      "authorizeConnectionLabel": "Authorize the observation page connection for “{name}”",
+      "cameraConnectionHint": "Staff sessions start the connection authorization automatically when the observation page opens. For a machine session, use “Authorize observation page connection” in this screen to reauthorize.",
+      "stop": "Stop",
+      "stopLabel": "Temporarily stop “{name}”",
+      "reapprove": "Redo camera authorization",
+      "reapproveLabel": "Redo camera authorization for “{name}”",
+      "connection": {
+        "authorized": "The camera connection delegation was saved.",
+        "login_required": "Reauthorizing the camera connection requires a staff login. Use “Authorize observation page connection” again.",
+        "failed": "Could not authorize the camera connection. Try again."
+      },
+      "observationPoints": "관측점"
     },
     "receiver": {
       "stoppedTitle": "관측이 중지되었습니다",
@@ -364,7 +426,20 @@
       "open": "이 단말에서 열기",
       "failed": "관측 장치를 등록할 수 없습니다.",
       "invalid": "장치 이름과 관측 지점 이름을 확인하세요.",
-      "eventNotFound": "이벤트를 찾을 수 없습니다."
+      "eventNotFound": "이벤트를 찾을 수 없습니다.",
+      "kindLabel": "Kind",
+      "kind": {
+        "observation_page": "Observation page",
+        "camera": "Camera"
+      },
+      "cameraPointLabel": "Linked observation point",
+      "cameraPointDescription": "Choose the camera-method observation point for this camera",
+      "cameraPointPlaceholder": "Select an observation point",
+      "noCameraPoints": "No observation point is available. Register an observation page device first.",
+      "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
+      "edgeDeviceIdLabel": "Edge device ID",
+      "openProvisioning": "Open provisioning",
+      "authorizeConnection": "Authorize observation page connection"
     },
     "unregisterEdge": {
       "title": "관측 장치 등록 해제",
@@ -373,6 +448,60 @@
       "confirm": "등록 해제하기",
       "failed": "등록을 해제할 수 없습니다.",
       "stale": "관측 장치를 찾을 수 없거나 이미 등록이 해제되었습니다. 목록을 새로 고치세요."
+    },
+    "stopCamera": {
+      "title": "Temporarily stop the camera",
+      "description": "Stops the stream from “{name}” temporarily. The registration remains; redo the camera authorization to resume.",
+      "cancel": "Cancel",
+      "confirm": "Stop temporarily",
+      "failed": "Could not stop the camera.",
+      "stale": "The camera was not found or does not belong to this event. Refresh the list."
+    },
+    "cameraProvision": {
+      "title": "ESP32 camera provisioning",
+      "description": "Write the Wi-Fi and connection settings to “{name}” ({id}).",
+      "reapprovalNotice": "Redoes the authorization for the temporarily stopped camera. This clears the stop and lets the device connect again.",
+      "reapprovalDescription": "Redo the device authorization for “{name}” ({id}).",
+      "reapprovalStart": "Redo authorization",
+      "trigger": "Provision",
+      "wifiSsidLabel": "Wi-Fi SSID",
+      "wifiPasswordLabel": "Wi-Fi password",
+      "wifiPasswordDescription": "Never shown in the page or logs",
+      "start": "Start writing",
+      "retry": "Retry",
+      "close": "Close",
+      "unsupported": "This browser does not support Web Serial. Use desktop Chrome or Edge.",
+      "insecure": "Web Serial is only available in a secure context (HTTPS or localhost).",
+      "steps": {
+        "selecting": "Selecting the serial port…",
+        "opening": "Opening the serial port…",
+        "writing": "Writing the settings…",
+        "waitingConfig": "Waiting for the device to confirm the settings…",
+        "waitingAuthorization": "Waiting for the device authorization code…",
+        "reconnecting": "Reconnecting to the device…",
+        "approving": "Approving the device authorization…",
+        "waitingResult": "Waiting for the device authorization result…"
+      },
+      "confirmAuthorization": "이 코드의 기기를 “{name}”(으)로 승인합니다. 연결된 기기를 확인하세요.",
+      "userCodeLabel": "User code",
+      "verificationUri": "Verification URL: {uri}",
+      "complete": "Provisioning for “{name}” is complete. Approved user code {userCode}.",
+      "manualTitle": "Could not receive the user code",
+      "manualDescription": "Enter the user code shown by the device and approve it.",
+      "manualLabel": "User code",
+      "manualSubmit": "Approve",
+      "configRejected": "The device rejected the settings: {error}",
+      "configRejectedNoReason": "The device rejected the settings.",
+      "deviceError": "The device returned an error: {error}",
+      "authorizationRejected": "The device authorization failed.",
+      "authorizationTimeout": "Timed out while waiting for the authorization result.",
+      "timeout": "The device did not respond. Check the connection and retry.",
+      "failed": "Provisioning failed. Check the connection and retry.",
+      "notConnected": "The serial port is not open. Start again.",
+      "reconnectTitle": "The serial port was disconnected",
+      "reconnectDescription": "The device may have restarted. Select the port again to reconnect.",
+      "reconnectFailed": "Could not open the serial port. Select the port again.",
+      "reconnectPort": "Reconnect port"
     }
   },
   "Detection": {
@@ -410,15 +539,27 @@
       "count": "라인 {index}: forward {forward} / backward {backward}",
       "namedCount": "{name}: forward {forward} / backward {backward}",
       "nameLabel": "선택한 라인 이름",
-      "namePlaceholder": "예: A홀 입구, 북쪽 연결 통로"
+      "namePlaceholder": "예: A홀 입구, 북쪽 연결 통로",
+      "areaWidthLabel": "선택한 라인의 영역 너비(%)",
+      "areaWidthDescription": "라인을 중심으로 한 띠의 전체 너비를 영상의 짧은 변에 대한 비율로 지정합니다. 띠 안에 있는 사람을 라인 이름의 관측 지점 인원으로 셉니다.",
+      "reRegisterNote": "라인의 위치나 영역 너비를 바꾼 관측 지점은 인원 기록을 새로 시작하도록 관측 지점을 다시 등록하세요.",
+      "areaOverlapWarning": "「{first}」와(과) 「{second}」의 영역이 겹칩니다. 겹친 곳에 있는 사람은 두 관측 지점 모두에 셉니다."
     }
   },
   "Observation": {
     "title": "{tenantId} 관측 페이지",
+    "machineSessionFailed": "관측 페이지를 승인하지 못했습니다.",
+    "machineSessionRetry": "다시 승인",
     "controls": {
       "start": "카메라 시작",
       "stop": "중지",
-      "loading": "시작 중…"
+      "loading": "시작 중…",
+      "retry": "다시 연결",
+      "observeOnThisDevice": "이 기기에서 관측하기",
+      "retryCamera": "{camera} 다시 연결"
+    },
+    "cameraSelector": {
+      "label": "카메라"
     },
     "status": {
       "detection": "검출 상태: {status}",
@@ -460,12 +601,17 @@
       "detection": "사람 검출 처리에 실패했습니다",
       "unregistered": "이 관측 디바이스는 등록 해제되었습니다",
       "modelLoad": "검출 모델을 불러오지 못했습니다（{status}: {path}）",
+      "connectionAuthorizationRequired": "The camera connection is not authorized. Reauthorize it with “Authorize observation page connection”.",
+      "connectionAuthorizationAutoStart": "Camera connection authorization is required. Moving to the authorization page.",
+      "connectionAuthorizationMachine": "The camera connection is not authorized. A staff member must reauthorize it with “Authorize observation page connection” in the management screen.",
+      "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "카메라 사용이 허용되지 않았습니다. 브라우저 설정에서 카메라 접근을 허용해 주세요.",
         "notFound": "카메라를 찾을 수 없습니다. 카메라가 연결되어 있는지 확인해 주세요.",
         "unsupported": "이 브라우저 또는 연결에서는 카메라를 사용할 수 없습니다",
         "unavailable": "카메라를 시작할 수 없습니다"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "영상 소스",
@@ -476,7 +622,18 @@
       "camera": "카메라",
       "activeHint": "(중지 후 전환)",
       "inactiveHint": "(선택 후 시작 시 반영)",
-      "hide": "숨기기"
+      "hide": "숨기기",
+      "espCamera": "ESP 카메라 ({edgeId})"
+    },
+    "cameraStatus": {
+      "label": "{camera}: {status}",
+      "waiting": "대기 중",
+      "stale": "영상 없음",
+      "capturing": "촬영 중",
+      "inferring": "감지 중",
+      "ready": "감지 중",
+      "error": "오류",
+      "errorDetail": "{camera}: {error}"
     }
   },
   "ObservationDevices": {
@@ -485,6 +642,8 @@
   },
   "Guest": {
     "pageSubtitle": "게스트 페이지",
+    "showOnMap": "지도에서 보기",
+    "showOnMapLabel": "{place}을(를) 지도에서 보기",
     "waitingNumber": {
       "title": "현재 대기 인원",
       "unit": "명"
@@ -533,13 +692,11 @@
     },
     "guideMap": {
       "title": "안내 지도",
-      "hint": "목적지를 선택하면 경로가 표시됩니다",
       "currentLocation": "현재 위치",
       "destinationsLabel": "목적지",
       "expand": "지도 확대",
       "collapse": "지도 축소",
-      "search": "목적지 검색",
-      "noResults": "결과 없음",
+      "selectDestination": "목적지를 선택하세요",
       "reset": "초기화",
       "goal": "목적지",
       "rideTo": "{via}로 {floor}까지",
@@ -552,17 +709,16 @@
       "walkStep": "{floor}: {from} → {to}",
       "rideStep": "{via}: {from} → {to}",
       "noRoute": "이 목적지까지의 경로를 찾을 수 없습니다",
-      "zoomInHint": "지도를 탭하여 확대",
       "zoomOutHint": "드래그로 이동 · 탭하여 전체 보기",
       "closed": " (통행 금지)",
       "crowdAvoided": "혼잡한 곳을 피한 경로입니다",
       "crowdRerouted": "혼잡 상황이 바뀌어 경로를 변경했습니다",
       "crowdThroughDanger": "혼잡으로 위험한 곳을 지나야 갈 수 있습니다. 스태프의 안내에 따라 주세요",
-      "crowdLegend": "혼잡"
+      "crowdLegend": "혼잡",
+      "stepsLabel": "경로 안내",
+      "nextFloor": "다음: {floor} 경로"
     },
     "floor": {
-      "title": "현재 층",
-      "placeholderName": "1층",
       "selectLabel": "표시할 층"
     },
     "congestion": {
@@ -574,7 +730,9 @@
       },
       "danger": "위험",
       "updatedAt": "{time} 업데이트",
-      "empty": "아직 혼잡 정보가 없습니다"
+      "empty": "아직 혼잡 정보가 없습니다",
+      "floorRange": "{from}~{to}",
+      "floorJoin": ", "
     },
     "loading": "불러오는 중…",
     "loadError": "정보를 불러오지 못했습니다"
@@ -631,9 +789,26 @@
       "invalidCredentials": "ID 또는 비밀번호가 올바르지 않습니다.",
       "failed": "로그인하지 못했습니다. 다시 시도해도 계속되면 사용하던 테넌트 페이지에서 다시 시작하세요."
     },
+    "signup": {
+      "title": "계정 만들기",
+      "description": "이 테넌트에서 사용할 계정의 ID와 비밀번호를 정하세요.",
+      "loginDescription": "이 테넌트의 계정이 이미 있으면 그 ID와 비밀번호로 로그인하세요.",
+      "usernameLabel": "ID",
+      "usernameDescription": "50자 이내, 공백은 사용할 수 없습니다.",
+      "passwordLabel": "비밀번호",
+      "passwordDescription": "8자 이상, 72바이트 이하입니다.",
+      "submit": "계정 만들기",
+      "invalidUsername": "ID는 공백 없이 50자 이내로 입력하세요.",
+      "lengthOutOfRange": "비밀번호는 8자 이상, 72바이트 이하로 입력하세요.",
+      "usernameTaken": "이미 사용 중인 ID입니다. 다른 ID를 지정하세요.",
+      "failed": "계정을 만들지 못했습니다. 다시 시도해도 계속되면 처음부터 다시 시작하세요.",
+      "useExistingAccount": "기존 계정으로 로그인",
+      "createAccount": "새 계정 만들기"
+    },
     "loggedOut": {
       "title": "로그아웃했습니다",
-      "login": "다시 로그인"
+      "login": "다시 로그인",
+      "toObservation": "Back to the observation page"
     },
     "logout": "로그아웃"
   },

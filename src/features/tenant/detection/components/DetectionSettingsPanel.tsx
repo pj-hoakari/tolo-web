@@ -1,10 +1,16 @@
 import type { Messages } from "next-intl";
 import { useTranslations } from "next-intl";
 import { memo } from "react";
-import type {
-  DetectionSettingsStore,
-  DetectionViewStateStore,
+import { useStore } from "zustand";
+import { toOverlayCountingLines } from "@/features/tenant/webrtc/utils/detectionOverlay";
+import {
+  type DetectionResultStore,
+  type DetectionSettingsStore,
+  type DetectionViewStateStore,
+  selectCountingLines,
+  selectFrameSize,
 } from "../stores/detectionStore";
+import { findOverlappingAreaNames } from "../utils/observationAreas";
 import { DetectionAdvancedSettings } from "./DetectionAdvancedSettings";
 import { DetectionLineActions } from "./DetectionLineActions";
 import { DetectionPresetGroup } from "./DetectionPresetGroup";
@@ -39,8 +45,45 @@ const formatMilliseconds = (value: number) => `${value}ms`;
 export type DetectionSettingsPanelProps = {
   settingsStore: DetectionSettingsStore;
   viewStateStore: DetectionViewStateStore;
+  resultStore: DetectionResultStore;
   showLineCreationModeToggle?: boolean;
 };
+
+function AreaOverlapWarningComponent({
+  settingsStore,
+  resultStore,
+}: Pick<DetectionSettingsPanelProps, "settingsStore" | "resultStore">) {
+  const countingLines = useStore(settingsStore, selectCountingLines);
+  const frameSize = useStore(resultStore, selectFrameSize);
+  const t = useTranslations("Detection.lines");
+  const overlaps = frameSize
+    ? findOverlappingAreaNames(
+        toOverlayCountingLines(
+          countingLines,
+          frameSize.width,
+          frameSize.height,
+        ),
+      )
+    : [];
+
+  if (overlaps.length === 0) {
+    return null;
+  }
+  return (
+    <div
+      role="alert"
+      className="grid gap-1 text-sm text-amber-700 dark:text-amber-400"
+    >
+      {overlaps.map(([first, second]) => (
+        <p key={JSON.stringify([first, second])}>
+          {t("areaOverlapWarning", { first, second })}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+const AreaOverlapWarning = memo(AreaOverlapWarningComponent);
 
 /**
  * 検出設定
@@ -48,6 +91,7 @@ export type DetectionSettingsPanelProps = {
 function DetectionSettingsPanelComponent({
   settingsStore,
   viewStateStore,
+  resultStore,
   showLineCreationModeToggle,
 }: DetectionSettingsPanelProps) {
   const t = useTranslations("Detection");
@@ -66,6 +110,14 @@ function DetectionSettingsPanelComponent({
           settingsStore={settingsStore}
           viewStateStore={viewStateStore}
           showLineCreationModeToggle={showLineCreationModeToggle}
+        />
+        <div className="grid gap-1 text-sm text-muted-foreground">
+          <p>{t("lines.areaWidthDescription")}</p>
+          <p>{t("lines.reRegisterNote")}</p>
+        </div>
+        <AreaOverlapWarning
+          settingsStore={settingsStore}
+          resultStore={resultStore}
         />
       </div>
       <DetectionPresetGroup

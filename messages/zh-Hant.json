@@ -6,7 +6,6 @@
     "title": "建立租戶",
     "name": "租戶名稱",
     "subdomain": "子網域",
-    "ownerEmail": "擁有者的電子郵件地址",
     "ownerDisplayName": "擁有者的顯示名稱",
     "ownerDisplayNameDescription": "向租戶成員顯示的名稱，最多 64 個字元。",
     "submit": "建立",
@@ -311,6 +310,50 @@
       "retry": "重試"
     }
   },
+  "FlowState": {
+    "error": "無法取得判定狀態",
+    "skipped": "無法判定：{judgements}",
+    "judgement": {
+      "surge": "激增",
+      "highStagnation": "停滯警戒",
+      "combined": "組合觸發",
+      "puncture": "飽和"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "沒有收到觀測",
+        "action": "請確認裝置是否在運作，如已停止請重新啟動"
+      },
+      "invalid": {
+        "label": "觀測值無效",
+        "action": "請檢查安裝情況，如攝影機角度和遮擋物"
+      },
+      "hold": {
+        "label": "測量值未送達，數值停滯",
+        "action": "請稍候，如持續請重新啟動裝置"
+      },
+      "stale": {
+        "label": "觀測已過時",
+        "action": "請稍候，如持續請重新啟動裝置"
+      },
+      "noHistory": {
+        "label": "還沒有用於判定的歷史資料",
+        "action": "請稍候，等待歷史資料累積"
+      },
+      "windowOnlyHistory": {
+        "label": "沒有長期歷史資料，僅根據最近的測量值判定",
+        "action": "請稍候，等待歷史資料累積"
+      },
+      "shortHistory": {
+        "label": "歷史資料不足 4 小時",
+        "action": "請稍候，等待歷史資料累積"
+      },
+      "intermittentLine": {
+        "label": "最近的流量測量值只有 {count} 個",
+        "action": "請確認裝置是否持續測量，如已停止請重新啟動"
+      }
+    }
+  },
   "Webrtc": {
     "connectionStatus": {
       "idle": "未連線",
@@ -338,7 +381,26 @@
       "openHere": "在此裝置上開啟",
       "openHereLabel": "在此裝置上開啟「{name}」",
       "unregister": "取消註冊",
-      "unregisterLabel": "取消註冊「{name}」"
+      "unregisterLabel": "取消註冊「{name}」",
+      "cameraBadge": "Camera",
+      "linkedPoint": "Linked point: {name}",
+      "provision": "Provision",
+      "provisionLabel": "Provision “{name}”",
+      "authorizeConnection": "Authorize observation page connection",
+      "useAsMachine": "Use as observation page",
+      "useAsMachineLabel": "Use {name} as an observation page",
+      "authorizeConnectionLabel": "Authorize the observation page connection for “{name}”",
+      "cameraConnectionHint": "Staff sessions start the connection authorization automatically when the observation page opens. For a machine session, use “Authorize observation page connection” in this screen to reauthorize.",
+      "stop": "Stop",
+      "stopLabel": "Temporarily stop “{name}”",
+      "reapprove": "Redo camera authorization",
+      "reapproveLabel": "Redo camera authorization for “{name}”",
+      "connection": {
+        "authorized": "The camera connection delegation was saved.",
+        "login_required": "Reauthorizing the camera connection requires a staff login. Use “Authorize observation page connection” again.",
+        "failed": "Could not authorize the camera connection. Try again."
+      },
+      "observationPoints": "觀測點"
     },
     "receiver": {
       "stoppedTitle": "觀測已停止",
@@ -364,7 +426,20 @@
       "open": "在此裝置上開啟",
       "failed": "無法註冊觀測裝置。",
       "invalid": "請檢查裝置名稱和觀測點名稱。",
-      "eventNotFound": "找不到活動。"
+      "eventNotFound": "找不到活動。",
+      "kindLabel": "Kind",
+      "kind": {
+        "observation_page": "Observation page",
+        "camera": "Camera"
+      },
+      "cameraPointLabel": "Linked observation point",
+      "cameraPointDescription": "Choose the camera-method observation point for this camera",
+      "cameraPointPlaceholder": "Select an observation point",
+      "noCameraPoints": "No observation point is available. Register an observation page device first.",
+      "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
+      "edgeDeviceIdLabel": "Edge device ID",
+      "openProvisioning": "Open provisioning",
+      "authorizeConnection": "Authorize observation page connection"
     },
     "unregisterEdge": {
       "title": "取消註冊觀測裝置",
@@ -373,6 +448,60 @@
       "confirm": "取消註冊",
       "failed": "無法取消註冊。",
       "stale": "找不到觀測裝置或該觀測裝置已取消註冊。請重新整理清單。"
+    },
+    "stopCamera": {
+      "title": "Temporarily stop the camera",
+      "description": "Stops the stream from “{name}” temporarily. The registration remains; redo the camera authorization to resume.",
+      "cancel": "Cancel",
+      "confirm": "Stop temporarily",
+      "failed": "Could not stop the camera.",
+      "stale": "The camera was not found or does not belong to this event. Refresh the list."
+    },
+    "cameraProvision": {
+      "title": "ESP32 camera provisioning",
+      "description": "Write the Wi-Fi and connection settings to “{name}” ({id}).",
+      "reapprovalNotice": "Redoes the authorization for the temporarily stopped camera. This clears the stop and lets the device connect again.",
+      "reapprovalDescription": "Redo the device authorization for “{name}” ({id}).",
+      "reapprovalStart": "Redo authorization",
+      "trigger": "Provision",
+      "wifiSsidLabel": "Wi-Fi SSID",
+      "wifiPasswordLabel": "Wi-Fi password",
+      "wifiPasswordDescription": "Never shown in the page or logs",
+      "start": "Start writing",
+      "retry": "Retry",
+      "close": "Close",
+      "unsupported": "This browser does not support Web Serial. Use desktop Chrome or Edge.",
+      "insecure": "Web Serial is only available in a secure context (HTTPS or localhost).",
+      "steps": {
+        "selecting": "Selecting the serial port…",
+        "opening": "Opening the serial port…",
+        "writing": "Writing the settings…",
+        "waitingConfig": "Waiting for the device to confirm the settings…",
+        "waitingAuthorization": "Waiting for the device authorization code…",
+        "reconnecting": "Reconnecting to the device…",
+        "approving": "Approving the device authorization…",
+        "waitingResult": "Waiting for the device authorization result…"
+      },
+      "confirmAuthorization": "將此代碼對應的裝置核准為「{name}」。請確認連接的裝置。",
+      "userCodeLabel": "User code",
+      "verificationUri": "Verification URL: {uri}",
+      "complete": "Provisioning for “{name}” is complete. Approved user code {userCode}.",
+      "manualTitle": "Could not receive the user code",
+      "manualDescription": "Enter the user code shown by the device and approve it.",
+      "manualLabel": "User code",
+      "manualSubmit": "Approve",
+      "configRejected": "The device rejected the settings: {error}",
+      "configRejectedNoReason": "The device rejected the settings.",
+      "deviceError": "The device returned an error: {error}",
+      "authorizationRejected": "The device authorization failed.",
+      "authorizationTimeout": "Timed out while waiting for the authorization result.",
+      "timeout": "The device did not respond. Check the connection and retry.",
+      "failed": "Provisioning failed. Check the connection and retry.",
+      "notConnected": "The serial port is not open. Start again.",
+      "reconnectTitle": "The serial port was disconnected",
+      "reconnectDescription": "The device may have restarted. Select the port again to reconnect.",
+      "reconnectFailed": "Could not open the serial port. Select the port again.",
+      "reconnectPort": "Reconnect port"
     }
   },
   "Detection": {
@@ -410,15 +539,27 @@
       "count": "線 {index}：forward {forward} / backward {backward}",
       "namedCount": "{name}：forward {forward} / backward {backward}",
       "nameLabel": "所選線的名稱",
-      "namePlaceholder": "例如：A廳入口、北側連通走廊"
+      "namePlaceholder": "例如：A廳入口、北側連通走廊",
+      "areaWidthLabel": "所選線的區域寬度（%）",
+      "areaWidthDescription": "以線為中心的帶狀區域的總寬度，以畫面短邊的百分比表示。帶內的人計入與線同名的觀測點。",
+      "reRegisterNote": "移動了線或變更了區域寬度的觀測點，請重新登錄該觀測點，以重新開始人數記錄。",
+      "areaOverlapWarning": "「{first}」和「{second}」的區域重疊。位於重疊處的人會同時計入兩個觀測點。"
     }
   },
   "Observation": {
     "title": "{tenantId} 觀測頁面",
+    "machineSessionFailed": "無法授權觀測頁面。",
+    "machineSessionRetry": "重新授權",
     "controls": {
       "start": "啟動攝影機",
       "stop": "停止",
-      "loading": "啟動中…"
+      "loading": "啟動中…",
+      "retry": "重新連線",
+      "observeOnThisDevice": "在此裝置上觀測",
+      "retryCamera": "重新連線 {camera}"
+    },
+    "cameraSelector": {
+      "label": "攝影機"
     },
     "status": {
       "detection": "偵測狀態：{status}",
@@ -460,12 +601,17 @@
       "detection": "人體偵測處理失敗",
       "unregistered": "此觀測裝置已取消註冊",
       "modelLoad": "載入偵測模型失敗（{status}: {path}）",
+      "connectionAuthorizationRequired": "The camera connection is not authorized. Reauthorize it with “Authorize observation page connection”.",
+      "connectionAuthorizationAutoStart": "Camera connection authorization is required. Moving to the authorization page.",
+      "connectionAuthorizationMachine": "The camera connection is not authorized. A staff member must reauthorize it with “Authorize observation page connection” in the management screen.",
+      "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "未允許使用攝影機。請在瀏覽器設定中允許存取攝影機。",
         "notFound": "找不到攝影機。請確認攝影機已連接。",
         "unsupported": "此瀏覽器或連線無法使用攝影機",
         "unavailable": "無法啟動攝影機"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "視訊來源",
@@ -476,7 +622,18 @@
       "camera": "攝影機",
       "activeHint": "（停止後才能切換）",
       "inactiveHint": "（選擇後啟動時生效）",
-      "hide": "隱藏"
+      "hide": "隱藏",
+      "espCamera": "ESP 攝影機 ({edgeId})"
+    },
+    "cameraStatus": {
+      "label": "{camera}: {status}",
+      "waiting": "等待中",
+      "stale": "沒有影片",
+      "capturing": "拍攝中",
+      "inferring": "偵測中",
+      "ready": "偵測中",
+      "error": "錯誤",
+      "errorDetail": "{camera}: {error}"
     }
   },
   "ObservationDevices": {
@@ -485,6 +642,8 @@
   },
   "Guest": {
     "pageSubtitle": "訪客頁面",
+    "showOnMap": "在地圖上查看",
+    "showOnMapLabel": "在地圖上查看{place}",
     "waitingNumber": {
       "title": "目前等候人數",
       "unit": "人"
@@ -533,13 +692,11 @@
     },
     "guideMap": {
       "title": "導覽圖",
-      "hint": "選擇目的地即可顯示路線",
       "currentLocation": "目前位置",
       "destinationsLabel": "目的地",
       "expand": "放大地圖",
       "collapse": "縮小地圖",
-      "search": "搜尋目的地",
-      "noResults": "無結果",
+      "selectDestination": "請選擇目的地",
       "reset": "重設",
       "goal": "目的地",
       "rideTo": "搭{via}到{floor}",
@@ -552,17 +709,16 @@
       "walkStep": "{floor}：{from} → {to}",
       "rideStep": "{via}：{from} → {to}",
       "noRoute": "找不到前往此目的地的路線",
-      "zoomInHint": "點按地圖放大",
       "zoomOutHint": "拖曳移動 · 點按查看全圖",
       "closed": "（禁止通行）",
       "crowdAvoided": "這是避開擁擠區域的路線",
       "crowdRerouted": "由於擁擠情況改變，已變更路線",
       "crowdThroughDanger": "必須經過因擁擠而危險的區域才能到達。請依照工作人員的引導",
-      "crowdLegend": "擁擠"
+      "crowdLegend": "擁擠",
+      "stepsLabel": "路線",
+      "nextFloor": "下一步：{floor}的路線"
     },
     "floor": {
-      "title": "目前樓層",
-      "placeholderName": "1樓",
       "selectLabel": "顯示樓層"
     },
     "congestion": {
@@ -574,7 +730,9 @@
       },
       "danger": "危險",
       "updatedAt": "{time} 更新",
-      "empty": "目前沒有擁擠資訊"
+      "empty": "目前沒有擁擠資訊",
+      "floorRange": "{from}～{to}",
+      "floorJoin": "、"
     },
     "loading": "載入中…",
     "loadError": "無法取得資訊"
@@ -631,9 +789,26 @@
       "invalidCredentials": "ID 或密碼不正確。",
       "failed": "無法登入。如果再次嘗試仍然失敗，請從你使用的租戶頁面重新開始。"
     },
+    "signup": {
+      "title": "建立帳戶",
+      "description": "請設定在此租戶中使用的帳戶 ID 和密碼。",
+      "loginDescription": "如果您已有此租戶的帳戶，請使用其 ID 和密碼登入。",
+      "usernameLabel": "ID",
+      "usernameDescription": "最多 50 個字元，不能包含空格。",
+      "passwordLabel": "密碼",
+      "passwordDescription": "至少 8 個字元，最多 72 位元組。",
+      "submit": "建立帳戶",
+      "invalidUsername": "ID 必須為 1 到 50 個字元，且不含空格。",
+      "lengthOutOfRange": "密碼必須至少 8 個字元，最多 72 位元組。",
+      "usernameTaken": "此 ID 已被使用。請指定其他 ID。",
+      "failed": "無法建立帳戶。如果問題持續，請從頭開始。",
+      "useExistingAccount": "使用既有帳戶登入",
+      "createAccount": "建立新帳戶"
+    },
     "loggedOut": {
       "title": "已登出",
-      "login": "再次登入"
+      "login": "再次登入",
+      "toObservation": "Back to the observation page"
     },
     "logout": "登出"
   },

@@ -6,7 +6,6 @@
     "title": "टेनेन्ट सिर्जना गर्नुहोस्",
     "name": "टेनेन्टको नाम",
     "subdomain": "सबडोमेन",
-    "ownerEmail": "मालिकको इमेल ठेगाना",
     "ownerDisplayName": "मालिकको देखिने नाम",
     "ownerDisplayNameDescription": "टेनेन्टका सदस्यहरूलाई देखिने नाम। बढीमा 64 अक्षर।",
     "submit": "सिर्जना गर्नुहोस्",
@@ -311,6 +310,50 @@
       "retry": "पुनः प्रयास"
     }
   },
+  "FlowState": {
+    "error": "निर्णयको अवस्था ल्याउन सकिएन",
+    "skipped": "निर्णय गर्न सकिँदैन: {judgements}",
+    "judgement": {
+      "surge": "अचानक वृद्धि",
+      "highStagnation": "जमघट चेतावनी",
+      "combined": "संयुक्त ट्रिगर",
+      "puncture": "पंक्चर"
+    },
+    "issue": {
+      "unobserved": {
+        "label": "अवलोकन आइरहेको छैन",
+        "action": "उपकरण चलिरहेको छ कि जाँच्नुहोस्, रोकिएको भए पुनः सुरु गर्नुहोस्"
+      },
+      "invalid": {
+        "label": "अवलोकन गरिएका मान अमान्य छन्",
+        "action": "क्यामेराको कोण र छेक्ने वस्तु जस्ता जडान पुनरावलोकन गर्नुहोस्"
+      },
+      "hold": {
+        "label": "मापन आइरहेको छैन र मान रोकिएका छन्",
+        "action": "केही बेर पर्खनुहोस्, जारी रहे उपकरण पुनः सुरु गर्नुहोस्"
+      },
+      "stale": {
+        "label": "अवलोकन पुरानो भएको छ",
+        "action": "केही बेर पर्खनुहोस्, जारी रहे उपकरण पुनः सुरु गर्नुहोस्"
+      },
+      "noHistory": {
+        "label": "निर्णयका लागि अझै इतिहास छैन",
+        "action": "इतिहास जम्मा नहुन्जेल केही बेर पर्खनुहोस्"
+      },
+      "windowOnlyHistory": {
+        "label": "दीर्घकालीन इतिहास छैन; हालका मापनबाट मात्र निर्णय गरिँदैछ",
+        "action": "इतिहास जम्मा नहुन्जेल केही बेर पर्खनुहोस्"
+      },
+      "shortHistory": {
+        "label": "इतिहास ४ घण्टाभन्दा कम छ",
+        "action": "इतिहास जम्मा नहुन्जेल केही बेर पर्खनुहोस्"
+      },
+      "intermittentLine": {
+        "label": "हालका प्रवाह मापन {count} वटा मात्र छन्",
+        "action": "उपकरणले मापन जारी राखेको छ कि जाँच्नुहोस्, रोकिएको भए पुनः सुरु गर्नुहोस्"
+      }
+    }
+  },
   "Webrtc": {
     "connectionStatus": {
       "idle": "जोडिएको छैन",
@@ -338,7 +381,26 @@
       "openHere": "यो उपकरणमा खोल्नुहोस्",
       "openHereLabel": "“{name}” यो उपकरणमा खोल्नुहोस्",
       "unregister": "दर्ता हटाउनुहोस्",
-      "unregisterLabel": "“{name}” को दर्ता हटाउनुहोस्"
+      "unregisterLabel": "“{name}” को दर्ता हटाउनुहोस्",
+      "cameraBadge": "Camera",
+      "linkedPoint": "Linked point: {name}",
+      "provision": "Provision",
+      "provisionLabel": "Provision “{name}”",
+      "authorizeConnection": "Authorize observation page connection",
+      "useAsMachine": "Use as observation page",
+      "useAsMachineLabel": "Use {name} as an observation page",
+      "authorizeConnectionLabel": "Authorize the observation page connection for “{name}”",
+      "cameraConnectionHint": "Staff sessions start the connection authorization automatically when the observation page opens. For a machine session, use “Authorize observation page connection” in this screen to reauthorize.",
+      "stop": "Stop",
+      "stopLabel": "Temporarily stop “{name}”",
+      "reapprove": "Redo camera authorization",
+      "reapproveLabel": "Redo camera authorization for “{name}”",
+      "connection": {
+        "authorized": "The camera connection delegation was saved.",
+        "login_required": "Reauthorizing the camera connection requires a staff login. Use “Authorize observation page connection” again.",
+        "failed": "Could not authorize the camera connection. Try again."
+      },
+      "observationPoints": "अवलोकन बिन्दु"
     },
     "receiver": {
       "stoppedTitle": "अवलोकन रोकियो",
@@ -364,7 +426,20 @@
       "open": "यो उपकरणमा खोल्नुहोस्",
       "failed": "अवलोकन उपकरण दर्ता गर्न सकिएन।",
       "invalid": "उपकरणको नाम र अवलोकन बिन्दुका नामहरू जाँच गर्नुहोस्।",
-      "eventNotFound": "कार्यक्रम फेला परेन।"
+      "eventNotFound": "कार्यक्रम फेला परेन।",
+      "kindLabel": "Kind",
+      "kind": {
+        "observation_page": "Observation page",
+        "camera": "Camera"
+      },
+      "cameraPointLabel": "Linked observation point",
+      "cameraPointDescription": "Choose the camera-method observation point for this camera",
+      "cameraPointPlaceholder": "Select an observation point",
+      "noCameraPoints": "No observation point is available. Register an observation page device first.",
+      "cameraRegistered": "Registered “{name}” as a camera. Open provisioning and write the settings to the device.",
+      "edgeDeviceIdLabel": "Edge device ID",
+      "openProvisioning": "Open provisioning",
+      "authorizeConnection": "Authorize observation page connection"
     },
     "unregisterEdge": {
       "title": "अवलोकन उपकरणको दर्ता हटाउनुहोस्",
@@ -373,6 +448,60 @@
       "confirm": "दर्ता हटाउनुहोस्",
       "failed": "दर्ता हटाउन सकिएन।",
       "stale": "अवलोकन उपकरण फेला परेन वा पहिले नै दर्ता हटाइएको छ। सूची ताजा गर्नुहोस्।"
+    },
+    "stopCamera": {
+      "title": "Temporarily stop the camera",
+      "description": "Stops the stream from “{name}” temporarily. The registration remains; redo the camera authorization to resume.",
+      "cancel": "Cancel",
+      "confirm": "Stop temporarily",
+      "failed": "Could not stop the camera.",
+      "stale": "The camera was not found or does not belong to this event. Refresh the list."
+    },
+    "cameraProvision": {
+      "title": "ESP32 camera provisioning",
+      "description": "Write the Wi-Fi and connection settings to “{name}” ({id}).",
+      "reapprovalNotice": "Redoes the authorization for the temporarily stopped camera. This clears the stop and lets the device connect again.",
+      "reapprovalDescription": "Redo the device authorization for “{name}” ({id}).",
+      "reapprovalStart": "Redo authorization",
+      "trigger": "Provision",
+      "wifiSsidLabel": "Wi-Fi SSID",
+      "wifiPasswordLabel": "Wi-Fi password",
+      "wifiPasswordDescription": "Never shown in the page or logs",
+      "start": "Start writing",
+      "retry": "Retry",
+      "close": "Close",
+      "unsupported": "This browser does not support Web Serial. Use desktop Chrome or Edge.",
+      "insecure": "Web Serial is only available in a secure context (HTTPS or localhost).",
+      "steps": {
+        "selecting": "Selecting the serial port…",
+        "opening": "Opening the serial port…",
+        "writing": "Writing the settings…",
+        "waitingConfig": "Waiting for the device to confirm the settings…",
+        "waitingAuthorization": "Waiting for the device authorization code…",
+        "reconnecting": "Reconnecting to the device…",
+        "approving": "Approving the device authorization…",
+        "waitingResult": "Waiting for the device authorization result…"
+      },
+      "confirmAuthorization": "यो कोड भएको उपकरणलाई “{name}” का रूपमा स्वीकृत गर्नुहोस्। जडान गरिएको उपकरण जाँच गर्नुहोस्।",
+      "userCodeLabel": "User code",
+      "verificationUri": "Verification URL: {uri}",
+      "complete": "Provisioning for “{name}” is complete. Approved user code {userCode}.",
+      "manualTitle": "Could not receive the user code",
+      "manualDescription": "Enter the user code shown by the device and approve it.",
+      "manualLabel": "User code",
+      "manualSubmit": "Approve",
+      "configRejected": "The device rejected the settings: {error}",
+      "configRejectedNoReason": "The device rejected the settings.",
+      "deviceError": "The device returned an error: {error}",
+      "authorizationRejected": "The device authorization failed.",
+      "authorizationTimeout": "Timed out while waiting for the authorization result.",
+      "timeout": "The device did not respond. Check the connection and retry.",
+      "failed": "Provisioning failed. Check the connection and retry.",
+      "notConnected": "The serial port is not open. Start again.",
+      "reconnectTitle": "The serial port was disconnected",
+      "reconnectDescription": "The device may have restarted. Select the port again to reconnect.",
+      "reconnectFailed": "Could not open the serial port. Select the port again.",
+      "reconnectPort": "Reconnect port"
     }
   },
   "Detection": {
@@ -410,15 +539,27 @@
       "count": "लाइन {index}: forward {forward} / backward {backward}",
       "namedCount": "{name}: forward {forward} / backward {backward}",
       "nameLabel": "छानिएको लाइनको नाम",
-      "namePlaceholder": "जस्तै: हल A प्रवेशद्वार, उत्तर करिडोर"
+      "namePlaceholder": "जस्तै: हल A प्रवेशद्वार, उत्तर करिडोर",
+      "areaWidthLabel": "छानिएको लाइनको क्षेत्रको चौडाइ (%)",
+      "areaWidthDescription": "लाइनलाई केन्द्र बनाएर बनेको पट्टीको पूरा चौडाइ, भिडियोको छोटो भुजाको प्रतिशतमा। पट्टीभित्र भएका मानिसहरूलाई लाइनको नाम भएको अवलोकन बिन्दुमा गनिन्छ।",
+      "reRegisterNote": "लाइन सारेको वा क्षेत्रको चौडाइ बदलेको अवलोकन बिन्दुको मानिस गणनाको इतिहास नयाँ सुरु गर्न त्यो अवलोकन बिन्दु फेरि दर्ता गर्नुहोस्।",
+      "areaOverlapWarning": "\"{first}\" र \"{second}\" का क्षेत्रहरू खप्टिएका छन्। खप्टिएको ठाउँका मानिसहरू दुवै अवलोकन बिन्दुमा गनिन्छन्।"
     }
   },
   "Observation": {
     "title": "{tenantId} अवलोकन पृष्ठ",
+    "machineSessionFailed": "अवलोकन पृष्ठ अधिकृत गर्न सकिएन।",
+    "machineSessionRetry": "फेरि अधिकृत गर्नुहोस्",
     "controls": {
       "start": "क्यामेरा सुरु गर्नुहोस्",
       "stop": "रोक्नुहोस्",
-      "loading": "सुरु हुँदै…"
+      "loading": "सुरु हुँदै…",
+      "retry": "पुनः जडान गर्नुहोस्",
+      "observeOnThisDevice": "यस उपकरणमा अवलोकन गर्नुहोस्",
+      "retryCamera": "{camera} पुनः जडान गर्नुहोस्"
+    },
+    "cameraSelector": {
+      "label": "क्यामेरा"
     },
     "status": {
       "detection": "पहिचान स्थिति: {status}",
@@ -460,12 +601,17 @@
       "detection": "मानिस पहिचान प्रक्रिया असफल भयो",
       "unregistered": "यो अवलोकन उपकरणको दर्ता रद्द गरिएको छ",
       "modelLoad": "पहिचान मोडेल लोड गर्न सकिएन ({status}: {path})",
+      "connectionAuthorizationRequired": "The camera connection is not authorized. Reauthorize it with “Authorize observation page connection”.",
+      "connectionAuthorizationAutoStart": "Camera connection authorization is required. Moving to the authorization page.",
+      "connectionAuthorizationMachine": "The camera connection is not authorized. A staff member must reauthorize it with “Authorize observation page connection” in the management screen.",
+      "cameraNotDelegated": "This camera is not part of the observation page's connection delegation.",
       "camera": {
         "permissionDenied": "क्यामेरा प्रयोग गर्न अनुमति छैन। ब्राउजर सेटिङमा क्यामेरा पहुँच अनुमति दिनुहोस्।",
         "notFound": "क्यामेरा भेटिएन। क्यामेरा जोडिएको छ कि छैन जाँच गर्नुहोस्।",
         "unsupported": "यो ब्राउजर वा जडानमा क्यामेरा प्रयोग गर्न सकिँदैन",
         "unavailable": "क्यामेरा सुरु गर्न सकिएन"
-      }
+      },
+      "cameraSource": "{camera}: {error}"
     },
     "devSource": {
       "title": "भिडियो स्रोत",
@@ -476,7 +622,18 @@
       "camera": "क्यामेरा",
       "activeHint": "(रोकेपछि मात्र बदलिन्छ)",
       "inactiveHint": "(छानेपछि सुरु गर्दा लागू हुन्छ)",
-      "hide": "लुकाउनुहोस्"
+      "hide": "लुकाउनुहोस्",
+      "espCamera": "ESP क्यामेरा ({edgeId})"
+    },
+    "cameraStatus": {
+      "label": "{camera}: {status}",
+      "waiting": "प्रतीक्षामा",
+      "stale": "भिडियो आएको छैन",
+      "capturing": "क्याप्चर गर्दै",
+      "inferring": "पहिचान गर्दै",
+      "ready": "पहिचान गर्दै",
+      "error": "त्रुटि",
+      "errorDetail": "{camera}: {error}"
     }
   },
   "ObservationDevices": {
@@ -485,6 +642,8 @@
   },
   "Guest": {
     "pageSubtitle": "पाहुना पृष्ठ",
+    "showOnMap": "नक्सामा हेर्नुहोस्",
+    "showOnMapLabel": "{place} नक्सामा हेर्नुहोस्",
     "waitingNumber": {
       "title": "हालको प्रतीक्षा संख्या",
       "unit": "जना"
@@ -533,13 +692,11 @@
     },
     "guideMap": {
       "title": "मार्गदर्शन नक्सा",
-      "hint": "गन्तव्य छान्नुभयो भने बाटो देखिन्छ",
       "currentLocation": "तपाईं यहाँ हुनुहुन्छ",
       "destinationsLabel": "गन्तव्यहरू",
       "expand": "नक्सा ठूलो पार्नुहोस्",
       "collapse": "नक्सा सानो पार्नुहोस्",
-      "search": "गन्तव्य खोज्नुहोस्",
-      "noResults": "नतिजा छैन",
+      "selectDestination": "गन्तव्य छान्नुहोस्",
       "reset": "रिसेट",
       "goal": "गन्तव्य",
       "rideTo": "{via} बाट {floor} सम्म",
@@ -552,17 +709,16 @@
       "walkStep": "{floor}: {from} → {to}",
       "rideStep": "{via}: {from} → {to}",
       "noRoute": "यो गन्तव्यसम्मको बाटो भेटिएन",
-      "zoomInHint": "ठूलो बनाउन नक्सा ट्याप गर्नुहोस्",
       "zoomOutHint": "सार्न तान्नुहोस् · पूरै हेर्न ट्याप गर्नुहोस्",
       "closed": " (बन्द)",
       "crowdAvoided": "यो मार्गले भीडभाड भएका ठाउँहरू छल्छ",
       "crowdRerouted": "भीडको अवस्था बदलिएकाले मार्ग परिवर्तन गरियो",
       "crowdThroughDanger": "यो मार्ग खतरनाक रूपमा भीड भएको ठाउँबाट जान्छ। कृपया कर्मचारीको निर्देशन पालना गर्नुहोस्",
-      "crowdLegend": "भीड"
+      "crowdLegend": "भीड",
+      "stepsLabel": "मार्ग निर्देशन",
+      "nextFloor": "अर्को: {floor} को मार्ग"
     },
     "floor": {
-      "title": "हालको तल्ला",
-      "placeholderName": "१ तल्ला",
       "selectLabel": "देखाउने तल्ला"
     },
     "congestion": {
@@ -574,7 +730,9 @@
       },
       "danger": "खतरा",
       "updatedAt": "{time} मा अद्यावधिक",
-      "empty": "भीडको जानकारी अझै छैन"
+      "empty": "भीडको जानकारी अझै छैन",
+      "floorRange": "{from}–{to}",
+      "floorJoin": ", "
     },
     "loading": "लोड हुँदैछ…",
     "loadError": "जानकारी ल्याउन सकिएन"
@@ -631,9 +789,26 @@
       "invalidCredentials": "ID वा पासवर्ड मिलेन।",
       "failed": "लग इन गर्न सकिएन। फेरि प्रयास गर्दा पनि भएन भने, आफ्नो टेनेन्टको पृष्ठबाट फेरि सुरु गर्नुहोस्।"
     },
+    "signup": {
+      "title": "खाता बनाउनुहोस्",
+      "description": "यस टेनेन्टमा प्रयोग गर्ने खाताको ID र पासवर्ड छान्नुहोस्।",
+      "loginDescription": "यस टेनेन्टमा पहिले नै खाता छ भने, त्यसको ID र पासवर्डले लग इन गर्नुहोस्।",
+      "usernameLabel": "ID",
+      "usernameDescription": "५० अक्षरसम्म, खाली ठाउँ बिना।",
+      "passwordLabel": "पासवर्ड",
+      "passwordDescription": "कम्तीमा ८ अक्षर र बढीमा ७२ बाइट।",
+      "submit": "खाता बनाउनुहोस्",
+      "invalidUsername": "ID खाली ठाउँ बिना १ देखि ५० अक्षरको हुनुपर्छ।",
+      "lengthOutOfRange": "पासवर्ड कम्तीमा ८ अक्षर र बढीमा ७२ बाइटको हुनुपर्छ।",
+      "usernameTaken": "यो ID पहिले नै प्रयोगमा छ। अर्को ID छान्नुहोस्।",
+      "failed": "खाता बनाउन सकिएन। यो जारी रहेमा, सुरुबाट फेरि गर्नुहोस्।",
+      "useExistingAccount": "पहिले नै भएको खाताबाट लग इन गर्नुहोस्",
+      "createAccount": "नयाँ खाता बनाउनुहोस्"
+    },
     "loggedOut": {
       "title": "लग आउट भयो",
-      "login": "फेरि लग इन गर्नुहोस्"
+      "login": "फेरि लग इन गर्नुहोस्",
+      "toObservation": "Back to the observation page"
     },
     "logout": "लग आउट"
   },
