@@ -26,7 +26,6 @@ cp .env.example .env
 8. 生成されたトークンをコピー  
    ⚠コピーを忘れて閉じないように注意
 
-
 トークンの「Select scopes」については以下の画像を参照
 ![Select scops](./assets/token-scopes-for-npm-package.png)
 
@@ -37,7 +36,6 @@ cp .env.example .env
 ```env
 NPM_TOKEN=ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
-
 
 ## direnvのセットアップ
 
@@ -50,11 +48,13 @@ NPM_TOKEN=ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 [Installation | direnv](https://direnv.net/docs/installation.html)
 
 Ubuntuの場合
+
 ```bash
 sudo apt install direnv
 ```
 
 macOSの場合
+
 ```bash
 brew install direnv
 ```
@@ -64,11 +64,13 @@ brew install direnv
 [Setup | direnv](https://direnv.net/docs/hook.html)
 
 Ubuntuの場合（bashを使用している場合）
+
 ```bash
 echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
 ```
 
 macOSの場合（zshを使用している場合）
+
 ```bash
 echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc
 ```
