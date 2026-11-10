@@ -12,6 +12,7 @@ import { observationDevicePath } from "@/features/tenant/observation/routes";
 import { machineSessionPath } from "@/features/tenant/webrtc/utils/cameraConnection";
 import { getPwaMetadata } from "@/lib/pwa/manifest";
 import { getViewer } from "@/server/auth";
+import { authMockingEnabled } from "@/server/auth/mocking";
 
 export async function generateMetadata({
   params,
@@ -50,7 +51,9 @@ export default async function TenantObservation({
       : undefined;
   const t = await getTranslations("Observation");
   const viewer = await getViewer();
+  const authMocking = authMockingEnabled();
   const canReport =
+    authMocking ||
     (viewer.type === "machine" &&
       viewer.eventId === eventId &&
       viewer.edgeDeviceId === edgeDeviceId) ||
@@ -86,7 +89,7 @@ export default async function TenantObservation({
               </div>
             )}
             <ScreenWakeControl />
-            {viewer.type === "staff" && !machineFailed && (
+            {viewer.type === "staff" && !machineFailed && !authMocking && (
               <Link
                 variant="default"
                 href={machineSessionPath({

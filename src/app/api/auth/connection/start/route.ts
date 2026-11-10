@@ -6,6 +6,7 @@ import {
 } from "@/server/auth/connection";
 import { withEventLifecycle } from "@/server/auth/eventLifecycle";
 import { sameHostPath } from "@/server/auth/login";
+import { authMockingEnabled } from "@/server/auth/mocking";
 import { delegatedPageCameras } from "@/server/cameraDelegation";
 import { requireApprovableEvent } from "@/server/eventStatus";
 
@@ -18,6 +19,7 @@ function backTo(request: Request, path: string): NextResponse {
 }
 
 export async function GET(request: Request) {
+  if (authMockingEnabled()) return new Response(null, { status: 404 });
   const url = new URL(request.url);
   const eventId = url.searchParams.get("eventId") ?? "";
   const pageEdgeDeviceId = url.searchParams.get("pageEdgeDeviceId") ?? "";
