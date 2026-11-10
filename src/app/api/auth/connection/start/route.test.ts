@@ -88,3 +88,14 @@ it("requires a staff session at the start", async () => {
   );
   expect(start).not.toHaveBeenCalled();
 });
+
+it("is not found while authentication is mocked", async () => {
+  vi.stubEnv("AUTH_MOCKING", "enabled");
+  try {
+    const response = await GET(request());
+    expect(response.status).toBe(404);
+    expect(getViewer).not.toHaveBeenCalled();
+  } finally {
+    vi.unstubAllEnvs();
+  }
+});

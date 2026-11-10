@@ -8,6 +8,7 @@ import {
   type MachineSessionResult,
   machineResultPath,
 } from "@/server/auth/machine";
+import { authMockingEnabled } from "@/server/auth/mocking";
 import { delegatedPageCameras } from "@/server/cameraDelegation";
 import { requireApprovableEvent } from "@/server/eventStatus";
 
@@ -24,6 +25,7 @@ function connectionNotice(value: string | null): MachineSessionResult | null {
 }
 
 export async function GET(request: Request) {
+  if (authMockingEnabled()) return new Response(null, { status: 404 });
   const url = new URL(request.url);
   const eventId = url.searchParams.get("eventId") ?? "";
   const pageEdgeDeviceId = url.searchParams.get("pageEdgeDeviceId") ?? "";

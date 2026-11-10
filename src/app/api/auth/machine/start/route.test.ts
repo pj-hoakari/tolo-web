@@ -156,3 +156,14 @@ describe("machine start route", () => {
     expect(machine.start).not.toHaveBeenCalled();
   });
 });
+
+it("is not found while authentication is mocked", async () => {
+  vi.stubEnv("AUTH_MOCKING", "enabled");
+  try {
+    const response = await GET(req());
+    expect(response.status).toBe(404);
+    expect(getViewer).not.toHaveBeenCalled();
+  } finally {
+    vi.unstubAllEnvs();
+  }
+});

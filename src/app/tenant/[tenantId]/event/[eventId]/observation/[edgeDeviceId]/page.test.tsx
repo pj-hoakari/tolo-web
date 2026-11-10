@@ -34,13 +34,35 @@ afterEach(() => {
 });
 
 it.each([
-  { type: "staff" as const, mocking: "disabled", canReport: false },
-  { type: "machine" as const, mocking: "disabled", canReport: true },
-  { type: "staff" as const, mocking: "enabled", canReport: true },
+  {
+    type: "staff" as const,
+    mocking: "disabled",
+    auth: "disabled",
+    canReport: false,
+  },
+  {
+    type: "machine" as const,
+    mocking: "disabled",
+    auth: "disabled",
+    canReport: true,
+  },
+  {
+    type: "staff" as const,
+    mocking: "enabled",
+    auth: "disabled",
+    canReport: true,
+  },
+  {
+    type: "staff" as const,
+    mocking: "disabled",
+    auth: "enabled",
+    canReport: true,
+  },
 ])(
-  "sets reporting permissions for $type with API mocking $mocking",
-  async ({ type, mocking, canReport }) => {
+  "sets reporting permissions for $type with API mocking $mocking and auth mocking $auth",
+  async ({ type, mocking, auth, canReport }) => {
     vi.stubEnv("NEXT_PUBLIC_API_MOCKING", mocking);
+    vi.stubEnv("AUTH_MOCKING", auth);
     vi.mocked(getViewer).mockResolvedValue({
       type,
       userId: "staff",
@@ -59,7 +81,7 @@ it.each([
       }),
     );
     expect(screen.getByRole("status").textContent).toBe(String(canReport));
-    if (type === "staff") {
+    if (type === "staff" && auth === "disabled") {
       const link = screen.getByRole("link", {
         name: "controls.observeOnThisDevice",
       });
