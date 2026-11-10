@@ -1099,3 +1099,26 @@ test.describe("端末での計測値の記録", () => {
     ).toBeVisible();
   });
 });
+
+test.describe("カウントラインの保存", () => {
+  test("ラインの名前を観測点に合わせると警告が消え、再読み込みしても残る", async ({
+    page,
+  }) => {
+    await setUpUnlockCode(page, "1234");
+    await expect(
+      page.getByText("観測点に紐づかないため、計測値を送りません: line-1"),
+    ).toBeVisible();
+
+    await lineName(page).fill("入口");
+    await expect(
+      page.getByText("観測点に紐づかないため、計測値を送りません"),
+    ).toHaveCount(0);
+
+    await page.reload();
+    await unlockPage(page, "1234");
+    await expect(lineName(page)).toHaveValue("入口");
+    await expect(
+      page.getByText("観測点に紐づかないため、計測値を送りません"),
+    ).toHaveCount(0);
+  });
+});
