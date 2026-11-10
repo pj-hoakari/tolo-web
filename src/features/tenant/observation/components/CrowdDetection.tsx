@@ -44,6 +44,7 @@ import { CameraConnectionAuthorizationNotice } from "./CameraConnectionAuthoriza
 import { CrowdDetectionControls } from "./CrowdDetectionControls";
 import { CrowdDetectionView } from "./CrowdDetectionView";
 import { DevVideoSourcePanel } from "./DevVideoSourcePanel";
+import { MeasurementRecordPanel } from "./MeasurementRecordPanel";
 import { ObservationLockButton } from "./ObservationSoftLock";
 
 const DEV_VIDEO_SOURCE_ENABLED = process.env.NODE_ENV === "development";
@@ -390,6 +391,9 @@ export function CrowdDetection({
         <p role="alert" className="text-destructive">
           {t("unregistered")}
         </p>
+      )}
+      {canReport && (
+        <MeasurementRecordPanel eventId={eventId} edgeDeviceId={edgeDeviceId} />
       )}
       {cameraListConnectionError?.cameraEdgeDeviceId && (
         <p role="alert" className="text-destructive">
