@@ -112,6 +112,8 @@ export function useCrowdDetectionLoop({
   onDetectionError,
 }: UseCrowdDetectionLoopParams): void {
   const broadcastRef = useRef<BroadcastStreamHandle | null>(null);
+  const onDetectionErrorRef = useRef(onDetectionError);
+  onDetectionErrorRef.current = onDetectionError;
   const latestFrameRef = useRef<CrowdDetectionFrame | null>(null);
   const pointIdByNameRef = useRef(observationPointIdByName);
   useEffect(() => {
@@ -242,7 +244,7 @@ export function useCrowdDetectionLoop({
         );
       } catch (cause) {
         if (!cancelled) {
-          onDetectionError(cause);
+          onDetectionErrorRef.current(cause);
         }
         return;
       }
@@ -307,7 +309,7 @@ export function useCrowdDetectionLoop({
 
     detectLoop().catch((cause) => {
       if (!cancelled) {
-        onDetectionError(cause);
+        onDetectionErrorRef.current(cause);
       }
     });
     renderRafId = requestAnimationFrame(renderLoop);
@@ -320,7 +322,6 @@ export function useCrowdDetectionLoop({
     };
   }, [
     status,
-    onDetectionError,
     onBroadcastStreamChange,
     onDetectionFrame,
     stopBroadcast,
