@@ -18,8 +18,13 @@ const REPORT_INTERVAL_MS = 30_000;
 const HEARTBEAT_INTERVAL_MS = 10_000;
 const MAX_UNSENT_WINDOWS = 120;
 
+const REFUSED_CODES = new Set(["BAD_REQUEST", "FORBIDDEN", "NOT_FOUND"]);
+
 const isUnregistered = (cause: unknown) =>
   cause instanceof ORPCError && cause.code === "PRECONDITION_FAILED";
+
+const isRefused = (cause: unknown) =>
+  cause instanceof ORPCError && REFUSED_CODES.has(cause.code);
 
 export type ObservationReportingCamera = {
   key: string;
@@ -312,6 +317,7 @@ export function useObservationReporting({
             setUnregistered(true);
             return;
           }
+          if (isRefused(cause)) return;
           unsentRef.current = [...windows, ...unsentRef.current].slice(
             -MAX_UNSENT_WINDOWS,
           );
