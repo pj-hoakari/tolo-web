@@ -8,12 +8,6 @@ const ABSOLUTE_LIFETIME_MS = 12 * 60 * 60 * 1000;
 const EXPIRY_MARGIN_MS = 5_000;
 const TENANT_ACCESS_TOKEN = "tenantAccessToken";
 const EVENT_ACCESS_TOKEN = "eventAccessToken";
-const EVENT_SCOPES = [
-  "events.read",
-  "events.manage",
-  "events.operate",
-  "events.report",
-];
 
 const tokenExchangeResponse = z.object({
   access_token: z.string(),
@@ -54,15 +48,6 @@ export function tokenScopes(accessToken: string): Set<string> {
     JSON.parse(Buffer.from(payload, "base64url").toString("utf8")),
   );
   return new Set(scope.split(" "));
-}
-
-function eventScopes(tenantAccessToken: string): string {
-  const granted = tokenScopes(tenantAccessToken);
-  const scopes = EVENT_SCOPES.filter((name) => granted.has(name));
-  if (scopes.length === 0) {
-    throw new Error("the session's tenant_access carries no event scope");
-  }
-  return scopes.join(" ");
 }
 
 type SessionLogin = {
@@ -218,8 +203,6 @@ export function createSessionAuth({ auth, env, lock }: RealAuth) {
     if (machine) {
       params.scope = "events.report";
       params.edge_device_id = login.edgeDeviceId as string;
-    } else {
-      params.scope = eventScopes(subjectToken);
     }
     const response = await postToTokenEndpoint(client, params);
     if (!response.ok) {
