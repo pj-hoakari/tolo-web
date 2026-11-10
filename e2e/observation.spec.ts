@@ -143,24 +143,16 @@ test.beforeEach(async ({ page, context }) => {
   ).toBeVisible();
 });
 
-test("この端末で観測する導線は開始元ページへ戻り、選択言語で表示される", async ({
+test("AUTH_MOCKING では、この端末で観測する導線を出さない", async ({
   page,
 }) => {
   await setUpUnlockCode(page, "1234");
-  const link = page.getByRole("link", { name: "この端末で観測する" });
-  const href = await link.getAttribute("href");
-  const url = new URL(href ?? "", page.url());
-  expect(url.pathname).toBe("/api/auth/machine/start");
-  expect(Object.fromEntries(url.searchParams)).toEqual({
-    eventId: "test",
-    pageEdgeDeviceId: "8c1f0e2a5d4b3c6e",
-    return: "/event/test/observation/8c1f0e2a5d4b3c6e",
-  });
-  await page.getByRole("button", { name: "言語を切り替え" }).click();
-  await page.getByRole("menuitemradio", { name: "English" }).click();
   await expect(
-    page.getByRole("link", { name: "Observe on this device" }),
-  ).toHaveAttribute("href", href ?? "");
+    page.getByRole("button", { name: "カメラを起動" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "この端末で観測する" }),
+  ).toHaveCount(0);
 });
 
 test.describe("画面ロック", () => {
