@@ -650,6 +650,13 @@
       "ready": "偵測中",
       "error": "錯誤",
       "errorDetail": "{camera}: {error}"
+    },
+    "records": {
+      "summary": "Recorded on this device: {count} (unsent {unsent})",
+      "export": "Export records",
+      "clear": "Clear records",
+      "clearConfirm": "Clear {count} records on this device? Records you have not exported will be lost.",
+      "writeFailed": "Could not record measurements on this device. Export the records, then clear them."
     }
   },
   "ObservationDevices": {

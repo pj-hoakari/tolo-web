@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import {
   type BrowserContext,
@@ -1030,5 +1031,71 @@ test.describe("Screen Wake Lock に対応していないブラウザ", () => {
       "画面の常時点灯（Screen Wake Lock）に対応していません",
     );
     await expect(wakeToggle(page)).toHaveCount(0);
+  });
+});
+
+test.describe("端末での計測値の記録", () => {
+  const record = {
+    eventId: "test",
+    edgeDeviceId: "8c1f0e2a5d4b3c6e",
+    observationPointId: "a1b2c3d4e5f60718",
+    observationPointName: "入口",
+    windowStart: "2026-11-11T01:00:00.000Z",
+    windowEnd: "2026-11-11T01:00:30.000Z",
+    countIn: 3,
+    countOut: 1,
+    sent: false,
+  };
+
+  test("記録した計測値を再読み込みの後も JSON Lines で書き出せる", async ({
+    page,
+  }) => {
+    const hydrationErrors: string[] = [];
+    page.on("console", (message) => {
+      if (message.type() === "error" && /hydrat/i.test(message.text())) {
+        hydrationErrors.push(message.text());
+      }
+    });
+    await setUpUnlockCode(page, "1234");
+    await page.evaluate((value) => {
+      localStorage.setItem(
+        "tolo:observation-measurements:test:8c1f0e2a5d4b3c6e",
+        JSON.stringify([value]),
+      );
+    }, record);
+    await page.reload();
+    await unlockPage(page, "1234");
+
+    await expect(
+      page.getByText("端末の記録: 1 件（未送信 1 件）"),
+    ).toBeVisible();
+    const downloading = page.waitForEvent("download");
+    await page.getByRole("button", { name: "記録を書き出す" }).click();
+    const download = await downloading;
+    const file = await download.path();
+    expect(await readFile(file, "utf8")).toBe(`${JSON.stringify(record)}\n`);
+    expect(download.suggestedFilename()).toMatch(
+      /^observation-test-8c1f0e2a5d4b3c6e-[0-9TZ-]+\.jsonl$/,
+    );
+    expect(hydrationErrors).toEqual([]);
+  });
+
+  test("記録を消すと件数が 0 になる", async ({ page }) => {
+    await setUpUnlockCode(page, "1234");
+    await page.evaluate((value) => {
+      localStorage.setItem(
+        "tolo:observation-measurements:test:8c1f0e2a5d4b3c6e",
+        JSON.stringify([value]),
+      );
+    }, record);
+    await page.reload();
+    await unlockPage(page, "1234");
+
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByRole("button", { name: "記録を消す" }).click();
+
+    await expect(
+      page.getByText("端末の記録: 0 件（未送信 0 件）"),
+    ).toBeVisible();
   });
 });

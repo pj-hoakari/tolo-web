@@ -650,6 +650,13 @@
       "ready": "検出中",
       "error": "エラー",
       "errorDetail": "{camera}: {error}"
+    },
+    "records": {
+      "summary": "端末の記録: {count} 件（未送信 {unsent} 件）",
+      "export": "記録を書き出す",
+      "clear": "記録を消す",
+      "clearConfirm": "端末の記録 {count} 件を消します。書き出していない記録は失われます。",
+      "writeFailed": "計測値を端末に記録できませんでした。記録を書き出してから消してください。"
     }
   },
   "ObservationDevices": {
