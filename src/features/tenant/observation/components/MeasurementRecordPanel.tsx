@@ -21,11 +21,11 @@ export function MeasurementRecordPanel({
   const version = useSyncExternalStore(
     subscribeMeasurementRecords,
     measurementRecordsVersion,
-    () => 0,
+    () => -1,
   );
-  // biome-ignore lint/correctness/useExhaustiveDependencies: version tracks writes to the records.
   const records = useMemo(
-    () => readMeasurementRecords({ eventId, edgeDeviceId }),
+    () =>
+      version === -1 ? [] : readMeasurementRecords({ eventId, edgeDeviceId }),
     [eventId, edgeDeviceId, version],
   );
   const unsent = records.filter((record) => !record.sent).length;
@@ -36,9 +36,11 @@ export function MeasurementRecordPanel({
     );
     const link = document.createElement("a");
     link.href = url;
-    link.download = `observation-${eventId}-${edgeDeviceId}-${new Date().toISOString()}.jsonl`;
+    link.download = `observation-${eventId}-${edgeDeviceId}-${new Date().toISOString().replace(/[:.]/g, "-")}.jsonl`;
+    document.body.append(link);
     link.click();
-    URL.revokeObjectURL(url);
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
   const clearRecords = () => {
