@@ -627,7 +627,8 @@
         "unsupported": "このブラウザまたは接続ではカメラを利用できません",
         "unavailable": "カメラを起動できませんでした"
       },
-      "cameraSource": "{camera}: {error}"
+      "cameraSource": "{camera}: {error}",
+      "unlinkedTargets": "観測点に紐づかないため、計測値を送りません: {targets}"
     },
     "devSource": {
       "title": "映像ソース",

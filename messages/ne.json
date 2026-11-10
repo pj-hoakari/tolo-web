@@ -627,7 +627,8 @@
         "unsupported": "यो ब्राउजर वा जडानमा क्यामेरा प्रयोग गर्न सकिँदैन",
         "unavailable": "क्यामेरा सुरु गर्न सकिएन"
       },
-      "cameraSource": "{camera}: {error}"
+      "cameraSource": "{camera}: {error}",
+      "unlinkedTargets": "Measurements are not sent because these are not linked to an observation point: {targets}"
     },
     "devSource": {
       "title": "भिडियो स्रोत",

@@ -627,7 +627,8 @@
         "unsupported": "The camera is not available in this browser or connection",
         "unavailable": "Could not start the camera"
       },
-      "cameraSource": "{camera}: {error}"
+      "cameraSource": "{camera}: {error}",
+      "unlinkedTargets": "Measurements are not sent because these are not linked to an observation point: {targets}"
     },
     "devSource": {
       "title": "Video source",

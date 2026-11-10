@@ -627,7 +627,8 @@
         "unsupported": "此瀏覽器或連線無法使用攝影機",
         "unavailable": "無法啟動攝影機"
       },
-      "cameraSource": "{camera}: {error}"
+      "cameraSource": "{camera}: {error}",
+      "unlinkedTargets": "Measurements are not sent because these are not linked to an observation point: {targets}"
     },
     "devSource": {
       "title": "視訊來源",
