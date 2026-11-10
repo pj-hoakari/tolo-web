@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { ORPCError } from "@orpc/client";
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -186,6 +187,30 @@ describe("計測値の送信に失敗したとき", () => {
     expect(resent).toHaveLength(121);
     expect(resent).not.toContain(firstWindowStart);
     expect(resent[0]).toBe(firstWindowStart + REPORT_INTERVAL_MS);
+  });
+
+  it.each(["BAD_REQUEST", "FORBIDDEN", "NOT_FOUND"])(
+    "%s で断られた送信のウィンドウは再送しない",
+    async (code) => {
+      reportMeasurements.mockRejectedValueOnce(new ORPCError(code));
+      await startDetecting();
+      await act(() => vi.advanceTimersByTimeAsync(REPORT_INTERVAL_MS * 2));
+
+      expect(sentWindowStarts(1)).toEqual([
+        sentWindowStarts(0)[0] + REPORT_INTERVAL_MS,
+      ]);
+    },
+  );
+
+  it("認証の失敗で断られた送信のウィンドウは再送する", async () => {
+    reportMeasurements.mockRejectedValueOnce(new ORPCError("UNAUTHORIZED"));
+    await startDetecting();
+    await act(() => vi.advanceTimersByTimeAsync(REPORT_INTERVAL_MS * 2));
+
+    expect(sentWindowStarts(1)).toEqual([
+      sentWindowStarts(0)[0],
+      sentWindowStarts(0)[0] + REPORT_INTERVAL_MS,
+    ]);
   });
 
   it("観測デバイスが替わると、前の観測デバイスで送信に失敗したウィンドウの計測値を再送しない", async () => {
