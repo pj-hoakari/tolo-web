@@ -627,7 +627,8 @@
         "unsupported": "此浏览器或连接无法使用摄像头",
         "unavailable": "无法启动摄像头"
       },
-      "cameraSource": "{camera}: {error}"
+      "cameraSource": "{camera}: {error}",
+      "unlinkedTargets": "Measurements are not sent because these are not linked to an observation point: {targets}"
     },
     "devSource": {
       "title": "视频源",

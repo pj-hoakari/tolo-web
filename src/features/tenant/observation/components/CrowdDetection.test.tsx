@@ -260,3 +260,24 @@ it("offers a per-camera reconnect button while the other camera is detecting", (
       .getAttribute("aria-selected"),
   ).toBe("true");
 });
+
+it("warns about cameras that are not linked to an observation point", () => {
+  render(
+    <CrowdDetection
+      canReport
+      tenantId="tenant"
+      eventId="event"
+      edgeDeviceId="page"
+    />,
+    { wrapper: IntlTestProvider },
+  );
+  expect(
+    screen
+      .getAllByRole("status")
+      .some((alert) =>
+        alert.textContent?.includes(
+          "観測点に紐づかないため、計測値を送りません: Camera one, Camera two",
+        ),
+      ),
+  ).toBe(true);
+});
