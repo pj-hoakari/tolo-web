@@ -161,7 +161,7 @@ docker compose up -d --build
 
 ### トレースの確認（Jaeger）
 
-サーバー側のトレースは、環境変数 `OTEL_EXPORTER_OTLP_ENDPOINT` か `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` を設定したときだけ OTLP/HTTP で export します。未設定ならトレーシングは無効です。トレースの `service.name` は `OTEL_SERVICE_NAME` で変えられ、既定は `tolo-web` です。ヘッダ・タイムアウトなどその他の `OTEL_EXPORTER_OTLP_*` は exporter がそのまま解釈します。span は Next.js が組み込みで作るもの（要求、レンダリング、`fetch` など）です。
+サーバー側のトレースは、環境変数 `OTEL_EXPORTER_OTLP_ENDPOINT` か `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` を設定したときだけ OTLP/HTTP で export します。どちらも未設定ならトレーシングは無効です。トレースの `service.name` は `OTEL_SERVICE_NAME` で変えられ、既定は `tolo-web` です。ヘッダ・タイムアウトなどその他の `OTEL_EXPORTER_OTLP_*` は exporter がそのまま解釈します。export する span は、Next.js が組み込みで作るもの（要求、レンダリング、`fetch` など）です。
 
 オーバーライドファイル `compose.o11y.yaml` を重ねると、Jaeger が起動し、`web` に `OTEL_EXPORTER_OTLP_ENDPOINT` などが設定されます。
 
