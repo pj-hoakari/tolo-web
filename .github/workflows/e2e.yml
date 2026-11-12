@@ -24,21 +24,48 @@ jobs:
       packages: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Detect changes
+        id: changes
+        uses: pj-hoakari/actions/detect-changes@92b346752a66ad19a36fbc929191603f72e00fe9 # v20261020.0.2
+        with:
+          paths: |
+            src/
+            messages/
+            public/
+            package.json
+            pnpm-lock.yaml
+            pnpm-workspace.yaml
+            .npmrc
+            tsconfig.json
+            global.d.ts
+            next.config.ts
+            postcss.config.mjs
+            components.json
+            e2e/
+            playwright.config.ts
+            .github/workflows/e2e.yml
 
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        if: steps.changes.outputs.changed == 'true'
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: steps.changes.outputs.changed == 'true'
         with:
           node-version: 24
           cache: pnpm
           registry-url: https://npm.pkg.github.com/
 
       - name: Install dependencies
+        if: steps.changes.outputs.changed == 'true'
         run: pnpm install --frozen-lockfile
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run e2e tests
+        if: steps.changes.outputs.changed == 'true'
         run: pnpm test:e2e --shard=${{ matrix.shard }}/2
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
