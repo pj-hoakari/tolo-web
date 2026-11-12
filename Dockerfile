@@ -18,7 +18,7 @@ COPY . .
 EXPOSE 3000
 CMD ["pnpm", "exec", "next", "dev", "-H", "0.0.0.0", "-p", "3000"]
 
-FROM mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f AS e2e
+FROM mcr.microsoft.com/playwright:v1.65.0-noble@sha256:9beb546099e11f52d62e505537914870e01a67e0e6b00ae41da4775324e73dbe AS e2e
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME/bin:$PATH
 ENV NEXT_TELEMETRY_DISABLED=1
