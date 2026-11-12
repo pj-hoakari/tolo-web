@@ -25,6 +25,8 @@
     "@bufbuild/protobuf": "^2.12.0",
     "@connectrpc/connect": "^2.1.2",
     "@connectrpc/connect-node": "^2.1.2",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.301.1",
+    "@opentelemetry/sdk-node": "^0.301.1",
     "@orpc/client": "^1.14.6",
     "@orpc/server": "^1.14.6",
     "@pj-hoakari/tolo-edge-bridge-client-es": "0.6.0",

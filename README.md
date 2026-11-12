@@ -159,6 +159,18 @@ docker compose up -d --build
 
 観測ページから映像を配信するには、`public/models` に人検出モデルが必要です（[人検出モデルセットアップ](docs/setup-for-detection-model.md)）。
 
+### トレースの確認（Jaeger）
+
+サーバー側のトレースは、環境変数 `OTEL_EXPORTER_OTLP_ENDPOINT` か `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` を設定したときだけ OTLP/HTTP で export します。どちらも未設定ならトレーシングは無効です。トレースの `service.name` は `OTEL_SERVICE_NAME` で変えられ、既定は `tolo-web` です。ヘッダ・タイムアウトなどその他の `OTEL_EXPORTER_OTLP_*` は exporter がそのまま解釈します。export する span は、Next.js が組み込みで作るもの（要求、レンダリング、`fetch` など）です。
+
+オーバーライドファイル `compose.o11y.yaml` を重ねると、Jaeger が起動し、`web` に `OTEL_EXPORTER_OTLP_ENDPOINT` などが設定されます。
+
+```bash
+docker compose -f compose.yaml -f compose.o11y.yaml up -d --build
+```
+
+Jaeger UI は `http://localhost:16686` で開きます。止めるときは `docker compose -f compose.yaml -f compose.o11y.yaml down` を実行します。
+
 ### ESP32 カメラを観測ページにつなぐ
 
 ESP32-S3 のファームウェア（`esp-edge-device`）は tolo-edge-bridge の Firestore
