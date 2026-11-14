@@ -28,7 +28,12 @@
     "title": "{tenantId} Management",
     "graphEditTitle": "{tenantId} Route diagram editor",
     "backLink": "Back to management",
-    "observationDevicesLink": "Observation devices"
+    "observationDevicesLink": "Observation devices",
+    "tenantId": "Tenant ID: {id}",
+    "filters": {
+      "reset": "Reset filters",
+      "results": "Showing {shown} of {total}"
+    }
   },
   "ObservationSettings": {
     "heading": "Observation settings",
@@ -64,7 +69,10 @@
       "tenantUnavailable": "Events can't be created for this tenant. The tenant may have been archived.",
       "tenantNotFound": "The tenant could not be found.",
       "created": "Created “{name}”. Its event type is not set yet.",
-      "setEventType": "Set the event type"
+      "setEventType": "Set the event type",
+      "open": "Create event",
+      "cancel": "Cancel",
+      "success": "Event created."
     },
     "list": {
       "heading": "Events",
@@ -72,7 +80,29 @@
       "empty": "No events yet.",
       "error": "Could not load the events.",
       "retry": "Reload",
-      "showArchived": "Show archived"
+      "showArchived": "Show archived",
+      "count": "{count, plural, one {# event} other {# events}}",
+      "state": "Status",
+      "actions": "Actions",
+      "open": "Manage",
+      "openLabel": "Manage {name}",
+      "search": "Search by event name or ID",
+      "allStatuses": "All statuses",
+      "noResults": "No events match these filters.",
+      "moreActions": "More actions for {name}",
+      "idLabel": "Event ID",
+      "copyId": "Copy event ID for {name}",
+      "idCopied": "Copied the event ID for {name}.",
+      "copyFailed": "Could not copy. Select the ID and copy it manually.",
+      "results": "Showing {shown} of {total} events",
+      "backToList": "Back to events",
+      "activeFilters": "Active filters",
+      "searchCondition": "Search: {query}",
+      "clearSearch": "Clear search",
+      "clearStatus": "Clear status filter",
+      "clearArchived": "Hide archived events",
+      "clearConditions": "Clear filters",
+      "dismissNotice": "Dismiss notification"
     },
     "status": {
       "draft": "Draft",
@@ -87,15 +117,38 @@
       "description": "Archive “{name}”? Archived events appear in this list only when “Show archived” is on, and you can restore them from there.",
       "cancel": "Cancel",
       "confirm": "Archive",
-      "failed": "Could not archive the event."
+      "failed": "Could not archive the event.",
+      "success": "Archived “{name}”."
     },
     "restore": {
       "button": "Restore",
-      "failed": "Could not restore the event."
+      "failed": "Could not restore the event.",
+      "success": "Restored “{name}”."
     },
     "transition": {
       "stale": "The event or tenant has changed, so the operation could not be completed. Please reload the list.",
-      "eventNotFound": "The event could not be found. Please reload the list."
+      "eventNotFound": "The event could not be found. Please reload the list.",
+      "button": "Change status for {name} ({status})",
+      "title": "Change event status",
+      "description": "Change the status of {name} from {from} to {to}.",
+      "confirm": "Change status",
+      "cancel": "Cancel",
+      "failed": "Could not change the event status.",
+      "success": "Changed the status of {name} to {status}.",
+      "actions": {
+        "draft": "Set to draft",
+        "open": "Publish",
+        "locked": "Lock",
+        "closed": "End event",
+        "archived": "Archive"
+      },
+      "draftReason": "Draft is the initial state. Events cannot return to draft from another state."
+    },
+    "pageTitle": "Event management",
+    "workspace": {
+      "brand": "Tolo",
+      "allEvents": "All events",
+      "navigation": "Event views"
     }
   },
   "Graph": {
@@ -574,7 +627,8 @@
         "unsupported": "The camera is not available in this browser or connection",
         "unavailable": "Could not start the camera"
       },
-      "cameraSource": "{camera}: {error}"
+      "cameraSource": "{camera}: {error}",
+      "unlinkedTargets": "Measurements are not sent because these are not linked to an observation point: {targets}"
     },
     "devSource": {
       "title": "Video source",
@@ -597,6 +651,13 @@
       "ready": "Detecting",
       "error": "Error",
       "errorDetail": "{camera}: {error}"
+    },
+    "records": {
+      "summary": "Recorded on this device: {count} (unsent {unsent})",
+      "export": "Export records",
+      "clear": "Clear records",
+      "clearConfirm": "Clear {count} records on this device? Records you have not exported will be lost.",
+      "writeFailed": "Could not record measurements on this device. Export the records, then clear them."
     }
   },
   "ObservationDevices": {

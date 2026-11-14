@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import {
   type BrowserContext,
@@ -142,24 +143,16 @@ test.beforeEach(async ({ page, context }) => {
   ).toBeVisible();
 });
 
-test("この端末で観測する導線は開始元ページへ戻り、選択言語で表示される", async ({
+test("AUTH_MOCKING では、この端末で観測する導線を出さない", async ({
   page,
 }) => {
   await setUpUnlockCode(page, "1234");
-  const link = page.getByRole("link", { name: "この端末で観測する" });
-  const href = await link.getAttribute("href");
-  const url = new URL(href ?? "", page.url());
-  expect(url.pathname).toBe("/api/auth/machine/start");
-  expect(Object.fromEntries(url.searchParams)).toEqual({
-    eventId: "test",
-    pageEdgeDeviceId: "8c1f0e2a5d4b3c6e",
-    return: "/event/test/observation/8c1f0e2a5d4b3c6e",
-  });
-  await page.getByRole("button", { name: "言語を切り替え" }).click();
-  await page.getByRole("menuitemradio", { name: "English" }).click();
   await expect(
-    page.getByRole("link", { name: "Observe on this device" }),
-  ).toHaveAttribute("href", href ?? "");
+    page.getByRole("button", { name: "カメラを起動" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "この端末で観測する" }),
+  ).toHaveCount(0);
 });
 
 test.describe("画面ロック", () => {
@@ -1030,5 +1023,94 @@ test.describe("Screen Wake Lock に対応していないブラウザ", () => {
       "画面の常時点灯（Screen Wake Lock）に対応していません",
     );
     await expect(wakeToggle(page)).toHaveCount(0);
+  });
+});
+
+test.describe("端末での計測値の記録", () => {
+  const record = {
+    eventId: "test",
+    edgeDeviceId: "8c1f0e2a5d4b3c6e",
+    observationPointId: "a1b2c3d4e5f60718",
+    observationPointName: "入口",
+    windowStart: "2026-11-11T01:00:00.000Z",
+    windowEnd: "2026-11-11T01:00:30.000Z",
+    countIn: 3,
+    countOut: 1,
+    sent: false,
+  };
+
+  test("記録した計測値を再読み込みの後も JSON Lines で書き出せる", async ({
+    page,
+  }) => {
+    const hydrationErrors: string[] = [];
+    page.on("console", (message) => {
+      if (message.type() === "error" && /hydrat/i.test(message.text())) {
+        hydrationErrors.push(message.text());
+      }
+    });
+    await setUpUnlockCode(page, "1234");
+    await page.evaluate((value) => {
+      localStorage.setItem(
+        "tolo:observation-measurements:test:8c1f0e2a5d4b3c6e",
+        JSON.stringify([value]),
+      );
+    }, record);
+    await page.reload();
+    await unlockPage(page, "1234");
+
+    await expect(
+      page.getByText("端末の記録: 1 件（未送信 1 件）"),
+    ).toBeVisible();
+    const downloading = page.waitForEvent("download");
+    await page.getByRole("button", { name: "記録を書き出す" }).click();
+    const download = await downloading;
+    const file = await download.path();
+    expect(await readFile(file, "utf8")).toBe(`${JSON.stringify(record)}\n`);
+    expect(download.suggestedFilename()).toMatch(
+      /^observation-test-8c1f0e2a5d4b3c6e-[0-9TZ-]+\.jsonl$/,
+    );
+    expect(hydrationErrors).toEqual([]);
+  });
+
+  test("記録を消すと件数が 0 になる", async ({ page }) => {
+    await setUpUnlockCode(page, "1234");
+    await page.evaluate((value) => {
+      localStorage.setItem(
+        "tolo:observation-measurements:test:8c1f0e2a5d4b3c6e",
+        JSON.stringify([value]),
+      );
+    }, record);
+    await page.reload();
+    await unlockPage(page, "1234");
+
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByRole("button", { name: "記録を消す" }).click();
+
+    await expect(
+      page.getByText("端末の記録: 0 件（未送信 0 件）"),
+    ).toBeVisible();
+  });
+});
+
+test.describe("カウントラインの保存", () => {
+  test("ラインの名前を観測点に合わせると警告が消え、再読み込みしても残る", async ({
+    page,
+  }) => {
+    await setUpUnlockCode(page, "1234");
+    await expect(
+      page.getByText("観測点に紐づかないため、計測値を送りません: line-1"),
+    ).toBeVisible();
+
+    await lineName(page).fill("入口");
+    await expect(
+      page.getByText("観測点に紐づかないため、計測値を送りません"),
+    ).toHaveCount(0);
+
+    await page.reload();
+    await unlockPage(page, "1234");
+    await expect(lineName(page)).toHaveValue("入口");
+    await expect(
+      page.getByText("観測点に紐づかないため、計測値を送りません"),
+    ).toHaveCount(0);
   });
 });

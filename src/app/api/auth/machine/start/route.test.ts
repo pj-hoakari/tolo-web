@@ -156,3 +156,28 @@ describe("machine start route", () => {
     expect(machine.start).not.toHaveBeenCalled();
   });
 });
+
+it("is not found while authentication is mocked", async () => {
+  vi.stubEnv("AUTH_MOCKING", "enabled");
+  try {
+    const response = await GET(req());
+    expect(response.status).toBe(404);
+    expect(getViewer).not.toHaveBeenCalled();
+  } finally {
+    vi.unstubAllEnvs();
+  }
+});
+
+it("returns to the request Host rather than the address the server listens on", async () => {
+  const url = new URL(req().url);
+  url.host = "0.0.0.0:3000";
+  vi.mocked(getConnectionAuth).mockReturnValue({
+    hasAuthorization: vi.fn(async () => {
+      throw new Error("unavailable");
+    }),
+  } as never);
+  const response = await GET(new Request(url, { headers: { host: HOST } }));
+  expect(response.headers.get("location")).toBe(
+    `http://${HOST}${RETURN}?machineSession=failed`,
+  );
+});

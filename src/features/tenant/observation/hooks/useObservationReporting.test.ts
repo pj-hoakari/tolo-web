@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { ORPCError } from "@orpc/client";
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -9,6 +10,10 @@ import {
   INITIAL_SETTINGS,
   recordDetectedPeople,
 } from "@/features/tenant/detection/stores/detectionStore";
+import {
+  readMeasurementRecords,
+  toJsonLines,
+} from "../utils/measurementRecords";
 import {
   type ObservationReportingCamera,
   useObservationReporting,
@@ -58,6 +63,7 @@ beforeEach(() => {
   reportMeasurements.mockReset();
   reportMeasurements.mockResolvedValue(undefined);
   observationPoints.length = 0;
+  localStorage.clear();
 });
 
 afterEach(() => {
@@ -186,6 +192,81 @@ describe("計測値の送信に失敗したとき", () => {
     expect(resent).toHaveLength(121);
     expect(resent).not.toContain(firstWindowStart);
     expect(resent[0]).toBe(firstWindowStart + REPORT_INTERVAL_MS);
+  });
+
+  it.each(["BAD_REQUEST", "FORBIDDEN", "NOT_FOUND"])(
+    "%s で断られた送信のウィンドウは再送しない",
+    async (code) => {
+      reportMeasurements.mockRejectedValueOnce(new ORPCError(code));
+      await startDetecting();
+      await act(() => vi.advanceTimersByTimeAsync(REPORT_INTERVAL_MS * 2));
+
+      expect(sentWindowStarts(1)).toEqual([
+        sentWindowStarts(0)[0] + REPORT_INTERVAL_MS,
+      ]);
+    },
+  );
+
+  it("認証の失敗で断られた送信のウィンドウは再送する", async () => {
+    reportMeasurements.mockRejectedValueOnce(new ORPCError("UNAUTHORIZED"));
+    await startDetecting();
+    await act(() => vi.advanceTimersByTimeAsync(REPORT_INTERVAL_MS * 2));
+
+    expect(sentWindowStarts(1)).toEqual([
+      sentWindowStarts(0)[0],
+      sentWindowStarts(0)[0] + REPORT_INTERVAL_MS,
+    ]);
+  });
+
+  it("送信できない間が 1 時間を超えても、すべてのウィンドウを端末に記録する", async () => {
+    reportMeasurements.mockRejectedValue(new Error("network"));
+    await startDetecting();
+    await act(() => vi.advanceTimersByTimeAsync(REPORT_INTERVAL_MS * 150));
+
+    const records = readMeasurementRecords({
+      eventId: "test",
+      edgeDeviceId: "8c1f0e2a5d4b3c6e",
+    });
+    expect(records).toHaveLength(150);
+    expect(records[0]).toMatchObject({
+      eventId: "test",
+      edgeDeviceId: "8c1f0e2a5d4b3c6e",
+      observationPointId: "a1b2c3d4e5f60718",
+      observationPointName: "入口",
+      countIn: 0,
+      countOut: 0,
+      sent: false,
+    });
+    expect(new Date(records[0].windowStart).getTime()).toBe(
+      sentWindowStarts(0)[0],
+    );
+    expect(toJsonLines(records).trimEnd().split("\n")).toHaveLength(150);
+  });
+
+  it("送信できたウィンドウと、再送で後から届いたウィンドウを送信済みとして記録する", async () => {
+    reportMeasurements.mockRejectedValueOnce(new Error("network"));
+    await startDetecting();
+    await act(() => vi.advanceTimersByTimeAsync(REPORT_INTERVAL_MS * 2));
+
+    expect(
+      readMeasurementRecords({
+        eventId: "test",
+        edgeDeviceId: "8c1f0e2a5d4b3c6e",
+      }).map((record) => record.sent),
+    ).toEqual([true, true]);
+  });
+
+  it("断られて捨てたウィンドウは未送信として記録に残す", async () => {
+    reportMeasurements.mockRejectedValueOnce(new ORPCError("BAD_REQUEST"));
+    await startDetecting();
+    await act(() => vi.advanceTimersByTimeAsync(REPORT_INTERVAL_MS * 2));
+
+    expect(
+      readMeasurementRecords({
+        eventId: "test",
+        edgeDeviceId: "8c1f0e2a5d4b3c6e",
+      }).map((record) => record.sent),
+    ).toEqual([false, true]);
   });
 
   it("観測デバイスが替わると、前の観測デバイスで送信に失敗したウィンドウの計測値を再送しない", async () => {

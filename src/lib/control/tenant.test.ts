@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { getRootDomain, resolveTenant, tenantOrigin } from "./tenant";
+import {
+  getRootDomain,
+  requestOrigin,
+  resolveTenant,
+  tenantOrigin,
+} from "./tenant";
 
 describe("resolveTenant", () => {
   test("extract one label below the root domain as the subdomain name", () => {
@@ -127,5 +132,25 @@ describe("tenantOrigin", () => {
   ])("is undefined for %j, which is not a tenant host", (host) => {
     vi.stubEnv("ROOT_DOMAIN", "example.com");
     expect(tenantOrigin(host)).toBeUndefined();
+  });
+});
+
+describe("requestOrigin", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+  test("follows the Host header rather than the address the server listens on", () => {
+    vi.stubEnv("ROOT_DOMAIN", "example.com");
+    const request = new Request("http://0.0.0.0:3000/api/auth/machine/start", {
+      headers: { host: "acme.example.com" },
+    });
+    expect(requestOrigin(request)).toBe("https://acme.example.com");
+  });
+  test("falls back to the root origin when the Host is not a tenant", () => {
+    vi.stubEnv("ROOT_DOMAIN", "example.com");
+    const request = new Request("http://0.0.0.0:3000/", {
+      headers: { host: "evil.test" },
+    });
+    expect(requestOrigin(request)).toBe("https://example.com");
   });
 });

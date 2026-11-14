@@ -7,14 +7,14 @@ test("AUTH_MOCKING では、管理ページはログインなしでモックの�
 
   await expect(
     page.getByRole("heading", {
-      level: 2,
-      name: "0123456789abcdef イベント管理",
+      level: 1,
+      name: "イベント管理",
     }),
   ).toBeVisible();
   expect(new URL(page.url()).pathname).toBe("/management");
 });
 
-test("AUTH_MOCKING では、ログインと registration の認可の開始と引き渡しの経路とルートドメインのログイン画面は 404 になる", async ({
+test("AUTH_MOCKING では、ログインと registration と観測ページの認可の開始と引き渡しの経路とルートドメインのログイン画面は 404 になる", async ({
   request,
 }) => {
   for (const path of [
@@ -22,6 +22,8 @@ test("AUTH_MOCKING では、ログインと registration の認可の開始と�
     "/auth/handoff?code=x",
     "/auth/join",
     "/invitation/handoff?code=x",
+    "/api/auth/machine/start?eventId=fedcba9876543210&pageEdgeDeviceId=8c1f0e2a5d4b3c6e&return=/",
+    "/api/auth/connection/start?eventId=fedcba9876543210&pageEdgeDeviceId=8c1f0e2a5d4b3c6e&return=/",
     "http://localhost:3100/auth/begin?login=x",
     "http://localhost:3100/onboarding/start",
     "http://localhost:3100/onboarding/claim?code=x",
@@ -70,8 +72,8 @@ test("ログインに失敗した画面から、ログインを始めたテナ�
 
   await expect(
     page.getByRole("heading", {
-      level: 2,
-      name: "0123456789abcdef イベント管理",
+      level: 1,
+      name: "イベント管理",
     }),
   ).toBeVisible();
   expect(page.url()).toBe("http://test.localhost:3100/management");
@@ -108,8 +110,8 @@ test("AUTH_MOCKING では、管理ページにログアウトのボタンはな�
 
   await expect(
     page.getByRole("heading", {
-      level: 2,
-      name: "0123456789abcdef イベント管理",
+      level: 1,
+      name: "イベント管理",
     }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "ログアウト" })).toHaveCount(0);
@@ -134,8 +136,8 @@ test("ログアウトした後の画面から、ログアウトしたテナン�
 
   await expect(
     page.getByRole("heading", {
-      level: 2,
-      name: "0123456789abcdef イベント管理",
+      level: 1,
+      name: "イベント管理",
     }),
   ).toBeVisible();
   expect(page.url()).toBe("http://test.localhost:3100/management");

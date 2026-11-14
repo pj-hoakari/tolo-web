@@ -17,7 +17,9 @@
         "@playwright/test",
         "mcr.microsoft.com/playwright"
       ],
-      "groupName": "playwright"
+      "groupName": "playwright",
+      "internalChecksFilter": "none",
+      "platformAutomerge": false
     }
   ]
 }

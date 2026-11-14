@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requestOrigin } from "@/lib/control/tenant";
 import { getViewer, requestTenantId } from "@/server/auth";
 import {
   connectionResultPath,
@@ -6,6 +7,7 @@ import {
 } from "@/server/auth/connection";
 import { withEventLifecycle } from "@/server/auth/eventLifecycle";
 import { sameHostPath } from "@/server/auth/login";
+import { authMockingEnabled } from "@/server/auth/mocking";
 import { delegatedPageCameras } from "@/server/cameraDelegation";
 import { requireApprovableEvent } from "@/server/eventStatus";
 
@@ -14,10 +16,11 @@ export const dynamic = "force-dynamic";
 const PUBLIC_ID = /^[0-9a-f]{16}$/;
 
 function backTo(request: Request, path: string): NextResponse {
-  return NextResponse.redirect(new URL(path, request.url), 302);
+  return NextResponse.redirect(new URL(path, requestOrigin(request)), 302);
 }
 
 export async function GET(request: Request) {
+  if (authMockingEnabled()) return new Response(null, { status: 404 });
   const url = new URL(request.url);
   const eventId = url.searchParams.get("eventId") ?? "";
   const pageEdgeDeviceId = url.searchParams.get("pageEdgeDeviceId") ?? "";

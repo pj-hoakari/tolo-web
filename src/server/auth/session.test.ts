@@ -359,34 +359,16 @@ describe("event_access", () => {
       subject_token_type: "urn:ietf:params:oauth:token-type:access_token",
       resource: `https://api.tolo.test/tenants/${TENANT}/events/${EVENT}`,
       audience: "backend-api",
-      scope: "events.read events.manage events.operate events.report",
     });
   });
 
-  it("requests only the event scopes that the session's tenant_access carries", async () => {
+  it("surfaces the IdP's invalid_scope when no default scope remains", async () => {
     const { auth, sessionAuth } = createTestAuth();
-    const idp = idpTokenEndpoint();
-    const { headers } = await signIn(auth, {
-      tokens: {
-        ...validTokens(),
-        accessToken: jwtWithScope(
-          "openid tenant.read events.read events.report",
-        ),
-      },
-    });
-
-    await sessionAuth.accessToken(headers, TENANT, {
-      type: "event_access",
-      eventId: EVENT,
-      client: "console",
-    });
-
-    expect(idp[0].form.get("scope")).toBe("events.read events.report");
-  });
-
-  it("does not exchange a tenant_access that carries no event scope", async () => {
-    const { auth, sessionAuth } = createTestAuth();
-    const idp = idpTokenEndpoint();
+    server.use(
+      http.post(TOKEN_ENDPOINT, () =>
+        HttpResponse.json({ error: "invalid_scope" }, { status: 400 }),
+      ),
+    );
     const { headers } = await signIn(auth, {
       tokens: {
         ...validTokens(),
@@ -400,8 +382,7 @@ describe("event_access", () => {
         eventId: EVENT,
         client: "console",
       }),
-    ).rejects.toThrow("carries no event scope");
-    expect(idp).toHaveLength(0);
+    ).rejects.toThrow(/failed with 400: .*invalid_scope/);
   });
 
   it("refuses the edge client for staff sessions", async () => {

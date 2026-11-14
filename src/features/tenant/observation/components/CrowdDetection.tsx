@@ -2,11 +2,13 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useStore } from "zustand";
 import { Button } from "@/components/ui/button";
 import { Tab, TabList, Tabs } from "@/components/ui/tabs";
 import { DetectionLineCreationModeToggle } from "@/features/tenant/detection/components/DetectionLineActions";
 import {
   createDetectionStores,
+  selectCountingLines,
   useDetectionStores,
 } from "@/features/tenant/detection/stores/detectionStore";
 import { BroadcastIndicator } from "@/features/tenant/webrtc/components/BroadcastIndicator";
@@ -37,6 +39,10 @@ import {
 import { createEspCameraVideoSource } from "../utils/espVideoSource";
 import { createMockCameraVideoSource } from "../utils/mockVideoSource";
 import {
+  detectionSettingsStorageKey,
+  persistDetectionSettings,
+} from "../utils/persistedDetectionSettings";
+import {
   type CrowdVideoSourceFactory,
   createCameraVideoSource,
 } from "../utils/videoSource";
@@ -44,6 +50,7 @@ import { CameraConnectionAuthorizationNotice } from "./CameraConnectionAuthoriza
 import { CrowdDetectionControls } from "./CrowdDetectionControls";
 import { CrowdDetectionView } from "./CrowdDetectionView";
 import { DevVideoSourcePanel } from "./DevVideoSourcePanel";
+import { MeasurementRecordPanel } from "./MeasurementRecordPanel";
 import { ObservationLockButton } from "./ObservationSoftLock";
 
 const DEV_VIDEO_SOURCE_ENABLED = process.env.NODE_ENV === "development";
@@ -198,6 +205,27 @@ export function CrowdDetection({
     return { settingsStores, viewStateStores, resultStores };
   }, [cameraKeySignature, espKeySignature, cameraStores]);
 
+  useEffect(
+    () =>
+      persistDetectionSettings(
+        settingsStore,
+        detectionSettingsStorageKey(eventId, edgeDeviceId, LOCAL_SOURCE_KEY),
+      ),
+    [settingsStore, eventId, edgeDeviceId],
+  );
+
+  useEffect(() => {
+    const stops = [...cameraSettingsStores].map(([key, store]) =>
+      persistDetectionSettings(
+        store,
+        detectionSettingsStorageKey(eventId, edgeDeviceId, key),
+      ),
+    );
+    return () => {
+      for (const stop of stops) stop();
+    };
+  }, [cameraSettingsStores, eventId, edgeDeviceId]);
+
   const {
     videoSource,
     videoSources,
@@ -311,6 +339,18 @@ export function CrowdDetection({
     isFresh,
   });
 
+  const localCountingLines = useStore(settingsStore, selectCountingLines);
+  const unlinkedTargets =
+    effectiveMode === "esp"
+      ? cameras
+          .filter((camera) => !camera.observationPointId)
+          .map((camera) => camera.name || camera.edgeDeviceId)
+      : pointIdByName
+        ? localCountingLines
+            .filter((line) => !pointIdByName.has(line.name))
+            .map((line) => line.name || line.id)
+        : [];
+
   const handleCameraPhase = useCallback(
     (key: string, phase: CameraCyclePhase, cause?: unknown) => {
       const error =
@@ -390,6 +430,14 @@ export function CrowdDetection({
         <p role="alert" className="text-destructive">
           {t("unregistered")}
         </p>
+      )}
+      {canReport && unlinkedTargets.length > 0 && (
+        <p role="status" className="text-destructive">
+          {t("unlinkedTargets", { targets: unlinkedTargets.join(", ") })}
+        </p>
+      )}
+      {canReport && (
+        <MeasurementRecordPanel eventId={eventId} edgeDeviceId={edgeDeviceId} />
       )}
       {cameraListConnectionError?.cameraEdgeDeviceId && (
         <p role="alert" className="text-destructive">

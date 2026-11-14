@@ -17,6 +17,10 @@ export function tenantOrigin(host: string): string | undefined {
   return `${new URL(rootOrigin()).protocol}//${host}`;
 }
 
+export function requestOrigin(request: Request): string {
+  return tenantOrigin(request.headers.get("host") ?? "") ?? rootOrigin();
+}
+
 const RESERVED_SUBDOMAINS = new Set(["www"]);
 
 export type TenantInvalidReason =

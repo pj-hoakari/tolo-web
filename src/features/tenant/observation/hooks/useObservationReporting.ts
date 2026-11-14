@@ -7,6 +7,10 @@ import type {
 } from "@/features/tenant/detection/stores/detectionStore";
 import { orpc } from "@/lib/orpc";
 import {
+  markMeasurementsSent,
+  recordMeasurements,
+} from "../utils/measurementRecords";
+import {
   buildWindowMeasurements,
   mapLinesToObservationPoint,
   mapLinesToObservationPoints,
@@ -18,8 +22,13 @@ const REPORT_INTERVAL_MS = 30_000;
 const HEARTBEAT_INTERVAL_MS = 10_000;
 const MAX_UNSENT_WINDOWS = 120;
 
+const REFUSED_CODES = new Set(["BAD_REQUEST", "FORBIDDEN", "NOT_FOUND"]);
+
 const isUnregistered = (cause: unknown) =>
   cause instanceof ORPCError && cause.code === "PRECONDITION_FAILED";
+
+const isRefused = (cause: unknown) =>
+  cause instanceof ORPCError && REFUSED_CODES.has(cause.code);
 
 export type ObservationReportingCamera = {
   key: string;
@@ -70,6 +79,7 @@ export function useObservationReporting({
   const isFreshRef = useRef(isFresh);
   isFreshRef.current = isFresh;
   const reportContextRef = useRef({ eventId, edgeDeviceId });
+  const nameByPointIdRef = useRef<ReadonlyMap<string, string>>(new Map());
 
   useEffect(() => {
     const previous = reportContextRef.current;
@@ -89,6 +99,9 @@ export function useObservationReporting({
       .listObservationPoints({ eventId, edgeDeviceId })
       .then(({ observationPoints }) => {
         if (!cancelled) {
+          nameByPointIdRef.current = new Map(
+            observationPoints.map((p) => [p.observationPointId, p.name]),
+          );
           setPointIdByName(
             new Map(
               observationPoints.map((p) => [p.name, p.observationPointId]),
@@ -295,6 +308,8 @@ export function useObservationReporting({
       }
       windowStart = windowEnd;
       const measurements = pending.splice(0);
+      const context = { eventId, edgeDeviceId };
+      recordMeasurements(context, measurements, nameByPointIdRef.current);
       const unsent = unsentRef.current;
       const windows =
         measurements.length === 0 ? unsent : [...unsent, measurements];
@@ -306,12 +321,14 @@ export function useObservationReporting({
           edgeDeviceId,
           measurements: windows.flat(),
         })
+        .then(() => markMeasurementsSent(context, windows.flat()))
         .catch((cause: unknown) => {
           console.error("failed to report measurements", cause);
           if (isUnregistered(cause)) {
             setUnregistered(true);
             return;
           }
+          if (isRefused(cause)) return;
           unsentRef.current = [...windows, ...unsentRef.current].slice(
             -MAX_UNSENT_WINDOWS,
           );
