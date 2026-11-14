@@ -228,7 +228,8 @@ function polygonArea(points: Pt[]) {
 /**
  * そのフロアの建物の外枠（壁として描くエリア）。
  * 案内マップエディタで用途を「建物の外枠」にしたエリア（色キー building）があればそれ、
- * 無ければ場所の半分以上を含む、いちばん大きいエリアを外枠とみなす
+ * 無ければ場所の半分以上を含む、いちばん大きいエリアを外枠とみなす。
+ * ただし色（種類）を選んだエリアは、その色で見せたいエリアなので外枠とみなさない
  */
 export function buildingAreaOf(objects: MapObject[]) {
   const areas = objects.filter(
@@ -239,6 +240,7 @@ export function buildingAreaOf(objects: MapObject[]) {
   if (marked) return marked;
   const places = objects.filter((o) => o.kind === "place");
   const candidates = areas
+    .filter((a) => NEUTRAL_KEYS.has(a.color) || a.color === "room")
     .filter(
       (a) =>
         places.length > 0 &&

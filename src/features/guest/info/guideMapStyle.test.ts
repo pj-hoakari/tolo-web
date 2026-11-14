@@ -162,6 +162,17 @@ describe("buildingAreaOf", () => {
     expect(buildingAreaOf(objects)).toBe(big);
   });
 
+  it("色を選んだエリアは外枠とみなさない（選んだ色で見せる）", () => {
+    const blue = area("blue", 500, "sky");
+    expect(buildingAreaOf([blue, room("a", 50, 50), room("b", 300, 300)])).toBe(
+      undefined,
+    );
+    const plain = area("plain", 500, "room");
+    expect(
+      buildingAreaOf([plain, room("a", 50, 50), room("b", 300, 300)]),
+    ).toBe(plain);
+  });
+
   it("場所を含まないエリアしか無ければ外枠は無い", () => {
     expect(buildingAreaOf([area("lawn", 100), room("a", 900, 900)])).toBe(
       undefined,

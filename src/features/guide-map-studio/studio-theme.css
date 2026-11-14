@@ -1,0 +1,132 @@
+/* 案内マップ・スタジオのスコープ（.guide-map-studio の配下だけに効く）。
+   色は tolo-web の共通トークンに合わせる。地図の上の道案内・目印の強調色は、ゲスト画面と同じ --guest-accent。
+   アニメーションのクラスは、ゲスト画面（guest-theme.css）とぶつからないよう studio- を付ける。 */
+
+.guide-map-studio {
+  --studio-accent: var(--guest-accent);
+  --studio-on-accent: oklch(1 0 0);
+  --studio-divider: var(--border);
+  --studio-text-primary: var(--foreground);
+  --studio-text-secondary: var(--muted-foreground);
+  --studio-background: var(--background);
+  --studio-surface: var(--card);
+  --studio-room: var(--card);
+  --studio-map: var(
+    --guest-map-ground
+  ); /* 地図の面は、お客さんの案内マップの地面と同じ */
+}
+
+/* ダイアログ・メニューが開くときの、ごく短いフェード */
+@keyframes studio-fade {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.studio-fade {
+  animation: studio-fade 0.2s ease-out;
+}
+
+/* 道具の説明カード：開く（in）・閉じる（out）・隣の道具へ移る（swap） */
+@keyframes studio-tool-card-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.studio-tool-card {
+  animation: studio-tool-card-in 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-origin: left center;
+}
+@keyframes studio-tool-card-out {
+  to {
+    opacity: 0;
+    transform: translateX(-4px) scale(0.98);
+  }
+}
+.studio-tool-card-out {
+  animation: studio-tool-card-out 0.12s ease-in forwards;
+  transform-origin: left center;
+}
+@keyframes studio-tool-card-swap {
+  from {
+    opacity: 0;
+  }
+}
+.studio-tool-card-swap {
+  animation: studio-tool-card-swap 0.16s ease-out;
+}
+
+/* パネルの薄いスクロールバー */
+.studio-thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.studio-thin-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.studio-thin-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 9999px;
+}
+
+/* 誘導プレビューの経路（点が流れるアニメーション） */
+@keyframes studio-route-flow {
+  to {
+    stroke-dashoffset: -22;
+  }
+}
+.studio-route-anim {
+  animation: studio-route-flow 0.9s linear infinite;
+}
+
+/* 書き出し完了のチェックマークを描く */
+@keyframes studio-check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.studio-check-draw {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: studio-check-draw 0.4s ease-out 0.05s forwards;
+}
+
+/* プレビューでピンを押したときに、輪が一度だけ広がる */
+@keyframes studio-pin-ping {
+  from {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.5);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.studio-pin-ping {
+  animation: studio-pin-ping 0.4s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-fade,
+  .studio-tool-card,
+  .studio-tool-card-out,
+  .studio-tool-card-swap,
+  .studio-route-anim,
+  .studio-pin-ping {
+    animation: none;
+  }
+  .studio-check-draw {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
