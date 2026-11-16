@@ -81,13 +81,40 @@ describe("案内マップのフィクスチャ（KCG本館）", () => {
     for (const p of graph.points) expect(referenced).toContain(p.pointId);
   });
 
-  it("目的地と階移動手段はすべてグラフのポイントに結び付いている", () => {
+  // 誘導グラフは道のつながり（ルート図）として、混雑や位置を受け取る所だけを持つ。部屋は地図だけに持つ
+  it("階移動手段はすべてグラフのポイントに結び付いている", () => {
     for (const o of localizeGuideMapLayout(
       layout,
       new Map(),
       "ja",
-    ).objects.filter((o) => isDestination(o) || isConnector(o)))
+    ).objects.filter(isConnector))
       expect(o.pointId, o.title).toBeDefined();
+  });
+
+  it("グラフに無い部屋も、地図に日本語と英語の名前を持ち、目的地に選べる", () => {
+    const rooms = layout.objects.filter(
+      (o) => o.kind === "place" && !o.connector && !o.pointId,
+    );
+    expect(rooms.length).toBeGreaterThan(0);
+    for (const o of rooms) {
+      expect(o.title?.ja, o.id).toBeTruthy();
+      expect(o.title?.en, o.id).toBeTruthy();
+    }
+    const en = localizeGuideMapLayout(layout, new Map(), "en").objects;
+    expect(
+      en.filter((o) => isDestination(o) && !o.pointId).map((o) => o.title),
+    ).toContain("Room 204");
+  });
+
+  it("グラフのポイントは、階段・エレベーター・廊下と、混雑や行列を受け取る場所だけ", () => {
+    const names = new Set(
+      sampleGuideMapGraph.nodes
+        .filter(isPointNode)
+        .map((n) => n.data.labels.ja),
+    );
+    expect([...names].sort()).toEqual(
+      ["エレベーター", "ホール", "ラウンジ", "廊下", "現在地", "階段"].sort(),
+    );
   });
 
   it("レイアウトが参照するポイント ID はゲスト向けのグラフに、ルート ID は管理側のグラフにある", () => {

@@ -448,15 +448,21 @@ const SECTIONS: Section[] = [
           <>
             お客さんの画面は、混雑の情報を<B>グラフのポイント・ルートごと</B>
             に受け取ります。地図の場所・範囲がそのポイント・ルートに
-            <B>結び付いていないと、混んでいても避けられません</B>。上の{" "}
-            <B>確かめる・共有</B> の <B>つなぎ</B>{" "}
-            でグラフ（グラフ編集で作ったもの）を読み込み、地図の物を選んでから「選んでいる物に結び付ける」を押してください。廊下などの通路は、通路に沿って{" "}
-            <B>範囲</B> を描き、ルートに結び付けます。結び付いていないものは{" "}
+            <B>結び付いていないと、混んでいても避けられません</B>。
+            地図には部屋・範囲・文字など<B>全部</B>
+            を描きますが、グラフ（グラフ編集で作る誘導グラフ）に入れるのは、
+            <B>階段・エレベーター・エスカレーター・廊下</B>{" "}
+            と、行列や混雑を測る所だけで足ります。部屋は地図の名前だけで目的地に選べるので、結び付けなくてかまいません。
+            グラフは開いたときに読み込まれます。上の <B>確かめる・共有</B> の{" "}
+            <B>つなぎ</B>{" "}
+            で地図の物を選んでから「選んでいる物に結び付ける」を押してください。廊下などの通路は、通路に沿って{" "}
+            <B>範囲</B>{" "}
+            を描き、ルートに結び付けます。結び付いていない階段・エレベーターは{" "}
             <B>チェック</B> でも分かります。
           </>
         ),
         keywords:
-          "つなぎ グラフ ポイント ルート 結び付け 混雑 避けられない 通路 廊下",
+          "つなぎ グラフ 誘導グラフ ポイント ルート 結び付け 混雑 避けられない 通路 廊下 階段 エレベーター 部屋",
       },
     ],
   },
@@ -1204,14 +1210,20 @@ const SECTIONS_EN: Section[] = [
             The visitors’ screen receives crowd info{" "}
             <B>per graph point/route</B>. If places and zones on the map{" "}
             <B>aren’t linked</B> to them, crowds there <B>can’t be avoided</B>.
-            Load the graph (made in the graph editor) in <B>Links</B> (under{" "}
+            Draw <B>everything</B> on the map (rooms, zones, text), but the
+            graph (the guidance graph made in the graph editor) only needs{" "}
+            <B>stairs, elevators, escalators and corridors</B>, plus places
+            where queues or crowds are measured. Rooms can be destinations by
+            their map names alone, so they don’t need links. The graph is loaded
+            when you open the studio. In <B>Links</B> (under{" "}
             <B>Check &amp; share</B> at the top), select something on the map,
             and press “Link to selected”. For corridors, draw a <B>zone</B>{" "}
             along the passage and link it to a route. <B>Check</B> also lists
-            what isn’t linked.
+            stairs and elevators that aren’t linked.
           </>
         ),
-        keywords: "links graph point route crowd avoid corridor",
+        keywords:
+          "links graph guidance point route crowd avoid corridor stairs elevator room",
       },
     ],
   },

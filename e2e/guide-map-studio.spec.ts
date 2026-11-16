@@ -118,7 +118,7 @@ test("開くと、イベントのグラフを取って地図に結び付ける",
   expect((await request).postDataJSON()).toEqual({
     json: { eventId: "test" },
   });
-  // 一時保存した地図に、KCG本館のグラフ（ポイント 57 か所）が入る
+  // 一時保存した地図に、KCG本館の誘導グラフ（階段・エレベーター・廊下など 23 か所）が入る
   await expect
     .poll(() =>
       page.evaluate(() => {
@@ -131,7 +131,7 @@ test("開くと、イベントのグラフを取って地図に結び付ける",
         return book?.pages[0]?.doc.graph?.points.length ?? 0;
       }),
     )
-    .toBe(57);
+    .toBe(23);
 });
 
 test("保存した地図を読み込めないと知らせ、もう一度読み込める", async ({

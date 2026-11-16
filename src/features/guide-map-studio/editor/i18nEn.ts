@@ -37,6 +37,10 @@ export const EN: Record<string, string> = {
   "保存した地図やグラフが出ていない可能性があります。通信の状態を確かめて、もう一度読み込んでください。":
     "The saved map or graph may be missing. Check your connection and load again.",
   もう一度読み込む: "Load again",
+  "「{name}」（{floor}）がグラフのポイントに結び付いていません":
+    "“{name}” ({floor}) isn't linked to a graph point",
+  "階段・エレベーターは混雑を避けて階をまたぐのに使うので、右の「くわしい設定」→「混雑とのつなぎ」で、グラフのポイントを選んでください。部屋は結び付けなくても目的地に選べます。":
+    "Stairs and elevators are used to avoid crowds between floors, so choose a graph point under “Advanced settings” → “Crowd link” on the right. Rooms can be destinations without a link.",
   "見本の会場マップを読み込みます。いまのタブの内容は置き換わります。よろしいですか？":
     "Load the sample venue map? The map in the current tab will be replaced.",
   閉じる: "Close",
