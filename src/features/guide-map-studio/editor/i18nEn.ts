@@ -18,6 +18,21 @@ export const EN: Record<string, string> = {
   見本を読み込む: "Load sample",
   書き出す: "Export",
   完了: "Done",
+  保存: "Save",
+  "保存中…": "Saving…",
+  保存しました: "Saved",
+  "保存できませんでした。通信の状態を確かめて、もう一度お試しください。":
+    "Couldn't save. Check your connection and try again.",
+  "tolo-web が地図を受け付けませんでした。グラフに無い階や場所を指していないか、「確かめる・共有」のチェックで確認してください。":
+    "tolo-web didn't accept the map. Use the check in “Check & share” to see whether it points to floors or places that aren't in the graph.",
+  "このイベントの地図を保存する権限がありません。":
+    "You don't have permission to save this event's map.",
+  "（tolo-web に保存していない変更があります）":
+    "(There are changes not saved to tolo-web)",
+  "このブラウザで作業したあとに、tolo-web へ別の地図が保存されています。保存されている地図を開きますか？（いまの作業はそのまま残ります）":
+    "A different map was saved to tolo-web after your work in this browser. Open the saved map? (Your current work stays as it is.)",
+  保存されている地図を開く: "Open the saved map",
+  保存されている地図: "Saved map",
   "見本の会場マップを読み込みます。いまのタブの内容は置き換わります。よろしいですか？":
     "Load the sample venue map? The map in the current tab will be replaced.",
   閉じる: "Close",
