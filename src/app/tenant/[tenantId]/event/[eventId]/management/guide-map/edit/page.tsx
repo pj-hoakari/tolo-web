@@ -3,9 +3,11 @@ import { StaffOnlineBoundary } from "@/components/pwa/staff-online-boundary";
 import { StaffStorageProvider } from "@/components/pwa/staff-storage-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LogoutButton } from "@/features/auth/LogoutButton";
-import { GuideMapStudioTitle } from "@/features/guide-map-studio/editor/GuideMapStudioTitle";
-import { VenueMapStudio } from "@/features/guide-map-studio/editor/VenueMapStudio";
-import { guideMapEditPath } from "@/features/guide-map-studio/routes";
+import {
+  GuideMapStudio,
+  GuideMapStudioTitle,
+  guideMapEditPath,
+} from "@/features/guide-map-studio";
 import { ManagementBackLink } from "@/features/tenant/management/components/ManagementBackLink";
 import { getStaffPwaMetadata } from "@/lib/pwa/staff-manifest";
 import { createStaffStorageScope } from "@/lib/pwa/staff-storage";
@@ -30,7 +32,7 @@ export default async function TenantGuideMapEdit({
     <StaffOnlineBoundary>
       <StaffStorageProvider scope={createStaffStorageScope(tenantId, viewer)}>
         <div className="h-dvh">
-          <VenueMapStudio
+          <GuideMapStudio
             eventId={eventId}
             leading={
               <>

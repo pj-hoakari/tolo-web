@@ -2,6 +2,8 @@
 
 作業日: 2026-11-16。**更新済みNPM_TOKENで依存同期し、現在の実装を維持したままローカルの自動検証を完了した。単体1,259件・Storybook136件・E2E408件、型検査・変更箇所Lint・非モック本番buildが成功。実機/実IdPは未検証。**
 
+初回PWA実装の記録はコミット `871954eb97ee140d5cf8dad6b2c5cfa1eb6b628f` 時点。今回のdevelop取り込み・競合解消は末尾に記録する。
+
 ## ブランチと退避
 
 | 項目              | 値                                                                                                                               |
@@ -99,7 +101,7 @@ Android Chrome/iOS Safariの実機、OSへインストールしたPWA、実IdP�
 - `src/components/pwa/staff-pwa-install.tsx`
 - `src/components/pwa/staff-storage-provider.test.tsx`
 - `src/components/pwa/staff-storage-provider.tsx`
-- `src/features/guide-map-studio/editor/VenueMapStudio.tsx`
+- `src/features/guide-map-studio/GuideMapStudio.tsx`
 - `src/features/tenant/management/components/ManagementHeader.tsx`
 - `src/features/tenant/management/members/TenantMembers.tsx`
 - `src/features/tenant/observation/components/CrowdDetection.tsx`
@@ -111,3 +113,13 @@ Android Chrome/iOS Safariの実機、OSへインストールしたPWA、実IdP�
 - `src/lib/pwa/staff-manifest.ts`
 - `src/lib/pwa/staff-storage.test.ts`
 - `src/lib/pwa/staff-storage.ts`
+
+## develop取り込み時の競合解消（2026-11-16）
+
+develop `512b6ea6b0de079e4b9732fb7923d919bee1dd7c` をPWAブランチへ取り込んだ。developブランチへのマージ、Push、PR作成、本番反映は行わない。
+
+競合は案内マップ編集pageとGuideMapStudioの2ファイル。developの名称変更、公開入口、CSS配置、components/hooks/utilsへの分割構成を優先し、旧editor/VenueMapStudioは復活させない。PWAのオンライン境界と保存所有者Provider、および下書き・指紋・IndexedDBキー分離だけを新しいGuideMapStudioへ維持した。新構成との差分は同ディレクトリ内ではGuideMapStudioのPWA用キー処理のみ。ゲスト関連ファイルは変更しない。
+
+初回実装の全E2E408件の結果と、競合解消後の検証範囲は区別する。今回の実測は `pwa-test-results.md` の「develop取り込み後の再検証」を参照。
+
+競合解消後は全単体/Storybook 1,395件成功（既存6件skip）、関連E2E76件成功、型・Lint・非モック本番buildが成功。関連外のE2E全408件はこのマージ状態で再実行していない。マージ先はfeature/pwa-audit-improvementのみで、developの参照は変更しない。

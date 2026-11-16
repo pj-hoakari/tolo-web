@@ -26,7 +26,7 @@
 | tenant `/event/[eventId]/management/graph/edit`      | ルート図編集                     | staff、event編集権限はbackend                                    | `requireStaff`、ノード・経路編集・保存                                           | B       | 設定・編集機能                                                           | 通信断時の編集・保存不可、未保存編集は再読込で破棄                         | スタッフmanifest・案内除去・オンライン境界                 | graph-editor系 / PWA                             |
 | tenant `/event/[eventId]/observation`                | 観測端末一覧                     | staff、event権限はbackend                                        | 端末一覧・登録・映像確認・カメラ接続                                             | B       | 機器管理、カメラ・オンライン依存                                         | 通信断時の管理操作不可                                                     | `requireStaff`・スタッフmanifest・案内除去・オンライン境界 | observation-devices / camera-authorization / PWA |
 | tenant `/event/[eventId]/observation/[edgeDeviceId]` | 観測・カメラ検知                 | staff / 対応するmachine、匿名はローカル表示のみ（APIは別途認証） | `getViewer`、ソフトロック、カメラ、Wake Lock、検知・報告・端末記録/JSONL書き出し | B       | 専用端末と権限・前景実行が必要                                           | ローカル検知と既存報告再試行は維持。切断表示を追加しサーバ反映を保証しない | 案内除去、接続状態の注意表示。既存端末用起動URLは維持      | observation / reporting単体 / PWA                |
-| tenant `/event/[eventId]/management/guide-map/edit`  | 案内マップ編集（VenueMapStudio） | staff、保存はevent backend権限                                   | `requireStaff`、複数マップ・スナップショット・サーバ保存                         | B       | 既存のイベント内導線から開く制作・設定機能。単独のインストール訴求は不要 | 通信断でサーバ操作停止。復帰後再取得。既存下書きは利用者/tenantで分離      | staff manifest・案内除去・オンライン境界・保存名前空間     | guide-map-studio / PWA / storage単体             |
+| tenant `/event/[eventId]/management/guide-map/edit`  | 案内マップ編集（GuideMapStudio） | staff、保存はevent backend権限                                   | `requireStaff`、複数マップ・スナップショット・サーバ保存                         | B       | 既存のイベント内導線から開く制作・設定機能。単独のインストール訴求は不要 | 通信断でサーバ操作停止。復帰後再取得。既存下書きは利用者/tenantで分離      | staff manifest・案内除去・オンライン境界・保存名前空間     | guide-map-studio / PWA / storage単体             |
 
 実装根拠は各URLに対応する `src/app` のpageと、`src/features/tenant/management` / `observation` / `webrtc`。ロールは画面の表示可否とAPIの操作権限を区別した。PWAは追加の権限を与えない。
 
@@ -37,7 +37,7 @@
 | `/management`         | CreateEventForm / ArchiveEventDialog / RestoreEventButton、検索・状態フィルタ                                         | B。サーバ確認後に変更を反映                                                    |
 | `/management/members` | CreateInvitationForm / MemberActionDialog / EventRolesDialog                                                          | C。招待作成・失効、役割変更・メンバー削除・イベント割当                        |
 | event management      | ObservationSettingsSection / ObservationLinkPanel / 言語・テーマメニュー                                              | B。設定・紐付けの保存はオンライン必須                                          |
-| guide-map edit        | VenueMapStudio / タブ・下書き・IndexedDB保存ポイント・server保存・比較/読み込み                                       | B。下書き・保存ポイントはアカウント/tenantで分離し、サーバ保存はオンライン必須 |
+| guide-map edit        | GuideMapStudio / タブ・下書き・IndexedDB保存ポイント・server保存・比較/読み込み                                       | B。下書き・保存ポイントはアカウント/tenantで分離し、サーバ保存はオンライン必須 |
 | graph edit            | SidePanel / ノード・経路・グループcontext menu / 多言語ラベル / layout                                                | B。ローカル編集後の保存はサーバ応答必須                                        |
 | observation一覧       | RegisterEdgeDeviceForm / UnregisterEdgeDeviceDialog / CameraProvisioningDialog / StopCameraDialog / VideoReceiverView | B。WebRTC・Firebase signaling・デバイス認可                                    |
 | observation端末       | ObservationSoftLock / DetectionSettingsPanel / ScreenWakeControl / CameraConnectionAuthorizationNotice                | B。ローカルロックはサーバ認証の代わりではない                                  |
@@ -77,3 +77,7 @@ root layout / PwaProvider / legacy manifest / oRPC / graph取得は共有。ス�
 前回は13画面。今回は案内マップ編集を追加して14画面（A:2、B:4、C:8）。メンバー管理は今回の「管理専用は不要」という基準に合わせBからCへ見直した。CもPWAからの遷移を禁止する意味ではない。
 
 案内マップの下書き・サーバ指紋・IndexedDBスナップショット、観測の検出設定・計測記録が追加されている。既存の保存機能を維持しながら、tenantとアカウント別の名前空間に分離する。所有者不明の旧保存キーは自動移行せず、削除もしない。
+
+## developの構成変更を取り込んだ確認
+
+`512b6ea6b0de079e4b9732fb7923d919bee1dd7c` のGuideMapStudioへの名称変更とファイル分割を採用。公開URLと分類（A:2、B:4、C:8）は不変。PWAの境界・保存分離を新構成へ維持し、ゲストページは変更しない。

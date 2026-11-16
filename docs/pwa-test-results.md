@@ -4,6 +4,8 @@
 
 **更新済みNPM_TOKENで依存同期が成功。現在の実装を維持したまま、単体・Storybook・全E2E・型・変更箇所のLint・本番ビルドが通過した。実機・実IdPは未検証。**
 
+以下の表は元のPWA実装コミット `871954eb97ee140d5cf8dad6b2c5cfa1eb6b628f` 時点の実測。develop取り込み後の最新結果は末尾の「develop取り込み後の再検証」に記載する。
+
 ## 実測結果
 
 | 項目                        | 状態                 | 証拠・結果                                                                                                  |
@@ -81,3 +83,16 @@ git diff --check
 Android Chrome実機、iOS Safari実機、OSへ実インストールしたPWA、実IdPでのアカウント切替、実機オフライン復旧は未検証。Android相当のUA/touch/390×844とstandalone表示の自動試験は成功したが、実機の合格へ置き換えない。
 
 legacy id `/` の既存インストールは自動移行しない。所有者不明の旧下書き・計測記録も削除/自動移行せずブラウザ内へ残すため、リリース前に利用者への案内と復旧手順を決める。Push・PR・マージ・本番反映は今回の範囲外。
+
+## develop取り込み後の再検証
+
+対象develop: `512b6ea6b0de079e4b9732fb7923d919bee1dd7c`。解消方針はdevelopの名称・公開入口・ファイル分割を優先し、既存PWAの境界と保存分離を保持。
+
+- 全単体・Storybook: 170ファイル、1,395件成功、既存PostgreSQL6件skip、失敗0（61.13秒）。内訳は単体1,259件・Storybook136件で前回から不変。
+- TypeScript: `tsc --noEmit` 成功。
+- 競合2ファイルと更新3資料のBiome: 成功。全体Lint（整形除外）も既存警告2件のみで成功。未解決競合0、developとのguest差分0。
+- 案内マップ/PWA/guest/authの関連E2E76件: 全件成功（53.0秒、失敗/skip/flaky0）。全408件の再実行とは区別する。
+- 非モック本番build: 成功。API/CROWD/AUTH/TENANTモックをdisabledにして型検査・ページ生成まで完了。
+- 既存MSWの生成バージョン警告は出るが、全単体/Storybookは成功。workerを今回の競合解消で更新しない。
+
+ログは `node_modules/.cache/pwa-merge-vitest.{log,json}`、`pwa-merge-typecheck.log`、`pwa-merge-e2e.{log,json}`、`pwa-merge-build.log`、`pwa-merge-lint.log` に保存。
