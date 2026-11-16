@@ -1,4 +1,4 @@
-FROM node:24-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20
+FROM node:26-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends wget gnupg ca-certificates \
