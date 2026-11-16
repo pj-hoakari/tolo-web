@@ -45,7 +45,7 @@ export function PageTabs({
     <div
       role="tablist"
       aria-label={t("マップのタブ")}
-      className="studio-thin-scroll flex min-w-0 items-center gap-1 overflow-x-auto"
+      className="studio-thin-scroll flex min-w-[6.5rem] items-center gap-1 overflow-x-auto"
     >
       {pages.map((p, i) =>
         editingPageId === p.id ? (

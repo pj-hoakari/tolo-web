@@ -9,7 +9,6 @@ import { useI18n } from "../../i18n/i18n";
 export function MapStatusBar({
   coordRef,
   showCoords,
-  showViewToggles,
   showRulerToggle,
   showRulers,
   onToggleRulers,
@@ -23,8 +22,6 @@ export function MapStatusBar({
   /** マウスの位置を書き込む所（マウスを動かすたびに画面全体を描き直さないよう、直接書き換える） */
   coordRef: React.RefObject<HTMLSpanElement | null>;
   showCoords: boolean;
-  /** 定規・全体図の切り替えを出すか（スマホで見るときは出さない） */
-  showViewToggles: boolean;
   /** 定規の切り替えを出すか（プレビュー中は出さない） */
   showRulerToggle: boolean;
   showRulers: boolean;
@@ -63,21 +60,19 @@ export function MapStatusBar({
           <Ruler className="size-4" />
         </button>
       )}
-      {showViewToggles && (
-        <button
-          type="button"
-          aria-pressed={showMini}
-          aria-label={t("全体図")}
-          title={showMini ? t("全体図を隠す") : t("全体図を出す")}
-          onClick={onToggleMini}
-          className={cn(
-            "flex size-7 items-center justify-center rounded-md",
-            showMini ? "bg-accent text-primary" : "hover:bg-accent",
-          )}
-        >
-          <MapIcon className="size-4" />
-        </button>
-      )}
+      <button
+        type="button"
+        aria-pressed={showMini}
+        aria-label={t("全体図")}
+        title={showMini ? t("全体図を隠す") : t("全体図を出す")}
+        onClick={onToggleMini}
+        className={cn(
+          "flex size-7 items-center justify-center rounded-md",
+          showMini ? "bg-accent text-primary" : "hover:bg-accent",
+        )}
+      >
+        <MapIcon className="size-4" />
+      </button>
       <button
         type="button"
         aria-label={t("全体を表示")}
