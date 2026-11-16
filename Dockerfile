@@ -1,8 +1,8 @@
-FROM node:24-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205 AS base
+FROM node:26-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME/bin:$PATH
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN corepack enable
+RUN npm install -g corepack@0.36.0 && corepack enable
 WORKDIR /app
 
 FROM base AS deps
@@ -22,7 +22,7 @@ FROM mcr.microsoft.com/playwright:v1.65.0-noble@sha256:9beb546099e11f52d62e50553
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME/bin:$PATH
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN corepack enable
+RUN npm install -g --force corepack@0.36.0 && corepack enable
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -34,7 +34,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm build
 
-FROM node:24-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205 AS runner
+FROM node:26-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS runner
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
