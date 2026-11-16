@@ -8,7 +8,7 @@ import {
   genId,
   isConnector,
   type MapObject,
-} from "./venueMap";
+} from "./guideMapDoc";
 
 // 階段・エレベーター等の、ほかの階の分身（コピー・複製で、つながる階と各階の設定をそのまま写すため）
 export const twinsOf = (all: MapObject[], items: MapObject[]) => {

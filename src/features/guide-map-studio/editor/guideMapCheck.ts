@@ -3,13 +3,13 @@
 
 // 行けるかどうかは、お客さんの画面の案内マップと同じ計算（src/features/guest/info/guideMapFloorRoute.ts）で確かめる
 import { computeFloorRoute } from "@/features/guest/info/guideMapFloorRoute";
-import { toRouteLayout } from "./guideMapIO";
 import {
+  type GuideMapDoc,
   isConnector,
   isTwinOf,
   needsGraphPoint,
-  type VenueMapDoc,
-} from "./venueMap";
+} from "./guideMapDoc";
+import { toRouteLayout } from "./guideMapIO";
 
 export type CheckIssue = {
   kind:
@@ -34,8 +34,8 @@ export type CheckIssue = {
   vars?: Record<string, string | number>;
 };
 
-export function checkVenueDoc(
-  doc: VenueMapDoc,
+export function checkGuideMapDoc(
+  doc: GuideMapDoc,
   untitled: string,
 ): CheckIssue[] {
   const issues: CheckIssue[] = [];
@@ -218,7 +218,7 @@ export function checkVenueDoc(
   // 重なっている四角・丸（通路がふさがったり、押しにくくなったりする）
   const shapes = doc.objects.filter(
     (o) => o.kind === "place" && o.shape !== "pin",
-  ) as Extract<VenueMapDoc["objects"][number], { kind: "place" }>[];
+  ) as Extract<GuideMapDoc["objects"][number], { kind: "place" }>[];
   let overlaps = 0;
   for (let i = 0; i < shapes.length && overlaps < 20; i++) {
     for (let j = i + 1; j < shapes.length && overlaps < 20; j++) {

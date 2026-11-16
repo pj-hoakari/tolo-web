@@ -3,9 +3,9 @@
 // 書き出すマップを選ぶ（タブが2つ以上のときだけ出す）
 
 import { Download } from "lucide-react";
+import type { StudioPage } from "./guideMapDoc";
 import { useI18n } from "./i18n";
 import { Modal } from "./Modal";
-import type { StudioPage } from "./venueMap";
 
 type ExportPickerDialogProps = {
   pages: StudioPage[];

@@ -135,7 +135,7 @@ export type TextObject = Base & {
 };
 export type MapObject = PlaceObject | RouteObject | AreaObject | TextObject;
 
-export type VenueMapDoc = {
+export type GuideMapDoc = {
   version: 1;
   floors: Floor[];
   activeFloorId: string;
@@ -143,11 +143,11 @@ export type VenueMapDoc = {
   north: number; // マップ上向きが指す方位角（度）。0=未設定
   scale: number; // 1px あたりのメートル（0=未設定）
   startId?: string; // 現在地（tolo-web の案内の出発点）にする場所の id。誘導プレビューの「出発」で選ぶ
-  graph?: VenueGraph; // 結び付ける tolo-web のグラフ（スタジオの中だけで使う。tolo-web 用の書き出しには入れない）
+  graph?: GuidanceGraph; // 結び付ける tolo-web のグラフ（スタジオの中だけで使う。tolo-web 用の書き出しには入れない）
 };
 
 // tolo-web のグラフ（グラフ編集の nodes / edges）から、スタジオで使う分だけ取り出したもの
-export type VenueGraph = {
+export type GuidanceGraph = {
   groups: { id: string; labels: LocalizedLabel }[]; // 階・建物などのまとまり
   points: {
     id: string;
@@ -396,8 +396,8 @@ export const floorSize = (f: Floor | undefined) => ({
 export const studioBookKey = (eventId: string) =>
   `guide-map-studio:book:${eventId}`;
 
-// スタジオのタブ1枚分。タブはスタジオの中だけのもので、書き出すのは doc（VenueMapDoc）だけ。
-export type StudioPage = { id: string; name: string; doc: VenueMapDoc };
+// スタジオのタブ1枚分。タブはスタジオの中だけのもので、書き出すのは doc（GuideMapDoc）だけ。
+export type StudioPage = { id: string; name: string; doc: GuideMapDoc };
 export type StudioBook = { pages: StudioPage[]; activePageId: string };
 
 export const genId = (prefix = "o") =>
@@ -410,7 +410,7 @@ export const genId = (prefix = "o") =>
  *  - markerSize（正方形のマークの大きさ）→ markW / markH
  *  - photo（前の版で入れた写真）は外す
  */
-export function normalizeDoc(d: VenueMapDoc): VenueMapDoc {
+export function normalizeDoc(d: GuideMapDoc): GuideMapDoc {
   type Old = { markerSize?: number; photo?: string };
   if (!d.objects.some((o) => "markerSize" in o || "photo" in o)) return d;
   return {
@@ -430,7 +430,7 @@ export function normalizeDoc(d: VenueMapDoc): VenueMapDoc {
   };
 }
 
-export function emptyDoc(): VenueMapDoc {
+export function emptyDoc(): GuideMapDoc {
   const floorId = genId("f");
   return {
     version: 1,

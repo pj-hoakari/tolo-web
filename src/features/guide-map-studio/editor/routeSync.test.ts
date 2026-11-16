@@ -15,7 +15,7 @@ import {
 import sampleGraph from "@/mocks/fixtures/guideMapGraph.json";
 import {
   parseGraph,
-  sampleVenueDoc,
+  sampleGuideMapDoc,
   toGuideMapLayout,
   toRouteLayout,
 } from "./guideMapIO";
@@ -59,7 +59,7 @@ const throughServer = (
   ),
 });
 
-const doc = await sampleVenueDoc();
+const doc = await sampleGuideMapDoc();
 const graph = parseGraph(sampleGraph);
 const pointLabels = new Map(graph.points.map((p) => [p.id, p.labels]));
 const studio = toRouteLayout(doc);

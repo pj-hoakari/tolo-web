@@ -1,7 +1,7 @@
 // スマートガイド：ドラッグ中の項目を、ほかの項目の「端・中央」にそろえたり、
 // 隣どうしの「すき間」を等しくそろえたりする（Figma のような吸着＋ガイド線）。
 
-import { bboxOf, isConnector, type MapObject, markBoxOf } from "./venueMap";
+import { bboxOf, isConnector, type MapObject, markBoxOf } from "./guideMapDoc";
 
 export type Box = { l: number; t: number; r: number; b: number };
 export type GuideLine = { x1: number; y1: number; x2: number; y2: number };

@@ -7,12 +7,12 @@ export const EN: Record<string, string> = {
     "Search (e.g. copy, stairs, align)",
   "「{q}」に当てはまる質問がありません。別のことばで探してみてください。":
     "No questions match “{q}”. Try other words.",
-  "会場マップ・スタジオ": "Venue Map Studio",
+  "案内マップ・スタジオ": "Guide Map Studio",
   "元に戻す（⌘Z）": "Undo (⌘Z)",
   元に戻す: "Undo",
   "やり直し（⌘⇧Z）": "Redo (⌘⇧Z)",
   やり直し: "Redo",
-  整列済みの見本会場マップを読み込む: "Load the sample venue map",
+  整列済みの見本の案内マップを読み込む: "Load the sample guide map",
   見本: "Sample",
   読み込む: "Import",
   見本を読み込む: "Load sample",
@@ -41,8 +41,8 @@ export const EN: Record<string, string> = {
     "“{name}” ({floor}) isn't linked to a graph point",
   "階段・エレベーターは混雑を避けて階をまたぐのに使うので、右の「くわしい設定」→「混雑とのつなぎ」で、グラフのポイントを選んでください。部屋は結び付けなくても目的地に選べます。":
     "Stairs and elevators are used to avoid crowds between floors, so choose a graph point under “Advanced settings” → “Crowd link” on the right. Rooms can be destinations without a link.",
-  "見本の会場マップを読み込みます。いまのタブの内容は置き換わります。よろしいですか？":
-    "Load the sample venue map? The map in the current tab will be replaced.",
+  "見本の案内マップを読み込みます。いまのタブの内容は置き換わります。よろしいですか？":
+    "Load the sample guide map? The map in the current tab will be replaced.",
   閉じる: "Close",
   編集: "Edit",
   プレビュー: "Preview",
@@ -332,14 +332,14 @@ export const EN: Record<string, string> = {
   位置: "Position",
   "位置（左上）・大きさ": "Position (top left) & size",
   // --- 新規作成（建物／会場） ---
-  会場: "Venue",
+  会場: "Site",
   "どんなマップを作りますか？": "What kind of map do you want to make?",
   "白紙のマップを新しいタブで作ります。いまのマップはそのまま残ります。":
     "A blank map opens in a new tab. Your current map stays.",
   "建物（階あり）": "Building (with floors)",
   "校舎やビルなど。1F から始めて、2F・3F…と階を増やし、階段やエレベーターでつなげます。":
     "Schools, office buildings and more. Start from 1F, add 2F, 3F… and connect them with stairs or elevators.",
-  "会場（階なし）": "Venue (no floors)",
+  "会場（階なし）": "Site (no floors)",
   "屋外のお祭り会場や広場など、階の無い場所を1枚の地図で作ります。あとから階を足すこともできます。":
     "Outdoor festival grounds, plazas and other places without floors, on a single map. You can add floors later.",
   // --- 道具の名前（用途で呼ぶ） ---

@@ -4,18 +4,18 @@
 
 import type * as React from "react";
 import { cn } from "@/lib/utils";
-import { useI18n } from "./i18n";
-import { type Corner, PAN_PAD } from "./shared";
 import {
   type Floor,
+  type GuideMapDoc,
   isConnector,
   markBoxOf,
   paletteOf,
   shownColorOf,
   toPointsAttr,
-  type VenueMapDoc,
-} from "./venueMap";
-import { floorBounds } from "./venueMapSvg";
+} from "./guideMapDoc";
+import { floorBounds } from "./guideMapSvg";
+import { useI18n } from "./i18n";
+import { type Corner, PAN_PAD } from "./shared";
 
 // 定規：キャンバスの上と左に、地図の座標の目盛りを出す（グリッドと同じ数え方。左上が 0）。
 // 選んでいるものの範囲は色の帯、マウスの位置は細い線（markXRef / markYRef を親が直接動かす）で示す
@@ -179,7 +179,7 @@ export function Rulers({
 
 // 全体図（ミニマップ）：その階の中身を小さく描き、いま見えている範囲を枠で示す。押す・ドラッグでその場所へ移動
 type MiniMapProps = {
-  doc: VenueMapDoc;
+  doc: GuideMapDoc;
   floor: Floor;
   zoom: number;
   view: { sl: number; st: number; cw: number; ch: number };

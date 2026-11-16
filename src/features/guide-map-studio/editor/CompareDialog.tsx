@@ -4,9 +4,9 @@
 
 import { Columns2, Download, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { StudioPage } from "./guideMapDoc";
+import { type FloorSvgOptions, floorSvg } from "./guideMapSvg";
 import { useI18n } from "./i18n";
-import type { StudioPage } from "./venueMap";
-import { type FloorSvgOptions, floorSvg } from "./venueMapSvg";
 
 export type CompareState = {
   left: string;

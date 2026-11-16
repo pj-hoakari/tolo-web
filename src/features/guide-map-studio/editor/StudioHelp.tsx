@@ -5,7 +5,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "./i18n";
 
-// 会場マップ・スタジオの使い方（Q&A）。地図を作る人向けに、専門用語を使わず、画面に出ている言葉で説明する。
+// 案内マップ・スタジオの使い方（Q&A）。地図を作る人向けに、専門用語を使わず、画面に出ている言葉で説明する。
 // 知りたいことを検索・カテゴリから探せる。「困ったとき」には、使っていてつまずきやすい点をまとめている。
 type QA = { q: string; a: React.ReactNode; keywords?: string };
 type Section = { title: string; items: QA[] };
@@ -810,7 +810,7 @@ const SECTIONS_EN: Section[] = [
         a: (
           <>
             Press <B>New</B> at the top or <B>+</B> next to the tabs, then
-            choose <B>Building (with floors)</B> or <B>Venue (no floors)</B> to
+            choose <B>Building (with floors)</B> or <B>Site (no floors)</B> to
             open a blank map in a new tab (your current map stays). Switch
             between them by clicking the tabs, like sheets in Excel. To base a
             new version on the current map,{" "}
@@ -822,17 +822,17 @@ const SECTIONS_EN: Section[] = [
         keywords: "tabs sheets new version compare duplicate page",
       },
       {
-        q: "I want to make a venue without floors (outdoors, etc.)",
+        q: "I want to make a site without floors (outdoors, etc.)",
         a: (
           <>
-            Choose <B>Venue (no floors)</B> in <B>New</B> to start with a single
-            floor named “Venue”. You don’t need stairs or elevators. On the
-            visitors’ screen, “Venue” appears where the floor name goes. Rename
+            Choose <B>Site (no floors)</B> in <B>New</B> to start with a single
+            floor named “Site”. You don’t need stairs or elevators. On the
+            visitors’ screen, “Site” appears where the floor name goes. Rename
             it in the “Floor” section on the right. If you later want to map
             inside a building, add floors with <B>+</B> on the floor tabs.
           </>
         ),
-        keywords: "no floors outdoor venue festival plaza single new",
+        keywords: "no floors outdoor site festival plaza single new",
       },
       {
         q: "With two or more tabs, which one is exported?",
@@ -1035,7 +1035,7 @@ const SECTIONS_EN: Section[] = [
         keywords: "list table names edit check all",
       },
       {
-        q: "In a large venue I can’t tell where I am (overview map)",
+        q: "On a large site I can’t tell where I am (overview map)",
         a: (
           <>
             The <B>overview map</B> at the bottom right of the map (shown when
@@ -1176,7 +1176,7 @@ const SECTIONS_EN: Section[] = [
           <>
             Visitors are guided from their <B>current location</B> (where they
             scanned the QR code) to the <B>destination</B> they search for.
-            Using the venue’s <B>crowd info</B>, the route{" "}
+            Using the site’s <B>crowd info</B>, the route{" "}
             <B>avoids crowded spots</B> and never passes dangerous ones. When
             crowds change, the route changes too. In the studio, try the same
             calculation with <B>Crowd-avoiding guidance (preview)</B> on the

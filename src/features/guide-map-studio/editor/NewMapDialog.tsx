@@ -10,7 +10,7 @@ export function NewMapDialog({
   onPick,
   onClose,
 }: {
-  onPick: (kind: "building" | "venue") => void;
+  onPick: (kind: "building" | "single") => void;
   onClose: () => void;
 }) {
   const { t } = useI18n();
@@ -41,7 +41,7 @@ export function NewMapDialog({
               icon: <Building2 className="size-6" />,
             },
             {
-              kind: "venue",
+              kind: "single",
               title: t("会場（階なし）"),
               text: t(
                 "屋外のお祭り会場や広場など、階の無い場所を1枚の地図で作ります。あとから階を足すこともできます。",

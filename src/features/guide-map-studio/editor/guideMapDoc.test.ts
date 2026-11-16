@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { PLACE_KINDS as TOLO_KINDS } from "@/features/guest/info/guideMapStyle";
-import { sampleVenueDoc } from "./guideMapIO";
 import {
   BASE_COLORS,
   DEFAULT_COLOR,
+  type GuideMapDoc,
   type MapObject,
   markOf,
   normalizeDoc,
@@ -12,8 +12,8 @@ import {
   PALETTE_KEYS,
   PLACE_KINDS,
   shownColorOf,
-  type VenueMapDoc,
-} from "./venueMap";
+} from "./guideMapDoc";
+import { sampleGuideMapDoc } from "./guideMapIO";
 
 const place = (title: string, color: string): MapObject => ({
   id: "p",
@@ -52,7 +52,7 @@ describe("色と種類（マーク）", () => {
     expect(markOf(place("男子トイレ", "room"))).toBe("room");
   });
   it("見本の地図は、範囲も含めてどの物も色えらびのどれかで選ばれて見える", async () => {
-    const doc = await sampleVenueDoc();
+    const doc = await sampleGuideMapDoc();
     for (const o of doc.objects)
       expect(PALETTE_KEYS).toContain(shownColorOf(o));
   });
@@ -67,7 +67,7 @@ describe("読み込んだ地図をいまの形に直す", () => {
       objects,
       north: 0,
       scale: 0,
-    }) as unknown as VenueMapDoc;
+    }) as unknown as GuideMapDoc;
   it("古いマークの大きさ（markerSize）を markW / markH にし、写真（photo）は外す", () => {
     const d = normalizeDoc(
       doc([{ ...place("EV", "room"), markerSize: 40, photo: "data:x" }]),
@@ -85,7 +85,7 @@ describe("読み込んだ地図をいまの形に直す", () => {
     expect(normalizeDoc(same)).toBe(same);
   });
   it("見本の地図には、古いマークの大きさが残っていない", async () => {
-    const doc = await sampleVenueDoc();
+    const doc = await sampleGuideMapDoc();
     expect(doc.objects.some((o) => "markerSize" in o)).toBe(false);
   });
 });

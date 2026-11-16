@@ -14,10 +14,10 @@ import {
   loadGuideMap,
   saveGuideMap,
 } from "./guideMapApi";
+import { emptyDoc, type GuideMapDoc } from "./guideMapDoc";
 import { fromGuideMapLayout, toGuideMapLayout } from "./guideMapIO";
-import { emptyDoc, type VenueMapDoc } from "./venueMap";
 
-const doc: VenueMapDoc = {
+const doc: GuideMapDoc = {
   ...emptyDoc(),
   floors: [{ id: "f1", name: "1F", groupId: "g_1f000001" }],
   activeFloorId: "f1",
@@ -145,7 +145,7 @@ describe("saveGuideMap / loadGuideMap", () => {
 });
 
 describe("guideMapFingerprint", () => {
-  const connectorDoc: VenueMapDoc = {
+  const connectorDoc: GuideMapDoc = {
     ...doc,
     floors: [
       {
@@ -185,7 +185,7 @@ describe("guideMapFingerprint", () => {
     const moved = {
       ...doc,
       objects: doc.objects.map((o) => ({ ...o, x: 11 })),
-    } as VenueMapDoc;
+    } as GuideMapDoc;
     expect(guideMapFingerprint(moved)).not.toBe(guideMapFingerprint(doc));
   });
 });

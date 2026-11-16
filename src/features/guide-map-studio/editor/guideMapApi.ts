@@ -1,17 +1,17 @@
 // スタジオの地図を tolo-web（Graph Authoring）に保存する・読み込む。
 // やりとりは案内マップの形（LocalizedGuideMapLayout）だけで、書き出しの JSON と同じ toGuideMapLayout で変換する。
-// 作業途中の一時保存はこのブラウザ（VenueMapStudio の localStorage）で行い、ここは使わない
+// 作業途中の一時保存はこのブラウザ（GuideMapStudio の localStorage）で行い、ここは使わない
 
 import { ORPCError } from "@orpc/client";
 import type { LocalizedGuideMapLayout } from "@/features/guest/info/guideMapLayout";
 import { orpc } from "@/lib/orpc";
+import type { GuidanceGraph, GuideMapDoc } from "./guideMapDoc";
 import {
   fromGuideMapLayout,
   labelOf,
   parseGraph,
   toGuideMapLayout,
 } from "./guideMapIO";
-import type { VenueGraph, VenueMapDoc } from "./venueMap";
 
 /** 保存できなかった理由。rejected＝中身を受け付けなかった（グラフに無い階・場所を指しているなど）、forbidden＝保存する権限が無い */
 export class GuideMapSaveError extends Error {
@@ -52,7 +52,7 @@ function forServer(layout: LocalizedGuideMapLayout): LocalizedGuideMapLayout {
 /** 地図を tolo-web に保存する */
 export async function saveGuideMap(
   eventId: string,
-  doc: VenueMapDoc,
+  doc: GuideMapDoc,
 ): Promise<void> {
   try {
     await orpc.graph.saveGuideMapLayout({
@@ -72,7 +72,7 @@ export async function saveGuideMap(
 export async function loadGuideMap(
   eventId: string,
   lang = "ja",
-): Promise<VenueMapDoc | null> {
+): Promise<GuideMapDoc | null> {
   const { layout, groupLabels } = await orpc.graph.getGuideMapLayout({
     eventId,
   });
@@ -90,7 +90,7 @@ export async function loadGuideMap(
 /** このイベントのグラフ（グラフ編集で保存したもの）を読む。まだ何も無ければ null */
 export async function loadEventGraph(
   eventId: string,
-): Promise<VenueGraph | null> {
+): Promise<GuidanceGraph | null> {
   const graph = await orpc.graph.getGraph({ eventId });
   return graph.nodes.length > 0 ? parseGraph(graph) : null;
 }
@@ -112,7 +112,7 @@ function stableJson(v: unknown): string {
  * サーバーに送る中身の指紋。tolo-web に保存した地図と、いまの地図が同じかを比べるのに使う
  * （同じなら「保存していない変更」は無い）。中身が大きいので、短い文字列にして残す
  */
-export function guideMapFingerprint(doc: VenueMapDoc): string {
+export function guideMapFingerprint(doc: GuideMapDoc): string {
   const s = stableJson(forServer(toGuideMapLayout(doc)));
   // cyrb53（速い 53 bit のハッシュ）
   let h1 = 0xdeadbeef;

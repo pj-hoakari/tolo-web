@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import type { MapObject } from "./guideMapDoc";
 import { hitTest } from "./hitTest";
-import type { MapObject } from "./venueMap";
 
 const room = (id: string, x: number, y: number): MapObject => ({
   id,

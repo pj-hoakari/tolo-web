@@ -2,19 +2,19 @@
 // 「見比べる」の表示・画像（PNG）保存・印刷に使う。画面のキャンバスと同じ「図面風」の見た目を、色を直接書いて再現する
 // （画像や印刷では CSS の変数が効かないため）。
 
-import { areaLabelSize, roomLabel } from "./roomLabel";
 import {
   bboxOf,
   type ConnectorType,
   type Floor,
   floorSize,
+  type GuideMapDoc,
   isConnector,
   markBoxOf,
   paletteOf,
   shownColorOf,
-  type VenueMapDoc,
-} from "./venueMap";
-import { boxOf, unionBox } from "./venueSnap";
+} from "./guideMapDoc";
+import { boxOf, unionBox } from "./guideMapSnap";
+import { areaLabelSize, roomLabel } from "./roomLabel";
 
 export type SvgTheme = {
   bg: string;
@@ -95,7 +95,7 @@ const icon = (
 
 /** 階の中身が収まる範囲（何も無ければ階の広さ） */
 export function floorBounds(
-  doc: Pick<VenueMapDoc, "floors" | "objects">,
+  doc: Pick<GuideMapDoc, "floors" | "objects">,
   floor: Floor,
   pad = 40,
 ) {
@@ -133,7 +133,7 @@ export type FloorSvgOptions = {
 
 /** 階を SVG 文字列にする。width/height は SVG の大きさ（地図の 1 単位 = 1px） */
 export function floorSvg(
-  doc: Pick<VenueMapDoc, "floors" | "objects">,
+  doc: Pick<GuideMapDoc, "floors" | "objects">,
   floorId: string,
   opts: FloorSvgOptions = {},
 ) {

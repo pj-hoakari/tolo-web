@@ -4,21 +4,21 @@
 
 import { Table2 } from "lucide-react";
 import { ColorSwatch } from "./ColorSwatch";
-import { useI18n } from "./i18n";
-import { Modal } from "./Modal";
 import {
+  type GuideMapDoc,
   isConnector,
   type MapObject,
   PALETTE_KEYS,
   shownColorOf,
-  type VenueMapDoc,
-} from "./venueMap";
+} from "./guideMapDoc";
+import { useI18n } from "./i18n";
+import { Modal } from "./Modal";
 
 /** 一覧の絞り込み（floor＝階。空はすべての階） */
 export type PlacesFilter = { floor: string; query: string; unnamed: boolean };
 
 type PlacesListDialogProps = {
-  doc: VenueMapDoc;
+  doc: GuideMapDoc;
   floorName: (id: string) => string;
   filter: PlacesFilter;
   onFilter: (next: PlacesFilter) => void;

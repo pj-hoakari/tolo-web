@@ -2,9 +2,9 @@
 
 import type * as React from "react";
 import { cn } from "@/lib/utils";
+import { PALETTE, type PaletteKey } from "./guideMapDoc";
 import { useI18n } from "./i18n";
 import { KindIcon } from "./StudioIcons";
-import { PALETTE, type PaletteKey } from "./venueMap";
 
 // 色（場所の種類）えらびのボタン。種類にはマークを重ね、selected のときは枠を光らせる。大きさは className で決める
 export function ColorSwatch({

@@ -1,4 +1,4 @@
-// 会場マップ・スタジオで使うアイコン（階段・エレベーターの線画と、場所の種類のマーク）
+// 案内マップ・スタジオで使うアイコン（階段・エレベーターの線画と、場所の種類のマーク）
 
 import {
   Accessibility as AccessibilityIcon,
@@ -20,7 +20,7 @@ import {
   Venus as VenusIcon,
 } from "lucide-react";
 import type * as React from "react";
-import type { ConnectorType, PaletteKey } from "./venueMap";
+import type { ConnectorType, PaletteKey } from "./guideMapDoc";
 
 // 階移動の種類アイコン（lucide に無いので線画で描く）
 export function ConnectorIcon({

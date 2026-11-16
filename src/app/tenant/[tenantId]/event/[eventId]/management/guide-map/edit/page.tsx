@@ -2,8 +2,8 @@ import { LocaleSelect } from "@/components/locale-select";
 import { PwaInstall } from "@/components/pwa/pwa-install";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LogoutButton } from "@/features/auth/LogoutButton";
+import { GuideMapStudio } from "@/features/guide-map-studio/editor/GuideMapStudio";
 import { GuideMapStudioTitle } from "@/features/guide-map-studio/editor/GuideMapStudioTitle";
-import { VenueMapStudio } from "@/features/guide-map-studio/editor/VenueMapStudio";
 import { guideMapEditPath } from "@/features/guide-map-studio/routes";
 import { ManagementBackLink } from "@/features/tenant/management/components/ManagementBackLink";
 import { getPwaMetadata } from "@/lib/pwa/manifest";
@@ -32,7 +32,7 @@ export default async function TenantGuideMapEdit({
   // 画面いっぱいをスタジオにする（帯を 1 段にして、地図を広く使う）
   return (
     <div className="h-dvh">
-      <VenueMapStudio
+      <GuideMapStudio
         eventId={eventId}
         leading={
           <>

@@ -77,34 +77,7 @@ import {
   loadGuideMap,
   saveGuideMap,
 } from "./guideMapApi";
-import {
-  detectFile,
-  fromGuideMapLayout,
-  labelOf,
-  sampleVenueDoc,
-  toGuideMapLayout,
-} from "./guideMapIO";
-import { StudioHelpButton } from "./HelpButton";
-import { hitTest as hitTestObjects } from "./hitTest";
-import { useI18n } from "./i18n";
-import { NewMapDialog } from "./NewMapDialog";
-import { type PlacesFilter, PlacesListDialog } from "./PlacesListDialog";
-import { PopupMenu } from "./PopupMenu";
-import { ConnectorPanel, crowdColor, PropertyPanel } from "./PropertyPanel";
-import { areaLabelSize, roomLabel } from "./roomLabel";
-import { SnapshotsDialog, snapshotClock } from "./SnapshotsDialog";
-import { ConnectorIcon, KIND_ICON } from "./StudioIcons";
-import { type Corner, GUIDE, PAN_PAD, type Tool } from "./shared";
-import {
-  addSnapshot,
-  deleteSnapshot,
-  listSnapshots,
-  nowMs,
-  renameSnapshot,
-  type Snapshot,
-} from "./snapshots";
-import { ToolCard } from "./ToolCard";
-import { useRoutePreview } from "./useRoutePreview";
+import { type CheckIssue, checkGuideMapDoc } from "./guideMapCheck";
 import {
   type AreaObject,
   anchorOf,
@@ -120,6 +93,8 @@ import {
   emptyDoc,
   type Floor,
   floorSize,
+  type GuidanceGraph,
+  type GuideMapDoc,
   genId,
   hasInfo,
   isConnector,
@@ -145,17 +120,14 @@ import {
   studioBookKey,
   type TextObject,
   toPointsAttr,
-  type VenueGraph,
-  type VenueMapDoc,
-} from "./venueMap";
-import { type CheckIssue, checkVenueDoc } from "./venueMapCheck";
+} from "./guideMapDoc";
 import {
-  floorBounds,
-  floorSvg,
-  SVG_DARK,
-  SVG_LIGHT,
-  svgToPngBlob,
-} from "./venueMapSvg";
+  detectFile,
+  fromGuideMapLayout,
+  labelOf,
+  sampleGuideMapDoc,
+  toGuideMapLayout,
+} from "./guideMapIO";
 import {
   type Box,
   boxOf,
@@ -164,7 +136,35 @@ import {
   smartSnap,
   snapResize,
   unionBox,
-} from "./venueSnap";
+} from "./guideMapSnap";
+import {
+  floorBounds,
+  floorSvg,
+  SVG_DARK,
+  SVG_LIGHT,
+  svgToPngBlob,
+} from "./guideMapSvg";
+import { StudioHelpButton } from "./HelpButton";
+import { hitTest as hitTestObjects } from "./hitTest";
+import { useI18n } from "./i18n";
+import { NewMapDialog } from "./NewMapDialog";
+import { type PlacesFilter, PlacesListDialog } from "./PlacesListDialog";
+import { PopupMenu } from "./PopupMenu";
+import { ConnectorPanel, crowdColor, PropertyPanel } from "./PropertyPanel";
+import { areaLabelSize, roomLabel } from "./roomLabel";
+import { SnapshotsDialog, snapshotClock } from "./SnapshotsDialog";
+import { ConnectorIcon, KIND_ICON } from "./StudioIcons";
+import { type Corner, GUIDE, PAN_PAD, type Tool } from "./shared";
+import {
+  addSnapshot,
+  deleteSnapshot,
+  listSnapshots,
+  nowMs,
+  renameSnapshot,
+  type Snapshot,
+} from "./snapshots";
+import { ToolCard } from "./ToolCard";
+import { useRoutePreview } from "./useRoutePreview";
 
 // 使い方（Q&A）の中身は大きいので、開いたときに読み込む
 const StudioHelpDialog = dynamic(() =>
@@ -180,7 +180,9 @@ const GRID_SNAP = 20; // グリッドに揃える刻み（方眼 40px の半分�
 const SEL = "var(--primary)";
 const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
 // 画面だけの設定（全体図・定規）の保存キー
-const VIEW_PREFS_KEY = "venue-map:view-prefs";
+const VIEW_PREFS_KEY = "guide-map-studio:view-prefs";
+// 前の名前の保存キー。残っていれば一度だけ読んで引き継ぐ
+const LEGACY_VIEW_PREFS_KEY = "venue-map:view-prefs";
 
 // tolo-web に最後に保存した（または開いたときに確かめた）地図の指紋。イベントごとにこのブラウザに残し、
 // 「tolo-web に保存していない変更」と「ほかで保存し直された地図」を見分けるのに使う
@@ -203,7 +205,7 @@ function writeServerPrint(eventId: string, print: string | null) {
 }
 
 // 出発（startId）の場所が消えていたら、出発も外す（消えた場所を指したまま書き出さないように）
-const dropDanglingStart = (d: VenueMapDoc): VenueMapDoc =>
+const dropDanglingStart = (d: GuideMapDoc): GuideMapDoc =>
   d.startId && !d.objects.some((o) => o.id === d.startId)
     ? { ...d, startId: undefined }
     : d;
@@ -367,17 +369,17 @@ function guessConnector(title?: string): ConnectorType | null {
 // eventId＝このイベントの案内マップ（ブラウザへの保存もイベントごとに分ける）。
 // leading / trailing＝上の帯の左端・右端に置く物（ページの戻るリンク・見出し・言語やテーマの切り替えなど）。
 // 帯を 1 段にまとめて、地図を広く使えるようにする
-type VenueMapStudioProps = {
+type GuideMapStudioProps = {
   eventId: string;
   leading?: React.ReactNode;
   trailing?: React.ReactNode;
 };
 
-export function VenueMapStudio({
+export function GuideMapStudio({
   eventId,
   leading,
   trailing,
-}: VenueMapStudioProps) {
+}: GuideMapStudioProps) {
   const { t, tg, lang, connectorName } = useI18n();
   // 確かめる・知らせる小さな画面（window.confirm / alert の代わり）
   const {
@@ -387,7 +389,7 @@ export function VenueMapStudio({
     open: confirmOpen,
   } = useConfirm();
   const { resolvedTheme } = useTheme();
-  const [doc, setDoc] = React.useState<VenueMapDoc>(() => emptyDoc());
+  const [doc, setDoc] = React.useState<GuideMapDoc>(() => emptyDoc());
   // エクセルのシートのようなタブ（別々のマップ）。表示中のタブの中身は doc にあり、pages 側の doc は切り替えたときに更新する
   const [pages, setPages] = React.useState<StudioPage[]>(() => [
     { id: "p1", name: "", doc: emptyDoc() },
@@ -536,7 +538,7 @@ export function VenueMapStudio({
     string | null | undefined
   >(undefined);
   // 開いたときに見つけた、このブラウザでの作業のあとに tolo-web へ保存し直された地図（開くか聞く）
-  const [serverOffer, setServerOffer] = React.useState<VenueMapDoc | null>(
+  const [serverOffer, setServerOffer] = React.useState<GuideMapDoc | null>(
     null,
   );
   // tolo-web から保存した地図・グラフを読めなかった（知らせて、もう一度読み込めるようにする）
@@ -556,9 +558,9 @@ export function VenueMapStudio({
   const worldRef = React.useRef<HTMLDivElement>(null);
   const dragRef = React.useRef<Drag>(null);
   // 元に戻す／やり直しの履歴と、コピーした項目（⌘Z・⌘C・⌘V）
-  const pastRef = React.useRef<VenueMapDoc[]>([]);
-  const futureRef = React.useRef<VenueMapDoc[]>([]);
-  const committedRef = React.useRef<VenueMapDoc | null>(null);
+  const pastRef = React.useRef<GuideMapDoc[]>([]);
+  const futureRef = React.useRef<GuideMapDoc[]>([]);
+  const committedRef = React.useRef<GuideMapDoc | null>(null);
   const skipHistoryRef = React.useRef(false);
   const lastChangeRef = React.useRef(0);
   // コピーした項目。階段・エレベーター等は、ほかの階の分身（どの階につながるか・各階の設定）も一緒に覚える
@@ -571,7 +573,7 @@ export function VenueMapStudio({
   // ブラウザの保存から読み戻し終えたか。読み戻す前の空の地図で保存を上書きしないよう、次の描画から保存を始める
   const [hydrated, setHydrated] = React.useState(false);
   const pageHistoryRef = React.useRef(
-    new Map<string, { past: VenueMapDoc[]; future: VenueMapDoc[] }>(),
+    new Map<string, { past: GuideMapDoc[]; future: GuideMapDoc[] }>(),
   ); // 元に戻すの履歴はタブごと
 
   const floor =
@@ -644,7 +646,7 @@ export function VenueMapStudio({
   }, [phoneView]);
   const viewScale = phoneView ? phoneScale : 1; // 画面の上での縮み（マウスの位置を地図の座標に直すときに使う）
   // 地図の中身が画面の幅に収まる大きさにして、左上から見せる
-  const fitPhone = (d: VenueMapDoc = doc, floorId = d.activeFloorId) => {
+  const fitPhone = (d: GuideMapDoc = doc, floorId = d.activeFloorId) => {
     const objs = d.objects.filter((o) => o.floor === floorId);
     if (objs.length === 0) return;
     if (phoneZoomRef.current === null) phoneZoomRef.current = zoom;
@@ -663,7 +665,7 @@ export function VenueMapStudio({
   // --- 表示する範囲 ---
   // 地図の中身（何も無ければ左上）が見えるようにする。keepZoom＝拡大率はそのままで、中身を真ん中に寄せるだけ
   const fitView = (
-    d: VenueMapDoc,
+    d: GuideMapDoc,
     floorId = d.activeFloorId,
     keepZoom = false,
   ) => {
@@ -707,7 +709,7 @@ export function VenueMapStudio({
   // biome-ignore lint/correctness/useExhaustiveDependencies: 復元するのはイベントが変わったときだけ（fitView は毎回作り直す関数なので入れない）
   React.useEffect(() => {
     let cancelled = false;
-    let localDoc: VenueMapDoc | null = null;
+    let localDoc: GuideMapDoc | null = null;
     try {
       const rawBook = window.localStorage.getItem(studioBookKey(eventId));
       const book = rawBook ? (JSON.parse(rawBook) as StudioBook) : null;
@@ -740,7 +742,7 @@ export function VenueMapStudio({
   // そのあとに別の地図が保存されていたときだけ開くか聞く。グラフは開いている地図に結び付ける（ファイルで読み込まなくてよい）。
   // 読めなくても白紙から作れるようにし、画面で知らせて「もう一度読み込む」でやり直せるようにする
   const syncWithServer = async (
-    localDoc: VenueMapDoc | null,
+    localDoc: GuideMapDoc | null,
     isCancelled: () => boolean = () => false,
   ) => {
     const knownPrint = readServerPrint(eventId);
@@ -1065,12 +1067,12 @@ export function VenueMapStudio({
       past: pastRef.current.length,
       future: futureRef.current.length,
     });
-  const sameContent = (a: VenueMapDoc, b: VenueMapDoc) =>
+  const sameContent = (a: GuideMapDoc, b: GuideMapDoc) =>
     a.objects === b.objects &&
     a.floors === b.floors &&
     a.north === b.north &&
     a.scale === b.scale;
-  const commitHistory = (current: VenueMapDoc, force = false) => {
+  const commitHistory = (current: GuideMapDoc, force = false) => {
     const prev = committedRef.current;
     committedRef.current = current;
     if (!prev || sameContent(prev, current)) return;
@@ -1097,7 +1099,7 @@ export function VenueMapStudio({
     if (dragRef.current) return; // ドラッグ中は離したときにまとめて記録
     commitHistory(doc);
   }, [doc]);
-  const jumpHistory = (from: VenueMapDoc[], to: VenueMapDoc[]) => {
+  const jumpHistory = (from: GuideMapDoc[], to: GuideMapDoc[]) => {
     const target = from.pop();
     if (!target) return;
     to.push(doc);
@@ -1207,7 +1209,7 @@ export function VenueMapStudio({
     });
 
   // --- フロア操作 ---
-  const goFloor = (id: string, d0: VenueMapDoc = doc) => {
+  const goFloor = (id: string, d0: GuideMapDoc = doc) => {
     setDoc((d) => ({ ...d, activeFloorId: id }));
     setSelectedIds([]);
     setShowInfo(false);
@@ -1351,9 +1353,9 @@ export function VenueMapStudio({
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   };
-  // 書き出すのは1つのマップ（VenueMapDoc）だけ。タブが2つ以上のときは、どれを書き出すか先に選んでもらう
+  // 書き出すのは1つのマップ（GuideMapDoc）だけ。タブが2つ以上のときは、どれを書き出すか先に選んでもらう
   // tolo-web の案内マップの形（groups・groupId・pointId・言語ごとの名前）で書き出す。末尾の改行まで付け、整形チェックが通るようにする
-  const exportDoc = (d: VenueMapDoc, name?: string) => {
+  const exportDoc = (d: GuideMapDoc, name?: string) => {
     const out = toGuideMapLayout(dropDanglingStart(d));
     const blob = new Blob([`${JSON.stringify(out, null, 2)}\n`], {
       type: "application/json",
@@ -1438,9 +1440,9 @@ export function VenueMapStudio({
   // --- tolo-web のグラフとの結び付け ---
   // グラフのグループ（階）を、名前が同じ階に結び付ける（まだ結び付いていない階だけ）
   const linkFloorsByName = (
-    d: VenueMapDoc,
-    g: VenueGraph | undefined = d.graph,
-  ): VenueMapDoc => {
+    d: GuideMapDoc,
+    g: GuidanceGraph | undefined = d.graph,
+  ): GuideMapDoc => {
     if (!g) return d;
     const norm = (v: string) =>
       v.normalize("NFKC").replace(/\s/g, "").toLowerCase();
@@ -1473,9 +1475,9 @@ export function VenueMapStudio({
     }
   };
   // quiet＝開いたときに tolo-web のグラフを結び付けるとき（毎回お知らせを出さない）
-  const attachGraph = (g: VenueGraph, { quiet = false } = {}) => {
+  const attachGraph = (g: GuidanceGraph, { quiet = false } = {}) => {
     // すでにグループに結び付いている階は、tolo-web と同じくグループの名前にそろえる（tolo-web の形で読み込んだ地図は、ここで階の名前が付く）
-    const named = (d: VenueMapDoc): VenueMapDoc => ({
+    const named = (d: GuideMapDoc): GuideMapDoc => ({
       ...d,
       floors: d.floors.map((f) => {
         const grp = g.groups.find((x) => x.id === f.groupId);
@@ -1532,13 +1534,13 @@ export function VenueMapStudio({
       !isBlank(doc) &&
       !(await confirm(
         t(
-          "見本の会場マップを読み込みます。いまのタブの内容は置き換わります。よろしいですか？",
+          "見本の案内マップを読み込みます。いまのタブの内容は置き換わります。よろしいですか？",
         ),
         { confirmLabel: t("見本を読み込む") },
       ))
     )
       return;
-    const d = await sampleVenueDoc(); // 見本は tolo-web のモックのグラフに結び付いている
+    const d = await sampleGuideMapDoc(); // 見本は tolo-web のモックのグラフに結び付いている
     setDoc(d);
     resetWork();
     fitView(d);
@@ -1557,7 +1559,7 @@ export function VenueMapStudio({
     ps.some((p) => !p.name)
       ? ps.map((p, i) => (p.name ? p : { ...p, name: pageName(p, i) }))
       : ps;
-  const isBlank = (d: VenueMapDoc) =>
+  const isBlank = (d: GuideMapDoc) =>
     d.objects.length === 0 && d.floors.length <= 1 && !d.floors[0]?.image;
   // 作業中の状態（選択・メニュー・道案内の選択など）を片付ける
   const resetWork = () => {
@@ -1603,18 +1605,18 @@ export function VenueMapStudio({
     while (used.has(t("マップ{n}", { n }))) n++;
     return t("マップ{n}", { n });
   };
-  // 新しいマップ。kind＝"building"（建物：1F から階を増やしていく）／"venue"（会場：階の無い屋外などを1枚で作る）
+  // 新しいマップ。kind＝"building"（建物：1F から階を増やしていく）／"single"（会場：階の無い屋外などを1枚で作る）
   // どちらも書き出す形は同じで、「会場」は階が1つだけで名前が「会場」のマップ（tolo-web にはこの名前が出る）
-  const newPage = (kind: "building" | "venue") => {
+  const newPage = (kind: "building" | "single") => {
     setNewMapOpen(false);
     const id = genId("p");
     const d = emptyDoc();
-    if (kind === "venue")
+    if (kind === "single")
       d.floors = d.floors.map((f) => ({ ...f, name: t("会場") }));
     goPage(id, [...pages, { id, name: nextPageName(), doc: d }]);
   };
   // 見本・読み込んだファイルを開く。いまのタブが白紙ならそこへ入れ、何かあれば新しいタブにする
-  const openDoc = (d: VenueMapDoc, name: string) => {
+  const openDoc = (d: GuideMapDoc, name: string) => {
     if (isBlank(doc)) {
       setDoc(d); // 白紙からの置き換えは ⌘Z で戻せる
       resetWork();
@@ -1698,7 +1700,7 @@ export function VenueMapStudio({
   };
   // --- 名前で探す・その場所を表示する ---
   // 階を切り替えて選び、地図の真ん中に来るようにスクロールする
-  const focusObject = (id: string, d0: VenueMapDoc = doc) => {
+  const focusObject = (id: string, d0: GuideMapDoc = doc) => {
     const o = d0.objects.find((x) => x.id === id);
     if (!o) return;
     setDoc((d) =>
@@ -1743,7 +1745,7 @@ export function VenueMapStudio({
     if (!d) return;
     setCheck({ pageId, issues: null, forExport });
     window.setTimeout(() => {
-      const issues = checkVenueDoc(d, t("（無題）"));
+      const issues = checkGuideMapDoc(d, t("（無題）"));
       if (forExport && !issues.some((is) => is.level === "warn")) {
         // 「要確認」が無ければそのまま書き出す（「念のため」の項目は「チェック」ボタンで見られる）
         setCheck(null);
@@ -1957,7 +1959,7 @@ export function VenueMapStudio({
         const a = document.createElement("a");
         a.href = url;
         // 全部の階のときは、ファイル名の頭に階の順番を付けて並びやすくする
-        a.download = `venue-map-${`${name}-${all ? `${String(k + 1).padStart(2, "0")}_` : ""}${f.name}`.replace(/[\\/:*?"<>|\s]+/g, "_")}.png`;
+        a.download = `guide-map-${`${name}-${all ? `${String(k + 1).padStart(2, "0")}_` : ""}${f.name}`.replace(/[\\/:*?"<>|\s]+/g, "_")}.png`;
         a.click();
         URL.revokeObjectURL(url);
         // 続けてダウンロードすると取りこぼすブラウザがあるので、少し間をあける
@@ -2638,7 +2640,9 @@ export function VenueMapStudio({
   React.useEffect(() => {
     try {
       const v = JSON.parse(
-        window.localStorage.getItem(VIEW_PREFS_KEY) || "{}",
+        window.localStorage.getItem(VIEW_PREFS_KEY) ||
+          window.localStorage.getItem(LEGACY_VIEW_PREFS_KEY) ||
+          "{}",
       ) as {
         showMini?: boolean;
         rulers?: boolean;
@@ -3119,7 +3123,7 @@ export function VenueMapStudio({
                 type="button"
                 onClick={loadSample}
                 aria-label={t("見本")}
-                title={t("整列済みの見本会場マップを読み込む")}
+                title={t("整列済みの見本の案内マップを読み込む")}
                 className="inline-flex h-full items-center gap-1.5 rounded px-2.5 hover:bg-accent"
               >
                 <Sparkles className="size-4" />
@@ -4041,7 +4045,7 @@ export function VenueMapStudio({
                             width={worldW}
                             height={worldH}
                           >
-                            {/* 色と描き方はお客さんの案内マップと同じ（venueMap.ts の buildingOf・areaPalette） */}
+                            {/* 色と描き方はお客さんの案内マップと同じ（guideMapDoc.ts の buildingOf・areaPalette） */}
                             {building && (
                               <polygon
                                 points={toPointsAttr(building.points)}

@@ -6,9 +6,6 @@ import { Copy, Lock, LockOpen, Trash2 } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { ColorSwatch } from "./ColorSwatch";
-import { labelOf } from "./guideMapIO";
-import { useI18n } from "./i18n";
-import { ConnectorIcon } from "./StudioIcons";
 import {
   CONNECTOR_TYPES,
   type ConnectorDirection,
@@ -17,6 +14,7 @@ import {
   type CrowdState,
   DEFAULT_COLOR,
   type Floor,
+  type GuidanceGraph,
   hasInfo,
   isConnector,
   MARKER_SIZE_MAX,
@@ -27,8 +25,10 @@ import {
   type PlaceObject,
   shownColorOf,
   type TextObject,
-  type VenueGraph,
-} from "./venueMap";
+} from "./guideMapDoc";
+import { labelOf } from "./guideMapIO";
+import { useI18n } from "./i18n";
+import { ConnectorIcon } from "./StudioIcons";
 
 // 階移動ポイントの設定（種類・つながる階・エスカレーターの向き）。同じ link の全フロア分にまとめて効く
 export function ConnectorPanel({
@@ -175,7 +175,7 @@ export function ConnectorPanel({
 type PropertyPanelProps = {
   part: "basic" | "advanced";
   object: MapObject;
-  graph?: VenueGraph;
+  graph?: GuidanceGraph;
   onLoadGraph: (file: File) => void;
   onLock: (on: boolean) => void;
   onChange: (patch: Partial<MapObject>) => void;
@@ -444,7 +444,7 @@ export const PREVIEW_CROWD_CHOICES: {
 
 type GraphLinkFieldsProps = {
   object: MapObject;
-  graph?: VenueGraph;
+  graph?: GuidanceGraph;
   onLoadGraph: (file: File) => void;
   onChange: (patch: Partial<MapObject>) => void;
   previewCrowd?: CrowdState;

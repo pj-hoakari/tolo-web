@@ -7,20 +7,20 @@ import {
   type FloorRouteStep,
 } from "@/features/guest/info/guideMapFloorRoute";
 import { crowdByObject } from "@/features/guest/info/guideMapLayout";
-import { labelOf, toRouteLayout } from "./guideMapIO";
-import { useI18n } from "./i18n";
-import { PREVIEW_CROWD_CHOICES } from "./PropertyPanel";
 import {
   CONNECTOR_TYPES,
   type ConnectorType,
   type CrowdState,
   type Floor,
+  type GuideMapDoc,
   isConnector,
   isTwinOf,
   type MapObject,
   type PlaceObject,
-  type VenueMapDoc,
-} from "./venueMap";
+} from "./guideMapDoc";
+import { labelOf, toRouteLayout } from "./guideMapIO";
+import { useI18n } from "./i18n";
+import { PREVIEW_CROWD_CHOICES } from "./PropertyPanel";
 
 // 階をまたぐ経路（重いので floors/objects・出発・目的地が変わった時だけ計算）。
 // お客さんの画面の案内マップと同じ計算（src/features/guest/info/guideMapFloorRoute.ts）をそのまま使い、同じ道を出す。
@@ -48,7 +48,7 @@ export type RoutePreview = ReturnType<typeof useRoutePreview>;
  * 誘導プレビューの状態と計算。出発（現在地）はマップに保存するので doc.startId を使う。
  * 名前の出し方（お客さんの画面での名前・階段・エレベーターの番号）もここで決める
  */
-export function useRoutePreview(doc: VenueMapDoc, paused = false) {
+export function useRoutePreview(doc: GuideMapDoc, paused = false) {
   const { t, tg, lang, connectorName } = useI18n();
   const routeStart = doc.startId ?? "";
   const [routeGoal, setRouteGoal] = React.useState(""); // 誘導プレビューの目的地ピン

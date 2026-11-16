@@ -1,27 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { sampleVenueDoc } from "./guideMapIO";
-import { isConnector } from "./venueMap";
-import { checkVenueDoc } from "./venueMapCheck";
+import { checkGuideMapDoc } from "./guideMapCheck";
+import { isConnector } from "./guideMapDoc";
+import { sampleGuideMapDoc } from "./guideMapIO";
 
-const kinds = (issues: ReturnType<typeof checkVenueDoc>) =>
+const kinds = (issues: ReturnType<typeof checkGuideMapDoc>) =>
   issues.map((is) => is.kind);
 
 describe("誘導グラフとの結び付けのチェック", () => {
   it("見本は、部屋がグラフに無くても結び付けの注意を出さない", async () => {
-    const doc = await sampleVenueDoc();
+    const doc = await sampleGuideMapDoc();
     expect(doc.objects.some((o) => o.kind === "place" && !o.graphPointId)).toBe(
       true,
     );
-    expect(kinds(checkVenueDoc(doc, "（無題）"))).not.toContain(
+    expect(kinds(checkGuideMapDoc(doc, "（無題）"))).not.toContain(
       "connector-no-point",
     );
   });
 
   it("グラフに結び付いていない階段・エレベーターを知らせる", async () => {
-    const doc = await sampleVenueDoc();
+    const doc = await sampleGuideMapDoc();
     const target = doc.objects.find(isConnector);
     if (!target) throw new Error("見本に階段・エレベーターがありません");
-    const issues = checkVenueDoc(
+    const issues = checkGuideMapDoc(
       {
         ...doc,
         objects: doc.objects.map((o) =>
@@ -40,8 +40,8 @@ describe("誘導グラフとの結び付けのチェック", () => {
   });
 
   it("グラフを読み込んでいなければ、結び付けの注意は出さない", async () => {
-    const doc = await sampleVenueDoc();
-    const issues = checkVenueDoc(
+    const doc = await sampleGuideMapDoc();
+    const issues = checkGuideMapDoc(
       {
         ...doc,
         graph: undefined,

@@ -5,17 +5,17 @@
 import { Check, RotateCcw, Route, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RoutePinSelect } from "./Fields";
+import type { GuideMapDoc } from "./guideMapDoc";
 import { useI18n } from "./i18n";
 import { crowdColor, PREVIEW_CROWD_CHOICES } from "./PropertyPanel";
 import { ConnectorIcon } from "./StudioIcons";
 import { GUIDE } from "./shared";
 import type { RoutePreview } from "./useRoutePreview";
-import type { VenueMapDoc } from "./venueMap";
 
 // 誘導プレビュー（ピン→ピンを、壁を避けた道なりでつなぐ）。右の設定の「誘導」タブの中身
 type GuidePanelProps = {
   route: RoutePreview;
-  doc: VenueMapDoc;
+  doc: GuideMapDoc;
   goFloor: (id: string) => void;
   onStart: (id: string) => void;
 };

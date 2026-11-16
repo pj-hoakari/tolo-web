@@ -13,7 +13,7 @@ import {
   markBoxOf,
   type Pt,
   pointInPolygon,
-} from "./venueMap";
+} from "./guideMapDoc";
 
 export function hitTest(
   objects: MapObject[],

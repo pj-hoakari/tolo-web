@@ -5,10 +5,10 @@
 import { BookmarkPlus, Pencil, Plus, Trash2 } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { floorSvg, type SvgTheme } from "./guideMapSvg";
 import { useI18n } from "./i18n";
 import { Modal } from "./Modal";
 import type { Snapshot } from "./snapshots";
-import { floorSvg, type SvgTheme } from "./venueMapSvg";
 
 /** 保存ポイントの日時（例：11/9 14:05） */
 export const snapshotClock = (at: number) => {

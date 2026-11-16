@@ -4,10 +4,10 @@
 
 import { ArrowRight, Download, ListChecks } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { CheckIssue } from "./guideMapCheck";
 import { useI18n } from "./i18n";
 import { Modal } from "./Modal";
 import { GUIDE } from "./shared";
-import type { CheckIssue } from "./venueMapCheck";
 
 type CheckDialogProps = {
   check: { issues: CheckIssue[] | null; forExport: boolean };

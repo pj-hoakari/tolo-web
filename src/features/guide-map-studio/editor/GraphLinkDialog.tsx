@@ -5,15 +5,15 @@
 
 import { Link2, Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { GuideMapDoc, MapObject } from "./guideMapDoc";
 import { labelOf } from "./guideMapIO";
 import { useI18n } from "./i18n";
 import { Modal } from "./Modal";
-import type { MapObject, VenueMapDoc } from "./venueMap";
 
 export type LinkTab = "floors" | "points" | "routes";
 
 type GraphLinkDialogProps = {
-  doc: VenueMapDoc;
+  doc: GuideMapDoc;
   selected: MapObject | null;
   floorName: (id: string) => string;
   tab: LinkTab;

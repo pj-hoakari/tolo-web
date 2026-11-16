@@ -1,4 +1,4 @@
-// スタジオの地図（venueMap.ts）と、お客さんの画面の案内マップの形とのやりとり。
+// スタジオの地図（guideMapDoc.ts）と、お客さんの画面の案内マップの形とのやりとり。
 //  - 書き出し：案内マップ（src/features/guest/info/guideMapLayout.ts の LocalizedGuideMapLayout）の形にする
 //  - 読み込み：案内マップの形・スタジオの形（floors を持つ形）・グラフ（nodes / edges）のどれでも読めるようにする
 // 案内マップの形はゲスト画面側で決まっているので、スタジオの側で変換して合わせる。
@@ -13,12 +13,12 @@ import type { LocalizedLabel } from "@/features/tenant/management/graph/type";
 import { resolveLabel } from "@/features/tenant/management/graph/utils/labels";
 import {
   DEFAULT_COLOR,
+  type GuidanceGraph,
+  type GuideMapDoc,
   genId,
   type MapObject,
   normalizeDoc,
-  type VenueGraph,
-  type VenueMapDoc,
-} from "./venueMap";
+} from "./guideMapDoc";
 
 const loc = (text: string | undefined): LocalizedLabel | undefined =>
   text?.trim() ? { ja: text } : undefined;
@@ -33,7 +33,7 @@ export const labelOf = (labels: LocalizedLabel | undefined, lang = "ja") =>
   labels ? resolveLabel(labels, lang).text : "";
 
 /** 地図を案内マップの形にする。階はグラフのグループ ID（結び付けていなければスタジオの階の ID）で書く */
-export function toGuideMapLayout(doc: VenueMapDoc): LocalizedGuideMapLayout {
+export function toGuideMapLayout(doc: GuideMapDoc): LocalizedGuideMapLayout {
   const groupOf = new Map(doc.floors.map((f) => [f.id, f.groupId || f.id]));
   return {
     version: 1,
@@ -77,8 +77,8 @@ export function toGuideMapLayout(doc: VenueMapDoc): LocalizedGuideMapLayout {
 /** 案内マップの形の地図を、スタジオの形に戻す。階の名前はグラフのグループ名（無ければ 1F, 2F…） */
 export function fromGuideMapLayout(
   l: LocalizedGuideMapLayout,
-  graph?: VenueGraph,
-): VenueMapDoc {
+  graph?: GuidanceGraph,
+): GuideMapDoc {
   const floors = l.groups.map((g, i) => ({
     id: g.groupId,
     groupId: g.groupId,
@@ -112,7 +112,7 @@ export function fromGuideMapLayout(
 }
 
 /** グラフ（グラフ編集の nodes / edges）から、グループ・ポイント・ルートを取り出す */
-export function parseGraph(raw: unknown): VenueGraph {
+export function parseGraph(raw: unknown): GuidanceGraph {
   const g = raw as { nodes?: unknown[]; edges?: unknown[] };
   if (!Array.isArray(g?.nodes) || !Array.isArray(g?.edges))
     throw new Error("invalid");
@@ -157,9 +157,9 @@ export function parseGraph(raw: unknown): VenueGraph {
 }
 
 export type ImportedFile =
-  | { kind: "studio"; doc: VenueMapDoc }
+  | { kind: "studio"; doc: GuideMapDoc }
   | { kind: "guideMap"; layout: LocalizedGuideMapLayout }
-  | { kind: "graph"; graph: VenueGraph };
+  | { kind: "graph"; graph: GuidanceGraph };
 /** 読み込んだ JSON が、どの形かを見分ける */
 export function detectFile(raw: unknown): ImportedFile {
   const r = raw as Record<string, unknown>;
@@ -169,7 +169,7 @@ export function detectFile(raw: unknown): ImportedFile {
       layout: r as unknown as LocalizedGuideMapLayout,
     };
   if (Array.isArray(r?.floors) && (r.floors as unknown[]).length)
-    return { kind: "studio", doc: r as unknown as VenueMapDoc };
+    return { kind: "studio", doc: r as unknown as GuideMapDoc };
   if (Array.isArray(r?.nodes) && Array.isArray(r?.edges))
     return { kind: "graph", graph: parseGraph(r) };
   throw new Error("unknown");
@@ -180,7 +180,7 @@ export function detectFile(raw: unknown): ImportedFile {
  * 階の ID はスタジオの階の ID のまま（計算結果の階をスタジオの画面でそのまま使えるように）、名前は1つの文字列にする。
  */
 export function toRouteLayout(
-  doc: Pick<VenueMapDoc, "floors" | "objects" | "north" | "scale" | "startId">,
+  doc: Pick<GuideMapDoc, "floors" | "objects" | "north" | "scale" | "startId">,
 ): GuideMapLayout {
   return {
     version: 1,
@@ -215,7 +215,7 @@ export function toRouteLayout(
 // 見本（テンプレート）のマップ。tolo-web のモック（src/mocks/fixtures/ の案内マップとグラフ。KCG本館 1F〜6F）を、スタジオの形にする。
 // 使うときだけ読み込む（最初に読む量を減らすため）
 // 見本の範囲は「建物の外枠」（濃い線）で入っているので、自分で囲んで色を選んだ範囲と同じ「基本の色」にする
-export async function sampleVenueDoc(): Promise<VenueMapDoc> {
+export async function sampleGuideMapDoc(): Promise<GuideMapDoc> {
   const [layout, graph] = await Promise.all([
     import("@/mocks/fixtures/guideMapLayout.json"),
     import("@/mocks/fixtures/guideMapGraph.json"),
