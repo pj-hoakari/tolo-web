@@ -3,8 +3,8 @@
 // 書き出すマップを選ぶ（タブが2つ以上のときだけ出す）
 
 import { Download } from "lucide-react";
-import type { StudioPage } from "./guideMapDoc";
-import { useI18n } from "./i18n";
+import { useI18n } from "../../i18n/i18n";
+import type { StudioPage } from "../../utils/guideMapDoc";
 import { Modal } from "./Modal";
 
 type ExportPickerDialogProps = {

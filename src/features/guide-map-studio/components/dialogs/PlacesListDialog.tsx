@@ -3,15 +3,15 @@
 // 場所の一覧表：部屋・目印などを表で見て、名前や色を直す。「表示」でその場所へ移る
 
 import { Table2 } from "lucide-react";
-import { ColorSwatch } from "./ColorSwatch";
+import { useI18n } from "../../i18n/i18n";
 import {
   type GuideMapDoc,
   isConnector,
   type MapObject,
   PALETTE_KEYS,
   shownColorOf,
-} from "./guideMapDoc";
-import { useI18n } from "./i18n";
+} from "../../utils/guideMapDoc";
+import { ColorSwatch } from "../parts/ColorSwatch";
 import { Modal } from "./Modal";
 
 /** 一覧の絞り込み（floor＝階。空はすべての階） */

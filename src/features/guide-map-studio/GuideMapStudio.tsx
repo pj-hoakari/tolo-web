@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import "../studio-theme.css";
+import "./studio-theme.css";
 import {
   ArrowLeft,
   ArrowRight,
@@ -60,24 +60,50 @@ import {
   ResizeHandles,
   Rulers,
   splitTitle,
-} from "./CanvasParts";
-import { CheckDialog } from "./CheckDialog";
-import { ColorSwatch } from "./ColorSwatch";
-import { CompareDialog, type CompareState } from "./CompareDialog";
-import { useConfirm } from "./ConfirmDialog";
-import { cloneObjects, twinOn, twinsOf } from "./copyObjects";
-import { ExportPickerDialog } from "./ExportPickerDialog";
-import { FloorNameInput, NumField } from "./Fields";
-import { GraphLinkDialog, type LinkTab } from "./GraphLinkDialog";
-import { GuidePanel } from "./GuidePanel";
+} from "./components/canvas/CanvasParts";
+import { CheckDialog } from "./components/dialogs/CheckDialog";
+import {
+  CompareDialog,
+  type CompareState,
+} from "./components/dialogs/CompareDialog";
+import { useConfirm } from "./components/dialogs/ConfirmDialog";
+import { ExportPickerDialog } from "./components/dialogs/ExportPickerDialog";
+import {
+  GraphLinkDialog,
+  type LinkTab,
+} from "./components/dialogs/GraphLinkDialog";
+import { NewMapDialog } from "./components/dialogs/NewMapDialog";
+import {
+  type PlacesFilter,
+  PlacesListDialog,
+} from "./components/dialogs/PlacesListDialog";
+import {
+  SnapshotsDialog,
+  snapshotClock,
+} from "./components/dialogs/SnapshotsDialog";
+import { StudioHelpButton } from "./components/header/HelpButton";
+import { GuidePanel } from "./components/panels/GuidePanel";
+import {
+  ConnectorPanel,
+  crowdColor,
+  PropertyPanel,
+} from "./components/panels/PropertyPanel";
+import { ColorSwatch } from "./components/parts/ColorSwatch";
+import { FloorNameInput, NumField } from "./components/parts/Fields";
+import { PopupMenu } from "./components/parts/PopupMenu";
+import { ConnectorIcon, KIND_ICON } from "./components/parts/StudioIcons";
+import { ToolCard } from "./components/parts/ToolCard";
+import { useRoutePreview } from "./hooks/useRoutePreview";
+import { useI18n } from "./i18n/i18n";
+import { cloneObjects, twinOn, twinsOf } from "./utils/copyObjects";
 import {
   GuideMapSaveError,
   guideMapFingerprint,
   loadEventGraph,
   loadGuideMap,
   saveGuideMap,
-} from "./guideMapApi";
-import { type CheckIssue, checkGuideMapDoc } from "./guideMapCheck";
+} from "./utils/guideMapApi";
+import { type CheckIssue, checkGuideMapDoc } from "./utils/guideMapCheck";
 import {
   type AreaObject,
   anchorOf,
@@ -120,14 +146,14 @@ import {
   studioBookKey,
   type TextObject,
   toPointsAttr,
-} from "./guideMapDoc";
+} from "./utils/guideMapDoc";
 import {
   detectFile,
   fromGuideMapLayout,
   labelOf,
   sampleGuideMapDoc,
   toGuideMapLayout,
-} from "./guideMapIO";
+} from "./utils/guideMapIO";
 import {
   type Box,
   boxOf,
@@ -136,25 +162,17 @@ import {
   smartSnap,
   snapResize,
   unionBox,
-} from "./guideMapSnap";
+} from "./utils/guideMapSnap";
 import {
   floorBounds,
   floorSvg,
   SVG_DARK,
   SVG_LIGHT,
   svgToPngBlob,
-} from "./guideMapSvg";
-import { StudioHelpButton } from "./HelpButton";
-import { hitTest as hitTestObjects } from "./hitTest";
-import { useI18n } from "./i18n";
-import { NewMapDialog } from "./NewMapDialog";
-import { type PlacesFilter, PlacesListDialog } from "./PlacesListDialog";
-import { PopupMenu } from "./PopupMenu";
-import { ConnectorPanel, crowdColor, PropertyPanel } from "./PropertyPanel";
-import { areaLabelSize, roomLabel } from "./roomLabel";
-import { SnapshotsDialog, snapshotClock } from "./SnapshotsDialog";
-import { ConnectorIcon, KIND_ICON } from "./StudioIcons";
-import { type Corner, GUIDE, PAN_PAD, type Tool } from "./shared";
+} from "./utils/guideMapSvg";
+import { hitTest as hitTestObjects } from "./utils/hitTest";
+import { areaLabelSize, roomLabel } from "./utils/roomLabel";
+import { type Corner, GUIDE, PAN_PAD, type Tool } from "./utils/shared";
 import {
   addSnapshot,
   deleteSnapshot,
@@ -162,13 +180,11 @@ import {
   nowMs,
   renameSnapshot,
   type Snapshot,
-} from "./snapshots";
-import { ToolCard } from "./ToolCard";
-import { useRoutePreview } from "./useRoutePreview";
+} from "./utils/snapshots";
 
 // 使い方（Q&A）の中身は大きいので、開いたときに読み込む
 const StudioHelpDialog = dynamic(() =>
-  import("./StudioHelp").then((m) => m.StudioHelpDialog),
+  import("./help/StudioHelp").then((m) => m.StudioHelpDialog),
 );
 
 const ZOOM_MIN = 0.2;

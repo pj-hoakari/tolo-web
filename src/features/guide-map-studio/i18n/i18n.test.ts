@@ -4,7 +4,8 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { EN } from "./i18nEn";
 
-const root = __dirname;
+// スタジオのフォルダ全体（このファイルは i18n/ にあるので 1 つ上）
+const root = path.join(__dirname, "..");
 const files = (dir: string): string[] =>
   fs
     .readdirSync(path.join(root, dir), { withFileTypes: true })

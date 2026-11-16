@@ -7,6 +7,8 @@ import {
   type FloorRouteStep,
 } from "@/features/guest/info/guideMapFloorRoute";
 import { crowdByObject } from "@/features/guest/info/guideMapLayout";
+import { PREVIEW_CROWD_CHOICES } from "../components/panels/PropertyPanel";
+import { useI18n } from "../i18n/i18n";
 import {
   CONNECTOR_TYPES,
   type ConnectorType,
@@ -17,10 +19,8 @@ import {
   isTwinOf,
   type MapObject,
   type PlaceObject,
-} from "./guideMapDoc";
-import { labelOf, toRouteLayout } from "./guideMapIO";
-import { useI18n } from "./i18n";
-import { PREVIEW_CROWD_CHOICES } from "./PropertyPanel";
+} from "../utils/guideMapDoc";
+import { labelOf, toRouteLayout } from "../utils/guideMapIO";
 
 // 階をまたぐ経路（重いので floors/objects・出発・目的地が変わった時だけ計算）。
 // お客さんの画面の案内マップと同じ計算（src/features/guest/info/guideMapFloorRoute.ts）をそのまま使い、同じ道を出す。

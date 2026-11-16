@@ -4,6 +4,7 @@
 
 import type * as React from "react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "../../i18n/i18n";
 import {
   type Floor,
   type GuideMapDoc,
@@ -12,10 +13,9 @@ import {
   paletteOf,
   shownColorOf,
   toPointsAttr,
-} from "./guideMapDoc";
-import { floorBounds } from "./guideMapSvg";
-import { useI18n } from "./i18n";
-import { type Corner, PAN_PAD } from "./shared";
+} from "../../utils/guideMapDoc";
+import { floorBounds } from "../../utils/guideMapSvg";
+import { type Corner, PAN_PAD } from "../../utils/shared";
 
 // 定規：キャンバスの上と左に、地図の座標の目盛りを出す（グリッドと同じ数え方。左上が 0）。
 // 選んでいるものの範囲は色の帯、マウスの位置は細い線（markXRef / markYRef を親が直接動かす）で示す

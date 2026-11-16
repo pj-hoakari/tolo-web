@@ -3,7 +3,7 @@
 // 新規作成：どんなマップ（建物＝階あり／会場＝階なし）を作るか選ぶ
 
 import { Building2, FilePlus, Trees } from "lucide-react";
-import { useI18n } from "./i18n";
+import { useI18n } from "../../i18n/i18n";
 import { Modal } from "./Modal";
 
 export function NewMapDialog({

@@ -4,8 +4,8 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import type { Tool } from "./shared";
-import { TOOL_GIFS } from "./toolGifs";
+import type { Tool } from "../../utils/shared";
+import { TOOL_GIFS } from "../../utils/toolGifs";
 
 // 動きを減らす設定のときは、動き（GIF）を出さない（GIF は止められないため、名前と説明だけにする）
 function useReducedMotion() {

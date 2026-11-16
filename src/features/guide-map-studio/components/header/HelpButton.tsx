@@ -3,7 +3,7 @@
 // 上の帯の「使い方」ボタン（使い方の中身は、開いたときに読み込む）
 
 import { HelpCircle } from "lucide-react";
-import { useI18n } from "./i18n";
+import { useI18n } from "../../i18n/i18n";
 
 // compact＝スタジオの上の帯用（小さめ。狭い画面では「？」だけ）
 export function StudioHelpButton({

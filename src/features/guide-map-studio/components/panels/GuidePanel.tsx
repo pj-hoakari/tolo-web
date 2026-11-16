@@ -4,13 +4,13 @@
 
 import { Check, RotateCcw, Route, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { RoutePinSelect } from "./Fields";
-import type { GuideMapDoc } from "./guideMapDoc";
-import { useI18n } from "./i18n";
+import type { RoutePreview } from "../../hooks/useRoutePreview";
+import { useI18n } from "../../i18n/i18n";
+import type { GuideMapDoc } from "../../utils/guideMapDoc";
+import { GUIDE } from "../../utils/shared";
+import { RoutePinSelect } from "../parts/Fields";
+import { ConnectorIcon } from "../parts/StudioIcons";
 import { crowdColor, PREVIEW_CROWD_CHOICES } from "./PropertyPanel";
-import { ConnectorIcon } from "./StudioIcons";
-import { GUIDE } from "./shared";
-import type { RoutePreview } from "./useRoutePreview";
 
 // 誘導プレビュー（ピン→ピンを、壁を避けた道なりでつなぐ）。右の設定の「誘導」タブの中身
 type GuidePanelProps = {

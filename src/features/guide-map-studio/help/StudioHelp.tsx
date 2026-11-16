@@ -3,7 +3,7 @@
 import { ChevronRight, Search, X } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { useI18n } from "./i18n";
+import { useI18n } from "../i18n/i18n";
 
 // 案内マップ・スタジオの使い方（Q&A）。地図を作る人向けに、専門用語を使わず、画面に出ている言葉で説明する。
 // 知りたいことを検索・カテゴリから探せる。「困ったとき」には、使っていてつまずきやすい点をまとめている。

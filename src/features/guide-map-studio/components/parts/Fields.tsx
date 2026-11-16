@@ -3,8 +3,8 @@
 // 右の設定などで使う入力欄（数字・階の名前・誘導の出発/目的地）
 
 import * as React from "react";
-import type { Floor } from "./guideMapDoc";
-import { useI18n } from "./i18n";
+import { useI18n } from "../../i18n/i18n";
+import type { Floor } from "../../utils/guideMapDoc";
 
 // 位置・大きさを数字で入れる欄。Enter・フォーカスが外れたときに確定する（矢印キーの増減はすぐ反映）
 type NumFieldProps = {

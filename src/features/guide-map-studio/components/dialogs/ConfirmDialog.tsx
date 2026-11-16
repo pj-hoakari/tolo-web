@@ -8,7 +8,7 @@ import {
   DialogFooter,
   DialogOverlay,
 } from "@/components/ui/dialog";
-import { useI18n } from "./i18n";
+import { useI18n } from "../../i18n/i18n";
 
 // 確かめる・知らせるための小さな画面（tolo-web の Dialog）。window.confirm / alert の代わりに使う。
 //  - confirm(message, { confirmLabel, destructive }) … 「キャンセル」と実行のボタン。押した方を true / false で返す

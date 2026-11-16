@@ -5,7 +5,7 @@
 import { Copy, Lock, LockOpen, Trash2 } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { ColorSwatch } from "./ColorSwatch";
+import { useI18n } from "../../i18n/i18n";
 import {
   CONNECTOR_TYPES,
   type ConnectorDirection,
@@ -25,10 +25,10 @@ import {
   type PlaceObject,
   shownColorOf,
   type TextObject,
-} from "./guideMapDoc";
-import { labelOf } from "./guideMapIO";
-import { useI18n } from "./i18n";
-import { ConnectorIcon } from "./StudioIcons";
+} from "../../utils/guideMapDoc";
+import { labelOf } from "../../utils/guideMapIO";
+import { ColorSwatch } from "../parts/ColorSwatch";
+import { ConnectorIcon } from "../parts/StudioIcons";
 
 // 階移動ポイントの設定（種類・つながる階・エスカレーターの向き）。同じ link の全フロア分にまとめて効く
 export function ConnectorPanel({

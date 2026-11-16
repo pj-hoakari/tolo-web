@@ -5,9 +5,9 @@
 
 import { Link2, Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { GuideMapDoc, MapObject } from "./guideMapDoc";
-import { labelOf } from "./guideMapIO";
-import { useI18n } from "./i18n";
+import { useI18n } from "../../i18n/i18n";
+import type { GuideMapDoc, MapObject } from "../../utils/guideMapDoc";
+import { labelOf } from "../../utils/guideMapIO";
 import { Modal } from "./Modal";
 
 export type LinkTab = "floors" | "points" | "routes";
