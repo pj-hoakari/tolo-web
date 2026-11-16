@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { PLACE_KINDS as TOLO_KINDS } from "@/features/guest/info/guideMapStyle";
+import type { GuideMapDoc, MapObject } from "../type";
 import {
   BASE_COLORS,
   DEFAULT_COLOR,
-  type GuideMapDoc,
-  type MapObject,
   markOf,
   normalizeDoc,
   PALETTE,

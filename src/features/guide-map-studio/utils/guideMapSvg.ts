@@ -2,12 +2,10 @@
 // 「見比べる」の表示・画像（PNG）保存・印刷に使う。画面のキャンバスと同じ「図面風」の見た目を、色を直接書いて再現する
 // （画像や印刷では CSS の変数が効かないため）。
 
+import type { ConnectorType, Floor, GuideMapDoc } from "../type";
 import {
   bboxOf,
-  type ConnectorType,
-  type Floor,
   floorSize,
-  type GuideMapDoc,
   isConnector,
   markBoxOf,
   paletteOf,

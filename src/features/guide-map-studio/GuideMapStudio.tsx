@@ -3,50 +3,29 @@
 import * as React from "react";
 import "./studio-theme.css";
 import {
-  ArrowLeft,
-  ArrowRight,
-  ArrowUpDown,
-  BookmarkPlus,
-  Check,
   ChevronDown,
-  Circle as CircleIcon,
   Columns2,
   Copy,
   Download,
   Eye,
-  FilePlus,
   ImageDown,
   Link2,
   ListChecks,
   Lock,
   LockOpen,
-  Map as MapIcon,
-  MapPin,
-  Maximize,
   Monitor,
-  MousePointer2,
   PanelRightClose,
   PanelRightOpen,
   Pencil,
-  Pentagon,
   Plus,
   Printer,
-  Redo2,
   Route,
-  Ruler,
   Search,
   Smartphone,
-  Sparkles,
   Square,
   Table2,
   Trash2,
-  Type,
-  Undo2,
-  Upload,
-  UploadCloud,
   X,
-  ZoomIn,
-  ZoomOut,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
@@ -61,6 +40,7 @@ import {
   Rulers,
   splitTitle,
 } from "./components/canvas/CanvasParts";
+import { MapStatusBar } from "./components/canvas/MapStatusBar";
 import { CheckDialog } from "./components/dialogs/CheckDialog";
 import {
   CompareDialog,
@@ -81,7 +61,14 @@ import {
   SnapshotsDialog,
   snapshotClock,
 } from "./components/dialogs/SnapshotsDialog";
+import { FileActions } from "./components/header/FileActions";
 import { StudioHelpButton } from "./components/header/HelpButton";
+import { PageTabs } from "./components/header/PageTabs";
+import { SaveActions } from "./components/header/SaveActions";
+import { ShareMenu } from "./components/header/ShareMenu";
+import { StudioNotice } from "./components/header/StudioNotice";
+import { ObjectMenu } from "./components/menus/ObjectMenu";
+import { TabMenu } from "./components/menus/TabMenu";
 import { GuidePanel } from "./components/panels/GuidePanel";
 import {
   ConnectorPanel,
@@ -90,12 +77,41 @@ import {
 } from "./components/panels/PropertyPanel";
 import { ColorSwatch } from "./components/parts/ColorSwatch";
 import { FloorNameInput, NumField } from "./components/parts/Fields";
-import { PopupMenu } from "./components/parts/PopupMenu";
 import { ConnectorIcon, KIND_ICON } from "./components/parts/StudioIcons";
-import { ToolCard } from "./components/parts/ToolCard";
+import { ToolRail } from "./components/toolbar/ToolRail";
+import { TOOLS } from "./components/toolbar/tools";
+import { useHistory } from "./hooks/useHistory";
 import { useRoutePreview } from "./hooks/useRoutePreview";
+import { useViewPrefs } from "./hooks/useViewPrefs";
 import { useI18n } from "./i18n/i18n";
+import type {
+  AreaObject,
+  ConnectorObject,
+  ConnectorType,
+  Floor,
+  GuidanceGraph,
+  GuideMapDoc,
+  MapObject,
+  PaletteKey,
+  PlaceObject,
+  Pt,
+  StudioBook,
+  StudioPage,
+  TextObject,
+} from "./type";
 import { cloneObjects, twinOn, twinsOf } from "./utils/copyObjects";
+import {
+  clampZoom,
+  dropDanglingStart,
+  GRID_SNAP,
+  guessConnector,
+  snap,
+  syncLinkedPositions,
+  uniqueName,
+  WHEEL_DELTA_MAX,
+  WHEEL_ZOOM_SPEED,
+  withLinkedTwins,
+} from "./utils/editing";
 import {
   GuideMapSaveError,
   guideMapFingerprint,
@@ -105,22 +121,16 @@ import {
 } from "./utils/guideMapApi";
 import { type CheckIssue, checkGuideMapDoc } from "./utils/guideMapCheck";
 import {
-  type AreaObject,
   anchorOf,
   areaPalette,
   bboxOf,
   buildingOf,
   CONNECTOR_LABEL,
   CONNECTOR_TYPES,
-  type ConnectorObject,
-  type ConnectorType,
   centroidOf,
   DEFAULT_COLOR,
   emptyDoc,
-  type Floor,
   floorSize,
-  type GuidanceGraph,
-  type GuideMapDoc,
   genId,
   hasInfo,
   isConnector,
@@ -129,22 +139,13 @@ import {
   MAP_WALL,
   MARKER_SIZE_MAX,
   MARKER_SIZE_MIN,
-  type MapObject,
   markBoxOf,
   markOf,
   normalizeDoc,
-  PALETTE,
-  PALETTE_GROUPS,
   PALETTE_KEYS,
-  type PaletteKey,
-  type PlaceObject,
-  type Pt,
   paletteOf,
-  type StudioBook,
-  type StudioPage,
   shownColorOf,
   studioBookKey,
-  type TextObject,
   toPointsAttr,
 } from "./utils/guideMapDoc";
 import {
@@ -155,7 +156,6 @@ import {
   toGuideMapLayout,
 } from "./utils/guideMapIO";
 import {
-  type Box,
   boxOf,
   type GapMark,
   type GuideLine,
@@ -172,7 +172,15 @@ import {
 } from "./utils/guideMapSvg";
 import { hitTest as hitTestObjects } from "./utils/hitTest";
 import { areaLabelSize, roomLabel } from "./utils/roomLabel";
-import { type Corner, GUIDE, PAN_PAD, type Tool } from "./utils/shared";
+import { readServerPrint, writeServerPrint } from "./utils/serverPrint";
+import {
+  type Corner,
+  type Drag,
+  GUIDE,
+  PAN_PAD,
+  SEL,
+  type Tool,
+} from "./utils/shared";
 import {
   addSnapshot,
   deleteSnapshot,
@@ -186,201 +194,6 @@ import {
 const StudioHelpDialog = dynamic(() =>
   import("./help/StudioHelp").then((m) => m.StudioHelpDialog),
 );
-
-const ZOOM_MIN = 0.2;
-const ZOOM_MAX = 4;
-const WHEEL_ZOOM_SPEED = 0.0025; // ホイール1単位あたりの拡大率（対数）
-const WHEEL_DELTA_MAX = 20; // 1イベントで効く deltaY の上限（マウス1ノッチ ≒ 5%）
-const GRID_SNAP = 20; // グリッドに揃える刻み（方眼 40px の半分）
-// 選択中の強調（アクセント色の太いリング＋外側のハロー）
-const SEL = "var(--primary)";
-const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
-// 画面だけの設定（全体図・定規）の保存キー
-const VIEW_PREFS_KEY = "guide-map-studio:view-prefs";
-// 前の名前の保存キー。残っていれば一度だけ読んで引き継ぐ
-const LEGACY_VIEW_PREFS_KEY = "venue-map:view-prefs";
-
-// tolo-web に最後に保存した（または開いたときに確かめた）地図の指紋。イベントごとにこのブラウザに残し、
-// 「tolo-web に保存していない変更」と「ほかで保存し直された地図」を見分けるのに使う
-const serverPrintKey = (eventId: string) =>
-  `guide-map-studio:server-print:${eventId}`;
-function readServerPrint(eventId: string) {
-  try {
-    return window.localStorage.getItem(serverPrintKey(eventId));
-  } catch {
-    return null;
-  }
-}
-function writeServerPrint(eventId: string, print: string | null) {
-  try {
-    if (print) window.localStorage.setItem(serverPrintKey(eventId), print);
-    else window.localStorage.removeItem(serverPrintKey(eventId));
-  } catch {
-    // 残せなくても保存そのものは済んでいる
-  }
-}
-
-// 出発（startId）の場所が消えていたら、出発も外す（消えた場所を指したまま書き出さないように）
-const dropDanglingStart = (d: GuideMapDoc): GuideMapDoc =>
-  d.startId && !d.objects.some((o) => o.id === d.startId)
-    ? { ...d, startId: undefined }
-    : d;
-// まだ使われていない名前にする（「1F（コピー）」がすでにあれば「1F（コピー2）」）
-function uniqueName(
-  base: string,
-  used: string[],
-  numbered: (n: number) => string,
-) {
-  if (!used.includes(base)) return base;
-  let n = 2;
-  while (used.includes(numbered(n))) n++;
-  return numbered(n);
-}
-const snap = (v: number) => Math.round(v / GRID_SNAP) * GRID_SNAP;
-
-type Drag =
-  | {
-      kind: "pan";
-      cx: number;
-      cy: number;
-      sl: number;
-      st: number;
-      moved: boolean;
-      tap?: string | null;
-    }
-  | {
-      kind: "move";
-      ids: string[];
-      pressed: string;
-      additive: boolean;
-      start: Pt;
-      rawStart: Pt;
-      origins: Record<string, MapObject>;
-      box: Box;
-      others: Box[];
-      moved: boolean;
-    }
-  | { kind: "vertex"; id: string; index: number; origin: Pt[] } // origin＝ドラッグ開始時の頂点（辺の向きの判定に使う）
-  | { kind: "draw"; shape: "rect" | "circle" | "area"; start: Pt; cur: Pt }
-  | {
-      kind: "resize";
-      id: string;
-      corner: Corner;
-      origin: PlaceObject;
-      others: Box[];
-    }
-  | { kind: "marquee"; start: Pt; raw: Pt; base: string[] } // base＝Shift で足すときの元の選択、raw＝押した位置（クリック判定用）
-  | null;
-
-// 名前は「何を置く道具か」で呼ぶ（形の名前ではなく用途）。shortcut＝その道具を選ぶキー、desc＝使い方の説明（マウスを置くと出る）
-const TOOLS: {
-  key: Tool;
-  label: string;
-  short?: string;
-  shortcut: string;
-  desc: string;
-  Icon: React.ComponentType<{ className?: string }>;
-}[] = [
-  {
-    key: "select",
-    label: "選択",
-    shortcut: "V",
-    desc: "地図の物を選んで、動かしたり大きさを変えたりします。何もない所をドラッグすると、まとめて選べます。",
-    Icon: MousePointer2,
-  },
-  {
-    key: "rect",
-    label: "部屋・区画",
-    shortcut: "R",
-    desc: "ドラッグして、部屋や売り場を描きます。部屋どうしのすき間が、お客さんの通る道になります。",
-    Icon: Square,
-  },
-  {
-    key: "circle",
-    label: "丸い区画",
-    shortcut: "C",
-    desc: "ドラッグして、丸い形の区画（ブース・広場など）を描きます。",
-    Icon: CircleIcon,
-  },
-  {
-    key: "pin",
-    label: "目印（ピン）",
-    short: "目印",
-    shortcut: "P",
-    desc: "クリックした所に目印を置きます。入口・案内所など、部屋ではない場所に使います。",
-    Icon: MapPin,
-  },
-  {
-    key: "area",
-    label: "範囲",
-    shortcut: "A",
-    desc: "ドラッグして範囲を囲みます。待機列の場所、通行止めにする所、建物全体などを示すのに使います。",
-    Icon: Pentagon,
-  },
-  {
-    key: "text",
-    label: "文字",
-    shortcut: "T",
-    desc: "クリックした所に文字を置きます。建物名や「本館」などの見出しに使います。",
-    Icon: Type,
-  },
-  {
-    key: "connector",
-    label: "階段・EV",
-    shortcut: "E",
-    desc: "クリックした所に階段・エスカレーター・エレベーターを置きます。全部の階の同じ位置に置かれます。",
-    Icon: ArrowUpDown,
-  },
-];
-
-// 階移動ポイント（階段・エスカレーター・エレベーター）はどの階でも同じ位置・同じ大きさ。
-// movedIds のうち階移動ポイントがあれば、同じ link の分身（他の階）の位置・大きさ・形をそろえる。
-function syncLinkedPositions(
-  objs: MapObject[],
-  movedIds: Set<string>,
-): MapObject[] {
-  const geo = new Map<
-    string,
-    Pick<PlaceObject, "x" | "y" | "w" | "h" | "shape" | "markW" | "markH">
-  >();
-  for (const o of objs)
-    if (movedIds.has(o.id) && isConnector(o))
-      geo.set(o.link, {
-        x: o.x,
-        y: o.y,
-        w: o.w,
-        h: o.h,
-        shape: o.shape,
-        markW: o.markW,
-        markH: o.markH,
-      });
-  if (geo.size === 0) return objs;
-  return objs.map((o) => {
-    const g = isConnector(o) ? geo.get(o.link) : undefined;
-    return g ? ({ ...o, ...g } as MapObject) : o;
-  });
-}
-// 削除・選択の対象を、階移動ポイントなら同じ link の全フロア分に広げる
-function withLinkedTwins(objs: MapObject[], ids: Set<string>): Set<string> {
-  const links = new Set(
-    objs
-      .filter((o) => ids.has(o.id) && isConnector(o))
-      .map((o) => (o as ConnectorObject).link),
-  );
-  if (links.size === 0) return ids;
-  return new Set([
-    ...ids,
-    ...objs.filter((o) => isConnector(o) && links.has(o.link)).map((o) => o.id),
-  ]);
-}
-
-function guessConnector(title?: string): ConnectorType | null {
-  if (!title) return null;
-  if (/エレベ|ＥＶ|\bEV\b|elevator/i.test(title)) return "elevator";
-  if (/エスカ|escalator/i.test(title)) return "escalator";
-  if (/階段|stairs?/i.test(title)) return "stairs";
-  return null;
-}
 
 // eventId＝このイベントの案内マップ（ブラウザへの保存もイベントごとに分ける）。
 // leading / trailing＝上の帯の左端・右端に置く物（ページの戻るリンク・見出し・言語やテーマの切り替えなど）。
@@ -397,6 +210,18 @@ export function GuideMapStudio({
   trailing,
 }: GuideMapStudioProps) {
   const { t, tg, lang, connectorName } = useI18n();
+  // 画面だけの設定（全体図・定規・くわしい設定・右の設定）。このブラウザに覚えておく
+  const {
+    showMini,
+    setShowMini,
+    showRulers,
+    setShowRulers,
+    advancedOpen,
+    setAdvancedOpen,
+    sideOpen,
+    setSideOpen,
+    saveViewPrefs,
+  } = useViewPrefs();
   // 確かめる・知らせる小さな画面（window.confirm / alert の代わり）
   const {
     confirm,
@@ -417,10 +242,6 @@ export function GuideMapStudio({
     id: string;
   } | null>(null); // マップタブの右クリックメニュー
   const [editingPage, setEditingPage] = React.useState<string | null>(null); // 名前を編集中のマップタブ
-  const [pageDrag, setPageDrag] = React.useState<{
-    id: string;
-    to: number | null;
-  } | null>(null); // マップタブの並べ替え（ドラッグ中）
   const [exportPicker, setExportPicker] = React.useState(false); // タブが2つ以上のとき、書き出すマップを選ぶ
   const [deletedPage, setDeletedPage] = React.useState<{
     page: StudioPage;
@@ -442,62 +263,9 @@ export function GuideMapStudio({
   const [historyList, setHistoryList] = React.useState<
     Snapshot[] | null | "loading"
   >(null); // 保存ポイントの一覧（null＝閉じている）
-  const [shareMenu, setShareMenu] = React.useState(false); // 「確かめる・共有」のメニュー
-  const [sideOpen, setSideOpen] = React.useState(true); // 右の設定を出しているか
   const [sideTab, setSideTab] = React.useState<"settings" | "guide">(
     "settings",
   ); // 右の設定のタブ
-  const [colorMenu, setColorMenu] = React.useState(false); // 道具の列の色えらび
-  // 道具の説明のカード（動画つき）。1枚だけ出して、マウスを置いた道具の横へ動かす。
-  // ・開く：少し置いてから。閉じた直後に隣の道具へ移ったときは待たずに開く
-  // ・移る：開いたまま隣の道具へ移ったら、出し直さずにすべって移る（中身だけ入れ替える）
-  // ・閉じる：すき間を通っただけでちらつかないよう少し待ち、短くフェードして消す
-  const [toolCard, setToolCard] = React.useState<{
-    tool: Tool;
-    top: number;
-    left: number;
-    notch: number;
-    phase: "in" | "swap" | "out";
-  } | null>(null);
-  const toolCardRef = React.useRef<HTMLDivElement>(null);
-  const toolCardOpenTimer = React.useRef<number | undefined>(undefined);
-  const toolCardCloseTimer = React.useRef<number | undefined>(undefined);
-  const toolCardWarmUntil = React.useRef(0);
-  const openToolCard = (key: Tool, el: HTMLElement, now = false) => {
-    window.clearTimeout(toolCardOpenTimer.current);
-    window.clearTimeout(toolCardCloseTimer.current);
-    // 道具の上端にそろえる。下にはみ出すときは上へずらす（三角はいつも道具の真ん中を指す）
-    const r = el.getBoundingClientRect();
-    const h = toolCardRef.current?.offsetHeight ?? 300;
-    const top = Math.max(8, Math.min(r.top - 6, window.innerHeight - h - 12));
-    const place = {
-      tool: key,
-      top,
-      left: r.right + 12,
-      notch: r.top + r.height / 2 - top - 5,
-    };
-    if (toolCard) setToolCard({ ...place, phase: "swap" });
-    else if (now || nowMs() < toolCardWarmUntil.current)
-      setToolCard({ ...place, phase: "in" });
-    else
-      toolCardOpenTimer.current = window.setTimeout(
-        () => setToolCard({ ...place, phase: "in" }),
-        380,
-      );
-  };
-  const closeToolCard = (wait = 90) => {
-    window.clearTimeout(toolCardOpenTimer.current);
-    window.clearTimeout(toolCardCloseTimer.current);
-    if (!toolCard) return;
-    toolCardCloseTimer.current = window.setTimeout(() => {
-      toolCardWarmUntil.current = nowMs() + 700;
-      setToolCard((c) => (c ? { ...c, phase: "out" } : c));
-      toolCardCloseTimer.current = window.setTimeout(
-        () => setToolCard(null),
-        130,
-      );
-    }, wait);
-  };
   const [historyNow, setHistoryNow] = React.useState(0); // 保存ポイントを開いた時刻（「〇分前」の基準）
   const [tool, setTool] = React.useState<Tool>("select");
   const [color, setColor] = React.useState<PaletteKey>(DEFAULT_COLOR);
@@ -527,9 +295,6 @@ export function GuideMapStudio({
   } | null>(null); // 四角/丸/エリア ドラッグ中のプレビュー
   const [zoom, setZoom] = React.useState(1);
   const [showGrid, setShowGrid] = React.useState(true);
-  const [showMini, setShowMini] = React.useState(true); // 全体図（ミニマップ）
-  const [showRulers, setShowRulers] = React.useState(true); // 定規（座標）を表示
-  const [advancedOpen, setAdvancedOpen] = React.useState(false); // 右の設定の「くわしい設定」を開いているか
   const [linkOpen, setLinkOpen] = React.useState(false); // tolo-web のグラフとのつなぎ（一覧）
   const [linkTab, setLinkTab] = React.useState<LinkTab>("points");
   const [linkUnlinkedOnly, setLinkUnlinkedOnly] = React.useState(false);
@@ -573,24 +338,37 @@ export function GuideMapStudio({
   const scrollerRef = React.useRef<HTMLDivElement>(null);
   const worldRef = React.useRef<HTMLDivElement>(null);
   const dragRef = React.useRef<Drag>(null);
-  // 元に戻す／やり直しの履歴と、コピーした項目（⌘Z・⌘C・⌘V）
-  const pastRef = React.useRef<GuideMapDoc[]>([]);
-  const futureRef = React.useRef<GuideMapDoc[]>([]);
-  const committedRef = React.useRef<GuideMapDoc | null>(null);
-  const skipHistoryRef = React.useRef(false);
-  const lastChangeRef = React.useRef(0);
+  // 元に戻す／やり直し（⌘Z／⌘⇧Z）。戻した・やり直した後は、無くなった物の選択やメニューを片付ける
+  const {
+    historyCount,
+    commitHistory,
+    undo,
+    redo,
+    skipNextHistory,
+    breakHistoryMerge,
+    switchPageHistory,
+    forgetPageHistory,
+  } = useHistory({
+    doc,
+    setDoc,
+    dragRef,
+    onJump: (next) => {
+      setSelectedIds((ids) =>
+        ids.filter((id) => next.objects.some((o) => o.id === id)),
+      );
+      setMenu(null);
+      setGuides(null);
+    },
+  });
+  // コピーした項目（⌘C・⌘V）
   // コピーした項目。階段・エレベーター等は、ほかの階の分身（どの階につながるか・各階の設定）も一緒に覚える
   const clipboardRef = React.useRef<{
     items: MapObject[];
     twins: ConnectorObject[];
   }>({ items: [], twins: [] });
   const pasteCountRef = React.useRef(new Map<string, number>()); // 貼り付け先の階ごとの回数
-  const importRef = React.useRef<HTMLInputElement>(null);
   // ブラウザの保存から読み戻し終えたか。読み戻す前の空の地図で保存を上書きしないよう、次の描画から保存を始める
   const [hydrated, setHydrated] = React.useState(false);
-  const pageHistoryRef = React.useRef(
-    new Map<string, { past: GuideMapDoc[]; future: GuideMapDoc[] }>(),
-  ); // 元に戻すの履歴はタブごと
 
   const floor =
     doc.floors.find((f) => f.id === doc.activeFloorId) ?? doc.floors[0];
@@ -735,7 +513,7 @@ export function GuideMapStudio({
       if (okPages.length) {
         const active =
           okPages.find((p) => p.id === book?.activePageId) ?? okPages[0];
-        skipHistoryRef.current = true; // 復元は「元に戻す」の対象にしない
+        skipNextHistory(); // 復元は「元に戻す」の対象にしない
         setPages(okPages);
         setActivePageId(active.id);
         setDoc(active.doc);
@@ -777,14 +555,14 @@ export function GuideMapStudio({
         if (print !== knownPrint && print !== guideMapFingerprint(localDoc))
           setServerOffer(d);
       } else if (d) {
-        skipHistoryRef.current = true;
+        skipNextHistory();
         setPages([{ id: "p1", name: "", doc: d }]);
         setActivePageId("p1");
         setDoc(d);
         fitView(d);
       }
       if (graph) {
-        skipHistoryRef.current = true; // 開いたときの結び付けは「元に戻す」の対象にしない
+        skipNextHistory(); // 開いたときの結び付けは「元に戻す」の対象にしない
         attachGraph(graph, { quiet: true });
       }
     } catch {
@@ -1072,72 +850,6 @@ export function GuideMapStudio({
             : x,
         ),
     }));
-  // --- 元に戻す／やり直し（⌘Z／⌘⇧Z）---
-  // ドラッグは離した時点で1回、続けて打った文字などは 0.6 秒以内ならまとめて1回にする。階の切り替えは履歴に積まない。
-  const [historyCount, setHistoryCount] = React.useState({
-    past: 0,
-    future: 0,
-  }); // ボタンの有効/無効用
-  const syncHistoryCount = () =>
-    setHistoryCount({
-      past: pastRef.current.length,
-      future: futureRef.current.length,
-    });
-  const sameContent = (a: GuideMapDoc, b: GuideMapDoc) =>
-    a.objects === b.objects &&
-    a.floors === b.floors &&
-    a.north === b.north &&
-    a.scale === b.scale;
-  const commitHistory = (current: GuideMapDoc, force = false) => {
-    const prev = committedRef.current;
-    committedRef.current = current;
-    if (!prev || sameContent(prev, current)) return;
-    const now = Date.now();
-    if (force || now - lastChangeRef.current > 600) {
-      pastRef.current = [...pastRef.current.slice(-99), prev];
-    }
-    lastChangeRef.current = force ? 0 : now;
-    futureRef.current = [];
-    syncHistoryCount();
-  };
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 地図が変わったときだけ履歴に積む（commitHistory は毎回作り直す関数なので入れない）
-  React.useEffect(() => {
-    // 最初の表示：基準にするだけ（保存からの復元フラグはそのまま残す）
-    if (committedRef.current === null) {
-      committedRef.current = doc;
-      return;
-    }
-    if (skipHistoryRef.current) {
-      skipHistoryRef.current = false;
-      committedRef.current = doc;
-      return;
-    }
-    if (dragRef.current) return; // ドラッグ中は離したときにまとめて記録
-    commitHistory(doc);
-  }, [doc]);
-  const jumpHistory = (from: GuideMapDoc[], to: GuideMapDoc[]) => {
-    const target = from.pop();
-    if (!target) return;
-    to.push(doc);
-    // 表示中の階はそのまま（無くなった階なら記録の階へ）
-    const next = {
-      ...target,
-      activeFloorId: target.floors.some((f) => f.id === doc.activeFloorId)
-        ? doc.activeFloorId
-        : target.activeFloorId,
-    };
-    skipHistoryRef.current = true;
-    lastChangeRef.current = 0;
-    setDoc(next);
-    setSelectedIds((ids) =>
-      ids.filter((id) => next.objects.some((o) => o.id === id)),
-    );
-    setMenu(null);
-    setGuides(null);
-    syncHistoryCount();
-  };
-  const undo = () => jumpHistory(pastRef.current, futureRef.current);
-  const redo = () => jumpHistory(futureRef.current, pastRef.current);
 
   // --- コピー／貼り付け（⌘C／⌘V／⌘X）---
   const copySelected = (ids: string[]) => {
@@ -1599,19 +1311,10 @@ export function GuideMapStudio({
     setPages(base);
     setPageMenu(null);
     if (id === activePageId) return;
-    pageHistoryRef.current.set(activePageId, {
-      past: pastRef.current,
-      future: futureRef.current,
-    });
-    const h = pageHistoryRef.current.get(id) ?? { past: [], future: [] };
-    pastRef.current = h.past;
-    futureRef.current = h.future;
-    skipHistoryRef.current = true; // 切り替えは「元に戻す」の対象にしない
-    lastChangeRef.current = 0;
+    switchPageHistory(id, activePageId); // 切り替えは「元に戻す」の対象にしない
     setActivePageId(id);
     setDoc(target.doc);
     resetWork();
-    syncHistoryCount();
     fitView(target.doc);
   };
   // 「マップ3」のように、まだ使っていない番号の名前
@@ -1694,23 +1397,16 @@ export function GuideMapStudio({
       wasActive: id === activePageId,
     });
     const rest = withNames(pages).filter((p) => p.id !== id);
-    pageHistoryRef.current.delete(id);
+    forgetPageHistory(id);
     if (id === activePageId) {
       // 消したタブの右（無ければ左）を表示する。消すタブの履歴は持ち越さない
-      pastRef.current = [];
-      futureRef.current = [];
       const target = rest[Math.min(i, rest.length - 1)];
       const nextId = target.id;
-      const h = pageHistoryRef.current.get(nextId) ?? { past: [], future: [] };
-      pastRef.current = h.past;
-      futureRef.current = h.future;
-      skipHistoryRef.current = true;
-      lastChangeRef.current = 0;
+      switchPageHistory(nextId);
       setPages(rest);
       setActivePageId(nextId);
       setDoc(target.doc);
       resetWork();
-      syncHistoryCount();
       fitView(target.doc);
     } else setPages(rest);
   };
@@ -1958,7 +1654,6 @@ export function GuideMapStudio({
   const svgLabels = { untitled: t("（無題）"), closedLabel: tg("closed") };
   // all=false：表示中の階だけ／all=true：全部の階を1枚ずつ（階ごとのファイル）
   const savePng = async (all: boolean) => {
-    setShareMenu(false);
     const i = pages.findIndex((p) => p.id === activePageId);
     const name = pageName(pages[i], i);
     const targets = all
@@ -2102,7 +1797,7 @@ export function GuideMapStudio({
         ? doc.activeFloorId
         : snap.doc.activeFloorId,
     };
-    lastChangeRef.current = 0;
+    breakHistoryMerge();
     setDoc(d);
     resetWork();
     fitView(d);
@@ -2652,48 +2347,6 @@ export function GuideMapStudio({
   // --- ズーム ---
   const zoomBy = (factor: number) => setZoom((z) => clampZoom(z * factor));
 
-  // --- 画面だけの設定（全体図・定規）を、このブラウザに覚えておく ---
-  React.useEffect(() => {
-    try {
-      const v = JSON.parse(
-        window.localStorage.getItem(VIEW_PREFS_KEY) ||
-          window.localStorage.getItem(LEGACY_VIEW_PREFS_KEY) ||
-          "{}",
-      ) as {
-        showMini?: boolean;
-        rulers?: boolean;
-        advanced?: boolean;
-        side?: boolean;
-      };
-      if (typeof v.showMini === "boolean") setShowMini(v.showMini);
-      if (typeof v.rulers === "boolean") setShowRulers(v.rulers);
-      if (typeof v.advanced === "boolean") setAdvancedOpen(v.advanced);
-      if (typeof v.side === "boolean") setSideOpen(v.side);
-    } catch {
-      // 読めなければ、はじめの表示のまま
-    }
-  }, []);
-  const saveViewPrefs = (next: {
-    showMini?: boolean;
-    rulers?: boolean;
-    advanced?: boolean;
-    side?: boolean;
-  }) => {
-    try {
-      window.localStorage.setItem(
-        VIEW_PREFS_KEY,
-        JSON.stringify({
-          showMini,
-          rulers: showRulers,
-          advanced: advancedOpen,
-          side: sideOpen,
-          ...next,
-        }),
-      );
-    } catch {
-      // 覚えられなくても切り替えはできる
-    }
-  };
   // 地図の物を選んだら、右の設定を「設定」のタブにする（誘導のタブを見ていても、選んだ物の設定がすぐ出るように）
   const selectedCount = selectedIds.length;
   React.useEffect(() => {
@@ -3035,375 +2688,109 @@ export function GuideMapStudio({
               </>
             )}
             {/* マップのタブ（エクセルのシートのように、別々のマップを切り替える） */}
-            <div
-              role="tablist"
-              aria-label={t("マップのタブ")}
-              className="studio-thin-scroll flex min-w-0 items-center gap-1 overflow-x-auto"
-            >
-              {pages.map((p, i) =>
-                editingPage === p.id ? (
-                  <FloorNameInput
-                    key={p.id}
-                    name={pageName(p, i)}
-                    label={t("マップ名")}
-                    maxLength={30}
-                    autoFocus
-                    onCommit={(name) => renamePage(p.id, name)}
-                    onDone={() => setEditingPage(null)}
-                    className="h-8 w-36 shrink-0 rounded-md border-2 border-primary bg-transparent px-3 text-xs font-medium"
-                  />
-                ) : (
-                  <button
-                    key={p.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={p.id === activePageId}
-                    draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData("text/plain", p.id);
-                      e.dataTransfer.effectAllowed = "move";
-                      setPageDrag({ id: p.id, to: null });
-                    }}
-                    onDragOver={(e) => {
-                      if (!pageDrag) return;
-                      e.preventDefault();
-                      const r = e.currentTarget.getBoundingClientRect();
-                      const to = e.clientX < r.left + r.width / 2 ? i : i + 1;
-                      if (pageDrag.to !== to) setPageDrag({ ...pageDrag, to });
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      if (pageDrag && pageDrag.to !== null)
-                        movePage(pageDrag.id, pageDrag.to);
-                      setPageDrag(null);
-                    }}
-                    onDragEnd={() => setPageDrag(null)}
-                    onClick={() => goPage(p.id)}
-                    onDoubleClick={() => setEditingPage(p.id)}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      goPage(p.id);
-                      setPageMenu({ x: e.clientX, y: e.clientY, id: p.id });
-                    }}
-                    title={t(
-                      "ドラッグで並べ替え／ダブルクリックで名前を変更／右クリックでメニュー",
-                    )}
-                    className={cn(
-                      "relative flex h-8 max-w-44 shrink-0 items-center truncate rounded-md px-3 text-xs",
-                      p.id === activePageId
-                        ? "bg-accent font-medium text-primary"
-                        : "text-muted-foreground hover:bg-accent/60",
-                      pageDrag?.id === p.id && "opacity-40",
-                      pageDrag &&
-                        pageDrag.to === i &&
-                        "before:absolute before:top-0 before:-left-1 before:h-full before:w-0.5 before:rounded before:bg-primary",
-                      pageDrag &&
-                        pageDrag.to === i + 1 &&
-                        i === pages.length - 1 &&
-                        "after:absolute after:top-0 after:-right-1 after:h-full after:w-0.5 after:rounded after:bg-primary",
-                    )}
-                  >
-                    <span className="truncate">{pageName(p, i)}</span>
-                  </button>
-                ),
-              )}
-              <button
-                type="button"
-                onClick={() => setNewMapOpen(true)}
-                title={t("新しいマップのタブを追加")}
-                aria-label={t("新しいマップのタブを追加")}
-                className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"
-              >
-                <Plus className="size-3.5" />
-              </button>
-            </div>
+            <PageTabs
+              pages={pages}
+              activePageId={activePageId}
+              pageName={pageName}
+              editingPageId={editingPage}
+              onEdit={setEditingPage}
+              onRename={renamePage}
+              onGo={goPage}
+              onMove={movePage}
+              onMenu={(x, y, id) => setPageMenu({ x, y, id })}
+              onAdd={() => setNewMapOpen(true)}
+            />
 
             <span className="flex-1" />
-            {/* マップの出し入れ（作る・開く・残す）をひとまとめに。名前が折り返さないよう縮めない */}
-            <div className="flex h-8 shrink-0 items-center gap-0.5 rounded-md border p-0.5 text-xs font-medium whitespace-nowrap">
-              <button
-                type="button"
-                onClick={() => setNewMapOpen(true)}
-                aria-label={t("新規作成")}
-                title={t(
-                  "白紙のマップを新しいタブで作ります（いまのマップはそのまま残ります）",
-                )}
-                className="inline-flex h-full items-center gap-1.5 rounded px-2.5 hover:bg-accent"
-              >
-                <FilePlus className="size-4" />
-                <span className="hidden min-[1360px]:inline">
-                  {t("新規作成")}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={loadSample}
-                aria-label={t("見本")}
-                title={t("整列済みの見本の案内マップを読み込む")}
-                className="inline-flex h-full items-center gap-1.5 rounded px-2.5 hover:bg-accent"
-              >
-                <Sparkles className="size-4" />
-                <span className="hidden min-[1360px]:inline">{t("見本")}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => importRef.current?.click()}
-                aria-label={t("読み込む")}
-                title={t("読み込む")}
-                className="inline-flex h-full items-center gap-1.5 rounded px-2.5 hover:bg-accent"
-              >
-                <Upload className="size-4" />
-                <span className="hidden min-[1360px]:inline">
-                  {t("読み込む")}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={openHistory}
-                title={t(
-                  "いまの地図を保存ポイントにしたり、保存ポイントの状態に戻したりします（⌘S で保存）",
-                )}
-                aria-label={t("保存ポイント")}
-                className="inline-flex h-full items-center gap-1.5 rounded px-2.5 hover:bg-accent"
-              >
-                <BookmarkPlus className="size-4" />
-                <span className="hidden min-[1360px]:inline">
-                  {t("保存ポイント")}
-                </span>
-              </button>
-            </div>
-            <input
-              ref={importRef}
-              type="file"
-              accept="application/json,.json"
-              className="hidden"
-              onChange={handleImport}
+            {/* マップの出し入れ（作る・開く・残す）をひとまとめに */}
+            <FileActions
+              onNew={() => setNewMapOpen(true)}
+              onSample={loadSample}
+              onImport={handleImport}
+              onSavePoints={openHistory}
             />
             {/* 確かめる・共有（つなぎ・一覧・チェック・見比べる・画像・印刷）を1つのメニューに */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShareMenu((v) => !v)}
-                aria-expanded={shareMenu}
-                aria-haspopup="menu"
-                aria-label={t("確かめる・共有")}
-                className={cn(
-                  "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium whitespace-nowrap hover:bg-accent",
-                  shareMenu && "bg-accent",
-                )}
-              >
-                <ListChecks className="size-4" />
-                <span className="hidden min-[1200px]:inline">
-                  {t("確かめる・共有")}
-                </span>
-                <ChevronDown className="size-3.5 opacity-60" />
-              </button>
-              {shareMenu && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onPointerDown={() => setShareMenu(false)}
-                  />
-                  <div
-                    role="menu"
-                    className="studio-fade absolute top-full right-0 z-50 mt-1.5 w-72 rounded-lg border bg-card p-1.5 text-xs shadow-[0_12px_32px_-12px_rgba(0,0,0,0.25)]"
-                  >
-                    {(
-                      [
-                        {
-                          icon: Link2,
-                          label: t("つなぎ"),
-                          sub: t("グラフと地図を結び付ける"),
-                          run: () => setLinkOpen(true),
-                        },
-                        {
-                          icon: Table2,
-                          label: t("一覧"),
-                          sub: t("部屋・目印を表で見て、名前や色を直す"),
-                          run: () => setListOpen(true),
-                        },
-                        {
-                          icon: ListChecks,
-                          label: t("チェック"),
-                          sub: t("行けない場所などが無いか調べる"),
-                          run: () => runCheck(activePageId, false),
-                        },
-                        {
-                          icon: Columns2,
-                          label: t("見比べる"),
-                          sub:
-                            pages.length < 2
-                              ? t("タブが2つ以上あると使えます")
-                              : t("2つのタブを並べて比べる"),
-                          run: () =>
-                            setCompare({
-                              left: activePageId,
-                              right:
-                                pages.find((p) => p.id !== activePageId)?.id ??
-                                activePageId,
-                              floor: Math.max(
-                                0,
-                                doc.floors.findIndex(
-                                  (f) => f.id === doc.activeFloorId,
-                                ),
-                              ),
-                              floorName: floor?.name ?? "",
-                            }),
-                          disabled: pages.length < 2,
-                        },
-                        {
-                          icon: ImageDown,
-                          label: t("この階だけ（{floor}）", {
-                            floor: floor?.name ?? "",
-                          }),
-                          sub: t("表示中の階を1枚の画像にします"),
-                          run: () => void savePng(false),
-                          group: t("画像で保存"),
-                        },
-                        {
-                          icon: ImageDown,
-                          label: t("全部の階（{n}枚）", {
-                            n: doc.floors.length,
-                          }),
-                          sub: t("階ごとに1枚ずつ、続けて保存します"),
-                          run: () => void savePng(true),
-                        },
-                        {
-                          icon: Printer,
-                          label: t("印刷"),
-                          sub: t(
-                            "全部の階を1ページずつ印刷します（PDF にも保存できます）",
-                          ),
-                          run: printFloors,
-                          group: "",
-                        },
-                      ] as {
-                        icon: React.ComponentType<{ className?: string }>;
-                        label: string;
-                        sub: string;
-                        run: () => void;
-                        disabled?: boolean;
-                        group?: string;
-                      }[]
-                    ).map((m, i) => (
-                      // biome-ignore lint/suspicious/noArrayIndexKey: メニューの項目は決まった並びで、並べ替えない
-                      <React.Fragment key={i}>
-                        {m.group !== undefined && (
-                          <div className="my-1 border-t">
-                            {m.group && (
-                              <span className="block px-2.5 pt-2 pb-0.5 font-mono text-[10px] tracking-[0.12em] text-muted-foreground">
-                                {m.group}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        <button
-                          type="button"
-                          role="menuitem"
-                          disabled={m.disabled}
-                          onClick={() => {
-                            setShareMenu(false);
-                            m.run();
-                          }}
-                          className="flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left hover:bg-accent disabled:opacity-40"
-                        >
-                          <m.icon className="mt-0.5 size-4 shrink-0" />
-                          <span className="min-w-0">
-                            <span className="block font-medium">{m.label}</span>
-                            <span className="block text-muted-foreground">
-                              {m.sub}
-                            </span>
-                          </span>
-                        </button>
-                      </React.Fragment>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+            <ShareMenu
+              items={[
+                {
+                  icon: Link2,
+                  label: t("つなぎ"),
+                  sub: t("グラフと地図を結び付ける"),
+                  run: () => setLinkOpen(true),
+                },
+                {
+                  icon: Table2,
+                  label: t("一覧"),
+                  sub: t("部屋・目印を表で見て、名前や色を直す"),
+                  run: () => setListOpen(true),
+                },
+                {
+                  icon: ListChecks,
+                  label: t("チェック"),
+                  sub: t("行けない場所などが無いか調べる"),
+                  run: () => runCheck(activePageId, false),
+                },
+                {
+                  icon: Columns2,
+                  label: t("見比べる"),
+                  sub:
+                    pages.length < 2
+                      ? t("タブが2つ以上あると使えます")
+                      : t("2つのタブを並べて比べる"),
+                  run: () =>
+                    setCompare({
+                      left: activePageId,
+                      right:
+                        pages.find((p) => p.id !== activePageId)?.id ??
+                        activePageId,
+                      floor: Math.max(
+                        0,
+                        doc.floors.findIndex((f) => f.id === doc.activeFloorId),
+                      ),
+                      floorName: floor?.name ?? "",
+                    }),
+                  disabled: pages.length < 2,
+                },
+                {
+                  icon: ImageDown,
+                  label: t("この階だけ（{floor}）", {
+                    floor: floor?.name ?? "",
+                  }),
+                  sub: t("表示中の階を1枚の画像にします"),
+                  run: () => void savePng(false),
+                  group: t("画像で保存"),
+                },
+                {
+                  icon: ImageDown,
+                  label: t("全部の階（{n}枚）", {
+                    n: doc.floors.length,
+                  }),
+                  sub: t("階ごとに1枚ずつ、続けて保存します"),
+                  run: () => void savePng(true),
+                },
+                {
+                  icon: Printer,
+                  label: t("印刷"),
+                  sub: t(
+                    "全部の階を1ページずつ印刷します（PDF にも保存できます）",
+                  ),
+                  run: printFloors,
+                  group: "",
+                },
+              ]}
+            />
             <StudioHelpButton onClick={() => setHelpOpen(true)} compact />
-            <div className="flex items-center">
-              <button
-                type="button"
-                onClick={undo}
-                disabled={historyCount.past === 0}
-                title={t("元に戻す（⌘Z）")}
-                aria-label={t("元に戻す")}
-                className="flex size-8 items-center justify-center rounded-md hover:bg-accent disabled:opacity-35"
-              >
-                <Undo2 className="size-4" />
-              </button>
-              <button
-                type="button"
-                onClick={redo}
-                disabled={historyCount.future === 0}
-                title={t("やり直し（⌘⇧Z）")}
-                aria-label={t("やり直し")}
-                className="flex size-8 items-center justify-center rounded-md hover:bg-accent disabled:opacity-35"
-              >
-                <Redo2 className="size-4" />
-              </button>
-            </div>
-            <Button
-              variant="outline"
-              onPress={handleServerSave}
-              isDisabled={serverSave === "saving"}
-              className="h-8 min-w-[6.5rem] shrink-0 gap-1.5 px-3.5 tracking-[0.04em]"
-            >
-              {serverSave === "done" ? (
-                <Check className="size-4" />
-              ) : (
-                <UploadCloud className="size-4" />
-              )}
-              {serverSave === "saving"
-                ? t("保存中…")
-                : serverSave === "done"
-                  ? t("保存しました")
-                  : t("保存")}
-              {serverSave === "idle" && unsavedToServer && (
-                <>
-                  <span
-                    aria-hidden
-                    className="size-1.5 rounded-full bg-primary"
-                  />
-                  <span className="sr-only">
-                    {t("（tolo-web に保存していない変更があります）")}
-                  </span>
-                </>
-              )}
-            </Button>
-            <button
-              type="button"
-              onClick={handleExport}
-              className="inline-flex h-8 min-w-[6.5rem] shrink-0 items-center justify-center gap-1.5 rounded-md bg-primary px-3.5 text-sm font-medium tracking-[0.04em] text-primary-foreground"
-            >
-              {exportDone ? (
-                <>
-                  {/* 細い線のチェックマークを描く（stroke-dashoffset） */}
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="size-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={1.6}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden
-                  >
-                    <path
-                      className="studio-check-draw"
-                      d="M5 12.5l4.5 4.5L19 7.5"
-                    />
-                  </svg>
-                  {t("完了")}
-                </>
-              ) : (
-                <>
-                  <Download className="size-4" />
-                  {t("書き出す")}
-                </>
-              )}
-            </button>
+            <SaveActions
+              canUndo={historyCount.past > 0}
+              canRedo={historyCount.future > 0}
+              onUndo={undo}
+              onRedo={redo}
+              serverSave={serverSave}
+              unsavedToServer={unsavedToServer}
+              onServerSave={handleServerSave}
+              exportDone={exportDone}
+              onExport={handleExport}
+            />
             {trailing && (
               <div className="flex shrink-0 items-center gap-1.5">
                 {trailing}
@@ -3412,22 +2799,12 @@ export function GuideMapStudio({
           </div>
         </header>
         {serverLoad === "failed" && (
-          <div
-            role="alert"
-            className="flex shrink-0 flex-wrap items-center gap-3 border-b border-primary bg-card px-4 py-2 text-sm"
+          <StudioNotice
+            title={t("tolo-web から読み込めませんでした。")}
+            message={t(
+              "保存した地図やグラフが出ていない可能性があります。通信の状態を確かめて、もう一度読み込んでください。",
+            )}
           >
-            <span
-              className="size-2 shrink-0 rounded-sm"
-              style={{ background: GUIDE }}
-            />
-            <span className="min-w-0 flex-1">
-              <b className="font-medium">
-                {t("tolo-web から読み込めませんでした。")}
-              </b>
-              {t(
-                "保存した地図やグラフが出ていない可能性があります。通信の状態を確かめて、もう一度読み込んでください。",
-              )}
-            </span>
             <Button
               size="sm"
               onPress={() => void syncWithServer(isBlank(doc) ? null : doc)}
@@ -3435,159 +2812,39 @@ export function GuideMapStudio({
             >
               {t("もう一度読み込む")}
             </Button>
-          </div>
+          </StudioNotice>
         )}
         {saveFailed && (
-          <div
-            role="alert"
-            className="flex shrink-0 flex-wrap items-center gap-3 border-b border-primary bg-card px-4 py-2 text-sm"
+          <StudioNotice
+            title={t("ブラウザに保存できませんでした。")}
+            message={t(
+              "保存できる量を超えています。このまま閉じると最後の変更が消えます。「書き出す」でファイルに保存するか、使っていないタブを減らしてください。",
+            )}
           >
-            <span
-              className="size-2 shrink-0 rounded-sm"
-              style={{ background: GUIDE }}
-            />
-            <span className="min-w-0 flex-1">
-              <b className="font-medium">
-                {t("ブラウザに保存できませんでした。")}
-              </b>
-              {t(
-                "保存できる量を超えています。このまま閉じると最後の変更が消えます。「書き出す」でファイルに保存するか、使っていないタブを減らしてください。",
-              )}
-            </span>
-            <button
-              type="button"
-              onClick={handleExport}
-              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground"
+            <Button
+              size="sm"
+              onPress={handleExport}
+              className="h-8 shrink-0 gap-1.5 px-3 text-xs"
             >
               <Download className="size-3.5" />
               {t("書き出す")}
-            </button>
-          </div>
+            </Button>
+          </StudioNotice>
         )}
         {/* 作業場：道具・地図・右の設定。画面いっぱいに広げるが、大きな画面では広がりすぎないよう最大幅を決める */}
         <div className="mx-auto flex min-h-0 w-full max-w-[1760px] flex-1 gap-3 p-3">
           {/* 道具の列（細め：アイコン＋小さな名前。使い方とキーはマウスを置くと出る） */}
-          <nav
-            aria-label={t("道具")}
-            className={cn(
-              "z-40 flex w-[68px] shrink-0 flex-col items-stretch gap-0.5 self-start rounded-xl border bg-card p-1 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_10px_30px_-18px_rgba(0,0,0,0.25)]",
-              preview && "pointer-events-none opacity-40",
-            )}
-          >
-            {TOOLS.map(({ key, label, short, shortcut, desc, Icon }) => (
-              // biome-ignore lint/a11y/noStaticElementInteractions: マウスを置いた・フォーカスした道具の説明カードを出すだけ（操作は中のボタン）
-              <div
-                key={key}
-                className="relative"
-                onPointerEnter={(e) => openToolCard(key, e.currentTarget)}
-                onPointerLeave={() => closeToolCard()}
-                onFocus={(e) => openToolCard(key, e.currentTarget, true)}
-                onBlur={() => closeToolCard()}
-              >
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTool(key);
-                    closeToolCard(0);
-                  }}
-                  aria-pressed={tool === key}
-                  aria-label={t(label)}
-                  aria-keyshortcuts={shortcut}
-                  aria-describedby={`tool-desc-${key}`}
-                  className={cn(
-                    "flex w-full flex-col items-center gap-1 rounded-lg px-0.5 py-2 text-[10px] leading-none font-medium whitespace-nowrap",
-                    tool === key
-                      ? "bg-primary text-primary-foreground"
-                      : "text-foreground/80 hover:bg-accent hover:text-foreground",
-                  )}
-                >
-                  <Icon className="size-[18px]" />
-                  <span className="text-center">{t(short ?? label)}</span>
-                </button>
-                <span id={`tool-desc-${key}`} className="sr-only">
-                  {t(desc)}
-                </span>
-              </div>
-            ))}
-            {/* 使い方のカード（マウスを置く・キーボードで移ると出る）。上に、その道具を使っている短い動画が流れる */}
-            {toolCard &&
-              (() => {
-                const def = TOOLS.find((x) => x.key === toolCard.tool);
-                if (!def) return null;
-                return (
-                  <ToolCard
-                    ref={toolCardRef}
-                    {...toolCard}
-                    label={t(def.label)}
-                    desc={t(def.desc)}
-                    shortcut={def.shortcut}
-                    Icon={def.Icon}
-                  />
-                );
-              })()}
-            <span className="mx-1.5 my-1 h-px bg-border" />
-            {/* 色：いまの色の1つのボタン。押すと色を選べる */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setColorMenu((v) => !v)}
-                aria-expanded={colorMenu}
-                aria-haspopup="menu"
-                title={t("色")}
-                className="flex w-full flex-col items-center gap-0.5 rounded-lg py-1.5 text-[10px] font-medium hover:bg-accent"
-              >
-                <span
-                  className="size-[18px] rounded-md border"
-                  style={{ background: PALETTE[color].fill }}
-                />
-                {t("色")}
-              </button>
-              {colorMenu && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onPointerDown={() => setColorMenu(false)}
-                  />
-                  <div
-                    role="menu"
-                    className="studio-fade absolute bottom-0 left-full z-50 ml-2 max-h-[80vh] w-max overflow-y-auto rounded-lg border bg-card p-2 text-xs shadow-[0_12px_32px_-12px_rgba(0,0,0,0.25)]"
-                  >
-                    {selectedIds.length > 0 && (
-                      <p className="mb-1.5 leading-relaxed text-muted-foreground">
-                        {t("選んでいる物の色も変わります")}
-                      </p>
-                    )}
-                    {PALETTE_GROUPS.map((group) => (
-                      <div key={group.label} className="mb-2 last:mb-0">
-                        <p className="mb-1 font-medium text-muted-foreground">
-                          {t(group.label)}
-                        </p>
-                        {/* 見出しごとに 1 行に並べる（折り返さない） */}
-                        <div className="flex flex-nowrap gap-1.5">
-                          {group.keys.map((k) => (
-                            <ColorSwatch
-                              key={k}
-                              k={k}
-                              role="menuitemradio"
-                              aria-checked={color === k}
-                              selected={color === k}
-                              onClick={() => {
-                                setColor(k);
-                                if (selectedIds.length)
-                                  colorSelected(selectedIds, k);
-                                setColorMenu(false);
-                              }}
-                              className="size-8 shrink-0"
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </nav>
+          <ToolRail
+            tool={tool}
+            onTool={setTool}
+            color={color}
+            onColor={(k) => {
+              setColor(k);
+              if (selectedIds.length) colorSelected(selectedIds, k);
+            }}
+            hasSelection={selectedIds.length > 0}
+            disabled={preview}
+          />
           <main className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04),0_10px_30px_-18px_rgba(0,0,0,0.25)]">
             {/* 地図の上の帯（2段目）：階・グリッド・名前で探す・編集／プレビュー */}
             <div className="flex min-h-12 shrink-0 flex-wrap items-center gap-2 border-b px-3 py-2">
@@ -4891,89 +4148,26 @@ export function GuideMapStudio({
               )}
             </div>
             {/* 地図の下の細い帯：マウスの位置・定規・全体図・拡大縮小 */}
-            <div className="flex h-9 shrink-0 items-center gap-0.5 border-t px-2">
-              {/* マウスの位置（地図の座標） */}
-              {rulersOn && (
-                <span
-                  ref={coordRef}
-                  aria-live="off"
-                  className="min-w-[7.5rem] px-1.5 font-mono text-[11px] text-muted-foreground tabular-nums"
-                />
-              )}
-              <span className="flex-1" />
-              {!phoneView && !preview && (
-                <button
-                  type="button"
-                  aria-pressed={showRulers}
-                  aria-label={t("定規")}
-                  title={
-                    showRulers
-                      ? t("定規（座標）を隠す")
-                      : t("定規（座標）を出す")
-                  }
-                  onClick={() => {
-                    setShowRulers(!showRulers);
-                    saveViewPrefs({ rulers: !showRulers });
-                  }}
-                  className={cn(
-                    "flex size-7 items-center justify-center rounded-md",
-                    showRulers ? "bg-accent text-primary" : "hover:bg-accent",
-                  )}
-                >
-                  <Ruler className="size-4" />
-                </button>
-              )}
-              {!phoneView && (
-                <button
-                  type="button"
-                  aria-pressed={showMini}
-                  aria-label={t("全体図")}
-                  title={showMini ? t("全体図を隠す") : t("全体図を出す")}
-                  onClick={() => {
-                    setShowMini(!showMini);
-                    saveViewPrefs({ showMini: !showMini });
-                  }}
-                  className={cn(
-                    "flex size-7 items-center justify-center rounded-md",
-                    showMini ? "bg-accent text-primary" : "hover:bg-accent",
-                  )}
-                >
-                  <MapIcon className="size-4" />
-                </button>
-              )}
-              <button
-                type="button"
-                aria-label={t("全体を表示")}
-                title={t("全体を表示")}
-                onClick={() => fitView(doc)}
-                className="flex size-7 items-center justify-center rounded-md hover:bg-accent"
-              >
-                <Maximize className="size-4" />
-              </button>
-              <button
-                type="button"
-                aria-label={t("縮小")}
-                onClick={() => zoomBy(0.9)}
-                className="flex size-7 items-center justify-center rounded-md hover:bg-accent"
-              >
-                <ZoomOut className="size-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setZoom(1)}
-                className="min-w-12 rounded-md px-1 text-center font-mono text-xs tabular-nums hover:bg-accent"
-              >
-                {Math.round(zoom * 100)}%
-              </button>
-              <button
-                type="button"
-                aria-label={t("拡大")}
-                onClick={() => zoomBy(1.1)}
-                className="flex size-7 items-center justify-center rounded-md hover:bg-accent"
-              >
-                <ZoomIn className="size-4" />
-              </button>
-            </div>
+            <MapStatusBar
+              coordRef={coordRef}
+              showCoords={rulersOn}
+              showViewToggles={!phoneView}
+              showRulerToggle={!phoneView && !preview}
+              showRulers={showRulers}
+              onToggleRulers={() => {
+                setShowRulers(!showRulers);
+                saveViewPrefs({ rulers: !showRulers });
+              }}
+              showMini={showMini}
+              onToggleMini={() => {
+                setShowMini(!showMini);
+                saveViewPrefs({ showMini: !showMini });
+              }}
+              zoom={zoom}
+              onFit={() => fitView(doc)}
+              onZoomBy={zoomBy}
+              onZoomReset={() => setZoom(1)}
+            />
           </main>
 
           {/* プロパティ */}
@@ -5783,71 +4977,21 @@ export function GuideMapStudio({
 
       {/* マップタブの右クリックメニュー */}
       {pageMenu && (
-        <PopupMenu
+        <TabMenu
           x={pageMenu.x}
           y={pageMenu.y}
+          index={pages.findIndex((p) => p.id === pageMenu.id)}
+          count={pages.length}
+          deleteBlockedTitle={t("最後の1つのタブは削除できません")}
           onClose={() => setPageMenu(null)}
-          className="w-44"
-        >
-          <button
-            type="button"
-            onClick={() => {
-              setEditingPage(pageMenu.id);
-              setPageMenu(null);
-            }}
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent"
-          >
-            <Pencil className="size-3.5" />
-            {t("名前を変更")}
-          </button>
-          {(() => {
-            const idx = pages.findIndex((p) => p.id === pageMenu.id);
-            return (
-              <>
-                <button
-                  type="button"
-                  disabled={idx <= 0}
-                  onClick={() => movePage(pageMenu.id, idx - 1)}
-                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent disabled:opacity-40"
-                >
-                  <ArrowLeft className="size-3.5" />
-                  {t("左へ移動")}
-                </button>
-                <button
-                  type="button"
-                  disabled={idx >= pages.length - 1}
-                  onClick={() => movePage(pageMenu.id, idx + 2)}
-                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent disabled:opacity-40"
-                >
-                  <ArrowRight className="size-3.5" />
-                  {t("右へ移動")}
-                </button>
-              </>
-            );
-          })()}
-          <button
-            type="button"
-            onClick={() => duplicatePage(pageMenu.id)}
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent"
-          >
-            <Copy className="size-3.5" />
-            {t("複製")}
-          </button>
-          <button
-            type="button"
-            disabled={pages.length <= 1}
-            onClick={() => deletePage(pageMenu.id)}
-            title={
-              pages.length <= 1
-                ? t("最後の1つのタブは削除できません")
-                : undefined
-            }
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent disabled:opacity-40"
-          >
-            <Trash2 className="size-3.5" />
-            {t("削除")}
-          </button>
-        </PopupMenu>
+          onRename={() => {
+            setEditingPage(pageMenu.id);
+            setPageMenu(null);
+          }}
+          onMove={(to) => movePage(pageMenu.id, to)}
+          onDuplicate={() => duplicatePage(pageMenu.id)}
+          onDelete={() => deletePage(pageMenu.id)}
+        />
       )}
 
       {/* 書き出すマップを選ぶ（タブが2つ以上のときだけ） */}
@@ -5863,160 +5007,39 @@ export function GuideMapStudio({
 
       {/* フロアタブの右クリックメニュー */}
       {floorMenu && (
-        <PopupMenu
+        <TabMenu
           x={floorMenu.x}
           y={floorMenu.y}
+          index={doc.floors.findIndex((f) => f.id === floorMenu.id)}
+          count={doc.floors.length}
+          deleteBlockedTitle={t("最後の1フロアは削除できません")}
           onClose={() => setFloorMenu(null)}
-          className="w-44"
-        >
-          <button
-            type="button"
-            onClick={() => {
-              setEditingFloor(floorMenu.id);
-              setFloorMenu(null);
-            }}
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent"
-          >
-            <Pencil className="size-3.5" />
-            {t("名前を変更")}
-          </button>
-          {(() => {
-            const idx = doc.floors.findIndex((f) => f.id === floorMenu.id);
-            return (
-              <>
-                <button
-                  type="button"
-                  disabled={idx <= 0}
-                  onClick={() => moveFloor(floorMenu.id, idx - 1)}
-                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent disabled:opacity-40"
-                >
-                  <ArrowLeft className="size-3.5" />
-                  {t("左へ移動")}
-                </button>
-                <button
-                  type="button"
-                  disabled={idx >= doc.floors.length - 1}
-                  onClick={() => moveFloor(floorMenu.id, idx + 2)}
-                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent disabled:opacity-40"
-                >
-                  <ArrowRight className="size-3.5" />
-                  {t("右へ移動")}
-                </button>
-              </>
-            );
-          })()}
-          <button
-            type="button"
-            onClick={() => duplicateFloor(floorMenu.id)}
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent"
-          >
-            <Copy className="size-3.5" />
-            {t("複製")}
-          </button>
-          <button
-            type="button"
-            disabled={doc.floors.length <= 1}
-            onClick={() => deleteFloor(floorMenu.id)}
-            title={
-              doc.floors.length <= 1
-                ? t("最後の1フロアは削除できません")
-                : undefined
-            }
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent disabled:opacity-40"
-          >
-            <Trash2 className="size-3.5" />
-            {t("削除")}
-          </button>
-        </PopupMenu>
+          onRename={() => {
+            setEditingFloor(floorMenu.id);
+            setFloorMenu(null);
+          }}
+          onMove={(to) => moveFloor(floorMenu.id, to)}
+          onDuplicate={() => duplicateFloor(floorMenu.id)}
+          onDelete={() => deleteFloor(floorMenu.id)}
+        />
       )}
 
       {/* 右クリックのコンテキストメニュー */}
       {menu && (
-        <PopupMenu
+        <ObjectMenu
           x={menu.x}
           y={menu.y}
+          count={selectedIds.length}
+          allLocked={selectedIds.every((id) => lockedIds.has(id))}
+          otherFloors={doc.floors.filter((f) => f.id !== doc.activeFloorId)}
+          selectedColor={selectedColor}
           onClose={() => setMenu(null)}
-          className="w-48"
-        >
-          <button
-            type="button"
-            onClick={() => duplicateSelected(selectedIds)}
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent"
-          >
-            <Copy className="size-3.5" />
-            {t("複製")}
-            {selectedIds.length > 1
-              ? t("（{n}件）", { n: selectedIds.length })
-              : ""}
-          </button>
-          <button
-            type="button"
-            onClick={() => deleteSelected(selectedIds)}
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent"
-          >
-            <Trash2 className="size-3.5" />
-            {t("削除")}
-            {selectedIds.length > 1
-              ? t("（{n}件）", { n: selectedIds.length })
-              : ""}
-          </button>
-          {selectedIds.every((id) => lockedIds.has(id)) ? (
-            <button
-              type="button"
-              onClick={() => lockSelected(selectedIds, false)}
-              className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent"
-            >
-              <LockOpen className="size-3.5" />
-              {t("固定を外す")}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => lockSelected(selectedIds, true)}
-              className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent"
-            >
-              <Lock className="size-3.5" />
-              {t("固定する（動かないようにする）")}
-            </button>
-          )}
-          {doc.floors.length > 1 && (
-            <>
-              <div className="my-1 border-t" />
-              <div className="px-2 pt-1 pb-0.5 text-muted-foreground">
-                {t("別の階へコピー")}
-              </div>
-              {doc.floors
-                .filter((f) => f.id !== doc.activeFloorId)
-                .map((f) => (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => copyToFloor(selectedIds, f.id)}
-                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent"
-                  >
-                    <Copy className="size-3.5" />
-                    {t("{floor}へコピー", { floor: f.name })}
-                  </button>
-                ))}
-            </>
-          )}
-          <div className="my-1 border-t" />
-          <div className="px-2 py-1">
-            <span className="text-muted-foreground">{t("色を変える")}</span>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {PALETTE_KEYS.map((k) => (
-                <ColorSwatch
-                  key={k}
-                  k={k}
-                  selected={selectedColor === k}
-                  aria-pressed={selectedColor === k}
-                  onClick={() => colorSelected(selectedIds, k)}
-                  className="size-5"
-                />
-              ))}
-            </div>
-          </div>
-        </PopupMenu>
+          onDuplicate={() => duplicateSelected(selectedIds)}
+          onDelete={() => deleteSelected(selectedIds)}
+          onLock={(locked) => lockSelected(selectedIds, locked)}
+          onCopyToFloor={(floorId) => copyToFloor(selectedIds, floorId)}
+          onColor={(k) => colorSelected(selectedIds, k)}
+        />
       )}
     </div>
   );

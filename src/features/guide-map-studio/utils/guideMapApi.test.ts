@@ -7,6 +7,7 @@ import {
   fromGuideMapLayoutMessage,
   toGuideMapLayoutMessage,
 } from "@/server/guideMapLayout";
+import type { GuideMapDoc } from "../type";
 import {
   GuideMapSaveError,
   guideMapFingerprint,
@@ -14,7 +15,7 @@ import {
   loadGuideMap,
   saveGuideMap,
 } from "./guideMapApi";
-import { emptyDoc, type GuideMapDoc } from "./guideMapDoc";
+import { emptyDoc } from "./guideMapDoc";
 import { fromGuideMapLayout, toGuideMapLayout } from "./guideMapIO";
 
 const doc: GuideMapDoc = {

@@ -3,12 +3,8 @@
 
 // 行けるかどうかは、お客さんの画面の案内マップと同じ計算（src/features/guest/info/guideMapFloorRoute.ts）で確かめる
 import { computeFloorRoute } from "@/features/guest/info/guideMapFloorRoute";
-import {
-  type GuideMapDoc,
-  isConnector,
-  isTwinOf,
-  needsGraphPoint,
-} from "./guideMapDoc";
+import type { GuideMapDoc } from "../type";
+import { isConnector, isTwinOf, needsGraphPoint } from "./guideMapDoc";
 import { toRouteLayout } from "./guideMapIO";
 
 export type CheckIssue = {

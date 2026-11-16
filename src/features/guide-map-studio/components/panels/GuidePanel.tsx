@@ -6,7 +6,7 @@ import { Check, RotateCcw, Route, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { RoutePreview } from "../../hooks/useRoutePreview";
 import { useI18n } from "../../i18n/i18n";
-import type { GuideMapDoc } from "../../utils/guideMapDoc";
+import type { GuideMapDoc } from "../../type";
 import { GUIDE } from "../../utils/shared";
 import { RoutePinSelect } from "../parts/Fields";
 import { ConnectorIcon } from "../parts/StudioIcons";

@@ -11,14 +11,8 @@ import type {
 } from "@/features/guest/info/guideMapLayout";
 import type { LocalizedLabel } from "@/features/tenant/management/graph/type";
 import { resolveLabel } from "@/features/tenant/management/graph/utils/labels";
-import {
-  DEFAULT_COLOR,
-  type GuidanceGraph,
-  type GuideMapDoc,
-  genId,
-  type MapObject,
-  normalizeDoc,
-} from "./guideMapDoc";
+import type { GuidanceGraph, GuideMapDoc, MapObject } from "../type";
+import { DEFAULT_COLOR, genId, normalizeDoc } from "./guideMapDoc";
 
 const loc = (text: string | undefined): LocalizedLabel | undefined =>
   text?.trim() ? { ja: text } : undefined;

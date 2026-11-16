@@ -6,25 +6,27 @@ import { Copy, Lock, LockOpen, Trash2 } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "../../i18n/i18n";
+import type {
+  ConnectorDirection,
+  ConnectorObject,
+  ConnectorType,
+  CrowdState,
+  Floor,
+  GuidanceGraph,
+  MapObject,
+  PlaceObject,
+  TextObject,
+} from "../../type";
 import {
   CONNECTOR_TYPES,
-  type ConnectorDirection,
-  type ConnectorObject,
-  type ConnectorType,
-  type CrowdState,
   DEFAULT_COLOR,
-  type Floor,
-  type GuidanceGraph,
   hasInfo,
   isConnector,
   MARKER_SIZE_MAX,
   MARKER_SIZE_MIN,
-  type MapObject,
   markBoxOf,
   PALETTE_GROUPS,
-  type PlaceObject,
   shownColorOf,
-  type TextObject,
 } from "../../utils/guideMapDoc";
 import { labelOf } from "../../utils/guideMapIO";
 import { ColorSwatch } from "../parts/ColorSwatch";

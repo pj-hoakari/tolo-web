@@ -5,7 +5,7 @@
 import { ORPCError } from "@orpc/client";
 import type { LocalizedGuideMapLayout } from "@/features/guest/info/guideMapLayout";
 import { orpc } from "@/lib/orpc";
-import type { GuidanceGraph, GuideMapDoc } from "./guideMapDoc";
+import type { GuidanceGraph, GuideMapDoc } from "../type";
 import {
   fromGuideMapLayout,
   labelOf,

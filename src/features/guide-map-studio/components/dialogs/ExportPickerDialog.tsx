@@ -4,7 +4,7 @@
 
 import { Download } from "lucide-react";
 import { useI18n } from "../../i18n/i18n";
-import type { StudioPage } from "../../utils/guideMapDoc";
+import type { StudioPage } from "../../type";
 import { Modal } from "./Modal";
 
 type ExportPickerDialogProps = {

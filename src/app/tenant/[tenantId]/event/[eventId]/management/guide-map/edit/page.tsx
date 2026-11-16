@@ -2,9 +2,11 @@ import { LocaleSelect } from "@/components/locale-select";
 import { PwaInstall } from "@/components/pwa/pwa-install";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LogoutButton } from "@/features/auth/LogoutButton";
-import { GuideMapStudioTitle } from "@/features/guide-map-studio/components/header/GuideMapStudioTitle";
-import { GuideMapStudio } from "@/features/guide-map-studio/GuideMapStudio";
-import { guideMapEditPath } from "@/features/guide-map-studio/routes";
+import {
+  GuideMapStudio,
+  GuideMapStudioTitle,
+  guideMapEditPath,
+} from "@/features/guide-map-studio";
 import { ManagementBackLink } from "@/features/tenant/management/components/ManagementBackLink";
 import { getPwaMetadata } from "@/lib/pwa/manifest";
 import { requireStaff } from "@/server/auth";

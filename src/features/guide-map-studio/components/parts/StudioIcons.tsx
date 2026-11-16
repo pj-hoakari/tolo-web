@@ -20,7 +20,7 @@ import {
   Venus as VenusIcon,
 } from "lucide-react";
 import type * as React from "react";
-import type { ConnectorType, PaletteKey } from "../../utils/guideMapDoc";
+import type { ConnectorType, PaletteKey } from "../../type";
 
 // 階移動の種類アイコン（lucide に無いので線画で描く）
 export function ConnectorIcon({

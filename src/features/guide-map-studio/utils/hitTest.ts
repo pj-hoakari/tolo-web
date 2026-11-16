@@ -4,14 +4,13 @@
 // areaInterior=true（プレビュー・クリックしただけ）のときは内側でもゾーンを拾う。
 // zoom は拡大率（細い線・小さなピンを、拡大率によらず同じくらいの大きさで掴めるようにする）。
 
+import type { MapObject, Pt } from "../type";
 import {
   bboxOf,
   centroidOf,
   distToSegment,
   isConnector,
-  type MapObject,
   markBoxOf,
-  type Pt,
   pointInPolygon,
 } from "./guideMapDoc";
 

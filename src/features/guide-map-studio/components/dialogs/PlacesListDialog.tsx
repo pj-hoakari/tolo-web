@@ -4,10 +4,9 @@
 
 import { Table2 } from "lucide-react";
 import { useI18n } from "../../i18n/i18n";
+import type { GuideMapDoc, MapObject } from "../../type";
 import {
-  type GuideMapDoc,
   isConnector,
-  type MapObject,
   PALETTE_KEYS,
   shownColorOf,
 } from "../../utils/guideMapDoc";

@@ -1,14 +1,8 @@
 // コピー・貼り付け・複製と、階段・エレベーター等の分身（各階に置く同じ組の物）。
 // 地図の物と階の一覧だけを受け取る（画面の状態には触らない）。
 
-import {
-  type ConnectorObject,
-  type Floor,
-  floorSize,
-  genId,
-  isConnector,
-  type MapObject,
-} from "./guideMapDoc";
+import type { ConnectorObject, Floor, MapObject } from "../type";
+import { floorSize, genId, isConnector } from "./guideMapDoc";
 
 // 階段・エレベーター等の、ほかの階の分身（コピー・複製で、つながる階と各階の設定をそのまま写すため）
 export const twinsOf = (all: MapObject[], items: MapObject[]) => {

@@ -2,7 +2,7 @@
 // ページを開き直すと ⌘Z の履歴は消えるが、保存ポイントは残る。消すのはユーザーが削除したときだけ。
 // IndexedDB に入れる（いつもの保存＝localStorage は数 MB しか無いので、そちらを圧迫しないため）。
 
-import type { GuideMapDoc } from "./guideMapDoc";
+import type { GuideMapDoc } from "../type";
 
 export type Snapshot = {
   id?: number;

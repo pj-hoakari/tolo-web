@@ -5,9 +5,8 @@
 import type * as React from "react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "../../i18n/i18n";
+import type { Floor, GuideMapDoc } from "../../type";
 import {
-  type Floor,
-  type GuideMapDoc,
   isConnector,
   markBoxOf,
   paletteOf,

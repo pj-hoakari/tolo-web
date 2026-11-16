@@ -4,7 +4,7 @@
 
 import * as React from "react";
 import { useI18n } from "../../i18n/i18n";
-import type { Floor } from "../../utils/guideMapDoc";
+import type { Floor } from "../../type";
 
 // 位置・大きさを数字で入れる欄。Enter・フォーカスが外れたときに確定する（矢印キーの増減はすぐ反映）
 type NumFieldProps = {

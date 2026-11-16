@@ -9,17 +9,15 @@ import {
 import { crowdByObject } from "@/features/guest/info/guideMapLayout";
 import { PREVIEW_CROWD_CHOICES } from "../components/panels/PropertyPanel";
 import { useI18n } from "../i18n/i18n";
-import {
-  CONNECTOR_TYPES,
-  type ConnectorType,
-  type CrowdState,
-  type Floor,
-  type GuideMapDoc,
-  isConnector,
-  isTwinOf,
-  type MapObject,
-  type PlaceObject,
-} from "../utils/guideMapDoc";
+import type {
+  ConnectorType,
+  CrowdState,
+  Floor,
+  GuideMapDoc,
+  MapObject,
+  PlaceObject,
+} from "../type";
+import { CONNECTOR_TYPES, isConnector, isTwinOf } from "../utils/guideMapDoc";
 import { labelOf, toRouteLayout } from "../utils/guideMapIO";
 
 // 階をまたぐ経路（重いので floors/objects・出発・目的地が変わった時だけ計算）。

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import type { ConnectorObject, Floor, MapObject } from "../type";
 import { cloneObjects, twinsOf } from "./copyObjects";
-import type { ConnectorObject, Floor, MapObject } from "./guideMapDoc";
 
 const floors: Floor[] = [
   { id: "1F", name: "1F" },
