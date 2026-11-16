@@ -5,8 +5,13 @@
 import { ORPCError } from "@orpc/client";
 import type { LocalizedGuideMapLayout } from "@/features/guest/info/guideMapLayout";
 import { orpc } from "@/lib/orpc";
-import { fromGuideMapLayout, labelOf, toGuideMapLayout } from "./guideMapIO";
-import type { VenueMapDoc } from "./venueMap";
+import {
+  fromGuideMapLayout,
+  labelOf,
+  parseGraph,
+  toGuideMapLayout,
+} from "./guideMapIO";
+import type { VenueGraph, VenueMapDoc } from "./venueMap";
 
 /** 保存できなかった理由。rejected＝中身を受け付けなかった（グラフに無い階・場所を指しているなど）、forbidden＝保存する権限が無い */
 export class GuideMapSaveError extends Error {
@@ -80,6 +85,14 @@ export async function loadGuideMap(
       return name ? { ...f, name } : f;
     }),
   };
+}
+
+/** このイベントのグラフ（グラフ編集で保存したもの）を読む。まだ何も無ければ null */
+export async function loadEventGraph(
+  eventId: string,
+): Promise<VenueGraph | null> {
+  const graph = await orpc.graph.getGraph({ eventId });
+  return graph.nodes.length > 0 ? parseGraph(graph) : null;
 }
 
 // 項目の並び順・空の項目（false・空文字・空のまとまり）の違いを無視して文字列にする

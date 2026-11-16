@@ -51,6 +51,7 @@ import {
   sampleGuestMessages,
   sampleGuestQueues,
   sampleGuideMap,
+  sampleSavedGuideMap,
 } from "./fixtures/guest";
 
 export type MockRouterOverrides = {
@@ -87,8 +88,10 @@ export type MockRouterOverrides = {
     code: CommonORPCErrorCode;
     violations?: GraphViolation[];
   };
-  /** graph.getGuideMapLayout が返す案内マップ（未指定なら空。保存するとその内容に置き換わる） */
+  /** graph.getGuideMapLayout が返す案内マップ（未指定なら KCG本館の見本。保存するとその内容に置き換わる） */
   savedGuideMap?: SavedGuideMap;
+  /** 案内マップを保存したときに呼ぶ（開発サーバーで、開き直しても保存した地図を残すのに使う） */
+  onGuideMapSaved?: (saved: SavedGuideMap) => void;
   getGuideMapLayoutError?: boolean;
   saveGuideMapLayoutError?: CommonORPCErrorCode;
   registerTenantError?: CommonORPCErrorCode;
@@ -156,6 +159,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     saveGraphError,
     getGuideMapLayoutError = false,
     saveGuideMapLayoutError,
+    onGuideMapSaved,
     registerTenantError,
     listEventsError = false,
     createEventError,
@@ -182,12 +186,9 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     ],
   );
   let nextEventNumber = events.length + 1;
-  let savedGuideMap: SavedGuideMap = structuredClone(
-    overrides.savedGuideMap ?? {
-      layout: { version: 1, groups: [], objects: [], north: 0, scale: 0 },
-      groupLabels: {},
-    },
-  );
+  let savedGuideMap: SavedGuideMap = overrides.savedGuideMap
+    ? structuredClone(overrides.savedGuideMap)
+    : sampleSavedGuideMap();
   let devices = [...initialDevices];
   const observationSettings = new Map<string, ObservationSettings>();
   let members = structuredClone(initialMembers);
@@ -259,6 +260,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             ...savedGuideMap,
             layout: structuredClone(input.layout),
           };
+          onGuideMapSaved?.(structuredClone(savedGuideMap));
         }),
     },
     camera: {
@@ -755,8 +757,10 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           if (getGuideMapError) {
             throw new ORPCError("INTERNAL_SERVER_ERROR");
           }
+          // 案内マップエディタで保存した地図を、ゲスト画面にも出す（スタジオで直して保存し、ゲスト画面で確かめられる）
           return structuredClone(
-            guideMap ?? sampleGuideMap(input.qrLocationId),
+            guideMap ??
+              sampleGuideMap(input.qrLocationId, savedGuideMap.layout),
           );
         }),
       getQueues: os

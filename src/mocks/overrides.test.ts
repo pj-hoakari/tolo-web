@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { layoutFixture } from "./fixtures/graphLayout";
 import { sampleGuideMapGraph } from "./fixtures/guest";
-import { readMockOverrides } from "./overrides";
+import {
+  readMockOverrides,
+  readSavedGuideMap,
+  SAVED_GUIDE_MAP_KEY,
+  writeSavedGuideMap,
+} from "./overrides";
 
 const storage = (values: Record<string, string> = {}) => ({
   getItem: (key: string) => values[key] ?? null,
@@ -63,6 +68,39 @@ describe("readMockOverrides", () => {
         },
         "",
       ),
+    ).toBeUndefined();
+  });
+});
+
+describe("readSavedGuideMap / writeSavedGuideMap", () => {
+  const saved = {
+    layout: {
+      version: 1 as const,
+      groups: [{ groupId: "g1" }],
+      objects: [],
+      north: 0,
+      scale: 0,
+    },
+    groupLabels: { g1: { ja: "1階" } },
+  };
+
+  it("保存した地図を書いて読み戻す", () => {
+    const values: Record<string, string> = {};
+    writeSavedGuideMap(
+      {
+        setItem: (key, value) => {
+          values[key] = value;
+        },
+      },
+      saved,
+    );
+    expect(readSavedGuideMap(storage(values))).toEqual(saved);
+  });
+
+  it("保存が無い・壊れているときは使わない（見本のまま）", () => {
+    expect(readSavedGuideMap(storage())).toBeUndefined();
+    expect(
+      readSavedGuideMap(storage({ [SAVED_GUIDE_MAP_KEY]: "{" })),
     ).toBeUndefined();
   });
 });

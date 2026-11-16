@@ -6,6 +6,7 @@ import type {
   GuestGuideMap,
   GuestMessage,
   GuestQueue,
+  SavedGuideMap,
 } from "@/server/router";
 import guideMapGraph from "./guideMapGraph.json";
 import guideMapLayout from "./guideMapLayout.json";
@@ -99,8 +100,28 @@ export const sampleQrLocations = new Map<string, SampleGraphAnchor>([
   ["c9d47e1a03b65f28", { pointId: "n_2f44fa0f" }],
 ]);
 
-export function sampleGuideMap(qrLocationId?: string): GuestGuideMap {
-  const layout = guideMapLayout as unknown as LocalizedGuideMapLayout;
+/**
+ * 案内マップエディタで保存した案内マップ（graph.getGuideMapLayout）の見本。
+ * 開発サーバーで開いたスタジオに、ゲスト画面と同じ KCG本館の地図が最初から入るようにする。階の名前はグラフのグループ名
+ */
+export function sampleSavedGuideMap(): SavedGuideMap {
+  return {
+    layout: structuredClone(
+      guideMapLayout as unknown as LocalizedGuideMapLayout,
+    ),
+    groupLabels: Object.fromEntries(
+      sampleGuideMapGraph.nodes
+        .filter((n) => n.type === "graphGroup")
+        .map((n) => [n.id, n.data.labels]),
+    ),
+  };
+}
+
+/** ゲスト画面の案内マップ。layout を渡すとその地図（スタジオで保存した地図など）にする */
+export function sampleGuideMap(
+  qrLocationId?: string,
+  layout = guideMapLayout as unknown as LocalizedGuideMapLayout,
+): GuestGuideMap {
   const anchor = qrLocationId ? sampleQrLocations.get(qrLocationId) : undefined;
   const currentPointId =
     anchor &&

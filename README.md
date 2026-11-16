@@ -291,6 +291,19 @@ GATEWAY_URL=http://127.0.0.1:8080 NEXT_PUBLIC_API_MOCKING=disabled TENANT_SUBDOM
 
 `AUTH_MOCKING` が `enabled` のときは、参加のボタンを押すとすぐに受諾します。`registration` トークンは、オンボーディングと同じく偽 IdP から、`sub` が `AUTH_MOCK_USER_ID` で scope が `tenant.join` のものを発行します。受諾できたら Cookie を消し、`/management` へ移ります。オーナーはすでにテナントに所属しているので、受諾を試すときは `AUTH_MOCK_USER_ID` にほかの値を設定します。
 
+## 案内マップ・スタジオ
+
+`/event/<イベント ID>/management/guide-map/edit` は、ゲスト画面の案内マップを作るページです。作業途中の地図はブラウザに一時保存し、「保存」で `graph.saveGuideMapLayout` を通して Graph Authoring に保存します。ブラウザに一時保存がなければ、Graph Authoring に保存した地図を開きます。
+
+`NEXT_PUBLIC_API_MOCKING` が `enabled` のときは、スタジオに KCG 本館の見本（`src/mocks/fixtures/guideMapLayout.json`、ゲスト画面の案内マップと同じもの）が最初から入ります。モックで保存した地図は localStorage の `msw:saved-guide-map` に残るので、ページを開き直しても、同じホストのゲスト画面（`/event/<イベント ID>/guest`）でも同じ地図が出ます。見本に戻すときは、`msw:saved-guide-map` と、スタジオの一時保存（`guide-map-studio:book:<イベント ID>`）を消します。
+
+スタジオは、開いたときにイベントのグラフ（グラフ編集で保存したもの）を `graph.getGraph` で取り、地図に結び付けます。モックの既定のグラフ（`PLACEHOLDER_GRAPH`）は KCG 本館の見本と合わないので、見本の場所をグラフと結び付けて試すときは、URL に `?layoutFixture=guide-map` を付けて KCG 本館のグラフに差し替えます。読み込みの失敗は、`msw:overrides`（sessionStorage）に `{"getGuideMapLayoutError":true}` か `{"getGraphError":true}` を入れると再現できます。
+
+```sh
+pnpm dev
+# http://test.localhost:3000/event/test/management/guide-map/edit?layoutFixture=guide-map を開く
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

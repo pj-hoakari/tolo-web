@@ -73,6 +73,7 @@ import { GuidePanel } from "./GuidePanel";
 import {
   GuideMapSaveError,
   guideMapFingerprint,
+  loadEventGraph,
   loadGuideMap,
   saveGuideMap,
 } from "./guideMapApi";
@@ -183,7 +184,8 @@ const VIEW_PREFS_KEY = "venue-map:view-prefs";
 
 // tolo-web に最後に保存した（または開いたときに確かめた）地図の指紋。イベントごとにこのブラウザに残し、
 // 「tolo-web に保存していない変更」と「ほかで保存し直された地図」を見分けるのに使う
-const serverPrintKey = (eventId: string) => `venue-map:server-print:${eventId}`;
+const serverPrintKey = (eventId: string) =>
+  `guide-map-studio:server-print:${eventId}`;
 function readServerPrint(eventId: string) {
   try {
     return window.localStorage.getItem(serverPrintKey(eventId));
@@ -537,6 +539,10 @@ export function VenueMapStudio({
   const [serverOffer, setServerOffer] = React.useState<VenueMapDoc | null>(
     null,
   );
+  // tolo-web から保存した地図・グラフを読めなかった（知らせて、もう一度読み込めるようにする）
+  const [serverLoad, setServerLoad] = React.useState<
+    "idle" | "loading" | "failed"
+  >("idle");
   const [guides, setGuides] = React.useState<{
     lines: GuideLine[];
     gaps: GapMark[];
@@ -722,35 +728,51 @@ export function VenueMapStudio({
     } catch {
       // 壊れた保存は無視
     }
+    syncWithServer(localDoc, () => cancelled).finally(() => {
+      if (!cancelled) setHydrated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [eventId]);
+  // tolo-web から、保存した地図と、このイベントのグラフ（グラフ編集で保存したもの）を読む。
+  // localDoc＝このブラウザに一時保存していた地図。無ければ保存した地図をそのまま開き、あれば、
+  // そのあとに別の地図が保存されていたときだけ開くか聞く。グラフは開いている地図に結び付ける（ファイルで読み込まなくてよい）。
+  // 読めなくても白紙から作れるようにし、画面で知らせて「もう一度読み込む」でやり直せるようにする
+  const syncWithServer = async (
+    localDoc: VenueMapDoc | null,
+    isCancelled: () => boolean = () => false,
+  ) => {
     const knownPrint = readServerPrint(eventId);
-    loadGuideMap(eventId, lang)
-      .then((d) => {
-        if (cancelled) return;
-        const print = d ? guideMapFingerprint(d) : null;
-        setServerPrint(print);
-        writeServerPrint(eventId, print);
-        if (!d) return;
-        if (localDoc) {
-          if (print !== knownPrint && print !== guideMapFingerprint(localDoc))
-            setServerOffer(d);
-          return;
-        }
+    setServerLoad("loading");
+    try {
+      const [d, graph] = await Promise.all([
+        loadGuideMap(eventId, lang),
+        loadEventGraph(eventId),
+      ]);
+      if (isCancelled()) return;
+      setServerLoad("idle");
+      const print = d ? guideMapFingerprint(d) : null;
+      setServerPrint(print);
+      writeServerPrint(eventId, print);
+      if (d && localDoc) {
+        if (print !== knownPrint && print !== guideMapFingerprint(localDoc))
+          setServerOffer(d);
+      } else if (d) {
         skipHistoryRef.current = true;
         setPages([{ id: "p1", name: "", doc: d }]);
         setActivePageId("p1");
         setDoc(d);
         fitView(d);
-      })
-      .catch(() => {
-        // 読めなくても、白紙から作れるようにする
-      })
-      .finally(() => {
-        if (!cancelled) setHydrated(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [eventId]);
+      }
+      if (graph) {
+        skipHistoryRef.current = true; // 開いたときの結び付けは「元に戻す」の対象にしない
+        attachGraph(graph, { quiet: true });
+      }
+    } catch {
+      if (!isCancelled()) setServerLoad("failed");
+    }
+  };
   // 変えるたびに保存すると、ドラッグ中はマウスが動くたびに全部のタブを書き込んで重くなるので、
   // 最後の変更から少し待って 1 回だけ保存する。待っている間にページを閉じる・ほかの画面へ移るときは、その場で保存する
   const pendingSaveRef = React.useRef<(() => void) | null>(null);
@@ -1450,7 +1472,8 @@ export function VenueMapStudio({
       );
     }
   };
-  const attachGraph = (g: VenueGraph) => {
+  // quiet＝開いたときに tolo-web のグラフを結び付けるとき（毎回お知らせを出さない）
+  const attachGraph = (g: VenueGraph, { quiet = false } = {}) => {
     // すでにグループに結び付いている階は、tolo-web と同じくグループの名前にそろえる（tolo-web の形で読み込んだ地図は、ここで階の名前が付く）
     const named = (d: VenueMapDoc): VenueMapDoc => ({
       ...d,
@@ -1462,6 +1485,7 @@ export function VenueMapStudio({
       }),
     });
     setDoc((d) => linkFloorsByName(named({ ...d, graph: g }), g));
+    if (quiet) return;
     setNotice(
       t("グラフを読み込みました（グループ {g}・ポイント {p}・ルート {r}）", {
         g: g.groups.length,
@@ -3352,6 +3376,32 @@ export function VenueMapStudio({
             )}
           </div>
         </header>
+        {serverLoad === "failed" && (
+          <div
+            role="alert"
+            className="flex shrink-0 flex-wrap items-center gap-3 border-b border-primary bg-card px-4 py-2 text-sm"
+          >
+            <span
+              className="size-2 shrink-0 rounded-sm"
+              style={{ background: GUIDE }}
+            />
+            <span className="min-w-0 flex-1">
+              <b className="font-medium">
+                {t("tolo-web から読み込めませんでした。")}
+              </b>
+              {t(
+                "保存した地図やグラフが出ていない可能性があります。通信の状態を確かめて、もう一度読み込んでください。",
+              )}
+            </span>
+            <Button
+              size="sm"
+              onPress={() => void syncWithServer(isBlank(doc) ? null : doc)}
+              className="h-8 shrink-0 px-3 text-xs"
+            >
+              {t("もう一度読み込む")}
+            </Button>
+          </div>
+        )}
         {saveFailed && (
           <div
             role="alert"
