@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { PLACEHOLDER_GRAPH } from "@/features/graph";
 import { orpc } from "@/lib/orpc";
 import { createOrpcHandlers } from "@/mocks/handlers";
 import { server } from "@/mocks/server";
@@ -9,6 +10,7 @@ import {
 import {
   GuideMapSaveError,
   guideMapFingerprint,
+  loadEventGraph,
   loadGuideMap,
   saveGuideMap,
 } from "./guideMapApi";
@@ -38,7 +40,35 @@ const doc: VenueMapDoc = {
 
 describe("saveGuideMap / loadGuideMap", () => {
   it("まだ保存していなければ null", async () => {
+    server.use(
+      ...createOrpcHandlers({
+        savedGuideMap: {
+          layout: { version: 1, groups: [], objects: [], north: 0, scale: 0 },
+          groupLabels: {},
+        },
+      }),
+    );
     expect(await loadGuideMap("e")).toBeNull();
+  });
+
+  it("モックの既定は KCG本館の見本で、階の名前はグラフのグループ名", async () => {
+    const sample = await loadGuideMap("e");
+    expect(sample?.floors.map((f) => f.name)).toEqual([
+      "1F",
+      "2F",
+      "3F",
+      "4F",
+      "5F",
+      "6Fホール",
+    ]);
+    expect(sample?.objects.length).toBeGreaterThan(0);
+  });
+
+  it("モックで保存した地図は、ゲスト画面の案内マップにも出る", async () => {
+    await saveGuideMap("e", doc);
+    const { layout } = await orpc.guest.getGuideMap({ eventId: "e" });
+    expect(layout.groups).toEqual([{ groupId: "g_1f000001" }]);
+    expect(layout.objects.map((o) => o.id)).toEqual(["p-hall"]);
   });
 
   it("保存した地図を読み戻し、階の名前はグラフのグループ名にする", async () => {
@@ -157,5 +187,21 @@ describe("guideMapFingerprint", () => {
       objects: doc.objects.map((o) => ({ ...o, x: 11 })),
     } as VenueMapDoc;
     expect(guideMapFingerprint(moved)).not.toBe(guideMapFingerprint(doc));
+  });
+});
+
+describe("loadEventGraph", () => {
+  it("グラフ編集で保存したグラフを、スタジオのグラフの形で読む", async () => {
+    const graph = await loadEventGraph("e");
+    const pointCount = PLACEHOLDER_GRAPH.nodes.filter(
+      (n) => n.type !== "graphGroup",
+    ).length;
+    expect(graph?.points).toHaveLength(pointCount);
+    expect(graph?.routes).toHaveLength(PLACEHOLDER_GRAPH.edges.length);
+  });
+
+  it("まだグラフが無ければ null", async () => {
+    server.use(...createOrpcHandlers({ graph: { nodes: [], edges: [] } }));
+    expect(await loadEventGraph("e")).toBeNull();
   });
 });

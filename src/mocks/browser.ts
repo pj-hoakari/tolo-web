@@ -1,9 +1,22 @@
 import { setupWorker } from "msw/browser";
+import type { SavedGuideMap } from "@/server/router";
 import { createOrpcHandlers } from "./handlers";
-import { readMockOverrides } from "./overrides";
+import {
+  readMockOverrides,
+  readSavedGuideMap,
+  writeSavedGuideMap,
+} from "./overrides";
 
-const storedOverrides = () =>
-  readMockOverrides(sessionStorage, window.location.search);
+// 案内マップエディタで保存した地図は localStorage に残し、開き直しても・ゲスト画面でも同じ地図を返す
+const storedOverrides = () => {
+  const overrides = readMockOverrides(sessionStorage, window.location.search);
+  return {
+    savedGuideMap: readSavedGuideMap(localStorage),
+    ...overrides,
+    onGuideMapSaved: (saved: SavedGuideMap) =>
+      writeSavedGuideMap(localStorage, saved),
+  };
+};
 
 /**
  * next dev でモック API を有効化するための Service Worker

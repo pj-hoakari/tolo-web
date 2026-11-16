@@ -33,6 +33,10 @@ export const EN: Record<string, string> = {
     "A different map was saved to tolo-web after your work in this browser. Open the saved map? (Your current work stays as it is.)",
   保存されている地図を開く: "Open the saved map",
   保存されている地図: "Saved map",
+  "tolo-web から読み込めませんでした。": "Couldn't load from tolo-web.",
+  "保存した地図やグラフが出ていない可能性があります。通信の状態を確かめて、もう一度読み込んでください。":
+    "The saved map or graph may be missing. Check your connection and load again.",
+  もう一度読み込む: "Load again",
   "見本の会場マップを読み込みます。いまのタブの内容は置き換わります。よろしいですか？":
     "Load the sample venue map? The map in the current tab will be replaced.",
   閉じる: "Close",
