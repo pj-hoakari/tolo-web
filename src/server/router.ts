@@ -56,13 +56,17 @@ import {
 } from "@/features/graph/graphDataSchema";
 import type { GuestGuideMapGraph } from "@/features/guest/info/guideMapGraph";
 import type { LocalizedGuideMapLayout } from "@/features/guest/info/guideMapLayout";
+import { guideMapLayoutSchema } from "@/features/guest/info/guideMapLayoutSchema";
 import type { GuestPageComponent } from "@/features/guest/pageComponents";
 import {
   EVENT_STATUSES as EVENT_STATUS_VALUES,
   type EventStatus,
   type TenantEvent,
 } from "@/features/tenant/management/events/type";
-import type { GraphData } from "@/features/tenant/management/graph/type";
+import type {
+  GraphData,
+  LocalizedLabel,
+} from "@/features/tenant/management/graph/type";
 import type {
   CreatedInvitation,
   TenantInvitation,
@@ -120,6 +124,10 @@ import { graphAuthoringClient } from "./graphAuthoring";
 import { fromGraphDocument, toGraphDocument } from "./graphDocument";
 import { guestPageClient } from "./guest";
 import { fromGuideMapResponse } from "./guideMap";
+import {
+  fromGuideMapLayoutMessage,
+  toGuideMapLayoutMessage,
+} from "./guideMapLayout";
 import {
   consoleEdgeDeviceClient,
   consoleObservationSettingsClient,
@@ -637,6 +645,12 @@ export interface GuestQueue {
   gates: GuestQueueGate[];
 }
 
+/** 案内マップエディタで保存した案内マップと、その階（グループ）の名前 */
+export interface SavedGuideMap {
+  layout: LocalizedGuideMapLayout;
+  groupLabels: Record<string, LocalizedLabel>;
+}
+
 export interface GuestGuideMap {
   graph: GuestGuideMapGraph;
   layout: LocalizedGuideMapLayout;
@@ -864,6 +878,51 @@ export const router = {
               },
             });
           }
+          throw toORPCError(err);
+        }
+      }),
+    getGuideMapLayout: os
+      .input(z.object({ eventId: z.string().min(1) }))
+      .handler(async ({ input }): Promise<SavedGuideMap> => {
+        try {
+          // 案内マップはグラフと一緒に返る。階の名前はグラフのグループ名を使う
+          const res = await graphAuthoringClient.getGraph(input);
+          const graph = res.document
+            ? fromGraphDocument(res.document)
+            : { nodes: [], edges: [] };
+          return {
+            layout: fromGuideMapLayoutMessage(res.guideMapLayout),
+            groupLabels: Object.fromEntries(
+              graph.nodes
+                .filter((n) => n.type === "graphGroup")
+                .map((n) => [n.id, n.data.labels]),
+            ),
+          };
+        } catch (err) {
+          // まだ一度も保存していないイベントは、空の案内マップにする
+          if (err instanceof ConnectError && err.code === Code.NotFound) {
+            return {
+              layout: fromGuideMapLayoutMessage(undefined),
+              groupLabels: {},
+            };
+          }
+          throw toORPCError(err);
+        }
+      }),
+    saveGuideMapLayout: os
+      .input(
+        z.object({
+          eventId: z.string().min(1),
+          layout: guideMapLayoutSchema,
+        }),
+      )
+      .handler(async ({ input }): Promise<void> => {
+        try {
+          await graphAuthoringClient.saveGuideMapLayout({
+            eventId: input.eventId,
+            guideMapLayout: toGuideMapLayoutMessage(input.layout),
+          });
+        } catch (err) {
           throw toORPCError(err);
         }
       }),

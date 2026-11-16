@@ -7,6 +7,7 @@ import {
   ArrowRight,
   ArrowUpDown,
   BookmarkPlus,
+  Check,
   ChevronDown,
   Circle as CircleIcon,
   Columns2,
@@ -42,12 +43,14 @@ import {
   Type,
   Undo2,
   Upload,
+  UploadCloud,
   X,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   MiniMap,
@@ -67,6 +70,12 @@ import { ExportPickerDialog } from "./ExportPickerDialog";
 import { FloorNameInput, NumField } from "./Fields";
 import { GraphLinkDialog, type LinkTab } from "./GraphLinkDialog";
 import { GuidePanel } from "./GuidePanel";
+import {
+  GuideMapSaveError,
+  guideMapFingerprint,
+  loadGuideMap,
+  saveGuideMap,
+} from "./guideMapApi";
 import {
   detectFile,
   fromGuideMapLayout,
@@ -171,6 +180,25 @@ const SEL = "var(--primary)";
 const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
 // 画面だけの設定（全体図・定規）の保存キー
 const VIEW_PREFS_KEY = "venue-map:view-prefs";
+
+// tolo-web に最後に保存した（または開いたときに確かめた）地図の指紋。イベントごとにこのブラウザに残し、
+// 「tolo-web に保存していない変更」と「ほかで保存し直された地図」を見分けるのに使う
+const serverPrintKey = (eventId: string) => `venue-map:server-print:${eventId}`;
+function readServerPrint(eventId: string) {
+  try {
+    return window.localStorage.getItem(serverPrintKey(eventId));
+  } catch {
+    return null;
+  }
+}
+function writeServerPrint(eventId: string, print: string | null) {
+  try {
+    if (print) window.localStorage.setItem(serverPrintKey(eventId), print);
+    else window.localStorage.removeItem(serverPrintKey(eventId));
+  } catch {
+    // 残せなくても保存そのものは済んでいる
+  }
+}
 
 // 出発（startId）の場所が消えていたら、出発も外す（消えた場所を指したまま書き出さないように）
 const dropDanglingStart = (d: VenueMapDoc): VenueMapDoc =>
@@ -498,6 +526,17 @@ export function VenueMapStudio({
   const [notice, setNotice] = React.useState<string | null>(null); // 画面下に少しだけ出すお知らせ
   const [helpOpen, setHelpOpen] = React.useState(false); // 使い方（Q&A）
   const [exportDone, setExportDone] = React.useState(false); // 書き出した直後の「完了」表示（1.5 秒）
+  const [serverSave, setServerSave] = React.useState<
+    "idle" | "saving" | "done"
+  >("idle"); // tolo-web への保存（保存中・保存した直後の「保存しました」表示）
+  // tolo-web に保存されている地図の指紋（null＝まだ保存していない、undefined＝読めていないので分からない）
+  const [serverPrint, setServerPrint] = React.useState<
+    string | null | undefined
+  >(undefined);
+  // 開いたときに見つけた、このブラウザでの作業のあとに tolo-web へ保存し直された地図（開くか聞く）
+  const [serverOffer, setServerOffer] = React.useState<VenueMapDoc | null>(
+    null,
+  );
   const [guides, setGuides] = React.useState<{
     lines: GuideLine[];
     gaps: GapMark[];
@@ -656,9 +695,13 @@ export function VenueMapStudio({
   };
 
   // --- 保存・復元 ---
-  // 全部のタブをまとめて、このブラウザに保存する（イベントごと）
+  // 作業途中は、全部のタブをまとめてこのブラウザに一時保存する（イベントごと）。
+  // 一時保存が無ければ、tolo-web に保存した地図（「保存」ボタンで送ったもの）を開く。
+  // 一時保存があっても、そのあとに tolo-web へ別の地図が保存されていれば、開くか聞く
   // biome-ignore lint/correctness/useExhaustiveDependencies: 復元するのはイベントが変わったときだけ（fitView は毎回作り直す関数なので入れない）
   React.useEffect(() => {
+    let cancelled = false;
+    let localDoc: VenueMapDoc | null = null;
     try {
       const rawBook = window.localStorage.getItem(studioBookKey(eventId));
       const book = rawBook ? (JSON.parse(rawBook) as StudioBook) : null;
@@ -673,11 +716,40 @@ export function VenueMapStudio({
         setActivePageId(active.id);
         setDoc(active.doc);
         fitView(active.doc);
+        setHydrated(true);
+        localDoc = active.doc;
       }
     } catch {
       // 壊れた保存は無視
     }
-    setHydrated(true);
+    const knownPrint = readServerPrint(eventId);
+    loadGuideMap(eventId, lang)
+      .then((d) => {
+        if (cancelled) return;
+        const print = d ? guideMapFingerprint(d) : null;
+        setServerPrint(print);
+        writeServerPrint(eventId, print);
+        if (!d) return;
+        if (localDoc) {
+          if (print !== knownPrint && print !== guideMapFingerprint(localDoc))
+            setServerOffer(d);
+          return;
+        }
+        skipHistoryRef.current = true;
+        setPages([{ id: "p1", name: "", doc: d }]);
+        setActivePageId("p1");
+        setDoc(d);
+        fitView(d);
+      })
+      .catch(() => {
+        // 読めなくても、白紙から作れるようにする
+      })
+      .finally(() => {
+        if (!cancelled) setHydrated(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [eventId]);
   // 変えるたびに保存すると、ドラッグ中はマウスが動くたびに全部のタブを書き込んで重くなるので、
   // 最後の変更から少し待って 1 回だけ保存する。待っている間にページを閉じる・ほかの画面へ移るときは、その場で保存する
@@ -1272,6 +1344,30 @@ export function VenueMapStudio({
     a.click();
     URL.revokeObjectURL(url);
     setExportDone(true);
+  };
+  // いま開いているタブの地図を tolo-web に保存する（tolo-web に入る地図はイベントごとに 1 つ）
+  const handleServerSave = async () => {
+    setServerSave("saving");
+    try {
+      await saveGuideMap(eventId, doc);
+      const print = guideMapFingerprint(doc);
+      setServerPrint(print);
+      writeServerPrint(eventId, print);
+      setServerSave("done");
+    } catch (error) {
+      setServerSave("idle");
+      void notify(
+        error instanceof GuideMapSaveError && error.reason === "rejected"
+          ? t(
+              "tolo-web が地図を受け付けませんでした。グラフに無い階や場所を指していないか、「確かめる・共有」のチェックで確認してください。",
+            )
+          : error instanceof GuideMapSaveError && error.reason === "forbidden"
+            ? t("このイベントの地図を保存する権限がありません。")
+            : t(
+                "保存できませんでした。通信の状態を確かめて、もう一度お試しください。",
+              ),
+      );
+    }
   };
   // 書き出す前に、行けない場所などが無いかチェックする（問題が無ければそのまま書き出す）
   const handleExport = () => {
@@ -2774,6 +2870,35 @@ export function VenueMapStudio({
     return () => document.removeEventListener("pointerdown", onDown);
   }, [selectedIds.length]);
 
+  // tolo-web に保存していない変更があるか（ドラッグ中に毎回比べないよう、少し遅れた地図で比べる）
+  const deferredDoc = React.useDeferredValue(doc);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: isBlank は毎回作り直す関数なので入れない
+  const unsavedToServer = React.useMemo(
+    () =>
+      serverPrint !== undefined &&
+      (serverPrint === null
+        ? !isBlank(deferredDoc)
+        : guideMapFingerprint(deferredDoc) !== serverPrint),
+    [deferredDoc, serverPrint],
+  );
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 聞くのは見つけたときだけ（confirm・openDoc・t は入れない）
+  React.useEffect(() => {
+    if (!serverOffer) return;
+    setServerOffer(null);
+    void confirm(
+      t(
+        "このブラウザで作業したあとに、tolo-web へ別の地図が保存されています。保存されている地図を開きますか？（いまの作業はそのまま残ります）",
+      ),
+      { confirmLabel: t("保存されている地図を開く") },
+    ).then((ok) => {
+      if (ok) openDoc(serverOffer, t("保存されている地図"));
+    });
+  }, [serverOffer]);
+  React.useEffect(() => {
+    if (serverSave !== "done") return;
+    const t = window.setTimeout(() => setServerSave("idle"), 1500);
+    return () => window.clearTimeout(t);
+  }, [serverSave]);
   React.useEffect(() => {
     if (!exportDone) return;
     const t = window.setTimeout(() => setExportDone(false), 1500);
@@ -3160,6 +3285,34 @@ export function VenueMapStudio({
                 <Redo2 className="size-4" />
               </button>
             </div>
+            <Button
+              variant="outline"
+              onPress={handleServerSave}
+              isDisabled={serverSave === "saving"}
+              className="h-8 min-w-[6.5rem] shrink-0 gap-1.5 px-3.5 tracking-[0.04em]"
+            >
+              {serverSave === "done" ? (
+                <Check className="size-4" />
+              ) : (
+                <UploadCloud className="size-4" />
+              )}
+              {serverSave === "saving"
+                ? t("保存中…")
+                : serverSave === "done"
+                  ? t("保存しました")
+                  : t("保存")}
+              {serverSave === "idle" && unsavedToServer && (
+                <>
+                  <span
+                    aria-hidden
+                    className="size-1.5 rounded-full bg-primary"
+                  />
+                  <span className="sr-only">
+                    {t("（tolo-web に保存していない変更があります）")}
+                  </span>
+                </>
+              )}
+            </Button>
             <button
               type="button"
               onClick={handleExport}

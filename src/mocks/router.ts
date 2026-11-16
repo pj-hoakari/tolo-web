@@ -7,6 +7,7 @@ import {
   graphDataSchema,
 } from "@/features/graph/graphDataSchema";
 import { PLACEHOLDER_GRAPH } from "@/features/graph/placeholderGraph";
+import { guideMapLayoutSchema } from "@/features/guest/info/guideMapLayoutSchema";
 import {
   DEFAULT_GUEST_PAGE_COMPONENTS,
   type GuestPageComponent,
@@ -39,6 +40,7 @@ import type {
   GuestQueue,
   RegisteredEdgeDevice,
   RegisterTenantResult,
+  SavedGuideMap,
 } from "@/server/router";
 import {
   registeredEdgeDeviceWire,
@@ -85,6 +87,10 @@ export type MockRouterOverrides = {
     code: CommonORPCErrorCode;
     violations?: GraphViolation[];
   };
+  /** graph.getGuideMapLayout が返す案内マップ（未指定なら空。保存するとその内容に置き換わる） */
+  savedGuideMap?: SavedGuideMap;
+  getGuideMapLayoutError?: boolean;
+  saveGuideMapLayoutError?: CommonORPCErrorCode;
   registerTenantError?: CommonORPCErrorCode;
   listEventsError?: boolean;
   events?: TenantEvent[];
@@ -148,6 +154,8 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     graph = PLACEHOLDER_GRAPH,
     getGraphError = false,
     saveGraphError,
+    getGuideMapLayoutError = false,
+    saveGuideMapLayoutError,
     registerTenantError,
     listEventsError = false,
     createEventError,
@@ -174,6 +182,12 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     ],
   );
   let nextEventNumber = events.length + 1;
+  let savedGuideMap: SavedGuideMap = structuredClone(
+    overrides.savedGuideMap ?? {
+      layout: { version: 1, groups: [], objects: [], north: 0, scale: 0 },
+      groupLabels: {},
+    },
+  );
   let devices = [...initialDevices];
   const observationSettings = new Map<string, ObservationSettings>();
   let members = structuredClone(initialMembers);
@@ -219,6 +233,32 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
               data: violations && { violations },
             });
           }
+        }),
+      getGuideMapLayout: os
+        .input(z.object({ eventId: z.string().min(1) }))
+        .handler(async (): Promise<SavedGuideMap> => {
+          if (getGuideMapLayoutError) {
+            throw new ORPCError("INTERNAL_SERVER_ERROR");
+          }
+          return structuredClone(savedGuideMap);
+        }),
+      saveGuideMapLayout: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            layout: guideMapLayoutSchema,
+          }),
+        )
+        .handler(async ({ input }): Promise<void> => {
+          if (saveGuideMapLayoutError) {
+            throw new ORPCError(saveGuideMapLayoutError, {
+              message: MOCK_SERVER_MESSAGE,
+            });
+          }
+          savedGuideMap = {
+            ...savedGuideMap,
+            layout: structuredClone(input.layout),
+          };
         }),
     },
     camera: {
