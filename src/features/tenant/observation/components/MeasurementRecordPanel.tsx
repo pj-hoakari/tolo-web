@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 import { useMemo, useSyncExternalStore } from "react";
+import { useStaffStorageScope } from "@/components/pwa/staff-storage-provider";
 import { Button } from "@/components/ui/button";
 import {
   clearMeasurementRecords,
@@ -18,6 +19,7 @@ export function MeasurementRecordPanel({
   edgeDeviceId: string;
 }) {
   const t = useTranslations("Observation.records");
+  const storageScope = useStaffStorageScope();
   const version = useSyncExternalStore(
     subscribeMeasurementRecords,
     measurementRecordsVersion,
@@ -25,8 +27,10 @@ export function MeasurementRecordPanel({
   );
   const records = useMemo(
     () =>
-      version === -1 ? [] : readMeasurementRecords({ eventId, edgeDeviceId }),
-    [eventId, edgeDeviceId, version],
+      version === -1
+        ? []
+        : readMeasurementRecords({ eventId, edgeDeviceId, storageScope }),
+    [eventId, edgeDeviceId, storageScope, version],
   );
   const unsent = records.filter((record) => !record.sent).length;
 
@@ -45,7 +49,7 @@ export function MeasurementRecordPanel({
 
   const clearRecords = () => {
     if (window.confirm(t("clearConfirm", { count: records.length }))) {
-      clearMeasurementRecords({ eventId, edgeDeviceId });
+      clearMeasurementRecords({ eventId, edgeDeviceId, storageScope });
     }
   };
 

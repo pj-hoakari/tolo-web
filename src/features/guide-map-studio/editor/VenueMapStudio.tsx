@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { useStaffStorageScope } from "@/components/pwa/staff-storage-provider";
+import { scopeStaffStorageKey } from "@/lib/pwa/staff-storage";
 import "../studio-theme.css";
 import {
   ArrowLeft,
@@ -378,6 +380,8 @@ export function VenueMapStudio({
   leading,
   trailing,
 }: VenueMapStudioProps) {
+  const storageScope = useStaffStorageScope();
+  const storageId = scopeStaffStorageKey(eventId, storageScope);
   const { t, tg, lang, connectorName } = useI18n();
   // 確かめる・知らせる小さな画面（window.confirm / alert の代わり）
   const {
@@ -709,7 +713,7 @@ export function VenueMapStudio({
     let cancelled = false;
     let localDoc: VenueMapDoc | null = null;
     try {
-      const rawBook = window.localStorage.getItem(studioBookKey(eventId));
+      const rawBook = window.localStorage.getItem(studioBookKey(storageId));
       const book = rawBook ? (JSON.parse(rawBook) as StudioBook) : null;
       const okPages = (
         book?.pages?.filter((p) => p?.id && p.doc?.floors?.length) ?? []
@@ -734,7 +738,7 @@ export function VenueMapStudio({
     return () => {
       cancelled = true;
     };
-  }, [eventId]);
+  }, [eventId, storageId]);
   // tolo-web から、保存した地図と、このイベントのグラフ（グラフ編集で保存したもの）を読む。
   // localDoc＝このブラウザに一時保存していた地図。無ければ保存した地図をそのまま開き、あれば、
   // そのあとに別の地図が保存されていたときだけ開くか聞く。グラフは開いている地図に結び付ける（ファイルで読み込まなくてよい）。
@@ -743,7 +747,7 @@ export function VenueMapStudio({
     localDoc: VenueMapDoc | null,
     isCancelled: () => boolean = () => false,
   ) => {
-    const knownPrint = readServerPrint(eventId);
+    const knownPrint = readServerPrint(storageId);
     setServerLoad("loading");
     try {
       const [d, graph] = await Promise.all([
@@ -754,7 +758,7 @@ export function VenueMapStudio({
       setServerLoad("idle");
       const print = d ? guideMapFingerprint(d) : null;
       setServerPrint(print);
-      writeServerPrint(eventId, print);
+      writeServerPrint(storageId, print);
       if (d && localDoc) {
         if (print !== knownPrint && print !== guideMapFingerprint(localDoc))
           setServerOffer(d);
@@ -786,7 +790,7 @@ export function VenueMapStudio({
           pages: pages.map((p) => (p.id === activePageId ? { ...p, doc } : p)),
         };
         window.localStorage.setItem(
-          studioBookKey(eventId),
+          studioBookKey(storageId),
           JSON.stringify(book),
         );
         setSaveFailed(false);
@@ -798,7 +802,7 @@ export function VenueMapStudio({
     pendingSaveRef.current = save;
     const timer = window.setTimeout(save, 400);
     return () => window.clearTimeout(timer);
-  }, [doc, pages, activePageId, eventId, hydrated]);
+  }, [doc, pages, activePageId, storageId, hydrated]);
   React.useEffect(() => {
     const flush = () => pendingSaveRef.current?.();
     window.addEventListener("pagehide", flush);
@@ -1374,7 +1378,7 @@ export function VenueMapStudio({
       await saveGuideMap(eventId, doc);
       const print = guideMapFingerprint(doc);
       setServerPrint(print);
-      writeServerPrint(eventId, print);
+      writeServerPrint(storageId, print);
       setServerSave("done");
     } catch (error) {
       setServerSave("idle");
@@ -2015,7 +2019,7 @@ export function VenueMapStudio({
 
   // --- 保存ポイント（好きなときに、いまの地図を名前を付けて残し、あとでその状態に戻せる）---
   // 保存ポイントはタブごと（どのイベントのタブかも含めて分ける）
-  const snapshotKey = `${eventId}:${activePageId}`;
+  const snapshotKey = `${storageId}:${activePageId}`;
   // 一覧を開く・読み直す
   const refreshHistory = async () => {
     const all = await listSnapshots(snapshotKey).catch(() => [] as Snapshot[]);

@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { LocaleSelect } from "@/components/locale-select";
-import { PwaInstall } from "@/components/pwa/pwa-install";
+import { ObservationConnectionNotice } from "@/components/pwa/staff-online-boundary";
+import { StaffStorageProvider } from "@/components/pwa/staff-storage-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Link } from "@/components/ui/link";
 import { LogoutButton } from "@/features/auth/LogoutButton";
@@ -11,6 +12,7 @@ import { ScreenWakeProvider } from "@/features/tenant/observation/components/Scr
 import { observationDevicePath } from "@/features/tenant/observation/routes";
 import { machineSessionPath } from "@/features/tenant/webrtc/utils/cameraConnection";
 import { getPwaMetadata } from "@/lib/pwa/manifest";
+import { createStaffStorageScope } from "@/lib/pwa/staff-storage";
 import { getViewer } from "@/server/auth";
 import { authMockingEnabled } from "@/server/auth/mocking";
 
@@ -60,57 +62,59 @@ export default async function TenantObservation({
     process.env.NEXT_PUBLIC_API_MOCKING === "enabled";
 
   return (
-    <ScreenWakeProvider>
-      <ObservationSoftLock tenantId={tenantId} eventId={eventId}>
-        <div className="flex w-full flex-col">
-          <header className="mb-4 flex w-full items-center justify-between px-10 py-5">
-            <h2 className="text-2xl font-bold">{t("title", { tenantId })}</h2>
-            <div className="flex items-center gap-2">
-              <PwaInstall compact />
-              <LocaleSelect />
-              <ThemeToggle />
-              <LogoutButton />
-            </div>
-          </header>
-          <main className="flex w-full flex-col items-center gap-4">
-            {machineFailed && (
-              <div role="alert" className="flex flex-col items-center gap-2">
-                <p>{t("machineSessionFailed")}</p>
+    <StaffStorageProvider scope={createStaffStorageScope(tenantId, viewer)}>
+      <ScreenWakeProvider>
+        <ObservationSoftLock tenantId={tenantId} eventId={eventId}>
+          <div className="flex w-full flex-col">
+            <ObservationConnectionNotice />
+            <header className="mb-4 flex w-full items-center justify-between px-10 py-5">
+              <h2 className="text-2xl font-bold">{t("title", { tenantId })}</h2>
+              <div className="flex items-center gap-2">
+                <LocaleSelect />
+                <ThemeToggle />
+                <LogoutButton />
+              </div>
+            </header>
+            <main className="flex w-full flex-col items-center gap-4">
+              {machineFailed && (
+                <div role="alert" className="flex flex-col items-center gap-2">
+                  <p>{t("machineSessionFailed")}</p>
+                  <Link
+                    href={machineSessionPath({
+                      eventId,
+                      pageEdgeDeviceId: edgeDeviceId,
+                      returnPath: observationDevicePath(eventId, edgeDeviceId),
+                    })}
+                    variant="outline"
+                  >
+                    {t("machineSessionRetry")}
+                  </Link>
+                </div>
+              )}
+              <ScreenWakeControl />
+              {viewer.type === "staff" && !machineFailed && !authMocking && (
                 <Link
+                  variant="default"
                   href={machineSessionPath({
                     eventId,
                     pageEdgeDeviceId: edgeDeviceId,
                     returnPath: observationDevicePath(eventId, edgeDeviceId),
                   })}
-                  variant="outline"
                 >
-                  {t("machineSessionRetry")}
+                  {t("controls.observeOnThisDevice")}
                 </Link>
-              </div>
-            )}
-            <ScreenWakeControl />
-            {viewer.type === "staff" && !machineFailed && !authMocking && (
-              <Link
-                variant="default"
-                href={machineSessionPath({
-                  eventId,
-                  pageEdgeDeviceId: edgeDeviceId,
-                  returnPath: observationDevicePath(eventId, edgeDeviceId),
-                })}
-              >
-                {t("controls.observeOnThisDevice")}
-              </Link>
-            )}
-            <CrowdDetection
-              canReport={canReport}
-              tenantId={tenantId}
-              eventId={eventId}
-              edgeDeviceId={edgeDeviceId}
-              requestedCameraId={requestedCameraId}
-            />
-          </main>
-        </div>
-      </ObservationSoftLock>
-    </ScreenWakeProvider>
+              )}
+              <CrowdDetection
+                canReport={canReport}
+                tenantId={tenantId}
+                eventId={eventId}
+                edgeDeviceId={edgeDeviceId}
+                requestedCameraId={requestedCameraId}
+              />
+            </main>
+          </div>
+        </ObservationSoftLock>
+      </ScreenWakeProvider>
+    </StaffStorageProvider>
   );
 }

@@ -1,4 +1,8 @@
 import { expect, type Page, test } from "@playwright/test";
+import {
+  createStaffStorageScope,
+  scopeStaffStorageKey,
+} from "@/lib/pwa/staff-storage";
 import { SAVED_GUIDE_MAP_KEY } from "@/mocks/overrides";
 import type { MockRouterOverrides } from "@/mocks/router";
 import type { SavedGuideMap } from "@/server/router";
@@ -6,6 +10,7 @@ import type { SavedGuideMap } from "@/server/router";
 test.use({ viewport: { width: 1600, height: 1000 } });
 
 const editPath = "/event/test/management/guide-map/edit";
+const bookKey = `guide-map-studio:book:${scopeStaffStorageKey("test", createStaffStorageScope("0123456789abcdef", { type: "staff", userId: "user-owner" }))}`;
 const floorTab = (page: Page, name: string) =>
   page.getByRole("button", { name, exact: true });
 // 「保存ポイント」と分けるため、名前が「保存」で始まるヘッダーの保存ボタンだけを取る
@@ -121,15 +126,15 @@ test("開くと、イベントのグラフを取って地図に結び付ける",
   // 一時保存した地図に、KCG本館の誘導グラフ（階段・エレベーター・廊下など 23 か所）が入る
   await expect
     .poll(() =>
-      page.evaluate(() => {
-        const raw = localStorage.getItem("guide-map-studio:book:test");
+      page.evaluate((key) => {
+        const raw = localStorage.getItem(key);
         const book = raw
           ? (JSON.parse(raw) as {
               pages: { doc: { graph?: { points: unknown[] } } }[];
             })
           : undefined;
         return book?.pages[0]?.doc.graph?.points.length ?? 0;
-      }),
+      }, bookKey),
     )
     .toBe(23);
 });

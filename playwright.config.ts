@@ -25,6 +25,7 @@ export default defineConfig({
       NEXT_PUBLIC_CROWD_DETECTION_MODEL_PATH: "/models/yolo26n.onnx",
       TENANT_SUBDOMAIN_MOCKING: "enabled",
       AUTH_MOCKING: "enabled",
+      AUTH_MOCK_USER_ID: "user-owner",
       FIREBASE_PROJECT_ID: "e2e-tolo-signaling",
     },
     reuseExistingServer: !process.env.CI,
