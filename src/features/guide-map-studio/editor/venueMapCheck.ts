@@ -4,7 +4,12 @@
 // 行けるかどうかは、お客さんの画面の案内マップと同じ計算（src/features/guest/info/guideMapFloorRoute.ts）で確かめる
 import { computeFloorRoute } from "@/features/guest/info/guideMapFloorRoute";
 import { toRouteLayout } from "./guideMapIO";
-import { isConnector, isTwinOf, type VenueMapDoc } from "./venueMap";
+import {
+  isConnector,
+  isTwinOf,
+  needsGraphPoint,
+  type VenueMapDoc,
+} from "./venueMap";
 
 export type CheckIssue = {
   kind:
@@ -12,6 +17,7 @@ export type CheckIssue = {
     | "no-start"
     | "unnamed"
     | "connector-unlinked"
+    | "connector-no-point"
     | "floor-isolated"
     | "overlap"
     | "empty-floor"
@@ -117,6 +123,15 @@ export function checkVenueDoc(
           vars: { floor: f.name },
         });
     for (const o of doc.objects) {
+      // 誘導グラフに要る所（階段・エレベーターなど）が結び付いていないと、そこが混んでも避けられない。部屋は結び付けなくてよい
+      if (needsGraphPoint(o) && !o.graphPointId)
+        issues.push({
+          kind: "connector-no-point",
+          level: "info",
+          floorId: o.floor,
+          objectId: o.id,
+          vars: { name: o.title || untitled, floor: floorName(o.floor) },
+        });
       if (o.graphPointId && !g.points.some((p) => p.id === o.graphPointId))
         issues.push({
           kind: "bad-point",

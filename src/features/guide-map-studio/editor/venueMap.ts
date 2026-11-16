@@ -104,6 +104,13 @@ export const markBoxOf = (o: PlaceObject) => ({
 });
 export const isConnector = (o: MapObject): o is ConnectorObject =>
   o.kind === "place" && Boolean(o.connector && o.link);
+/**
+ * 誘導グラフ（tolo-web のグラフ）のポイントに結び付けておくべき物か。
+ * 地図は全部（部屋・範囲・文字など）を持ち、誘導グラフは道のつながり（ルート図）として、混雑や位置を受け取る所だけを持つ。
+ * 階段・エレベーター・エスカレーターは階をまたぐ道なので必須。部屋は地図の名前だけで目的地に選べるので、
+ * 行列や混雑を測る部屋だけを結び付ければよい（地図からは分からないので任意）
+ */
+export const needsGraphPoint = (o: MapObject) => isConnector(o);
 /** 同じ組（link）の階段・エスカレーター・エレベーターか（各階に置いた分身どうしは同じ link を持つ） */
 export const isTwinOf = (o: MapObject, link: string): o is ConnectorObject =>
   isConnector(o) && o.link === link;

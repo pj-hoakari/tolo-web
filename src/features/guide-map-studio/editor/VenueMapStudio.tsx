@@ -1830,6 +1830,17 @@ export function VenueMapStudio({
           ),
           go: t("「つなぎ」の階を開く"),
         };
+      case "connector-no-point":
+        return {
+          title: t(
+            "「{name}」（{floor}）がグラフのポイントに結び付いていません",
+            v,
+          ),
+          hint: t(
+            "階段・エレベーターは混雑を避けて階をまたぐのに使うので、右の「くわしい設定」→「混雑とのつなぎ」で、グラフのポイントを選んでください。部屋は結び付けなくても目的地に選べます。",
+          ),
+          go: t("その場所を表示"),
+        };
       case "bad-point":
         return {
           title: t("「{name}」の結び付け先が、グラフに見つかりません", v),
@@ -1911,7 +1922,11 @@ export function VenueMapStudio({
         // 重なっているものは、2つとも選ぶ
         if (is.otherId) setSelectedIds([is.objectId, is.otherId]);
         // 結び付け先の直しは「くわしい設定」の中なので開いておく
-        if (is.kind === "bad-point" || is.kind === "bad-route")
+        if (
+          is.kind === "bad-point" ||
+          is.kind === "bad-route" ||
+          is.kind === "connector-no-point"
+        )
           setAdvancedOpen(true);
       } else if (is.floorId) {
         setSelectedIds([]);

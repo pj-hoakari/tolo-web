@@ -172,10 +172,10 @@
       "w": 660,
       "h": 134,
       "title": {
-        "ja": "204"
+        "ja": "204",
+        "en": "Room 204"
       },
-      "pin": true,
-      "pointId": "n_140c0d44"
+      "pin": true
     },
     {
       "id": "s-0171d677-85b8-4b2f-92e6-993c8e08b796",
@@ -188,10 +188,10 @@
       "w": 680,
       "h": 160,
       "title": {
-        "ja": "職員室"
+        "ja": "職員室",
+        "en": "Staff room"
       },
-      "pin": true,
-      "pointId": "n_c4db2e1b"
+      "pin": true
     },
     {
       "id": "c-3333c895-fe04-43e4-911f-6d6b0006309a",
@@ -363,10 +363,10 @@
       "w": 101.15625,
       "h": 160,
       "title": {
-        "ja": "男子トイレ"
+        "ja": "男子トイレ",
+        "en": "Men's restroom"
       },
-      "pin": true,
-      "pointId": "n_d731631f"
+      "pin": true
     },
     {
       "id": "p-0940659b-5d99-49aa-8fac-fe962255a810",
@@ -379,10 +379,10 @@
       "w": 120,
       "h": 160,
       "title": {
-        "ja": "教室"
+        "ja": "教室",
+        "en": "Classroom"
       },
-      "pin": true,
-      "pointId": "n_5d4632e6"
+      "pin": true
     },
     {
       "id": "p-9f74ec93-6aae-4ab6-807d-2f873dac9cd2",
@@ -395,10 +395,10 @@
       "w": 100,
       "h": 160,
       "title": {
-        "ja": "女子トイレ"
+        "ja": "女子トイレ",
+        "en": "Women's restroom"
       },
-      "pin": true,
-      "pointId": "n_163538fe"
+      "pin": true
     },
     {
       "id": "p-cf8119bd-95a4-49b1-af55-29cb65217637",
@@ -411,10 +411,10 @@
       "w": 195.390625,
       "h": 180,
       "title": {
-        "ja": "302"
+        "ja": "302",
+        "en": "Room 302"
       },
-      "pin": true,
-      "pointId": "n_8de0c98e"
+      "pin": true
     },
     {
       "id": "p-0c024aef-4260-42f8-bf4b-e57344f6be82",
@@ -427,10 +427,10 @@
       "w": 346.5429687499999,
       "h": 180,
       "title": {
-        "ja": "３０６"
+        "ja": "３０６",
+        "en": "Room 306"
       },
-      "pin": true,
-      "pointId": "n_f5331da5"
+      "pin": true
     },
     {
       "id": "p-0526a53c-d1e8-4724-9054-3b8e522175ef",
@@ -443,10 +443,10 @@
       "w": 333.23828125,
       "h": 180,
       "title": {
-        "ja": "３０８"
+        "ja": "３０８",
+        "en": "Room 308"
       },
-      "pin": true,
-      "pointId": "n_2d83951d"
+      "pin": true
     },
     {
       "id": "p-fcdd66e7-d248-455d-87c9-92a158ea9b06",
@@ -459,10 +459,10 @@
       "w": 245.74609375,
       "h": 160,
       "title": {
-        "ja": "３０３"
+        "ja": "３０３",
+        "en": "Room 303"
       },
-      "pin": true,
-      "pointId": "n_f9954d5e"
+      "pin": true
     },
     {
       "id": "p-e3f72c0f-d20b-4fc5-89cc-64bdab518c58",
@@ -475,10 +475,10 @@
       "w": 158.2734375,
       "h": 160,
       "title": {
-        "ja": "３０９"
+        "ja": "３０９",
+        "en": "Room 309"
       },
-      "pin": true,
-      "pointId": "n_b017642b"
+      "pin": true
     },
     {
       "id": "a-d9ab47f4-5088-4779-a107-3ea1e518e05a",
@@ -545,10 +545,10 @@
       "w": 214.71875,
       "h": 160,
       "title": {
-        "ja": "男子・女子トイレ"
+        "ja": "男子・女子トイレ",
+        "en": "Restrooms"
       },
-      "pin": true,
-      "pointId": "n_f718bc8f"
+      "pin": true
     },
     {
       "id": "t-ac8738f8-5c40-445a-a510-9a4c3e283bb4",
@@ -678,10 +678,10 @@
       "w": 85.1875,
       "h": 160,
       "title": {
-        "ja": "男子トイレ"
+        "ja": "男子トイレ",
+        "en": "Men's restroom"
       },
-      "pin": true,
-      "pointId": "n_fbaca13a"
+      "pin": true
     },
     {
       "id": "p-c73b81d7-c1db-458d-8ebf-ed84c759cabd",
@@ -710,10 +710,10 @@
       "w": 100,
       "h": 160,
       "title": {
-        "ja": "女子トイレ"
+        "ja": "女子トイレ",
+        "en": "Women's restroom"
       },
-      "pin": true,
-      "pointId": "n_8940056b"
+      "pin": true
     },
     {
       "id": "p-ff723c68-e3ac-4d44-ae9f-1d171d139978",
@@ -726,10 +726,10 @@
       "w": 195.390625,
       "h": 180,
       "title": {
-        "ja": "ラウンジ"
+        "ja": "ラウンジ",
+        "en": "Lounge"
       },
-      "pin": true,
-      "pointId": "n_9e533cff"
+      "pin": true
     },
     {
       "id": "p-d99ac63a-1cc7-4b3d-9860-7659fe5e8878",
@@ -742,10 +742,10 @@
       "w": 158.2734375,
       "h": 179.99999999999997,
       "title": {
-        "ja": "４０５"
+        "ja": "４０５",
+        "en": "Room 405"
       },
-      "pin": true,
-      "pointId": "n_ab649c4c"
+      "pin": true
     },
     {
       "id": "p-f2f9769d-0865-4163-8d45-f0131f9bae9e",
@@ -758,10 +758,10 @@
       "w": 158.2734375,
       "h": 180,
       "title": {
-        "ja": "４０４"
+        "ja": "４０４",
+        "en": "Room 404"
       },
-      "pin": true,
-      "pointId": "n_6e4efc42"
+      "pin": true
     },
     {
       "id": "p-3d82f608-d3d1-41db-af42-8af2cc2d3740",
@@ -774,10 +774,10 @@
       "w": 158.2734375,
       "h": 180,
       "title": {
-        "ja": "４０３"
+        "ja": "４０３",
+        "en": "Room 403"
       },
-      "pin": true,
-      "pointId": "n_a303869f"
+      "pin": true
     },
     {
       "id": "p-a34ac401-2c34-44f4-88b0-b03596264650",
@@ -790,10 +790,10 @@
       "w": 173.271484375,
       "h": 180,
       "title": {
-        "ja": "４０２"
+        "ja": "４０２",
+        "en": "Room 402"
       },
-      "pin": true,
-      "pointId": "n_68cb9111"
+      "pin": true
     },
     {
       "id": "p-1b8f3644-fd54-462b-a375-311b2b1a52ee",
@@ -806,10 +806,10 @@
       "w": 158.2734375,
       "h": 160,
       "title": {
-        "ja": "４０８"
+        "ja": "４０８",
+        "en": "Room 408"
       },
-      "pin": true,
-      "pointId": "n_88246a63"
+      "pin": true
     },
     {
       "id": "p-f9f4a369-f4b3-4715-86ef-14dfc15fa329",
@@ -822,10 +822,10 @@
       "w": 239.1171875,
       "h": 160,
       "title": {
-        "ja": "４０７"
+        "ja": "４０７",
+        "en": "Room 407"
       },
-      "pin": true,
-      "pointId": "n_f64255d6"
+      "pin": true
     },
     {
       "id": "p-60a7b846-6f22-4e4c-8dd6-eedd1e7b9cfb",
@@ -838,10 +838,10 @@
       "w": 158.2734375,
       "h": 160,
       "title": {
-        "ja": "４０１"
+        "ja": "４０１",
+        "en": "Room 401"
       },
-      "pin": true,
-      "pointId": "n_c0db542e"
+      "pin": true
     },
     {
       "id": "p-b0d8f522-d95b-451c-8c6b-330e7e5b076c",
@@ -854,10 +854,10 @@
       "w": 144.23828125,
       "h": 160,
       "title": {
-        "ja": "職員室"
+        "ja": "職員室",
+        "en": "Staff room"
       },
-      "pin": true,
-      "pointId": "n_ab3f0346"
+      "pin": true
     },
     {
       "id": "t-2e3c272c-cb1a-4174-86b0-dc37c00a4eee",
@@ -987,10 +987,10 @@
       "w": 101.15625,
       "h": 160,
       "title": {
-        "ja": "男子トイレ"
+        "ja": "男子トイレ",
+        "en": "Men's restroom"
       },
-      "pin": true,
-      "pointId": "n_bb7519ad"
+      "pin": true
     },
     {
       "id": "p-363a48df-9dbd-454b-8f62-9ddff82a34e4",
@@ -1003,10 +1003,10 @@
       "w": 120,
       "h": 160,
       "title": {
-        "ja": "502"
+        "ja": "502",
+        "en": "Room 502"
       },
-      "pin": true,
-      "pointId": "n_0b5fa1c6"
+      "pin": true
     },
     {
       "id": "p-949ecffa-f2bd-4dff-a226-cd3cebd252bb",
@@ -1019,10 +1019,10 @@
       "w": 100,
       "h": 160,
       "title": {
-        "ja": "女子トイレ"
+        "ja": "女子トイレ",
+        "en": "Women's restroom"
       },
-      "pin": true,
-      "pointId": "n_aad38edb"
+      "pin": true
     },
     {
       "id": "p-921a9bed-6883-4c9a-9336-6aa638d1ad9c",
@@ -1035,10 +1035,10 @@
       "w": 195.390625,
       "h": 180,
       "title": {
-        "ja": "501"
+        "ja": "501",
+        "en": "Room 501"
       },
-      "pin": true,
-      "pointId": "n_eb2347b5"
+      "pin": true
     },
     {
       "id": "p-9e2c71b9-a40f-4733-adf8-33ff04137a0c",
@@ -1051,10 +1051,10 @@
       "w": 174.255859375,
       "h": 180,
       "title": {
-        "ja": "５０８"
+        "ja": "５０８",
+        "en": "Room 508"
       },
-      "pin": true,
-      "pointId": "n_ef390073"
+      "pin": true
     },
     {
       "id": "p-6c2be06a-3c21-486f-bb97-490754e4ae4c",
@@ -1067,10 +1067,10 @@
       "w": 391.59375,
       "h": 160,
       "title": {
-        "ja": "５０３"
+        "ja": "５０３",
+        "en": "Room 503"
       },
-      "pin": true,
-      "pointId": "n_16dc054f"
+      "pin": true
     },
     {
       "id": "p-6c26d7e3-1f04-4add-9696-f6e7e56d897a",
@@ -1083,10 +1083,10 @@
       "w": 158.2734375,
       "h": 160,
       "title": {
-        "ja": "５０４"
+        "ja": "５０４",
+        "en": "Room 504"
       },
-      "pin": true,
-      "pointId": "n_0194f3e2"
+      "pin": true
     },
     {
       "id": "p-9762644c-01b4-44de-8bc4-af3d2b66bc0f",
@@ -1099,10 +1099,10 @@
       "w": 174.255859375,
       "h": 180,
       "title": {
-        "ja": "５０７"
+        "ja": "５０７",
+        "en": "Room 507"
       },
-      "pin": true,
-      "pointId": "n_7cd1a0c4"
+      "pin": true
     },
     {
       "id": "p-2e92a788-a703-4587-8cdb-c2aa631881b5",
@@ -1115,10 +1115,10 @@
       "w": 174.255859375,
       "h": 180,
       "title": {
-        "ja": "５０６"
+        "ja": "５０６",
+        "en": "Room 506"
       },
-      "pin": true,
-      "pointId": "n_4473a893"
+      "pin": true
     },
     {
       "id": "p-baa7c426-b16d-45fa-9eb5-6ed7e1af9f09",
@@ -1131,10 +1131,10 @@
       "w": 155.912109375,
       "h": 180,
       "title": {
-        "ja": "５０５"
+        "ja": "５０５",
+        "en": "Room 505"
       },
-      "pin": true,
-      "pointId": "n_52e3cee1"
+      "pin": true
     },
     {
       "id": "t-7c9b50c9-1803-467a-b8da-a03d2f77d808",
@@ -1264,10 +1264,10 @@
       "w": 120,
       "h": 60,
       "title": {
-        "ja": "男子トイレ"
+        "ja": "男子トイレ",
+        "en": "Men's restroom"
       },
-      "pin": true,
-      "pointId": "n_8a1af758"
+      "pin": true
     },
     {
       "id": "p-02f74849-07ec-48e5-a8ba-3eab9f1ce867",
@@ -1280,10 +1280,10 @@
       "w": 120,
       "h": 60,
       "title": {
-        "ja": "女子トイレ"
+        "ja": "女子トイレ",
+        "en": "Women's restroom"
       },
-      "pin": true,
-      "pointId": "n_39c750dd"
+      "pin": true
     },
     {
       "id": "c-2e81b8a7-041f-42be-9279-e31e60120bbe",

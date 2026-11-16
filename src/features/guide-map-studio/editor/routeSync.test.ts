@@ -114,7 +114,9 @@ const want = scenarios.map(([, crowd], i) =>
 describe("誘導プレビューとお客さんの画面で同じ道になる", () => {
   it("見本に目的地とグラフの結び付きがあり、混雑を避けて道が変わる場合がある", () => {
     expect(goals.length).toBeGreaterThan(30);
-    expect(linked.length).toBeGreaterThan(40);
+    // 誘導グラフに結び付けるのは、階段・エレベーターと、混雑を受け取る場所だけ（部屋は地図だけに持つ）
+    expect(linked.length).toBeGreaterThan(20);
+    expect(linked.length).toBeLessThan(goals.length);
     const plain = JSON.stringify(
       someGoals.map((goal) => want[0][goals.indexOf(goal)]),
     );
