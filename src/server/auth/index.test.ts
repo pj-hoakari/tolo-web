@@ -1,11 +1,14 @@
 import { headers } from "next/headers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { issueRegistrationToken } from "../idp";
+import { issueEdgeAccessToken, issueRegistrationToken } from "../idp";
 import { getAccessToken, getRegistrationToken, requireStaff } from ".";
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/headers", () => ({ headers: vi.fn() }));
-vi.mock("../idp", () => ({ issueRegistrationToken: vi.fn() }));
+vi.mock("../idp", () => ({
+  issueEdgeAccessToken: vi.fn(),
+  issueRegistrationToken: vi.fn(),
+}));
 
 describe("getAccessToken with AUTH_MOCKING", () => {
   beforeEach(() => {
@@ -35,6 +38,28 @@ describe("getAccessToken with AUTH_MOCKING", () => {
         client: "edge",
       }),
     ).toBe("observation-token");
+  });
+
+  it("issues an edge token bound to the page's edge device from the fake IdP", async () => {
+    vi.stubEnv("TENANT_SUBDOMAIN_MOCKING", "enabled");
+    vi.mocked(headers).mockResolvedValue(
+      new Headers({ host: "test.localhost:3000" }),
+    );
+    vi.mocked(issueEdgeAccessToken).mockResolvedValue("edge-device-token");
+
+    await expect(
+      getAccessToken({
+        type: "event_access",
+        eventId: "e1",
+        client: "edge",
+        edgeDeviceId: "d1",
+      }),
+    ).resolves.toBe("edge-device-token");
+    expect(issueEdgeAccessToken).toHaveBeenCalledWith({
+      tenantId: "0123456789abcdef",
+      eventId: "e1",
+      edgeDeviceId: "d1",
+    });
   });
 
   it("refuses when the token is not set", async () => {
