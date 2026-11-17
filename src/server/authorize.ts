@@ -52,5 +52,6 @@ export function eventAccess(
     type: "event_access",
     eventId: eventIdOf(req),
     client,
+    edgeDeviceId: req.contextValues.get(pageEdgeDeviceIdKey) || undefined,
   }));
 }

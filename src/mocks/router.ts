@@ -848,7 +848,12 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
           }),
         ),
       issueEdgeFirestoreToken: os
-        .input(z.object({ eventId: z.string().min(1) }))
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            edgeDeviceId: z.string().min(1),
+          }),
+        )
         .handler(
           async (): Promise<FirestoreToken> => ({
             customToken: "mock-edge-token",
