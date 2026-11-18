@@ -258,7 +258,11 @@ export function useVideoSender(params: {
     let unsubscribeSessions: (() => void) | null = null;
     let stopSignIn: (() => void) | null = null;
     signInForSignaling(
-      () => orpc.signaling.issueEdgeFirestoreToken({ eventId }),
+      () =>
+        orpc.signaling.issueEdgeFirestoreToken({
+          eventId,
+          edgeDeviceId: edgeId,
+        }),
       getAuth(firebaseConfig),
     )
       .then((stop) => {

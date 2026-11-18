@@ -3,7 +3,7 @@ import "server-only";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { resolveTenant, rootOrigin } from "@/lib/control/tenant";
-import { issueRegistrationToken } from "../idp";
+import { issueEdgeAccessToken, issueRegistrationToken } from "../idp";
 import { resolveTenantSubdomain } from "../tenantSubdomain";
 import { getRealAuth } from "./betterAuth";
 import { createLoginFlow } from "./login";
@@ -32,7 +32,12 @@ export type Viewer =
 
 export type AccessTokenRequest =
   | { type: "tenant_access" }
-  | { type: "event_access"; eventId: string; client: "console" | "edge" };
+  | {
+      type: "event_access";
+      eventId: string;
+      client: "console" | "edge";
+      edgeDeviceId?: string;
+    };
 
 let sessionAuth: ReturnType<typeof createSessionAuth> | undefined;
 let login: ReturnType<typeof createLoginFlow> | undefined;
@@ -133,6 +138,19 @@ export async function getAccessToken(
       await requestTenantId(),
       request,
     );
+  }
+  if (
+    request.type === "event_access" &&
+    request.client === "edge" &&
+    request.edgeDeviceId
+  ) {
+    const tenantId = await requestTenantId();
+    if (!tenantId) throw new Error("no tenant for this host");
+    return issueEdgeAccessToken({
+      tenantId,
+      eventId: request.eventId,
+      edgeDeviceId: request.edgeDeviceId,
+    });
   }
   const name =
     MOCK_TOKEN_ENV[
