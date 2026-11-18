@@ -27,7 +27,7 @@ export function StudioHelpButton({
       }
     >
       <HelpCircle className="size-4" />
-      <span className={compact ? "hidden min-[1360px]:inline" : undefined}>
+      <span className={compact ? "hidden min-[1680px]:inline" : undefined}>
         {t("使い方")}
       </span>
     </button>

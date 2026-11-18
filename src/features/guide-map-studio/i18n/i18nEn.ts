@@ -175,7 +175,13 @@ export const EN: Record<string, string> = {
   "出入口・集合": "Entrances & meeting",
   催し: "Events",
   建物の外枠: "Building outline",
-  "建物の外枠（壁として描く）": "Building outline (drawn as walls)",
+  用途: "Use",
+  "建物（外枠）": "Building",
+  区域: "Zone",
+  "建物の外枠は、中を通路の床の色で塗り、縁を壁として太く描きます（色は選べません）。":
+    "A building outline is filled with the floor color and drawn with thick walls (no color to choose).",
+  "区域は、芝生広場・待機列・屋外の会場など。選んだ色の線と薄い塗りで描きます。":
+    "Zones are lawns, queue areas, outdoor sites and so on, drawn with the chosen color's line and a light fill.",
   "普通の部屋は「基本の色」から選びます。トイレなどの種類を選ぶと、tolo-web と同じ色とマークで表示されます":
     'Pick ordinary rooms from "Basic colors". Choosing a type such as a restroom shows it with the same color and mark as tolo-web',
   ローズ: "Rose",
@@ -203,9 +209,11 @@ export const EN: Record<string, string> = {
     "The map in the chosen tab is saved as one file.",
   "{f}フロア・{n}件": "Floors: {f} · Items: {n}",
   表示中: "Current",
+  確認: "Confirm",
+  お知らせ: "Notice",
   キャンセル: "Cancel",
 
-  // --- 固定・探す・チェック・見比べる・画像・印刷・スマホ表示・保存の失敗 ---
+  // --- 固定・探す・チェック・見比べる・画像・印刷・保存の失敗 ---
   "固定しているので消せません。固定を外してください":
     "It's locked, so it can't be deleted. Unlock it first.",
   "{floor}を画像で保存しました": "Saved {floor} as an image",
@@ -223,10 +231,6 @@ export const EN: Record<string, string> = {
   名前で探す: "Find by name",
   見つかりませんでした: "No matches",
   固定中: "Locked",
-  パソコンの画面で見る: "View as on a computer",
-  パソコン: "Computer",
-  スマホの画面で見る: "View as on a smartphone",
-  スマホ: "Phone",
   固定を外す: "Unlock",
   固定する: "Lock",
   "タブ「{name}」を削除しました": "Deleted tab “{name}”",

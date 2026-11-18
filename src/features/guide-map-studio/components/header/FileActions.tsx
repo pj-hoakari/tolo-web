@@ -32,7 +32,7 @@ export function FileActions({
           className="inline-flex h-full items-center gap-1.5 rounded px-2.5 hover:bg-accent"
         >
           <FilePlus className="size-4" />
-          <span className="hidden min-[1360px]:inline">{t("新規作成")}</span>
+          <span className="hidden min-[1680px]:inline">{t("新規作成")}</span>
         </button>
         <button
           type="button"
@@ -42,7 +42,7 @@ export function FileActions({
           className="inline-flex h-full items-center gap-1.5 rounded px-2.5 hover:bg-accent"
         >
           <Sparkles className="size-4" />
-          <span className="hidden min-[1360px]:inline">{t("見本")}</span>
+          <span className="hidden min-[1680px]:inline">{t("見本")}</span>
         </button>
         <button
           type="button"
@@ -52,7 +52,7 @@ export function FileActions({
           className="inline-flex h-full items-center gap-1.5 rounded px-2.5 hover:bg-accent"
         >
           <Upload className="size-4" />
-          <span className="hidden min-[1360px]:inline">{t("読み込む")}</span>
+          <span className="hidden min-[1680px]:inline">{t("読み込む")}</span>
         </button>
         <button
           type="button"
@@ -64,7 +64,7 @@ export function FileActions({
           className="inline-flex h-full items-center gap-1.5 rounded px-2.5 hover:bg-accent"
         >
           <BookmarkPlus className="size-4" />
-          <span className="hidden min-[1360px]:inline">
+          <span className="hidden min-[1680px]:inline">
             {t("保存ポイント")}
           </span>
         </button>

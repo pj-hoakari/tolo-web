@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import type { RoutePreview } from "../../hooks/useRoutePreview";
 import { useI18n } from "../../i18n/i18n";
 import type { GuideMapDoc } from "../../type";
+import { shortFloorNames } from "../../utils/editing";
 import { GUIDE } from "../../utils/shared";
 import { RoutePinSelect } from "../parts/Fields";
 import { ConnectorIcon } from "../parts/StudioIcons";
@@ -22,6 +23,7 @@ type GuidePanelProps = {
 
 export function GuidePanel({ route, doc, goFloor, onStart }: GuidePanelProps) {
   const { t, tg, connectorName } = useI18n();
+  const shortFloors = shortFloorNames(doc.floors.map((f) => f.name));
   const {
     routeGoal,
     setRouteGoal,
@@ -200,7 +202,7 @@ export function GuidePanel({ route, doc, goFloor, onStart }: GuidePanelProps) {
                     <thead>
                       <tr>
                         <th />
-                        {doc.floors.map((f) => {
+                        {doc.floors.map((f, i) => {
                           const keys = carRows.flatMap((r) =>
                             r.objs
                               .filter((o) => o.floor === f.id)
@@ -220,7 +222,7 @@ export function GuidePanel({ route, doc, goFloor, onStart }: GuidePanelProps) {
                                     "text-primary",
                                 )}
                               >
-                                {f.name}
+                                {shortFloors[i]}
                               </button>
                             </th>
                           );
