@@ -77,7 +77,7 @@
     "@vitest/coverage-v8": "5.1.0",
     "babel-plugin-react-compiler": "1.0.0",
     "jsdom": "31.0.1",
-    "msw": "3.0.5",
+    "msw": "3.0.6",
     "msw-storybook-addon": "3.0.3",
     "playwright": "1.65.1",
     "storybook": "10.6.7",
