@@ -1,4 +1,3 @@
-import { readFile } from "node:fs/promises";
 import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
 import { Pool } from "pg";
@@ -12,6 +11,7 @@ import {
   vi,
 } from "vitest";
 import type { RealAuth } from "./betterAuth";
+import { applyMigrations } from "./migrations";
 import { createOnboarding, tenantOnboarding } from "./onboarding";
 
 const input = { name: "Acme", subdomain: "acme", displayName: "Owner" };
@@ -119,9 +119,7 @@ describe.skipIf(!process.env.AUTH_TEST_DATABASE_URL)("on PostgreSQL", () => {
 
   beforeAll(async () => {
     await pool.query(`CREATE SCHEMA ${schema}`);
-    await pool.query(
-      await readFile(new URL("../../../db/auth.sql", import.meta.url), "utf8"),
-    );
+    await applyMigrations(pool);
   });
 
   afterAll(async () => {

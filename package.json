@@ -18,8 +18,7 @@
     "test:all": "vitest",
     "test:e2e": "playwright test",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
-    "db:auth:migrate": "node scripts/migrate-auth-db.mjs"
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.12.0",
