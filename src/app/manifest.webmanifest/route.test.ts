@@ -2,6 +2,29 @@ import { describe, expect, test } from "vitest";
 import { GET } from "./route";
 
 describe("manifest route", () => {
+  test("staff launch ignores arbitrary start targets and keeps the legacy manifest unchanged", async () => {
+    const staff = GET(
+      new Request(
+        "https://tenant.example/manifest.webmanifest?audience=staff&start=/event/example/guest",
+      ),
+    );
+    expect(staff.headers.get("cache-control")).toBe("no-store");
+    expect(await staff.json()).toMatchObject({
+      id: "/management",
+      start_url: "/management",
+      scope: "/",
+    });
+    const legacy = GET(
+      new Request(
+        "https://tenant.example/manifest.webmanifest?start=/event/example/guest",
+      ),
+    );
+    expect(await legacy.json()).toMatchObject({
+      id: "/",
+      start_url: "/event/example/guest",
+      scope: "/",
+    });
+  });
   test.each(["https://tolo.example.com", "https://tenant.tolo.example.com"])(
     "starts at the installation page on %s without browser storage",
     async (origin) => {

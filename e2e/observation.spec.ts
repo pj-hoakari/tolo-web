@@ -8,6 +8,10 @@ import {
   test,
 } from "@playwright/test";
 import {
+  createStaffStorageScope,
+  scopeStaffStorageKey,
+} from "@/lib/pwa/staff-storage";
+import {
   sampleEdgeDevicesWire,
   sampleObservationDevicesWire,
 } from "@/mocks/fixtures/edges";
@@ -1049,12 +1053,21 @@ test.describe("端末での計測値の記録", () => {
       }
     });
     await setUpUnlockCode(page, "1234");
-    await page.evaluate((value) => {
-      localStorage.setItem(
-        "tolo:observation-measurements:test:8c1f0e2a5d4b3c6e",
-        JSON.stringify([value]),
-      );
-    }, record);
+    await page.evaluate(
+      ({ value, key }) => {
+        localStorage.setItem(key, JSON.stringify([value]));
+      },
+      {
+        value: record,
+        key: scopeStaffStorageKey(
+          "tolo:observation-measurements:test:8c1f0e2a5d4b3c6e",
+          createStaffStorageScope("0123456789abcdef", {
+            type: "staff",
+            userId: "user-owner",
+          }),
+        ),
+      },
+    );
     await page.reload();
     await unlockPage(page, "1234");
 
@@ -1074,12 +1087,21 @@ test.describe("端末での計測値の記録", () => {
 
   test("記録を消すと件数が 0 になる", async ({ page }) => {
     await setUpUnlockCode(page, "1234");
-    await page.evaluate((value) => {
-      localStorage.setItem(
-        "tolo:observation-measurements:test:8c1f0e2a5d4b3c6e",
-        JSON.stringify([value]),
-      );
-    }, record);
+    await page.evaluate(
+      ({ value, key }) => {
+        localStorage.setItem(key, JSON.stringify([value]));
+      },
+      {
+        value: record,
+        key: scopeStaffStorageKey(
+          "tolo:observation-measurements:test:8c1f0e2a5d4b3c6e",
+          createStaffStorageScope("0123456789abcdef", {
+            type: "staff",
+            userId: "user-owner",
+          }),
+        ),
+      },
+    );
     await page.reload();
     await unlockPage(page, "1234");
 

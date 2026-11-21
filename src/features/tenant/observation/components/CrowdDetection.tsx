@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "zustand";
+import { useStaffStorageScope } from "@/components/pwa/staff-storage-provider";
 import { Button } from "@/components/ui/button";
 import { Tab, TabList, Tabs } from "@/components/ui/tabs";
 import { DetectionLineCreationModeToggle } from "@/features/tenant/detection/components/DetectionLineActions";
@@ -16,6 +17,7 @@ import { useFirebaseConfig } from "@/features/tenant/webrtc/components/FirebaseC
 import { useVideoSender } from "@/features/tenant/webrtc/hooks/useVideoSender";
 import { clearCameraConnectionAutoStart } from "@/features/tenant/webrtc/utils/cameraConnection";
 import { orpc } from "@/lib/orpc";
+import { scopeStaffStorageKey } from "@/lib/pwa/staff-storage";
 import { cn } from "@/lib/utils";
 import { useCrowdDetectionLoop } from "../hooks/useCrowdDetectionLoop";
 import { useCrowdVideoSources } from "../hooks/useCrowdVideoSources";
@@ -79,6 +81,7 @@ export function CrowdDetection({
   const tControls = useTranslations("Observation.controls");
   const tCameraStatus = useTranslations("Observation.cameraStatus");
   const firebaseConfig = useFirebaseConfig();
+  const storageScope = useStaffStorageScope();
 
   const {
     cameras,
@@ -209,22 +212,28 @@ export function CrowdDetection({
     () =>
       persistDetectionSettings(
         settingsStore,
-        detectionSettingsStorageKey(eventId, edgeDeviceId, LOCAL_SOURCE_KEY),
+        scopeStaffStorageKey(
+          detectionSettingsStorageKey(eventId, edgeDeviceId, LOCAL_SOURCE_KEY),
+          storageScope,
+        ),
       ),
-    [settingsStore, eventId, edgeDeviceId],
+    [settingsStore, eventId, edgeDeviceId, storageScope],
   );
 
   useEffect(() => {
     const stops = [...cameraSettingsStores].map(([key, store]) =>
       persistDetectionSettings(
         store,
-        detectionSettingsStorageKey(eventId, edgeDeviceId, key),
+        scopeStaffStorageKey(
+          detectionSettingsStorageKey(eventId, edgeDeviceId, key),
+          storageScope,
+        ),
       ),
     );
     return () => {
       for (const stop of stops) stop();
     };
-  }, [cameraSettingsStores, eventId, edgeDeviceId]);
+  }, [cameraSettingsStores, eventId, edgeDeviceId, storageScope]);
 
   const {
     videoSource,

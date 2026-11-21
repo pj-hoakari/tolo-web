@@ -1,5 +1,6 @@
 import { ORPCError } from "@orpc/client";
 import { useEffect, useRef, useState } from "react";
+import { useStaffStorageScope } from "@/components/pwa/staff-storage-provider";
 import type {
   DetectionResult,
   DetectionResultStore,
@@ -71,6 +72,7 @@ export function useObservationReporting({
   pointIdByName: ReadonlyMap<string, string> | null;
 } {
   const [unregistered, setUnregistered] = useState(false);
+  const storageScope = useStaffStorageScope();
   const [pointIdByName, setPointIdByName] = useState<ReadonlyMap<
     string,
     string
@@ -78,19 +80,20 @@ export function useObservationReporting({
   const unsentRef = useRef<WindowMeasurement[][]>([]);
   const isFreshRef = useRef(isFresh);
   isFreshRef.current = isFresh;
-  const reportContextRef = useRef({ eventId, edgeDeviceId });
+  const reportContextRef = useRef({ eventId, edgeDeviceId, storageScope });
   const nameByPointIdRef = useRef<ReadonlyMap<string, string>>(new Map());
 
   useEffect(() => {
     const previous = reportContextRef.current;
     if (
       previous.eventId !== eventId ||
-      previous.edgeDeviceId !== edgeDeviceId
+      previous.edgeDeviceId !== edgeDeviceId ||
+      previous.storageScope !== storageScope
     ) {
       unsentRef.current = [];
-      reportContextRef.current = { eventId, edgeDeviceId };
+      reportContextRef.current = { eventId, edgeDeviceId, storageScope };
     }
-  }, [eventId, edgeDeviceId]);
+  }, [eventId, edgeDeviceId, storageScope]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -308,7 +311,7 @@ export function useObservationReporting({
       }
       windowStart = windowEnd;
       const measurements = pending.splice(0);
-      const context = { eventId, edgeDeviceId };
+      const context = { eventId, edgeDeviceId, storageScope };
       recordMeasurements(context, measurements, nameByPointIdRef.current);
       const unsent = unsentRef.current;
       const windows =
@@ -350,6 +353,7 @@ export function useObservationReporting({
     eventId,
     edgeDeviceId,
     reportingPointIdByName,
+    storageScope,
     status,
     settingsStore,
     resultStore,
