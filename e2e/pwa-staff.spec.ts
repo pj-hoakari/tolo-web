@@ -181,12 +181,23 @@ test("PWA code creates no offline caches; the only test worker is MSW", async ({
 }) => {
   await page.goto("/event/test/management");
   await expect(page.getByTestId("rf__node-ph_booth")).toBeVisible();
-  const storage = await page.evaluate(async () => ({
-    caches: await caches.keys(),
-    workers: (await navigator.serviceWorker.getRegistrations()).map(
-      (registration) => registration.active?.scriptURL,
-    ),
-  }));
+  const storage = await page.evaluate(async () => {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    // MSW stores active client IDs so they survive a worker restart.
+    const mswClientCaches = new Set(
+      registrations.flatMap(({ active, scope }) =>
+        active && new URL(active.scriptURL).pathname === "/mockServiceWorker.js"
+          ? [`msw:active-clients:${scope}`]
+          : [],
+      ),
+    );
+    return {
+      caches: (await caches.keys()).filter(
+        (name) => !mswClientCaches.has(name),
+      ),
+      workers: registrations.map(({ active }) => active?.scriptURL),
+    };
+  });
   expect(storage.caches).toEqual([]);
   expect(
     storage.workers.every(
