@@ -29,6 +29,7 @@
     "graphEditTitle": "{tenantId} 路徑圖編輯",
     "backLink": "返回管理頁面",
     "observationDevicesLink": "觀測裝置管理",
+    "guideMapEditLink": "編輯導覽地圖",
     "tenantId": "租戶 ID: {id}",
     "filters": {
       "reset": "重設篩選",
@@ -566,6 +567,7 @@
     "title": "{tenantId} 觀測頁面",
     "machineSessionFailed": "無法授權觀測頁面。",
     "machineSessionRetry": "重新授權",
+    "observationDevicesBackLink": "返回觀測裝置管理",
     "controls": {
       "start": "啟動攝影機",
       "stop": "停止",

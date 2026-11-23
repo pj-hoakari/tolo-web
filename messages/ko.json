@@ -29,6 +29,7 @@
     "graphEditTitle": "{tenantId} 경로도 편집",
     "backLink": "관리 페이지로 돌아가기",
     "observationDevicesLink": "관측 장치 관리",
+    "guideMapEditLink": "안내 지도 편집",
     "tenantId": "테넌트 ID: {id}",
     "filters": {
       "reset": "필터 초기화",
@@ -566,6 +567,7 @@
     "title": "{tenantId} 관측 페이지",
     "machineSessionFailed": "관측 페이지를 승인하지 못했습니다.",
     "machineSessionRetry": "다시 승인",
+    "observationDevicesBackLink": "관측 장치 관리로 돌아가기",
     "controls": {
       "start": "카메라 시작",
       "stop": "중지",

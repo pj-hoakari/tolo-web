@@ -23,6 +23,7 @@ import { managementPath } from "../routes";
 import { ArchiveEventDialog } from "./ArchiveEventDialog";
 import { CreateEventForm } from "./CreateEventForm";
 import { EventId } from "./EventId";
+import { EventManagementMenu } from "./EventManagementMenu";
 import { EventStatusControl } from "./EventStatusControl";
 import { RestoreEventButton } from "./RestoreEventButton";
 import {
@@ -393,16 +394,10 @@ export function TenantEvents({ tenantId, header }: Props) {
                       />
                     </div>
                     <div className="grid grid-cols-[minmax(0,1fr)_2.75rem] items-center gap-2 lg:grid-cols-[minmax(0,1fr)_2.5rem]">
-                      <Link
-                        href={managementPath(event.eventId)}
-                        onPress={rememberList}
-                        variant="outline"
-                        size="sm"
-                        className="min-h-11 w-full lg:min-h-8 lg:text-xs"
-                        aria-label={t("list.openLabel", { name: event.name })}
-                      >
-                        {t("list.open")}
-                      </Link>
+                      <EventManagementMenu
+                        event={event}
+                        rememberList={rememberList}
+                      />
                       {ARCHIVABLE_STATUSES.has(event.status) ? (
                         <div className="justify-self-end">
                           <ArchiveEventDialog

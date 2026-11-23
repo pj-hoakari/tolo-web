@@ -29,6 +29,7 @@
     "graphEditTitle": "{tenantId} 路径图编辑",
     "backLink": "返回管理页面",
     "observationDevicesLink": "观测设备管理",
+    "guideMapEditLink": "编辑导览地图",
     "tenantId": "租户 ID: {id}",
     "filters": {
       "reset": "重置筛选",
@@ -566,6 +567,7 @@
     "title": "{tenantId} 观测页面",
     "machineSessionFailed": "无法授权观测页面。",
     "machineSessionRetry": "重新授权",
+    "observationDevicesBackLink": "返回观测设备管理",
     "controls": {
       "start": "启动摄像头",
       "stop": "停止",

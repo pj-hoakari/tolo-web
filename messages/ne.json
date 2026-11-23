@@ -29,6 +29,7 @@
     "graphEditTitle": "{tenantId} मार्ग रेखाचित्र सम्पादन",
     "backLink": "व्यवस्थापन पृष्ठमा फर्कनुहोस्",
     "observationDevicesLink": "अवलोकन उपकरण व्यवस्थापन",
+    "guideMapEditLink": "निर्देशन नक्सा सम्पादन गर्नुहोस्",
     "tenantId": "टेनेन्ट ID: {id}",
     "filters": {
       "reset": "फिल्टर रिसेट गर्नुहोस्",
@@ -566,6 +567,7 @@
     "title": "{tenantId} अवलोकन पृष्ठ",
     "machineSessionFailed": "अवलोकन पृष्ठ अधिकृत गर्न सकिएन।",
     "machineSessionRetry": "फेरि अधिकृत गर्नुहोस्",
+    "observationDevicesBackLink": "अवलोकन उपकरण व्यवस्थापनमा फर्कनुहोस्",
     "controls": {
       "start": "क्यामेरा सुरु गर्नुहोस्",
       "stop": "रोक्नुहोस्",

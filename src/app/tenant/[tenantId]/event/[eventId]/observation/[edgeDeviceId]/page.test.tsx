@@ -34,6 +34,42 @@ afterEach(() => {
 });
 
 it.each([
+  { type: "staff", userId: "staff", tenantId: "tenant" },
+  {
+    type: "machine",
+    userId: "staff",
+    tenantId: "tenant",
+    eventId: "event",
+    edgeDeviceId: "edge",
+  },
+  { type: "anonymous" },
+] as const)(
+  "shows the observation devices link only to staff ($type)",
+  async (viewer) => {
+    vi.mocked(getViewer).mockResolvedValue(viewer);
+    render(
+      await TenantObservation({
+        params: Promise.resolve({
+          tenantId: "tenant",
+          eventId: "event",
+          edgeDeviceId: "edge",
+        }),
+        searchParams: Promise.resolve({}),
+      }),
+    );
+
+    const link = screen.queryByRole("link", {
+      name: "observationDevicesBackLink",
+    });
+    if (viewer.type === "staff") {
+      expect(link?.getAttribute("href")).toBe("/event/event/observation");
+    } else {
+      expect(link).toBeNull();
+    }
+  },
+);
+
+it.each([
   {
     type: "staff" as const,
     mocking: "disabled",
@@ -103,7 +139,7 @@ it.each([
   },
 );
 
-it("shows only the retry action when machine authorization fails", async () => {
+it("offers a retry without the regular authorization action after a machine authorization failure", async () => {
   vi.mocked(getViewer).mockResolvedValue({
     type: "staff",
     userId: "staff",

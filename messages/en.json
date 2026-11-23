@@ -29,6 +29,7 @@
     "graphEditTitle": "{tenantId} Route diagram editor",
     "backLink": "Back to management",
     "observationDevicesLink": "Observation devices",
+    "guideMapEditLink": "Edit guide map",
     "tenantId": "Tenant ID: {id}",
     "filters": {
       "reset": "Reset filters",
@@ -566,6 +567,7 @@
     "title": "{tenantId} Observation",
     "machineSessionFailed": "Could not authorize the observation page.",
     "machineSessionRetry": "Try authorization again",
+    "observationDevicesBackLink": "Back to observation devices",
     "controls": {
       "start": "Start camera",
       "stop": "Stop",

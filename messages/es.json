@@ -29,6 +29,7 @@
     "graphEditTitle": "{tenantId} Editor del diagrama de rutas",
     "backLink": "Volver a administración",
     "observationDevicesLink": "Dispositivos de observación",
+    "guideMapEditLink": "Editar mapa de orientación",
     "tenantId": "ID del inquilino: {id}",
     "filters": {
       "reset": "Restablecer filtros",
@@ -566,6 +567,7 @@
     "title": "{tenantId} Observación",
     "machineSessionFailed": "No se pudo autorizar la página de observación.",
     "machineSessionRetry": "Volver a autorizar",
+    "observationDevicesBackLink": "Volver a los dispositivos de observación",
     "controls": {
       "start": "Iniciar cámara",
       "stop": "Detener",

@@ -147,8 +147,9 @@ test("イベントを作成すると、イベント種別が未設定である�
 test("イベント一覧の操作から個別管理画面を開ける", async ({ page }) => {
   await open(page);
   await eventRow(page, "Event B")
-    .getByRole("link", { name: "「Event B」を管理" })
+    .getByRole("button", { name: "「Event B」を管理" })
     .click();
+  await page.getByRole("menuitem", { name: "管理ページ", exact: true }).click();
   await expect(
     page.getByRole("heading", {
       level: 2,
@@ -178,7 +179,7 @@ test("イベントIDをコピーしても管理画面には遷移せず、先頭
   await expect(page).toHaveURL("/management");
 });
 
-test("PCでは絞り込みを一列に表示し、全行の管理画面リンクの位置を揃える", async ({
+test("PCでは絞り込みを一列に表示し、全行の管理メニューボタンの位置を揃える", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -191,17 +192,18 @@ test("PCでは絞り込みを一列に表示し、全行の管理画面リンク
   const checkboxCenter = archived.y + archived.height / 2;
   expect(checkboxCenter).toBeGreaterThanOrEqual(search.y);
   expect(checkboxCenter).toBeLessThanOrEqual(search.y + search.height);
-  const links = await Promise.all(
+  const buttons = await Promise.all(
     ["Event A", "Event B", "Event C", "Event D"].map((name) =>
       eventRow(page, name)
-        .getByRole("link", { name: `「${name}」を管理` })
+        .getByRole("button", { name: `「${name}」を管理` })
         .boundingBox(),
     ),
   );
-  for (const link of links) {
-    if (!link || !links[0]) throw new Error("event link is not visible");
-    expect(link.x).toBeCloseTo(links[0].x, 0);
-    expect(link.width).toBeCloseTo(links[0].width, 0);
+  for (const button of buttons) {
+    if (!button || !buttons[0])
+      throw new Error("event menu button is not visible");
+    expect(button.x).toBeCloseTo(buttons[0].x, 0);
+    expect(button.width).toBeCloseTo(buttons[0].width, 0);
   }
   const firstRow = await eventRow(page, "Event A").boundingBox();
   if (!firstRow) throw new Error("event row is not visible");
@@ -711,7 +713,7 @@ for (const theme of ["light", "dark"] as const) {
         page.getByRole("button", { name: "イベントを作成" }),
       ).toBeVisible();
       await expect(
-        eventRow(page, "Event A").getByRole("link", {
+        eventRow(page, "Event A").getByRole("button", {
           name: "「Event A」を管理",
         }),
       ).toHaveText("管理する");
@@ -766,7 +768,7 @@ for (const theme of ["light", "dark"] as const) {
         row.getByRole("button", { name: /のイベントIDをコピー/ }),
       ).toBeEnabled();
       await expect(
-        row.getByRole("link", { name: `「${name}」を管理` }),
+        row.getByRole("button", { name: `「${name}」を管理` }),
       ).toBeVisible();
     });
   }

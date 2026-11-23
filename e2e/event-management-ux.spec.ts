@@ -22,6 +22,86 @@ async function open(page: Page, overrides: MockRouterOverrides = {}) {
   await page.goto("/management");
 }
 
+test("管理メニューは再クリック・外側クリック・Escape で閉じ、キーボードで案内マップへ移動できる", async ({
+  page,
+}) => {
+  await open(page);
+  const origin = new URL(page.url()).origin;
+  const trigger = row(page, "Event B").getByRole("button", {
+    name: "「Event B」を管理",
+  });
+  const menu = page.getByRole("menu", { name: "「Event B」を管理" });
+  const map = menu.getByRole("menuitem", { name: "案内マップを編集" });
+
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await trigger.scrollIntoViewIfNeeded();
+  const triggerBox = await trigger.boundingBox();
+  if (!triggerBox) throw new Error("Management menu button is not visible");
+  await trigger.click();
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  await expect(menu).toBeVisible();
+  // The popover makes the background inert and dismisses through its underlay.
+  await page.mouse.click(
+    triggerBox.x + triggerBox.width / 2,
+    triggerBox.y + triggerBox.height / 2,
+  );
+  await expect(menu).toBeHidden();
+
+  await trigger.click();
+  await page.mouse.click(8, 8);
+  await expect(menu).toBeHidden();
+
+  await trigger.press("ArrowDown");
+  await expect(
+    menu.getByRole("menuitem", { name: "管理ページ" }),
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await expect(trigger).toBeFocused();
+
+  await trigger.press("ArrowDown");
+  await expect(map).toHaveAttribute(
+    "href",
+    "/event/0000000000000002/management/guide-map/edit",
+  );
+  await page.keyboard.press("ArrowDown");
+  await expect(map).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(
+    `${origin}/event/0000000000000002/management/guide-map/edit`,
+  );
+});
+
+test.describe("英語のスマートフォン表示", () => {
+  test.use({
+    viewport: { width: 320, height: 800 },
+    locale: "en-US",
+    isMobile: true,
+    hasTouch: true,
+  });
+
+  test("管理メニューをタップして同じイベントの観測デバイス管理へ移動できる", async ({
+    page,
+  }) => {
+    await open(page);
+    const origin = new URL(page.url()).origin;
+    const trigger = row(page, "Event B").getByRole("button", {
+      name: "Manage Event B",
+    });
+    await expect(trigger).toBeInViewport({ ratio: 1 });
+    await trigger.tap();
+    const menu = page.getByRole("menu", { name: "Manage Event B" });
+    await expect(menu).toBeInViewport({ ratio: 1 });
+    await expect(
+      menu.getByRole("menuitem", { name: "Edit guide map" }),
+    ).toBeVisible();
+    await menu.getByRole("menuitem", { name: "Observation devices" }).tap();
+    await expect(page).toHaveURL(
+      `${origin}/event/0000000000000002/observation`,
+    );
+  });
+});
+
 test("URLの条件を再読込・戻る・進むでも維持し、条件を個別に解除できる", async ({
   page,
 }) => {
@@ -81,7 +161,10 @@ for (const way of ["history", "link"] as const) {
     const y = await page.evaluate(() => window.scrollY);
     expect(y).toBeGreaterThan(500);
     await event
-      .getByRole("link", { name: "「Event 35」を管理", exact: true })
+      .getByRole("button", { name: "「Event 35」を管理", exact: true })
+      .click();
+    await page
+      .getByRole("menuitem", { name: "管理ページ", exact: true })
       .click();
     await expect(page).toHaveURL("/event/0000000000000023/management");
     if (way === "history") await page.goBack();
@@ -283,7 +366,7 @@ test("スマートフォンの主要アイコンと管理操作は44px以上の�
     event.getByRole("button", { name: /のイベントIDをコピー/ }),
     event.getByRole("button", { name: /の状態を変更/ }),
     event.getByRole("button", { name: /のその他の操作/ }),
-    event.getByRole("link", { name: "「Event A」を管理", exact: true }),
+    event.getByRole("button", { name: "「Event A」を管理", exact: true }),
   ]) {
     const box = await control.boundingBox();
     if (!box) throw new Error("Control is not visible");

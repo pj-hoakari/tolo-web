@@ -8,7 +8,10 @@ import { CrowdDetection } from "@/features/tenant/observation/components/CrowdDe
 import { ObservationSoftLock } from "@/features/tenant/observation/components/ObservationSoftLock";
 import { ScreenWakeControl } from "@/features/tenant/observation/components/ScreenWakeControl";
 import { ScreenWakeProvider } from "@/features/tenant/observation/components/ScreenWakeProvider";
-import { observationDevicePath } from "@/features/tenant/observation/routes";
+import {
+  observationDevicePath,
+  observationPath,
+} from "@/features/tenant/observation/routes";
 import { machineSessionPath } from "@/features/tenant/webrtc/utils/cameraConnection";
 import { getPwaMetadata } from "@/lib/pwa/manifest";
 import { getViewer } from "@/server/auth";
@@ -63,9 +66,14 @@ export default async function TenantObservation({
     <ScreenWakeProvider>
       <ObservationSoftLock tenantId={tenantId} eventId={eventId}>
         <div className="flex w-full flex-col">
-          <header className="mb-4 flex w-full items-center justify-between px-10 py-5">
+          <header className="mb-4 flex w-full flex-wrap items-center justify-between gap-3 px-4 py-5 sm:px-10">
             <h2 className="text-2xl font-bold">{t("title", { tenantId })}</h2>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {viewer.type === "staff" ? (
+                <Link href={observationPath(eventId)} variant="ghost" size="sm">
+                  {t("observationDevicesBackLink")}
+                </Link>
+              ) : null}
               <PwaInstall compact />
               <LocaleSelect />
               <ThemeToggle />

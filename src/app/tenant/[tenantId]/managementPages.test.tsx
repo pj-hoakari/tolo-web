@@ -1,13 +1,20 @@
 import { getURLFromRedirectError } from "next/dist/client/components/redirect";
 import { headers } from "next/headers";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import type { Viewer } from "@/server/auth";
 import TenantGraphEdit from "./event/[eventId]/management/graph/edit/page";
+import TenantGuideMapEdit from "./event/[eventId]/management/guide-map/edit/page";
 import TenantManagement from "./event/[eventId]/management/page";
 import TenantMemberManagement from "./management/members/page";
 import TenantEventManagement from "./management/page";
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/headers", () => ({ headers: vi.fn() }));
+const viewer = vi.hoisted(() => vi.fn<() => Promise<Viewer>>());
+vi.mock("@/server/auth/betterAuth", () => ({ getRealAuth: vi.fn() }));
+vi.mock("@/server/auth/session", () => ({
+  createSessionAuth: () => ({ viewer }),
+}));
 
 beforeEach(() => {
   vi.stubEnv("AUTH_MOCKING", "enabled");
@@ -23,6 +30,7 @@ it.each([
   ["/management/members", () => TenantMemberManagement({ params })],
   ["/event/e1/management", () => TenantManagement({ params })],
   ["/event/e1/management/graph/edit", () => TenantGraphEdit({ params })],
+  ["/event/e1/management/guide-map/edit", () => TenantGuideMapEdit({ params })],
 ])(
   "sends an anonymous viewer of %s to the login start",
   async (path, render) => {
@@ -36,3 +44,22 @@ it.each([
     );
   },
 );
+
+it("refuses direct access to guide map editing from a machine session", async () => {
+  vi.stubEnv("AUTH_MOCKING", "disabled");
+  viewer.mockResolvedValue({
+    type: "machine",
+    userId: "staff",
+    tenantId: "0123456789abcdef",
+    eventId: "e1",
+    edgeDeviceId: "edge",
+  });
+
+  const interrupt = await TenantGuideMapEdit({ params }).catch(
+    (err: unknown) => err,
+  );
+
+  expect(getURLFromRedirectError(interrupt as never)).toBe(
+    "http://localhost/auth/error?error=machine_session_forbidden",
+  );
+});

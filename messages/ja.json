@@ -29,6 +29,7 @@
     "graphEditTitle": "{tenantId} ルート図編集",
     "backLink": "管理ページへ戻る",
     "observationDevicesLink": "観測デバイス管理",
+    "guideMapEditLink": "案内マップを編集",
     "tenantId": "テナントID: {id}",
     "filters": {
       "reset": "条件をリセット",
@@ -566,6 +567,7 @@
     "title": "{tenantId} 観測ページ",
     "machineSessionFailed": "観測ページの認可に失敗しました。",
     "machineSessionRetry": "もう一度認可する",
+    "observationDevicesBackLink": "観測デバイス管理へ戻る",
     "controls": {
       "start": "カメラを起動",
       "stop": "停止",
