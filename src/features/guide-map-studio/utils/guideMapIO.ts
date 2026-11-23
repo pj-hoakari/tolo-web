@@ -38,19 +38,21 @@ export function toGuideMapLayout(doc: GuideMapDoc): LocalizedGuideMapLayout {
     north: doc.north,
     scale: doc.scale,
     objects: doc.objects.map((o) => {
-      // スタジオだけで使う項目（floor・graphPointId・graphRouteId・locked）は外し、名前は言語ごとの形にする
+      // スタジオだけで使う項目（floor・graphPointId・graphRouteId・locked・labelScale）は外し、名前は言語ごとの形にする
       const {
         id,
         floor,
         graphPointId,
         graphRouteId,
         locked: _locked,
+        labelScale: _labelScale,
         title,
         description,
         kind,
         ...rest
       } = o;
       void _locked;
+      void _labelScale;
       return {
         id,
         kind: kind === "route" ? "line" : kind,
@@ -191,10 +193,12 @@ export function toRouteLayout(
         graphPointId,
         graphRouteId,
         locked: _locked,
+        labelScale: _labelScale,
         kind,
         ...rest
       } = o;
       void _locked;
+      void _labelScale;
       return {
         ...rest,
         kind: kind === "route" ? "line" : kind,

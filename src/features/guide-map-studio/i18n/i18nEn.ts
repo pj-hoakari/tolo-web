@@ -1,6 +1,43 @@
 // 英語の辞書（見出し＝画面の日本語の文、値＝英語）。{name} などは差し込み。
 // 見出しは画面のコードの t("…") と完全に同じ文にすること（違うと日本語のまま表示される）。
 export const EN: Record<string, string> = {
+  // --- 上の帯（ファイル・チェック・その他） ---
+  ファイル: "File",
+  見本を開く: "Open the sample",
+  "できあがった地図（KCG本館）を開きます（いまのマップはそのまま残ります）":
+    "Opens a finished map (KCG main building). Your current map stays as it is.",
+  "書き出した地図・グラフのファイルを開きます":
+    "Opens an exported map or graph file",
+  "チェック（要確認 {n}件）": "Check ({n} to review)",
+  その他: "More",
+  "種類を選ぶ（トイレ・飲食など）": "Choose a kind (toilets, food, etc.)",
+  "地図の物を選んで、動かしたり大きさを変えたりします。何もない所をドラッグすると、まとめて選べます。動かすとほかの物の縁やグリッドにそろうよう吸い付きます。Alt（option）を押しながら操作すると、吸い付かずに好きな位置・大きさにできます。":
+    "Select items on the map to move or resize them. Drag on an empty spot to select several. Items snap to the edges of others and to the grid; hold Alt (option) while working to place or size them freely.",
+  "混雑を試す（混んだときの道を確かめる）":
+    "Try crowds (check the route when it’s crowded)",
+  混ませる度合い: "Crowd level",
+  名前の大きさ: "Name size",
+  "自動（100%）": "Auto (100%)",
+  "{label}を数字で入力（いまは {value}）":
+    "Type a number for {label} (now {value})",
+  大きさ: "Size",
+  // --- 始め方のカード ---
+  案内マップを作りましょう: "Let’s make a guide map",
+  "まず、どこから始めるか選んでください。": "First, choose how to start.",
+  見本から始める: "Start from the sample",
+  "できあがった地図（KCG本館）を開いて、さわりながら覚えます":
+    "Open a finished map (KCG main building) and learn by trying it",
+  建物を白紙から作る: "Build a building from scratch",
+  "校舎やビルなど。1F から階を増やしていきます":
+    "Schools, offices and so on. Start at 1F and add floors",
+  階のない会場を作る: "Make a site without floors",
+  "屋外のお祭り会場や広場など、1枚の地図で作ります":
+    "Outdoor festivals, plazas and so on, on a single map",
+  ファイルを読み込む: "Import a file",
+  前に書き出した地図の続きを作ります: "Continue a map you exported before",
+  部屋を描く: "Draw rooms",
+  名前を付ける: "Name them",
+  "階段・エレベーターを置く": "Place stairs and elevators",
   // --- 共通・ヘッダー ---
   使い方: "Help",
   "知りたいことを入力（例：コピー、階段、そろえる）":
@@ -12,10 +49,8 @@ export const EN: Record<string, string> = {
   元に戻す: "Undo",
   "やり直し（⌘⇧Z）": "Redo (⌘⇧Z)",
   やり直し: "Redo",
-  整列済みの見本の案内マップを読み込む: "Load the sample guide map",
   見本: "Sample",
   読み込む: "Import",
-  見本を読み込む: "Load sample",
   書き出す: "Export",
   完了: "Done",
   保存: "Save",
@@ -23,8 +58,8 @@ export const EN: Record<string, string> = {
   保存しました: "Saved",
   "保存できませんでした。通信の状態を確かめて、もう一度お試しください。":
     "Couldn't save. Check your connection and try again.",
-  "tolo-web が地図を受け付けませんでした。グラフに無い階や場所を指していないか、「確かめる・共有」のチェックで確認してください。":
-    "tolo-web didn't accept the map. Use the check in “Check & share” to see whether it points to floors or places that aren't in the graph.",
+  "tolo-web が地図を受け付けませんでした。グラフに無い階や場所を指していないか、上の「チェック」で確認してください。":
+    "tolo-web didn't accept the map. Use “Check” at the top to see whether it points to floors or places that aren't in the graph.",
   "このイベントの地図を保存する権限がありません。":
     "You don't have permission to save this event's map.",
   "（tolo-web に保存していない変更があります）":
@@ -41,8 +76,6 @@ export const EN: Record<string, string> = {
     "“{name}” ({floor}) isn't linked to a graph point",
   "階段・エレベーターは混雑を避けて階をまたぐのに使うので、右の「くわしい設定」→「混雑とのつなぎ」で、グラフのポイントを選んでください。部屋は結び付けなくても目的地に選べます。":
     "Stairs and elevators are used to avoid crowds between floors, so choose a graph point under “Advanced settings” → “Crowd link” on the right. Rooms can be destinations without a link.",
-  "見本の案内マップを読み込みます。いまのタブの内容は置き換わります。よろしいですか？":
-    "Load the sample guide map? The map in the current tab will be replaced.",
   閉じる: "Close",
   編集: "Edit",
   プレビュー: "Preview",
@@ -334,7 +367,7 @@ export const EN: Record<string, string> = {
   "定規（座標）を隠す": "Hide rulers (coordinates)",
   "定規（座標）を出す": "Show rulers (coordinates)",
   位置: "Position",
-  "位置（左上）・大きさ": "Position (top left) & size",
+  "位置（左上）": "Position (top-left)",
   // --- 新規作成（建物／会場） ---
   会場: "Site",
   "どんなマップを作りますか？": "What kind of map do you want to make?",
@@ -442,8 +475,6 @@ export const EN: Record<string, string> = {
     "With a name, it shows on the map and visitors can choose it as a destination",
   説明: "Description",
   "（任意・タップで表示）": "(optional, shown on tap)",
-  "地図の物を選んで、動かしたり大きさを変えたりします。何もない所をドラッグすると、まとめて選べます。":
-    "Select items on the map to move or resize them. Drag on an empty spot to select several.",
   "ドラッグして、部屋や売り場を描きます。部屋どうしのすき間が、お客さんの通る道になります。":
     "Drag to draw rooms or shops. The gaps between rooms become the paths visitors walk.",
   "ドラッグして、丸い形の区画（ブース・広場など）を描きます。":
@@ -457,10 +488,8 @@ export const EN: Record<string, string> = {
   "クリックした所に階段・エスカレーター・エレベーターを置きます。全部の階の同じ位置に置かれます。":
     "Click to place stairs, an escalator or an elevator. It’s placed at the same spot on every floor.",
   // --- 作業場のレイアウト ---
-  "確かめる・共有": "Check & share",
   "部屋・目印を表で見て、名前や色を直す":
     "See rooms & markers in a table and fix names/colors",
-  行けない場所などが無いか調べる: "Look for unreachable places and more",
   "2つのタブを並べて比べる": "Compare two tabs side by side",
   選んでいる物の色も変わります: "The selection’s color changes too",
   グリッド: "Grid",

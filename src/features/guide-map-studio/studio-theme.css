@@ -10,7 +10,8 @@
   --studio-text-secondary: var(--muted-foreground);
   --studio-background: var(--background);
   --studio-surface: var(--card);
-  --studio-room: var(--card);
+  /* 部屋の面の元の色。お客さんの画面の部屋と同じ色にして、建物の床（白に近い）と見分けやすくする（ダークでも床より明るい） */
+  --studio-room: var(--guest-map-room-fill);
   --studio-map: var(
     --guest-map-ground
   ); /* 地図の面は、お客さんの案内マップの地面と同じ */

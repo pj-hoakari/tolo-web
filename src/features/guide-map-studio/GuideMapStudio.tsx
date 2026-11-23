@@ -5,11 +5,13 @@ import { useStaffStorageScope } from "@/components/pwa/staff-storage-provider";
 import { scopeStaffStorageKey } from "@/lib/pwa/staff-storage";
 import "./studio-theme.css";
 import {
+  BookmarkPlus,
   ChevronDown,
   Columns2,
   Copy,
   Download,
   Eye,
+  FilePlus,
   ImageDown,
   Link2,
   ListChecks,
@@ -22,9 +24,11 @@ import {
   Printer,
   Route,
   Search,
+  Sparkles,
   Square,
   Table2,
   Trash2,
+  Upload,
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -41,6 +45,7 @@ import {
   splitTitle,
 } from "./components/canvas/CanvasParts";
 import { MapStatusBar } from "./components/canvas/MapStatusBar";
+import { StartCard } from "./components/canvas/StartCard";
 import { CheckDialog } from "./components/dialogs/CheckDialog";
 import {
   CompareDialog,
@@ -61,11 +66,10 @@ import {
   SnapshotsDialog,
   snapshotClock,
 } from "./components/dialogs/SnapshotsDialog";
-import { FileActions } from "./components/header/FileActions";
+import { HeaderMenu } from "./components/header/HeaderMenu";
 import { StudioHelpButton } from "./components/header/HelpButton";
 import { PageTabs } from "./components/header/PageTabs";
 import { SaveActions } from "./components/header/SaveActions";
-import { ShareMenu } from "./components/header/ShareMenu";
 import { StudioNotice } from "./components/header/StudioNotice";
 import { ObjectMenu } from "./components/menus/ObjectMenu";
 import { TabMenu } from "./components/menus/TabMenu";
@@ -370,6 +374,14 @@ export function GuideMapStudio({
   const pasteCountRef = React.useRef(new Map<string, number>()); // 貼り付け先の階ごとの回数
   // ブラウザの保存から読み戻し終えたか。読み戻す前の空の地図で保存を上書きしないよう、次の描画から保存を始める
   const [hydrated, setHydrated] = React.useState(false);
+  // 始め方のカードを閉じたタブ
+  const [startClosed, setStartClosed] = React.useState<ReadonlySet<string>>(
+    new Set(),
+  );
+  // チェックの「要確認」の数（上の帯のチェックに出す）
+  const [warnCount, setWarnCount] = React.useState(0);
+  // 読み込むファイルを選ぶ欄（始め方のカードと「ファイル」から開く）
+  const importRef = React.useRef<HTMLInputElement>(null);
 
   const floor =
     doc.floors.find((f) => f.id === doc.activeFloorId) ?? doc.floors[0];
@@ -564,7 +576,7 @@ export function GuideMapStudio({
     sc.scrollTop = PAN_PAD;
   }, []);
 
-  // --- 座標変換（グリッドにスナップ） ---
+  // --- 座標変換（グリッドにスナップ。PowerPoint と同じく、Alt を押している間はそろえず好きな位置にする） ---
   const rawPoint = (e: { clientX: number; clientY: number }): Pt => {
     const r = worldRef.current?.getBoundingClientRect() ?? { left: 0, top: 0 };
     return {
@@ -572,9 +584,13 @@ export function GuideMapStudio({
       y: (e.clientY - r.top) / zoom,
     };
   };
-  const worldPoint = (e: { clientX: number; clientY: number }): Pt => {
+  const worldPoint = (e: {
+    clientX: number;
+    clientY: number;
+    altKey?: boolean;
+  }): Pt => {
     const p = rawPoint(e);
-    return { x: snap(p.x), y: snap(p.y) };
+    return e.altKey ? p : { x: snap(p.x), y: snap(p.y) };
   };
 
   // --- doc 更新ヘルパー ---
@@ -638,12 +654,18 @@ export function GuideMapStudio({
         d.objects.map((x) => {
           if (x.id !== o.id) return x;
           if (x.kind === "area" || x.kind === "route") {
+            // 位置は左上で動かし、幅・高さは左上を固定して形ごと伸び縮みさせる
             const bb = bboxOf(x.points);
-            const dx = next.left !== undefined ? next.left - bb.x : 0;
-            const dy = next.top !== undefined ? next.top - bb.y : 0;
+            const left = next.left ?? bb.x;
+            const top = next.top ?? bb.y;
+            const sx = next.w !== undefined && bb.w > 0 ? next.w / bb.w : 1;
+            const sy = next.h !== undefined && bb.h > 0 ? next.h / bb.h : 1;
             return {
               ...x,
-              points: x.points.map((pt) => ({ x: pt.x + dx, y: pt.y + dy })),
+              points: x.points.map((pt) => ({
+                x: left + (pt.x - bb.x) * sx,
+                y: top + (pt.y - bb.y) * sy,
+              })),
             } as MapObject;
           }
           if (x.kind === "text" || (x.kind === "place" && x.shape === "pin"))
@@ -1065,7 +1087,7 @@ export function GuideMapStudio({
       void notify(
         error instanceof GuideMapSaveError && error.reason === "rejected"
           ? t(
-              "tolo-web が地図を受け付けませんでした。グラフに無い階や場所を指していないか、「確かめる・共有」のチェックで確認してください。",
+              "tolo-web が地図を受け付けませんでした。グラフに無い階や場所を指していないか、上の「チェック」で確認してください。",
             )
           : error instanceof GuideMapSaveError && error.reason === "forbidden"
             ? t("このイベントの地図を保存する権限がありません。")
@@ -1205,23 +1227,11 @@ export function GuideMapStudio({
     dragRef.current = null;
     setEditing(false);
   };
-  // 見本はタブを増やさず、いまのタブの中身を置き換える（⌘Z で戻せる）
+  // 見本は、作りかけの地図を消さないよう、いまのタブが白紙ならそこへ、何かあれば新しいタブで開く
   // 見本の地図とグラフは、押したときに読み込む
   const loadSample = async () => {
-    if (
-      !isBlank(doc) &&
-      !(await confirm(
-        t(
-          "見本の案内マップを読み込みます。いまのタブの内容は置き換わります。よろしいですか？",
-        ),
-        { confirmLabel: t("見本を読み込む") },
-      ))
-    )
-      return;
     const d = await sampleGuideMapDoc(); // 見本は tolo-web のモックのグラフに結び付いている
-    setDoc(d);
-    resetWork();
-    fitView(d);
+    openDoc(d, t("見本"));
   };
 
   // --- マップのタブ（エクセルのシートのように、別々のマップを並べて作れる） ---
@@ -1599,6 +1609,24 @@ export function GuideMapStudio({
       }
     }, 0);
   };
+
+  // 上の帯のチェックに出す「要確認」の数。描くたびに調べると重いので、手を止めて少ししてから数える。白紙のときは出さない
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 地図が変わったときだけ数え直す（isBlank・t は毎回作り直す関数なので入れない）
+  React.useEffect(() => {
+    if (preview) return;
+    const timer = window.setTimeout(
+      () =>
+        setWarnCount(
+          isBlank(doc)
+            ? 0
+            : checkGuideMapDoc(doc, t("（無題）")).filter(
+                (is) => is.level === "warn",
+              ).length,
+        ),
+      1500,
+    );
+    return () => window.clearTimeout(timer);
+  }, [doc, preview]);
 
   // --- 画像（PNG）で保存・印刷 ---
   const svgLabels = { untitled: t("（無題）"), closedLabel: tg("closed") };
@@ -2069,13 +2097,13 @@ export function GuideMapStudio({
             ? o.y + box.h / 2
             : o.y - box.h / 2,
       };
-      // ほかの項目の端・中央や、同じ幅／高さに吸着（Option/Alt を押している間は吸着せずグリッドだけ）
+      // ほかの項目の端・中央や、同じ幅／高さに吸着（Option/Alt を押している間は吸着も刻みもなく、好きな大きさにする）
       const res = snapResize(
         fixed,
         rawPoint(e),
         e.altKey ? [] : d.others,
         10 / zoom,
-        isMark ? (v) => Math.round(v / 4) * 4 : snap,
+        e.altKey ? (v) => v : isMark ? (v) => Math.round(v / 4) * 4 : snap,
       );
       setGuides(
         res.lines.length || res.gaps.length
@@ -2119,14 +2147,14 @@ export function GuideMapStudio({
       )
         return;
       d.moved = true;
-      // ほかの項目の端・中央や、等しいすき間に吸着（Option/Alt を押している間は吸着せずグリッドだけ）
+      // ほかの項目の端・中央や、等しいすき間に吸着（Option/Alt を押している間は吸着も刻みもなく、好きな位置へ動かす）
       const snapped = smartSnap(
         d.box,
         e.altKey ? [] : d.others,
         raw.x - d.rawStart.x,
         raw.y - d.rawStart.y,
         10 / zoom,
-        GRID_SNAP,
+        e.altKey ? 0 : GRID_SNAP,
       );
       const { dx, dy } = snapped;
       setGuides(
@@ -2235,6 +2263,8 @@ export function GuideMapStudio({
     } else if (d?.kind === "draw" && d.shape !== "area") {
       const box = drawBox;
       // ドラッグが小さい（＝クリック）ときは既定サイズ
+      // Alt を押して描いたときは、刻みにそろえない
+      const round = e.altKey ? (v: number) => v : snap;
       const w = box && box.w >= GRID_SNAP ? box.w : 200;
       const h = box && box.h >= GRID_SNAP ? box.h : 120;
       const cx = box && box.w >= GRID_SNAP ? box.x + box.w / 2 : d.start.x;
@@ -2244,11 +2274,11 @@ export function GuideMapStudio({
         kind: "place",
         floor: doc.activeFloorId,
         color,
-        x: snap(cx),
-        y: snap(cy),
+        x: round(cx),
+        y: round(cy),
         shape: d.shape,
-        w: snap(w),
-        h: snap(h),
+        w: round(w),
+        h: round(h),
         title: "",
         pin: true,
       }; // 描いた部屋・区画には真ん中に目印を付ける（道案内の出発・目的地に選べるように。右の設定で外せる）
@@ -2481,7 +2511,8 @@ export function GuideMapStudio({
           e.key === "ArrowDown")
       ) {
         e.preventDefault();
-        const step = (e.shiftKey ? 2 : 1) * GRID_SNAP;
+        // Alt を押しながらなら 1px ずつ（細かく合わせる）。Shift なら大きく
+        const step = e.altKey ? 1 : (e.shiftKey ? 2 : 1) * GRID_SNAP;
         nudgeSelected(
           selectedIds,
           e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0,
@@ -2641,35 +2672,126 @@ export function GuideMapStudio({
             />
 
             <span className="flex-1" />
-            {/* マップの出し入れ（作る・開く・残す）をひとまとめに */}
-            <FileActions
-              onNew={() => setNewMapOpen(true)}
-              onSample={loadSample}
-              onImport={handleImport}
-              onSavePoints={openHistory}
-            />
-            {/* 確かめる・共有（つなぎ・一覧・チェック・見比べる・画像・印刷）を1つのメニューに */}
-            <ShareMenu
+            {/* ファイル：作る・開く・読み込む・残す・画像・印刷をひとまとめに */}
+            <HeaderMenu
+              label={t("ファイル")}
+              icon={FilePlus}
               items={[
                 {
-                  icon: Link2,
-                  label: t("つなぎ"),
-                  sub: t("グラフと地図を結び付ける"),
-                  run: () => setLinkOpen(true),
+                  id: "new",
+                  icon: FilePlus,
+                  label: t("新規作成"),
+                  sub: t(
+                    "白紙のマップを新しいタブで作ります（いまのマップはそのまま残ります）",
+                  ),
+                  run: () => setNewMapOpen(true),
                 },
                 {
+                  id: "sample",
+                  icon: Sparkles,
+                  label: t("見本を開く"),
+                  sub: t(
+                    "できあがった地図（KCG本館）を開きます（いまのマップはそのまま残ります）",
+                  ),
+                  run: () => void loadSample(),
+                },
+                {
+                  id: "import",
+                  icon: Upload,
+                  label: t("読み込む"),
+                  sub: t("書き出した地図・グラフのファイルを開きます"),
+                  run: () => importRef.current?.click(),
+                },
+                {
+                  id: "save-points",
+                  icon: BookmarkPlus,
+                  label: t("保存ポイント"),
+                  sub: t(
+                    "いまの地図を保存ポイントにしたり、保存ポイントの状態に戻したりします（⌘S で保存）",
+                  ),
+                  run: () => void openHistory(),
+                  group: "",
+                },
+                {
+                  id: "png-floor",
+                  icon: ImageDown,
+                  label: t("この階だけ（{floor}）", {
+                    floor: floor?.name ?? "",
+                  }),
+                  sub: t("表示中の階を1枚の画像にします"),
+                  run: () => void savePng(false),
+                  group: t("画像で保存"),
+                },
+                {
+                  id: "png-all",
+                  icon: ImageDown,
+                  label: t("全部の階（{n}枚）", {
+                    n: doc.floors.length,
+                  }),
+                  sub: t("階ごとに1枚ずつ、続けて保存します"),
+                  run: () => void savePng(true),
+                },
+                {
+                  id: "print",
+                  icon: Printer,
+                  label: t("印刷"),
+                  sub: t(
+                    "全部の階を1ページずつ印刷します（PDF にも保存できます）",
+                  ),
+                  run: printFloors,
+                  group: "",
+                },
+              ]}
+            />
+            <input
+              ref={importRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={handleImport}
+            />
+            {/* チェック：まちがい（行けない場所など）が無いか調べる。要確認があれば数を出す */}
+            <Button
+              variant="outline"
+              onPress={() => runCheck(activePageId, false)}
+              aria-label={
+                warnCount > 0
+                  ? t("チェック（要確認 {n}件）", { n: warnCount })
+                  : t("チェック")
+              }
+              className="h-8 shrink-0 gap-1.5 px-2.5 text-xs"
+            >
+              <ListChecks className="size-4" />
+              <span className="hidden min-[1200px]:inline">
+                {t("チェック")}
+              </span>
+              {warnCount > 0 && (
+                <span className="rounded-full bg-primary px-1.5 font-mono text-[10px] leading-4 text-primary-foreground">
+                  {warnCount}
+                </span>
+              )}
+            </Button>
+            {/* その他：一覧・つなぎ・見比べる */}
+            <HeaderMenu
+              label={t("その他")}
+              icon={Table2}
+              items={[
+                {
+                  id: "list",
                   icon: Table2,
                   label: t("一覧"),
                   sub: t("部屋・目印を表で見て、名前や色を直す"),
                   run: () => setListOpen(true),
                 },
                 {
-                  icon: ListChecks,
-                  label: t("チェック"),
-                  sub: t("行けない場所などが無いか調べる"),
-                  run: () => runCheck(activePageId, false),
+                  id: "link",
+                  icon: Link2,
+                  label: t("つなぎ"),
+                  sub: t("グラフと地図を結び付ける"),
+                  run: () => setLinkOpen(true),
                 },
                 {
+                  id: "compare",
                   icon: Columns2,
                   label: t("見比べる"),
                   sub:
@@ -2689,32 +2811,6 @@ export function GuideMapStudio({
                       floorName: floor?.name ?? "",
                     }),
                   disabled: pages.length < 2,
-                },
-                {
-                  icon: ImageDown,
-                  label: t("この階だけ（{floor}）", {
-                    floor: floor?.name ?? "",
-                  }),
-                  sub: t("表示中の階を1枚の画像にします"),
-                  run: () => void savePng(false),
-                  group: t("画像で保存"),
-                },
-                {
-                  icon: ImageDown,
-                  label: t("全部の階（{n}枚）", {
-                    n: doc.floors.length,
-                  }),
-                  sub: t("階ごとに1枚ずつ、続けて保存します"),
-                  run: () => void savePng(true),
-                },
-                {
-                  icon: Printer,
-                  label: t("印刷"),
-                  sub: t(
-                    "全部の階を1ページずつ印刷します（PDF にも保存できます）",
-                  ),
-                  run: printFloors,
-                  group: "",
                 },
               ]}
             />
@@ -3119,32 +3215,31 @@ export function GuideMapStudio({
                           return null;
                         const isBuilding = o === building;
                         const pal = areaPalette(o.color);
-                        const sel = !preview && selectedIds.includes(o.id);
                         const c = centroidOf(o.points);
                         const bb = bboxOf(o.points);
                         const top = bb.y;
                         return (
                           <g key={o.id}>
-                            {/* 建物の外枠は床をいちばん下に塗ってあるので、ここでは壁の線だけ。通行止めだけ点線で区別する */}
+                            {/* ここでは塗りだけ。外枠の線は、部屋などに隠れないよう、いちばん上のレイヤーで描く（建物の外枠は床をいちばん下に塗ってある） */}
                             <polygon
                               points={toPointsAttr(o.points)}
                               fill={isBuilding ? "none" : pal.fill}
                               fillOpacity={o.closed ? 0.7 : 0.55}
-                              stroke={
-                                sel ? SEL : isBuilding ? MAP_WALL : pal.stroke
-                              }
-                              strokeWidth={sel ? 1.5 : isBuilding ? 3 : 1.5}
-                              strokeDasharray={
-                                sel ? undefined : o.closed ? "6 3" : undefined
-                              }
-                              strokeLinejoin="round"
                             />
                             {o.title && (
                               <text
                                 x={c.x}
-                                y={top + areaLabelSize(bb.w, bb.h) + 8}
+                                y={
+                                  top +
+                                  areaLabelSize(bb.w, bb.h) *
+                                    (o.labelScale ?? 1) +
+                                  8
+                                }
                                 textAnchor="middle"
-                                fontSize={areaLabelSize(bb.w, bb.h)}
+                                fontSize={
+                                  areaLabelSize(bb.w, bb.h) *
+                                  (o.labelScale ?? 1)
+                                }
                                 fontFamily="var(--font-mono)"
                                 letterSpacing="0.06em"
                                 fill={
@@ -3430,7 +3525,10 @@ export function GuideMapStudio({
                                   className="size-[18px]"
                                   style={{ color: line }}
                                 />
-                                <span className="max-w-full truncate px-2 text-[12px] tracking-[0.04em]">
+                                <span
+                                  className="max-w-full truncate px-2 tracking-[0.04em]"
+                                  style={{ fontSize: 12 * (o.labelScale ?? 1) }}
+                                >
                                   {label}
                                 </span>
                                 {!preview && (
@@ -3479,7 +3577,10 @@ export function GuideMapStudio({
                                   }}
                                 />
                               </span>
-                              <span className="absolute top-full left-1/2 mt-1 flex -translate-x-1/2 items-center gap-1.5 rounded-sm bg-background/85 px-1 font-mono text-[10px] tracking-[0.08em] whitespace-nowrap">
+                              <span
+                                className="absolute top-full left-1/2 mt-1 flex -translate-x-1/2 items-center gap-1.5 rounded-sm bg-background/85 px-1 font-mono tracking-[0.08em] whitespace-nowrap"
+                                style={{ fontSize: 10 * (o.labelScale ?? 1) }}
+                              >
                                 <span
                                   style={{
                                     color: "var(--studio-text-primary)",
@@ -3512,8 +3613,9 @@ export function GuideMapStudio({
                             >
                               {o.title && (
                                 <span
-                                  className="absolute bottom-3 left-1/2 max-w-[160px] -translate-x-1/2 truncate rounded-md border bg-card px-2 py-0.5 text-[11px] tracking-[0.04em]"
+                                  className="absolute bottom-3 left-1/2 max-w-[160px] -translate-x-1/2 truncate rounded-md border bg-card px-2 py-0.5 tracking-[0.04em]"
                                   style={{
+                                    fontSize: 11 * (o.labelScale ?? 1),
                                     color: "var(--studio-text-primary)",
                                     borderColor: sel
                                       ? SEL
@@ -3618,7 +3720,9 @@ export function GuideMapStudio({
                                     ? "tracking-[0.04em]"
                                     : "font-mono tracking-[0.12em]",
                                 )}
-                                style={{ fontSize: label.size }}
+                                style={{
+                                  fontSize: label.size * (o.labelScale ?? 1),
+                                }}
                               >
                                 <span className="block truncate">
                                   {label.lines[0]}
@@ -3634,6 +3738,40 @@ export function GuideMapStudio({
                         );
                       })}
 
+                    {/* 範囲の外枠の線：部屋・区画や目印より手前に描き、重なっても隠れないようにする（押すのは下の範囲で受ける） */}
+                    <svg
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 z-[26] overflow-visible"
+                      width={worldW}
+                      height={worldH}
+                    >
+                      {objects.map((o) => {
+                        if (o.kind !== "area" || o.points.length < 3)
+                          return null;
+                        const isBuilding = o === building;
+                        const sel = !preview && selectedIds.includes(o.id);
+                        // 通行止めだけ点線で区別する
+                        return (
+                          <polygon
+                            key={o.id}
+                            points={toPointsAttr(o.points)}
+                            fill="none"
+                            stroke={
+                              sel
+                                ? SEL
+                                : isBuilding
+                                  ? MAP_WALL
+                                  : areaPalette(o.color).stroke
+                            }
+                            strokeWidth={sel ? 1.5 : isBuilding ? 3 : 1.5}
+                            strokeDasharray={
+                              sel ? undefined : o.closed ? "6 3" : undefined
+                            }
+                            strokeLinejoin="round"
+                          />
+                        );
+                      })}
+                    </svg>
                     {/* 四角/丸 のリサイズハンドル */}
                     {resizable && (
                       <ResizeHandles
@@ -3872,6 +4010,34 @@ export function GuideMapStudio({
                   </div>
                 </div>
               </div>
+              {/* 始め方のカード：白紙の地図のときだけ。何かを描く・見本を開く・閉じると消える */}
+              {hydrated &&
+                !preview &&
+                isBlank(doc) &&
+                !startClosed.has(activePageId) && (
+                  <StartCard
+                    onSample={() => void loadSample()}
+                    onBuilding={() => {
+                      setStartClosed((s) => new Set(s).add(activePageId));
+                      setTool("rect");
+                    }}
+                    onSingle={() => {
+                      setStartClosed((s) => new Set(s).add(activePageId));
+                      setDoc((d) => ({
+                        ...d,
+                        floors: d.floors.map((f) => ({
+                          ...f,
+                          name: t("会場"),
+                        })),
+                      }));
+                    }}
+                    onImport={() => importRef.current?.click()}
+                    onHelp={() => setHelpOpen(true)}
+                    onClose={() =>
+                      setStartClosed((s) => new Set(s).add(activePageId))
+                    }
+                  />
+                )}
               {/* 定規（上と左）：地図の座標の目盛り・マウスの位置・選んでいるものの範囲 */}
               {rulersOn && (
                 <Rulers
@@ -4268,6 +4434,7 @@ export function GuideMapStudio({
                               onChange={(patch) =>
                                 updateObject(selected.id, patch)
                               }
+                              onResize={(size) => setGeometry(selected, size)}
                               onDelete={() => deleteObject(selected.id)}
                               onDuplicate={() =>
                                 duplicateSelected([selected.id])
@@ -4356,7 +4523,7 @@ export function GuideMapStudio({
                                       <span className="text-muted-foreground">
                                         {pointLike
                                           ? t("位置")
-                                          : t("位置（左上）・大きさ")}
+                                          : t("位置（左上）")}
                                       </span>
                                       <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1.5">
                                         <NumField
@@ -4375,29 +4542,6 @@ export function GuideMapStudio({
                                             setGeometry(o, { top: v })
                                           }
                                         />
-                                        {o.kind === "place" &&
-                                          o.shape !== "pin" && (
-                                            <>
-                                              <NumField
-                                                label="W"
-                                                value={o.w}
-                                                min={GRID_SNAP}
-                                                disabled={o.locked}
-                                                onCommit={(v) =>
-                                                  setGeometry(o, { w: v })
-                                                }
-                                              />
-                                              <NumField
-                                                label="H"
-                                                value={o.h}
-                                                min={GRID_SNAP}
-                                                disabled={o.locked}
-                                                onCommit={(v) =>
-                                                  setGeometry(o, { h: v })
-                                                }
-                                              />
-                                            </>
-                                          )}
                                         {bb && (
                                           <span className="col-span-2 font-mono text-[11px] text-muted-foreground">
                                             W {Math.round(bb.w)} H{" "}

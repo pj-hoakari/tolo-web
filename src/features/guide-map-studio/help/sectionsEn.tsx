@@ -33,10 +33,11 @@ export const SECTIONS_EN: Section[] = [
               </li>
             </ol>
             <span className="mt-2 block">
-              To see a finished example, press <B>Sample</B> at the top to show
-              the KCG main building (1F–6F). The sample replaces the contents of
-              the current tab, so if you have a map in progress, open another
-              tab with <B>New</B> first.
+              To see a finished example, press <B>Start from the sample</B> in
+              the middle of a blank map, or <B>Open the sample</B> under{" "}
+              <B>File</B> at the top, to show the KCG main building (1F–6F). If
+              you have a map in progress, it opens in a new tab, so your map
+              isn’t lost.
             </span>
           </>
         ),
@@ -49,7 +50,7 @@ export const SECTIONS_EN: Section[] = [
             Yes. It is <B>saved automatically</B> in this browser. To continue
             on another computer, share it with someone, or publish it on the
             visitor guide screen, save it as a file with <B>Export</B>. You can
-            open that file with <B>Import</B>.
+            open that file with <B>Import</B> under <B>File</B>.
           </>
         ),
         keywords: "save export import file",
@@ -58,11 +59,11 @@ export const SECTIONS_EN: Section[] = [
         q: "I want to make two versions and pick the better one (tabs, New)",
         a: (
           <>
-            Press <B>New</B> at the top or <B>+</B> next to the tabs, then
-            choose <B>Building (with floors)</B> or <B>Site (no floors)</B> to
-            open a blank map in a new tab (your current map stays). Switch
-            between them by clicking the tabs, like sheets in Excel. To base a
-            new version on the current map,{" "}
+            Choose <B>New</B> under <B>File</B> at the top or press <B>+</B>{" "}
+            next to the tabs, then choose <B>Building (with floors)</B> or{" "}
+            <B>Site (no floors)</B> to open a blank map in a new tab (your
+            current map stays). Switch between them by clicking the tabs, like
+            sheets in Excel. To base a new version on the current map,{" "}
             <B>right-click the tab → Duplicate</B>. <B>Double-click</B> a tab to
             rename it and <B>drag</B> to reorder. Undo (<K>⌘</K>+<K>Z</K>) is
             separate for each tab.
@@ -74,11 +75,13 @@ export const SECTIONS_EN: Section[] = [
         q: "I want to make a site without floors (outdoors, etc.)",
         a: (
           <>
-            Choose <B>Site (no floors)</B> in <B>New</B> to start with a single
-            floor named “Site”. You don’t need stairs or elevators. On the
-            visitors’ screen, “Site” appears where the floor name goes. Rename
-            it in the “Floor” section on the right. If you later want to map
-            inside a building, add floors with <B>+</B> on the floor tabs.
+            Press <B>Make a site without floors</B> in the middle of a blank
+            map, or choose <B>Site (no floors)</B> in <B>New</B> under{" "}
+            <B>File</B>, to start with a single floor named “Site”. You don’t
+            need stairs or elevators. On the visitors’ screen, “Site” appears
+            where the floor name goes. Rename it in the “Floor” section on the
+            right. If you later want to map inside a building, add floors with{" "}
+            <B>+</B> on the floor tabs.
           </>
         ),
         keywords: "no floors outdoor site festival plaza single new",
@@ -274,10 +277,10 @@ export const SECTIONS_EN: Section[] = [
         q: "I want to check or fix room names all at once (list)",
         a: (
           <>
-            Press <B>List</B> in <B>Check &amp; share</B> at the top to see
-            rooms, markers, zones and more in a table. You can edit names and
-            colors right there, filter by floor or name, or show only items
-            without a name. Press <B>Show</B> to go to that place.
+            Press <B>List</B> under <B>More</B> at the top to see rooms,
+            markers, zones and more in a table. You can edit names and colors
+            right there, filter by floor or name, or show only items without a
+            name. Press <B>Show</B> to go to that place.
           </>
         ),
         keywords: "list table names edit check all",
@@ -463,11 +466,11 @@ export const SECTIONS_EN: Section[] = [
             <B>stairs, elevators, escalators and corridors</B>, plus places
             where queues or crowds are measured. Rooms can be destinations by
             their map names alone, so they don’t need links. The graph is loaded
-            when you open the studio. In <B>Links</B> (under{" "}
-            <B>Check &amp; share</B> at the top), select something on the map,
-            and press “Link to selected”. For corridors, draw a <B>zone</B>{" "}
-            along the passage and link it to a route. <B>Check</B> also lists
-            stairs and elevators that aren’t linked.
+            when you open the studio. In <B>Links</B> (under <B>More</B> at the
+            top), select something on the map, and press “Link to selected”. For
+            corridors, draw a <B>zone</B> along the passage and link it to a
+            route. <B>Check</B> also lists stairs and elevators that aren’t
+            linked.
           </>
         ),
         keywords:
@@ -482,14 +485,15 @@ export const SECTIONS_EN: Section[] = [
         q: "I want to check for mistakes before showing it to visitors",
         a: (
           <>
-            Press <B>Check</B> in <B>Check &amp; share</B> at the top to list{" "}
-            <B>unreachable places</B>, <B>stairs not linked to other floors</B>,{" "}
+            Press <B>Check</B> at the top to list <B>unreachable places</B>,{" "}
+            <B>stairs not linked to other floors</B>,{" "}
             <B>floors with no stairs or elevator</B>,{" "}
             <B>places without names</B>, <B>overlapping rooms</B> and more.
             Press an item to show it. <B>Export</B> also checks automatically
             and shows the list only when something is marked <B>Check</B> (you
             can still choose “Export anyway”). “FYI” items are shown with the{" "}
-            <B>Check</B> button.
+            <B>Check</B> button. While anything needs review, the <B>Check</B>{" "}
+            button shows how many.
           </>
         ),
         keywords: "check mistakes unreachable before export",
@@ -498,10 +502,10 @@ export const SECTIONS_EN: Section[] = [
         q: "I want to compare two versions side by side",
         a: (
           <>
-            With two or more tabs, press <B>Compare</B> in{" "}
-            <B>Check &amp; share</B> at the top to show two tabs’ maps side by
-            side. Choose a tab on each side; switching floors changes both. Once
-            you decide, press <B>Export this</B> on that side.
+            With two or more tabs, press <B>Compare</B> under <B>More</B> at the
+            top to show two tabs’ maps side by side. Choose a tab on each side;
+            switching floors changes both. Once you decide, press{" "}
+            <B>Export this</B> on that side.
           </>
         ),
         keywords: "compare side by side versions tabs",
@@ -510,7 +514,7 @@ export const SECTIONS_EN: Section[] = [
         q: "I want the map as an image / on paper",
         a: (
           <>
-            Under <B>Save image</B> in <B>Check &amp; share</B>, choose{" "}
+            Under <B>Save image</B> in <B>File</B>, choose{" "}
             <B>This floor only</B> or <B>All floors</B> (one PNG per floor),
             handy for documents. For all floors, if the browser asks about
             downloading multiple files, choose “Allow”. <B>Print</B> prints
@@ -533,24 +537,22 @@ export const SECTIONS_EN: Section[] = [
             isn’t visible on another computer, another browser or a private
             window, and clearing the browser’s history or data deletes it too.
             Press <B>Export</B> now and then to save a file, and open it with{" "}
-            <B>Import</B> to continue.
+            <B>Import</B> under <B>File</B> to continue.
           </>
         ),
         keywords: "disappeared lost save another computer backup export",
       },
       {
-        q: "“Sample” replaced my map / “Import” added a tab",
+        q: "“Open the sample” or “Import” added a tab",
         a: (
           <>
-            <B>Sample</B> replaces the map in the current tab. Right after, you
-            can undo with <K>⌘</K>+<K>Z</K>. To keep your map, open a blank tab
-            with <B>New</B> first, then press Sample. <B>Import</B> opens the
-            file in a <B>new tab</B> if the current tab has anything on it, so
-            your work isn’t lost. Remove tabs you don’t need with{" "}
+            <B>Open the sample</B> and <B>Import</B> open in a <B>new tab</B> if
+            the current tab has anything on it, so your work isn’t lost (a blank
+            tab is used as is). Remove tabs you don’t need with{" "}
             <B>right-click → Delete</B>.
           </>
         ),
-        keywords: "sample import replaced tab added undo",
+        keywords: "sample import replaced tab added new tab",
       },
       {
         q: "I deleted a tab by mistake",
@@ -634,12 +636,12 @@ export const SECTIONS_EN: Section[] = [
         q: "I want to keep the state before trying an idea (save points)",
         a: (
           <>
-            Press <B>Save points</B> at the top, enter a name (e.g. “Plan A”,
-            “before widening the entrance”) and press <B>Save current state</B>.{" "}
-            <K>⌘</K>+<K>S</K> saves right away without a name; you can name it
-            later by clicking its name (pencil icon) in the list. Save points
-            are kept per tab and remain after reopening the page (in this
-            browser only).
+            Choose <B>Save points</B> under <B>File</B> at the top, enter a name
+            (e.g. “Plan A”, “before widening the entrance”) and press{" "}
+            <B>Save current state</B>. <K>⌘</K>+<K>S</K> saves right away
+            without a name; you can name it later by clicking its name (pencil
+            icon) in the list. Save points are kept per tab and remain after
+            reopening the page (in this browser only).
           </>
         ),
         keywords: "save point snapshot history keep ⌘S version",
@@ -663,11 +665,13 @@ export const SECTIONS_EN: Section[] = [
         q: "I can’t put it exactly where I want (it snaps)",
         a: (
           <>
-            Things snap where they line up with others. Hold <K>Option</K> while
-            moving to turn that off. Positions still follow the grid steps.
+            Things snap where they line up with others and to the grid steps. As
+            in PowerPoint, hold <K>Alt</K> (<K>Option</K>) while moving,
+            resizing, drawing or placing to put things exactly where you want.
+            With <K>Alt</K>, the arrow keys move 1px at a time.
           </>
         ),
-        keywords: "snap stuck position option",
+        keywords: "snap stuck position option alt free exact fine",
       },
       {
         q: "⌘Z (undo) doesn’t work",
@@ -754,8 +758,8 @@ export const SECTIONS_EN: Section[] = [
               Hold <K>⌘</K> or <K>Space</K> and drag: move the map
             </li>
             <li>
-              <K>Shift</K>+click: add to selection / <K>Option</K>+drag: move
-              without snapping
+              <K>Shift</K>+click: add to selection / <K>Alt</K> (<K>Option</K>
+              )+drag, draw or place: no snapping / <K>Alt</K>+arrows: move 1px
             </li>
             <li>
               <K>⌘</K>+<K>F</K> Find by name / <K>⌘</K>+<K>S</K> Create a save
