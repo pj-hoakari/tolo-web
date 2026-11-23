@@ -2,6 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { getViewer } from "@/server/auth";
+import { IntlTestProvider } from "@/test/IntlTestProvider";
 import TenantObservation from "./page";
 
 vi.mock("server-only", () => ({}));
@@ -10,7 +11,6 @@ vi.mock("next-intl/server", () => ({
   getTranslations: async () => (key: string) => key,
 }));
 vi.mock("@/components/locale-select", () => ({ LocaleSelect: () => null }));
-vi.mock("@/components/pwa/pwa-install", () => ({ PwaInstall: () => null }));
 vi.mock("@/components/theme-toggle", () => ({ ThemeToggle: () => null }));
 vi.mock("@/features/auth/LogoutButton", () => ({ LogoutButton: () => null }));
 vi.mock("@/features/tenant/observation/components/ScreenWakeControl", () => ({
@@ -79,6 +79,7 @@ it.each([
         }),
         searchParams: Promise.resolve({}),
       }),
+      { wrapper: IntlTestProvider },
     );
     expect(screen.getByRole("status").textContent).toBe(String(canReport));
     if (type === "staff" && auth === "disabled") {
@@ -118,6 +119,7 @@ it("shows only the retry action when machine authorization fails", async () => {
       }),
       searchParams: Promise.resolve({ machineSession: "failed" }),
     }),
+    { wrapper: IntlTestProvider },
   );
   expect(screen.getByRole("alert").textContent).toContain(
     "machineSessionFailed",
