@@ -83,6 +83,27 @@ describe("読み込んだ地図をいまの形に直す", () => {
     const same = doc([place("401", "room")]);
     expect(normalizeDoc(same)).toBe(same);
   });
+  it("範囲の名前と名前の大きさは外す（範囲には名前を付けない）", () => {
+    const d = normalizeDoc(
+      doc([
+        {
+          id: "a",
+          kind: "area",
+          floor: "f",
+          color: "building",
+          title: "本館",
+          labelScale: 1.5,
+          points: [
+            { x: 0, y: 0 },
+            { x: 10, y: 0 },
+            { x: 10, y: 10 },
+          ],
+        },
+      ]),
+    );
+    expect(d.objects[0]).not.toHaveProperty("title");
+    expect(d.objects[0]).not.toHaveProperty("labelScale");
+  });
   it("見本の地図には、古いマークの大きさが残っていない", async () => {
     const doc = await sampleGuideMapDoc();
     expect(doc.objects.some((o) => "markerSize" in o)).toBe(false);

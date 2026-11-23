@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { areaLabelSize, roomLabel, textEm } from "./roomLabel";
+import { roomLabel, textEm } from "./roomLabel";
 
 describe("部屋・区画の名前の出し方", () => {
   it("文字の幅は、全角 1・半角 0.6（em）", () => {
@@ -18,10 +18,8 @@ describe("部屋・区画の名前の出し方", () => {
     for (const line of l.lines)
       expect(l.size * textEm(line, 0.04)).toBeLessThanOrEqual(80 - 16);
   });
-  it("大きい部屋・範囲は、名前を少し大きく出す（上限あり）", () => {
+  it("大きい部屋は、名前を少し大きく出す（上限あり）", () => {
     expect(roomLabel("ホール", 520, 480).size).toBe(22);
-    expect(areaLabelSize(1000, 480)).toBeGreaterThan(areaLabelSize(300, 160));
-    expect(areaLabelSize(60, 40)).toBe(11);
   });
   it("2 行の方が大きく出せるときは、お客さんの画面と同じ所で分ける", () => {
     const l = roomLabel("男子・女子トイレ", 90, 160);

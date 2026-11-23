@@ -99,15 +99,6 @@ export function useRoutePreview(doc: GuideMapDoc, paused = false) {
       ? `${connectorName(ct)} ${links.indexOf(link) + 1}`
       : connectorName(ct);
   };
-  // 混雑を試すときのキー（tolo-web に届く混雑と同じ ID。グラフと結び付いていなければ地図の物の id）
-  const crowdKeyOf = (o: MapObject) =>
-    isConnector(o)
-      ? `object:${o.id}`
-      : o.graphPointId
-        ? `pointId:${o.graphPointId}`
-        : o.graphRouteId
-          ? `routeId:${o.graphRouteId}`
-          : `object:${o.id}`;
   // 道の計算は重い（1 回 10〜20ms）ので、物を動かしている間（paused）は計算し直さない（混雑の割り当ても道の計算の入力なので同じ）。
   // 動かす前の地図で道を出したままにし、離したら（paused でなくなったら）いまの地図で計算する
   const [routeInput, setRouteInput] = React.useState({
@@ -342,7 +333,6 @@ export function useRoutePreview(doc: GuideMapDoc, paused = false) {
     floorName,
     shownName,
     titleOf,
-    crowdKeyOf,
     previewCrowdMap,
     pins,
     toloDefaultStart,

@@ -6,8 +6,6 @@
 
 import type { MapObject, Pt } from "../type";
 import {
-  bboxOf,
-  centroidOf,
   distToSegment,
   isConnector,
   markBoxOf,
@@ -71,18 +69,6 @@ export function hitTest(
         tol
       )
         return o.id;
-    if (o.title) {
-      // ラベル（枠上部の名前）
-      const c = centroidOf(o.points);
-      const top = bboxOf(o.points).y;
-      const labelW = (o.title.length + (o.closed ? 6 : 0)) * 16;
-      if (
-        Math.abs(p.x - c.x) <= labelW / 2 + 4 &&
-        p.y >= top + 4 &&
-        p.y <= top + 26
-      )
-        return o.id;
-    }
     if (areaInterior && pointInPolygon(p, o.points)) return o.id;
   }
   return null;

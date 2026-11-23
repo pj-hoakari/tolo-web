@@ -131,3 +131,41 @@
     stroke-dashoffset: 0;
   }
 }
+
+/* チェックの重さ（3 段階）の色：直してください（赤）・確認してください（黄）・念のため（青） */
+.guide-map-studio {
+  --studio-check-error: oklch(0.58 0.21 27);
+  --studio-check-warn: oklch(0.72 0.16 70);
+  --studio-check-info: oklch(0.6 0.12 245);
+}
+.dark .guide-map-studio {
+  --studio-check-error: oklch(0.68 0.19 25);
+  --studio-check-warn: oklch(0.8 0.15 80);
+  --studio-check-info: oklch(0.72 0.11 240);
+}
+
+/* チェックで押した場所の印：ふくらんで知らせてから、輪を残す */
+@keyframes studio-check-pulse {
+  0% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  70% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.studio-check-pulse {
+  animation: studio-check-pulse 0.9s ease-out 3;
+}
+@media (prefers-reduced-motion: reduce) {
+  .studio-check-pulse {
+    animation: none;
+  }
+}

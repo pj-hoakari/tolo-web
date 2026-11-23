@@ -294,14 +294,25 @@ export const genId = (prefix = "o") =>
  * 読み込んだ地図（ブラウザの保存・ファイル・見本・保存ポイント）を、いまの形に直す。古い書き方はここでだけ扱う。
  *  - markerSize（正方形のマークの大きさ）→ markW / markH
  *  - photo（前の版で入れた写真）は外す
+ *  - 範囲の名前と名前の大きさ（範囲には名前を付けなくなった）は外す
  */
 export function normalizeDoc(d: GuideMapDoc): GuideMapDoc {
   type Old = { markerSize?: number; photo?: string };
-  if (!d.objects.some((o) => "markerSize" in o || "photo" in o)) return d;
+  const old = (o: MapObject) =>
+    "markerSize" in o ||
+    "photo" in o ||
+    (o.kind === "area" && ("title" in o || "labelScale" in o));
+  if (!d.objects.some(old)) return d;
   return {
     ...d,
     objects: d.objects.map((o) => {
-      if (!("markerSize" in o || "photo" in o)) return o;
+      if (!old(o)) return o;
+      if (o.kind === "area") {
+        const { title: _title, labelScale: _labelScale, ...area } = o;
+        void _title;
+        void _labelScale;
+        return area;
+      }
       const { markerSize, photo: _photo, ...rest } = o as MapObject & Old;
       void _photo;
       if (rest.kind !== "place" || markerSize === undefined)

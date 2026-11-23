@@ -74,8 +74,6 @@ export const EN: Record<string, string> = {
   もう一度読み込む: "Load again",
   "「{name}」（{floor}）がグラフのポイントに結び付いていません":
     "“{name}” ({floor}) isn't linked to a graph point",
-  "階段・エレベーターは混雑を避けて階をまたぐのに使うので、右の「くわしい設定」→「混雑とのつなぎ」で、グラフのポイントを選んでください。部屋は結び付けなくても目的地に選べます。":
-    "Stairs and elevators are used to avoid crowds between floors, so choose a graph point under “Advanced settings” → “Crowd link” on the right. Rooms can be destinations without a link.",
   閉じる: "Close",
   編集: "Edit",
   プレビュー: "Preview",
@@ -177,7 +175,6 @@ export const EN: Record<string, string> = {
   文字サイズ: "Font size",
 
   // --- グラフ連携・混雑 ---
-  混雑を試す: "Try congestion",
   なし: "None",
   "混雑：中": "Congestion: medium",
   "混雑：高": "Congestion: high",
@@ -251,15 +248,11 @@ export const EN: Record<string, string> = {
     "It's locked, so it can't be deleted. Unlock it first.",
   "{floor}を画像で保存しました": "Saved {floor} as an image",
   チェック: "Check",
-  タブが2つ以上あると使えます: "Available when there are two or more tabs",
-  見比べる: "Compare",
   画像で保存: "Save image",
   "全部の階を1ページずつ印刷します（PDF にも保存できます）":
     "Print every floor, one per page (you can also save as PDF)",
   印刷: "Print",
   "ブラウザに保存できませんでした。": "Couldn't save in the browser.",
-  "グリッドは作るときの目安です（お客さんの画面には出ません）":
-    "The grid is a guide for drawing (not shown to visitors)",
   "名前で探す（⌘F）": "Find by name (⌘F)",
   名前で探す: "Find by name",
   見つかりませんでした: "No matches",
@@ -272,15 +265,8 @@ export const EN: Record<string, string> = {
   "問題は見つかりませんでした。": "No problems found.",
   念のため: "FYI",
   このまま書き出す: "Export anyway",
-  "左右で別のタブを選べます。階の切り替えは両方そろって動きます。":
-    "Choose a tab on each side. Switching floors changes both.",
-  見比べるタブ: "Tab to compare",
-  このタブを開く: "Open this tab",
-  これを書き出す: "Export this",
   "固定する（動かないようにする）": "Lock (prevent moving)",
   "固定中（押すと外す）": "Locked (press to unlock)",
-  "「混雑を試す」は、ここでの誘導プレビューにだけ効きます（保存しません）。お客さんの画面では、実際の混雑状況で避けます。":
-    "“Try congestion” only affects the route preview here (not saved). On the visitors’ screen, routes avoid actual congestion.",
 
   // --- 全体表示・保存ポイント ---
   全体を表示: "Fit to view",
@@ -343,8 +329,6 @@ export const EN: Record<string, string> = {
   // --- ほかの階を重ねる・全体図・一覧 ---
   受付: "Reception",
   全体図: "Overview map",
-  全体図を隠す: "Hide overview map",
-  全体図を出す: "Show overview map",
   "全体図（押すとその場所へ移動）": "Overview map (press to go there)",
   一覧: "List",
   場所の一覧: "Places",
@@ -364,8 +348,6 @@ export const EN: Record<string, string> = {
     "This exceeds the space the browser allows. If you close now, your latest changes will be lost. Save a file with “Export”, or remove unused tabs.",
   // --- 定規・座標 ---
   定規: "Rulers",
-  "定規（座標）を隠す": "Hide rulers (coordinates)",
-  "定規（座標）を出す": "Show rulers (coordinates)",
   位置: "Position",
   "位置（左上）": "Position (top-left)",
   // --- 新規作成（建物／会場） ---
@@ -394,13 +376,9 @@ export const EN: Record<string, string> = {
   "範囲を「通行止め」にすると、その道は避けて再計算します。":
     "Set a zone to “Closed” and the route will avoid it.",
   "真ん中に目印（ピン）を表示": "Show a marker in the center",
-  "階段・EVとして使う（全部の階の同じ位置に置かれます）":
-    "Use as stairs/EV (placed at the same spot on every floor)",
   通行止め: "Closed",
   "通行止め（ここは避けて案内）": "Closed (routes avoid it)",
   // --- tolo-web のグラフ・混雑を避けて誘導 ---
-  "グラフを読み込みました（グループ {g}・ポイント {p}・ルート {r}）":
-    "Graph loaded (groups {g}, points {p}, routes {r})",
   つなぎ: "Links",
   "混雑を避けて誘導（プレビュー）": "Crowd-avoiding guidance (preview)",
   "名前のある場所を2つ以上置くと、お客さんの画面と同じように、混雑を避けて目的地へ誘導する道を試せます。":
@@ -439,15 +417,6 @@ export const EN: Record<string, string> = {
   ルートは範囲か線に結び付けます: "Routes are linked to zones or lines",
   選んでいる物に結び付ける: "Link to selected",
   混雑とのつなぎ: "Crowd link",
-  "（グラフに無い：{id}）": "(Not in graph: {id})",
-  "読み込んだグラフに、このポイントがありません":
-    "This point isn't in the loaded graph",
-  "お客さんの画面では、名前が「{name}」と表示されます（ポイントの名前）。":
-    "On the visitors’ screen, the name shows as “{name}” (the point’s name).",
-  "読み込んだグラフに、このルートがありません":
-    "This route isn't in the loaded graph",
-  "廊下などの通路は、通路に沿って範囲を描き、ルートに結び付けると、そこが混んだときに避けられます。":
-    "For corridors, draw a zone along the passage and link it to a route so it can be avoided when crowded.",
   "決めていないと、お客さんの画面では「{name}」が現在地になります。":
     "If not set, “{name}” becomes the current location on the visitors’ screen.",
   ここにする: "Use this",
@@ -466,9 +435,6 @@ export const EN: Record<string, string> = {
   // --- 道具（左の縦の並び）・右の設定（基本／くわしい設定） ---
   道具: "Tools",
   くわしい設定: "Advanced settings",
-  "位置・大きさ、形、固定、混雑とのつなぎ など":
-    "Position & size, shape, lock, crowd links, etc.",
-  混雑とつながっています: "Linked to crowd info",
   表示する文字: "Text to show",
   "例：受付・101教室・売店": "e.g. Reception, Room 101, Shop",
   "名前を入れると、地図に表示され、お客さんが目的地に選べます":
@@ -490,9 +456,7 @@ export const EN: Record<string, string> = {
   // --- 作業場のレイアウト ---
   "部屋・目印を表で見て、名前や色を直す":
     "See rooms & markers in a table and fix names/colors",
-  "2つのタブを並べて比べる": "Compare two tabs side by side",
   選んでいる物の色も変わります: "The selection’s color changes too",
-  グリッド: "Grid",
   "お客さんから見た表示（プレビュー）": "As visitors see it (preview)",
   "右の設定を出す（\\）": "Show the side panel (\\)",
   右の設定を出す: "Show the side panel",
@@ -531,8 +495,6 @@ export const EN: Record<string, string> = {
   その階を表示: "Show the floor",
   "「{a}」と「{b}」が重なっています（{floor}）":
     "“{a}” and “{b}” overlap ({floor})",
-  "重なっていると、その間を通る道が作れません。少し離してください。":
-    "Overlapping rooms leave no path between them. Move them apart a little.",
   "2つを選んで表示": "Select both and show",
   "{floor}には、まだ何も置かれていません": "Nothing is placed on {floor} yet",
   "使わない階なら、消してもかまいません。":
@@ -548,10 +510,6 @@ export const EN: Record<string, string> = {
   "「つなぎ」の階を開く": "Open floors in “Links”",
   "「{name}」の結び付け先が、グラフに見つかりません":
     "The link of “{name}” isn’t in the graph",
-  "グラフが作り直された可能性があります。右の「くわしい設定」→「混雑とのつなぎ」で、ポイントを選び直してください。":
-    "The graph may have been rebuilt. Choose the point again in “Advanced settings” → “Crowd link” on the right.",
-  "グラフが作り直された可能性があります。右の「くわしい設定」→「混雑とのつなぎ」で、ルートを選び直してください。":
-    "The graph may have been rebuilt. Choose the route again in “Advanced settings” → “Crowd link” on the right.",
   "混雑の情報を受け取れない場所が{n}か所あります":
     "{n} places can’t receive crowd info",
   "グラフの「{names}」などが、地図のどれとも結び付いていないため、そこが混んでも避けて案内できません。":
@@ -568,13 +526,41 @@ export const EN: Record<string, string> = {
     "Otherwise this floor won’t appear correctly on the visitors’ screen",
   "お客さんの画面と同じ計算で、混んでいる所を避けて目的地へ誘導する道を出します。":
     "Shows the route that avoids crowded spots, calculated the same way as the visitors’ screen.",
-  "お客さんの画面は、混雑の情報をグラフのポイント・ルートごとに受け取り、結び付いた地図の場所・範囲を避けて案内します。地図の物を選んでからここを開くと、その物に結び付けられます。":
-    "The visitors’ screen receives crowd info per graph point/route and guides around the linked places and zones on the map. Select something on the map before opening this to link it.",
   "まだグラフがありません。グラフ編集で作ったグラフ（.json）を読み込んでください。":
     "No graph yet. Load a graph (.json) made in the graph editor.",
-  "気になる所が{n}件あります。項目を押すと、直す場所へ移ります。":
-    "{n} things to look at. Press an item to go where you can fix it.",
   直してください: "Fix this",
-  "グラフ（グラフ編集で作ったもの）を読み込むと、この場所を混雑の情報と結び付けられます。結び付けた所が混んでいると、お客さんの画面ではそこを避けて案内します。":
-    "Load the graph (made in the graph editor) to link this place to crowd info. When a linked place is crowded, the visitors’ screen guides around it.",
+  // --- チェック（3 段階・OK で消す・場所を光らせる）・右の設定のたたみ・グリッド線・マークの大きさ ---
+  チェックに戻る: "Back to Check",
+  "OK（このままでよい）": "OK (leave it as is)",
+  "階段・EVとして使う": "Use as stairs / elevator",
+  "位置、形、固定 など": "Position, shape, lock, etc.",
+  グリッド線: "Grid lines",
+  "拡大率を100%に戻す（いまは {n}%）": "Reset zoom to 100% (now {n}%)",
+  確認してください: "Please check",
+  "「{title}」を OK にして消す": "Mark “{title}” OK and hide it",
+  OK: "OK",
+  "OK にした項目（{n}件）": "Items marked OK ({n})",
+  "「{title}」を一覧に戻す": "Put “{title}” back in the list",
+  戻す: "Restore",
+  マークの大きさ: "Mark size",
+  "ふつう（100%）": "Normal (100%)",
+  "選んだ階の同じ位置にコピーします。":
+    "Copies to the same position on the floor you choose.",
+  "選ぶと、全部の階の同じ位置に置かれます。":
+    "Once chosen, it is placed at the same position on every floor.",
+  "グラフが作り直された可能性があります。上の「その他」→「つなぎ」で、ポイントを選び直してください。":
+    "The graph may have been rebuilt. Choose the point again in More → Links at the top.",
+  "グラフが作り直された可能性があります。上の「その他」→「つなぎ」で、ルートを選び直してください。":
+    "The graph may have been rebuilt. Choose the route again in More → Links at the top.",
+  "重なっていると、その間を通る道が作れなかったり、押しにくくなったりします。わざと重ねているときは「OK」で消せます。":
+    "When items overlap, no route can pass between them and they are harder to click. If you overlapped them on purpose, press “OK” to hide this.",
+  "気になる所が{n}件あります。「その場所を表示」で、地図の上の場所が光ります。意図してそうしている所は「OK」で消せます。":
+    "{n} things to look at. “Show the place” highlights the spot on the map. Press “OK” for anything you did on purpose.",
+  // --- グラフへの自動の結び付け ---
+  "グラフを読み込みました（グループ {g}・ポイント {p}・ルート {r}）。名前の同じ {n} か所を自動で結び付けました":
+    "Graph loaded ({g} groups, {p} points, {r} routes). Linked {n} places with matching names automatically.",
+  "お客さんの画面は、混雑の情報をグラフのポイント・ルートごとに受け取り、結び付いた地図の場所・範囲を避けて案内します。階・階段・エレベーターなどは、名前の同じポイントに自動で結び付きます。自動で決まらなかった物だけ、地図の物を選んでからここで結び付けてください。":
+    "The visitors’ screen receives crowd info per graph point and route, and guides around the linked places and zones on the map. Floors, stairs, elevators and so on link automatically to points with the same name. Only for items that couldn’t be linked automatically, select the item on the map and link it here.",
+  "名前の同じポイントが無いか、いくつもあって、自動で結び付けられませんでした。階段・エレベーターは混雑を避けて階をまたぐのに使うので、上の「その他」→「つなぎ」で選んでください。":
+    "It couldn’t be linked automatically (no point with the same name, or more than one). Stairs and elevators are used to change floors while avoiding crowds, so choose a point in More → Links at the top.",
 };

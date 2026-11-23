@@ -1,15 +1,30 @@
 "use client";
 
-import { Map as MapIcon, Maximize, Ruler, ZoomIn, ZoomOut } from "lucide-react";
+import {
+  Grid3x3,
+  Map as MapIcon,
+  Maximize,
+  Ruler,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
 import type * as React from "react";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Toggle } from "@/components/ui/toggle";
 import { useI18n } from "../../i18n/i18n";
 
-// 地図の下の細い帯：マウスの位置（地図の座標）・定規と全体図の切り替え・全体を表示・拡大縮小
+// 帯のボタンの見た目（小さな四角いアイコンボタン。入っているときは色を付ける）
+const ICON_BUTTON = "size-7 px-0 text-foreground";
+const ICON_TOGGLE =
+  "size-7 px-0 text-foreground selected:bg-accent selected:text-primary";
+
+// 地図の下の細い帯：マウスの位置（地図の座標）・グリッド線と定規と全体図の切り替え・全体を表示・拡大縮小
 export function MapStatusBar({
   coordRef,
   showCoords,
   showRulerToggle,
+  showGrid,
+  onToggleGrid,
   showRulers,
   onToggleRulers,
   showMini,
@@ -22,8 +37,10 @@ export function MapStatusBar({
   /** マウスの位置を書き込む所（マウスを動かすたびに画面全体を描き直さないよう、直接書き換える） */
   coordRef: React.RefObject<HTMLSpanElement | null>;
   showCoords: boolean;
-  /** 定規の切り替えを出すか（プレビュー中は出さない） */
+  /** グリッド線・定規の切り替えを出すか（プレビュー中は出さない） */
   showRulerToggle: boolean;
+  showGrid: boolean;
+  onToggleGrid: () => void;
   showRulers: boolean;
   onToggleRulers: () => void;
   showMini: boolean;
@@ -46,65 +63,68 @@ export function MapStatusBar({
       )}
       <span className="flex-1" />
       {showRulerToggle && (
-        <button
-          type="button"
-          aria-pressed={showRulers}
-          aria-label={t("定規")}
-          title={showRulers ? t("定規（座標）を隠す") : t("定規（座標）を出す")}
-          onClick={onToggleRulers}
-          className={cn(
-            "flex size-7 items-center justify-center rounded-md",
-            showRulers ? "bg-accent text-primary" : "hover:bg-accent",
-          )}
-        >
-          <Ruler className="size-4" />
-        </button>
+        <>
+          {/* グリッド線：作るときの目安（お客さんの画面には出ない） */}
+          <Toggle
+            isSelected={showGrid}
+            onChange={onToggleGrid}
+            aria-label={t("グリッド線")}
+            className={ICON_TOGGLE}
+          >
+            <Grid3x3 aria-hidden className="size-4" />
+          </Toggle>
+          <Toggle
+            isSelected={showRulers}
+            onChange={onToggleRulers}
+            aria-label={t("定規")}
+            className={ICON_TOGGLE}
+          >
+            <Ruler aria-hidden className="size-4" />
+          </Toggle>
+        </>
       )}
-      <button
-        type="button"
-        aria-pressed={showMini}
+      <Toggle
+        isSelected={showMini}
+        onChange={onToggleMini}
         aria-label={t("全体図")}
-        title={showMini ? t("全体図を隠す") : t("全体図を出す")}
-        onClick={onToggleMini}
-        className={cn(
-          "flex size-7 items-center justify-center rounded-md",
-          showMini ? "bg-accent text-primary" : "hover:bg-accent",
-        )}
+        className={ICON_TOGGLE}
       >
-        <MapIcon className="size-4" />
-      </button>
-      <button
-        type="button"
+        <MapIcon aria-hidden className="size-4" />
+      </Toggle>
+      <Button
+        variant="ghost"
         aria-label={t("全体を表示")}
-        title={t("全体を表示")}
-        onClick={onFit}
-        className="flex size-7 items-center justify-center rounded-md hover:bg-accent"
+        onPress={onFit}
+        className={ICON_BUTTON}
       >
-        <Maximize className="size-4" />
-      </button>
-      <button
-        type="button"
+        <Maximize aria-hidden className="size-4" />
+      </Button>
+      <Button
+        variant="ghost"
         aria-label={t("縮小")}
-        onClick={() => onZoomBy(0.9)}
-        className="flex size-7 items-center justify-center rounded-md hover:bg-accent"
+        onPress={() => onZoomBy(0.9)}
+        className={ICON_BUTTON}
       >
-        <ZoomOut className="size-4" />
-      </button>
-      <button
-        type="button"
-        onClick={onZoomReset}
-        className="min-w-12 rounded-md px-1 text-center font-mono text-xs tabular-nums hover:bg-accent"
+        <ZoomOut aria-hidden className="size-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        aria-label={t("拡大率を100%に戻す（いまは {n}%）", {
+          n: Math.round(zoom * 100),
+        })}
+        onPress={onZoomReset}
+        className="h-7 min-w-12 px-1 font-mono text-xs font-normal tabular-nums"
       >
         {Math.round(zoom * 100)}%
-      </button>
-      <button
-        type="button"
+      </Button>
+      <Button
+        variant="ghost"
         aria-label={t("拡大")}
-        onClick={() => onZoomBy(1.1)}
-        className="flex size-7 items-center justify-center rounded-md hover:bg-accent"
+        onPress={() => onZoomBy(1.1)}
+        className={ICON_BUTTON}
       >
-        <ZoomIn className="size-4" />
-      </button>
+        <ZoomIn aria-hidden className="size-4" />
+      </Button>
     </div>
   );
 }

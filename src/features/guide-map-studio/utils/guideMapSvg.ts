@@ -1,10 +1,9 @@
 // 1つの階を、ひとつながりの SVG（文字列）として描く。
-// 「見比べる」の表示・画像（PNG）保存・印刷に使う。画面のキャンバスと同じ「図面風」の見た目を、色を直接書いて再現する
+// 画像（PNG）保存・印刷に使う。画面のキャンバスと同じ「図面風」の見た目を、色を直接書いて再現する
 // （画像や印刷では CSS の変数が効かないため）。
 
 import type { ConnectorType, Floor, GuideMapDoc } from "../type";
 import {
-  bboxOf,
   floorSize,
   isConnector,
   markBoxOf,
@@ -12,7 +11,7 @@ import {
   shownColorOf,
 } from "./guideMapDoc";
 import { boxOf, unionBox } from "./guideMapSnap";
-import { areaLabelSize, roomLabel } from "./roomLabel";
+import { connectorRoomLayout, roomLabel } from "./roomLabel";
 
 export type SvgTheme = {
   bg: string;
@@ -168,13 +167,7 @@ export function floorSvg(
     out.push(
       `<polygon points="${pts}" fill="${building ? th.surface : pal}" fill-opacity="${building ? 0.6 : o.closed ? 0.24 : 0.16}"/>`,
     );
-    if (o.title) {
-      const bb = bboxOf(o.points);
-      const label = `${o.title}${o.closed && opts.closedLabel ? opts.closedLabel : ""}`;
-      out.push(
-        `<text x="${bb.x + bb.w / 2}" y="${bb.y + areaLabelSize(bb.w, bb.h) * (o.labelScale ?? 1) + 8}" text-anchor="middle" font-family="${MONO}" font-size="${areaLabelSize(bb.w, bb.h) * (o.labelScale ?? 1)}" letter-spacing="1" fill="${o.closed ? th.accent : th.muted}" stroke="${th.bg}" stroke-width="3" paint-order="stroke" stroke-linejoin="round">${esc(label)}</text>`,
-      );
-    }
+    // 範囲には名前を出さない（画面と同じ）
   }
   // 線（順路など）
   for (const o of objs) {
@@ -203,10 +196,11 @@ export function floorSvg(
       continue;
     }
     if (o.shape === "pin") {
+      const ms = o.markScale ?? 1; // マークの大きさ（画面と同じ倍率）
       out.push(
-        `<circle cx="${o.x}" cy="${o.y}" r="8" fill="none" stroke="${ln}"/>`,
+        `<circle cx="${o.x}" cy="${o.y}" r="${8 * ms}" fill="none" stroke="${ln}"/>`,
       );
-      out.push(`<circle cx="${o.x}" cy="${o.y}" r="4" fill="${pal}"/>`);
+      out.push(`<circle cx="${o.x}" cy="${o.y}" r="${4 * ms}" fill="${pal}"/>`);
       if (title) {
         const tw = Math.min(
           160,
@@ -216,10 +210,10 @@ export function floorSvg(
           ) + 16,
         );
         out.push(
-          `<rect x="${o.x - tw / 2}" y="${o.y - 34}" width="${tw}" height="20" rx="6" fill="${th.surface}" stroke="${th.divider}"/>`,
+          `<rect x="${o.x - tw / 2}" y="${o.y - 34 - 9 * (ms - 1)}" width="${tw}" height="20" rx="6" fill="${th.surface}" stroke="${th.divider}"/>`,
         );
         out.push(
-          `<text x="${o.x}" y="${o.y - 20}" text-anchor="middle" font-family="${FONT}" font-size="${11 * (o.labelScale ?? 1)}" fill="${th.text}">${esc(fitText(title, tw - 12, 11 * (o.labelScale ?? 1)))}</text>`,
+          `<text x="${o.x}" y="${o.y - 20 - 9 * (ms - 1)}" text-anchor="middle" font-family="${FONT}" font-size="${11 * (o.labelScale ?? 1)}" fill="${th.text}">${esc(fitText(title, tw - 12, 11 * (o.labelScale ?? 1)))}</text>`,
         );
       }
       continue;
@@ -242,11 +236,18 @@ export function floorSvg(
         );
     }
     if (isConnector(o)) {
-      out.push(icon(o.connector, o.x, o.y - (title ? 9 : 0), 18, ln));
-      if (title)
+      // アイコンと名前を部屋の真ん中に縦に並べる。大きさは画面と同じ（部屋の大きさに合わせる）
+      const box = connectorRoomLayout(o, title);
+      const lineH = box.size * 1.2;
+      const gap = box.lines.length ? 4 : 0;
+      const top = o.y - (box.icon + gap + box.lines.length * lineH) / 2;
+      out.push(icon(o.connector, o.x, top + box.icon / 2, box.icon, ln));
+      box.lines.forEach((text, i) => {
+        const y = top + box.icon + gap + lineH * (i + 0.5);
         out.push(
-          `<text x="${o.x}" y="${o.y + 16}" text-anchor="middle" font-family="${FONT}" font-size="${12 * (o.labelScale ?? 1)}" fill="${th.text}">${esc(fitText(title, o.w - 16, 12 * (o.labelScale ?? 1)))}</text>`,
+          `<text x="${o.x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-family="${FONT}" font-size="${box.size}" letter-spacing="${box.size * 0.04}" fill="${th.text}">${esc(fitText(text, o.w - 16, box.size))}</text>`,
         );
+      });
       continue;
     }
     // 「101 受付」のような名前は、番号を左上に小さく出す（画面と同じ）
@@ -264,21 +265,24 @@ export function floorSvg(
         `<text x="${x + 10}" y="${y + 16}" font-family="${MONO}" font-size="10" letter-spacing="1" fill="${th.muted}">${esc(num)}</text>`,
       );
     // 名前（無ければ番号）は部屋の大きさに合わせた大きさで、入らなければ 2 行に分ける（画面と同じ roomLabel.ts）
+    const ms = o.markScale ?? 1; // 目印の大きさ（画面と同じ倍率）
     const label = roomLabel(name || num, o.w, o.h, {
-      reserved: o.pin ? 18 + 6 : 0,
+      reserved: o.pin ? 18 * ms + 6 : 0,
       spacing: name ? 0.04 : 0.12,
       mono: !name,
     });
     const size = label.size * (o.labelScale ?? 1); // 名前の大きさ（スタジオで変えた倍率をかける）
     // 目印（18px）・すき間（6px）・名前を 1 つにまとめて、部屋の真ん中に縦に並べる（画面と同じ並び）
-    const pinH = o.pin ? 18 + (label.lines.length ? 6 : 0) : 0;
+    const pinH = o.pin ? 18 * ms + (label.lines.length ? 6 : 0) : 0;
     const lineH = size * 1.2;
     const top = o.y - (pinH + label.lines.length * lineH) / 2;
     if (o.pin) {
       out.push(
-        `<circle cx="${o.x}" cy="${top + 9}" r="8" fill="none" stroke="${ln}"/>`,
+        `<circle cx="${o.x}" cy="${top + 9 * ms}" r="${8 * ms}" fill="none" stroke="${ln}"/>`,
       );
-      out.push(`<circle cx="${o.x}" cy="${top + 9}" r="4" fill="${pal}"/>`);
+      out.push(
+        `<circle cx="${o.x}" cy="${top + 9 * ms}" r="${4 * ms}" fill="${pal}"/>`,
+      );
     }
     label.lines.forEach((line, i) => {
       const y = top + pinH + lineH * (i + 0.5);

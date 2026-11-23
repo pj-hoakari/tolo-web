@@ -49,6 +49,7 @@ type Base = {
   graphPointId?: string; // 会場グラフ（tolo-web のグラフ編集）のポイント ID。混雑状況と結び付けて混雑回避ルートに使う
   graphRouteId?: string; // 会場グラフのルート（通路）ID。廊下などのエリア・線に付ける
   locked?: boolean; // 固定（スタジオで動かしたり消したりできないようにする。お客さんの画面には関係しない）
+  markScale?: number; // マーク（トイレなどの印・階段やエレベーターの印・目印のピン）の大きさの倍率（無し＝1）。labelScale と同じくスタジオの中だけ
   labelScale?: number; // 名前の大きさの倍率（無し＝1＝部屋の大きさに合わせた自動の大きさ）。スタジオの地図・画像・印刷だけで、お客さんの画面には関係しない
 };
 
@@ -101,6 +102,7 @@ export type GuideMapDoc = {
   scale: number; // 1px あたりのメートル（0=未設定）
   startId?: string; // 現在地（tolo-web の案内の出発点）にする場所の id。誘導プレビューの「出発」で選ぶ
   graph?: GuidanceGraph; // 結び付ける tolo-web のグラフ（スタジオの中だけで使う。tolo-web 用の書き出しには入れない）
+  checkIgnored?: string[]; // チェックで「OK」を押して消した項目の鍵（checkIssueKey）。スタジオの中だけで使い、書き出しには入れない
 };
 
 // tolo-web のグラフ（グラフ編集の nodes / edges）から、スタジオで使う分だけ取り出したもの

@@ -1,6 +1,6 @@
 "use client";
 
-// 右の設定：選んでいる物の設定（名前・色・説明・固定・形・階段・エレベーター・混雑とのつなぎ）
+// 右の設定：選んでいる物の設定（名前・大きさ・色・説明・固定・形・階段・エレベーター）
 
 import { ChevronRight, Copy, Lock, LockOpen, Trash2 } from "lucide-react";
 import * as React from "react";
@@ -14,7 +14,6 @@ import type {
   ConnectorType,
   CrowdState,
   Floor,
-  GuidanceGraph,
   MapObject,
   PlaceObject,
   TextObject,
@@ -32,10 +31,10 @@ import {
   PALETTE_GROUPS,
   shownColorOf,
 } from "../../utils/guideMapDoc";
-import { labelOf } from "../../utils/guideMapIO";
 import { ColorSwatch } from "../parts/ColorSwatch";
+import { ScaleSlider } from "../parts/ScaleSlider";
 import { SizeSlider } from "../parts/SizeSlider";
-import { ConnectorIcon } from "../parts/StudioIcons";
+import { ConnectorIcon, hasMarkScale } from "../parts/StudioIcons";
 
 // 階移動ポイントの設定（種類・つながる階・エスカレーターの向き）。同じ link の全フロア分にまとめて効く
 export function ConnectorPanel({
@@ -61,14 +60,14 @@ export function ConnectorPanel({
     <div className="mb-3 space-y-2.5 rounded-lg border p-2.5 text-xs">
       <div>
         <span className="text-muted-foreground">{t("種類")}</span>
-        <div className="mt-1 flex gap-1">
+        <div className="mt-1 flex flex-wrap gap-1">
           {CONNECTOR_TYPES.map((ct) => (
             <button
               key={ct}
               type="button"
               onClick={() => onType(ct)}
               className={cn(
-                "flex items-center gap-1 rounded-md border px-2 py-1",
+                "flex items-center gap-1 rounded-md border px-2 py-1 whitespace-nowrap",
                 connector.connector === ct
                   ? "bg-accent text-primary"
                   : "hover:bg-accent",
@@ -162,12 +161,11 @@ export function ConnectorPanel({
   );
 }
 
-// part＝"basic"（名前・色・説明など、まず決めること）／"advanced"（固定・形・混雑とのつなぎ。くわしい設定の中）
+// part＝"basic"（名前・色・説明など、まず決めること）／"advanced"（固定・形。くわしい設定の中）
+// グラフ（混雑の情報）との結び付けは、上の「その他」→「つなぎ」でまとめて行う
 type PropertyPanelProps = {
   part: "basic" | "advanced";
   object: MapObject;
-  graph?: GuidanceGraph;
-  onLoadGraph: (file: File) => void;
   onLock: (on: boolean) => void;
   onChange: (patch: Partial<MapObject>) => void;
   /** 大きさ（幅・高さ）を変える。部屋・区画は真ん中ではなく左上を固定、範囲は形ごと伸び縮みする */
@@ -175,23 +173,17 @@ type PropertyPanelProps = {
   onDelete: () => void;
   onDuplicate: () => void;
   onPreview: () => void;
-  previewCrowd?: CrowdState;
-  onPreviewCrowd: (state: CrowdState | undefined) => void;
 };
 
 export function PropertyPanel({
   part,
   object,
-  graph,
-  onLoadGraph,
   onLock,
   onChange,
   onResize,
   onDelete,
   onDuplicate,
   onPreview,
-  previewCrowd,
-  onPreviewCrowd,
 }: PropertyPanelProps) {
   const { t } = useI18n();
   const info = object.kind !== "text" && hasInfo(object);
@@ -265,16 +257,6 @@ export function PropertyPanel({
             )}
           </div>
         )}
-        {object.kind !== "text" && (
-          <GraphLinkFields
-            object={object}
-            graph={graph}
-            onLoadGraph={onLoadGraph}
-            onChange={onChange}
-            previewCrowd={previewCrowd}
-            onPreviewCrowd={onPreviewCrowd}
-          />
-        )}
       </div>
     );
   // 範囲の用途。建物の外枠（壁として描く）か、区域（屋外・広場・待機列など。選んだ色で塗る）か。
@@ -323,52 +305,69 @@ export function PropertyPanel({
           </p>
         </div>
       )}
-      <label className="block">
-        <span className="font-medium">
-          {object.kind === "text" ? t("文字") : t("名前")}
-        </span>
-        <input
-          value={object.title ?? ""}
-          onChange={(e) => onChange({ title: e.target.value })}
-          className={cn(
-            "mt-1 h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm",
-            !object.title?.trim() && object.kind !== "text" && "border-primary",
-          )}
-          placeholder={
-            object.kind === "text"
-              ? t("表示する文字")
-              : t("例：受付・101教室・売店")
-          }
-        />
-        {!object.title?.trim() &&
-          object.kind === "place" &&
-          !isConnector(object) && (
-            <span className="mt-1 block text-primary">
-              {t("名前を入れると、地図に表示され、お客さんが目的地に選べます")}
+      {/* 名前と、名前の大きさ。範囲には名前を付けない（地図にも出さない） */}
+      {object.kind !== "area" && (
+        <>
+          <label className="block">
+            <span className="font-medium">
+              {object.kind === "text" ? t("文字") : t("名前")}
             </span>
+            <input
+              value={object.title ?? ""}
+              onChange={(e) => onChange({ title: e.target.value })}
+              className={cn(
+                "mt-1 h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm",
+                !object.title?.trim() &&
+                  object.kind !== "text" &&
+                  "border-primary",
+              )}
+              placeholder={
+                object.kind === "text"
+                  ? t("表示する文字")
+                  : t("例：受付・101教室・売店")
+              }
+            />
+            {!object.title?.trim() &&
+              object.kind === "place" &&
+              !isConnector(object) && (
+                <span className="mt-1 block text-primary">
+                  {t(
+                    "名前を入れると、地図に表示され、お客さんが目的地に選べます",
+                  )}
+                </span>
+              )}
+          </label>
+          {/* 名前（文字）の大きさ。部屋などは、部屋の大きさに合わせた大きさ（100%）からの倍率。文字は文字サイズそのもの */}
+          {object.kind === "text" ? (
+            <SizeSlider
+              label={t("文字サイズ")}
+              value={(object as TextObject).size}
+              min={8}
+              max={72}
+              onChange={(size) => onChange({ size } as Partial<MapObject>)}
+            />
+          ) : (
+            <ScaleSlider
+              label={t("名前の大きさ")}
+              value={object.labelScale}
+              max={200}
+              snaps={[100, 150]}
+              defaultLabel={t("自動（100%）")}
+              onChange={(labelScale) => onChange({ labelScale })}
+            />
           )}
-      </label>
-      {/* 名前（文字）の大きさ。部屋などは、部屋の大きさに合わせた大きさ（100%）からの倍率。文字は文字サイズそのもの */}
-      {object.kind === "text" ? (
-        <SizeSlider
-          label={t("文字サイズ")}
-          value={(object as TextObject).size}
-          min={8}
-          max={72}
-          onChange={(size) => onChange({ size } as Partial<MapObject>)}
-        />
-      ) : (
-        <SizeSlider
-          label={t("名前の大きさ")}
-          value={Math.round((object.labelScale ?? 1) * 100)}
-          min={50}
-          max={200}
-          step={10}
-          unit="%"
-          format={(v) => (v === 100 ? t("自動（100%）") : `${v}%`)}
-          onChange={(v) =>
-            onChange({ labelScale: v === 100 ? undefined : v / 100 })
-          }
+        </>
+      )}
+      {/* マークの大きさ：目印（ピン）・部屋の中の目印・トイレなどの印・四角／丸の階段やエレベーターの印。
+          ピンの階段・エレベーターは、上の「マークの大きさ」で幅と高さを変える */}
+      {hasMarkScale(object) && (
+        <ScaleSlider
+          label={t("マークの大きさ")}
+          value={object.markScale}
+          max={250}
+          snaps={[100, 150, 200]}
+          defaultLabel={t("ふつう（100%）")}
+          onChange={(markScale) => onChange({ markScale })}
         />
       )}
       {/* 大きさ：部屋・区画（四角・丸）と範囲。角のハンドルでも変えられる */}
@@ -508,10 +507,7 @@ export function PropertyPanel({
   );
 }
 
-// --- 混雑とのつなぎ（tolo-web のグラフ） ---
-// tolo-web は Guest Service の混雑状況（"pointId:<ID>" / "routeId:<ID>"）を、この ID で地図の物に重ね、混雑を避けて誘導する。
-// 結び付ける候補は、タブ（マップ）ごとに読み込んだグラフ（doc.graph）から選ぶ。
-// 混雑の色（お客さんの画面の凡例と同じ段階：中・高・危険）
+// --- 混雑の色（誘導の「混雑を試す」で使う。お客さんの画面の凡例と同じ段階：中・高・危険） ---
 export const crowdColor = (st: CrowdState) =>
   st.danger ? "#c2410c" : st.level === "high" ? "#e0663f" : "#e2a53a";
 
@@ -525,190 +521,3 @@ export const PREVIEW_CROWD_CHOICES: {
   { value: "high", label: "混雑：高", state: { level: "high", danger: false } },
   { value: "danger", label: "危険", state: { level: "high", danger: true } },
 ];
-
-type GraphLinkFieldsProps = {
-  object: MapObject;
-  graph?: GuidanceGraph;
-  onLoadGraph: (file: File) => void;
-  onChange: (patch: Partial<MapObject>) => void;
-  previewCrowd?: CrowdState;
-  onPreviewCrowd: (state: CrowdState | undefined) => void;
-};
-
-function GraphLinkFields({
-  object,
-  graph,
-  onLoadGraph,
-  onChange,
-  previewCrowd,
-  onPreviewCrowd,
-}: GraphLinkFieldsProps) {
-  const { t, lang } = useI18n();
-  const fileRef = React.useRef<HTMLInputElement>(null);
-  const canRoute = object.kind === "area" || object.kind === "route";
-  const previewValue = !previewCrowd
-    ? ""
-    : previewCrowd.danger
-      ? "danger"
-      : previewCrowd.level;
-  const groupName = (id?: string) =>
-    labelOf(graph?.groups.find((g) => g.id === id)?.labels, lang);
-  const point = graph?.points.find((p) => p.id === object.graphPointId);
-  const route = graph?.routes.find((r) => r.id === object.graphRouteId);
-  return (
-    <div className="space-y-2 rounded-md border p-2">
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-medium">{t("混雑とのつなぎ")}</span>
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          className="rounded-md border px-2 py-0.5 hover:bg-accent"
-        >
-          {graph ? t("グラフを読み直す") : t("グラフを読み込む")}
-        </button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="application/json,.json"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            e.target.value = "";
-            if (f) onLoadGraph(f);
-          }}
-        />
-      </div>
-      {!graph ? (
-        <p className="leading-relaxed text-muted-foreground">
-          {t(
-            "グラフ（グラフ編集で作ったもの）を読み込むと、この場所を混雑の情報と結び付けられます。結び付けた所が混んでいると、お客さんの画面ではそこを避けて案内します。",
-          )}
-        </p>
-      ) : (
-        <>
-          <label className="block">
-            <span className="text-muted-foreground">
-              {t("ポイント（場所）")}
-            </span>
-            <select
-              value={object.graphPointId ?? ""}
-              onChange={(e) =>
-                onChange({ graphPointId: e.target.value || undefined })
-              }
-              className="mt-0.5 h-8 w-full rounded-md border border-input bg-transparent px-1.5 text-sm"
-            >
-              <option value="">{t("（結び付けない）")}</option>
-              {graph.groups.map((g) => {
-                const ps = graph.points.filter((p) => p.groupId === g.id);
-                return ps.length ? (
-                  <optgroup key={g.id} label={labelOf(g.labels, lang)}>
-                    {ps.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {labelOf(p.labels, lang) || p.id}
-                      </option>
-                    ))}
-                  </optgroup>
-                ) : null;
-              })}
-              {graph.points
-                .filter(
-                  (p) =>
-                    !p.groupId || !graph.groups.some((g) => g.id === p.groupId),
-                )
-                .map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {labelOf(p.labels, lang) || p.id}
-                  </option>
-                ))}
-              {object.graphPointId && !point && (
-                <option value={object.graphPointId}>
-                  {t("（グラフに無い：{id}）", { id: object.graphPointId })}
-                </option>
-              )}
-            </select>
-          </label>
-          {object.graphPointId && !point && (
-            <p className="text-primary">
-              {t("読み込んだグラフに、このポイントがありません")}
-            </p>
-          )}
-          {point && object.kind === "place" && (
-            <p className="leading-relaxed text-muted-foreground">
-              {t(
-                "お客さんの画面では、名前が「{name}」と表示されます（ポイントの名前）。",
-                { name: labelOf(point.labels, lang) },
-              )}
-            </p>
-          )}
-          {canRoute && (
-            <>
-              <label className="block">
-                <span className="text-muted-foreground">
-                  {t("ルート（通路）")}
-                </span>
-                <select
-                  value={object.graphRouteId ?? ""}
-                  onChange={(e) =>
-                    onChange({ graphRouteId: e.target.value || undefined })
-                  }
-                  className="mt-0.5 h-8 w-full rounded-md border border-input bg-transparent px-1.5 text-sm"
-                >
-                  <option value="">{t("（結び付けない）")}</option>
-                  {graph.routes.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {labelOf(r.labels, lang) || r.id}
-                      {groupName(
-                        graph.points.find((p) => p.id === r.source)?.groupId,
-                      )
-                        ? `（${groupName(graph.points.find((p) => p.id === r.source)?.groupId)}）`
-                        : ""}
-                    </option>
-                  ))}
-                  {object.graphRouteId && !route && (
-                    <option value={object.graphRouteId}>
-                      {t("（グラフに無い：{id}）", { id: object.graphRouteId })}
-                    </option>
-                  )}
-                </select>
-              </label>
-              {object.graphRouteId && !route && (
-                <p className="text-primary">
-                  {t("読み込んだグラフに、このルートがありません")}
-                </p>
-              )}
-              <p className="leading-relaxed text-muted-foreground">
-                {t(
-                  "廊下などの通路は、通路に沿って範囲を描き、ルートに結び付けると、そこが混んだときに避けられます。",
-                )}
-              </p>
-            </>
-          )}
-        </>
-      )}
-      <label className="flex items-center gap-2">
-        <span className="text-muted-foreground">{t("混雑を試す")}</span>
-        <select
-          value={previewValue}
-          onChange={(e) =>
-            onPreviewCrowd(
-              PREVIEW_CROWD_CHOICES.find((c) => c.value === e.target.value)
-                ?.state,
-            )
-          }
-          className="h-7 min-w-0 flex-1 rounded-md border border-input bg-transparent px-1"
-        >
-          {PREVIEW_CROWD_CHOICES.map((c) => (
-            <option key={c.value} value={c.value}>
-              {t(c.label)}
-            </option>
-          ))}
-        </select>
-      </label>
-      <p className="leading-relaxed text-muted-foreground">
-        {t(
-          "「混雑を試す」は、ここでの誘導プレビューにだけ効きます（保存しません）。お客さんの画面では、実際の混雑状況で避けます。",
-        )}
-      </p>
-    </div>
-  );
-}
