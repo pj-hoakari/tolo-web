@@ -46,7 +46,7 @@ export function StoryGraphCanvas({
           edgeTypes={edgeTypes}
           connectionMode={ConnectionMode.Loose}
           fitView
-          fitViewOptions={{ padding: 0.3 }}
+          fitViewOptions={{ padding: "11.5%" }}
           proOptions={{ hideAttribution: true }}
         >
           <Background gap={20} size={1} />
