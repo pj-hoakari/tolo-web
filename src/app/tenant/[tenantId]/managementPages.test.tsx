@@ -2,7 +2,9 @@ import { getURLFromRedirectError } from "next/dist/client/components/redirect";
 import { headers } from "next/headers";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import TenantGraphEdit from "./event/[eventId]/management/graph/edit/page";
+import TenantGuideMapEdit from "./event/[eventId]/management/guide-map/edit/page";
 import TenantManagement from "./event/[eventId]/management/page";
+import TenantObservationDevices from "./event/[eventId]/observation/page";
 import TenantMemberManagement from "./management/members/page";
 import TenantEventManagement from "./management/page";
 
@@ -23,6 +25,12 @@ it.each([
   ["/management/members", () => TenantMemberManagement({ params })],
   ["/event/e1/management", () => TenantManagement({ params })],
   ["/event/e1/management/graph/edit", () => TenantGraphEdit({ params })],
+  ["/event/e1/management/guide-map/edit", () => TenantGuideMapEdit({ params })],
+  [
+    "/event/e1/observation",
+    () =>
+      TenantObservationDevices({ params, searchParams: Promise.resolve({}) }),
+  ],
 ])(
   "sends an anonymous viewer of %s to the login start",
   async (path, render) => {

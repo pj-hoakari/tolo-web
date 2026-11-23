@@ -77,7 +77,7 @@ test("ID のない観測ページの URL を開くと観測デバイス管理ペ
   ).toHaveCount(0);
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
     "href",
-    `/manifest.webmanifest?start=${encodeURIComponent("/event/test/observation")}`,
+    "/manifest.webmanifest?audience=staff",
   );
 });
 

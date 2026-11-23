@@ -1,8 +1,10 @@
+import { scopeStaffStorageKey } from "@/lib/pwa/staff-storage";
 import type { WindowMeasurement } from "./measurements";
 
 export type MeasurementRecordContext = {
   eventId: string;
   edgeDeviceId: string;
+  storageScope: string;
 };
 
 export type MeasurementRecord = {
@@ -31,8 +33,15 @@ function notify(): void {
   for (const listener of listeners) listener();
 }
 
-const storageKey = ({ eventId, edgeDeviceId }: MeasurementRecordContext) =>
-  `tolo:observation-measurements:${eventId}:${edgeDeviceId}`;
+const storageKey = ({
+  eventId,
+  edgeDeviceId,
+  storageScope,
+}: MeasurementRecordContext) =>
+  scopeStaffStorageKey(
+    `tolo:observation-measurements:${eventId}:${edgeDeviceId}`,
+    storageScope,
+  );
 
 const recordKey = (m: { observationPointId: string; windowStart: string }) =>
   `${m.observationPointId}@${m.windowStart}`;
@@ -74,7 +83,8 @@ export function recordMeasurements(
   writeMeasurementRecords(context, [
     ...readMeasurementRecords(context),
     ...measurements.map((m) => ({
-      ...context,
+      eventId: context.eventId,
+      edgeDeviceId: context.edgeDeviceId,
       observationPointId: m.observationPointId,
       observationPointName: nameByPointId.get(m.observationPointId) ?? "",
       windowStart: m.windowStart.toISOString(),

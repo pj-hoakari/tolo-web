@@ -16,6 +16,7 @@ import messages from "../../../messages/ja.json";
 import { PwaInstall } from "./pwa-install";
 import { PwaProvider, usePwaInstall } from "./pwa-provider";
 import { LAST_PAGE_KEY } from "./pwa-utils";
+import { StaffPwaInstall } from "./staff-pwa-install";
 
 const navigation = vi.hoisted(() => ({
   pathname: "/",
@@ -313,6 +314,24 @@ describe("PwaProvider", () => {
 });
 
 describe("PwaInstall guidance", () => {
+  it.each(["insecure", "unsupported"])(
+    "hides staff promotion in an %s browser without changing guest guidance",
+    (kind) => {
+      if (kind === "insecure")
+        setBrowserProperty(window, "isSecureContext", false);
+      else
+        setBrowserProperty(navigator, "userAgent", "Mozilla/5.0 Firefox/140.0");
+      const { unmount } = render(<StaffPwaInstall />, { wrapper: Wrapper });
+      expect(
+        screen.queryByRole("button", { name: messages.PwaInstall.button }),
+      ).toBeNull();
+      unmount();
+      render(<PwaInstall />, { wrapper: Wrapper });
+      expect(
+        screen.getByRole("button", { name: messages.PwaInstall.button }),
+      ).toBeTruthy();
+    },
+  );
   it("expands the iOS instructions for an iPad with a desktop user agent", async () => {
     setBrowserProperty(
       navigator,

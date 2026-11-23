@@ -931,5 +931,12 @@
     "cannotJoin": "You cannot join this tenant. You may already be a member, or the tenant may have been archived.",
     "openManagement": "Open the management page",
     "failed": "Could not join the tenant. Try again."
+  },
+  "StaffConnection": {
+    "title": "Online connection required",
+    "offline": "You are offline. Current information and actions are unavailable. Reconnect and reload. Unsaved changes will be lost.",
+    "reconnected": "Connection restored. Reload to verify your session and fetch current information. Unsaved changes will be lost.",
+    "reload": "Reload",
+    "cameraOffline": "You are offline. Reports and settings cannot be confirmed by the server. Local detections do not represent the current server status."
   }
 }

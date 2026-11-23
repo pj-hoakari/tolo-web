@@ -2,7 +2,9 @@
 
 import { ORPCError } from "@orpc/client";
 import { act, cleanup, renderHook } from "@testing-library/react";
+import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { StaffStorageProvider } from "@/components/pwa/staff-storage-provider";
 import {
   createDetectionResultStore,
   createDetectionStores,
@@ -10,6 +12,7 @@ import {
   INITIAL_SETTINGS,
   recordDetectedPeople,
 } from "@/features/tenant/detection/stores/detectionStore";
+import { createStaffStorageScope } from "@/lib/pwa/staff-storage";
 import {
   readMeasurementRecords,
   toJsonLines,
@@ -38,6 +41,14 @@ vi.mock("@/lib/orpc", () => ({
 }));
 
 const { settingsStore, resultStore } = createDetectionStores();
+const storageScope = createStaffStorageScope("tenant", {
+  type: "machine",
+  userId: "observer",
+});
+
+function ReportingTestProvider({ children }: { children: ReactNode }) {
+  return createElement(StaffStorageProvider, { scope: storageScope, children });
+}
 
 function renderReporting(initial: {
   edgeDeviceId: string;
@@ -53,7 +64,7 @@ function renderReporting(initial: {
         isFresh: () => true,
         ...props,
       }),
-    { initialProps: initial },
+    { initialProps: initial, wrapper: ReportingTestProvider },
   );
 }
 
@@ -91,7 +102,7 @@ describe("useObservationReporting", () => {
           cameras: [camera],
           isFresh: () => true,
         }),
-      { initialProps: { enabled: false } },
+      { initialProps: { enabled: false }, wrapper: ReportingTestProvider },
     );
     await act(() => vi.advanceTimersByTimeAsync(60_000));
     expect(heartbeat).not.toHaveBeenCalled();
@@ -173,7 +184,10 @@ describe("計測値の送信に失敗したとき", () => {
           isFresh: () => true,
           ...props,
         }),
-      { initialProps: { edgeDeviceId: "8c1f0e2a5d4b3c6e" } },
+      {
+        initialProps: { edgeDeviceId: "8c1f0e2a5d4b3c6e" },
+        wrapper: ReportingTestProvider,
+      },
     );
     await act(() => vi.advanceTimersByTimeAsync(0));
     return rendered;
@@ -226,6 +240,7 @@ describe("計測値の送信に失敗したとき", () => {
     const records = readMeasurementRecords({
       eventId: "test",
       edgeDeviceId: "8c1f0e2a5d4b3c6e",
+      storageScope,
     });
     expect(records).toHaveLength(150);
     expect(records[0]).toMatchObject({
@@ -252,6 +267,7 @@ describe("計測値の送信に失敗したとき", () => {
       readMeasurementRecords({
         eventId: "test",
         edgeDeviceId: "8c1f0e2a5d4b3c6e",
+        storageScope,
       }).map((record) => record.sent),
     ).toEqual([true, true]);
   });
@@ -265,6 +281,7 @@ describe("計測値の送信に失敗したとき", () => {
       readMeasurementRecords({
         eventId: "test",
         edgeDeviceId: "8c1f0e2a5d4b3c6e",
+        storageScope,
       }).map((record) => record.sent),
     ).toEqual([false, true]);
   });
@@ -335,17 +352,19 @@ describe("複数カメラの計測報告", () => {
       isFresh?: (key: string) => boolean;
     } = {},
   ) {
-    return renderHook(() =>
-      useObservationReporting({
-        eventId: "test",
-        edgeDeviceId: "0123456789abcdef",
-        listening: options.listening ?? false,
-        status: "detecting",
-        settingsStore,
-        resultStore: resultStore,
-        cameras,
-        isFresh: options.isFresh ?? (() => true),
-      }),
+    return renderHook(
+      () =>
+        useObservationReporting({
+          eventId: "test",
+          edgeDeviceId: "0123456789abcdef",
+          listening: options.listening ?? false,
+          status: "detecting",
+          settingsStore,
+          resultStore: resultStore,
+          cameras,
+          isFresh: options.isFresh ?? (() => true),
+        }),
+      { wrapper: ReportingTestProvider },
     );
   }
 
