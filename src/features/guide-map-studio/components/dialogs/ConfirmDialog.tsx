@@ -7,6 +7,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogOverlay,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { useI18n } from "../../i18n/i18n";
 
@@ -55,6 +56,10 @@ export function useConfirm() {
         closeButton={false}
         className="sm:max-w-md"
       >
+        {/* 見出しは出さないが、読み上げ用に題を付ける（題の無いダイアログは支援技術で何の画面か分からない） */}
+        <DialogTitle className="sr-only">
+          {request?.confirmLabel ? t("確認") : t("お知らせ")}
+        </DialogTitle>
         <DialogDescription className="text-sm leading-relaxed text-foreground">
           {request?.message}
         </DialogDescription>

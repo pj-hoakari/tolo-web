@@ -18,8 +18,7 @@
     "test:all": "vitest",
     "test:e2e": "playwright test",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
-    "db:auth:migrate": "node scripts/migrate-auth-db.mjs"
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.12.0",
@@ -30,13 +29,13 @@
     "@orpc/client": "^1.14.6",
     "@orpc/server": "^1.14.6",
     "@pj-hoakari/tolo-edge-bridge-client-es": "0.6.0",
-    "@pj-hoakari/tolo-graph-authoring-client-es": "0.5.0",
-    "@pj-hoakari/tolo-guest-client-es": "0.2.1",
-    "@pj-hoakari/tolo-observation-client-es": "0.9.0",
-    "@pj-hoakari/tolo-tenant-management-connect-es": "0.8.0",
+    "@pj-hoakari/tolo-graph-authoring-client-es": "0.6.1",
+    "@pj-hoakari/tolo-guest-client-es": "0.2.2",
+    "@pj-hoakari/tolo-observation-client-es": "0.9.1",
+    "@pj-hoakari/tolo-tenant-management-connect-es": "0.8.1",
     "@pj-hoakari/web-crowd-detection-utils": "^0.7.0",
     "@xyflow/react": "^12.11.0",
-    "better-auth": "1.7.22",
+    "better-auth": "1.7.25",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "firebase": "^13.0.0",
@@ -58,9 +57,9 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.7",
+    "@biomejs/biome": "2.6.8",
     "@chromatic-com/storybook": "5.6.0",
-    "@playwright/test": "1.65.0",
+    "@playwright/test": "1.65.1",
     "@storybook/addon-a11y": "10.6.7",
     "@storybook/addon-docs": "10.6.7",
     "@storybook/addon-mcp": "10.6.7",
@@ -73,18 +72,18 @@
     "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "@vitest/browser-playwright": "5.1.0",
-    "@vitest/coverage-v8": "5.1.0",
+    "@vitest/browser-playwright": "5.1.1",
+    "@vitest/coverage-v8": "5.1.1",
     "babel-plugin-react-compiler": "1.0.0",
-    "jsdom": "31.0.0",
-    "msw": "3.0.5",
+    "jsdom": "31.0.1",
+    "msw": "3.0.7",
     "msw-storybook-addon": "3.0.3",
-    "playwright": "1.65.0",
+    "playwright": "1.65.1",
     "storybook": "10.6.7",
     "tailwindcss": "4.3.5",
     "typescript": "7.0.2",
-    "vite": "8.3.7",
-    "vitest": "5.1.0"
+    "vite": "8.3.8",
+    "vitest": "5.1.1"
   },
   "msw": {
     "workerDirectory": [
@@ -96,5 +95,5 @@
     "yarn": "⚠use pnpm",
     "node": ">=24.17.0"
   },
-  "packageManager": "pnpm@12.18.0"
+  "packageManager": "pnpm@12.21.0"
 }

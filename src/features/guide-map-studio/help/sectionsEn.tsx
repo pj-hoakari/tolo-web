@@ -101,13 +101,12 @@ export const SECTIONS_EN: Section[] = [
         a: (
           <>
             Press <B>Preview</B> in the bar above the map to see it as visitors
-            do. Tapping a place with a description shows it. Press <B>Phone</B>{" "}
-            to show the map inside a smartphone frame and check how it looks on
-            a phone. The grid and selection outlines are not shown to visitors.
-            Press “Edit” to go back.
+            do. Tapping a place with a description shows it. The grid and
+            selection outlines are not shown to visitors. Press “Edit” to go
+            back.
           </>
         ),
-        keywords: "visitors preview grid phone smartphone mobile",
+        keywords: "visitors preview grid",
       },
     ],
   },

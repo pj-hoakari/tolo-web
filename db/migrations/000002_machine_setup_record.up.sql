@@ -1,0 +1,1 @@
+create table "machineSetupRecord" ("id" text not null primary key, "tenantId" text not null, "eventId" text not null, "edgeDeviceId" text not null, "subject" text not null, "createdAt" timestamptz not null);

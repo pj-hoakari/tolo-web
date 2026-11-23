@@ -187,8 +187,9 @@ type MiniMapProps = {
 
 export function MiniMap({ doc, floor, zoom, view, onJump }: MiniMapProps) {
   const { t } = useI18n();
-  const W = 168;
-  const H = 104;
+  // 狭い画面では地図を隠しすぎないよう、地図の幅に合わせて小さくする（112〜168px）
+  const W = Math.round(Math.min(168, Math.max(112, view.cw * 0.18)));
+  const H = Math.round((W * 104) / 168);
   const content = floorBounds(doc, floor, 40);
   // いま見えている範囲（地図の座標）
   const vp = {
@@ -213,12 +214,14 @@ export function MiniMap({ doc, floor, zoom, view, onJump }: MiniMapProps) {
     };
   };
   const objs = doc.objects.filter((o) => o.floor === floor.id);
-  // 地図の中身がぜんぶ見えているときは、全体図は要らないので出さない
+  // 地図の中身がぜんぶ見えているときは、全体図は要らないので出さない（余白を除いた中身で比べる。少しのはみ出しは見えているとみなす）
+  const shown = floorBounds(doc, floor, 0);
+  const slack = 4 / zoom;
   if (
-    content.x >= vp.x &&
-    content.y >= vp.y &&
-    content.x + content.w <= vp.x + vp.w &&
-    content.y + content.h <= vp.y + vp.h
+    shown.x >= vp.x - slack &&
+    shown.y >= vp.y - slack &&
+    shown.x + shown.w <= vp.x + vp.w + slack &&
+    shown.y + shown.h <= vp.y + vp.h + slack
   )
     return null;
   return (

@@ -1,5 +1,6 @@
 [tools]
 betterleaks = "latest"
+gomigrate = "latest"
 lefthook = "latest"
 node = "26"
 pnpm = "12"

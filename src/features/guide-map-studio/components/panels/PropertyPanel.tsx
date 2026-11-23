@@ -4,6 +4,7 @@
 
 import { Copy, Lock, LockOpen, Trash2 } from "lucide-react";
 import * as React from "react";
+import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
 import { cn } from "@/lib/utils";
 import { useI18n } from "../../i18n/i18n";
 import type {
@@ -278,8 +279,52 @@ export function PropertyPanel({
         )}
       </div>
     );
+  // 範囲の用途。建物の外枠（壁として描く）か、区域（屋外・広場・待機列など。選んだ色で塗る）か。
+  // tolo-web へは色の項目で伝える（建物の外枠は色キー building）
+  const isBuildingArea = object.kind === "area" && object.color === "building";
   return (
     <div className="space-y-3 text-xs">
+      {object.kind === "area" && (
+        <div>
+          <span className="font-medium">{t("用途")}</span>
+          <ToggleButtonGroup
+            aria-label={t("用途")}
+            selectionMode="single"
+            disallowEmptySelection
+            selectedKeys={[isBuildingArea ? "building" : "zone"]}
+            onSelectionChange={(keys) => {
+              const next = [...keys][0];
+              if (next === "building" && !isBuildingArea)
+                onChange({ color: "building" });
+              if (next === "zone" && isBuildingArea)
+                onChange({ color: DEFAULT_COLOR });
+            }}
+            className="mt-1 w-full gap-1 rounded-md bg-muted p-1"
+          >
+            <Toggle
+              id="building"
+              className="selected:bg-background selected:text-foreground selected:shadow-sm h-auto flex-1 rounded-sm px-2 py-1 text-xs font-medium"
+            >
+              {t("建物（外枠）")}
+            </Toggle>
+            <Toggle
+              id="zone"
+              className="selected:bg-background selected:text-foreground selected:shadow-sm h-auto flex-1 rounded-sm px-2 py-1 text-xs font-medium"
+            >
+              {t("区域")}
+            </Toggle>
+          </ToggleButtonGroup>
+          <p className="mt-1 leading-relaxed text-muted-foreground">
+            {isBuildingArea
+              ? t(
+                  "建物の外枠は、中を通路の床の色で塗り、縁を壁として太く描きます（色は選べません）。",
+                )
+              : t(
+                  "区域は、芝生広場・待機列・屋外の会場など。選んだ色の線と薄い塗りで描きます。",
+                )}
+          </p>
+        </div>
+      )}
       <label className="block">
         <span className="font-medium">
           {object.kind === "text" ? t("文字") : t("名前")}
@@ -305,36 +350,40 @@ export function PropertyPanel({
             </span>
           )}
       </label>
-      <div>
-        <span className="font-medium">{t("色")}</span>
-        <div className="mt-1 space-y-1.5">
-          {PALETTE_GROUPS.map((group) => (
-            <div key={group.label}>
-              <span className="mb-0.5 block text-muted-foreground">
-                {t(group.label)}
-              </span>
-              {/* 見出しごとに 1 行に並べる（折り返さない） */}
-              <div className="flex flex-nowrap gap-1">
-                {group.keys.map((k) => (
-                  <ColorSwatch
-                    key={k}
-                    k={k}
-                    selected={shownColorOf(object) === k}
-                    aria-pressed={shownColorOf(object) === k}
-                    onClick={() => onChange({ color: k })}
-                    className="size-6"
-                  />
-                ))}
-              </div>
+      {!isBuildingArea && (
+        <>
+          <div>
+            <span className="font-medium">{t("色")}</span>
+            <div className="mt-1 space-y-1.5">
+              {PALETTE_GROUPS.map((group) => (
+                <div key={group.label}>
+                  <span className="mb-0.5 block text-muted-foreground">
+                    {t(group.label)}
+                  </span>
+                  {/* 見出しごとに 1 行に並べる（折り返さない） */}
+                  <div className="flex flex-nowrap gap-1">
+                    {group.keys.map((k) => (
+                      <ColorSwatch
+                        key={k}
+                        k={k}
+                        selected={shownColorOf(object) === k}
+                        aria-pressed={shownColorOf(object) === k}
+                        onClick={() => onChange({ color: k })}
+                        className="size-6"
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
-      <p className="leading-relaxed text-muted-foreground">
-        {t(
-          "普通の部屋は「基本の色」から選びます。トイレなどの種類を選ぶと、tolo-web と同じ色とマークで表示されます",
-        )}
-      </p>
+          </div>
+          <p className="leading-relaxed text-muted-foreground">
+            {t(
+              "普通の部屋は「基本の色」から選びます。トイレなどの種類を選ぶと、tolo-web と同じ色とマークで表示されます",
+            )}
+          </p>
+        </>
+      )}
       {object.kind === "area" && (
         <label className="flex items-center gap-1.5">
           <input
@@ -345,19 +394,6 @@ export function PropertyPanel({
             }
           />
           <span>{t("通行止め（ここは避けて案内）")}</span>
-        </label>
-      )}
-      {object.kind === "area" && (
-        // tolo-web は「建物の外枠」のエリアを、床（通路）を明るく塗って縁を壁として描く。色キー building で印を付ける
-        <label className="flex items-center gap-1.5">
-          <input
-            type="checkbox"
-            checked={object.color === "building"}
-            onChange={(e) =>
-              onChange({ color: e.target.checked ? "building" : DEFAULT_COLOR })
-            }
-          />
-          <span>{t("建物の外枠（壁として描く）")}</span>
         </label>
       )}
       {object.kind === "text" && (

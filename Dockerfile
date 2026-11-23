@@ -18,7 +18,7 @@ COPY . .
 EXPOSE 3000
 CMD ["pnpm", "exec", "next", "dev", "-H", "0.0.0.0", "-p", "3000"]
 
-FROM mcr.microsoft.com/playwright:v1.65.0-noble@sha256:9beb546099e11f52d62e505537914870e01a67e0e6b00ae41da4775324e73dbe AS e2e
+FROM mcr.microsoft.com/playwright:v1.65.1-noble@sha256:1507cbfc550a63a6b7396791ca4f00df17beb56342d2447b3f106c306f525579 AS e2e
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME/bin:$PATH
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -47,7 +47,6 @@ COPY --from=build /app/public ./public
 COPY --from=build --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=build --chown=nextjs:nodejs /app/db ./db
-COPY --from=build --chown=nextjs:nodejs /app/scripts/migrate-auth-db.mjs ./scripts/migrate-auth-db.mjs
 USER nextjs
 EXPOSE 3000
 CMD ["node", "server.js"]

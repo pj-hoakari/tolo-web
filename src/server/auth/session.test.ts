@@ -1,4 +1,3 @@
-import { readFile } from "node:fs/promises";
 import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
 import { testUtils } from "better-auth/plugins";
@@ -15,6 +14,7 @@ import {
   type SessionLock,
   type SessionLocks,
 } from "./betterAuth";
+import { applyMigrations } from "./migrations";
 import { createSessionAuth } from "./session";
 
 const env: AuthEnv = {
@@ -562,9 +562,7 @@ describe.skipIf(!process.env.AUTH_TEST_DATABASE_URL)("on PostgreSQL", () => {
   beforeAll(async () => {
     const migrator = pool();
     await migrator.query(`CREATE SCHEMA ${schema}`);
-    await migrator.query(
-      await readFile(new URL("../../../db/auth.sql", import.meta.url), "utf8"),
-    );
+    await applyMigrations(migrator);
   });
 
   afterAll(async () => {

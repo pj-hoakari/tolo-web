@@ -704,8 +704,13 @@ function eventContext(eventId: string) {
 async function issueFirestoreToken(
   client: Client<typeof SignalingService>,
   eventId: string,
+  pageEdgeDeviceId?: string,
 ): Promise<FirestoreToken> {
-  const res = await client.issueFirestoreToken({}, eventContext(eventId));
+  const context = eventContext(eventId);
+  if (pageEdgeDeviceId) {
+    context.contextValues.set(pageEdgeDeviceIdKey, pageEdgeDeviceId);
+  }
+  const res = await client.issueFirestoreToken({}, context);
   if (!res.expiresAt) {
     throw new Error("IssueFirestoreToken returned no expires_at");
   }
@@ -1375,9 +1380,18 @@ export const router = {
         issueFirestoreToken(consoleSignalingClient, input.eventId),
       ),
     issueEdgeFirestoreToken: os
-      .input(z.object({ eventId: z.string().min(1) }))
+      .input(
+        z.object({
+          eventId: z.string().min(1),
+          edgeDeviceId: z.string().min(1),
+        }),
+      )
       .handler(({ input }) =>
-        issueFirestoreToken(edgeSignalingClient, input.eventId),
+        issueFirestoreToken(
+          edgeSignalingClient,
+          input.eventId,
+          input.edgeDeviceId,
+        ),
       ),
   },
   camera: {

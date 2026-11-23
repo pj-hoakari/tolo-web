@@ -86,3 +86,14 @@ export function guessConnector(title?: string): ConnectorType | null {
   if (/階段|stairs?/i.test(title)) return "stairs";
   return null;
 }
+
+// 混雑を試す表の見出しに出す、階の短い名前（「6Fホール」→「6F」）。列が細いので、名前の頭の階の番号だけにする。
+// 短くすると同じになる階があるときは、元の名前のまま（見出しは切れるが、押す前に名前が見られる）
+export function shortFloorNames(names: string[]): string[] {
+  const short = names.map(
+    (n) => n.normalize("NFKC").match(/^B?\d+F/i)?.[0] ?? n,
+  );
+  return short.map((s, i) =>
+    short.indexOf(s) === short.lastIndexOf(s) ? s : names[i],
+  );
+}

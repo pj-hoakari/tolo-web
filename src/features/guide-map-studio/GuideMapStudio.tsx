@@ -15,7 +15,6 @@ import {
   ListChecks,
   Lock,
   LockOpen,
-  Monitor,
   PanelRightClose,
   PanelRightOpen,
   Pencil,
@@ -23,7 +22,6 @@ import {
   Printer,
   Route,
   Search,
-  Smartphone,
   Square,
   Table2,
   Trash2,
@@ -259,7 +257,6 @@ export function GuideMapStudio({
     forExport: boolean;
   } | null>(null); // 書き出す前のチェック（issues=null は確認中）
   const [compare, setCompare] = React.useState<CompareState | null>(null); // 2つのタブを見比べる（階は名前でそろえる）
-  const [phone, setPhone] = React.useState(false); // プレビューをスマホの画面で見る
   const [query, setQuery] = React.useState(""); // 名前で探す
   const [searchOpen, setSearchOpen] = React.useState(false);
   const searchRef = React.useRef<HTMLInputElement>(null);
@@ -417,49 +414,6 @@ export function GuideMapStudio({
     [],
   );
 
-  // --- スマホの画面で見る（プレビュー）---
-  const phoneView = preview && phone;
-  const PHONE_W = 390; // 画面の幅（一般的なスマホ）
-  const PHONE_H = 844;
-  const phoneZoomRef = React.useRef<number | null>(null); // スマホで見る前の拡大率（戻すときに使う）
-  // スマホの形は本物と同じ大きさ（390×844）で作り、置き場所に収まるよう全体を縮めて見せる（縦横の比はそのまま）
-  const PHONE_BEZEL = 11;
-  const phoneStageRef = React.useRef<HTMLDivElement>(null);
-  const [phoneScale, setPhoneScale] = React.useState(1);
-  React.useEffect(() => {
-    const el = phoneStageRef.current;
-    if (!phoneView || !el) return;
-    const fitToBox = () =>
-      setPhoneScale(
-        Math.min(
-          1,
-          (el.clientHeight - 48) / (PHONE_H + PHONE_BEZEL * 2),
-          (el.clientWidth - 32) / (PHONE_W + PHONE_BEZEL * 2),
-        ),
-      );
-    fitToBox();
-    const ro = new ResizeObserver(fitToBox);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [phoneView]);
-  const viewScale = phoneView ? phoneScale : 1; // 画面の上での縮み（マウスの位置を地図の座標に直すときに使う）
-  // 地図の中身が画面の幅に収まる大きさにして、左上から見せる
-  const fitPhone = (d: GuideMapDoc = doc, floorId = d.activeFloorId) => {
-    const objs = d.objects.filter((o) => o.floor === floorId);
-    if (objs.length === 0) return;
-    if (phoneZoomRef.current === null) phoneZoomRef.current = zoom;
-    const u = unionBox(objs.map(boxOf));
-    const z = clampZoom(Math.min(1, (PHONE_W - 24) / Math.max(1, u.r - u.l)));
-    setZoom(z);
-    window.requestAnimationFrame(() => {
-      const sc = scrollerRef.current;
-      if (sc)
-        sc.scrollTo({
-          left: PAN_PAD + u.l * z - 12,
-          top: PAN_PAD + u.t * z - 12,
-        });
-    });
-  };
   // --- 表示する範囲 ---
   // 地図の中身（何も無ければ左上）が見えるようにする。keepZoom＝拡大率はそのままで、中身を真ん中に寄せるだけ
   const fitView = (
@@ -469,10 +423,6 @@ export function GuideMapStudio({
   ) => {
     const f = d.floors.find((x) => x.id === floorId) ?? d.floors[0];
     if (!f) return;
-    if (preview && phone) {
-      fitPhone(d, f.id);
-      return;
-    }
     const empty = !f.image && !d.objects.some((o) => o.floor === f.id);
     const b = floorBounds(d, f, 24);
     window.requestAnimationFrame(() => {
@@ -618,8 +568,8 @@ export function GuideMapStudio({
   const rawPoint = (e: { clientX: number; clientY: number }): Pt => {
     const r = worldRef.current?.getBoundingClientRect() ?? { left: 0, top: 0 };
     return {
-      x: (e.clientX - r.left) / (zoom * viewScale),
-      y: (e.clientY - r.top) / (zoom * viewScale),
+      x: (e.clientX - r.left) / zoom,
+      y: (e.clientY - r.top) / zoom,
     };
   };
   const worldPoint = (e: { clientX: number; clientY: number }): Pt => {
@@ -1245,10 +1195,6 @@ export function GuideMapStudio({
 
   // 編集 ⇄ プレビュー 切り替え（作業中の状態はリセット）
   const switchPreview = (on: boolean) => {
-    if (phone) {
-      if (on) fitPhone(doc);
-      else leavePhone();
-    }
     setPreview(on);
     setSelectedIds([]);
     setShowInfo(false);
@@ -1719,17 +1665,6 @@ export function GuideMapStudio({
     }, 200);
   };
 
-  // スマホの表示をやめたら、元の拡大率に戻す
-  const leavePhone = () => {
-    if (phoneZoomRef.current !== null) setZoom(phoneZoomRef.current);
-    phoneZoomRef.current = null;
-  };
-  const switchPhone = (on: boolean) => {
-    setPhone(on);
-    if (on) fitPhone(doc);
-    else leavePhone();
-  };
-
   // --- 保存ポイント（好きなときに、いまの地図を名前を付けて残し、あとでその状態に戻せる）---
   // 保存ポイントはタブごと（どのイベントのタブかも含めて分ける）
   const snapshotKey = `${storageId}:${activePageId}`;
@@ -2073,8 +2008,8 @@ export function GuideMapStudio({
     if (d.kind === "pan") {
       const sc = scrollerRef.current;
       if (!sc) return;
-      sc.scrollLeft = d.sl - (e.clientX - d.cx) / viewScale;
-      sc.scrollTop = d.st - (e.clientY - d.cy) / viewScale;
+      sc.scrollLeft = d.sl - (e.clientX - d.cx);
+      sc.scrollTop = d.st - (e.clientY - d.cy);
       if (Math.abs(e.clientX - d.cx) + Math.abs(e.clientY - d.cy) > 3)
         d.moved = true;
       return;
@@ -2682,7 +2617,7 @@ export function GuideMapStudio({
       <div className="flex min-h-0 flex-1 flex-col">
         {/* 上の帯（1段目）：（ページから渡された見出しなど）・マップのタブ・ファイルの操作・確かめる・書き出す・（言語やテーマなど） */}
         <header className="z-30 flex h-14 shrink-0 border-b bg-card">
-          <div className="mx-auto flex w-full max-w-[1760px] min-w-0 items-center gap-2.5 px-4">
+          <div className="mx-auto flex w-full max-w-[1760px] min-w-0 items-center gap-2 px-3 min-[1280px]:gap-2.5 min-[1280px]:px-4">
             {leading && (
               <>
                 <div className="flex shrink-0 items-center gap-2">
@@ -2850,9 +2785,10 @@ export function GuideMapStudio({
             disabled={preview}
           />
           <main className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04),0_10px_30px_-18px_rgba(0,0,0,0.25)]">
-            {/* 地図の上の帯（2段目）：階・グリッド・名前で探す・編集／プレビュー */}
-            <div className="flex min-h-12 shrink-0 flex-wrap items-center gap-2 border-b px-3 py-2">
-              <div className="flex items-center gap-1">
+            {/* 地図の上の帯（2段目）：階・グリッド・名前で探す・編集／プレビュー。
+                狭い画面でも 2 段に折り返さない（階のタブが多いときは横にスクロールし、名前で探す欄は虫眼鏡だけにたたむ） */}
+            <div className="flex min-h-12 shrink-0 items-center gap-2 border-b px-3 py-2">
+              <div className="studio-thin-scroll flex h-9 min-w-0 shrink items-center gap-1 overflow-x-auto overflow-y-hidden">
                 {doc.floors.map((f, i) =>
                   editingFloor === f.id ? (
                     <FloorNameInput
@@ -2941,9 +2877,9 @@ export function GuideMapStudio({
               </div>
               {!preview && (
                 <>
-                  <span className="mx-1 h-5 w-px bg-border" />
+                  <span className="mx-1 h-5 w-px shrink-0 bg-border" />
                   <label
-                    className="ml-1 flex items-center gap-1 text-xs text-muted-foreground"
+                    className="ml-1 flex shrink-0 items-center gap-1 text-xs text-muted-foreground"
                     title={t(
                       "グリッドは作るときの目安です（お客さんの画面には出ません）",
                     )}
@@ -2957,13 +2893,15 @@ export function GuideMapStudio({
                   </label>
                   {tool === "connector" && (
                     <>
-                      <span className="mx-1 h-5 w-px bg-border" />
-                      <div className="flex items-center rounded-md border p-0.5">
+                      <span className="mx-1 h-5 w-px shrink-0 bg-border" />
+                      <div className="flex shrink-0 items-center rounded-md border p-0.5">
                         {CONNECTOR_TYPES.map((ct) => (
                           <button
                             key={ct}
                             type="button"
                             onClick={() => setConnectorType(ct)}
+                            aria-label={connectorName(ct)}
+                            title={connectorName(ct)}
                             className={cn(
                               "flex items-center gap-1 rounded px-2 py-1 text-xs font-medium",
                               connectorType === ct
@@ -2972,11 +2910,13 @@ export function GuideMapStudio({
                             )}
                           >
                             <ConnectorIcon type={ct} className="size-3.5" />
-                            {connectorName(ct)}
+                            <span className="hidden min-[1280px]:inline">
+                              {connectorName(ct)}
+                            </span>
                           </button>
                         ))}
                       </div>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="hidden min-w-0 truncate text-xs text-muted-foreground min-[1440px]:inline">
                         {t(
                           "地図をクリックして置く（全部の階の同じ位置に置かれます）",
                         )}
@@ -2986,7 +2926,7 @@ export function GuideMapStudio({
                 </>
               )}
               {/* 名前で探す（⌘F） */}
-              <div className="relative ml-auto" data-keep-selection>
+              <div className="relative ml-auto shrink-0" data-keep-selection>
                 <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
                 <input
                   ref={searchRef}
@@ -3018,7 +2958,7 @@ export function GuideMapStudio({
                   placeholder={t("名前で探す")}
                   title={t("名前で探す（⌘F）")}
                   aria-label={t("名前で探す")}
-                  className="h-8 w-36 rounded-md border border-input bg-card pr-2 pl-8 text-xs min-[1500px]:w-52"
+                  className="h-8 w-8 rounded-md border border-input bg-card pr-2 pl-8 text-xs transition-[width] focus:w-36 min-[1280px]:w-36 min-[1500px]:w-52 min-[1500px]:focus:w-52"
                 />
                 {searchOpen && query.trim() && (
                   <div className="studio-fade absolute right-0 z-50 mt-1 max-h-80 w-72 overflow-auto rounded-md border bg-card p-1 text-xs">
@@ -3056,8 +2996,8 @@ export function GuideMapStudio({
                   </div>
                 )}
               </div>
-              {/* 編集 ⇄ プレビュー 切り替え。プレビュー中はパソコン／スマホの見え方も選べる */}
-              <div className="flex items-center gap-0.5 rounded-md border p-0.5">
+              {/* 編集 ⇄ プレビュー 切り替え */}
+              <div className="flex shrink-0 items-center gap-0.5 rounded-md border p-0.5">
                 <button
                   type="button"
                   onClick={() => switchPreview(false)}
@@ -3094,47 +3034,6 @@ export function GuideMapStudio({
                     {t("プレビュー")}
                   </span>
                 </button>
-                {preview && (
-                  <>
-                    <span className="mx-1 h-5 w-px bg-border" />
-                    <button
-                      type="button"
-                      onClick={() => switchPhone(false)}
-                      aria-pressed={!phone}
-                      aria-label={t("パソコン")}
-                      title={t("パソコンの画面で見る")}
-                      className={cn(
-                        "flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium",
-                        !phone
-                          ? "bg-accent text-primary"
-                          : "text-muted-foreground hover:bg-accent",
-                      )}
-                    >
-                      <Monitor className="size-3.5" />
-                      <span className="hidden min-[1400px]:inline">
-                        {t("パソコン")}
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => switchPhone(true)}
-                      aria-pressed={phone}
-                      aria-label={t("スマホ")}
-                      title={t("スマホの画面で見る")}
-                      className={cn(
-                        "flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium",
-                        phone
-                          ? "bg-accent text-primary"
-                          : "text-muted-foreground hover:bg-accent",
-                      )}
-                    >
-                      <Smartphone className="size-3.5" />
-                      <span className="hidden min-[1400px]:inline">
-                        {t("スマホ")}
-                      </span>
-                    </button>
-                  </>
-                )}
               </div>
               {!sideOpen && (
                 <button
@@ -3149,968 +3048,826 @@ export function GuideMapStudio({
               )}
             </div>
             <div className="relative min-h-0 flex-1">
-              {/* スマホで見るとき：スマホの形（枠・画面上の時計・階の切り替え）の中に地図を出す。地図の要素は作り直さない */}
               <div
-                ref={phoneStageRef}
-                className={
-                  phoneView
-                    ? "absolute inset-0 flex justify-center overflow-hidden bg-[var(--studio-map)] px-4 py-6"
-                    : "contents"
-                }
+                ref={scrollerRef}
+                className="studio-thin-scroll absolute inset-0 overflow-auto bg-[var(--studio-map)]"
               >
+                {/* biome-ignore lint/a11y/noStaticElementInteractions: 地図の上で描く・動かす操作（マウス・ペン）。キーボードでは道具のキーと矢印キーで操作する */}
                 <div
-                  className={
-                    phoneView
-                      ? "relative h-fit origin-top rounded-[54px] border-[11px] border-[#1d1b19] bg-[#1d1b19] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.45)]"
-                      : "contents"
-                  }
-                  style={
-                    phoneView
-                      ? { transform: `scale(${phoneScale})` }
-                      : undefined
-                  }
+                  style={{
+                    width: worldW * zoom + PAN_PAD * 2,
+                    height: worldH * zoom + PAN_PAD * 2,
+                    ...(showGrid && !preview
+                      ? {
+                          backgroundImage:
+                            "linear-gradient(to right, color-mix(in srgb, var(--foreground) 16%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--foreground) 16%, transparent) 1px, transparent 1px), linear-gradient(to right, color-mix(in srgb, var(--foreground) 7%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--foreground) 7%, transparent) 1px, transparent 1px)",
+                          backgroundSize: `${200 * zoom}px ${200 * zoom}px, ${200 * zoom}px ${200 * zoom}px, ${40 * zoom}px ${40 * zoom}px, ${40 * zoom}px ${40 * zoom}px`,
+                          backgroundPosition: `${PAN_PAD}px ${PAN_PAD}px`,
+                        }
+                      : {}),
+                  }}
+                  // 地図の外側の余白（グリッドが見えている所）でも、置く・選ぶ・動かすができるように、操作はこの広い面で受ける。
+                  // 座標は地図（worldRef）の左上を基準に計算するので、余白ではマイナスの位置になる
+                  data-keep-selection
+                  onPointerDown={onWorldDown}
+                  onPointerMove={onMove}
+                  onPointerUp={onUp}
+                  onPointerCancel={onUp}
+                  onPointerLeave={() => rulersOn && showCursor(null)}
+                  onContextMenu={onWorldContextMenu}
+                  className={cn("touch-none select-none", worldCursor)}
                 >
-                  {phoneView && (
-                    <span
-                      aria-hidden
-                      className="absolute top-[11px] left-1/2 z-10 h-[30px] w-[110px] -translate-x-1/2 rounded-full bg-[#1d1b19]"
-                    />
-                  )}
                   <div
-                    className={
-                      phoneView
-                        ? "flex flex-col overflow-hidden rounded-[43px] bg-card"
-                        : "contents"
-                    }
-                    style={
-                      phoneView
-                        ? { width: PHONE_W, height: PHONE_H }
-                        : undefined
-                    }
+                    ref={worldRef}
+                    data-keep-selection
+                    className="relative"
+                    style={{
+                      width: worldW,
+                      height: worldH,
+                      transform: `translate(${PAN_PAD}px, ${PAN_PAD}px) scale(${zoom})`,
+                      transformOrigin: "0 0",
+                    }}
                   >
-                    {phoneView && (
-                      <div
-                        aria-hidden
-                        className="flex h-[52px] shrink-0 items-end justify-between px-8 pb-1.5 text-[13px] font-medium"
-                      >
-                        <span className="font-mono">9:41</span>
-                        <span className="flex items-center gap-1.5">
-                          <svg
-                            aria-hidden="true"
-                            viewBox="0 0 18 12"
-                            className="h-2.5 w-4"
-                            fill="currentColor"
-                          >
-                            <rect x="0" y="8" width="3" height="4" rx="1" />
-                            <rect x="5" y="5" width="3" height="7" rx="1" />
-                            <rect
-                              x="10"
-                              y="2.5"
-                              width="3"
-                              height="9.5"
-                              rx="1"
-                            />
-                            <rect x="15" y="0" width="3" height="12" rx="1" />
-                          </svg>
-                          <svg
-                            aria-hidden="true"
-                            viewBox="0 0 26 12"
-                            className="h-3 w-6"
-                            fill="none"
-                            stroke="currentColor"
-                          >
-                            <rect
-                              x="0.5"
-                              y="0.5"
-                              width="22"
-                              height="11"
-                              rx="3"
-                            />
-                            <rect
-                              x="2.5"
-                              y="2.5"
-                              width="15"
-                              height="7"
-                              rx="1.5"
-                              fill="currentColor"
-                              stroke="none"
-                            />
-                            <path d="M24.5 4v4" strokeLinecap="round" />
-                          </svg>
-                        </span>
-                      </div>
+                    {/* 下敷き画像（いまは追加できないが、前に入れた地図ではそのまま表示する） */}
+                    {floor?.image && (
+                      // biome-ignore lint/performance/noImgElement: SVG の data URL をそのまま出す（画像の最適化は要らない）
+                      <img
+                        src={floor.image.src}
+                        alt=""
+                        className="pointer-events-none absolute top-0 left-0 select-none"
+                        style={{ width: worldW, height: worldH }}
+                        draggable={false}
+                      />
                     )}
-                    {phoneView && (
-                      <div className="studio-thin-scroll flex shrink-0 items-center gap-1.5 overflow-x-auto border-b px-4 py-2">
-                        {doc.floors.map((f) => (
-                          <button
-                            key={f.id}
-                            type="button"
-                            onClick={() => goFloor(f.id)}
-                            className={cn(
-                              "shrink-0 rounded-full border px-3 py-1 font-mono text-xs",
-                              f.id === doc.activeFloorId
-                                ? "border-transparent bg-primary text-primary-foreground"
-                                : "",
-                            )}
-                          >
-                            {f.name}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    <div
-                      ref={scrollerRef}
-                      className={
-                        phoneView
-                          ? "studio-thin-scroll min-h-0 flex-1 overflow-auto bg-[var(--studio-map)]"
-                          : "studio-thin-scroll absolute inset-0 overflow-auto bg-[var(--studio-map)]"
-                      }
+
+                    {/* エリア＝ゾーン（最背面レイヤー。範囲を囲んでラベルで分かりやすく） */}
+                    <svg
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 overflow-visible"
+                      width={worldW}
+                      height={worldH}
                     >
-                      {/* biome-ignore lint/a11y/noStaticElementInteractions: 地図の上で描く・動かす操作（マウス・ペン）。キーボードでは道具のキーと矢印キーで操作する */}
-                      <div
-                        style={{
-                          width: worldW * zoom + PAN_PAD * 2,
-                          height: worldH * zoom + PAN_PAD * 2,
-                          ...(showGrid && !preview
-                            ? {
-                                backgroundImage:
-                                  "linear-gradient(to right, color-mix(in srgb, var(--foreground) 16%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--foreground) 16%, transparent) 1px, transparent 1px), linear-gradient(to right, color-mix(in srgb, var(--foreground) 7%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--foreground) 7%, transparent) 1px, transparent 1px)",
-                                backgroundSize: `${200 * zoom}px ${200 * zoom}px, ${200 * zoom}px ${200 * zoom}px, ${40 * zoom}px ${40 * zoom}px, ${40 * zoom}px ${40 * zoom}px`,
-                                backgroundPosition: `${PAN_PAD}px ${PAN_PAD}px`,
+                      {/* 色と描き方はお客さんの案内マップと同じ（guideMapDoc.ts の buildingOf・areaPalette） */}
+                      {building && (
+                        <polygon
+                          points={toPointsAttr(building.points)}
+                          fill={MAP_FLOOR}
+                        />
+                      )}
+                      {objects.map((o) => {
+                        if (o.kind !== "area" || o.points.length < 3)
+                          return null;
+                        const isBuilding = o === building;
+                        const pal = areaPalette(o.color);
+                        const sel = !preview && selectedIds.includes(o.id);
+                        const c = centroidOf(o.points);
+                        const bb = bboxOf(o.points);
+                        const top = bb.y;
+                        return (
+                          <g key={o.id}>
+                            {/* 建物の外枠は床をいちばん下に塗ってあるので、ここでは壁の線だけ。通行止めだけ点線で区別する */}
+                            <polygon
+                              points={toPointsAttr(o.points)}
+                              fill={isBuilding ? "none" : pal.fill}
+                              fillOpacity={o.closed ? 0.7 : 0.55}
+                              stroke={
+                                sel ? SEL : isBuilding ? MAP_WALL : pal.stroke
                               }
-                            : {}),
-                        }}
-                        // 地図の外側の余白（グリッドが見えている所）でも、置く・選ぶ・動かすができるように、操作はこの広い面で受ける。
-                        // 座標は地図（worldRef）の左上を基準に計算するので、余白ではマイナスの位置になる
-                        data-keep-selection
-                        onPointerDown={onWorldDown}
-                        onPointerMove={onMove}
-                        onPointerUp={onUp}
-                        onPointerCancel={onUp}
-                        onPointerLeave={() => rulersOn && showCursor(null)}
-                        onContextMenu={onWorldContextMenu}
-                        className={cn("touch-none select-none", worldCursor)}
-                      >
+                              strokeWidth={sel ? 1.5 : isBuilding ? 3 : 1.5}
+                              strokeDasharray={
+                                sel ? undefined : o.closed ? "6 3" : undefined
+                              }
+                              strokeLinejoin="round"
+                            />
+                            {o.title && (
+                              <text
+                                x={c.x}
+                                y={top + areaLabelSize(bb.w, bb.h) + 8}
+                                textAnchor="middle"
+                                fontSize={areaLabelSize(bb.w, bb.h)}
+                                fontFamily="var(--font-mono)"
+                                letterSpacing="0.06em"
+                                fill={
+                                  o.closed
+                                    ? "var(--studio-accent)"
+                                    : isBuilding
+                                      ? "var(--guest-map-room-ink)"
+                                      : pal.ink
+                                }
+                                style={{ paintOrder: "stroke" }}
+                                stroke={MAP_FLOOR}
+                                strokeWidth={3}
+                                strokeLinejoin="round"
+                              >
+                                {o.title}
+                                {o.closed ? tg("closed") : ""}
+                                {!preview && o.locked ? " 🔒" : ""}
+                              </text>
+                            )}
+                          </g>
+                        );
+                      })}
+                      {/* 混雑を試している所（お客さんの画面と同じ広さ：範囲はその中、通路の線はまわり、場所はまわり） */}
+                      {objects.map((o) => {
+                        const st = previewCrowdMap.get(o.id);
+                        if (!st) return null;
+                        const c = crowdColor(st);
+                        const common = {
+                          fill: c,
+                          fillOpacity: st.danger ? 0.28 : 0.2,
+                          stroke: c,
+                          strokeWidth: 1.5,
+                          strokeDasharray: st.danger ? "6 4" : undefined,
+                        };
+                        if (o.kind === "area")
+                          return (
+                            <polygon
+                              key={`cz-${o.id}`}
+                              points={toPointsAttr(o.points)}
+                              {...common}
+                            />
+                          );
+                        if (o.kind === "route")
+                          return (
+                            <polyline
+                              key={`cz-${o.id}`}
+                              points={toPointsAttr(o.points)}
+                              fill="none"
+                              stroke={c}
+                              strokeOpacity={0.35}
+                              strokeWidth={o.width + 64}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          );
+                        if (o.kind !== "place") return null;
+                        if (o.shape === "pin" && !isConnector(o))
+                          return (
+                            <circle
+                              key={`cz-${o.id}`}
+                              cx={o.x}
+                              cy={o.y}
+                              r={64}
+                              {...common}
+                            />
+                          );
+                        const b =
+                          isConnector(o) && o.shape === "pin"
+                            ? markBoxOf(o)
+                            : { w: o.w, h: o.h };
+                        return (
+                          <rect
+                            key={`cz-${o.id}`}
+                            x={o.x - b.w / 2 - 32}
+                            y={o.y - b.h / 2 - 32}
+                            width={b.w + 64}
+                            height={b.h + 64}
+                            rx={12}
+                            {...common}
+                          />
+                        );
+                      })}
+                      {/* 混雑が無いときの道（混雑を避けて道が変わったときだけ、灰色の点線で） */}
+                      {avoided &&
+                        plainSteps?.map((s, i) =>
+                          s.kind === "walk" &&
+                          s.floor === doc.activeFloorId &&
+                          s.points.length >= 2 ? (
+                            <polyline
+                              // biome-ignore lint/suspicious/noArrayIndexKey: 道の区間は順番そのものが意味で、並べ替えない
+                              key={`plain-${i}`}
+                              points={toPointsAttr(s.points)}
+                              fill="none"
+                              stroke="var(--studio-text-secondary)"
+                              strokeOpacity={0.6}
+                              strokeWidth={3}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeDasharray="1 8"
+                            />
+                          ) : null,
+                        )}
+                      {/* 誘導プレビュー経路（壁を避けた道なり） */}
+                      {routeSteps?.map((s, i) =>
+                        s.kind === "walk" &&
+                        s.floor === doc.activeFloorId &&
+                        s.points.length >= 2 ? (
+                          // tolo-web の案内マップと同じ見た目：縁取り＋太い線＋進む向きに流れる白い点
+                          // biome-ignore lint/suspicious/noArrayIndexKey: 道の区間は順番そのものが意味で、並べ替えない
+                          <g key={i}>
+                            <polyline
+                              points={toPointsAttr(s.points)}
+                              fill="none"
+                              stroke="var(--studio-background)"
+                              strokeWidth={10}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <polyline
+                              points={toPointsAttr(s.points)}
+                              fill="none"
+                              stroke={GUIDE}
+                              strokeWidth={5.5}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <polyline
+                              points={toPointsAttr(s.points)}
+                              fill="none"
+                              stroke="#ffffff"
+                              strokeOpacity={0.9}
+                              strokeWidth={2}
+                              strokeLinecap="round"
+                              strokeDasharray="0.01 11"
+                              className="studio-route-anim"
+                            />
+                          </g>
+                        ) : null,
+                      )}
+                      {/* 範囲選択（マーキー） */}
+                      {marquee && (
+                        <rect
+                          x={Math.min(marquee.x0, marquee.x1)}
+                          y={Math.min(marquee.y0, marquee.y1)}
+                          width={Math.abs(marquee.x1 - marquee.x0)}
+                          height={Math.abs(marquee.y1 - marquee.y0)}
+                          className="fill-primary stroke-primary"
+                          fillOpacity={0.08}
+                          strokeWidth={1 / zoom}
+                          strokeDasharray="5 4"
+                        />
+                      )}
+                      {/* 四角/丸/エリア ドラッグ中プレビュー */}
+                      {drawBox && (
+                        <rect
+                          x={drawBox.x}
+                          y={drawBox.y}
+                          width={drawBox.w}
+                          height={drawBox.h}
+                          rx={
+                            tool === "circle"
+                              ? Math.min(drawBox.w, drawBox.h) / 2
+                              : tool === "area"
+                                ? 0
+                                : 4
+                          }
+                          ry={
+                            tool === "circle"
+                              ? Math.min(drawBox.w, drawBox.h) / 2
+                              : tool === "area"
+                                ? 0
+                                : 4
+                          }
+                          fill={paletteOf(color).fill}
+                          fillOpacity={0.2}
+                          stroke={paletteOf(color).stroke}
+                          strokeWidth={2}
+                          strokeDasharray="6 5"
+                        />
+                      )}
+                      {/* 選択中 route/area の頂点マーカー */}
+                      {!preview &&
+                        selected &&
+                        !selected.locked &&
+                        (selected.kind === "route" ||
+                          selected.kind === "area") &&
+                        selected.points.map((pt, i) => (
+                          <circle
+                            // biome-ignore lint/suspicious/noArrayIndexKey: 頂点は番号そのものが識別子（何番目の頂点か）
+                            key={i}
+                            cx={pt.x}
+                            cy={pt.y}
+                            r={5 / zoom + 1}
+                            className="fill-card stroke-primary"
+                            strokeWidth={2 / zoom + 1}
+                          />
+                        ))}
+                    </svg>
+
+                    {/* 頂点ハンドル（当たり） */}
+                    {!preview &&
+                      selected &&
+                      !selected.locked &&
+                      (selected.kind === "route" || selected.kind === "area") &&
+                      selected.points.map((pt, i) => (
                         <div
-                          ref={worldRef}
-                          data-keep-selection
-                          className="relative"
+                          // biome-ignore lint/suspicious/noArrayIndexKey: 頂点は番号そのものが識別子（何番目の頂点か）
+                          key={i}
+                          onPointerDown={(ev) =>
+                            onVertexDown(ev, selected.id, i)
+                          }
+                          className="absolute z-30 cursor-move rounded-full"
                           style={{
-                            width: worldW,
-                            height: worldH,
-                            transform: `translate(${PAN_PAD}px, ${PAN_PAD}px) scale(${zoom})`,
-                            transformOrigin: "0 0",
+                            left: pt.x - 9 / zoom,
+                            top: pt.y - 9 / zoom,
+                            width: 18 / zoom,
+                            height: 18 / zoom,
                           }}
-                        >
-                          {/* 下敷き画像（いまは追加できないが、前に入れた地図ではそのまま表示する） */}
-                          {floor?.image && (
-                            // biome-ignore lint/performance/noImgElement: SVG の data URL をそのまま出す（画像の最適化は要らない）
-                            <img
-                              src={floor.image.src}
-                              alt=""
-                              className="pointer-events-none absolute top-0 left-0 select-none"
-                              style={{ width: worldW, height: worldH }}
-                              draggable={false}
-                            />
-                          )}
+                        />
+                      ))}
 
-                          {/* エリア＝ゾーン（最背面レイヤー。範囲を囲んでラベルで分かりやすく） */}
-                          <svg
-                            aria-hidden="true"
-                            className="pointer-events-none absolute inset-0 overflow-visible"
-                            width={worldW}
-                            height={worldH}
-                          >
-                            {/* 色と描き方はお客さんの案内マップと同じ（guideMapDoc.ts の buildingOf・areaPalette） */}
-                            {building && (
-                              <polygon
-                                points={toPointsAttr(building.points)}
-                                fill={MAP_FLOOR}
-                              />
-                            )}
-                            {objects.map((o) => {
-                              if (o.kind !== "area" || o.points.length < 3)
-                                return null;
-                              const isBuilding = o === building;
-                              const pal = areaPalette(o.color);
-                              const sel =
-                                !preview && selectedIds.includes(o.id);
-                              const c = centroidOf(o.points);
-                              const bb = bboxOf(o.points);
-                              const top = bb.y;
-                              return (
-                                <g key={o.id}>
-                                  {/* 建物の外枠は床をいちばん下に塗ってあるので、ここでは壁の線だけ。通行止めだけ点線で区別する */}
-                                  <polygon
-                                    points={toPointsAttr(o.points)}
-                                    fill={isBuilding ? "none" : pal.fill}
-                                    fillOpacity={o.closed ? 0.7 : 0.55}
-                                    stroke={
-                                      sel
-                                        ? SEL
-                                        : isBuilding
-                                          ? MAP_WALL
-                                          : pal.stroke
-                                    }
-                                    strokeWidth={
-                                      sel ? 1.5 : isBuilding ? 3 : 1.5
-                                    }
-                                    strokeDasharray={
-                                      sel
-                                        ? undefined
-                                        : o.closed
-                                          ? "6 3"
-                                          : undefined
-                                    }
-                                    strokeLinejoin="round"
-                                  />
-                                  {o.title && (
-                                    <text
-                                      x={c.x}
-                                      y={top + areaLabelSize(bb.w, bb.h) + 8}
-                                      textAnchor="middle"
-                                      fontSize={areaLabelSize(bb.w, bb.h)}
-                                      fontFamily="var(--font-mono)"
-                                      letterSpacing="0.06em"
-                                      fill={
-                                        o.closed
-                                          ? "var(--studio-accent)"
-                                          : isBuilding
-                                            ? "var(--guest-map-room-ink)"
-                                            : pal.ink
-                                      }
-                                      style={{ paintOrder: "stroke" }}
-                                      stroke={MAP_FLOOR}
-                                      strokeWidth={3}
-                                      strokeLinejoin="round"
-                                    >
-                                      {o.title}
-                                      {o.closed ? tg("closed") : ""}
-                                      {!preview && o.locked ? " 🔒" : ""}
-                                    </text>
-                                  )}
-                                </g>
-                              );
-                            })}
-                            {/* 混雑を試している所（お客さんの画面と同じ広さ：範囲はその中、通路の線はまわり、場所はまわり） */}
-                            {objects.map((o) => {
-                              const st = previewCrowdMap.get(o.id);
-                              if (!st) return null;
-                              const c = crowdColor(st);
-                              const common = {
-                                fill: c,
-                                fillOpacity: st.danger ? 0.28 : 0.2,
-                                stroke: c,
-                                strokeWidth: 1.5,
-                                strokeDasharray: st.danger ? "6 4" : undefined,
-                              };
-                              if (o.kind === "area")
-                                return (
-                                  <polygon
-                                    key={`cz-${o.id}`}
-                                    points={toPointsAttr(o.points)}
-                                    {...common}
-                                  />
-                                );
-                              if (o.kind === "route")
-                                return (
-                                  <polyline
-                                    key={`cz-${o.id}`}
-                                    points={toPointsAttr(o.points)}
-                                    fill="none"
-                                    stroke={c}
-                                    strokeOpacity={0.35}
-                                    strokeWidth={o.width + 64}
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                );
-                              if (o.kind !== "place") return null;
-                              if (o.shape === "pin" && !isConnector(o))
-                                return (
-                                  <circle
-                                    key={`cz-${o.id}`}
-                                    cx={o.x}
-                                    cy={o.y}
-                                    r={64}
-                                    {...common}
-                                  />
-                                );
-                              const b =
-                                isConnector(o) && o.shape === "pin"
-                                  ? markBoxOf(o)
-                                  : { w: o.w, h: o.h };
-                              return (
-                                <rect
-                                  key={`cz-${o.id}`}
-                                  x={o.x - b.w / 2 - 32}
-                                  y={o.y - b.h / 2 - 32}
-                                  width={b.w + 64}
-                                  height={b.h + 64}
-                                  rx={12}
-                                  {...common}
-                                />
-                              );
-                            })}
-                            {/* 混雑が無いときの道（混雑を避けて道が変わったときだけ、灰色の点線で） */}
-                            {avoided &&
-                              plainSteps?.map((s, i) =>
-                                s.kind === "walk" &&
-                                s.floor === doc.activeFloorId &&
-                                s.points.length >= 2 ? (
-                                  <polyline
-                                    // biome-ignore lint/suspicious/noArrayIndexKey: 道の区間は順番そのものが意味で、並べ替えない
-                                    key={`plain-${i}`}
-                                    points={toPointsAttr(s.points)}
-                                    fill="none"
-                                    stroke="var(--studio-text-secondary)"
-                                    strokeOpacity={0.6}
-                                    strokeWidth={3}
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeDasharray="1 8"
-                                  />
-                                ) : null,
-                              )}
-                            {/* 誘導プレビュー経路（壁を避けた道なり） */}
-                            {routeSteps?.map((s, i) =>
-                              s.kind === "walk" &&
-                              s.floor === doc.activeFloorId &&
-                              s.points.length >= 2 ? (
-                                // tolo-web の案内マップと同じ見た目：縁取り＋太い線＋進む向きに流れる白い点
-                                // biome-ignore lint/suspicious/noArrayIndexKey: 道の区間は順番そのものが意味で、並べ替えない
-                                <g key={i}>
-                                  <polyline
-                                    points={toPointsAttr(s.points)}
-                                    fill="none"
-                                    stroke="var(--studio-background)"
-                                    strokeWidth={10}
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                  <polyline
-                                    points={toPointsAttr(s.points)}
-                                    fill="none"
-                                    stroke={GUIDE}
-                                    strokeWidth={5.5}
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                  <polyline
-                                    points={toPointsAttr(s.points)}
-                                    fill="none"
-                                    stroke="#ffffff"
-                                    strokeOpacity={0.9}
-                                    strokeWidth={2}
-                                    strokeLinecap="round"
-                                    strokeDasharray="0.01 11"
-                                    className="studio-route-anim"
-                                  />
-                                </g>
-                              ) : null,
-                            )}
-                            {/* 範囲選択（マーキー） */}
-                            {marquee && (
-                              <rect
-                                x={Math.min(marquee.x0, marquee.x1)}
-                                y={Math.min(marquee.y0, marquee.y1)}
-                                width={Math.abs(marquee.x1 - marquee.x0)}
-                                height={Math.abs(marquee.y1 - marquee.y0)}
-                                className="fill-primary stroke-primary"
-                                fillOpacity={0.08}
-                                strokeWidth={1 / zoom}
-                                strokeDasharray="5 4"
-                              />
-                            )}
-                            {/* 四角/丸/エリア ドラッグ中プレビュー */}
-                            {drawBox && (
-                              <rect
-                                x={drawBox.x}
-                                y={drawBox.y}
-                                width={drawBox.w}
-                                height={drawBox.h}
-                                rx={
-                                  tool === "circle"
-                                    ? Math.min(drawBox.w, drawBox.h) / 2
-                                    : tool === "area"
-                                      ? 0
-                                      : 4
-                                }
-                                ry={
-                                  tool === "circle"
-                                    ? Math.min(drawBox.w, drawBox.h) / 2
-                                    : tool === "area"
-                                      ? 0
-                                      : 4
-                                }
-                                fill={paletteOf(color).fill}
-                                fillOpacity={0.2}
-                                stroke={paletteOf(color).stroke}
-                                strokeWidth={2}
-                                strokeDasharray="6 5"
-                              />
-                            )}
-                            {/* 選択中 route/area の頂点マーカー */}
-                            {!preview &&
-                              selected &&
-                              !selected.locked &&
-                              (selected.kind === "route" ||
-                                selected.kind === "area") &&
-                              selected.points.map((pt, i) => (
-                                <circle
-                                  // biome-ignore lint/suspicious/noArrayIndexKey: 頂点は番号そのものが識別子（何番目の頂点か）
-                                  key={i}
-                                  cx={pt.x}
-                                  cy={pt.y}
-                                  r={5 / zoom + 1}
-                                  className="fill-card stroke-primary"
-                                  strokeWidth={2 / zoom + 1}
-                                />
-                              ))}
-                          </svg>
-
-                          {/* 頂点ハンドル（当たり） */}
-                          {!preview &&
-                            selected &&
-                            !selected.locked &&
-                            (selected.kind === "route" ||
-                              selected.kind === "area") &&
-                            selected.points.map((pt, i) => (
+                    {/* 場所（ピン / 四角 / 丸）—「上質な図面」風：面の色＋選んだ色はごく薄く、細い線と左の色帯、等幅の番号 */}
+                    {objects
+                      .filter((o): o is PlaceObject => o.kind === "place")
+                      .map((o) => {
+                        const pal = paletteOf(shownColorOf(o));
+                        const sel = !preview && selectedIds.includes(o.id);
+                        const tapped =
+                          preview && showInfo && selectedId === o.id;
+                        const line = objLine(pal.fill);
+                        const selStyle = sel
+                          ? {
+                              outline: `1.5px solid ${SEL}`,
+                              outlineOffset: 2,
+                            }
+                          : {};
+                        if (isConnector(o)) {
+                          const linked = doc.floors.filter((f) =>
+                            doc.objects.some(
+                              (x) =>
+                                isConnector(x) &&
+                                x.link === o.link &&
+                                x.floor === f.id,
+                            ),
+                          );
+                          const floorsLabel =
+                            linked.length < 2
+                              ? t("未接続")
+                              : linked.length > 2
+                                ? `${linked[0].name}–${linked[linked.length - 1].name}`
+                                : linked.map((f) => f.name).join("・");
+                          const label = o.title || connectorName(o.connector);
+                          if (o.shape !== "pin") {
+                            // 四角／丸の階段・エレベーター：部屋と同じ図面風の面に、線画アイコン＋名前＋つながる階
+                            return (
                               <div
-                                // biome-ignore lint/suspicious/noArrayIndexKey: 頂点は番号そのものが識別子（何番目の頂点か）
-                                key={i}
-                                onPointerDown={(ev) =>
-                                  onVertexDown(ev, selected.id, i)
-                                }
-                                className="absolute z-30 cursor-move rounded-full"
+                                key={o.id}
+                                className={cn(
+                                  "absolute z-20 flex flex-col items-center justify-center gap-1 text-center",
+                                  o.shape === "circle"
+                                    ? "rounded-full"
+                                    : "rounded-md",
+                                )}
                                 style={{
-                                  left: pt.x - 9 / zoom,
-                                  top: pt.y - 9 / zoom,
-                                  width: 18 / zoom,
-                                  height: 18 / zoom,
+                                  left: o.x - o.w / 2,
+                                  top: o.y - o.h / 2,
+                                  width: o.w,
+                                  height: o.h,
+                                  background: objFill(pal.fill),
+                                  border: `1px solid ${line}`,
+                                  color: "var(--studio-text-primary)",
+                                  ...selStyle,
                                 }}
-                              />
-                            ))}
-
-                          {/* 場所（ピン / 四角 / 丸）—「上質な図面」風：面の色＋選んだ色はごく薄く、細い線と左の色帯、等幅の番号 */}
-                          {objects
-                            .filter((o): o is PlaceObject => o.kind === "place")
-                            .map((o) => {
-                              const pal = paletteOf(shownColorOf(o));
-                              const sel =
-                                !preview && selectedIds.includes(o.id);
-                              const tapped =
-                                preview && showInfo && selectedId === o.id;
-                              const line = objLine(pal.fill);
-                              const selStyle = sel
-                                ? {
-                                    outline: `1.5px solid ${SEL}`,
-                                    outlineOffset: 2,
-                                  }
-                                : {};
-                              if (isConnector(o)) {
-                                const linked = doc.floors.filter((f) =>
-                                  doc.objects.some(
-                                    (x) =>
-                                      isConnector(x) &&
-                                      x.link === o.link &&
-                                      x.floor === f.id,
-                                  ),
-                                );
-                                const floorsLabel =
-                                  linked.length < 2
-                                    ? t("未接続")
-                                    : linked.length > 2
-                                      ? `${linked[0].name}–${linked[linked.length - 1].name}`
-                                      : linked.map((f) => f.name).join("・");
-                                const label =
-                                  o.title || connectorName(o.connector);
-                                if (o.shape !== "pin") {
-                                  // 四角／丸の階段・エレベーター：部屋と同じ図面風の面に、線画アイコン＋名前＋つながる階
-                                  return (
-                                    <div
-                                      key={o.id}
-                                      className={cn(
-                                        "absolute z-20 flex flex-col items-center justify-center gap-1 text-center",
-                                        o.shape === "circle"
-                                          ? "rounded-full"
-                                          : "rounded-md",
-                                      )}
-                                      style={{
-                                        left: o.x - o.w / 2,
-                                        top: o.y - o.h / 2,
-                                        width: o.w,
-                                        height: o.h,
-                                        background: objFill(pal.fill),
-                                        border: `1px solid ${line}`,
-                                        color: "var(--studio-text-primary)",
-                                        ...selStyle,
-                                      }}
-                                    >
-                                      {!preview && o.locked && (
-                                        <Lock
-                                          aria-label={t("固定中")}
-                                          className="absolute top-1.5 right-1.5 size-3 text-muted-foreground"
-                                        />
-                                      )}
-                                      <ConnectorIcon
-                                        type={o.connector}
-                                        className="size-[18px]"
-                                        style={{ color: line }}
-                                      />
-                                      <span className="max-w-full truncate px-2 text-[12px] tracking-[0.04em]">
-                                        {label}
-                                      </span>
-                                      {!preview && (
-                                        <span
-                                          className={cn(
-                                            "max-w-full truncate px-2 font-mono text-[10px] tracking-[0.08em]",
-                                            linked.length < 2
-                                              ? "text-primary"
-                                              : "text-muted-foreground",
-                                          )}
-                                        >
-                                          {floorsLabel}
-                                        </span>
-                                      )}
-                                    </div>
-                                  );
-                                }
-                                // ピン型の階段・エレベーター：細い線の正方形に線画アイコン、下に等幅の小さな名前と行き先の階
-                                const mb = markBoxOf(o);
-                                return (
-                                  <div
-                                    key={o.id}
-                                    className="absolute z-[25]"
-                                    style={{
-                                      left: o.x - mb.w / 2,
-                                      top: o.y - mb.h / 2,
-                                      width: mb.w,
-                                      height: mb.h,
-                                    }}
-                                  >
-                                    <span
-                                      className="flex size-full items-center justify-center rounded-md"
-                                      style={{
-                                        background: "var(--studio-surface)",
-                                        border: `1px solid ${line}`,
-                                        color: line,
-                                        ...selStyle,
-                                      }}
-                                    >
-                                      <ConnectorIcon
-                                        type={o.connector}
-                                        style={{
-                                          width: Math.min(mb.w, mb.h) * 0.56,
-                                          height: Math.min(mb.w, mb.h) * 0.56,
-                                        }}
-                                      />
-                                    </span>
-                                    <span className="absolute top-full left-1/2 mt-1 flex -translate-x-1/2 items-center gap-1.5 rounded-sm bg-background/85 px-1 font-mono text-[10px] tracking-[0.08em] whitespace-nowrap">
-                                      <span
-                                        style={{
-                                          color: "var(--studio-text-primary)",
-                                        }}
-                                      >
-                                        {label}
-                                      </span>
-                                      {!preview && (
-                                        <span
-                                          className={
-                                            linked.length < 2
-                                              ? "text-primary"
-                                              : "text-muted-foreground"
-                                          }
-                                        >
-                                          {floorsLabel}
-                                        </span>
-                                      )}
-                                    </span>
-                                  </div>
-                                );
-                              }
-                              if (o.shape === "pin") {
-                                // 単独のピン：小さな点＋細い輪（中心が x,y）。名前は上に小さく
-                                return (
-                                  <div
-                                    key={o.id}
-                                    className="absolute z-20"
-                                    style={{ left: o.x, top: o.y }}
-                                  >
-                                    {o.title && (
-                                      <span
-                                        className="absolute bottom-3 left-1/2 max-w-[160px] -translate-x-1/2 truncate rounded-md border bg-card px-2 py-0.5 text-[11px] tracking-[0.04em]"
-                                        style={{
-                                          color: "var(--studio-text-primary)",
-                                          borderColor: sel
-                                            ? SEL
-                                            : "var(--studio-divider)",
-                                        }}
-                                      >
-                                        {o.title}
-                                      </span>
-                                    )}
-                                    <PinDot
-                                      color={pal.fill}
-                                      line={line}
-                                      sel={sel}
-                                      tapped={tapped}
-                                    />
-                                  </div>
-                                );
-                              }
-                              // 四角／丸（部屋・区画）。トイレなどは tolo-web と同じマークを名前の上に出す
-                              const parts = splitTitle(o.title);
-                              const Mark = KIND_ICON[markOf(o)];
-                              const markSize = Math.max(
-                                12,
-                                Math.min(28, Math.min(o.w, o.h) * 0.3),
-                              );
-                              // 名前（無ければ番号）は部屋の大きさに合わせた大きさで、入らなければ 2 行に分ける（roomLabel.ts）。
-                              // 名前より上の目印（18px）とマークの分は、名前に使える高さから引く（すき間は 6px）
-                              const label = roomLabel(
-                                parts.name || parts.num,
-                                o.w,
-                                o.h,
-                                {
-                                  reserved:
-                                    (o.pin ? 18 + 6 : 0) +
-                                    (Mark ? markSize + 6 : 0),
-                                  spacing: parts.name ? 0.04 : 0.12,
-                                  mono: !parts.name,
-                                },
-                              );
-                              return (
-                                <div
-                                  key={o.id}
-                                  className={cn(
-                                    "absolute z-20 flex flex-col items-center justify-center gap-1.5 text-center",
-                                    o.shape === "circle"
-                                      ? "rounded-full"
-                                      : "rounded-md",
-                                  )}
-                                  style={{
-                                    left: o.x - o.w / 2,
-                                    top: o.y - o.h / 2,
-                                    width: o.w,
-                                    height: o.h,
-                                    background: objFill(pal.fill),
-                                    border: `1px solid ${line}`,
-                                    // 左の辺に 3px の色帯（丸には付けない）
-                                    ...(o.shape === "circle"
-                                      ? {}
-                                      : {
-                                          borderLeft: `3px solid ${pal.fill}`,
-                                        }),
-                                    color: "var(--studio-text-primary)",
-                                    ...selStyle,
-                                  }}
-                                >
-                                  {!preview && o.locked && (
-                                    <Lock
-                                      aria-label={t("固定中")}
-                                      className="absolute top-1.5 right-1.5 size-3 text-muted-foreground"
-                                    />
-                                  )}
-                                  {/* 部屋番号：左上に等幅で小さく（名前が番号だけのときは中央に大きめ） */}
-                                  {parts.num && parts.name && (
-                                    <span className="absolute top-1.5 left-2.5 font-mono text-[10px] tracking-[0.1em] text-muted-foreground">
-                                      {parts.num}
-                                    </span>
-                                  )}
-                                  {o.pin && (
-                                    <PinDot
-                                      color={pal.fill}
-                                      line={line}
-                                      sel={false}
-                                      tapped={tapped}
-                                      inline
-                                    />
-                                  )}
-                                  {Mark && (
-                                    <Mark
-                                      aria-hidden
-                                      className="shrink-0"
-                                      style={{
-                                        width: markSize,
-                                        height: markSize,
-                                        color: line,
-                                      }}
-                                    />
-                                  )}
-                                  {label.lines.length > 0 && (
-                                    <span
-                                      className={cn(
-                                        "max-w-full px-2 leading-[1.2]",
-                                        parts.name
-                                          ? "tracking-[0.04em]"
-                                          : "font-mono tracking-[0.12em]",
-                                      )}
-                                      style={{ fontSize: label.size }}
-                                    >
-                                      <span className="block truncate">
-                                        {label.lines[0]}
-                                      </span>
-                                      {label.lines[1] && (
-                                        <span className="block truncate">
-                                          {label.lines[1]}
-                                        </span>
-                                      )}
-                                    </span>
-                                  )}
-                                </div>
-                              );
-                            })}
-
-                          {/* 四角/丸 のリサイズハンドル */}
-                          {resizable && (
-                            <ResizeHandles
-                              id={resizable.id}
-                              x={resizable.x}
-                              y={resizable.y}
-                              w={resizable.w}
-                              h={resizable.h}
-                              zoom={zoom}
-                              onStart={onResizeDown}
-                            />
-                          )}
-
-                          {/* テキスト */}
-                          {objects
-                            .filter((o): o is TextObject => o.kind === "text")
-                            .map((o) => {
-                              const pal = paletteOf(shownColorOf(o));
-                              const sel =
-                                !preview && selectedIds.includes(o.id);
-                              return (
-                                <div
-                                  key={o.id}
-                                  className="absolute z-20 -translate-x-1/2 -translate-y-1/2 font-normal tracking-[0.06em] whitespace-nowrap"
-                                  style={{
-                                    left: o.x,
-                                    top: o.y,
-                                    fontSize: o.size,
-                                    color: `color-mix(in srgb, ${pal.fill} 35%, var(--studio-text-primary))`,
-                                    outline: sel
-                                      ? `1.5px solid ${SEL}`
-                                      : undefined,
-                                    outlineOffset: 4,
-                                    borderRadius: 6,
-                                  }}
-                                >
-                                  {o.title || t("テキスト")}
-                                </div>
-                              );
-                            })}
-
-                          {/* 道案内の目印（出発・目的地・乗り換え。乗り換えは押すと行き先の階へ） */}
-                          {routeMarks
-                            .filter((m) => m.floor === doc.activeFloorId)
-                            .map((m, i) => {
-                              const o = doc.objects.find((x) => x.id === m.id);
-                              if (o?.kind !== "place") return null;
-                              const cls =
-                                "absolute z-30 -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-0.5 text-[11px] font-medium font-mono text-primary-foreground";
-                              const style = {
-                                left: o.x,
-                                top: o.y + 6,
-                                background: GUIDE,
-                              };
-                              const to = m.to;
-                              return to ? (
-                                <button
-                                  // biome-ignore lint/suspicious/noArrayIndexKey: 道案内の目印は道の順に並び、並べ替えない
-                                  key={i}
-                                  type="button"
-                                  onPointerDown={(e) => e.stopPropagation()}
-                                  onClick={() => goFloor(to)}
-                                  className={cn(cls, "hover:brightness-110")}
-                                  style={style}
-                                  title={t("{floor}を表示", {
-                                    floor: floorName(to),
-                                  })}
-                                >
-                                  {m.label} ›
-                                </button>
-                              ) : (
-                                <span
-                                  // biome-ignore lint/suspicious/noArrayIndexKey: 道案内の目印は道の順に並び、並べ替えない
-                                  key={i}
-                                  className={cn(cls, "pointer-events-none")}
-                                  style={style}
-                                >
-                                  {m.label}
-                                </span>
-                              );
-                            })}
-
-                          {/* スマートガイドは四角などより手前に描く */}
-                          <svg
-                            aria-hidden="true"
-                            className="pointer-events-none absolute inset-0 z-40 overflow-visible"
-                            width={worldW}
-                            height={worldH}
-                          >
-                            {/* スマートガイド：そろった端・中央の線と、等しいすき間の目印 */}
-                            {guides && (
-                              <g className="pointer-events-none">
-                                {guides.lines.map((l, i) => (
-                                  <line
-                                    // biome-ignore lint/suspicious/noArrayIndexKey: スマートガイドはドラッグのたびに作り直す一覧
-                                    key={`gl${i}`}
-                                    x1={l.x1}
-                                    y1={l.y1}
-                                    x2={l.x2}
-                                    y2={l.y2}
-                                    stroke={GUIDE}
-                                    strokeWidth={1 / zoom}
-                                    strokeDasharray={`${4 / zoom} ${3 / zoom}`}
+                              >
+                                {!preview && o.locked && (
+                                  <Lock
+                                    aria-label={t("固定中")}
+                                    className="absolute top-1.5 right-1.5 size-3 text-muted-foreground"
                                   />
-                                ))}
-                                {guides.gaps.map((g, i) => {
-                                  const horiz = g.y1 === g.y2;
-                                  const t = 5 / zoom;
-                                  const mx = (g.x1 + g.x2) / 2;
-                                  const my = (g.y1 + g.y2) / 2;
-                                  return (
-                                    // biome-ignore lint/suspicious/noArrayIndexKey: スマートガイドはドラッグのたびに作り直す一覧
-                                    <g key={`gg${i}`}>
-                                      <line
-                                        x1={g.x1}
-                                        y1={g.y1}
-                                        x2={g.x2}
-                                        y2={g.y2}
-                                        stroke={GUIDE}
-                                        strokeWidth={1.5 / zoom}
-                                      />
-                                      {horiz ? (
-                                        <>
-                                          <line
-                                            x1={g.x1}
-                                            y1={g.y1 - t}
-                                            x2={g.x1}
-                                            y2={g.y1 + t}
-                                            stroke={GUIDE}
-                                            strokeWidth={1.5 / zoom}
-                                          />
-                                          <line
-                                            x1={g.x2}
-                                            y1={g.y2 - t}
-                                            x2={g.x2}
-                                            y2={g.y2 + t}
-                                            stroke={GUIDE}
-                                            strokeWidth={1.5 / zoom}
-                                          />
-                                        </>
-                                      ) : (
-                                        <>
-                                          <line
-                                            x1={g.x1 - t}
-                                            y1={g.y1}
-                                            x2={g.x1 + t}
-                                            y2={g.y1}
-                                            stroke={GUIDE}
-                                            strokeWidth={1.5 / zoom}
-                                          />
-                                          <line
-                                            x1={g.x2 - t}
-                                            y1={g.y2}
-                                            x2={g.x2 + t}
-                                            y2={g.y2}
-                                            stroke={GUIDE}
-                                            strokeWidth={1.5 / zoom}
-                                          />
-                                        </>
-                                      )}
-                                      <g
-                                        transform={`translate(${mx} ${my}) scale(${1 / zoom})`}
-                                      >
-                                        <rect
-                                          x={-16}
-                                          y={-9}
-                                          width={32}
-                                          height={18}
-                                          rx={4}
-                                          fill={GUIDE}
-                                        />
-                                        <text
-                                          textAnchor="middle"
-                                          dominantBaseline="central"
-                                          fontSize={11}
-                                          fontWeight={600}
-                                          fill="var(--studio-on-accent)"
-                                        >
-                                          {g.size}
-                                        </text>
-                                      </g>
-                                    </g>
-                                  );
-                                })}
-                              </g>
-                            )}
-                          </svg>
-
-                          {/* 情報カード（説明があるものをタップしたとき） */}
-                          {selected && showInfo && hasInfo(selected) && (
+                                )}
+                                <ConnectorIcon
+                                  type={o.connector}
+                                  className="size-[18px]"
+                                  style={{ color: line }}
+                                />
+                                <span className="max-w-full truncate px-2 text-[12px] tracking-[0.04em]">
+                                  {label}
+                                </span>
+                                {!preview && (
+                                  <span
+                                    className={cn(
+                                      "max-w-full truncate px-2 font-mono text-[10px] tracking-[0.08em]",
+                                      linked.length < 2
+                                        ? "text-primary"
+                                        : "text-muted-foreground",
+                                    )}
+                                  >
+                                    {floorsLabel}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          }
+                          // ピン型の階段・エレベーター：細い線の正方形に線画アイコン、下に等幅の小さな名前。
+                          // 行き先の階は、名前が長くなって隣の部屋に重ならないよう、選んだときと、つながっていない（未接続）ときだけ出す
+                          const mb = markBoxOf(o);
+                          return (
                             <div
-                              className="absolute z-40"
+                              key={o.id}
+                              className="absolute z-[25]"
                               style={{
-                                left: anchorOf(selected).x,
-                                top: anchorOf(selected).y,
-                                transform: `scale(${1 / zoom})`,
-                                transformOrigin: "0 0",
+                                left: o.x - mb.w / 2,
+                                top: o.y - mb.h / 2,
+                                width: mb.w,
+                                height: mb.h,
                               }}
                             >
-                              <div
-                                className="w-60"
+                              <span
+                                className="flex size-full items-center justify-center rounded-md"
                                 style={{
-                                  transform:
-                                    "translate(-50%, calc(-100% - 10px))",
+                                  background: "var(--studio-surface)",
+                                  border: `1px solid ${line}`,
+                                  color: line,
+                                  ...selStyle,
                                 }}
-                                onPointerDown={(e) => e.stopPropagation()}
                               >
-                                <div className="studio-fade overflow-hidden rounded-md border bg-card">
-                                  <div className="flex items-start gap-2 px-3 pt-2.5">
-                                    <span
-                                      className="mt-1.5 size-2 shrink-0 rounded-sm"
-                                      style={{
-                                        background: paletteOf(
-                                          shownColorOf(selected),
-                                        ).fill,
-                                      }}
-                                    />
-                                    <span className="flex-1 text-sm leading-snug font-medium tracking-[0.02em]">
-                                      {selected.title || t("（無題）")}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => setShowInfo(false)}
-                                      aria-label={t("閉じる")}
-                                      className="-mt-0.5 -mr-1 text-muted-foreground hover:text-foreground"
-                                    >
-                                      <X className="size-4" />
-                                    </button>
-                                  </div>
-                                  {selected.description?.trim() && (
-                                    <p className="px-3 pt-2 pb-3 text-xs leading-relaxed whitespace-pre-wrap">
-                                      {selected.description}
-                                    </p>
-                                  )}
-                                </div>
-                                {/* 吹き出しの三角 */}
-                                <div className="mx-auto -mt-1.5 size-3 rotate-45 border-r border-b bg-card" />
-                              </div>
+                                <ConnectorIcon
+                                  type={o.connector}
+                                  style={{
+                                    width: Math.min(mb.w, mb.h) * 0.56,
+                                    height: Math.min(mb.w, mb.h) * 0.56,
+                                  }}
+                                />
+                              </span>
+                              <span className="absolute top-full left-1/2 mt-1 flex -translate-x-1/2 items-center gap-1.5 rounded-sm bg-background/85 px-1 font-mono text-[10px] tracking-[0.08em] whitespace-nowrap">
+                                <span
+                                  style={{
+                                    color: "var(--studio-text-primary)",
+                                  }}
+                                >
+                                  {label}
+                                </span>
+                                {!preview && (sel || linked.length < 2) && (
+                                  <span
+                                    className={
+                                      linked.length < 2
+                                        ? "text-primary"
+                                        : "text-muted-foreground"
+                                    }
+                                  >
+                                    {floorsLabel}
+                                  </span>
+                                )}
+                              </span>
                             </div>
-                          )}
+                          );
+                        }
+                        if (o.shape === "pin") {
+                          // 単独のピン：小さな点＋細い輪（中心が x,y）。名前は上に小さく
+                          return (
+                            <div
+                              key={o.id}
+                              className="absolute z-20"
+                              style={{ left: o.x, top: o.y }}
+                            >
+                              {o.title && (
+                                <span
+                                  className="absolute bottom-3 left-1/2 max-w-[160px] -translate-x-1/2 truncate rounded-md border bg-card px-2 py-0.5 text-[11px] tracking-[0.04em]"
+                                  style={{
+                                    color: "var(--studio-text-primary)",
+                                    borderColor: sel
+                                      ? SEL
+                                      : "var(--studio-divider)",
+                                  }}
+                                >
+                                  {o.title}
+                                </span>
+                              )}
+                              <PinDot
+                                color={pal.fill}
+                                line={line}
+                                sel={sel}
+                                tapped={tapped}
+                              />
+                            </div>
+                          );
+                        }
+                        // 四角／丸（部屋・区画）。トイレなどは tolo-web と同じマークを名前の上に出す
+                        const parts = splitTitle(o.title);
+                        const Mark = KIND_ICON[markOf(o)];
+                        const markSize = Math.max(
+                          12,
+                          Math.min(28, Math.min(o.w, o.h) * 0.3),
+                        );
+                        // 名前（無ければ番号）は部屋の大きさに合わせた大きさで、入らなければ 2 行に分ける（roomLabel.ts）。
+                        // 名前より上の目印（18px）とマークの分は、名前に使える高さから引く（すき間は 6px）
+                        const label = roomLabel(
+                          parts.name || parts.num,
+                          o.w,
+                          o.h,
+                          {
+                            reserved:
+                              (o.pin ? 18 + 6 : 0) + (Mark ? markSize + 6 : 0),
+                            spacing: parts.name ? 0.04 : 0.12,
+                            mono: !parts.name,
+                          },
+                        );
+                        return (
+                          <div
+                            key={o.id}
+                            className={cn(
+                              "absolute z-20 flex flex-col items-center justify-center gap-1.5 text-center",
+                              o.shape === "circle"
+                                ? "rounded-full"
+                                : "rounded-md",
+                            )}
+                            style={{
+                              left: o.x - o.w / 2,
+                              top: o.y - o.h / 2,
+                              width: o.w,
+                              height: o.h,
+                              background: objFill(pal.fill),
+                              border: `1px solid ${line}`,
+                              // 左の辺に 3px の色帯（丸には付けない）
+                              ...(o.shape === "circle"
+                                ? {}
+                                : {
+                                    borderLeft: `3px solid ${pal.fill}`,
+                                  }),
+                              color: "var(--studio-text-primary)",
+                              ...selStyle,
+                            }}
+                          >
+                            {!preview && o.locked && (
+                              <Lock
+                                aria-label={t("固定中")}
+                                className="absolute top-1.5 right-1.5 size-3 text-muted-foreground"
+                              />
+                            )}
+                            {/* 部屋番号：左上に等幅で小さく（名前が番号だけのときは中央に大きめ） */}
+                            {parts.num && parts.name && (
+                              <span className="absolute top-1.5 left-2.5 font-mono text-[10px] tracking-[0.1em] text-muted-foreground">
+                                {parts.num}
+                              </span>
+                            )}
+                            {o.pin && (
+                              <PinDot
+                                color={pal.fill}
+                                line={line}
+                                sel={false}
+                                tapped={tapped}
+                                inline
+                              />
+                            )}
+                            {Mark && (
+                              <Mark
+                                aria-hidden
+                                className="shrink-0"
+                                style={{
+                                  width: markSize,
+                                  height: markSize,
+                                  color: line,
+                                }}
+                              />
+                            )}
+                            {label.lines.length > 0 && (
+                              <span
+                                className={cn(
+                                  "max-w-full px-2 leading-[1.2]",
+                                  parts.name
+                                    ? "tracking-[0.04em]"
+                                    : "font-mono tracking-[0.12em]",
+                                )}
+                                style={{ fontSize: label.size }}
+                              >
+                                <span className="block truncate">
+                                  {label.lines[0]}
+                                </span>
+                                {label.lines[1] && (
+                                  <span className="block truncate">
+                                    {label.lines[1]}
+                                  </span>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                    {/* 四角/丸 のリサイズハンドル */}
+                    {resizable && (
+                      <ResizeHandles
+                        id={resizable.id}
+                        x={resizable.x}
+                        y={resizable.y}
+                        w={resizable.w}
+                        h={resizable.h}
+                        zoom={zoom}
+                        onStart={onResizeDown}
+                      />
+                    )}
+
+                    {/* テキスト */}
+                    {objects
+                      .filter((o): o is TextObject => o.kind === "text")
+                      .map((o) => {
+                        const pal = paletteOf(shownColorOf(o));
+                        const sel = !preview && selectedIds.includes(o.id);
+                        return (
+                          <div
+                            key={o.id}
+                            className="absolute z-20 -translate-x-1/2 -translate-y-1/2 font-normal tracking-[0.06em] whitespace-nowrap"
+                            style={{
+                              left: o.x,
+                              top: o.y,
+                              fontSize: o.size,
+                              color: `color-mix(in srgb, ${pal.fill} 35%, var(--studio-text-primary))`,
+                              outline: sel ? `1.5px solid ${SEL}` : undefined,
+                              outlineOffset: 4,
+                              borderRadius: 6,
+                            }}
+                          >
+                            {o.title || t("テキスト")}
+                          </div>
+                        );
+                      })}
+
+                    {/* 道案内の目印（出発・目的地・乗り換え。乗り換えは押すと行き先の階へ） */}
+                    {routeMarks
+                      .filter((m) => m.floor === doc.activeFloorId)
+                      .map((m, i) => {
+                        const o = doc.objects.find((x) => x.id === m.id);
+                        if (o?.kind !== "place") return null;
+                        const cls =
+                          "absolute z-30 -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-0.5 text-[11px] font-medium font-mono text-primary-foreground";
+                        const style = {
+                          left: o.x,
+                          top: o.y + 6,
+                          background: GUIDE,
+                        };
+                        const to = m.to;
+                        return to ? (
+                          <button
+                            // biome-ignore lint/suspicious/noArrayIndexKey: 道案内の目印は道の順に並び、並べ替えない
+                            key={i}
+                            type="button"
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={() => goFloor(to)}
+                            className={cn(cls, "hover:brightness-110")}
+                            style={style}
+                            title={t("{floor}を表示", {
+                              floor: floorName(to),
+                            })}
+                          >
+                            {m.label} ›
+                          </button>
+                        ) : (
+                          <span
+                            // biome-ignore lint/suspicious/noArrayIndexKey: 道案内の目印は道の順に並び、並べ替えない
+                            key={i}
+                            className={cn(cls, "pointer-events-none")}
+                            style={style}
+                          >
+                            {m.label}
+                          </span>
+                        );
+                      })}
+
+                    {/* スマートガイドは四角などより手前に描く */}
+                    <svg
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 z-40 overflow-visible"
+                      width={worldW}
+                      height={worldH}
+                    >
+                      {/* スマートガイド：そろった端・中央の線と、等しいすき間の目印 */}
+                      {guides && (
+                        <g className="pointer-events-none">
+                          {guides.lines.map((l, i) => (
+                            <line
+                              // biome-ignore lint/suspicious/noArrayIndexKey: スマートガイドはドラッグのたびに作り直す一覧
+                              key={`gl${i}`}
+                              x1={l.x1}
+                              y1={l.y1}
+                              x2={l.x2}
+                              y2={l.y2}
+                              stroke={GUIDE}
+                              strokeWidth={1 / zoom}
+                              strokeDasharray={`${4 / zoom} ${3 / zoom}`}
+                            />
+                          ))}
+                          {guides.gaps.map((g, i) => {
+                            const horiz = g.y1 === g.y2;
+                            const t = 5 / zoom;
+                            const mx = (g.x1 + g.x2) / 2;
+                            const my = (g.y1 + g.y2) / 2;
+                            return (
+                              // biome-ignore lint/suspicious/noArrayIndexKey: スマートガイドはドラッグのたびに作り直す一覧
+                              <g key={`gg${i}`}>
+                                <line
+                                  x1={g.x1}
+                                  y1={g.y1}
+                                  x2={g.x2}
+                                  y2={g.y2}
+                                  stroke={GUIDE}
+                                  strokeWidth={1.5 / zoom}
+                                />
+                                {horiz ? (
+                                  <>
+                                    <line
+                                      x1={g.x1}
+                                      y1={g.y1 - t}
+                                      x2={g.x1}
+                                      y2={g.y1 + t}
+                                      stroke={GUIDE}
+                                      strokeWidth={1.5 / zoom}
+                                    />
+                                    <line
+                                      x1={g.x2}
+                                      y1={g.y2 - t}
+                                      x2={g.x2}
+                                      y2={g.y2 + t}
+                                      stroke={GUIDE}
+                                      strokeWidth={1.5 / zoom}
+                                    />
+                                  </>
+                                ) : (
+                                  <>
+                                    <line
+                                      x1={g.x1 - t}
+                                      y1={g.y1}
+                                      x2={g.x1 + t}
+                                      y2={g.y1}
+                                      stroke={GUIDE}
+                                      strokeWidth={1.5 / zoom}
+                                    />
+                                    <line
+                                      x1={g.x2 - t}
+                                      y1={g.y2}
+                                      x2={g.x2 + t}
+                                      y2={g.y2}
+                                      stroke={GUIDE}
+                                      strokeWidth={1.5 / zoom}
+                                    />
+                                  </>
+                                )}
+                                <g
+                                  transform={`translate(${mx} ${my}) scale(${1 / zoom})`}
+                                >
+                                  <rect
+                                    x={-16}
+                                    y={-9}
+                                    width={32}
+                                    height={18}
+                                    rx={4}
+                                    fill={GUIDE}
+                                  />
+                                  <text
+                                    textAnchor="middle"
+                                    dominantBaseline="central"
+                                    fontSize={11}
+                                    fontWeight={600}
+                                    fill="var(--studio-on-accent)"
+                                  >
+                                    {g.size}
+                                  </text>
+                                </g>
+                              </g>
+                            );
+                          })}
+                        </g>
+                      )}
+                    </svg>
+
+                    {/* 情報カード（説明があるものをタップしたとき） */}
+                    {selected && showInfo && hasInfo(selected) && (
+                      <div
+                        className="absolute z-40"
+                        style={{
+                          left: anchorOf(selected).x,
+                          top: anchorOf(selected).y,
+                          transform: `scale(${1 / zoom})`,
+                          transformOrigin: "0 0",
+                        }}
+                      >
+                        <div
+                          className="w-60"
+                          style={{
+                            transform: "translate(-50%, calc(-100% - 10px))",
+                          }}
+                          onPointerDown={(e) => e.stopPropagation()}
+                        >
+                          <div className="studio-fade overflow-hidden rounded-md border bg-card">
+                            <div className="flex items-start gap-2 px-3 pt-2.5">
+                              <span
+                                className="mt-1.5 size-2 shrink-0 rounded-sm"
+                                style={{
+                                  background: paletteOf(shownColorOf(selected))
+                                    .fill,
+                                }}
+                              />
+                              <span className="flex-1 text-sm leading-snug font-medium tracking-[0.02em]">
+                                {selected.title || t("（無題）")}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setShowInfo(false)}
+                                aria-label={t("閉じる")}
+                                className="-mt-0.5 -mr-1 text-muted-foreground hover:text-foreground"
+                              >
+                                <X className="size-4" />
+                              </button>
+                            </div>
+                            {selected.description?.trim() && (
+                              <p className="px-3 pt-2 pb-3 text-xs leading-relaxed whitespace-pre-wrap">
+                                {selected.description}
+                              </p>
+                            )}
+                          </div>
+                          {/* 吹き出しの三角 */}
+                          <div className="mx-auto -mt-1.5 size-3 rotate-45 border-r border-b bg-card" />
                         </div>
                       </div>
-                    </div>
-                    {phoneView && (
-                      <span
-                        aria-hidden
-                        className="mx-auto mt-2 mb-2 block h-[5px] w-[134px] shrink-0 rounded-full bg-current opacity-80"
-                      />
                     )}
                   </div>
                 </div>
@@ -4134,7 +3891,7 @@ export function GuideMapStudio({
                 />
               )}
               {/* 全体図（ミニマップ）：いま見ている範囲を枠で示す。押した所へ移動 */}
-              {showMini && !phoneView && floor && (
+              {showMini && floor && (
                 <MiniMap
                   doc={doc}
                   floor={floor}
@@ -4155,8 +3912,7 @@ export function GuideMapStudio({
             <MapStatusBar
               coordRef={coordRef}
               showCoords={rulersOn}
-              showViewToggles={!phoneView}
-              showRulerToggle={!phoneView && !preview}
+              showRulerToggle={!preview}
               showRulers={showRulers}
               onToggleRulers={() => {
                 setShowRulers(!showRulers);

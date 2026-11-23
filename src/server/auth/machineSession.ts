@@ -10,6 +10,7 @@ import { hostLockKey } from "./locks";
 
 export const PENDING_MACHINE_AUTHORIZATION = "pendingMachineAuthorization";
 export const PENDING_MACHINE_HANDOFF = "pendingMachineHandoff";
+export const MACHINE_SETUP_RECORD = "machineSetupRecord";
 export const MACHINE_BINDING_COOKIE = "__Host-tolo.machine.binding";
 
 const TENANT_ACCESS_TOKEN = "tenantAccessToken";
@@ -88,6 +89,15 @@ export function machineSessionPlugin(
           bindingHash: { type: "string", required: true },
           returnPath: { type: "string", required: true },
           expiresAt: { type: "date", required: true },
+        },
+      },
+      machineSetupRecord: {
+        fields: {
+          tenantId: { type: "string", required: true },
+          eventId: { type: "string", required: true },
+          edgeDeviceId: { type: "string", required: true },
+          subject: { type: "string", required: true },
+          createdAt: { type: "date", required: true },
         },
       },
     },
@@ -184,6 +194,16 @@ export function machineSessionPlugin(
               },
               true,
             );
+            await adapter.create({
+              model: MACHINE_SETUP_RECORD,
+              data: {
+                tenantId: handoff.tenantId,
+                eventId: handoff.eventId,
+                edgeDeviceId: handoff.edgeDeviceId,
+                subject: handoff.subject,
+                createdAt: new Date(),
+              },
+            });
             await adapter.create({
               model: TENANT_ACCESS_TOKEN,
               data: {

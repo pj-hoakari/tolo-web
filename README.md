@@ -39,11 +39,25 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 | `AUTH_IDP_CLIENT_SECRET` | BFF の client secret                                           |
 | `AUTH_RESOURCE_HOST`     | `resource` の URI に使う論理ホスト。このホストへは通信しません |
 
-データベースのテーブルは、空のデータベースに `db/auth.sql` を 1 回だけ適用して作ります。
+データベースのテーブルは、`db/migrations` のマイグレーションを [golang-migrate](https://github.com/golang-migrate/migrate) の `migrate` で適用して作ります。`migrate` は mise で入ります。適用済みのバージョンは `schema_migrations` のテーブルに残るので、未適用のマイグレーションだけが適用されます。イメージには同じファイルを `/app/db/migrations` に入れています。`migrate` は既定で TLS を求めるので、TLS のないサーバーへは URL に `sslmode=disable` を付けます。
 
 ```bash
-AUTH_DATABASE_URL=postgres://... pnpm db:auth:migrate
+migrate -path db/migrations -database "$AUTH_DATABASE_URL" up
 ```
+
+`db/auth.sql` を適用して作ったデータベースには `schema_migrations` がありません。最初の 1 回だけ、`000001_init` を適用済みとして記録してから `up` を実行します。
+
+```bash
+migrate -path db/migrations -database "$AUTH_DATABASE_URL" force 1
+```
+
+スキーマを変えるときは、マイグレーションを追加します。適用済みのマイグレーションは書き換えません。
+
+```bash
+migrate create -ext sql -dir db/migrations -seq <name>
+```
+
+`migrate create` は `.up.sql` と `.down.sql` を作ります。`.down.sql` は使わないので消します。
 
 ### ログインとセッションの引き渡し
 

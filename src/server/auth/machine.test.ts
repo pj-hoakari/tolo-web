@@ -19,6 +19,7 @@ import {
 import { createMachineAuth, machineResultPath } from "./machine";
 import {
   MACHINE_BINDING_COOKIE,
+  MACHINE_SETUP_RECORD,
   PENDING_MACHINE_AUTHORIZATION,
   PENDING_MACHINE_HANDOFF,
 } from "./machineSession";
@@ -164,6 +165,7 @@ function createTestAuth(
     pendingLogin: [],
     pendingMachineAuthorization: [],
     pendingMachineHandoff: [],
+    machineSetupRecord: [],
   }),
 ) {
   const options = authOptions(env);
@@ -381,6 +383,18 @@ describe("machine callback and handoff", () => {
     expect(
       await ctx.adapter.findMany({ model: PENDING_MACHINE_HANDOFF }),
     ).toHaveLength(0);
+    expect(await ctx.adapter.findMany({ model: MACHINE_SETUP_RECORD })).toEqual(
+      [
+        {
+          id: expect.any(String),
+          tenantId: TENANT,
+          eventId: EVENT,
+          edgeDeviceId: PAGE,
+          subject: "user-1",
+          createdAt: expect.any(Date),
+        },
+      ],
+    );
   });
 
   it("keeps multiple machine sessions", async () => {
@@ -491,5 +505,9 @@ describe("machine callback and handoff", () => {
     expect(handedOff.headers.get("location")).toContain(
       "/auth/error?error=machine_handoff_invalid",
     );
+    const ctx = await test.auth.$context;
+    expect(
+      await ctx.adapter.findMany({ model: MACHINE_SETUP_RECORD }),
+    ).toHaveLength(0);
   });
 });
