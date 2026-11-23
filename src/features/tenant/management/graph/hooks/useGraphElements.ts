@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  applyEdgeChanges,
-  applyNodeChanges,
   type EdgeChange,
+  EdgeChangeset,
   type NodeChange,
+  NodeChangeset,
 } from "@xyflow/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
@@ -114,7 +114,7 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
         }
         return true;
       });
-      const applied = applyNodeChanges(normalized, prepared);
+      const applied = new NodeChangeset(normalized).applyTo(prepared);
 
       // グループの拡縮は確定イベントでのみ行う:
       // - 削除（子が減った）
@@ -136,7 +136,7 @@ export function useGraphElements(initial: GraphData, labelLocale: string) {
   }, []);
 
   const changeEdges = useCallback((changes: EdgeChange<GraphEdgeType>[]) => {
-    setEdges((eds) => applyEdgeChanges(changes, eds));
+    setEdges((eds) => new EdgeChangeset(changes).applyTo(eds));
   }, []);
 
   /** プログラムからの選択は、描画とプロパティで共有する selected に反映する。 */
