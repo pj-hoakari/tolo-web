@@ -179,6 +179,9 @@ test("navigation uses the current page's installation guide and appinstalled hid
   await emitNativePrompt(page, "accepted");
   await page.getByRole("link", { name: "グラフを編集" }).click();
   await expect(page).toHaveURL("/event/test/management/graph/edit");
+  await expect(installButton(page)).toHaveCount(0);
+  await page.getByRole("link", { name: "管理ページへ戻る" }).click();
+  await expect(page).toHaveURL("/event/test/management");
   await installButton(page).click();
   const dialog = page.getByRole("dialog", { name: ja.PwaInstall.title });
   await expect(

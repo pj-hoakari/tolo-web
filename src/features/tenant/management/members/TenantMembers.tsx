@@ -45,7 +45,7 @@ export function TenantMembers({ tenantId }: Props) {
           {(invitation) => (
             <li
               key={invitation.invitationId}
-              className="flex items-center justify-between gap-4 px-4 py-3"
+              className="flex flex-col items-start justify-between gap-4 px-4 py-3 sm:flex-row sm:items-center"
             >
               <div className="flex flex-col">
                 <span className="font-medium">{invitation.displayName}</span>
@@ -78,10 +78,10 @@ export function TenantMembers({ tenantId }: Props) {
           {(member) => (
             <li
               key={member.userId}
-              className="flex items-center justify-between gap-4 px-4 py-3"
+              className="flex flex-col items-start justify-between gap-4 px-4 py-3 sm:flex-row sm:items-center"
             >
-              <div className="flex flex-col">
-                <div className="flex items-center gap-3">
+              <div className="flex min-w-0 flex-col">
+                <div className="flex flex-wrap items-center gap-3">
                   <span className="font-medium">{member.displayName}</span>
                   <span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
                     {t(`roles.${member.role}`)}
@@ -104,7 +104,7 @@ export function TenantMembers({ tenantId }: Props) {
                       })}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <EventRolesDialog
                   member={member}
                   events={events}

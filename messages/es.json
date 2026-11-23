@@ -931,5 +931,12 @@
     "cannotJoin": "No puedes unirte a este inquilino. Puede que ya seas miembro o que el inquilino se haya archivado.",
     "openManagement": "Abrir la página de administración",
     "failed": "No se pudo unir al inquilino. Inténtalo de nuevo."
+  },
+  "StaffConnection": {
+    "title": "Se requiere conexión a Internet",
+    "offline": "Sin conexión no se puede consultar información actual ni realizar operaciones. Reconecta y recarga. Se perderán los cambios sin guardar.",
+    "reconnected": "Conexión restablecida. Recarga para verificar tu sesión y obtener información actual. Se perderán los cambios sin guardar.",
+    "reload": "Recargar",
+    "cameraOffline": "Sin conexión. No se pueden confirmar los informes ni los ajustes en el servidor. Las detecciones locales no representan el estado actual del servidor."
   }
 }
