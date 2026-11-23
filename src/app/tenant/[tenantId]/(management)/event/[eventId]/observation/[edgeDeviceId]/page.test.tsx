@@ -1,11 +1,18 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
+import { readStaffEventNavigationAccess } from "@/features/tenant/management/headerAccess";
 import { getViewer } from "@/server/auth";
 import TenantObservation from "./page";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/server/auth", () => ({ getViewer: vi.fn() }));
+vi.mock("@/features/tenant/management/headerAccess", () => ({
+  readStaffEventNavigationAccess: vi.fn(async () => ({
+    canEditGuideMap: false,
+    canViewObservationDevices: true,
+  })),
+}));
 vi.mock("next-intl/server", () => ({
   getTranslations: async () => (key: string) => key,
 }));
@@ -30,6 +37,7 @@ vi.mock("@/features/tenant/observation/components/CrowdDetection", () => ({
 }));
 afterEach(() => {
   cleanup();
+  vi.clearAllMocks();
   vi.unstubAllEnvs();
 });
 
@@ -68,6 +76,31 @@ it.each([
     }
   },
 );
+
+it("hides the device list link from staff without event read access", async () => {
+  vi.mocked(getViewer).mockResolvedValue({
+    type: "staff",
+    userId: "staff",
+    tenantId: "tenant",
+  });
+  vi.mocked(readStaffEventNavigationAccess).mockResolvedValueOnce({
+    canEditGuideMap: false,
+    canViewObservationDevices: false,
+  });
+  render(
+    await TenantObservation({
+      params: Promise.resolve({
+        tenantId: "tenant",
+        eventId: "event",
+        edgeDeviceId: "edge",
+      }),
+      searchParams: Promise.resolve({}),
+    }),
+  );
+  expect(
+    screen.queryByRole("link", { name: "observationDevicesBackLink" }),
+  ).toBeNull();
+});
 
 it.each([
   {

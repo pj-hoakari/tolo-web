@@ -1,12 +1,10 @@
 import { getTranslations } from "next-intl/server";
-import { LocaleSelect } from "@/components/locale-select";
-import { PwaInstall } from "@/components/pwa/pwa-install";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Link } from "@/components/ui/link";
-import { LogoutButton } from "@/features/auth/LogoutButton";
 import { guideMapEditPath } from "@/features/guide-map-studio/routes";
-import { EventListBackLink } from "@/features/tenant/management/events/EventListBackLink";
+import { ManagementPageHeading } from "@/features/tenant/management/components/ManagementPageHeading";
+import { ManagementMain } from "@/features/tenant/management/components/ManagementShell";
 import { GraphViewer } from "@/features/tenant/management/graph";
+import { readStaffEventNavigationAccess } from "@/features/tenant/management/headerAccess";
 import {
   graphEditPath,
   managementPath,
@@ -32,29 +30,35 @@ export default async function TenantManagement({
 }) {
   const { tenantId, eventId } = await params;
   await requireStaff(managementPath(eventId));
-  const t = await getTranslations("Management");
+  const [t, access] = await Promise.all([
+    getTranslations("Management"),
+    readStaffEventNavigationAccess(eventId),
+  ]);
 
   return (
-    <div className="flex h-screen flex-col">
-      <header className="flex w-full flex-wrap items-center justify-between gap-3 px-4 py-5 sm:px-10">
-        <div className="flex min-w-0 flex-col gap-2">
-          <EventListBackLink tenantId={tenantId} />
-          <h2 className="text-2xl font-bold">{t("title", { tenantId })}</h2>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link href={guideMapEditPath(eventId)} variant="ghost" size="sm">
-            {t("guideMapEditLink")}
-          </Link>
-          <Link href={observationPath(eventId)} variant="ghost" size="sm">
-            {t("observationDevicesLink")}
-          </Link>
-          <PwaInstall compact />
-          <LocaleSelect />
-          <ThemeToggle />
-          <LogoutButton />
-        </div>
-      </header>
-      <main className="flex min-h-0 w-full flex-1 flex-col gap-2 p-2">
+    <div data-management-canvas className="flex min-h-0 flex-col">
+      <ManagementPageHeading
+        title={t("title", { tenantId })}
+        navigation={
+          access.canViewObservationDevices ? (
+            <>
+              {access.canEditGuideMap && (
+                <Link
+                  href={guideMapEditPath(eventId)}
+                  variant="ghost"
+                  size="sm"
+                >
+                  {t("guideMapEditLink")}
+                </Link>
+              )}
+              <Link href={observationPath(eventId)} variant="ghost" size="sm">
+                {t("observationDevicesLink")}
+              </Link>
+            </>
+          ) : undefined
+        }
+      />
+      <ManagementMain className="flex min-h-0 w-full flex-1 flex-col gap-2 p-2">
         <ObservationSettingsSection key={eventId} eventId={eventId} />
         <div className="min-h-0 w-full flex-1 overflow-hidden rounded-lg border border-border bg-background">
           <GraphViewer
@@ -63,7 +67,7 @@ export default async function TenantManagement({
             editHref={graphEditPath(eventId)}
           />
         </div>
-      </main>
+      </ManagementMain>
     </div>
   );
 }

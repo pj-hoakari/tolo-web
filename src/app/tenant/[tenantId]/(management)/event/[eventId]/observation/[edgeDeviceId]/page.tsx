@@ -1,9 +1,8 @@
 import { getTranslations } from "next-intl/server";
-import { LocaleSelect } from "@/components/locale-select";
-import { PwaInstall } from "@/components/pwa/pwa-install";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Link } from "@/components/ui/link";
-import { LogoutButton } from "@/features/auth/LogoutButton";
+import { ManagementPageHeading } from "@/features/tenant/management/components/ManagementPageHeading";
+import { ManagementMain } from "@/features/tenant/management/components/ManagementShell";
+import { readStaffEventNavigationAccess } from "@/features/tenant/management/headerAccess";
 import { CrowdDetection } from "@/features/tenant/observation/components/CrowdDetection";
 import { ObservationSoftLock } from "@/features/tenant/observation/components/ObservationSoftLock";
 import { ScreenWakeControl } from "@/features/tenant/observation/components/ScreenWakeControl";
@@ -54,6 +53,10 @@ export default async function TenantObservation({
       : undefined;
   const t = await getTranslations("Observation");
   const viewer = await getViewer();
+  const access =
+    viewer.type === "staff"
+      ? await readStaffEventNavigationAccess(eventId)
+      : null;
   const authMocking = authMockingEnabled();
   const canReport =
     authMocking ||
@@ -66,21 +69,17 @@ export default async function TenantObservation({
     <ScreenWakeProvider>
       <ObservationSoftLock tenantId={tenantId} eventId={eventId}>
         <div className="flex w-full flex-col">
-          <header className="mb-4 flex w-full flex-wrap items-center justify-between gap-3 px-4 py-5 sm:px-10">
-            <h2 className="text-2xl font-bold">{t("title", { tenantId })}</h2>
-            <div className="flex flex-wrap items-center gap-2">
-              {viewer.type === "staff" ? (
+          <ManagementPageHeading
+            title={t("title", { tenantId })}
+            navigation={
+              access?.canViewObservationDevices ? (
                 <Link href={observationPath(eventId)} variant="ghost" size="sm">
                   {t("observationDevicesBackLink")}
                 </Link>
-              ) : null}
-              <PwaInstall compact />
-              <LocaleSelect />
-              <ThemeToggle />
-              <LogoutButton />
-            </div>
-          </header>
-          <main className="flex w-full flex-col items-center gap-4">
+              ) : undefined
+            }
+          />
+          <ManagementMain className="flex w-full flex-col items-center gap-4">
             {machineFailed && (
               <div role="alert" className="flex flex-col items-center gap-2">
                 <p>{t("machineSessionFailed")}</p>
@@ -116,7 +115,7 @@ export default async function TenantObservation({
               edgeDeviceId={edgeDeviceId}
               requestedCameraId={requestedCameraId}
             />
-          </main>
+          </ManagementMain>
         </div>
       </ObservationSoftLock>
     </ScreenWakeProvider>

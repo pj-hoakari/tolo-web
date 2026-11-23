@@ -38,7 +38,7 @@ test("イベント管理ページの「メンバー管理」からメンバー�
   await expect(page).toHaveURL("/management/members");
   await expect(memberList(page)).toBeVisible();
 
-  await page.getByRole("link", { name: "イベント管理" }).click();
+  await page.getByRole("link", { name: "イベント一覧に戻る" }).click();
   await expect(page).toHaveURL("/management");
 });
 

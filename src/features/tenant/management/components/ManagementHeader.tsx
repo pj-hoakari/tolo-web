@@ -1,43 +1,43 @@
-import { useTranslations } from "next-intl";
-import { LocaleSelect } from "@/components/locale-select";
-import { PwaInstall } from "@/components/pwa/pwa-install";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/components/ui/link";
-import { LogoutButton } from "@/features/auth/LogoutButton";
+import { ManagementControls } from "./ManagementControls";
+import { ManagementHomeTitle } from "./ManagementHomeTitle";
+import { ManagementBanner, ManagementNavigation } from "./ManagementShell";
 
-export function ManagementHeader({
-  title,
+export async function ManagementHeader({
   tenantId,
+  staff,
+  members,
+  logout,
 }: {
-  title: string;
   tenantId: string;
+  staff: boolean;
+  members: boolean;
+  logout: boolean;
 }) {
-  const t = useTranslations("Management");
-  const tTenant = useTranslations("TenantManagement");
-
+  const [t, tManagement] = await Promise.all([
+    getTranslations("TenantManagement"),
+    getTranslations("Management"),
+  ]);
+  const title = t("pageTitle");
   return (
-    <header className="sticky top-0 z-10 shrink-0 border-b border-border bg-background px-4 py-4 sm:px-6">
-      <div className="flex min-h-8 flex-wrap items-center justify-between gap-4">
-        <div className="min-w-0 flex-1 basis-48">
-          <div className="flex flex-wrap items-center gap-4">
-            <h1 className="min-w-0 text-lg font-semibold tracking-tight break-words">
-              {title}
-            </h1>
-          </div>
-          <div className="mt-1 text-xs text-muted-foreground lg:hidden">
-            <p className="break-all">{t("tenantId", { id: tenantId })}</p>
-          </div>
-        </div>
-        <div className="ml-auto flex shrink-0 items-center gap-2 [&_svg]:size-4">
-          <Link href="/management/members" variant="ghost" size="sm">
-            {tTenant("membersLink")}
-          </Link>
-          <PwaInstall compact />
-          <LocaleSelect />
-          <ThemeToggle />
-          <LogoutButton />
-        </div>
+    <ManagementBanner className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background px-4 py-4 sm:px-6">
+      <div className="flex min-w-0 flex-1 basis-48 flex-col items-start gap-2">
+        <ManagementHomeTitle title={title} tenantId={tenantId} staff={staff} />
+        <p className="text-xs wrap-anywhere text-muted-foreground lg:hidden">
+          {tManagement("tenantId", { id: tenantId })}
+        </p>
       </div>
-    </header>
+      <div className="ml-auto flex min-w-0 flex-wrap items-center gap-2 [&_svg]:size-4">
+        {members && (
+          <ManagementNavigation aria-label={title}>
+            <Link href="/management/members" variant="ghost" size="sm">
+              {t("membersLink")}
+            </Link>
+          </ManagementNavigation>
+        )}
+        <ManagementControls install logout={logout} />
+      </div>
+    </ManagementBanner>
   );
 }

@@ -10,7 +10,9 @@ const floorTab = (page: Page, name: string) =>
   page.getByRole("button", { name, exact: true });
 // 「保存ポイント」と分けるため、名前が「保存」で始まるヘッダーの保存ボタンだけを取る
 const saveButton = (page: Page) =>
-  page.locator("header").getByRole("button", { name: /^保存(?!ポイント)/ });
+  page
+    .locator("[data-guide-map-toolbar]")
+    .getByRole("button", { name: /^保存(?!ポイント)/ });
 
 const open = async (
   page: Page,

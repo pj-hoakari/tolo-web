@@ -1,0 +1,32 @@
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.shell:has(> [data-management-canvas]) {
+  flex: none;
+  height: 100dvh;
+}
+
+@media (width >= 64rem) {
+  .shell:has(> [data-management-events]) {
+    grid-template-columns: 14rem minmax(0, 1fr);
+    grid-template-areas:
+      "sidebar header"
+      "sidebar events";
+  }
+
+  .shell:has(> [data-management-events]) > header {
+    grid-area: header;
+  }
+
+  .shell > [data-management-event-sidebar] {
+    grid-area: sidebar;
+    align-self: start;
+  }
+
+  .shell > [data-management-events] {
+    grid-area: events;
+  }
+}

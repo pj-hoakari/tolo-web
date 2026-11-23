@@ -19,6 +19,7 @@ import { Link } from "@/components/ui/link";
 import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
 import { matchesSearch } from "@/lib/matchesSearch";
 import { ListFilters } from "../components/ListFilters";
+import { ManagementMain } from "../components/ManagementShell";
 import { managementPath } from "../routes";
 import { ArchiveEventDialog } from "./ArchiveEventDialog";
 import { CreateEventForm } from "./CreateEventForm";
@@ -37,10 +38,9 @@ import { useTenantEvents } from "./useTenantEvents";
 
 type Props = {
   tenantId: string;
-  header: ReactNode;
 };
 
-export function TenantEvents({ tenantId, header }: Props) {
+export function TenantEvents({ tenantId }: Props) {
   const t = useTranslations("TenantManagement");
   const tManagement = useTranslations("Management");
   const tFilters = useTranslations("Management.filters");
@@ -102,8 +102,11 @@ export function TenantEvents({ tenantId, header }: Props) {
   ] as const;
 
   return (
-    <div className="flex min-h-dvh">
-      <aside className="sticky top-0 hidden h-dvh w-56 shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground lg:flex">
+    <>
+      <aside
+        data-management-event-sidebar
+        className="sticky top-0 hidden h-dvh w-56 shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground lg:flex"
+      >
         <div className="flex h-[73px] shrink-0 items-center gap-3 px-5">
           <span className="flex size-8 items-center justify-center rounded-lg border border-sidebar-border bg-background">
             <Layers aria-hidden className="size-4" />
@@ -159,281 +162,276 @@ export function TenantEvents({ tenantId, header }: Props) {
           </p>
         </div>
       </aside>
-      <div className="flex min-w-0 flex-1 flex-col">
-        {header}
-        <main className="min-w-0 flex-1">
-          <div className="flex justify-end border-b border-border px-4 py-3 lg:hidden">
-            <CreateEventForm tenantId={tenantId} onCreated={handleCreated} />
-          </div>
-          {notice && (
-            <div
-              role="status"
-              className="flex items-start justify-between gap-4 border-b border-border bg-muted/40 px-4 py-3 text-sm sm:px-6"
+      <ManagementMain data-management-events>
+        <div className="flex justify-end border-b border-border px-4 py-3 lg:hidden">
+          <CreateEventForm tenantId={tenantId} onCreated={handleCreated} />
+        </div>
+        {notice && (
+          <div
+            role="status"
+            className="flex items-start justify-between gap-4 border-b border-border bg-muted/40 px-4 py-3 text-sm sm:px-6"
+          >
+            <div className="min-w-0">{notice}</div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-11 shrink-0"
+              aria-label={t("list.dismissNotice")}
+              onPress={() => setNotice(null)}
             >
-              <div className="min-w-0">{notice}</div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-11 shrink-0"
-                aria-label={t("list.dismissNotice")}
-                onPress={() => setNotice(null)}
-              >
-                <X aria-hidden className="size-4" />
+              <X aria-hidden className="size-4" />
+            </Button>
+          </div>
+        )}
+        <section
+          aria-label={t("list.heading")}
+          className="min-w-0 bg-background text-foreground"
+        >
+          <div className="border-b border-border px-4 py-4 sm:px-6">
+            <ListFilters<EventStatus | "all">
+              query={query}
+              onQueryChange={(query) => updateFilters({ query }, true)}
+              hideStatusOnDesktop
+              searchLabel={t("list.search")}
+              filterLabel={t("list.state")}
+              selected={selectedStatus}
+              onSelectionChange={selectStatus}
+              options={[
+                { id: "all", label: t("list.allStatuses") },
+                ...(
+                  ["draft", "open", "locked", "closed", "archived"] as const
+                ).map((id) => ({ id, label: t(`status.${id}`) })),
+              ]}
+              resetLabel={tFilters("reset")}
+              isResetDisabled={
+                !query && selectedStatus === "all" && !includeArchived
+              }
+              onReset={resetFilters}
+              additionalFilters={
+                <Checkbox
+                  className="min-h-11 text-sm lg:min-h-10"
+                  isSelected={includeArchived}
+                  onChange={(value) => {
+                    updateFilters({
+                      includeArchived: value,
+                      ...(!value && selectedStatus === "archived"
+                        ? { selectedStatus: "all" as const }
+                        : {}),
+                    });
+                    setNotice(null);
+                  }}
+                >
+                  {t("list.showArchived")}
+                </Checkbox>
+              }
+            />
+          </div>
+          {hasFilters && (
+            <section
+              aria-label={t("list.activeFilters")}
+              className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2 sm:px-6"
+            >
+              {query && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="min-h-11 max-w-full gap-2 lg:min-h-8"
+                  aria-label={t("list.clearSearch")}
+                  onPress={() => updateFilters({ query: "" })}
+                >
+                  <span className="truncate">
+                    {t("list.searchCondition", { query })}
+                  </span>
+                  <X aria-hidden className="size-3 shrink-0" />
+                </Button>
+              )}
+              {selectedStatus !== "all" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="min-h-11 gap-2 lg:min-h-8"
+                  aria-label={t("list.clearStatus")}
+                  onPress={() => updateFilters({ selectedStatus: "all" })}
+                >
+                  {t(`status.${selectedStatus}`)}
+                  <X aria-hidden className="size-3" />
+                </Button>
+              )}
+              {includeArchived && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="min-h-11 gap-2 lg:min-h-8"
+                  aria-label={t("list.clearArchived")}
+                  onPress={() =>
+                    updateFilters({
+                      includeArchived: false,
+                      ...(selectedStatus === "archived"
+                        ? { selectedStatus: "all" as const }
+                        : {}),
+                    })
+                  }
+                >
+                  {t("list.showArchived")}
+                  <X aria-hidden className="size-3" />
+                </Button>
+              )}
+            </section>
+          )}
+          <div className="grid grid-cols-1 items-center gap-4 border-b border-border bg-muted/40 px-4 py-3 sm:px-6 md:grid-cols-[minmax(0,1fr)_8rem_10rem]">
+            <div className="flex min-w-0 items-center gap-2">
+              <CalendarDays
+                aria-hidden
+                className="size-4 text-muted-foreground"
+              />
+              <h2 className="text-sm font-medium">{t("list.heading")}</h2>
+              {list.status === "ready" && (
+                <p
+                  role="status"
+                  className="text-xs text-muted-foreground tabular-nums"
+                >
+                  {query.trim() || selectedStatus !== "all"
+                    ? t("list.results", {
+                        shown: visibleEvents.length,
+                        total: list.events.length,
+                      })
+                    : t("list.count", { count: list.events.length })}
+                </p>
+              )}
+            </div>
+            <span
+              aria-hidden
+              className="hidden text-xs text-muted-foreground md:block"
+            >
+              {t("list.state")}
+            </span>
+            <span
+              aria-hidden
+              className="hidden text-right text-xs text-muted-foreground md:block"
+            >
+              {t("list.actions")}
+            </span>
+          </div>
+          {list.status === "loading" && (
+            <p
+              role="status"
+              className="px-6 py-10 text-sm text-muted-foreground"
+            >
+              {t("list.loading")}
+            </p>
+          )}
+          {list.status === "error" && (
+            <div
+              role="alert"
+              className="flex flex-wrap items-center gap-3 px-6 py-10"
+            >
+              <p className="text-sm text-destructive">{t("list.error")}</p>
+              <Button variant="outline" size="sm" onPress={list.refresh}>
+                {t("list.retry")}
               </Button>
             </div>
           )}
-          <section
-            aria-label={t("list.heading")}
-            className="min-w-0 bg-background text-foreground"
-          >
-            <div className="border-b border-border px-4 py-4 sm:px-6">
-              <ListFilters<EventStatus | "all">
-                query={query}
-                onQueryChange={(query) => updateFilters({ query }, true)}
-                hideStatusOnDesktop
-                searchLabel={t("list.search")}
-                filterLabel={t("list.state")}
-                selected={selectedStatus}
-                onSelectionChange={selectStatus}
-                options={[
-                  { id: "all", label: t("list.allStatuses") },
-                  ...(
-                    ["draft", "open", "locked", "closed", "archived"] as const
-                  ).map((id) => ({ id, label: t(`status.${id}`) })),
-                ]}
-                resetLabel={tFilters("reset")}
-                isResetDisabled={
-                  !query && selectedStatus === "all" && !includeArchived
-                }
-                onReset={resetFilters}
-                additionalFilters={
-                  <Checkbox
-                    className="min-h-11 text-sm lg:min-h-10"
-                    isSelected={includeArchived}
-                    onChange={(value) => {
-                      updateFilters({
-                        includeArchived: value,
-                        ...(!value && selectedStatus === "archived"
-                          ? { selectedStatus: "all" as const }
-                          : {}),
-                      });
-                      setNotice(null);
-                    }}
-                  >
-                    {t("list.showArchived")}
-                  </Checkbox>
-                }
-              />
-            </div>
-            {hasFilters && (
-              <section
-                aria-label={t("list.activeFilters")}
-                className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2 sm:px-6"
-              >
-                {query && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="min-h-11 max-w-full gap-2 lg:min-h-8"
-                    aria-label={t("list.clearSearch")}
-                    onPress={() => updateFilters({ query: "" })}
-                  >
-                    <span className="truncate">
-                      {t("list.searchCondition", { query })}
-                    </span>
-                    <X aria-hidden className="size-3 shrink-0" />
-                  </Button>
-                )}
-                {selectedStatus !== "all" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="min-h-11 gap-2 lg:min-h-8"
-                    aria-label={t("list.clearStatus")}
-                    onPress={() => updateFilters({ selectedStatus: "all" })}
-                  >
-                    {t(`status.${selectedStatus}`)}
-                    <X aria-hidden className="size-3" />
-                  </Button>
-                )}
-                {includeArchived && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="min-h-11 gap-2 lg:min-h-8"
-                    aria-label={t("list.clearArchived")}
-                    onPress={() =>
-                      updateFilters({
-                        includeArchived: false,
-                        ...(selectedStatus === "archived"
-                          ? { selectedStatus: "all" as const }
-                          : {}),
-                      })
-                    }
-                  >
-                    {t("list.showArchived")}
-                    <X aria-hidden className="size-3" />
-                  </Button>
-                )}
-              </section>
-            )}
-            <div className="grid grid-cols-1 items-center gap-4 border-b border-border bg-muted/40 px-4 py-3 sm:px-6 md:grid-cols-[minmax(0,1fr)_8rem_10rem]">
-              <div className="flex min-w-0 items-center gap-2">
-                <CalendarDays
-                  aria-hidden
-                  className="size-4 text-muted-foreground"
+          {list.status === "ready" &&
+            list.events.length === 0 &&
+            !hasFilters && (
+              <div className="flex flex-col items-start gap-4 px-6 py-10">
+                <p className="text-sm text-muted-foreground">
+                  {t("list.empty")}
+                </p>
+                <CreateEventForm
+                  tenantId={tenantId}
+                  onCreated={handleCreated}
                 />
-                <h2 className="text-sm font-medium">{t("list.heading")}</h2>
-                {list.status === "ready" && (
-                  <p
-                    role="status"
-                    className="text-xs text-muted-foreground tabular-nums"
-                  >
-                    {query.trim() || selectedStatus !== "all"
-                      ? t("list.results", {
-                          shown: visibleEvents.length,
-                          total: list.events.length,
-                        })
-                      : t("list.count", { count: list.events.length })}
-                  </p>
-                )}
               </div>
-              <span
-                aria-hidden
-                className="hidden text-xs text-muted-foreground md:block"
-              >
-                {t("list.state")}
-              </span>
-              <span
-                aria-hidden
-                className="hidden text-right text-xs text-muted-foreground md:block"
-              >
-                {t("list.actions")}
-              </span>
-            </div>
-            {list.status === "loading" && (
-              <p
-                role="status"
-                className="px-6 py-10 text-sm text-muted-foreground"
-              >
-                {t("list.loading")}
-              </p>
             )}
-            {list.status === "error" && (
-              <div
-                role="alert"
-                className="flex flex-wrap items-center gap-3 px-6 py-10"
-              >
-                <p className="text-sm text-destructive">{t("list.error")}</p>
-                <Button variant="outline" size="sm" onPress={list.refresh}>
-                  {t("list.retry")}
+          {list.status === "ready" &&
+            (list.events.length > 0 || hasFilters) &&
+            visibleEvents.length === 0 && (
+              <div className="flex flex-col items-start gap-4 px-6 py-10">
+                <p className="text-sm text-muted-foreground">
+                  {t("list.noResults")}
+                </p>
+                <Button
+                  variant="outline"
+                  className="min-h-11"
+                  onPress={resetFilters}
+                >
+                  {t("list.clearConditions")}
                 </Button>
               </div>
             )}
-            {list.status === "ready" &&
-              list.events.length === 0 &&
-              !hasFilters && (
-                <div className="flex flex-col items-start gap-4 px-6 py-10">
-                  <p className="text-sm text-muted-foreground">
-                    {t("list.empty")}
-                  </p>
-                  <CreateEventForm
-                    tenantId={tenantId}
-                    onCreated={handleCreated}
-                  />
-                </div>
-              )}
-            {list.status === "ready" &&
-              (list.events.length > 0 || hasFilters) &&
-              visibleEvents.length === 0 && (
-                <div className="flex flex-col items-start gap-4 px-6 py-10">
-                  <p className="text-sm text-muted-foreground">
-                    {t("list.noResults")}
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="min-h-11"
-                    onPress={resetFilters}
-                  >
-                    {t("list.clearConditions")}
-                  </Button>
-                </div>
-              )}
-            {list.status === "ready" && visibleEvents.length > 0 && (
-              <ul className="divide-y divide-border">
-                {visibleEvents.map((event) => (
-                  <li
-                    key={event.eventId}
-                    className="grid grid-cols-[minmax(0,1fr)_9rem] items-center gap-x-4 gap-y-2 px-4 py-2 transition-colors duration-150 focus-within:bg-muted/50 hover:bg-muted/50 sm:px-6 md:min-h-16 md:grid-cols-[minmax(0,1fr)_8rem_10rem]"
-                  >
-                    <div className="col-span-2 min-w-0 md:col-span-1">
-                      <Link
-                        href={managementPath(event.eventId)}
-                        onPress={rememberList}
-                        className="block min-w-0 rounded-sm text-sm leading-5 font-medium underline-offset-4 hover:bg-accent hover:text-accent-foreground hover:underline focus-visible:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                      >
-                        <span title={event.name} className="block truncate">
-                          {event.name}
-                        </span>
-                      </Link>
-                      <EventId id={event.eventId} name={event.name} />
-                    </div>
-                    <div className="min-w-0">
-                      <span className="sr-only">{t("list.state")}: </span>
-                      <EventStatusControl
-                        event={event}
-                        onChanged={(updated) => {
-                          setNotice(
-                            t("transition.success", {
-                              name: updated.name,
-                              status: t(`status.${updated.status}`),
-                            }),
-                          );
-                          list.refresh();
-                        }}
-                      />
-                    </div>
-                    <div className="grid grid-cols-[minmax(0,1fr)_2.75rem] items-center gap-2 lg:grid-cols-[minmax(0,1fr)_2.5rem]">
-                      <EventManagementMenu
-                        event={event}
-                        rememberList={rememberList}
-                      />
-                      {ARCHIVABLE_STATUSES.has(event.status) ? (
-                        <div className="justify-self-end">
-                          <ArchiveEventDialog
-                            event={event}
-                            actionsLabel={t("list.moreActions", {
-                              name: event.name,
-                            })}
-                            onArchived={() => {
-                              setNotice(
-                                t("archive.success", { name: event.name }),
-                              );
-                              list.refresh();
-                            }}
-                          />
-                        </div>
-                      ) : RESTORABLE_STATUSES.has(event.status) ? (
-                        <RestoreEventButton
+          {list.status === "ready" && visibleEvents.length > 0 && (
+            <ul className="divide-y divide-border">
+              {visibleEvents.map((event) => (
+                <li
+                  key={event.eventId}
+                  className="grid grid-cols-[minmax(0,1fr)_9rem] items-center gap-x-4 gap-y-2 px-4 py-2 transition-colors duration-150 focus-within:bg-muted/50 hover:bg-muted/50 sm:px-6 md:min-h-16 md:grid-cols-[minmax(0,1fr)_8rem_10rem]"
+                >
+                  <div className="col-span-2 min-w-0 md:col-span-1">
+                    <Link
+                      href={managementPath(event.eventId)}
+                      onPress={rememberList}
+                      className="block min-w-0 rounded-sm text-sm leading-5 font-medium underline-offset-4 hover:bg-accent hover:text-accent-foreground hover:underline focus-visible:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    >
+                      <span title={event.name} className="block truncate">
+                        {event.name}
+                      </span>
+                    </Link>
+                    <EventId id={event.eventId} name={event.name} />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="sr-only">{t("list.state")}: </span>
+                    <EventStatusControl
+                      event={event}
+                      onChanged={(updated) => {
+                        setNotice(
+                          t("transition.success", {
+                            name: updated.name,
+                            status: t(`status.${updated.status}`),
+                          }),
+                        );
+                        list.refresh();
+                      }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-[minmax(0,1fr)_2.75rem] items-center gap-2 lg:grid-cols-[minmax(0,1fr)_2.5rem]">
+                    <EventManagementMenu
+                      event={event}
+                      rememberList={rememberList}
+                    />
+                    {ARCHIVABLE_STATUSES.has(event.status) ? (
+                      <div className="justify-self-end">
+                        <ArchiveEventDialog
                           event={event}
-                          onRestored={() => {
+                          actionsLabel={t("list.moreActions", {
+                            name: event.name,
+                          })}
+                          onArchived={() => {
                             setNotice(
-                              t("restore.success", { name: event.name }),
+                              t("archive.success", { name: event.name }),
                             );
                             list.refresh();
                           }}
                         />
-                      ) : (
-                        <span aria-hidden />
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </main>
-      </div>
-    </div>
+                      </div>
+                    ) : RESTORABLE_STATUSES.has(event.status) ? (
+                      <RestoreEventButton
+                        event={event}
+                        onRestored={() => {
+                          setNotice(t("restore.success", { name: event.name }));
+                          list.refresh();
+                        }}
+                      />
+                    ) : (
+                      <span aria-hidden />
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </ManagementMain>
+    </>
   );
 }

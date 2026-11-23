@@ -2,11 +2,11 @@ import { getURLFromRedirectError } from "next/dist/client/components/redirect";
 import { headers } from "next/headers";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { Viewer } from "@/server/auth";
-import TenantGraphEdit from "./event/[eventId]/management/graph/edit/page";
-import TenantGuideMapEdit from "./event/[eventId]/management/guide-map/edit/page";
-import TenantManagement from "./event/[eventId]/management/page";
-import TenantMemberManagement from "./management/members/page";
-import TenantEventManagement from "./management/page";
+import TenantGraphEdit from "./(management)/event/[eventId]/management/graph/edit/page";
+import TenantGuideMapEdit from "./(management)/event/[eventId]/management/guide-map/edit/page";
+import TenantManagement from "./(management)/event/[eventId]/management/page";
+import TenantMemberManagement from "./(management)/management/members/page";
+import TenantEventManagement from "./(management)/management/page";
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/headers", () => ({ headers: vi.fn() }));

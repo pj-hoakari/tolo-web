@@ -22,6 +22,26 @@ async function open(page: Page, overrides: MockRouterOverrides = {}) {
   await page.goto("/management");
 }
 
+test("PCでは一覧をスクロールしても共通バーとサイドバーの位置を維持する", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 700 });
+  await open(page, {
+    events: Array.from({ length: 40 }, (_, index) => ({
+      eventId: (index + 1).toString(16).padStart(16, "0"),
+      name: `Event ${index + 1}`,
+      status: "open",
+    })),
+  });
+  await row(page, "Event 40").scrollIntoViewIfNeeded();
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(500);
+  const header = await page.getByRole("banner").boundingBox();
+  const sidebar = await page.getByRole("complementary").boundingBox();
+  expect(header?.y).toBe(0);
+  expect(sidebar?.y).toBe(0);
+  expect(header?.x).toBe(sidebar?.width);
+});
+
 test("管理メニューは再クリック・外側クリック・Escape で閉じ、キーボードで案内マップへ移動できる", async ({
   page,
 }) => {

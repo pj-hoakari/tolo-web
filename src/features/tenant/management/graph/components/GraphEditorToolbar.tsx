@@ -33,11 +33,11 @@ export function GraphEditorToolbar({
   const tType = useTranslations("Graph.nodeType");
 
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-4 py-2">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-4 py-2">
       <p className="shrink-0 text-sm font-semibold text-foreground">
         {t("title")}
       </p>
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-2 sm:justify-end">
         {(
           [
             { type: DEFAULT_NODE_TYPE, label: t("point") },
@@ -67,7 +67,7 @@ export function GraphEditorToolbar({
           <SquareDashed aria-hidden className="size-4 shrink-0" />
           {t("addGroup")}
         </Button>
-        <div className="ml-1 flex items-center gap-2 border-l border-border pl-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:ml-1 sm:border-l sm:border-border sm:pl-2">
           <LabelLocaleMenu
             labelLocale={labelLocale}
             onChangeLabelLocale={onChangeLabelLocale}

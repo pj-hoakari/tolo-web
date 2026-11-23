@@ -136,10 +136,7 @@ test.beforeEach(async ({ page, context }) => {
   }, sampleEdgeDevicesWire);
   await page.goto("/event/test/observation/8c1f0e2a5d4b3c6e");
   await expect(
-    page.getByRole("heading", {
-      level: 2,
-      name: "0123456789abcdef 観測ページ",
-    }),
+    page.getByText("0123456789abcdef 観測ページ", { exact: true }),
   ).toBeVisible();
 });
 
@@ -163,7 +160,7 @@ test.describe("画面ロック", () => {
       page.getByRole("heading", { level: 2, name: "解除コードを設定" }),
     ).toBeVisible();
     await expect(
-      page.locator("[inert]").getByRole("button", { name: "カメラを起動" }),
+      page.locator("[inert]").getByText("カメラを起動", { exact: true }),
     ).toHaveCount(1);
   });
 
@@ -190,6 +187,8 @@ test.describe("画面ロック", () => {
     expect(reached).not.toContain("アプリをインストール");
     expect(reached).not.toContain("言語を切り替え");
     expect(reached).not.toContain("テーマを切り替え");
+    expect(reached).not.toContain("イベント一覧に戻る");
+    expect(reached).not.toContain("メンバー管理");
     expect(reached).not.toContain("画面の常時点灯");
   });
 

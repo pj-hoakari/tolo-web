@@ -29,9 +29,10 @@ export function EventListBackLink({ tenantId }: { tenantId: string }) {
   return (
     <Link
       href={`/management${position?.search ? `?${position.search}` : ""}`}
+      aria-label={t("backToList")}
       variant="ghost"
-      size="sm"
-      className="min-h-11 gap-2 self-start"
+      size="icon"
+      className="size-11"
       onPress={() => {
         if (position)
           try {
@@ -45,7 +46,6 @@ export function EventListBackLink({ tenantId }: { tenantId: string }) {
       }}
     >
       <ArrowLeft aria-hidden className="size-4" />
-      {t("backToList")}
     </Link>
   );
 }

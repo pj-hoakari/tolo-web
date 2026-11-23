@@ -59,7 +59,7 @@ export function CreateInvitationForm({ tenantId, onCreated }: Props) {
             onChange={setDisplayName}
             maxLength={64}
             isDisabled={submitting}
-            className="flex-1"
+            className="min-w-0 flex-1"
           />
           <Button type="submit" isDisabled={submitting || !displayName.trim()}>
             {t("invite.submit")}
@@ -79,7 +79,7 @@ export function CreateInvitationForm({ tenantId, onCreated }: Props) {
               label={t("invite.url")}
               value={url}
               isReadOnly
-              className="flex-1"
+              className="min-w-0 flex-1"
             />
             <Button variant="outline" onPress={() => copy(url)}>
               {copied ? t("invite.copied") : t("invite.copy")}

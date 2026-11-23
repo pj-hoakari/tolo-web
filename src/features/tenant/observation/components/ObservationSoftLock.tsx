@@ -12,6 +12,11 @@ import {
   useState,
 } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  DialogContent,
+  DialogOverlay,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { FieldError, Label } from "@/components/ui/field";
 import { Input, TextField } from "@/components/ui/textfield";
 import { cn } from "@/lib/utils";
@@ -204,67 +209,76 @@ export function ObservationSoftLock({
       </div>
 
       {blocksOperation && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/90 px-4 backdrop-blur-sm">
-          <form
-            className="w-full max-w-sm rounded-md border border-border bg-background p-5 shadow-lg"
-            onSubmit={handleSubmit}
+        <DialogOverlay
+          isOpen
+          isDismissable={false}
+          isKeyboardDismissDisabled
+          className="z-[60] bg-background/90 backdrop-blur-sm"
+        >
+          <DialogContent
+            closeButton={false}
+            className="w-[calc(100%-2rem)] max-w-sm rounded-md border-border p-5 md:w-[calc(100%-2rem)]"
           >
-            <div className="mb-4 flex items-start gap-3">
-              <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-md bg-muted">
-                <ShieldCheck className="size-5" aria-hidden="true" />
+            <form onSubmit={handleSubmit}>
+              <div className="mb-4 flex items-start gap-3">
+                <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-md bg-muted">
+                  <ShieldCheck className="size-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <DialogTitle className="text-lg leading-normal font-bold tracking-normal">
+                    {needsSetup ? t("setupTitle") : t("lockedTitle")}
+                  </DialogTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {needsSetup
+                      ? t("setupDescription")
+                      : t("lockedDescription")}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-bold">
-                  {needsSetup ? t("setupTitle") : t("lockedTitle")}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {needsSetup ? t("setupDescription") : t("lockedDescription")}
-                </p>
-              </div>
-            </div>
 
-            <div className="flex flex-col gap-3">
-              <TextField
-                className="flex flex-col gap-2"
-                value={unlockCode}
-                onChange={setUnlockCode}
-                isInvalid={error !== null}
-              >
-                <Label>{t("codeLabel")}</Label>
-                <Input
-                  type="password"
-                  autoComplete={
-                    needsSetup ? "new-password" : "current-password"
-                  }
-                  autoFocus
-                />
-                {/* FieldError は TextField のコンテキスト内でしか描画されないため、
-                    解除コード入力に関するエラーはこのフィールドにまとめて出す */}
-                <FieldError>{error}</FieldError>
-              </TextField>
-
-              {needsSetup && (
+              <div className="flex flex-col gap-3">
                 <TextField
                   className="flex flex-col gap-2"
-                  value={unlockCodeConfirmation}
-                  onChange={setUnlockCodeConfirmation}
+                  value={unlockCode}
+                  onChange={setUnlockCode}
                   isInvalid={error !== null}
                 >
-                  <Label>{t("codeConfirmationLabel")}</Label>
-                  <Input type="password" autoComplete="new-password" />
+                  <Label>{t("codeLabel")}</Label>
+                  <Input
+                    type="password"
+                    autoComplete={
+                      needsSetup ? "new-password" : "current-password"
+                    }
+                    autoFocus
+                  />
+                  {/* FieldError は TextField のコンテキスト内でしか描画されないため、
+                    解除コード入力に関するエラーはこのフィールドにまとめて出す */}
+                  <FieldError>{error}</FieldError>
                 </TextField>
-              )}
 
-              <Button
-                type="button"
-                onPress={() => void unlock()}
-                isDisabled={busy || !loaded}
-              >
-                {needsSetup ? t("submitSetup") : t("submitUnlock")}
-              </Button>
-            </div>
-          </form>
-        </div>
+                {needsSetup && (
+                  <TextField
+                    className="flex flex-col gap-2"
+                    value={unlockCodeConfirmation}
+                    onChange={setUnlockCodeConfirmation}
+                    isInvalid={error !== null}
+                  >
+                    <Label>{t("codeConfirmationLabel")}</Label>
+                    <Input type="password" autoComplete="new-password" />
+                  </TextField>
+                )}
+
+                <Button
+                  type="button"
+                  onPress={() => void unlock()}
+                  isDisabled={busy || !loaded}
+                >
+                  {needsSetup ? t("submitSetup") : t("submitUnlock")}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </DialogOverlay>
       )}
     </LockContext.Provider>
   );

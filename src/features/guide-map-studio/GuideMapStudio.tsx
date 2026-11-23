@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { ManagementMain } from "@/features/tenant/management/components/ManagementShell";
 import "./studio-theme.css";
 import {
   ChevronDown,
@@ -194,19 +195,14 @@ const StudioHelpDialog = dynamic(() =>
 );
 
 // eventId＝このイベントの案内マップ（ブラウザへの保存もイベントごとに分ける）。
-// leading / trailing＝上の帯の左端・右端に置く物（ページの戻るリンク・見出し・言語やテーマの切り替えなど）。
+// leading は編集ツールバーの左端に置く画面の見出しと戻るリンク。
 // 帯を 1 段にまとめて、地図を広く使えるようにする
 type GuideMapStudioProps = {
   eventId: string;
   leading?: React.ReactNode;
-  trailing?: React.ReactNode;
 };
 
-export function GuideMapStudio({
-  eventId,
-  leading,
-  trailing,
-}: GuideMapStudioProps) {
+export function GuideMapStudio({ eventId, leading }: GuideMapStudioProps) {
   const { t, tg, lang, connectorName } = useI18n();
   // 画面だけの設定（全体図・定規・くわしい設定・右の設定）。このブラウザに覚えておく
   const {
@@ -2612,11 +2608,14 @@ export function GuideMapStudio({
       {confirmDialog}
       <div className="flex min-h-0 flex-1 flex-col">
         {/* 上の帯（1段目）：（ページから渡された見出しなど）・マップのタブ・ファイルの操作・確かめる・書き出す・（言語やテーマなど） */}
-        <header className="z-30 flex h-14 shrink-0 border-b bg-card">
-          <div className="mx-auto flex w-full max-w-[1760px] min-w-0 items-center gap-2 px-3 min-[1280px]:gap-2.5 min-[1280px]:px-4">
+        <div
+          data-guide-map-toolbar
+          className="z-30 flex min-h-14 shrink-0 border-b bg-card"
+        >
+          <div className="mx-auto flex w-full max-w-[1760px] min-w-0 flex-wrap items-center gap-2 px-3 py-2 min-[1280px]:flex-nowrap min-[1280px]:gap-2.5 min-[1280px]:px-4 min-[1280px]:py-0">
             {leading && (
               <>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex max-w-full shrink-0 items-center gap-2">
                   {leading}
                 </div>
                 <span aria-hidden className="h-5 w-px shrink-0 bg-border" />
@@ -2636,7 +2635,7 @@ export function GuideMapStudio({
               onAdd={() => setNewMapOpen(true)}
             />
 
-            <span className="flex-1" />
+            <span className="hidden flex-1 min-[1280px]:block" />
             {/* マップの出し入れ（作る・開く・残す）をひとまとめに */}
             <FileActions
               onNew={() => setNewMapOpen(true)}
@@ -2726,13 +2725,8 @@ export function GuideMapStudio({
               exportDone={exportDone}
               onExport={handleExport}
             />
-            {trailing && (
-              <div className="flex shrink-0 items-center gap-1.5">
-                {trailing}
-              </div>
-            )}
           </div>
-        </header>
+        </div>
         {serverLoad === "failed" && (
           <StudioNotice
             title={t("tolo-web から読み込めませんでした。")}
@@ -2767,7 +2761,7 @@ export function GuideMapStudio({
           </StudioNotice>
         )}
         {/* 作業場：道具・地図・右の設定。画面いっぱいに広げるが、大きな画面では広がりすぎないよう最大幅を決める */}
-        <div className="mx-auto flex min-h-0 w-full max-w-[1760px] flex-1 gap-3 p-3">
+        <div className="mx-auto flex min-h-0 w-full max-w-[1760px] flex-1 gap-3 overflow-x-auto p-3 lg:overflow-visible">
           {/* 道具の列（細め：アイコン＋小さな名前。使い方とキーはマウスを置くと出る） */}
           <ToolRail
             tool={tool}
@@ -2780,7 +2774,7 @@ export function GuideMapStudio({
             hasSelection={selectedIds.length > 0}
             disabled={preview}
           />
-          <main className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04),0_10px_30px_-18px_rgba(0,0,0,0.25)]">
+          <ManagementMain className="flex min-w-72 flex-col overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04),0_10px_30px_-18px_rgba(0,0,0,0.25)] lg:min-w-0">
             {/* 地図の上の帯（2段目）：階・グリッド・名前で探す・編集／プレビュー。
                 狭い画面でも 2 段に折り返さない（階のタブが多いときは横にスクロールし、名前で探す欄は虫眼鏡だけにたたむ） */}
             <div className="flex min-h-12 shrink-0 items-center gap-2 border-b px-3 py-2">
@@ -3924,7 +3918,7 @@ export function GuideMapStudio({
               onZoomBy={zoomBy}
               onZoomReset={() => setZoom(1)}
             />
-          </main>
+          </ManagementMain>
 
           {/* プロパティ */}
           {/* 右の設定：「設定」「誘導」のタブで分け、中だけスクロールする。\ キーでしまえる */}
