@@ -355,8 +355,8 @@ export function GraphCanvas({
               edges={edges}
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
+              onNodesChange={(changes) => onNodesChange(changes.toArray())}
+              onEdgesChange={(changes) => onEdgesChange(changes.toArray())}
               onConnect={editable ? handleConnect : undefined}
               onConnectStart={editable ? handleConnectStart : undefined}
               onConnectEnd={editable ? handleConnectEnd : undefined}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useStoreApi, type XYPosition } from "@xyflow/react";
+import { useReactFlowStoreApi, type XYPosition } from "@xyflow/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { GraphCanvasNode, GraphEdgeType } from "../type";
 import {
@@ -26,15 +26,18 @@ export type EasyConnectApi = {
  * 呼び出し側で ReactFlowProvider の内側に置くこと。
  */
 export function useEasyConnect(): EasyConnectApi {
-  const storeApi = useStoreApi<GraphCanvasNode, GraphEdgeType>();
+  const { optionsStore, nodesStore } = useReactFlowStoreApi<
+    GraphCanvasNode,
+    GraphEdgeType
+  >();
   const [mode, setMode] = useState<EasyConnectMode | null>(null);
   const active = mode !== null;
 
   const end = useCallback(() => {
     setMode(null);
     // 進行中の接続ドラッグが残っていた場合も、接続線ごと破棄する。
-    storeApi.getState().cancelConnection();
-  }, [storeApi]);
+    optionsStore.getState().cancelConnection();
+  }, [optionsStore]);
 
   const startGlobal = useCallback(() => {
     setMode({ kind: "global" });
@@ -67,11 +70,11 @@ export function useEasyConnect(): EasyConnectApi {
     let rafId = 0;
     let attempts = 0;
     const startConnectionDrag = () => {
-      const node = storeApi.getState().nodeLookup.get(sourceNodeId);
+      const node = nodesStore.getState().nodeLookup.get(sourceNodeId);
       const handleRegistered = node?.internals.handleBounds?.source?.some(
         (handle) => handle.id === EASY_CONNECT_HANDLE_ID,
       );
-      const handleElement = storeApi
+      const handleElement = optionsStore
         .getState()
         .domNode?.querySelector<HTMLElement>(
           `.react-flow__handle[data-handleid="${EASY_CONNECT_HANDLE_ID}"][data-nodeid="${CSS.escape(sourceNodeId)}"]`,
@@ -103,7 +106,7 @@ export function useEasyConnect(): EasyConnectApi {
     };
     rafId = requestAnimationFrame(startConnectionDrag);
     return () => cancelAnimationFrame(rafId);
-  }, [mode, storeApi]);
+  }, [mode, optionsStore, nodesStore]);
 
   return useMemo(
     () => ({ mode, active: mode !== null, startGlobal, startFromNode, end }),
