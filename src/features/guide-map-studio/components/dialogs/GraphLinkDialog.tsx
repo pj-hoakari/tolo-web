@@ -50,8 +50,9 @@ export function GraphLinkDialog({
       selected.kind === "route")
       ? selected
       : null;
+  // 範囲は名前を持たないので「範囲（1F）」のように示す
   const objName = (o: MapObject) =>
-    `${o.title || t("（無題）")}（${floorName(o.floor)}）`;
+    `${o.kind === "area" ? t("範囲") : o.title || t("（無題）")}（${floorName(o.floor)}）`;
   const linkedTo = (key: "graphPointId" | "graphRouteId", id: string) =>
     doc.objects.filter((o) => o[key] === id);
   const rows = !g
@@ -125,7 +126,7 @@ export function GraphLinkDialog({
       </div>
       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
         {t(
-          "お客さんの画面は、混雑の情報をグラフのポイント・ルートごとに受け取り、結び付いた地図の場所・範囲を避けて案内します。地図の物を選んでからここを開くと、その物に結び付けられます。",
+          "お客さんの画面は、混雑の情報をグラフのポイント・ルートごとに受け取り、結び付いた地図の場所・範囲を避けて案内します。階・階段・エレベーターなどは、名前の同じポイントに自動で結び付きます。自動で決まらなかった物だけ、地図の物を選んでからここで結び付けてください。",
         )}
       </p>
       {!g ? (
@@ -265,8 +266,9 @@ export function GraphLinkDialog({
                                 <button
                                   type="button"
                                   onClick={() =>
+                                    // "" は「手で外した」印。自動の結び付けで付け直さないようにする
                                     onChange(o.id, {
-                                      [r.key]: undefined,
+                                      [r.key]: "",
                                     } as Partial<MapObject>)
                                   }
                                   aria-label={t("結び付きを外す")}

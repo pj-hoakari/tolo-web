@@ -20,7 +20,8 @@ import {
   Venus as VenusIcon,
 } from "lucide-react";
 import type * as React from "react";
-import type { ConnectorType, PaletteKey } from "../../type";
+import type { ConnectorType, MapObject, PaletteKey } from "../../type";
+import { isConnector, markOf } from "../../utils/guideMapDoc";
 
 // 階移動の種類アイコン（lucide に無いので線画で描く）
 export function ConnectorIcon({
@@ -99,4 +100,16 @@ export function KindIcon({ kind }: { kind: PaletteKey }) {
       <Icon className="size-[68%]" />
     </span>
   );
+}
+
+/**
+ * 「マークの大きさ」（markScale）を変えられる物か。目印（ピン）・部屋の中の目印・トイレなどの種類のマーク・四角／丸の階段やエレベーターの印。
+ * ピンの階段・エレベーターは、マークの幅と高さ（markW / markH）で変えるので除く
+ */
+export function hasMarkScale(
+  o: MapObject,
+): o is Extract<MapObject, { kind: "place" }> {
+  if (o.kind !== "place") return false;
+  if (isConnector(o)) return o.shape !== "pin";
+  return o.shape === "pin" || Boolean(o.pin) || Boolean(KIND_ICON[markOf(o)]);
 }

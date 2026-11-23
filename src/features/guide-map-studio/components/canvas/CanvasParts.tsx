@@ -331,19 +331,23 @@ export function PinDot({
   sel,
   tapped,
   inline,
+  scale = 1,
 }: {
   color: string;
   line: string;
   sel: boolean;
   tapped: boolean;
   inline?: boolean;
+  /** 大きさの倍率（マークの大きさ。1＝18px） */
+  scale?: number;
 }) {
   return (
     <span
       className={cn(
-        "pointer-events-none flex size-[18px] shrink-0 items-center justify-center",
+        "pointer-events-none flex shrink-0 items-center justify-center",
         inline ? "relative" : "absolute -translate-x-1/2 -translate-y-1/2",
       )}
+      style={{ width: 18 * scale, height: 18 * scale }}
     >
       <span
         className={cn(
@@ -357,8 +361,8 @@ export function PinDot({
         }}
       />
       <span
-        className="relative size-[7px] rounded-full"
-        style={{ background: color }}
+        className="relative rounded-full"
+        style={{ background: color, width: 7 * scale, height: 7 * scale }}
       />
     </span>
   );

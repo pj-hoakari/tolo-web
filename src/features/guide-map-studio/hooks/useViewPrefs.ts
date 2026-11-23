@@ -1,6 +1,6 @@
 import * as React from "react";
 
-// 画面だけの設定（全体図・定規・右の「くわしい設定」・右の設定を出しているか）。このブラウザに覚えておく
+// 画面だけの設定（全体図・定規・グリッド線・右の「くわしい設定」・右の設定を出しているか）。このブラウザに覚えておく
 // 保存キー
 const VIEW_PREFS_KEY = "guide-map-studio:view-prefs";
 // 前の名前の保存キー。残っていれば一度だけ読んで引き継ぐ
@@ -10,6 +10,7 @@ export function useViewPrefs() {
   const [sideOpen, setSideOpen] = React.useState(true); // 右の設定を出しているか
   const [showMini, setShowMini] = React.useState(true); // 全体図（ミニマップ）
   const [showRulers, setShowRulers] = React.useState(true); // 定規（座標）を表示
+  const [showGrid, setShowGrid] = React.useState(true); // グリッド線（作るときの目安）を表示
   const [advancedOpen, setAdvancedOpen] = React.useState(false); // 右の設定の「くわしい設定」を開いているか
   React.useEffect(() => {
     try {
@@ -20,11 +21,13 @@ export function useViewPrefs() {
       ) as {
         showMini?: boolean;
         rulers?: boolean;
+        grid?: boolean;
         advanced?: boolean;
         side?: boolean;
       };
       if (typeof v.showMini === "boolean") setShowMini(v.showMini);
       if (typeof v.rulers === "boolean") setShowRulers(v.rulers);
+      if (typeof v.grid === "boolean") setShowGrid(v.grid);
       if (typeof v.advanced === "boolean") setAdvancedOpen(v.advanced);
       if (typeof v.side === "boolean") setSideOpen(v.side);
     } catch {
@@ -34,6 +37,7 @@ export function useViewPrefs() {
   const saveViewPrefs = (next: {
     showMini?: boolean;
     rulers?: boolean;
+    grid?: boolean;
     advanced?: boolean;
     side?: boolean;
   }) => {
@@ -43,6 +47,7 @@ export function useViewPrefs() {
         JSON.stringify({
           showMini,
           rulers: showRulers,
+          grid: showGrid,
           advanced: advancedOpen,
           side: sideOpen,
           ...next,
@@ -57,6 +62,8 @@ export function useViewPrefs() {
     setShowMini,
     showRulers,
     setShowRulers,
+    showGrid,
+    setShowGrid,
     advancedOpen,
     setAdvancedOpen,
     sideOpen,

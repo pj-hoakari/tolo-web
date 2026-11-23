@@ -39,7 +39,8 @@ export function PlacesListDialog({
   const q = filter.query.trim().normalize("NFKC").toLowerCase();
   const order = new Map(doc.floors.map((f, i) => [f.id, i]));
   const rows = doc.objects
-    .filter((o) => o.kind !== "route")
+    // 線と範囲は名前を持たないので並べない
+    .filter((o) => o.kind !== "route" && o.kind !== "area")
     .filter((o) => !filter.floor || o.floor === filter.floor)
     .filter((o) => !filter.unnamed || !o.title?.trim())
     .filter(

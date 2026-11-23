@@ -52,9 +52,20 @@ export function roomLabel(
 }
 
 /**
- * 範囲（エリア）の名前の大きさ。範囲の広さに合わせる（11〜20px）。
- * 範囲の名前は枠の上の方に 1 行で出すので、幅と高さの両方から控えめに決める
+ * 四角・丸の階段・エレベーターの、アイコンと名前の大きさ。
+ * 部屋と同じく部屋の大きさに合わせる（部屋を「階段・EVとして使う」にしても、マークや名前が小さくならないように）。
+ * 名前の下に出す「つながる階」（10px・1 行）の分も、名前に使える高さから引く。画面と画像（guideMapSvg.ts）で同じ大きさにする
  */
-export function areaLabelSize(w: number, h: number) {
-  return Math.max(11, Math.min(20, Math.min(w / 16, h / 9)));
+export function connectorRoomLayout(
+  o: { w: number; h: number; labelScale?: number; markScale?: number },
+  text: string,
+): { icon: number; lines: string[]; size: number } {
+  const icon =
+    Math.max(14, Math.min(32, Math.min(o.w, o.h) * 0.3)) * (o.markScale ?? 1);
+  const label = roomLabel(text, o.w, o.h, { reserved: icon + 4 + 19 });
+  return {
+    icon,
+    lines: label.lines,
+    size: label.size * (o.labelScale ?? 1),
+  };
 }

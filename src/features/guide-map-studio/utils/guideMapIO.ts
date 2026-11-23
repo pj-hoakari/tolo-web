@@ -38,7 +38,7 @@ export function toGuideMapLayout(doc: GuideMapDoc): LocalizedGuideMapLayout {
     north: doc.north,
     scale: doc.scale,
     objects: doc.objects.map((o) => {
-      // スタジオだけで使う項目（floor・graphPointId・graphRouteId・locked・labelScale）は外し、名前は言語ごとの形にする
+      // スタジオだけで使う項目（floor・graphPointId・graphRouteId・locked・labelScale・markScale）は外し、名前は言語ごとの形にする
       const {
         id,
         floor,
@@ -46,6 +46,7 @@ export function toGuideMapLayout(doc: GuideMapDoc): LocalizedGuideMapLayout {
         graphRouteId,
         locked: _locked,
         labelScale: _labelScale,
+        markScale: _markScale,
         title,
         description,
         kind,
@@ -53,12 +54,14 @@ export function toGuideMapLayout(doc: GuideMapDoc): LocalizedGuideMapLayout {
       } = o;
       void _locked;
       void _labelScale;
+      void _markScale;
       return {
         id,
         kind: kind === "route" ? "line" : kind,
         groupId: groupOf.get(floor) ?? floor,
         ...rest,
-        ...(loc(title) ? { title: loc(title) } : {}),
+        // 範囲には名前を付けない（スタジオで出さないので、残っていても tolo-web へは送らない）
+        ...(loc(title) && kind !== "area" ? { title: loc(title) } : {}),
         ...(loc(description) ? { description: loc(description) } : {}),
         ...(graphPointId ? { pointId: graphPointId } : {}),
         ...(graphRouteId ? { routeId: graphRouteId } : {}),
@@ -89,7 +92,8 @@ export function fromGuideMapLayout(
       ...rest,
       kind: kind === "line" ? "route" : kind,
       floor: groupId,
-      ...(text(title) ? { title: text(title) } : {}),
+      // 範囲の名前は読み込まない（範囲には名前を付けない）
+      ...(text(title) && kind !== "area" ? { title: text(title) } : {}),
       ...(text(description) ? { description: text(description) } : {}),
       ...(pointId ? { graphPointId: pointId } : {}),
       ...(routeId ? { graphRouteId: routeId } : {}),
@@ -194,11 +198,13 @@ export function toRouteLayout(
         graphRouteId,
         locked: _locked,
         labelScale: _labelScale,
+        markScale: _markScale,
         kind,
         ...rest
       } = o;
       void _locked;
       void _labelScale;
+      void _markScale;
       return {
         ...rest,
         kind: kind === "route" ? "line" : kind,

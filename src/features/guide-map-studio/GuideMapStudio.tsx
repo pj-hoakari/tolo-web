@@ -6,8 +6,8 @@ import { scopeStaffStorageKey } from "@/lib/pwa/staff-storage";
 import "./studio-theme.css";
 import {
   BookmarkPlus,
+  Check,
   ChevronDown,
-  Columns2,
   Copy,
   Download,
   Eye,
@@ -47,10 +47,6 @@ import {
 import { MapStatusBar } from "./components/canvas/MapStatusBar";
 import { StartCard } from "./components/canvas/StartCard";
 import { CheckDialog } from "./components/dialogs/CheckDialog";
-import {
-  CompareDialog,
-  type CompareState,
-} from "./components/dialogs/CompareDialog";
 import { useConfirm } from "./components/dialogs/ConfirmDialog";
 import { ExportPickerDialog } from "./components/dialogs/ExportPickerDialog";
 import {
@@ -80,10 +76,13 @@ import {
   PropertyPanel,
 } from "./components/panels/PropertyPanel";
 import { ColorSwatch } from "./components/parts/ColorSwatch";
+import { CopyToFloorFold } from "./components/parts/CopyToFloorFold";
 import { FloorNameInput, NumField } from "./components/parts/Fields";
+import { FoldSection } from "./components/parts/FoldSection";
 import { ConnectorIcon, KIND_ICON } from "./components/parts/StudioIcons";
 import { ToolRail } from "./components/toolbar/ToolRail";
 import { TOOLS } from "./components/toolbar/tools";
+import { useCheck } from "./hooks/useCheck";
 import { useHistory } from "./hooks/useHistory";
 import { useRoutePreview } from "./hooks/useRoutePreview";
 import { useViewPrefs } from "./hooks/useViewPrefs";
@@ -116,6 +115,7 @@ import {
   WHEEL_ZOOM_SPEED,
   withLinkedTwins,
 } from "./utils/editing";
+import { autoLinkGraph } from "./utils/graphAutoLink";
 import {
   GuideMapSaveError,
   guideMapFingerprint,
@@ -123,7 +123,11 @@ import {
   loadGuideMap,
   saveGuideMap,
 } from "./utils/guideMapApi";
-import { type CheckIssue, checkGuideMapDoc } from "./utils/guideMapCheck";
+import {
+  CHECK_LEVEL_COLOR,
+  CHECK_LEVEL_ON_COLOR,
+  type CheckIssue,
+} from "./utils/guideMapCheck";
 import {
   anchorOf,
   areaPalette,
@@ -175,7 +179,7 @@ import {
   svgToPngBlob,
 } from "./utils/guideMapSvg";
 import { hitTest as hitTestObjects } from "./utils/hitTest";
-import { areaLabelSize, roomLabel } from "./utils/roomLabel";
+import { connectorRoomLayout, roomLabel } from "./utils/roomLabel";
 import { readServerPrint, writeServerPrint } from "./utils/serverPrint";
 import {
   type Corner,
@@ -222,6 +226,8 @@ export function GuideMapStudio({
     setShowMini,
     showRulers,
     setShowRulers,
+    showGrid,
+    setShowGrid,
     advancedOpen,
     setAdvancedOpen,
     sideOpen,
@@ -255,12 +261,6 @@ export function GuideMapStudio({
     wasActive: boolean;
   } | null>(null); // 消したタブ（数秒だけ「元に戻す」を出す）
   const [saveFailed, setSaveFailed] = React.useState(false); // ブラウザに保存できなかった（容量がいっぱいなど）
-  const [check, setCheck] = React.useState<{
-    pageId: string;
-    issues: CheckIssue[] | null;
-    forExport: boolean;
-  } | null>(null); // 書き出す前のチェック（issues=null は確認中）
-  const [compare, setCompare] = React.useState<CompareState | null>(null); // 2つのタブを見比べる（階は名前でそろえる）
   const [query, setQuery] = React.useState(""); // 名前で探す
   const [searchOpen, setSearchOpen] = React.useState(false);
   const searchRef = React.useRef<HTMLInputElement>(null);
@@ -299,7 +299,6 @@ export function GuideMapStudio({
     h: number;
   } | null>(null); // 四角/丸/エリア ドラッグ中のプレビュー
   const [zoom, setZoom] = React.useState(1);
-  const [showGrid, setShowGrid] = React.useState(true);
   const [linkOpen, setLinkOpen] = React.useState(false); // tolo-web のグラフとのつなぎ（一覧）
   const [linkTab, setLinkTab] = React.useState<LinkTab>("points");
   const [linkUnlinkedOnly, setLinkUnlinkedOnly] = React.useState(false);
@@ -378,8 +377,6 @@ export function GuideMapStudio({
   const [startClosed, setStartClosed] = React.useState<ReadonlySet<string>>(
     new Set(),
   );
-  // チェックの「要確認」の数（上の帯のチェックに出す）
-  const [warnCount, setWarnCount] = React.useState(0);
   // 読み込むファイルを選ぶ欄（始め方のカードと「ファイル」から開く）
   const importRef = React.useRef<HTMLInputElement>(null);
 
@@ -412,14 +409,12 @@ export function GuideMapStudio({
     setPreviewCrowd,
     floorName,
     shownName,
-    crowdKeyOf,
     previewCrowdMap,
     plainSteps,
     avoided,
     routeSteps,
     routeMarks,
     routeFloors,
-    setCrowdTrial,
   } = route;
   const setRouteStart = React.useCallback(
     (id: string) => setDoc((d) => ({ ...d, startId: id || undefined })),
@@ -1106,15 +1101,19 @@ export function GuideMapStudio({
     setExportPicker(false);
     runCheck(id, true);
   };
+  // そのタブの地図を書き出す（タブが2つ以上なら、ファイル名にタブの名前を入れる）
+  const exportPageDoc = (pageId: string) => {
+    const i = pages.findIndex((p) => p.id === pageId);
+    if (i < 0) return;
+    exportDoc(
+      pageId === activePageId ? doc : pages[i].doc,
+      pages.length > 1 ? pageName(pages[i], i) : undefined,
+    );
+  };
   const exportAnyway = () => {
     if (!check) return;
-    const i = pages.findIndex((p) => p.id === check.pageId);
-    if (i >= 0)
-      exportDoc(
-        check.pageId === activePageId ? doc : pages[i].doc,
-        pages.length > 1 ? pageName(pages[i], i) : undefined,
-      );
-    setCheck(null);
+    exportPageDoc(check.pageId);
+    closeCheck();
   };
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1132,7 +1131,7 @@ export function GuideMapStudio({
           ? fromGuideMapLayout(f.layout, doc.graph)
           : normalizeDoc(f.doc);
       // いまのタブが空ならそこへ、何か描いてあれば新しいタブで開く（作りかけのマップは消さない）
-      openDoc(linkFloorsByName(d), file.name.replace(/\.json$/i, ""));
+      openDoc(autoLinkGraph(d), file.name.replace(/\.json$/i, ""));
     } catch {
       void notify(
         t(
@@ -1142,28 +1141,6 @@ export function GuideMapStudio({
     }
   };
   // --- tolo-web のグラフとの結び付け ---
-  // グラフのグループ（階）を、名前が同じ階に結び付ける（まだ結び付いていない階だけ）
-  const linkFloorsByName = (
-    d: GuideMapDoc,
-    g: GuidanceGraph | undefined = d.graph,
-  ): GuideMapDoc => {
-    if (!g) return d;
-    const norm = (v: string) =>
-      v.normalize("NFKC").replace(/\s/g, "").toLowerCase();
-    return {
-      ...d,
-      floors: d.floors.map((f) =>
-        f.groupId
-          ? f
-          : {
-              ...f,
-              groupId: g.groups.find((x) =>
-                Object.values(x.labels).some((l) => norm(l) === norm(f.name)),
-              )?.id,
-            },
-      ),
-    };
-  };
   // グラフのファイルを読み込んで、いまのタブの地図に結び付ける
   const loadGraphFile = async (file: File) => {
     try {
@@ -1190,14 +1167,30 @@ export function GuideMapStudio({
           : f;
       }),
     });
-    setDoc((d) => linkFloorsByName(named({ ...d, graph: g }), g));
-    if (quiet) return;
+    // 階・階段・エレベーターなどは、名前でグラフに自動で結び付ける（utils/graphAutoLink.ts）
+    const attach = (d: GuideMapDoc) => autoLinkGraph(named({ ...d, graph: g }));
+    // 開いたとき（quiet）は、直前に開いた地図にまだ画面が追いついていないので、最新の地図に結び付ける
+    if (quiet) {
+      setDoc(attach);
+      return;
+    }
+    const linked = attach(doc);
+    setDoc(linked);
+    const n = linked.objects.filter(
+      (o) =>
+        o.graphPointId &&
+        o.graphPointId !== doc.objects.find((x) => x.id === o.id)?.graphPointId,
+    ).length;
     setNotice(
-      t("グラフを読み込みました（グループ {g}・ポイント {p}・ルート {r}）", {
-        g: g.groups.length,
-        p: g.points.length,
-        r: g.routes.length,
-      }),
+      t(
+        "グラフを読み込みました（グループ {g}・ポイント {p}・ルート {r}）。名前の同じ {n} か所を自動で結び付けました",
+        {
+          g: g.groups.length,
+          p: g.points.length,
+          r: g.routes.length,
+          n,
+        },
+      ),
     );
   };
   // 階をグラフのグループに結び付ける。tolo-web では階の名前にグループの名前が出るので、階の名前もそろえる
@@ -1249,6 +1242,28 @@ export function GuideMapStudio({
       : ps;
   const isBlank = (d: GuideMapDoc) =>
     d.objects.length === 0 && d.floors.length <= 1 && !d.floors[0]?.image;
+  // チェック（一覧・地図の上の印・上の帯の数）
+  const {
+    check,
+    checkDoc,
+    closeCheck,
+    runCheck,
+    messageOf: checkMessageOf,
+    setIgnored: setCheckIgnored,
+    focus: checkFocus,
+    setFocus: setCheckFocus,
+    focusMark,
+    needsLook,
+  } = useCheck({
+    doc,
+    setDoc,
+    pages,
+    setPages,
+    activePageId,
+    preview,
+    isBlank,
+    onExport: exportPageDoc,
+  });
   // 作業中の状態（選択・メニュー・道案内の選択など）を片付ける
   const resetWork = () => {
     setSelectedIds([]);
@@ -1409,159 +1424,14 @@ export function GuideMapStudio({
         .slice(0, 12)
     : [];
 
-  // --- 書き出す前のチェック ---
-  // 重い（道案内を全部の場所で試す）ので、「確認中」を出してから少し後で計算する
-  const runCheck = (pageId: string, forExport: boolean) => {
-    const i = pages.findIndex((p) => p.id === pageId);
-    const d = pageId === activePageId ? doc : pages[i]?.doc;
-    if (!d) return;
-    setCheck({ pageId, issues: null, forExport });
-    window.setTimeout(() => {
-      const issues = checkGuideMapDoc(d, t("（無題）"));
-      if (forExport && !issues.some((is) => is.level === "warn")) {
-        // 「要確認」が無ければそのまま書き出す（「念のため」の項目は「チェック」ボタンで見られる）
-        setCheck(null);
-        exportDoc(d, pages.length > 1 ? pageName(pages[i], i) : undefined);
-        return;
-      }
-      setCheck((c) => (c && c.pageId === pageId ? { ...c, issues } : c));
-    }, 30);
-  };
-  // チェックの項目の文：何が問題か（title）・どうすればいいか（hint）・押すとどこへ移るか（go）
-  const checkMessage = (
-    is: CheckIssue,
-  ): { title: string; hint: string; go: string } => {
-    const v = is.vars ?? {};
-    switch (is.kind) {
-      case "unreachable":
-        return {
-          title: t("「{name}」（{floor}）へたどり着けません", v),
-          hint: t(
-            "現在地「{from}」から行ける道がありません。部屋・区画どうしのすき間が狭すぎないか、通路がふさがれていないか確かめてください。",
-            v,
-          ),
-          go: t("その場所を表示"),
-        };
-      case "no-start":
-        return {
-          title: t("お客さんの現在地が決まっていません"),
-          hint: t(
-            "QR コードの場所が分からないとき、どこから案内を始めるかを「誘導」の「現在地」で選んでください。",
-          ),
-          go: t("「現在地」を開く"),
-        };
-      case "unnamed":
-        return {
-          title: t("名前のない目印があります（{floor}）", v),
-          hint: t(
-            "名前が無いと、お客さんが目的地として選べません。名前を入れるか、要らなければ消してください。",
-          ),
-          go: t("その目印を表示"),
-        };
-      case "connector-unlinked":
-        return {
-          title: t("「{name}」（{floor}）が、ほかの階とつながっていません", v),
-          hint: t(
-            "この階段・エレベーターでは別の階へ移れません。右の「つながる階」で、行き来できる階に印を付けてください。",
-          ),
-          go: t("その場所を表示"),
-        };
-      case "floor-isolated":
-        return {
-          title: t("{floor}へ行ける階段・エレベーターがありません", v),
-          hint: t(
-            "ほかの階からこの階へ案内できません。道具の「階段・EV」で置いてください。",
-          ),
-          go: t("その階を表示"),
-        };
-      case "overlap":
-        return {
-          title: t("「{a}」と「{b}」が重なっています（{floor}）", v),
-          hint: t(
-            "重なっていると、その間を通る道が作れません。少し離してください。",
-          ),
-          go: t("2つを選んで表示"),
-        };
-      case "empty-floor":
-        return {
-          title: t("{floor}には、まだ何も置かれていません", v),
-          hint: t("使わない階なら、消してもかまいません。"),
-          go: t("その階を表示"),
-        };
-      case "no-graph":
-        return {
-          title: t("混雑の情報と、まだつながっていません"),
-          hint: t(
-            "グラフ（グラフ編集で作ったもの）を読み込むと、混んでいる所を避けた案内を確かめられます。",
-          ),
-          go: t("「つなぎ」を開く"),
-        };
-      case "floor-no-group":
-        return {
-          title: t("{floor}が、グラフのどの階か決まっていません", v),
-          hint: t(
-            "決めないと、お客さんの画面でこの階が正しく出ません。「つなぎ」の「階」で選んでください。",
-          ),
-          go: t("「つなぎ」の階を開く"),
-        };
-      case "connector-no-point":
-        return {
-          title: t(
-            "「{name}」（{floor}）がグラフのポイントに結び付いていません",
-            v,
-          ),
-          hint: t(
-            "階段・エレベーターは混雑を避けて階をまたぐのに使うので、右の「くわしい設定」→「混雑とのつなぎ」で、グラフのポイントを選んでください。部屋は結び付けなくても目的地に選べます。",
-          ),
-          go: t("その場所を表示"),
-        };
-      case "bad-point":
-        return {
-          title: t("「{name}」の結び付け先が、グラフに見つかりません", v),
-          hint: t(
-            "グラフが作り直された可能性があります。右の「くわしい設定」→「混雑とのつなぎ」で、ポイントを選び直してください。",
-          ),
-          go: t("その場所を表示"),
-        };
-      case "bad-route":
-        return {
-          title: t("「{name}」の結び付け先が、グラフに見つかりません", v),
-          hint: t(
-            "グラフが作り直された可能性があります。右の「くわしい設定」→「混雑とのつなぎ」で、ルートを選び直してください。",
-          ),
-          go: t("その場所を表示"),
-        };
-      case "unlinked-points":
-        return {
-          title: t("混雑の情報を受け取れない場所が{n}か所あります", v),
-          hint: t(
-            "グラフの「{names}」などが、地図のどれとも結び付いていないため、そこが混んでも避けて案内できません。",
-            v,
-          ),
-          go: t("結び付いていない場所の一覧を開く"),
-        };
-      case "unlinked-routes":
-        return {
-          title: t("混雑の情報を受け取れない通路が{n}本あります", v),
-          hint: t(
-            "グラフの「{names}」などの通路が、地図と結び付いていません。廊下に沿って範囲を描き、「つなぎ」でルートに結び付けると、混んだときに避けられます。",
-            v,
-          ),
-          go: t("結び付いていない通路の一覧を開く"),
-        };
-    }
-  };
   // チェックの項目を押したら、そのタブ・階・場所を表示する
+  // 別のタブの項目なら、そのタブに切り替えてから、そのタブの地図で場所を探す
   const openIssue = (is: CheckIssue) => {
-    if (!check) return;
-    // 別のタブの項目なら、そのタブに切り替えてから、そのタブの地図で場所を探す
-    const target =
-      check.pageId === activePageId
-        ? doc
-        : pages.find((p) => p.id === check.pageId)?.doc;
-    if (!target) return;
-    if (check.pageId !== activePageId) goPage(check.pageId);
-    setCheck(null);
+    const target = checkDoc;
+    if (!check || !target) return;
+    const pageId = check.pageId;
+    if (pageId !== activePageId) goPage(pageId);
+    closeCheck();
     window.setTimeout(() => {
       switch (is.kind) {
         case "no-start":
@@ -1595,36 +1465,30 @@ export function GuideMapStudio({
         focusObject(is.objectId, target);
         // 重なっているものは、2つとも選ぶ
         if (is.otherId) setSelectedIds([is.objectId, is.otherId]);
-        // 結び付け先の直しは「くわしい設定」の中なので開いておく
-        if (
-          is.kind === "bad-point" ||
-          is.kind === "bad-route" ||
-          is.kind === "connector-no-point"
-        )
-          setAdvancedOpen(true);
+        // 地図の上で、その場所を光らせる
+        setCheckFocus({ pageId, issue: is });
       } else if (is.floorId) {
         setSelectedIds([]);
         goFloor(is.floorId, target);
         fitView(target, is.floorId);
+        // 階の問題は、その階のタブを光らせる
+        setCheckFocus({ pageId, issue: is });
       }
     }, 0);
   };
 
-  // 上の帯のチェックに出す「要確認」の数。描くたびに調べると重いので、手を止めて少ししてから数える。白紙のときは出さない
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 地図が変わったときだけ数え直す（isBlank・t は毎回作り直す関数なので入れない）
+  // 新しく置いた階段・エレベーターや名前を変えた物を、グラフに自動で結び付ける。
+  // 手を止めてから（チェックの数を数え直すより少し前に）。元に戻すの対象にはしない
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 地図が変わったときだけ調べる（skipNextHistory は毎回作り直す関数なので入れない）
   React.useEffect(() => {
     if (preview) return;
-    const timer = window.setTimeout(
-      () =>
-        setWarnCount(
-          isBlank(doc)
-            ? 0
-            : checkGuideMapDoc(doc, t("（無題）")).filter(
-                (is) => is.level === "warn",
-              ).length,
-        ),
-      1500,
-    );
+    const timer = window.setTimeout(() => {
+      if (dragRef.current) return;
+      const linked = autoLinkGraph(doc);
+      if (linked === doc) return;
+      skipNextHistory();
+      setDoc(linked);
+    }, 1000);
     return () => window.clearTimeout(timer);
   }, [doc, preview]);
 
@@ -2425,7 +2289,6 @@ export function GuideMapStudio({
         confirmOpen ||
         exportPicker ||
         check ||
-        compare ||
         historyList ||
         listOpen ||
         newMapOpen ||
@@ -2755,8 +2618,8 @@ export function GuideMapStudio({
               variant="outline"
               onPress={() => runCheck(activePageId, false)}
               aria-label={
-                warnCount > 0
-                  ? t("チェック（要確認 {n}件）", { n: warnCount })
+                needsLook.n > 0
+                  ? t("チェック（要確認 {n}件）", { n: needsLook.n })
                   : t("チェック")
               }
               className="h-8 shrink-0 gap-1.5 px-2.5 text-xs"
@@ -2765,13 +2628,20 @@ export function GuideMapStudio({
               <span className="hidden min-[1200px]:inline">
                 {t("チェック")}
               </span>
-              {warnCount > 0 && (
-                <span className="rounded-full bg-primary px-1.5 font-mono text-[10px] leading-4 text-primary-foreground">
-                  {warnCount}
+              {needsLook.n > 0 && needsLook.level && (
+                <span
+                  className="rounded-full px-1.5 font-mono text-[10px] leading-4"
+                  style={{
+                    background: CHECK_LEVEL_COLOR[needsLook.level],
+                    // 黄色の上は白い字が読みにくいので、黒に近い字にする
+                    color: CHECK_LEVEL_ON_COLOR[needsLook.level],
+                  }}
+                >
+                  {needsLook.n}
                 </span>
               )}
             </Button>
-            {/* その他：一覧・つなぎ・見比べる */}
+            {/* その他：一覧・つなぎ */}
             <HeaderMenu
               label={t("その他")}
               icon={Table2}
@@ -2789,28 +2659,6 @@ export function GuideMapStudio({
                   label: t("つなぎ"),
                   sub: t("グラフと地図を結び付ける"),
                   run: () => setLinkOpen(true),
-                },
-                {
-                  id: "compare",
-                  icon: Columns2,
-                  label: t("見比べる"),
-                  sub:
-                    pages.length < 2
-                      ? t("タブが2つ以上あると使えます")
-                      : t("2つのタブを並べて比べる"),
-                  run: () =>
-                    setCompare({
-                      left: activePageId,
-                      right:
-                        pages.find((p) => p.id !== activePageId)?.id ??
-                        activePageId,
-                      floor: Math.max(
-                        0,
-                        doc.floors.findIndex((f) => f.id === doc.activeFloorId),
-                      ),
-                      floorName: floor?.name ?? "",
-                    }),
-                  disabled: pages.length < 2,
                 },
               ]}
             />
@@ -2881,7 +2729,7 @@ export function GuideMapStudio({
             disabled={preview}
           />
           <main className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04),0_10px_30px_-18px_rgba(0,0,0,0.25)]">
-            {/* 地図の上の帯（2段目）：階・グリッド・名前で探す・編集／プレビュー。
+            {/* 地図の上の帯（2段目）：階・名前で探す・編集／プレビュー。
                 狭い画面でも 2 段に折り返さない（階のタブが多いときは横にスクロールし、名前で探す欄は虫眼鏡だけにたたむ） */}
             <div className="flex min-h-12 shrink-0 items-center gap-2 border-b px-3 py-2">
               <div className="studio-thin-scroll flex h-9 min-w-0 shrink items-center gap-1 overflow-x-auto overflow-y-hidden">
@@ -2949,7 +2797,17 @@ export function GuideMapStudio({
                           floorDrag.to === i + 1 &&
                           i === doc.floors.length - 1 &&
                           "after:absolute after:top-0 after:-right-1.5 after:h-full after:w-0.5 after:rounded after:bg-primary",
+                        // チェックで移った階の項目：その階のタブを光らせる
+                        focusMark?.floorId === f.id &&
+                          "studio-check-pulse ring-2 ring-offset-1",
                       )}
+                      style={
+                        focusMark?.floorId === f.id
+                          ? ({
+                              "--tw-ring-color": focusMark.color,
+                            } as React.CSSProperties)
+                          : undefined
+                      }
                     >
                       {f.name}
                       {routeFloors.has(f.id) && (
@@ -2971,54 +2829,36 @@ export function GuideMapStudio({
                   <Plus className="size-3.5" />
                 </button>
               </div>
-              {!preview && (
+              {!preview && tool === "connector" && (
                 <>
                   <span className="mx-1 h-5 w-px shrink-0 bg-border" />
-                  <label
-                    className="ml-1 flex shrink-0 items-center gap-1 text-xs text-muted-foreground"
-                    title={t(
-                      "グリッドは作るときの目安です（お客さんの画面には出ません）",
-                    )}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={showGrid}
-                      onChange={(e) => setShowGrid(e.target.checked)}
-                    />
-                    {t("グリッド")}
-                  </label>
-                  {tool === "connector" && (
-                    <>
-                      <span className="mx-1 h-5 w-px shrink-0 bg-border" />
-                      <div className="flex shrink-0 items-center rounded-md border p-0.5">
-                        {CONNECTOR_TYPES.map((ct) => (
-                          <button
-                            key={ct}
-                            type="button"
-                            onClick={() => setConnectorType(ct)}
-                            aria-label={connectorName(ct)}
-                            title={connectorName(ct)}
-                            className={cn(
-                              "flex items-center gap-1 rounded px-2 py-1 text-xs font-medium",
-                              connectorType === ct
-                                ? "bg-accent text-primary"
-                                : "text-muted-foreground hover:bg-accent/60",
-                            )}
-                          >
-                            <ConnectorIcon type={ct} className="size-3.5" />
-                            <span className="hidden min-[1280px]:inline">
-                              {connectorName(ct)}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                      <span className="hidden min-w-0 truncate text-xs text-muted-foreground min-[1440px]:inline">
-                        {t(
-                          "地図をクリックして置く（全部の階の同じ位置に置かれます）",
+                  <div className="flex shrink-0 items-center rounded-md border p-0.5">
+                    {CONNECTOR_TYPES.map((ct) => (
+                      <button
+                        key={ct}
+                        type="button"
+                        onClick={() => setConnectorType(ct)}
+                        aria-label={connectorName(ct)}
+                        title={connectorName(ct)}
+                        className={cn(
+                          "flex items-center gap-1 rounded px-2 py-1 text-xs font-medium",
+                          connectorType === ct
+                            ? "bg-accent text-primary"
+                            : "text-muted-foreground hover:bg-accent/60",
                         )}
-                      </span>
-                    </>
-                  )}
+                      >
+                        <ConnectorIcon type={ct} className="size-3.5" />
+                        <span className="hidden min-[1280px]:inline">
+                          {connectorName(ct)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  <span className="hidden min-w-0 truncate text-xs text-muted-foreground min-[1440px]:inline">
+                    {t(
+                      "地図をクリックして置く（全部の階の同じ位置に置かれます）",
+                    )}
+                  </span>
                 </>
               )}
               {/* 名前で探す（⌘F） */}
@@ -3196,7 +3036,7 @@ export function GuideMapStudio({
                       />
                     )}
 
-                    {/* エリア＝ゾーン（最背面レイヤー。範囲を囲んでラベルで分かりやすく） */}
+                    {/* エリア＝ゾーン（最背面レイヤー。範囲には名前を出さない） */}
                     <svg
                       aria-hidden="true"
                       className="pointer-events-none absolute inset-0 overflow-visible"
@@ -3215,9 +3055,6 @@ export function GuideMapStudio({
                           return null;
                         const isBuilding = o === building;
                         const pal = areaPalette(o.color);
-                        const c = centroidOf(o.points);
-                        const bb = bboxOf(o.points);
-                        const top = bb.y;
                         return (
                           <g key={o.id}>
                             {/* ここでは塗りだけ。外枠の線は、部屋などに隠れないよう、いちばん上のレイヤーで描く（建物の外枠は床をいちばん下に塗ってある） */}
@@ -3226,39 +3063,6 @@ export function GuideMapStudio({
                               fill={isBuilding ? "none" : pal.fill}
                               fillOpacity={o.closed ? 0.7 : 0.55}
                             />
-                            {o.title && (
-                              <text
-                                x={c.x}
-                                y={
-                                  top +
-                                  areaLabelSize(bb.w, bb.h) *
-                                    (o.labelScale ?? 1) +
-                                  8
-                                }
-                                textAnchor="middle"
-                                fontSize={
-                                  areaLabelSize(bb.w, bb.h) *
-                                  (o.labelScale ?? 1)
-                                }
-                                fontFamily="var(--font-mono)"
-                                letterSpacing="0.06em"
-                                fill={
-                                  o.closed
-                                    ? "var(--studio-accent)"
-                                    : isBuilding
-                                      ? "var(--guest-map-room-ink)"
-                                      : pal.ink
-                                }
-                                style={{ paintOrder: "stroke" }}
-                                stroke={MAP_FLOOR}
-                                strokeWidth={3}
-                                strokeLinejoin="round"
-                              >
-                                {o.title}
-                                {o.closed ? tg("closed") : ""}
-                                {!preview && o.locked ? " 🔒" : ""}
-                              </text>
-                            )}
                           </g>
                         );
                       })}
@@ -3493,7 +3297,9 @@ export function GuideMapStudio({
                                 : linked.map((f) => f.name).join("・");
                           const label = o.title || connectorName(o.connector);
                           if (o.shape !== "pin") {
-                            // 四角／丸の階段・エレベーター：部屋と同じ図面風の面に、線画アイコン＋名前＋つながる階
+                            // 四角／丸の階段・エレベーター：部屋と同じ図面風の面に、線画アイコン＋名前＋つながる階。
+                            // アイコンと名前は、部屋のときと同じく部屋の大きさに合わせた大きさにする（階段・EV にしても小さくならないように）
+                            const box = connectorRoomLayout(o, label);
                             return (
                               <div
                                 key={o.id}
@@ -3522,15 +3328,25 @@ export function GuideMapStudio({
                                 )}
                                 <ConnectorIcon
                                   type={o.connector}
-                                  className="size-[18px]"
-                                  style={{ color: line }}
+                                  className="shrink-0"
+                                  style={{
+                                    color: line,
+                                    width: box.icon,
+                                    height: box.icon,
+                                  }}
                                 />
-                                <span
-                                  className="max-w-full truncate px-2 tracking-[0.04em]"
-                                  style={{ fontSize: 12 * (o.labelScale ?? 1) }}
-                                >
-                                  {label}
-                                </span>
+                                {box.lines.length > 0 && (
+                                  <span
+                                    className="max-w-full px-2 leading-[1.2] tracking-[0.04em]"
+                                    style={{ fontSize: box.size }}
+                                  >
+                                    {box.lines.map((ln) => (
+                                      <span key={ln} className="block truncate">
+                                        {ln}
+                                      </span>
+                                    ))}
+                                  </span>
+                                )}
                                 {!preview && (
                                   <span
                                     className={cn(
@@ -3613,8 +3429,10 @@ export function GuideMapStudio({
                             >
                               {o.title && (
                                 <span
-                                  className="absolute bottom-3 left-1/2 max-w-[160px] -translate-x-1/2 truncate rounded-md border bg-card px-2 py-0.5 tracking-[0.04em]"
+                                  className="absolute left-1/2 max-w-[160px] -translate-x-1/2 truncate rounded-md border bg-card px-2 py-0.5 tracking-[0.04em]"
                                   style={{
+                                    // 目印の上に少しすき間をあけて出す（目印を大きくしても重ならない）
+                                    bottom: 9 * (o.markScale ?? 1) + 3,
                                     fontSize: 11 * (o.labelScale ?? 1),
                                     color: "var(--studio-text-primary)",
                                     borderColor: sel
@@ -3630,6 +3448,7 @@ export function GuideMapStudio({
                                 line={line}
                                 sel={sel}
                                 tapped={tapped}
+                                scale={o.markScale ?? 1}
                               />
                             </div>
                           );
@@ -3637,10 +3456,10 @@ export function GuideMapStudio({
                         // 四角／丸（部屋・区画）。トイレなどは tolo-web と同じマークを名前の上に出す
                         const parts = splitTitle(o.title);
                         const Mark = KIND_ICON[markOf(o)];
-                        const markSize = Math.max(
-                          12,
-                          Math.min(28, Math.min(o.w, o.h) * 0.3),
-                        );
+                        const markScale = o.markScale ?? 1;
+                        const markSize =
+                          Math.max(12, Math.min(28, Math.min(o.w, o.h) * 0.3)) *
+                          markScale;
                         // 名前（無ければ番号）は部屋の大きさに合わせた大きさで、入らなければ 2 行に分ける（roomLabel.ts）。
                         // 名前より上の目印（18px）とマークの分は、名前に使える高さから引く（すき間は 6px）
                         const label = roomLabel(
@@ -3649,7 +3468,8 @@ export function GuideMapStudio({
                           o.h,
                           {
                             reserved:
-                              (o.pin ? 18 + 6 : 0) + (Mark ? markSize + 6 : 0),
+                              (o.pin ? 18 * markScale + 6 : 0) +
+                              (Mark ? markSize + 6 : 0),
                             spacing: parts.name ? 0.04 : 0.12,
                             mono: !parts.name,
                           },
@@ -3699,6 +3519,7 @@ export function GuideMapStudio({
                                 sel={false}
                                 tapped={tapped}
                                 inline
+                                scale={markScale}
                               />
                             )}
                             {Mark && (
@@ -3772,6 +3593,23 @@ export function GuideMapStudio({
                         );
                       })}
                     </svg>
+                    {/* チェックで移った場所の印：重さの色の太い輪を、ふくらませて知らせてから残す */}
+                    {focusMark?.boxes.map((b, i) => (
+                      <div
+                        // biome-ignore lint/suspicious/noArrayIndexKey: 1 つの項目の場所（多くて 2 つ）を並べるだけで、並びは変わらない
+                        key={i}
+                        aria-hidden
+                        className="studio-check-pulse pointer-events-none absolute z-[27] rounded-lg"
+                        style={{
+                          left: b.l - 10 / zoom,
+                          top: b.t - 10 / zoom,
+                          width: b.r - b.l + 20 / zoom,
+                          height: b.b - b.t + 20 / zoom,
+                          border: `${3 / zoom}px solid ${focusMark.color}`,
+                          boxShadow: `0 0 0 ${6 / zoom}px color-mix(in srgb, ${focusMark.color} 28%, transparent)`,
+                        }}
+                      />
+                    ))}
                     {/* 四角/丸 のリサイズハンドル */}
                     {resizable && (
                       <ResizeHandles
@@ -4038,6 +3876,76 @@ export function GuideMapStudio({
                     }
                   />
                 )}
+              {/* チェックで移った項目：何が気になるのかを地図の上に出しておく（閉じる・OK まで） */}
+              {focusMark && !preview && (
+                <div
+                  role="status"
+                  className="studio-fade absolute top-3 left-1/2 z-40 flex w-[min(34rem,calc(100%-2rem))] -translate-x-1/2 items-start gap-2 rounded-lg border border-l-4 bg-card px-3 py-2 text-xs shadow-[0_8px_24px_-12px_rgba(0,0,0,0.35)]"
+                  style={{ borderLeftColor: focusMark.color }}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium">
+                      {focusMark.message.title}
+                    </span>
+                    <span className="mt-0.5 block leading-relaxed text-muted-foreground">
+                      {focusMark.message.hint}
+                    </span>
+                    <span className="mt-1.5 flex flex-wrap gap-1.5">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onPress={() => {
+                          setCheckFocus(null);
+                          runCheck(activePageId, false);
+                        }}
+                        className="h-7 px-2 text-xs"
+                      >
+                        {t("チェックに戻る")}
+                      </Button>
+                      {focusMark.linkTab && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onPress={() => {
+                            setLinkTab(focusMark.linkTab ?? "points");
+                            setLinkUnlinkedOnly(false);
+                            setLinkOpen(true);
+                          }}
+                          className="h-7 px-2 text-xs"
+                        >
+                          {t("「つなぎ」を開く")}
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onPress={() => {
+                          if (checkFocus)
+                            setCheckIgnored(
+                              checkFocus.pageId,
+                              checkFocus.issue,
+                              true,
+                            );
+                          setCheckFocus(null);
+                        }}
+                        className="h-7 gap-1 px-2 text-xs"
+                      >
+                        <Check className="size-3.5" />
+                        {t("OK（このままでよい）")}
+                      </Button>
+                    </span>
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onPress={() => setCheckFocus(null)}
+                    aria-label={t("閉じる")}
+                    className="size-7 shrink-0 text-muted-foreground"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </div>
+              )}
               {/* 定規（上と左）：地図の座標の目盛り・マウスの位置・選んでいるものの範囲 */}
               {rulersOn && (
                 <Rulers
@@ -4079,6 +3987,11 @@ export function GuideMapStudio({
               coordRef={coordRef}
               showCoords={rulersOn}
               showRulerToggle={!preview}
+              showGrid={showGrid}
+              onToggleGrid={() => {
+                setShowGrid(!showGrid);
+                saveViewPrefs({ grid: !showGrid });
+              }}
               showRulers={showRulers}
               onToggleRulers={() => {
                 setShowRulers(!showRulers);
@@ -4195,24 +4108,15 @@ export function GuideMapStudio({
                           )}
                         </div>
                         {selectedIds.length > 1 && doc.floors.length > 1 && (
-                          <div className="mb-3 flex flex-wrap items-center gap-1 text-xs">
-                            <span className="mr-1 text-muted-foreground">
-                              {t("別の階へコピー")}
-                            </span>
-                            {doc.floors
-                              .filter((f) => f.id !== doc.activeFloorId)
-                              .map((f) => (
-                                <button
-                                  key={f.id}
-                                  type="button"
-                                  onClick={() => copyToFloor(selectedIds, f.id)}
-                                  className="flex items-center gap-1 rounded-md border px-2 py-1 hover:bg-accent"
-                                >
-                                  <Copy className="size-3" />
-                                  {t("{floor}へ", { floor: f.name })}
-                                </button>
-                              ))}
-                          </div>
+                          <CopyToFloorFold
+                            className="mb-3"
+                            floors={doc.floors.filter(
+                              (f) => f.id !== doc.activeFloorId,
+                            )}
+                            onCopy={(floorId) =>
+                              copyToFloor(selectedIds, floorId)
+                            }
+                          />
                         )}
                         {selectedIds.length > 1 ? (
                           <div className="space-y-2.5 text-xs">
@@ -4374,16 +4278,24 @@ export function GuideMapStudio({
                                       <Icon className="size-4" />
                                     )}
                                   </span>
-                                  <span className="min-w-0">
-                                    <span className="block truncate text-sm font-medium">
-                                      {shownName(selected) || t("（名前なし）")}
+                                  {selected.kind === "area" ? (
+                                    // 範囲は名前を持たないので、種類（範囲）だけを出す
+                                    <span className="min-w-0 truncate text-sm font-medium">
+                                      {t(toolOf?.label ?? "")}
                                     </span>
-                                    <span className="block text-[11px] text-muted-foreground">
-                                      {isConnector(selected)
-                                        ? connectorName(selected.connector)
-                                        : t(toolOf?.label ?? "")}
+                                  ) : (
+                                    <span className="min-w-0">
+                                      <span className="block truncate text-sm font-medium">
+                                        {shownName(selected) ||
+                                          t("（名前なし）")}
+                                      </span>
+                                      <span className="block text-[11px] text-muted-foreground">
+                                        {isConnector(selected)
+                                          ? connectorName(selected.connector)
+                                          : t(toolOf?.label ?? "")}
+                                      </span>
                                     </span>
-                                  </span>
+                                  )}
                                 </div>
                               );
                             })()}
@@ -4428,8 +4340,6 @@ export function GuideMapStudio({
                               part="basic"
                               key={`b-${selected.id}`}
                               object={selected}
-                              graph={doc.graph}
-                              onLoadGraph={loadGraphFile}
                               onLock={(on) => lockSelected([selected.id], on)}
                               onChange={(patch) =>
                                 updateObject(selected.id, patch)
@@ -4440,11 +4350,97 @@ export function GuideMapStudio({
                                 duplicateSelected([selected.id])
                               }
                               onPreview={() => setShowInfo(true)}
-                              previewCrowd={previewCrowd[crowdKeyOf(selected)]}
-                              onPreviewCrowd={(state) =>
-                                setCrowdTrial(crowdKeyOf(selected), state)
-                              }
                             />
+
+                            {/* 階段・EVとして使う／別の階へコピー：いつも使う操作ではないので、たたんでおく */}
+                            <div className="mt-3 space-y-2">
+                              {selected.kind === "place" &&
+                                selected.shape !== "pin" && (
+                                  <FoldSection
+                                    title={
+                                      <>
+                                        <ConnectorIcon
+                                          type={
+                                            isConnector(selected)
+                                              ? selected.connector
+                                              : (guessConnector(
+                                                  selected.title,
+                                                ) ?? "stairs")
+                                          }
+                                          className="size-3.5"
+                                        />
+                                        {t("階段・EVとして使う")}
+                                      </>
+                                    }
+                                  >
+                                    {isConnector(selected) ? (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onPress={() =>
+                                          unmakeConnector(selected)
+                                        }
+                                        className="h-auto w-full px-2 py-1.5 text-xs font-normal whitespace-normal"
+                                      >
+                                        {t(
+                                          "階段・EVとして使うのをやめて、普通の{shape}に戻す",
+                                          {
+                                            shape:
+                                              selected.shape === "circle"
+                                                ? t("丸い区画")
+                                                : t("部屋・区画"),
+                                          },
+                                        )}
+                                      </Button>
+                                    ) : (
+                                      <>
+                                        <p className="mb-1.5 leading-relaxed text-muted-foreground">
+                                          {t(
+                                            "選ぶと、全部の階の同じ位置に置かれます。",
+                                          )}
+                                        </p>
+                                        <div className="flex flex-wrap gap-1">
+                                          {CONNECTOR_TYPES.map((ct) => (
+                                            <Button
+                                              key={ct}
+                                              variant="outline"
+                                              size="sm"
+                                              onPress={() =>
+                                                makeConnector(selected.id, ct)
+                                              }
+                                              className={cn(
+                                                "h-7 gap-1 px-2 text-xs font-normal",
+                                                guessConnector(
+                                                  selected.title,
+                                                ) === ct &&
+                                                  "border-primary text-primary",
+                                              )}
+                                            >
+                                              <ConnectorIcon
+                                                type={ct}
+                                                className="size-3.5"
+                                              />
+                                              {t("{type}にする", {
+                                                type: connectorName(ct),
+                                              })}
+                                            </Button>
+                                          ))}
+                                        </div>
+                                      </>
+                                    )}
+                                  </FoldSection>
+                                )}
+                              {doc.floors.length > 1 && (
+                                <CopyToFloorFold
+                                  floors={doc.floors.filter(
+                                    (f) => f.id !== doc.activeFloorId,
+                                  )}
+                                  onCopy={(floorId) =>
+                                    copyToFloor(selectedIds, floorId)
+                                  }
+                                />
+                              )}
+                            </div>
 
                             {/* くわしい設定（開け閉めできる。開いたかどうかは覚えておく） */}
                             <details
@@ -4471,30 +4467,17 @@ export function GuideMapStudio({
                                   {t("くわしい設定")}
                                 </span>
                                 <span className="min-w-0 flex-1 truncate text-muted-foreground">
-                                  {t(
-                                    "位置・大きさ、形、固定、混雑とのつなぎ など",
-                                  )}
+                                  {t("位置、形、固定 など")}
                                 </span>
                               </summary>
                               {/* 中で設定されているものは、閉じていても印で分かるように */}
-                              {!advancedOpen &&
-                                (selected.locked ||
-                                  selected.graphPointId ||
-                                  selected.graphRouteId) && (
-                                  <div className="flex flex-wrap gap-1 px-2.5 pb-2">
-                                    {selected.locked && (
-                                      <span className="rounded bg-accent px-1.5 py-0.5">
-                                        {t("固定中")}
-                                      </span>
-                                    )}
-                                    {(selected.graphPointId ||
-                                      selected.graphRouteId) && (
-                                      <span className="rounded bg-accent px-1.5 py-0.5">
-                                        {t("混雑とつながっています")}
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
+                              {!advancedOpen && selected.locked && (
+                                <div className="flex flex-wrap gap-1 px-2.5 pb-2">
+                                  <span className="rounded bg-accent px-1.5 py-0.5">
+                                    {t("固定中")}
+                                  </span>
+                                </div>
+                              )}
                               <div className="space-y-3 border-t px-2.5 py-3">
                                 {/* 位置・大きさ（定規と同じ座標） */}
                                 {(() => {
@@ -4556,8 +4539,6 @@ export function GuideMapStudio({
                                   part="advanced"
                                   key={`a-${selected.id}`}
                                   object={selected}
-                                  graph={doc.graph}
-                                  onLoadGraph={loadGraphFile}
                                   onLock={(on) =>
                                     lockSelected([selected.id], on)
                                   }
@@ -4569,90 +4550,7 @@ export function GuideMapStudio({
                                     duplicateSelected([selected.id])
                                   }
                                   onPreview={() => setShowInfo(true)}
-                                  previewCrowd={
-                                    previewCrowd[crowdKeyOf(selected)]
-                                  }
-                                  onPreviewCrowd={(state) =>
-                                    setCrowdTrial(crowdKeyOf(selected), state)
-                                  }
                                 />
-                                {selected.kind === "place" &&
-                                  selected.shape !== "pin" &&
-                                  !isConnector(selected) && (
-                                    <div className="rounded-md border border-dashed p-2">
-                                      <span className="text-muted-foreground">
-                                        {t(
-                                          "階段・EVとして使う（全部の階の同じ位置に置かれます）",
-                                        )}
-                                      </span>
-                                      <div className="mt-1 flex flex-wrap gap-1">
-                                        {CONNECTOR_TYPES.map((ct) => (
-                                          <button
-                                            key={ct}
-                                            type="button"
-                                            onClick={() =>
-                                              makeConnector(selected.id, ct)
-                                            }
-                                            className={cn(
-                                              "flex items-center gap-1 rounded-md border px-2 py-1",
-                                              guessConnector(selected.title) ===
-                                                ct
-                                                ? "border-primary bg-accent text-primary"
-                                                : "hover:bg-accent",
-                                            )}
-                                          >
-                                            <ConnectorIcon
-                                              type={ct}
-                                              className="size-3.5"
-                                            />
-                                            {t("{type}にする", {
-                                              type: connectorName(ct),
-                                            })}
-                                          </button>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                {isConnector(selected) &&
-                                  selected.shape !== "pin" && (
-                                    <button
-                                      type="button"
-                                      onClick={() => unmakeConnector(selected)}
-                                      className="w-full rounded-md border px-2 py-1 text-muted-foreground hover:text-foreground"
-                                    >
-                                      {t(
-                                        "階段・EVとして使うのをやめて、普通の{shape}に戻す",
-                                        {
-                                          shape:
-                                            selected.shape === "circle"
-                                              ? t("丸い区画")
-                                              : t("部屋・区画"),
-                                        },
-                                      )}
-                                    </button>
-                                  )}
-                                {doc.floors.length > 1 && (
-                                  <div className="flex flex-wrap items-center gap-1">
-                                    <span className="mr-1 text-muted-foreground">
-                                      {t("別の階へコピー")}
-                                    </span>
-                                    {doc.floors
-                                      .filter((f) => f.id !== doc.activeFloorId)
-                                      .map((f) => (
-                                        <button
-                                          key={f.id}
-                                          type="button"
-                                          onClick={() =>
-                                            copyToFloor(selectedIds, f.id)
-                                          }
-                                          className="flex items-center gap-1 rounded-md border px-2 py-1 hover:bg-accent"
-                                        >
-                                          <Copy className="size-3" />
-                                          {t("{floor}へ", { floor: f.name })}
-                                        </button>
-                                      ))}
-                                  </div>
-                                )}
                               </div>
                             </details>
                           </>
@@ -4676,7 +4574,8 @@ export function GuideMapStudio({
                       </div>
                     )}
 
-                    {floor && !preview && (
+                    {/* 階の設定（名前・複製・削除）。部屋や階段などを選んでいる間は、その物の設定だけを出す（階はフロアタブの右クリックでも変えられる） */}
+                    {floor && !preview && selectedIds.length === 0 && (
                       <div className="border-t py-6">
                         <h2 className="mb-4 font-mono text-[11px] font-normal tracking-[0.16em] text-muted-foreground">
                           {t("フロア")}
@@ -4849,33 +4748,13 @@ export function GuideMapStudio({
                 })()
               : ""
           }
-          messageOf={checkMessage}
+          ignored={new Set(checkDoc?.checkIgnored ?? [])}
+          messageOf={checkMessageOf}
           onOpenIssue={openIssue}
+          onIgnore={(is) => setCheckIgnored(check.pageId, is, true)}
+          onRestore={(is) => setCheckIgnored(check.pageId, is, false)}
           onExportAnyway={exportAnyway}
-          onClose={() => setCheck(null)}
-        />
-      )}
-
-      {/* 2つのタブを並べて見比べる */}
-      {compare && (
-        <CompareDialog
-          compare={compare}
-          pages={livePages}
-          pageName={pageName}
-          svgOptions={{
-            ...svgLabels,
-            theme: resolvedTheme === "dark" ? SVG_DARK : SVG_LIGHT,
-          }}
-          onChange={setCompare}
-          onOpenPage={(id) => {
-            setCompare(null);
-            goPage(id);
-          }}
-          onExport={(id) => {
-            setCompare(null);
-            runCheck(id, true);
-          }}
-          onClose={() => setCompare(null)}
+          onClose={closeCheck}
         />
       )}
 

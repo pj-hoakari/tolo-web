@@ -69,7 +69,7 @@ export const SECTIONS_EN: Section[] = [
             separate for each tab.
           </>
         ),
-        keywords: "tabs sheets new version compare duplicate page",
+        keywords: "tabs sheets new version duplicate page",
       },
       {
         q: "I want to make a site without floors (outdoors, etc.)",
@@ -80,7 +80,8 @@ export const SECTIONS_EN: Section[] = [
             <B>File</B>, to start with a single floor named “Site”. You don’t
             need stairs or elevators. On the visitors’ screen, “Site” appears
             where the floor name goes. Rename it in the “Floor” section on the
-            right. If you later want to map inside a building, add floors with{" "}
+            right (shown when nothing is selected), or double-click the floor
+            tab. If you later want to map inside a building, add floors with{" "}
             <B>+</B> on the floor tabs.
           </>
         ),
@@ -93,8 +94,7 @@ export const SECTIONS_EN: Section[] = [
             When you press <B>Export</B>, you are asked which tab’s map to
             export, and only that one is saved as a file (the tab name is
             included in the file name). With only one tab, it exports right away
-            without asking. If you can’t decide, put them side by side with{" "}
-            <B>Compare</B>.
+            without asking.
           </>
         ),
         keywords: "export tab choose which file",
@@ -105,11 +105,12 @@ export const SECTIONS_EN: Section[] = [
           <>
             Press <B>Preview</B> in the bar above the map to see it as visitors
             do. Tapping a place with a description shows it. The grid and
-            selection outlines are not shown to visitors. Press “Edit” to go
-            back.
+            selection outlines are not shown to visitors. If the grid lines get
+            in the way while you work, turn them off with the button left of the
+            ruler in the bar below the map. Press “Edit” to go back.
           </>
         ),
-        keywords: "visitors preview grid",
+        keywords: "visitors preview grid lines hide",
       },
     ],
   },
@@ -137,9 +138,10 @@ export const SECTIONS_EN: Section[] = [
             with keys (<K>V</K> Select, <K>R</K> Room, <K>C</K> Round room,{" "}
             <K>P</K> Marker, <K>A</K> Zone, <K>T</K> Text, <K>E</K> Stairs/EV).
             Select something you drew and its <B>name</B> and <B>color</B>{" "}
-            appear at the top of the settings on the right. Position & size,
-            shape, lock and crowd links are under <B>Advanced settings</B>{" "}
-            below.
+            appear at the top of the settings on the right. Below them, open the
+            folded <B>Use as stairs / elevator</B> and{" "}
+            <B>Copy to another floor</B> sections when you need them. Position,
+            shape and lock are under <B>Advanced settings</B>.
           </>
         ),
         keywords: "tools where name color settings advanced keys",
@@ -278,9 +280,10 @@ export const SECTIONS_EN: Section[] = [
         a: (
           <>
             Press <B>List</B> under <B>More</B> at the top to see rooms,
-            markers, zones and more in a table. You can edit names and colors
-            right there, filter by floor or name, or show only items without a
-            name. Press <B>Show</B> to go to that place.
+            markers, stairs, elevators and more in a table (zones have no names,
+            so they aren’t listed). You can edit names and colors right there,
+            filter by floor or name, or show only items without a name. Press{" "}
+            <B>Show</B> to go to that place.
           </>
         ),
         keywords: "list table names edit check all",
@@ -386,8 +389,8 @@ export const SECTIONS_EN: Section[] = [
         q: "How do I copy things from 1F to 2F?",
         a: (
           <>
-            Select them and right-click → “Copy to 2F”, or press “Copy to
-            another floor” on the right. They are copied to the{" "}
+            Select them and right-click → “Copy to 2F”, or open “Copy to another
+            floor” on the right and press a floor. They are copied to the{" "}
             <B>same position</B>. You can also copy with <K>⌘</K>+<K>C</K>, open
             2F and paste with <K>⌘</K>+<K>V</K>.
           </>
@@ -466,8 +469,12 @@ export const SECTIONS_EN: Section[] = [
             <B>stairs, elevators, escalators and corridors</B>, plus places
             where queues or crowds are measured. Rooms can be destinations by
             their map names alone, so they don’t need links. The graph is loaded
-            when you open the studio. In <B>Links</B> (under <B>More</B> at the
-            top), select something on the map, and press “Link to selected”. For
+            when you open the studio, and floors, stairs, elevators and so on{" "}
+            <B>link automatically to points with the same name</B> (even if a
+            floor has two points with the same name, they are worked out from
+            the other floors). Only for items that couldn’t be linked
+            automatically, open <B>Links</B> (under <B>More</B> at the top),
+            select something on the map, and press “Link to selected”. For
             corridors, draw a <B>zone</B> along the passage and link it to a
             route. <B>Check</B> also lists stairs and elevators that aren’t
             linked.
@@ -488,27 +495,22 @@ export const SECTIONS_EN: Section[] = [
             Press <B>Check</B> at the top to list <B>unreachable places</B>,{" "}
             <B>stairs not linked to other floors</B>,{" "}
             <B>floors with no stairs or elevator</B>,{" "}
-            <B>places without names</B>, <B>overlapping rooms</B> and more.
-            Press an item to show it. <B>Export</B> also checks automatically
-            and shows the list only when something is marked <B>Check</B> (you
-            can still choose “Export anyway”). “FYI” items are shown with the{" "}
-            <B>Check</B> button. While anything needs review, the <B>Check</B>{" "}
-            button shows how many.
+            <B>places without names</B>,{" "}
+            <B>overlapping rooms, stairs and elevators</B> and more. Items come
+            in three levels, each with its own color (red = <B>Fix this</B>,
+            yellow = <B>Please check</B>, blue = <B>FYI</B>). Press{" "}
+            <B>Show the place</B> to highlight the spot on the map, with a note
+            saying what’s wrong. If something is on purpose (rooms you
+            overlapped, for example), press <B>OK</B> to hide it; restore it
+            later from “Items marked OK” at the bottom of the list.{" "}
+            <B>Export</B> also checks automatically and shows the list only when
+            something is red or yellow (you can still choose “Export anyway”).
+            While anything is red or yellow, the <B>Check</B> button shows how
+            many.
           </>
         ),
-        keywords: "check mistakes unreachable before export",
-      },
-      {
-        q: "I want to compare two versions side by side",
-        a: (
-          <>
-            With two or more tabs, press <B>Compare</B> under <B>More</B> at the
-            top to show two tabs’ maps side by side. Choose a tab on each side;
-            switching floors changes both. Once you decide, press{" "}
-            <B>Export this</B> on that side.
-          </>
-        ),
-        keywords: "compare side by side versions tabs",
+        keywords:
+          "check mistakes unreachable before export overlap ok hide highlight",
       },
       {
         q: "I want the map as an image / on paper",
@@ -690,8 +692,8 @@ export const SECTIONS_EN: Section[] = [
         a: (
           <>
             Things placed inside a zone can be clicked as usual. To select the
-            zone itself, click an empty spot inside it, or its outline or name
-            (dragging selects several things instead).
+            zone itself, click an empty spot inside it, or its outline (dragging
+            selects several things instead).
           </>
         ),
         keywords: "area cannot select",

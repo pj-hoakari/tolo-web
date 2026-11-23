@@ -11,10 +11,12 @@ import {
 } from "@/components/ui/slider";
 import { Input, TextField } from "@/components/ui/textfield";
 import { useI18n } from "../../i18n/i18n";
+import { niceSnapPoints, snapRadius, snapToPoints } from "./sliderSnap";
 
 // 大きさを変えるスライダー（名前の大きさ・文字サイズ・マークの大きさ・幅／高さ）。
 // 見出しと、いまの値を上に並べ、その下につまみを出す。キーボードの矢印でも 1 刻みずつ動かせる。
-// 値（「158px」など）を押すと数字を打ち込める。Enter か、ほかを押すと決まり、Esc でやめる
+// 値（「158px」など）を押すと数字を打ち込める。Enter か、ほかを押すと決まり、Esc でやめる。
+// つまみをドラッグしているときは、切りのいい数字（目盛り）の近くで少し止まる（目盛りは線の上に小さな点で出す）
 export function SizeSlider({
   label,
   value,
@@ -24,6 +26,7 @@ export function SizeSlider({
   unit = "px",
   format = (v) => `${v}${unit}`,
   typedMax = max,
+  snaps,
   disabled = false,
   onChange,
 }: {
@@ -37,6 +40,8 @@ export function SizeSlider({
   format?: (value: number) => string;
   /** 打ち込むときの上限（スライダーの上限より大きい値も打ち込めるようにするとき） */
   typedMax?: number;
+  /** ドラッグ中に止まる、切りのいい数字（省略すると範囲から決める。空の配列なら止まらない） */
+  snaps?: readonly number[];
   /** 固定している物など、変えられないとき */
   disabled?: boolean;
   onChange: (value: number) => void;
@@ -44,6 +49,20 @@ export function SizeSlider({
   const { t } = useI18n();
   const [editing, setEditing] = React.useState(false);
   const [draft, setDraft] = React.useState("");
+  const points = snaps ?? niceSnapPoints(min, max);
+  // つまみ・線をドラッグしている間だけ吸い付ける（矢印キーでは 1 刻みで動かしたいので吸い付けない）
+  const dragging = React.useRef(false);
+  React.useEffect(() => {
+    const stop = () => {
+      dragging.current = false;
+    };
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
+    return () => {
+      window.removeEventListener("pointerup", stop);
+      window.removeEventListener("pointercancel", stop);
+    };
+  }, []);
   const startEdit = () => {
     setDraft(String(value));
     setEditing(true);
@@ -63,7 +82,13 @@ export function SizeSlider({
       maxValue={max}
       step={step}
       isDisabled={disabled}
-      onChange={(v) => onChange(Array.isArray(v) ? v[0] : v)}
+      onChange={(v) => {
+        const raw = Array.isArray(v) ? v[0] : v;
+        const next = dragging.current
+          ? snapToPoints(raw, points, snapRadius(min, max, step))
+          : raw;
+        if (next !== value) onChange(next);
+      }}
       className="grid gap-1.5"
     >
       <div className="flex min-h-6 items-center justify-between gap-2">
@@ -107,8 +132,23 @@ export function SizeSlider({
           </Button>
         )}
       </div>
-      <SliderTrack className="h-1.5">
+      <SliderTrack
+        className="h-1.5"
+        // つまみを押したときも線を押したときも気づけるよう、子より先に受ける
+        onPointerDownCapture={() => {
+          dragging.current = true;
+        }}
+      >
         <SliderFillTrack />
+        {/* 切りのいい数字の目盛り */}
+        {points.map((p) => (
+          <span
+            key={p}
+            aria-hidden
+            className="pointer-events-none absolute top-1/2 size-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-muted-foreground/50"
+            style={{ left: `${((p - min) / (max - min)) * 100}%` }}
+          />
+        ))}
         <SliderThumb className="size-4" />
       </SliderTrack>
     </Slider>
