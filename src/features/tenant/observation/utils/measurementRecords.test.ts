@@ -44,8 +44,15 @@ it("marks a server acknowledgement only in the sender's account", () => {
 });
 
 it("does not migrate observations whose legacy owner is unknown", () => {
-  const legacy = { eventId: "event", edgeDeviceId: "device" };
-  recordMeasurements(legacy, [measurement], names);
+  const legacyKey = "tolo:observation-measurements:event:device";
+  const legacyRecords = JSON.stringify([{ countIn: 7 }]);
+  localStorage.setItem(legacyKey, legacyRecords);
   expect(readMeasurementRecords(owner("alice"))).toEqual([]);
-  expect(readMeasurementRecords(legacy)).toHaveLength(1);
+  recordMeasurements(owner("alice"), [measurement], names);
+  const scopedKey = `tolo:staff:alice:${legacyKey}`;
+  expect(localStorage.getItem(scopedKey)).toBe(
+    JSON.stringify(readMeasurementRecords(owner("alice"))),
+  );
+  clearMeasurementRecords(owner("alice"));
+  expect(localStorage.getItem(legacyKey)).toBe(legacyRecords);
 });

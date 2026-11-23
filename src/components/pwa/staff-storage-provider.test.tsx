@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, renderHook, screen } from "@testing-library/react";
 import { useEffect, useState } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { scopeStaffStorageKey } from "@/lib/pwa/staff-storage";
@@ -25,8 +25,8 @@ function RememberedData({ onDispose }: { onDispose: () => void }) {
 
 it("unmounts previous user state and reads only the current user's namespace", () => {
   localStorage.setItem("draft", "legacy owner unknown");
-  localStorage.setItem(scopeStaffStorageKey("draft", "alice"), "alice private");
-  localStorage.setItem(scopeStaffStorageKey("draft", "bob"), "bob private");
+  localStorage.setItem("tolo:staff:alice:draft", "alice private");
+  localStorage.setItem("tolo:staff:bob:draft", "bob private");
   const dispose = vi.fn();
   const { rerender } = render(
     <StaffStorageProvider scope="alice">
@@ -47,4 +47,10 @@ it("unmounts previous user state and reads only the current user's namespace", (
     "alice private",
   );
   expect(localStorage.getItem("draft")).toBe("legacy owner unknown");
+});
+
+it("throws when the scope hook is used outside StaffStorageProvider", () => {
+  expect(() => renderHook(useStaffStorageScope)).toThrow(
+    "useStaffStorageScope requires a valid scope from StaffStorageProvider.",
+  );
 });

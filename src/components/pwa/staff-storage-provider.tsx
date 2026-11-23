@@ -18,6 +18,12 @@ export function StaffStorageProvider({
   );
 }
 
-export function useStaffStorageScope() {
-  return useContext(StaffStorageContext);
+export function useStaffStorageScope(): string {
+  const scope = useContext(StaffStorageContext);
+  if (typeof scope !== "string" || !scope.trim()) {
+    throw new Error(
+      "useStaffStorageScope requires a valid scope from StaffStorageProvider.",
+    );
+  }
+  return scope;
 }

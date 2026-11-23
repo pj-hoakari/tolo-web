@@ -17,6 +17,12 @@ export function createStaffStorageScope(
 }
 
 /** Legacy keys remain intact, but authenticated pages never read another owner. */
-export function scopeStaffStorageKey(key: string, scope?: string) {
-  return scope ? `tolo:staff:${scope}:${key}` : key;
+export function scopeStaffStorageKey(key: string, scope: string): string {
+  if (typeof scope !== "string" || !scope.trim()) {
+    throw new Error(
+      "scopeStaffStorageKey: valid scope is required. Check StaffStorageProvider usage.",
+    );
+  }
+
+  return `tolo:staff:${scope}:${key}`;
 }

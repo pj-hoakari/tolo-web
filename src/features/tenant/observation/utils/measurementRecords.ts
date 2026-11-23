@@ -4,7 +4,7 @@ import type { WindowMeasurement } from "./measurements";
 export type MeasurementRecordContext = {
   eventId: string;
   edgeDeviceId: string;
-  storageScope?: string;
+  storageScope: string;
 };
 
 export type MeasurementRecord = {

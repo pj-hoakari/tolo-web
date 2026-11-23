@@ -24,9 +24,25 @@ describe("staff persistence ownership", () => {
     ).not.toBe(createStaffStorageScope("a", { type: "staff", userId: "b:c" }));
   });
 
-  it("leaves the legacy key available only for consumers without a session scope", () => {
-    const legacy = "guide-map-studio:book:event";
-    expect(scopeStaffStorageKey(legacy)).toBe(legacy);
-    expect(scopeStaffStorageKey(legacy, "owner")).not.toBe(legacy);
+  it("preserves the existing key format for a valid scope", () => {
+    expect(scopeStaffStorageKey("settings", "guild-123")).toBe(
+      "tolo:staff:guild-123:settings",
+    );
+    expect(scopeStaffStorageKey("settings", " guild-123 ")).toBe(
+      "tolo:staff: guild-123 :settings",
+    );
+  });
+
+  it("requires a scope at compile time and at runtime", () => {
+    expect(() => {
+      // @ts-expect-error A scope is required even for legacy keys.
+      scopeStaffStorageKey("settings");
+    }).toThrow("scopeStaffStorageKey: valid scope is required");
+  });
+
+  it.each(["", " \t\n", undefined, null])("rejects scope %j", (scope) => {
+    expect(() =>
+      Reflect.apply(scopeStaffStorageKey, undefined, ["settings", scope]),
+    ).toThrow("scopeStaffStorageKey: valid scope is required");
   });
 });
