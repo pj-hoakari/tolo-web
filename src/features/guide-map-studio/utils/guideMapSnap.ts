@@ -209,8 +209,10 @@ export function smartSnap(
   };
   const sx = snapAxis(m0, others, "x", tol) as Candidate | null;
   const sy = snapAxis(m0, others, "y", tol) as Candidate | null;
-  const dx = sx ? rawDx + sx.diff : Math.round(rawDx / grid) * grid;
-  const dy = sy ? rawDy + sy.diff : Math.round(rawDy / grid) * grid;
+  // grid が 0 以下なら刻みにそろえない（Alt を押して好きな位置に置くとき）
+  const round = (v: number) => (grid > 0 ? Math.round(v / grid) * grid : v);
+  const dx = sx ? rawDx + sx.diff : round(rawDx);
+  const dy = sy ? rawDy + sy.diff : round(rawDy);
   const m = {
     l: moving.l + dx,
     r: moving.r + dx,

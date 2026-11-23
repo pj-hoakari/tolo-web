@@ -17,6 +17,8 @@ import { areaLabelSize, roomLabel } from "./roomLabel";
 export type SvgTheme = {
   bg: string;
   surface: string;
+  /** 部屋の面の元の色（画面と同じく、お客さんの画面の部屋の色 --guest-map-room-fill） */
+  room: string;
   divider: string;
   text: string;
   muted: string;
@@ -25,6 +27,7 @@ export type SvgTheme = {
 export const SVG_LIGHT: SvgTheme = {
   bg: "#f5f0e8",
   surface: "#fbf8f3",
+  room: "#f0ece6",
   divider: "#e2dace",
   text: "#2a2622",
   muted: "#6e655c",
@@ -33,6 +36,7 @@ export const SVG_LIGHT: SvgTheme = {
 export const SVG_DARK: SvgTheme = {
   bg: "#1c1916",
   surface: "#26221e",
+  room: "#423c37",
   divider: "#3a342e",
   text: "#ede6da",
   muted: "#9a9086",
@@ -157,18 +161,18 @@ export function floorSvg(
   // エリア（最背面）
   for (const o of objs) {
     if (o.kind !== "area") continue;
-    const { fill: pal, stroke } = paletteOf(shownColorOf(o));
+    const { fill: pal } = paletteOf(shownColorOf(o));
     const pts = o.points.map((p) => `${p.x},${p.y}`).join(" ");
-    // 範囲の縁は画面と同じ実線の枠（通行止めだけ点線）
+    // ここでは塗りだけ。縁の線は、部屋などに隠れないよう、部屋・ピンを描いたあとに描く（画面と同じ）
     const building = o.color === "building";
     out.push(
-      `<polygon points="${pts}" fill="${building ? th.surface : pal}" fill-opacity="${building ? 0.6 : o.closed ? 0.24 : 0.16}" stroke="${stroke}" stroke-width="${building ? 3 : 2}" stroke-linejoin="round"${o.closed ? ' stroke-dasharray="6 3"' : ""}/>`,
+      `<polygon points="${pts}" fill="${building ? th.surface : pal}" fill-opacity="${building ? 0.6 : o.closed ? 0.24 : 0.16}"/>`,
     );
     if (o.title) {
       const bb = bboxOf(o.points);
       const label = `${o.title}${o.closed && opts.closedLabel ? opts.closedLabel : ""}`;
       out.push(
-        `<text x="${bb.x + bb.w / 2}" y="${bb.y + areaLabelSize(bb.w, bb.h) + 8}" text-anchor="middle" font-family="${MONO}" font-size="${areaLabelSize(bb.w, bb.h)}" letter-spacing="1" fill="${o.closed ? th.accent : th.muted}" stroke="${th.bg}" stroke-width="3" paint-order="stroke" stroke-linejoin="round">${esc(label)}</text>`,
+        `<text x="${bb.x + bb.w / 2}" y="${bb.y + areaLabelSize(bb.w, bb.h) * (o.labelScale ?? 1) + 8}" text-anchor="middle" font-family="${MONO}" font-size="${areaLabelSize(bb.w, bb.h) * (o.labelScale ?? 1)}" letter-spacing="1" fill="${o.closed ? th.accent : th.muted}" stroke="${th.bg}" stroke-width="3" paint-order="stroke" stroke-linejoin="round">${esc(label)}</text>`,
       );
     }
   }
@@ -194,7 +198,7 @@ export function floorSvg(
       out.push(icon(o.connector, o.x, o.y, Math.min(mb.w, mb.h) * 0.56, ln));
       if (title)
         out.push(
-          `<text x="${o.x}" y="${o.y + mb.h / 2 + 14}" text-anchor="middle" font-family="${MONO}" font-size="10" letter-spacing="0.8" fill="${th.text}" stroke="${th.bg}" stroke-width="3" paint-order="stroke">${esc(title)}</text>`,
+          `<text x="${o.x}" y="${o.y + mb.h / 2 + 14 * (o.labelScale ?? 1)}" text-anchor="middle" font-family="${MONO}" font-size="${10 * (o.labelScale ?? 1)}" letter-spacing="0.8" fill="${th.text}" stroke="${th.bg}" stroke-width="3" paint-order="stroke">${esc(title)}</text>`,
         );
       continue;
     }
@@ -215,7 +219,7 @@ export function floorSvg(
           `<rect x="${o.x - tw / 2}" y="${o.y - 34}" width="${tw}" height="20" rx="6" fill="${th.surface}" stroke="${th.divider}"/>`,
         );
         out.push(
-          `<text x="${o.x}" y="${o.y - 20}" text-anchor="middle" font-family="${FONT}" font-size="11" fill="${th.text}">${esc(fitText(title, tw - 12, 11))}</text>`,
+          `<text x="${o.x}" y="${o.y - 20}" text-anchor="middle" font-family="${FONT}" font-size="${11 * (o.labelScale ?? 1)}" fill="${th.text}">${esc(fitText(title, tw - 12, 11 * (o.labelScale ?? 1)))}</text>`,
         );
       }
       continue;
@@ -223,7 +227,7 @@ export function floorSvg(
     // 四角・丸
     const x = o.x - o.w / 2;
     const y = o.y - o.h / 2;
-    const fill = mix(pal, th.surface, 8);
+    const fill = mix(pal, th.room, 12); // 画面の部屋の面（objFill）と同じ
     if (o.shape === "circle")
       out.push(
         `<ellipse cx="${o.x}" cy="${o.y}" rx="${o.w / 2}" ry="${o.h / 2}" fill="${fill}" stroke="${ln}"/>`,
@@ -241,7 +245,7 @@ export function floorSvg(
       out.push(icon(o.connector, o.x, o.y - (title ? 9 : 0), 18, ln));
       if (title)
         out.push(
-          `<text x="${o.x}" y="${o.y + 16}" text-anchor="middle" font-family="${FONT}" font-size="12" fill="${th.text}">${esc(fitText(title, o.w - 16, 12))}</text>`,
+          `<text x="${o.x}" y="${o.y + 16}" text-anchor="middle" font-family="${FONT}" font-size="${12 * (o.labelScale ?? 1)}" fill="${th.text}">${esc(fitText(title, o.w - 16, 12 * (o.labelScale ?? 1)))}</text>`,
         );
       continue;
     }
@@ -265,9 +269,10 @@ export function floorSvg(
       spacing: name ? 0.04 : 0.12,
       mono: !name,
     });
+    const size = label.size * (o.labelScale ?? 1); // 名前の大きさ（スタジオで変えた倍率をかける）
     // 目印（18px）・すき間（6px）・名前を 1 つにまとめて、部屋の真ん中に縦に並べる（画面と同じ並び）
     const pinH = o.pin ? 18 + (label.lines.length ? 6 : 0) : 0;
-    const lineH = label.size * 1.2;
+    const lineH = size * 1.2;
     const top = o.y - (pinH + label.lines.length * lineH) / 2;
     if (o.pin) {
       out.push(
@@ -278,9 +283,19 @@ export function floorSvg(
     label.lines.forEach((line, i) => {
       const y = top + pinH + lineH * (i + 0.5);
       out.push(
-        `<text x="${o.x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-family="${name ? FONT : MONO}" font-size="${label.size}" letter-spacing="${label.size * (name ? 0.04 : 0.12)}" fill="${th.text}">${esc(fitText(line, o.w - 16, label.size))}</text>`,
+        `<text x="${o.x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-family="${name ? FONT : MONO}" font-size="${size}" letter-spacing="${size * (name ? 0.04 : 0.12)}" fill="${th.text}">${esc(fitText(line, o.w - 16, size))}</text>`,
       );
     });
+  }
+  // 範囲の縁：画面と同じ実線の枠（通行止めだけ点線）。部屋・ピンより手前に描く
+  for (const o of objs) {
+    if (o.kind !== "area") continue;
+    const { stroke } = paletteOf(shownColorOf(o));
+    const pts = o.points.map((p) => `${p.x},${p.y}`).join(" ");
+    const building = o.color === "building";
+    out.push(
+      `<polygon points="${pts}" fill="none" stroke="${stroke}" stroke-width="${building ? 3 : 2}" stroke-linejoin="round"${o.closed ? ' stroke-dasharray="6 3"' : ""}/>`,
+    );
   }
   // 文字
   for (const o of objs) {

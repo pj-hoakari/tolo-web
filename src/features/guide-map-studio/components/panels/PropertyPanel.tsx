@@ -2,8 +2,9 @@
 
 // 右の設定：選んでいる物の設定（名前・色・説明・固定・形・階段・エレベーター・混雑とのつなぎ）
 
-import { Copy, Lock, LockOpen, Trash2 } from "lucide-react";
+import { ChevronRight, Copy, Lock, LockOpen, Trash2 } from "lucide-react";
 import * as React from "react";
+import { Button } from "@/components/ui/button";
 import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
 import { cn } from "@/lib/utils";
 import { useI18n } from "../../i18n/i18n";
@@ -18,7 +19,9 @@ import type {
   PlaceObject,
   TextObject,
 } from "../../type";
+import { GRID_SNAP } from "../../utils/editing";
 import {
+  bboxOf,
   CONNECTOR_TYPES,
   DEFAULT_COLOR,
   hasInfo,
@@ -31,6 +34,7 @@ import {
 } from "../../utils/guideMapDoc";
 import { labelOf } from "../../utils/guideMapIO";
 import { ColorSwatch } from "../parts/ColorSwatch";
+import { SizeSlider } from "../parts/SizeSlider";
 import { ConnectorIcon } from "../parts/StudioIcons";
 
 // 階移動ポイントの設定（種類・つながる階・エスカレーターの向き）。同じ link の全フロア分にまとめて効く
@@ -81,33 +85,17 @@ export function ConnectorPanel({
           <span className="text-muted-foreground">
             {t("マークの大きさ（全部の階に反映・角のハンドルでも変更可）")}
           </span>
-          <div className="mt-1 flex items-center gap-2">
+          <div className="mt-1.5 space-y-2.5">
             {(["markW", "markH"] as const).map((k) => (
-              <label key={k} className="flex items-center gap-1">
-                <span className="text-muted-foreground">
-                  {k === "markW" ? t("幅") : t("高さ")}
-                </span>
-                <input
-                  type="number"
-                  min={MARKER_SIZE_MIN}
-                  max={MARKER_SIZE_MAX}
-                  value={markBoxOf(connector)[k === "markW" ? "w" : "h"]}
-                  onChange={(e) =>
-                    onMarkSize({
-                      [k]: Math.min(
-                        MARKER_SIZE_MAX,
-                        Math.max(
-                          MARKER_SIZE_MIN,
-                          Number(e.target.value) || MARKER_SIZE_MIN,
-                        ),
-                      ),
-                    })
-                  }
-                  className="h-7 w-16 rounded-md border border-input bg-transparent px-1.5"
-                />
-              </label>
+              <SizeSlider
+                key={k}
+                label={k === "markW" ? t("幅") : t("高さ")}
+                value={markBoxOf(connector)[k === "markW" ? "w" : "h"]}
+                min={MARKER_SIZE_MIN}
+                max={MARKER_SIZE_MAX}
+                onChange={(v) => onMarkSize({ [k]: v })}
+              />
             ))}
-            <span className="text-muted-foreground">px</span>
           </div>
         </div>
       )}
@@ -182,6 +170,8 @@ type PropertyPanelProps = {
   onLoadGraph: (file: File) => void;
   onLock: (on: boolean) => void;
   onChange: (patch: Partial<MapObject>) => void;
+  /** 大きさ（幅・高さ）を変える。部屋・区画は真ん中ではなく左上を固定、範囲は形ごと伸び縮みする */
+  onResize?: (size: { w?: number; h?: number }) => void;
   onDelete: () => void;
   onDuplicate: () => void;
   onPreview: () => void;
@@ -196,6 +186,7 @@ export function PropertyPanel({
   onLoadGraph,
   onLock,
   onChange,
+  onResize,
   onDelete,
   onDuplicate,
   onPreview,
@@ -204,6 +195,13 @@ export function PropertyPanel({
 }: PropertyPanelProps) {
   const { t } = useI18n();
   const info = object.kind !== "text" && hasInfo(object);
+  // 種類の色（トイレ・飲食など）を開いている物。選び直したら閉じる。いま種類の色の物は、初めから開いておく
+  const [kindsOpenFor, setKindsOpenFor] = React.useState<string | null>(null);
+  const kindsOpen =
+    kindsOpenFor === object.id ||
+    !(PALETTE_GROUPS[0].keys as readonly string[]).includes(
+      shownColorOf(object),
+    );
   if (part === "advanced")
     return (
       <div className="space-y-2.5 text-xs">
@@ -350,38 +348,103 @@ export function PropertyPanel({
             </span>
           )}
       </label>
+      {/* 名前（文字）の大きさ。部屋などは、部屋の大きさに合わせた大きさ（100%）からの倍率。文字は文字サイズそのもの */}
+      {object.kind === "text" ? (
+        <SizeSlider
+          label={t("文字サイズ")}
+          value={(object as TextObject).size}
+          min={8}
+          max={72}
+          onChange={(size) => onChange({ size } as Partial<MapObject>)}
+        />
+      ) : (
+        <SizeSlider
+          label={t("名前の大きさ")}
+          value={Math.round((object.labelScale ?? 1) * 100)}
+          min={50}
+          max={200}
+          step={10}
+          unit="%"
+          format={(v) => (v === 100 ? t("自動（100%）") : `${v}%`)}
+          onChange={(v) =>
+            onChange({ labelScale: v === 100 ? undefined : v / 100 })
+          }
+        />
+      )}
+      {/* 大きさ：部屋・区画（四角・丸）と範囲。角のハンドルでも変えられる */}
+      {(() => {
+        const size =
+          object.kind === "place" && object.shape !== "pin"
+            ? { w: object.w, h: object.h }
+            : object.kind === "area"
+              ? bboxOf(object.points)
+              : null;
+        if (!size || !onResize) return null;
+        return (
+          <div className="space-y-2.5">
+            <span className="font-medium">{t("大きさ")}</span>
+            {(["w", "h"] as const).map((k) => (
+              <SizeSlider
+                key={k}
+                label={k === "w" ? t("幅") : t("高さ")}
+                value={Math.round(size[k])}
+                min={GRID_SNAP}
+                max={Math.max(1500, Math.round(size[k]))}
+                typedMax={5000}
+                disabled={object.locked}
+                onChange={(v) => onResize({ [k]: v })}
+              />
+            ))}
+          </div>
+        );
+      })()}
+      {/* 色：初めは「基本の色」だけ。トイレ・飲食などの種類の色は「種類を選ぶ」で開く（いま種類の色なら開いておく） */}
       {!isBuildingArea && (
         <>
           <div>
             <span className="font-medium">{t("色")}</span>
             <div className="mt-1 space-y-1.5">
-              {PALETTE_GROUPS.map((group) => (
-                <div key={group.label}>
-                  <span className="mb-0.5 block text-muted-foreground">
-                    {t(group.label)}
-                  </span>
-                  {/* 見出しごとに 1 行に並べる（折り返さない） */}
-                  <div className="flex flex-nowrap gap-1">
-                    {group.keys.map((k) => (
-                      <ColorSwatch
-                        key={k}
-                        k={k}
-                        selected={shownColorOf(object) === k}
-                        aria-pressed={shownColorOf(object) === k}
-                        onClick={() => onChange({ color: k })}
-                        className="size-6"
-                      />
-                    ))}
+              {(kindsOpen ? PALETTE_GROUPS : PALETTE_GROUPS.slice(0, 1)).map(
+                (group) => (
+                  <div key={group.label}>
+                    <span className="mb-0.5 block text-muted-foreground">
+                      {t(group.label)}
+                    </span>
+                    {/* 見出しごとに 1 行に並べる（折り返さない） */}
+                    <div className="flex flex-nowrap gap-1">
+                      {group.keys.map((k) => (
+                        <ColorSwatch
+                          key={k}
+                          k={k}
+                          selected={shownColorOf(object) === k}
+                          aria-pressed={shownColorOf(object) === k}
+                          onClick={() => onChange({ color: k })}
+                          className="size-6"
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ),
+              )}
             </div>
-          </div>
-          <p className="leading-relaxed text-muted-foreground">
-            {t(
-              "普通の部屋は「基本の色」から選びます。トイレなどの種類を選ぶと、tolo-web と同じ色とマークで表示されます",
+            {!kindsOpen && (
+              <Button
+                variant="link"
+                onPress={() => setKindsOpenFor(object.id)}
+                className="mt-1.5 h-auto gap-0.5 p-0 text-xs"
+              >
+                <ChevronRight className="size-3.5" />
+                {t("種類を選ぶ（トイレ・飲食など）")}
+              </Button>
             )}
-          </p>
+          </div>
+          {kindsOpen && (
+            <p className="leading-relaxed text-muted-foreground">
+              {t(
+                "普通の部屋は「基本の色」から選びます。トイレなどの種類を選ぶと、tolo-web と同じ色とマークで表示されます",
+              )}
+            </p>
+          )}
         </>
       )}
       {object.kind === "area" && (
@@ -394,23 +457,6 @@ export function PropertyPanel({
             }
           />
           <span>{t("通行止め（ここは避けて案内）")}</span>
-        </label>
-      )}
-      {object.kind === "text" && (
-        <label className="flex items-center gap-1.5">
-          <span className="font-medium">{t("文字サイズ")}</span>
-          <input
-            type="number"
-            min={8}
-            max={72}
-            value={(object as TextObject).size}
-            onChange={(e) =>
-              onChange({
-                size: Math.max(8, Number(e.target.value)),
-              } as Partial<MapObject>)
-            }
-            className="h-8 w-16 rounded-md border border-input bg-transparent px-1.5"
-          />
         </label>
       )}
       {object.kind !== "text" && (

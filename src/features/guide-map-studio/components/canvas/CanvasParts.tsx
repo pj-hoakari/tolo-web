@@ -302,9 +302,10 @@ export function MiniMap({ doc, floor, zoom, view, onJump }: MiniMapProps) {
 
 // --- 地図の項目の見た目（案A「上質な図面」）---
 // 面：選んだ色をごく薄く（8%）だけ面の色に重ねる／線：選んだ色を少し落ち着かせる（ライト・ダークどちらでも馴染む）
-// 部屋の面：部屋の色を少しだけ、明るい紙（--studio-room）に混ぜる。地図の面より明るくして浮かせる
+// 部屋の面：選んだ色を少しだけ、部屋の色（--studio-room。お客さんの画面の部屋と同じ）に混ぜる。
+// 種類（トイレ・飲食など）の色がひと目で分かるよう、12% 混ぜる
 export const objFill = (color: string) =>
-  `color-mix(in srgb, ${color} 7%, var(--studio-room))`;
+  `color-mix(in srgb, ${color} 12%, var(--studio-room))`;
 
 export const objLine = (color: string) =>
   `color-mix(in srgb, ${color} 70%, var(--studio-divider))`;
