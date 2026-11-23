@@ -8,14 +8,32 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { onSnapshot } from "firebase/firestore";
+import type { ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
+import { StaffStorageProvider } from "@/components/pwa/staff-storage-provider";
 import {
   encodeDetectionControlRequest,
   parseDetectionControlNotice,
 } from "@/features/tenant/webrtc/utils/detectionControl";
 import { connectAsSender } from "@/features/tenant/webrtc/utils/webrtcSender";
+import { createStaffStorageScope } from "@/lib/pwa/staff-storage";
 import { IntlTestProvider } from "@/test/IntlTestProvider";
 import { CrowdDetection } from "./CrowdDetection";
+
+const storageScope = createStaffStorageScope("tenant", {
+  type: "machine",
+  userId: "observer",
+});
+
+function CrowdDetectionTestProvider({ children }: { children: ReactNode }) {
+  return (
+    <IntlTestProvider>
+      <StaffStorageProvider scope={storageScope}>
+        {children}
+      </StaffStorageProvider>
+    </IntlTestProvider>
+  );
+}
 
 const mocks = vi.hoisted(() => {
   vi.stubEnv("NEXT_PUBLIC_API_MOCKING", "disabled");
@@ -140,7 +158,7 @@ it("does not offer the local camera when the camera list fails", () => {
       eventId="event"
       edgeDeviceId="page"
     />,
-    { wrapper: IntlTestProvider },
+    { wrapper: CrowdDetectionTestProvider },
   );
   expect(screen.getByRole("alert").textContent).toContain(
     "映像ソースの取得に失敗しました",
@@ -188,7 +206,7 @@ it("sends and receives settings for the selected ESP camera across tab switches"
       eventId="event"
       edgeDeviceId="page"
     />,
-    { wrapper: IntlTestProvider },
+    { wrapper: CrowdDetectionTestProvider },
   );
   await waitFor(() => expect(channels).toHaveLength(1));
   const read = (channel: (typeof channels)[number]) => {
@@ -250,7 +268,7 @@ it("offers a per-camera reconnect button while the other camera is detecting", (
       eventId="event"
       edgeDeviceId="page"
     />,
-    { wrapper: IntlTestProvider },
+    { wrapper: CrowdDetectionTestProvider },
   );
   fireEvent.click(screen.getByRole("button", { name: "Camera two に再接続" }));
   expect(mocks.retryCamera).toHaveBeenCalledExactlyOnceWith("two");
@@ -269,7 +287,7 @@ it("warns about cameras that are not linked to an observation point", () => {
       eventId="event"
       edgeDeviceId="page"
     />,
-    { wrapper: IntlTestProvider },
+    { wrapper: CrowdDetectionTestProvider },
   );
   expect(
     screen

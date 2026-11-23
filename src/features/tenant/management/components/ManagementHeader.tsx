@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 import { LocaleSelect } from "@/components/locale-select";
-import { PwaInstall } from "@/components/pwa/pwa-install";
+import { StaffPwaInstall } from "@/components/pwa/staff-pwa-install";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Link } from "@/components/ui/link";
 import { LogoutButton } from "@/features/auth/LogoutButton";
@@ -32,7 +32,7 @@ export function ManagementHeader({
           <Link href="/management/members" variant="ghost" size="sm">
             {tTenant("membersLink")}
           </Link>
-          <PwaInstall compact />
+          <StaffPwaInstall compact />
           <LocaleSelect />
           <ThemeToggle />
           <LogoutButton />
