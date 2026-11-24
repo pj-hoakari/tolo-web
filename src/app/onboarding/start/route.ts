@@ -14,5 +14,6 @@ export async function GET(request: Request) {
     request.headers.get("host") ?? "",
     pending.tenantId,
     "/onboarding/claim",
+    { type: "ownership_claim_token", token: pending.ownershipClaimToken },
   );
 }

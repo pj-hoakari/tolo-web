@@ -29,7 +29,7 @@ import {
   type SessionLocks,
 } from "./betterAuth";
 import { hostLockKey } from "./locks";
-import { createLoginFlow } from "./login";
+import { createLoginFlow, type RegistrationGrant } from "./login";
 import { MACHINE_BINDING_COOKIE } from "./machineSession";
 import { applyMigrations } from "./migrations";
 import { createSessionAuth } from "./session";
@@ -1043,6 +1043,10 @@ describe("machine session protection", () => {
 });
 
 const SIGNUP_COOKIE = "__Host-tolo.signup";
+const INVITATION_GRANT: RegistrationGrant = {
+  type: "invitation_token",
+  token: "invitation-token",
+};
 
 async function registerUntilHandoff(
   testAuth: TestAuth,
@@ -1053,6 +1057,7 @@ async function registerUntilHandoff(
     returnPath = "/invitation/handoff",
     sub = "user-new",
     startJar = cookieJar(),
+    grant = INVITATION_GRANT,
   } = {},
 ) {
   const rootJar = cookieJar();
@@ -1060,6 +1065,7 @@ async function registerUntilHandoff(
     host,
     tenantId,
     returnPath,
+    grant,
   );
   startJar.store(started);
   const begun = await testAuth.flow.begin(
@@ -1123,6 +1129,7 @@ describe("registration authorization", () => {
       state: expect.any(String),
       code_challenge: expect.any(String),
       code_challenge_method: "S256",
+      invitation_token: "invitation-token",
     });
     expect(
       begun.headers
@@ -1141,6 +1148,64 @@ describe("registration authorization", () => {
     expect(signupShown).toBe(true);
   });
 
+  it("puts an ownership claim token on the authorization request in place of an invitation token", async () => {
+    const provider = idp();
+    const testAuth = await createTestAuth();
+    const { authorizeUrl } = await registerUntilHandoff(testAuth, provider, {
+      returnPath: "/onboarding/claim",
+      grant: { type: "ownership_claim_token", token: "claim-token" },
+    });
+
+    expect(authorizeUrl.searchParams.get("ownership_claim_token")).toBe(
+      "claim-token",
+    );
+    expect(authorizeUrl.searchParams.has("invitation_token")).toBe(false);
+  });
+
+  it("forgets the grant once the authorization request is issued, so the login cannot be begun again", async () => {
+    idp();
+    const testAuth = await createTestAuth();
+    const started = await testAuth.flow.startRegistration(
+      HOST,
+      TENANT,
+      "/invitation/handoff",
+      INVITATION_GRANT,
+    );
+    const beginUrl = started.headers.get("location") ?? "";
+
+    await testAuth.flow.begin(onHost(beginUrl, "tolo.test", ""));
+    const ctx = await testAuth.auth.$context;
+    expect(await ctx.adapter.findMany({ model: "pendingLogin" })).toEqual([
+      expect.objectContaining({ registrationGrant: null }),
+    ]);
+
+    const again = await testAuth.flow.begin(onHost(beginUrl, "tolo.test", ""));
+
+    expect(loginErrorPage(again)).toEqual({
+      status: 302,
+      page: "https://tolo.test/auth/error",
+      host: HOST,
+      error: "login_expired",
+    });
+  });
+
+  it("refuses to start a registration without a grant", async () => {
+    const testAuth = await createTestAuth();
+
+    await expect(
+      testAuth.auth.api.startLogin({
+        body: {
+          kind: "registration",
+          tenantId: TENANT,
+          host: HOST,
+          returnPath: "/invitation/handoff",
+        } as never,
+      }),
+    ).rejects.toThrow();
+    const ctx = await testAuth.auth.$context;
+    expect(await ctx.adapter.findMany({ model: "pendingLogin" })).toEqual([]);
+  });
+
   it("does not mark the login page for signup on a plain login, and clears a mark left by an abandoned registration", async () => {
     const provider = idp();
     const testAuth = await createTestAuth();
@@ -1149,7 +1214,12 @@ describe("registration authorization", () => {
       await testAuth.flow.begin(
         onHost(
           (
-            await testAuth.flow.startRegistration(HOST, TENANT, "/x")
+            await testAuth.flow.startRegistration(
+              HOST,
+              TENANT,
+              "/x",
+              INVITATION_GRANT,
+            )
           ).headers.get("location") ?? "",
           "tolo.test",
           "",
@@ -1276,7 +1346,7 @@ describe("registration authorization", () => {
     ).resolves.toBe(undefined);
   });
 
-  it("sends an error the IdP returns for a registration to the error page with the host that started it", async () => {
+  it("sends an error the IdP returns for a registration back to the page that started it, and forgets the login", async () => {
     idp();
     const testAuth = await createTestAuth();
     const rootJar = cookieJar();
@@ -1284,6 +1354,7 @@ describe("registration authorization", () => {
       HOST,
       TENANT,
       "/invitation/handoff",
+      INVITATION_GRANT,
     );
     const begun = await testAuth.flow.begin(
       onHost(started.headers.get("location") ?? "", "tolo.test", ""),
@@ -1301,12 +1372,12 @@ describe("registration authorization", () => {
       ),
     );
 
-    expect(loginErrorPage(failed as Response)).toEqual({
-      status: 302,
-      page: "https://tolo.test/auth/error",
-      host: HOST,
-      error: "access_denied",
-    });
+    expect(failed?.status).toBe(302);
+    expect(failed?.headers.get("location")).toBe(
+      `https://${HOST}/invitation/handoff?error=access_denied`,
+    );
+    const ctx = await testAuth.auth.$context;
+    expect(await ctx.adapter.findMany({ model: "pendingLogin" })).toEqual([]);
   });
 });
 

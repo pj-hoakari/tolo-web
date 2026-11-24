@@ -147,6 +147,32 @@ describe("completing the onboarding on the root domain", () => {
     },
   );
 
+  it.each(["access_denied", "temporarily_unavailable"])(
+    "shows a refused registration (%s) on the form, keeping the provisional tenant",
+    async (error) => {
+      handOver(undefined);
+      const store = keep(pending);
+
+      const response = await completeOnboarding(
+        request(
+          `https://tolo.test/onboarding/claim?error=${error}`,
+          "tolo.test",
+          "__Host-tolo.onboarding=binding",
+        ),
+      );
+
+      expect(store.forget).not.toHaveBeenCalled();
+      expect(
+        tenantRegistrationClient.claimTenantOwnership,
+      ).not.toHaveBeenCalled();
+      expect(redirected(response)).toEqual({
+        status: 302,
+        location: "/onboarding?error=failed",
+        cookies: ["__Host-tolo.login.l1="],
+      });
+    },
+  );
+
   it.each([
     ["no registration token is handed over", undefined, pending],
     [
@@ -217,6 +243,35 @@ describe("completing an invitation on the tenant host", () => {
 
       const response = await completeInvitation(handoffRequest(), TENANT);
 
+      expect(redirected(response)).toEqual({
+        status: 302,
+        location: `/invitation/accept?error=${error}`,
+        cookies: ["__Host-tolo.login.l1="],
+      });
+    },
+  );
+
+  it.each([
+    ["access_denied", "unusable"],
+    ["temporarily_unavailable", "failed"],
+    ["server_error", "failed"],
+  ])(
+    "keeps the invitation when the IdP refuses the registration with %s and shows %s",
+    async (refusal, error) => {
+      handOver(undefined);
+
+      const response = await completeInvitation(
+        request(
+          `https://acme.tolo.test/invitation/handoff?error=${refusal}`,
+          "acme.tolo.test",
+          "__Host-tolo.invitation=invitation-token",
+        ),
+        TENANT,
+      );
+
+      expect(
+        relationRegistrationClient.acceptTenantInvitation,
+      ).not.toHaveBeenCalled();
       expect(redirected(response)).toEqual({
         status: 302,
         location: `/invitation/accept?error=${error}`,

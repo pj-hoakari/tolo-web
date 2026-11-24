@@ -58,6 +58,9 @@ function redirect(headers: Headers, location: string): Response {
 export async function completeOnboarding(request: Request): Promise<Response> {
   const host = request.headers.get("host") ?? "";
   const { headers, registration } = await loginFlow().takeRegistration(request);
+  if (new URL(request.url).searchParams.has("error")) {
+    return redirect(headers, "/onboarding?error=failed");
+  }
   const pending = await onboardingStore().bound(
     parseCookies(request.headers.get("cookie") ?? "").get(ONBOARDING_COOKIE),
   );
@@ -98,6 +101,13 @@ export async function completeInvitation(
 ): Promise<Response> {
   const host = request.headers.get("host") ?? "";
   const { headers, registration } = await loginFlow().takeRegistration(request);
+  const refusal = new URL(request.url).searchParams.get("error");
+  if (refusal !== null) {
+    return redirect(
+      headers,
+      `/invitation/accept?error=${refusal === "access_denied" ? "unusable" : "failed"}`,
+    );
+  }
   if (!registration || registration.tenantId !== tenantId) {
     return redirect(headers, loginErrorUrl(host, "invalid_handoff"));
   }

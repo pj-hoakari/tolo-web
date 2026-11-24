@@ -27,6 +27,12 @@ const SIGNUP_COOKIE = "__Host-tolo.signup";
 
 export type LoginKind = "login" | "registration";
 
+const registrationGrant = z.object({
+  type: z.enum(["invitation_token", "ownership_claim_token"]),
+  token: z.string().min(1),
+});
+export type RegistrationGrant = z.infer<typeof registrationGrant>;
+
 type PendingLogin = {
   id: string;
   kind: LoginKind;
@@ -45,6 +51,7 @@ type PendingLogin = {
   idToken?: string | null;
   stateHash?: string | null;
   codeVerifier?: string | null;
+  registrationGrant?: string | null;
 };
 
 type ReceivedTokens = Pick<
@@ -136,6 +143,7 @@ export function loginHandoff(lock: SessionLock) {
           idToken: { type: "string", required: false },
           stateHash: { type: "string", required: false, unique: true },
           codeVerifier: { type: "string", required: false },
+          registrationGrant: { type: "string", required: false },
         },
       },
     },
@@ -214,12 +222,21 @@ export function loginHandoff(lock: SessionLock) {
       startLogin: createAuthEndpoint.serverOnly(
         {
           method: "POST",
-          body: z.object({
-            kind: z.enum(["login", "registration"]),
-            tenantId: z.string(),
-            host: z.string(),
-            returnPath: z.string(),
-          }),
+          body: z.discriminatedUnion("kind", [
+            z.object({
+              kind: z.literal("login"),
+              tenantId: z.string(),
+              host: z.string(),
+              returnPath: z.string(),
+            }),
+            z.object({
+              kind: z.literal("registration"),
+              tenantId: z.string(),
+              host: z.string(),
+              returnPath: z.string(),
+              grant: registrationGrant,
+            }),
+          ]),
         },
         async (ctx) => {
           const { adapter, authCookies, baseURL, internalAdapter, secret } =
@@ -242,7 +259,14 @@ export function loginHandoff(lock: SessionLock) {
             return adapter.create<Omit<PendingLogin, "id">, PendingLogin>({
               model: PENDING_LOGIN,
               data: {
-                ...ctx.body,
+                kind: ctx.body.kind,
+                tenantId: ctx.body.tenantId,
+                host: ctx.body.host,
+                returnPath: ctx.body.returnPath,
+                registrationGrant:
+                  ctx.body.kind === "registration"
+                    ? JSON.stringify(ctx.body.grant)
+                    : null,
                 staffSessionId: previousSession?.session.id,
                 bindingHash: sha256(value),
                 expiresAt: new Date(Date.now() + LOGIN_TTL_SECONDS * 1000),
@@ -375,6 +399,17 @@ export function loginHandoff(lock: SessionLock) {
   } satisfies BetterAuthPlugin;
 }
 
+function storedGrant(
+  value: string | null | undefined,
+): RegistrationGrant | undefined {
+  if (!value) return undefined;
+  try {
+    return registrationGrant.safeParse(JSON.parse(value)).data;
+  } catch {
+    return undefined;
+  }
+}
+
 async function keepForLogin(
   { accessToken, refreshToken, accessTokenExpiresAt, idToken }: ReceivedTokens,
   ctx: GenericEndpointContext | null,
@@ -403,13 +438,21 @@ export function createLoginFlow({ auth, env }: RealAuth) {
   }
 
   async function authorizeRegistration(login: PendingLogin) {
+    const grant = storedGrant(login.registrationGrant);
+    if (!grant) {
+      return Response.redirect(loginErrorUrl(login.host, "login_expired"), 302);
+    }
     const state = randomToken();
     const codeVerifier = randomToken();
     const { adapter } = await auth.$context;
     await adapter.update({
       model: PENDING_LOGIN,
       where: [{ field: "id", value: login.id }],
-      update: { stateHash: sha256(state), codeVerifier },
+      update: {
+        stateHash: sha256(state),
+        codeVerifier,
+        registrationGrant: null,
+      },
     });
     const target = new URL((await discovery()).authorization_endpoint);
     target.search = new URLSearchParams({
@@ -422,6 +465,7 @@ export function createLoginFlow({ auth, env }: RealAuth) {
       state,
       code_challenge: sha256(codeVerifier),
       code_challenge_method: "S256",
+      [grant.type]: grant.token,
     }).toString();
     const headers = new Headers({ location: target.href });
     headers.append(
@@ -495,9 +539,10 @@ export function createLoginFlow({ auth, env }: RealAuth) {
       host: string,
       tenantId: string,
       returnPath: string,
+      grant: RegistrationGrant,
     ): Promise<Response> {
       return auth.api.startLogin({
-        body: { kind: "registration", tenantId, host, returnPath },
+        body: { kind: "registration", tenantId, host, returnPath, grant },
         asResponse: true,
       });
     },
@@ -555,7 +600,7 @@ export function createLoginFlow({ auth, env }: RealAuth) {
       if (!tokens) {
         await adapter.delete({ model: PENDING_LOGIN, where });
         return redirect(
-          loginErrorUrl(login.host, params.get("error") ?? "login_expired"),
+          `${new URL(rootOrigin()).protocol}//${login.host}${login.returnPath}?error=${encodeURIComponent(params.get("error") ?? "login_expired")}`,
         );
       }
       const handoffCode = randomToken();
