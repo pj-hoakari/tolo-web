@@ -350,7 +350,7 @@ export function CrowdDetection({
     [observationPoints.points],
   );
   const reporting = useObservationReporting({
-    enabled: canReport,
+    enabled: canReport && !observationPoints.unregistered,
     eventId,
     edgeDeviceId,
     listening: API_MOCKING_ENABLED || edgeId !== null,
