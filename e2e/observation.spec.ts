@@ -52,6 +52,12 @@ const stopButton = (page: Page) =>
   page.getByRole("button", { name: "停止", exact: true });
 const lineName = (page: Page) =>
   page.getByRole("textbox", { name: "選択ラインの名前" });
+const linePoint = (page: Page) =>
+  page.getByRole("button", { name: /選択ラインの観測点/ });
+const assignPoint = async (page: Page, name: string) => {
+  await linePoint(page).click();
+  await page.getByRole("option", { name, exact: true }).click();
+};
 const lineButtons = (page: Page) =>
   page.getByRole("button", { name: /(?:を編集|の編集を終了)$/ });
 const wakeToggle = (page: Page) =>
@@ -71,7 +77,9 @@ const areaOverlapWarning = (page: Page) =>
 
 const canvasPoint = async (page: Page, u: number, v: number) => {
   const canvas = page.locator("canvas").first();
-  await canvas.scrollIntoViewIfNeeded();
+  await canvas.evaluate((element) =>
+    element.scrollIntoView({ block: "center" }),
+  );
   const box = await canvas.boundingBox();
   if (!box) throw new Error("canvas is not visible");
   return { x: box.x + box.width * u, y: box.y + box.height * v };
@@ -419,12 +427,12 @@ test.describe("検出設定", () => {
     });
   }
 
-  test("観測点のエリアを変えたら観測点を登録し直すよう案内する", async ({
+  test("ラインのエリアを変えたら新しい観測点を割り当てるよう案内する", async ({
     page,
   }) => {
     await expect(
       page.getByText(
-        "ラインの位置やエリアの幅を変えた観測点は、人数の履歴を切り直すために観測点を登録し直してください。",
+        "ラインの位置やエリアの幅を変えたときは、人数の履歴を切り直すために新しい観測点を追加してラインに割り当ててください。",
       ),
     ).toBeVisible();
   });
@@ -485,14 +493,16 @@ test.describe("カウントライン", () => {
     ).toBeVisible();
   });
 
-  test("違う名前のラインのエリアが重なると警告が出て、ラインを離すと警告が消える", async ({
+  test("違う観測点のラインのエリアが重なると警告が出て、ラインを離すと警告が消える", async ({
     page,
   }) => {
     await lineName(page).fill("ゲート");
+    await assignPoint(page, "入口");
     await lineCreationToggle(page).click();
     await dragOnCanvas(page, [0.2, 0.58], [0.5, 0.58]);
     await expect(page.getByRole("radio", { name: "編集モード" })).toBeChecked();
     await lineName(page).fill("ホール");
+    await assignPoint(page, "出口");
 
     await expect(areaOverlapWarning(page)).toHaveText(
       "「ゲート」と「ホール」のエリアが重なっています。重なった場所にいる人は両方の観測点に数えます。",
@@ -503,27 +513,31 @@ test.describe("カウントライン", () => {
     await expect(areaOverlapWarning(page)).toHaveCount(0);
   });
 
-  test("重なったラインを同じ名前にすると、同じ観測点のエリアになり警告が消える", async ({
+  test("重なったラインに同じ観測点を割り当てると、同じ観測点のエリアになり警告が消える", async ({
     page,
   }) => {
     await lineName(page).fill("ゲート");
+    await assignPoint(page, "入口");
     await lineCreationToggle(page).click();
     await dragOnCanvas(page, [0.2, 0.58], [0.5, 0.58]);
     await expect(page.getByRole("radio", { name: "編集モード" })).toBeChecked();
     await lineName(page).fill("ホール");
+    await assignPoint(page, "出口");
     await expect(areaOverlapWarning(page)).toBeVisible();
 
-    await lineName(page).fill("ゲート");
+    await assignPoint(page, "入口");
 
     await expect(areaOverlapWarning(page)).toHaveCount(0);
   });
 
-  test("選択ラインのエリアの幅を広げると、離れた違う名前のラインのエリアと重なって警告が出る", async ({
+  test("選択ラインのエリアの幅を広げると、離れた違う観測点のラインのエリアと重なって警告が出る", async ({
     page,
   }) => {
     await lineName(page).fill("ゲート");
+    await assignPoint(page, "入口");
     await addLine(page);
     await lineName(page).fill("ホール");
+    await assignPoint(page, "出口");
     await expect(areaOverlapWarning(page)).toHaveCount(0);
 
     await areaWidth(page).fill("100");
@@ -789,7 +803,7 @@ test.describe("計測値の送信", () => {
   test("送信に失敗したウィンドウの計測値は検出を停止して再開した後の送信に含めて再送する", async ({
     page,
   }) => {
-    await lineName(page).fill("入口");
+    await assignPoint(page, "入口");
     await startButton(page).click();
     await expect(page.getByText("検出状態: 検出中")).toBeVisible();
     const windows = sentWindows(page);
@@ -857,8 +871,8 @@ test.describe("登録解除された観測デバイス", () => {
     await page.waitForTimeout(1_000);
   };
 
-  const startDetecting = async (page: Page) => {
-    await lineName(page).fill("入口");
+  const startDetecting = async (page: Page, { linked = true } = {}) => {
+    if (linked) await assignPoint(page, "入口");
     await startButton(page).click();
     await expect(page.getByText("検出状態: 検出中")).toBeVisible();
   };
@@ -878,7 +892,8 @@ test.describe("登録解除された観測デバイス", () => {
     const sent = sentRequests(page);
 
     await expect(unregisteredAlert(page)).toBeVisible();
-    await startDetecting(page);
+    await expect(linePoint(page)).toHaveCount(0);
+    await startDetecting(page, { linked: false });
     await fastForwardAndSettle(page, REPORT_INTERVAL_MS * 2);
 
     expect(sent).toEqual({ heartbeat: 0, reportMeasurements: 0 });
@@ -1115,22 +1130,45 @@ test.describe("端末での計測値の記録", () => {
 });
 
 test.describe("カウントラインの保存", () => {
-  test("ラインの名前を観測点に合わせると警告が消え、再読み込みしても残る", async ({
+  test("観測ページで追加した観測点を選択ラインに割り当て、同じ名前は登録済みの観測点を割り当てる", async ({
     page,
   }) => {
     await setUpUnlockCode(page, "1234");
+    const newPoint = page.getByRole("textbox", { name: "新しい観測点の名前" });
+
+    await newPoint.fill("受付");
+    await page.getByRole("button", { name: "観測点を追加" }).click();
+
+    await expect(linePoint(page)).toContainText("受付");
+    await expect(lineButtons(page)).toContainText(["ライン 1（受付）"]);
+    await expect(newPoint).toHaveValue("");
+
+    await newPoint.fill("入口");
+    await page.getByRole("button", { name: "観測点を追加" }).click();
+
+    await expect(linePoint(page)).toContainText("入口");
     await expect(
-      page.getByText("観測点に紐づかないため、計測値を送りません: line-1"),
+      page.getByText("「入口」は登録済みのため、その観測点を割り当てました。"),
+    ).toBeVisible();
+  });
+
+  test("観測点と同じ名前のラインは紐づかず、観測点を割り当てると警告が消え、再読み込みしても残る", async ({
+    page,
+  }) => {
+    await setUpUnlockCode(page, "1234");
+    await lineName(page).fill("入口");
+    await expect(
+      page.getByText("観測点に紐づかないため、計測値を送りません: 入口"),
     ).toBeVisible();
 
-    await lineName(page).fill("入口");
+    await assignPoint(page, "入口");
     await expect(
       page.getByText("観測点に紐づかないため、計測値を送りません"),
     ).toHaveCount(0);
 
     await page.reload();
     await unlockPage(page, "1234");
-    await expect(lineName(page)).toHaveValue("入口");
+    await expect(linePoint(page)).toContainText("入口");
     await expect(
       page.getByText("観測点に紐づかないため、計測値を送りません"),
     ).toHaveCount(0);

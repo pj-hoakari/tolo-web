@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { type FormEvent, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
@@ -38,15 +38,6 @@ const REGISTER_ERRORS: ErrorMessageKeys<
 };
 
 const REGISTER_KINDS: EdgeDeviceKind[] = ["observation_page", "camera"];
-
-const linesOf = (text: string): string[] => [
-  ...new Set(
-    text
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean),
-  ),
-];
 
 type CameraPointOption = {
   id: string;
@@ -87,30 +78,20 @@ export function RegisterEdgeDeviceForm({
   connectionReturnPath,
 }: Props) {
   const t = useTranslations("Webrtc.registerEdge");
-  const format = useFormatter();
   const [kind, setKind] = useState<EdgeDeviceKind>("observation_page");
   const [name, setName] = useState("");
-  const [points, setPoints] = useState("");
   const [linkedPointId, setLinkedPointId] = useState<string | null>(null);
   const [registration, setRegistration] = useState<Registration>({
     kind: "idle",
   });
   const submitting = registration.kind === "submitting";
-  const observationPointNames = linesOf(points);
   const options = useMemo(() => cameraPointOptions(edges), [edges]);
   const selectedPoint = options.find((option) => option.id === linkedPointId);
-  const valid =
-    kind === "camera"
-      ? selectedPoint !== undefined
-      : observationPointNames.length > 0;
+  const valid = kind !== "camera" || selectedPoint !== undefined;
 
   function changeKind(next: EdgeDeviceKind) {
     setKind(next);
-    if (next === "camera") {
-      setPoints("");
-    } else {
-      setLinkedPointId(null);
-    }
+    if (next !== "camera") setLinkedPointId(null);
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -123,7 +104,6 @@ export function RegisterEdgeDeviceForm({
           eventId,
           name,
           kind,
-          observationPointNames: kind === "camera" ? [] : observationPointNames,
           linkedObservationPointId:
             kind === "camera" ? (linkedPointId ?? undefined) : undefined,
         });
@@ -150,7 +130,6 @@ export function RegisterEdgeDeviceForm({
         copied: false,
       });
       setName("");
-      setPoints("");
       setLinkedPointId(null);
       onRegistered();
     } catch (err) {
@@ -201,7 +180,7 @@ export function RegisterEdgeDeviceForm({
           </SelectItem>
         )}
       </JollySelect>
-      {kind === "camera" ? (
+      {kind === "camera" && (
         <>
           <JollySelect<CameraPointOption>
             label={t("cameraPointLabel")}
@@ -226,15 +205,6 @@ export function RegisterEdgeDeviceForm({
             </p>
           )}
         </>
-      ) : (
-        <JollyTextField
-          textArea
-          label={t("pointsLabel")}
-          description={t("pointsDescription")}
-          value={points}
-          onChange={setPoints}
-          isDisabled={submitting}
-        />
       )}
       <Button
         type="submit"
@@ -284,13 +254,6 @@ export function RegisterEdgeDeviceForm({
             <>
               <p className="text-sm">
                 {t("registered", { name: registration.device.name })}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {t("points", {
-                  names: format.list(
-                    registration.device.observationPoints.map((p) => p.name),
-                  ),
-                })}
               </p>
               <JollyTextField
                 label={t("urlLabel")}

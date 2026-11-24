@@ -8,6 +8,8 @@ import {
   observationPointAreas,
 } from "./observationAreas";
 
+const POINT_IDS: Record<string, string> = { gate: "1", hall: "2" };
+
 const line = (
   name: string,
   x1: number,
@@ -15,16 +17,23 @@ const line = (
   x2: number,
   y2: number,
   areaWidth = 20,
-) => ({ name, p1: { x: x1, y: y1 }, p2: { x: x2, y: y2 }, areaWidth });
+  observationPointId: string | null = POINT_IDS[name] ?? null,
+) => ({
+  name,
+  observationPointId,
+  p1: { x: x1, y: y1 },
+  p2: { x: x2, y: y2 },
+  areaWidth,
+});
 
 const countIn = (
   people: { x: number; y: number }[],
   lines: ReturnType<typeof line>[],
-  pointIdByName: Record<string, string>,
+  knownPointIds: string[],
 ) =>
   countPeopleInAreas(
     people,
-    observationPointAreas(lines, new Map(Object.entries(pointIdByName))),
+    observationPointAreas(lines, new Set(knownPointIds)),
   );
 
 describe("ラインのエリア", () => {
@@ -52,6 +61,7 @@ describe("ラインのエリア", () => {
           {
             id: "a",
             name: "gate",
+            observationPointId: null,
             p1: { x: 0, y: 0 },
             p2: { x: 1, y: 1 },
             areaWidth: 0.1,
@@ -87,7 +97,7 @@ describe("観測点ごとの人数", () => {
           { x: 50, y: 200 },
         ],
         [line("gate", 0, 100, 100, 100), line("hall", 0, 300, 100, 300)],
-        { gate: "1", hall: "2" },
+        ["1", "2"],
       ),
     ).toEqual(
       new Map([
@@ -105,7 +115,7 @@ describe("観測点ごとの人数", () => {
           { x: 1000, y: 1000 },
         ],
         [line("gate", 0, 100, 100, 100)],
-        { gate: "1" },
+        ["1"],
       ),
     ).toEqual(new Map([["1", 1]]));
   });
@@ -115,7 +125,7 @@ describe("観測点ごとの人数", () => {
       countIn(
         [{ x: 50, y: 100 }],
         [line("gate", 0, 100, 100, 100), line("gate", 50, 50, 50, 150)],
-        { gate: "1" },
+        ["1"],
       ),
     ).toEqual(new Map([["1", 1]]));
   });
@@ -125,7 +135,7 @@ describe("観測点ごとの人数", () => {
       countIn(
         [{ x: 50, y: 100 }],
         [line("gate", 0, 100, 100, 100), line("hall", 50, 50, 50, 150)],
-        { gate: "1", hall: "2" },
+        ["1", "2"],
       ),
     ).toEqual(
       new Map([
@@ -135,17 +145,29 @@ describe("観測点ごとの人数", () => {
     );
   });
 
-  it("観測点として登録されていない名前のラインは数えない", () => {
+  it("観測点を割り当てていないラインは、観測点と同じ名前でも数えない", () => {
     expect(
-      countIn([{ x: 50, y: 100 }], [line("unregistered", 0, 100, 100, 100)], {
-        gate: "1",
-      }),
+      countIn(
+        [{ x: 50, y: 100 }],
+        [line("gate", 0, 100, 100, 100, 20, null)],
+        ["1"],
+      ),
+    ).toEqual(new Map());
+  });
+
+  it("端末の観測点にない ID を割り当てたラインは数えない", () => {
+    expect(
+      countIn(
+        [{ x: 50, y: 100 }],
+        [line("gate", 0, 100, 100, 100, 20, "9")],
+        ["1"],
+      ),
     ).toEqual(new Map());
   });
 });
 
 describe("エリアの重なり", () => {
-  it("違う名前のラインのエリアが重なれば、その名前の組を返す", () => {
+  it("違う観測点のラインのエリアが重なれば、そのラインの名前の組を返す", () => {
     expect(
       findOverlappingAreaNames([
         line("gate", 0, 100, 100, 100),
@@ -172,7 +194,7 @@ describe("エリアの重なり", () => {
     ).toEqual([]);
   });
 
-  it("同じ名前のラインどうしや、名前のないラインとの重なりは返さない", () => {
+  it("同じ観測点のラインどうしや、観測点を割り当てていないラインとの重なりは返さない", () => {
     expect(
       findOverlappingAreaNames([
         line("gate", 0, 100, 100, 100),
@@ -182,7 +204,16 @@ describe("エリアの重なり", () => {
     ).toEqual([]);
   });
 
-  it("同じ名前の組は 1 回だけ返す", () => {
+  it("名前が同じでも違う観測点のラインどうしの重なりは返す", () => {
+    expect(
+      findOverlappingAreaNames([
+        line("gate", 0, 100, 100, 100, 20, "1"),
+        line("gate", 50, 50, 50, 150, 20, "2"),
+      ]),
+    ).toEqual([["gate", "gate"]]);
+  });
+
+  it("同じ観測点の組は 1 回だけ返す", () => {
     expect(
       findOverlappingAreaNames([
         line("gate", 0, 100, 100, 100),

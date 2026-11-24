@@ -7,6 +7,7 @@ import type {
   DetectionSettingsStore,
 } from "@/features/tenant/detection/stores/detectionStore";
 import { orpc } from "@/lib/orpc";
+import type { ObservationPoint } from "@/server/router";
 import {
   markMeasurementsSent,
   recordMeasurements,
@@ -44,7 +45,7 @@ export type ObservationReportingCamera = {
  *
  * `cameras` を渡すと、カメラごとの結果から cameraLinks の観測点へ
  * 計測値を作る。省略した場合は従来どおり、選択中の resultStore と
- * ライン名で対応づけた観測点を使う（ローカルカメラ・開発用）。
+ * ラインに割り当てた観測点を使う（ローカルカメラ・開発用）。
  */
 export function useObservationReporting({
   enabled = true,
@@ -55,6 +56,7 @@ export function useObservationReporting({
   settingsStore,
   resultStore,
   cameras,
+  observationPoints,
   isFresh,
 }: {
   eventId: string;
@@ -65,23 +67,25 @@ export function useObservationReporting({
   settingsStore: DetectionSettingsStore;
   resultStore: DetectionResultStore;
   cameras?: readonly ObservationReportingCamera[];
+  observationPoints: readonly ObservationPoint[] | null;
   /** カメラの映像が新しく届いているか。false のカメラは報告しない。 */
   isFresh: (key: string) => boolean;
 }): {
   unregistered: boolean;
-  pointIdByName: ReadonlyMap<string, string> | null;
 } {
   const [unregistered, setUnregistered] = useState(false);
   const storageScope = useStaffStorageScope();
-  const [pointIdByName, setPointIdByName] = useState<ReadonlyMap<
-    string,
-    string
-  > | null>(null);
   const unsentRef = useRef<WindowMeasurement[][]>([]);
   const isFreshRef = useRef(isFresh);
   isFreshRef.current = isFresh;
   const reportContextRef = useRef({ eventId, edgeDeviceId, storageScope });
   const nameByPointIdRef = useRef<ReadonlyMap<string, string>>(new Map());
+  nameByPointIdRef.current = new Map(
+    (observationPoints ?? []).map((p) => [p.observationPointId, p.name]),
+  );
+  const knownPointIdsRef = useRef<ReadonlySet<string>>(new Set());
+  knownPointIdsRef.current = new Set(nameByPointIdRef.current.keys());
+  const pointsLoaded = observationPoints !== null;
 
   useEffect(() => {
     const previous = reportContextRef.current;
@@ -94,34 +98,6 @@ export function useObservationReporting({
       reportContextRef.current = { eventId, edgeDeviceId, storageScope };
     }
   }, [eventId, edgeDeviceId, storageScope]);
-
-  useEffect(() => {
-    if (!enabled) return;
-    let cancelled = false;
-    orpc.observation
-      .listObservationPoints({ eventId, edgeDeviceId })
-      .then(({ observationPoints }) => {
-        if (!cancelled) {
-          nameByPointIdRef.current = new Map(
-            observationPoints.map((p) => [p.observationPointId, p.name]),
-          );
-          setPointIdByName(
-            new Map(
-              observationPoints.map((p) => [p.name, p.observationPointId]),
-            ),
-          );
-        }
-      })
-      .catch((cause: unknown) => {
-        console.error("failed to load observation points", cause);
-        if (!cancelled && isUnregistered(cause)) {
-          setUnregistered(true);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [enabled, eventId, edgeDeviceId]);
 
   useEffect(() => {
     if (!enabled || !listening || unregistered) {
@@ -141,12 +117,12 @@ export function useObservationReporting({
                 .filter((pointId) => pointId !== ""),
             ),
           ];
-        } else if (pointIdByName) {
+        } else if (pointsLoaded) {
           activeObservationPointIds = [
             ...new Set(
               mapLinesToObservationPoints(
                 settingsStore.getState().countingLines,
-                pointIdByName,
+                knownPointIdsRef.current,
               ).values(),
             ),
           ];
@@ -170,7 +146,7 @@ export function useObservationReporting({
     eventId,
     edgeDeviceId,
     listening,
-    pointIdByName,
+    pointsLoaded,
     status,
     settingsStore,
     unregistered,
@@ -178,7 +154,7 @@ export function useObservationReporting({
     isFresh,
   ]);
 
-  const reportingPointIdByName = cameras ? null : pointIdByName;
+  const localPointsLoaded = !cameras && pointsLoaded;
   useEffect(() => {
     if (!enabled || status !== "detecting" || unregistered) {
       return;
@@ -187,7 +163,7 @@ export function useObservationReporting({
       if (cameras.every((camera) => camera.observationPointId === "")) {
         return;
       }
-    } else if (!reportingPointIdByName) {
+    } else if (!localPointsLoaded) {
       return;
     }
 
@@ -299,7 +275,7 @@ export function useObservationReporting({
           ...buildWindowMeasurements({
             pointIdByLineId: mapLinesToObservationPoints(
               settingsStore.getState().countingLines,
-              reportingPointIdByName as ReadonlyMap<string, string>,
+              knownPointIdsRef.current,
             ),
             previous,
             current,
@@ -352,7 +328,7 @@ export function useObservationReporting({
     enabled,
     eventId,
     edgeDeviceId,
-    reportingPointIdByName,
+    localPointsLoaded,
     storageScope,
     status,
     settingsStore,
@@ -361,5 +337,5 @@ export function useObservationReporting({
     cameras,
   ]);
 
-  return { unregistered, pointIdByName };
+  return { unregistered };
 }

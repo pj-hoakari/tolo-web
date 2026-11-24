@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect } from "react";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { Button } from "@/components/ui/button";
+import type { ObservationPoint } from "@/server/router";
 import {
   DEFAULT_LINE_ID,
   type DetectionLineCount,
@@ -21,6 +22,7 @@ import {
 type DetectionLineCountButtonProps = {
   lineId: string;
   lineName: string;
+  pointName?: string;
   index: number;
   resultStore: DetectionResultStore;
   viewStateStore: DetectionViewStateStore;
@@ -29,6 +31,7 @@ type DetectionLineCountButtonProps = {
 function DetectionLineCountButtonComponent({
   lineId,
   lineName,
+  pointName,
   index,
   resultStore,
   viewStateStore,
@@ -64,12 +67,19 @@ function DetectionLineCountButtonComponent({
       onPress={editLine}
     >
       <Pencil className="mr-2 size-4" />
-      {t(lineName ? "namedCount" : "count", {
-        name: lineName,
-        index: index + 1,
-        forward: count.forward,
-        backward: count.backward,
-      })}
+      {pointName
+        ? t("pointCount", {
+            name: displayName,
+            point: pointName,
+            forward: count.forward,
+            backward: count.backward,
+          })
+        : t(lineName ? "namedCount" : "count", {
+            name: lineName,
+            index: index + 1,
+            forward: count.forward,
+            backward: count.backward,
+          })}
     </Button>
   );
 }
@@ -80,6 +90,7 @@ export type DetectionLineCountListProps = {
   settingsStore: DetectionSettingsStore;
   resultStore: DetectionResultStore;
   viewStateStore: DetectionViewStateStore;
+  observationPoints?: readonly ObservationPoint[];
 };
 
 /**
@@ -89,6 +100,7 @@ function DetectionLineCountListComponent({
   settingsStore,
   resultStore,
   viewStateStore,
+  observationPoints,
 }: DetectionLineCountListProps) {
   // ライン配列の各要素を浅く比較して不要な再レンダリングを抑える
   const lines = useStore(settingsStore, useShallow(selectCountingLines));
@@ -112,6 +124,11 @@ function DetectionLineCountListComponent({
           key={line.id}
           lineId={line.id}
           lineName={line.name}
+          pointName={
+            observationPoints?.find(
+              (point) => point.observationPointId === line.observationPointId,
+            )?.name
+          }
           index={index}
           resultStore={resultStore}
           viewStateStore={viewStateStore}

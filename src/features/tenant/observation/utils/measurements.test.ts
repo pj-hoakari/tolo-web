@@ -5,9 +5,14 @@ import {
   mapLinesToObservationPoints,
 } from "./measurements";
 
-const line = (id: string, name: string) => ({
+const line = (
+  id: string,
+  name: string,
+  observationPointId: string | null = null,
+) => ({
   id,
   name,
+  observationPointId,
   p1: { x: 0, y: 0 },
   p2: { x: 1, y: 0 },
   areaWidth: 0.1,
@@ -19,15 +24,12 @@ describe("buildWindowMeasurements", () => {
     const windowEnd = new Date("2026-10-10T00:00:30Z");
     const pointIdByLineId = mapLinesToObservationPoints(
       [
-        line("a", "gate"),
-        line("b", "gate"),
-        line("c", "hall"),
-        line("d", "unregistered"),
+        line("a", "gate", "0000000000000001"),
+        line("b", "gate", "0000000000000001"),
+        line("c", "hall", "0000000000000002"),
+        line("d", "removed", "0000000000000009"),
       ],
-      new Map([
-        ["gate", "0000000000000001"],
-        ["hall", "0000000000000002"],
-      ]),
+      new Set(["0000000000000001", "0000000000000002"]),
     );
 
     const measurements = buildWindowMeasurements({
@@ -105,6 +107,21 @@ describe("buildWindowMeasurements", () => {
 
     expect(measurement.meanDetectedPeople).toBe(expected);
     expect("meanDetectedPeople" in measurement).toBe(expected !== undefined);
+  });
+});
+
+describe("mapLinesToObservationPoints", () => {
+  it("links lines by their observation point ID, not by their name", () => {
+    expect(
+      mapLinesToObservationPoints(
+        [
+          line("a", "anything", "0000000000000001"),
+          line("b", "gate"),
+          line("c", "gate", "0000000000000009"),
+        ],
+        new Set(["0000000000000001"]),
+      ),
+    ).toEqual(new Map([["a", "0000000000000001"]]));
   });
 });
 

@@ -1,4 +1,5 @@
 import { memo, type RefObject } from "react";
+import type { LineObservationPoints } from "@/features/tenant/detection/components/DetectionLineActions";
 import { DetectionLineCountList } from "@/features/tenant/detection/components/DetectionLineCountList";
 import { DetectionSettingsPanel } from "@/features/tenant/detection/components/DetectionSettingsPanel";
 import type {
@@ -22,6 +23,7 @@ export type CrowdDetectionViewProps = {
   resultStore: DetectionResultStore;
   viewStateStore: DetectionViewStateStore;
   showDetectionStatus?: boolean;
+  observationPoints?: LineObservationPoints;
 };
 
 /**
@@ -38,6 +40,7 @@ function CrowdDetectionViewComponent({
   resultStore,
   viewStateStore,
   showDetectionStatus = true,
+  observationPoints,
 }: CrowdDetectionViewProps) {
   return (
     <div className="flex w-full flex-col items-center gap-2">
@@ -54,6 +57,7 @@ function CrowdDetectionViewComponent({
         settingsStore={settingsStore}
         resultStore={resultStore}
         viewStateStore={viewStateStore}
+        observationPoints={observationPoints?.points}
       />
       <DetectionStatusPanel
         status={status}
@@ -65,6 +69,7 @@ function CrowdDetectionViewComponent({
         viewStateStore={viewStateStore}
         resultStore={resultStore}
         showLineCreationModeToggle={false}
+        observationPoints={observationPoints}
       />
       {status === "error" && error && (
         <p role="alert" className="text-destructive">

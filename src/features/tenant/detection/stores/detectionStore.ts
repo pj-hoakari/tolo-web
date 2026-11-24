@@ -17,6 +17,7 @@ export type DetectionPoint = {
 export type DetectionCountingLineSetting = {
   id: string;
   name: string;
+  observationPointId: string | null;
   p1: DetectionPoint;
   p2: DetectionPoint;
   areaWidth: number;
@@ -72,6 +73,7 @@ export const DEFAULT_COUNTING_LINES: DetectionCountingLineSetting[] = [
   {
     id: DEFAULT_LINE_ID,
     name: "",
+    observationPointId: null,
     p1: { x: 0, y: 0.6 },
     p2: { x: 1, y: 0.6 },
     areaWidth: DEFAULT_AREA_WIDTH,
@@ -272,6 +274,7 @@ export function areCountingLinesEqual(
         other !== undefined &&
         line.id === other.id &&
         line.name === other.name &&
+        line.observationPointId === other.observationPointId &&
         line.p1.x === other.p1.x &&
         line.p1.y === other.p1.y &&
         line.p2.x === other.p2.x &&
@@ -328,6 +331,7 @@ export function clampCountingLines(
   return countingLines.map((line) => ({
     id: line.id,
     name: line.name,
+    observationPointId: line.observationPointId,
     p1: { x: clampUnit(line.p1.x), y: clampUnit(line.p1.y) },
     p2: { x: clampUnit(line.p2.x), y: clampUnit(line.p2.y) },
     areaWidth: clampAreaWidth(line.areaWidth),
@@ -584,13 +588,16 @@ function parseCountingLine(
   if (typeof value !== "object" || value === null) {
     return null;
   }
-  const { id, name, p1, p2, areaWidth } =
+  const { id, name, observationPointId, p1, p2, areaWidth } =
     value as Partial<DetectionCountingLineSetting>;
   const parsedP1 = parsePoint(p1);
   const parsedP2 = parsePoint(p2);
   if (
     typeof id !== "string" ||
     (name !== undefined && typeof name !== "string") ||
+    (observationPointId !== undefined &&
+      observationPointId !== null &&
+      typeof observationPointId !== "string") ||
     (areaWidth !== undefined && typeof areaWidth !== "number") ||
     !parsedP1 ||
     !parsedP2
@@ -601,6 +608,7 @@ function parseCountingLine(
   return {
     id,
     name: name ?? "",
+    observationPointId: observationPointId ?? null,
     p1: parsedP1,
     p2: parsedP2,
     areaWidth: areaWidth ?? DEFAULT_AREA_WIDTH,

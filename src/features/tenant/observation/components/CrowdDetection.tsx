@@ -21,6 +21,7 @@ import { scopeStaffStorageKey } from "@/lib/pwa/staff-storage";
 import { cn } from "@/lib/utils";
 import { useCrowdDetectionLoop } from "../hooks/useCrowdDetectionLoop";
 import { useCrowdVideoSources } from "../hooks/useCrowdVideoSources";
+import { useEdgeDeviceObservationPoints } from "../hooks/useEdgeDeviceObservationPoints";
 import { useEspCameraAutoStart } from "../hooks/useEspCameraAutoStart";
 import { useMultiCameraDetectionLoop } from "../hooks/useMultiCameraDetectionLoop";
 import { useObservationPageCameras } from "../hooks/useObservationPageCameras";
@@ -336,8 +337,20 @@ export function CrowdDetection({
     });
   }, [effectiveMode, cameras, cameraResultStores, cameraSettingsStores]);
 
-  const { unregistered, pointIdByName } = useObservationReporting({
+  const observationPoints = useEdgeDeviceObservationPoints({
     enabled: canReport,
+    eventId,
+    edgeDeviceId,
+  });
+  const knownPointIds = useMemo(
+    () =>
+      observationPoints.points
+        ? new Set(observationPoints.points.map((p) => p.observationPointId))
+        : null,
+    [observationPoints.points],
+  );
+  const reporting = useObservationReporting({
+    enabled: canReport && !observationPoints.unregistered,
     eventId,
     edgeDeviceId,
     listening: API_MOCKING_ENABLED || edgeId !== null,
@@ -345,8 +358,18 @@ export function CrowdDetection({
     settingsStore,
     resultStore,
     cameras: reportingCameras,
+    observationPoints: observationPoints.points,
     isFresh,
   });
+  const unregistered = observationPoints.unregistered || reporting.unregistered;
+  const { points: loadedPoints, add: addObservationPoint } = observationPoints;
+  const lineObservationPoints = useMemo(
+    () =>
+      effectiveMode !== "esp" && loadedPoints
+        ? { points: loadedPoints, add: addObservationPoint }
+        : undefined,
+    [effectiveMode, loadedPoints, addObservationPoint],
+  );
 
   const localCountingLines = useStore(settingsStore, selectCountingLines);
   const unlinkedTargets =
@@ -354,9 +377,13 @@ export function CrowdDetection({
       ? cameras
           .filter((camera) => !camera.observationPointId)
           .map((camera) => camera.name || camera.edgeDeviceId)
-      : pointIdByName
+      : knownPointIds
         ? localCountingLines
-            .filter((line) => !pointIdByName.has(line.name))
+            .filter(
+              (line) =>
+                line.observationPointId === null ||
+                !knownPointIds.has(line.observationPointId),
+            )
             .map((line) => line.name || line.id)
         : [];
 
@@ -414,7 +441,7 @@ export function CrowdDetection({
     settingsStore: selectedSettingsStore,
     viewStateStore: selectedViewStateStore,
     resultStore,
-    observationPointIdByName: pointIdByName,
+    knownPointIds,
     onBroadcastStreamChange: setBroadcastStream,
     onDetectionFrame: sendDetectionFrame,
     onDetectionError: (cause) =>
@@ -588,6 +615,7 @@ export function CrowdDetection({
         resultStore={resultStore}
         viewStateStore={selectedViewStateStore}
         showDetectionStatus={effectiveMode !== "esp"}
+        observationPoints={lineObservationPoints}
       />
       <BroadcastIndicator active={active} edgeId={edgeId} />
     </div>

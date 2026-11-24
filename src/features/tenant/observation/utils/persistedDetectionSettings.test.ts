@@ -16,6 +16,7 @@ const entrance = {
     {
       id: "line-entrance",
       name: "入口",
+      observationPointId: "0000000000000001",
       p1: { x: 0.2, y: 0.3 },
       p2: { x: 0.8, y: 0.4 },
       areaWidth: 0.2,

@@ -33,12 +33,12 @@ function meanDetectedPeople(
 
 export function mapLinesToObservationPoints(
   lines: DetectionCountingLineSetting[],
-  pointIdByName: ReadonlyMap<string, string>,
+  knownPointIds: ReadonlySet<string>,
 ): Map<string, string> {
   const pointIdByLineId = new Map<string, string>();
   for (const line of lines) {
-    const pointId = pointIdByName.get(line.name);
-    if (pointId) {
+    const pointId = line.observationPointId;
+    if (pointId !== null && knownPointIds.has(pointId)) {
       pointIdByLineId.set(line.id, pointId);
     }
   }

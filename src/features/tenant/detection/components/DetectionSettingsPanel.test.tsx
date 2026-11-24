@@ -1,18 +1,22 @@
 // @vitest-environment jsdom
+import { ORPCError } from "@orpc/client";
 import {
   cleanup,
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { IntlTestProvider } from "@/test/IntlTestProvider";
 import {
+  applyFrameSize,
   createDetectionStores,
   DEFAULT_COUNTING_LINES,
   INITIAL_SETTINGS,
 } from "../stores/detectionStore";
+import type { LineObservationPoints } from "./DetectionLineActions";
 import { DetectionLineCountList } from "./DetectionLineCountList";
 import { DetectionSettingsPanel } from "./DetectionSettingsPanel";
 
@@ -71,7 +75,141 @@ describe("DetectionSettingsPanel", () => {
   });
 });
 
+const ENTRANCE = { observationPointId: "a1b2c3d4e5f60718", name: "入口" };
+const EXIT = { observationPointId: "b1b2c3d4e5f60718", name: "出口" };
+
+const renderPanelWithPoints = (add: LineObservationPoints["add"]) => {
+  const stores = createDetectionStores();
+  render(
+    <DetectionSettingsPanel
+      settingsStore={stores.settingsStore}
+      viewStateStore={stores.viewStateStore}
+      resultStore={stores.resultStore}
+      observationPoints={{ points: [ENTRANCE], add }}
+    />,
+    { wrapper: IntlTestProvider },
+  );
+  return stores;
+};
+
+const selectedLinePointId = (
+  stores: ReturnType<typeof createDetectionStores>,
+) => stores.settingsStore.getState().countingLines[0].observationPointId;
+
+const addPoint = (name: string) => {
+  fireEvent.change(
+    screen.getByRole("textbox", { name: "新しい観測点の名前" }),
+    {
+      target: { value: name },
+    },
+  );
+  fireEvent.click(screen.getByRole("button", { name: "観測点を追加" }));
+};
+
+describe("エリアの重なりの警告", () => {
+  it("名前のないラインは一覧と同じ既定の名前で伝える", () => {
+    const stores = createDetectionStores({
+      ...INITIAL_SETTINGS,
+      countingLines: [
+        { ...DEFAULT_COUNTING_LINES[0], observationPointId: "1" },
+        {
+          ...DEFAULT_COUNTING_LINES[0],
+          id: "second",
+          observationPointId: "2",
+          p1: { x: 0.5, y: 0 },
+          p2: { x: 0.5, y: 1 },
+        },
+      ],
+    });
+    applyFrameSize(stores.resultStore, 100, 100);
+    render(<DetectionSettingsPanel {...stores} />, {
+      wrapper: IntlTestProvider,
+    });
+
+    expect(screen.getByRole("alert").textContent).toBe(
+      "「ライン 1」と「ライン 2」のエリアが重なっています。重なった場所にいる人は両方の観測点に数えます。",
+    );
+  });
+});
+
+describe("選択ラインの観測点", () => {
+  it("観測点を渡さなければ選べない", () => {
+    renderPanel();
+
+    expect(
+      screen.queryByRole("button", { name: /選択ラインの観測点/ }),
+    ).toBeNull();
+  });
+
+  it("端末の観測点を選ぶと選択ラインに割り当て、未割り当てに戻せる", async () => {
+    const stores = renderPanelWithPoints(vi.fn());
+
+    fireEvent.click(screen.getByRole("button", { name: /選択ラインの観測点/ }));
+    fireEvent.click(await screen.findByRole("option", { name: "入口" }));
+    expect(selectedLinePointId(stores)).toBe(ENTRANCE.observationPointId);
+
+    fireEvent.click(screen.getByRole("button", { name: /選択ラインの観測点/ }));
+    fireEvent.click(await screen.findByRole("option", { name: "未割り当て" }));
+    expect(selectedLinePointId(stores)).toBeNull();
+  });
+
+  it("追加した観測点を選択ラインに割り当てる", async () => {
+    const add = vi.fn().mockResolvedValue(EXIT);
+    const stores = renderPanelWithPoints(add);
+
+    addPoint(" 出口 ");
+
+    await waitFor(() =>
+      expect(selectedLinePointId(stores)).toBe(EXIT.observationPointId),
+    );
+    expect(add).toHaveBeenCalledWith("出口");
+  });
+
+  it("登録済みの名前なら追加せず、その観測点を割り当てたことを伝える", () => {
+    const add = vi.fn();
+    const stores = renderPanelWithPoints(add);
+
+    addPoint("入口");
+
+    expect(add).not.toHaveBeenCalled();
+    expect(selectedLinePointId(stores)).toBe(ENTRANCE.observationPointId);
+    expect(screen.getByRole("status").textContent).toContain("入口");
+  });
+
+  it("追加できなければその場で伝え、割り当てを変えない", async () => {
+    const stores = renderPanelWithPoints(
+      vi.fn().mockRejectedValue(new ORPCError("CONFLICT")),
+    );
+
+    addPoint("出口");
+
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "同じ名前の観測点がすでにあります。",
+    );
+    expect(selectedLinePointId(stores)).toBeNull();
+  });
+});
+
 describe("DetectionLineCountList", () => {
+  it("ラインに割り当てた観測点の名前を表示する", () => {
+    const stores = createDetectionStores({
+      ...INITIAL_SETTINGS,
+      countingLines: [
+        {
+          ...DEFAULT_COUNTING_LINES[0],
+          name: "北側",
+          observationPointId: ENTRANCE.observationPointId,
+        },
+      ],
+    });
+    render(
+      <DetectionLineCountList {...stores} observationPoints={[ENTRANCE]} />,
+      { wrapper: IntlTestProvider },
+    );
+
+    expect(screen.getByRole("button").textContent).toContain("北側（入口）");
+  });
+
   it("選択中のラインを伝え、押したラインに選択が移る", () => {
     const stores = createDetectionStores({
       ...INITIAL_SETTINGS,

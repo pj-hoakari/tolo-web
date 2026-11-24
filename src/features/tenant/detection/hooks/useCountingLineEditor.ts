@@ -183,6 +183,7 @@ export function useCountingLineEditor({
           {
             id: lineId,
             name: "",
+            observationPointId: null,
             p1: unitPoint,
             p2: unitPoint,
             areaWidth: DEFAULT_AREA_WIDTH,

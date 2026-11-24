@@ -24,6 +24,7 @@ describe("カウントラインの forward 方向", () => {
       normalizeCountingLineDirection({
         id: "line-2",
         name: "入口",
+        observationPointId: null,
         p1: { x: 0.8, y: 0.7 },
         p2: { x: 0.2, y: 0.3 },
         areaWidth: 0.1,
@@ -31,6 +32,7 @@ describe("カウントラインの forward 方向", () => {
     ).toEqual({
       id: "line-2",
       name: "入口",
+      observationPointId: null,
       p1: { x: 0.2, y: 0.3 },
       p2: { x: 0.8, y: 0.7 },
       areaWidth: 0.1,
@@ -45,12 +47,14 @@ describe("カウントラインの forward 方向", () => {
       normalizeCountingLineDirection({
         id: "line-2",
         name: "",
+        observationPointId: null,
         areaWidth: 0.1,
         ...points,
       }),
     ).toEqual({
       id: "line-2",
       name: "",
+      observationPointId: null,
       p1: { x: 0.5, y: 0.8 },
       p2: { x: 0.49, y: 0.2 },
       areaWidth: 0.1,
@@ -62,6 +66,7 @@ describe("カウントラインの forward 方向", () => {
       reverseCountingLineDirection({
         id: "line-1",
         name: "出口",
+        observationPointId: null,
         p1: { x: 0, y: 0.6 },
         p2: { x: 1, y: 0.6 },
         areaWidth: 0.1,
@@ -69,6 +74,7 @@ describe("カウントラインの forward 方向", () => {
     ).toEqual({
       id: "line-1",
       name: "出口",
+      observationPointId: null,
       p1: { x: 1, y: 0.6 },
       p2: { x: 0, y: 0.6 },
       areaWidth: 0.1,
@@ -84,6 +90,7 @@ describe("applyCountingLines", () => {
       {
         id: "line-1",
         name: "",
+        observationPointId: null,
         p1: { x: -0.5, y: 0.2 },
         p2: { x: 1.5, y: 0.2 },
         areaWidth: 2,
@@ -94,6 +101,7 @@ describe("applyCountingLines", () => {
       {
         id: "line-1",
         name: "",
+        observationPointId: null,
         p1: { x: 0, y: 0.2 },
         p2: { x: 1, y: 0.2 },
         areaWidth: 1,
@@ -148,6 +156,7 @@ describe("applySettings", () => {
         {
           id: "line-9",
           name: "通路",
+          observationPointId: null,
           p1: { x: -1, y: 0.5 },
           p2: { x: 2, y: 0.5 },
           areaWidth: 0,
@@ -164,12 +173,32 @@ describe("applySettings", () => {
         {
           id: "line-9",
           name: "通路",
+          observationPointId: null,
           p1: { x: 0, y: 0.5 },
           p2: { x: 1, y: 0.5 },
           areaWidth: 0.01,
         },
       ],
     });
+  });
+
+  it("観測点の割り当てだけを変えても通知する", () => {
+    const { settingsStore } = createDetectionStores();
+    const listener = vi.fn();
+    settingsStore.subscribe(listener);
+
+    applyCountingLines(
+      settingsStore,
+      INITIAL_SETTINGS.countingLines.map((line) => ({
+        ...line,
+        observationPointId: "0000000000000001",
+      })),
+    );
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(settingsStore.getState().countingLines[0].observationPointId).toBe(
+      "0000000000000001",
+    );
   });
 
   it("丸めた結果が同じなら通知しない", () => {
@@ -192,6 +221,7 @@ describe("parseDetectionSettings", () => {
       {
         id: "line-1",
         name: "ホールA入口",
+        observationPointId: "0000000000000001",
         p1: { x: 0, y: 0.6 },
         p2: { x: 1, y: 0.6 },
         areaWidth: 0.25,
@@ -212,6 +242,18 @@ describe("parseDetectionSettings", () => {
     ).toEqual({
       ...valid,
       countingLines: [{ ...line, name: "" }],
+    });
+  });
+
+  it("観測点の ID を持たない保存済みのラインは未割り当てとして通す", () => {
+    const legacy = structuredClone(valid);
+    const [{ observationPointId: _id, ...line }] = legacy.countingLines;
+
+    expect(
+      parseDetectionSettings({ ...legacy, countingLines: [line] }),
+    ).toEqual({
+      ...valid,
+      countingLines: [{ ...line, observationPointId: null }],
     });
   });
 
@@ -244,6 +286,13 @@ describe("parseDetectionSettings", () => {
     [
       "ライン名が文字列でない",
       { ...valid, countingLines: [{ ...valid.countingLines[0], name: 123 }] },
+    ],
+    [
+      "観測点の ID が文字列でない",
+      {
+        ...valid,
+        countingLines: [{ ...valid.countingLines[0], observationPointId: 1 }],
+      },
     ],
     [
       "エリアの幅が数値でない",
@@ -395,6 +444,7 @@ describe("カメラごとの設定と画面操作の状態", () => {
       {
         id: "camera-a-line",
         name: "入口",
+        observationPointId: null,
         areaWidth: 0.1,
         p1: { x: 0.1, y: 0.2 },
         p2: { x: 0.9, y: 0.8 },

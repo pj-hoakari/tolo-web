@@ -57,7 +57,7 @@ function Detecting({ stores }: { stores: DetectionStores }) {
     settingsStore: stores.settingsStore,
     viewStateStore: stores.viewStateStore,
     resultStore: stores.resultStore,
-    observationPointIdByName: null,
+    knownPointIds: null,
     onBroadcastStreamChange: setBroadcastStream,
     onDetectionFrame: ignoreFrame,
     onDetectionError: () => {},

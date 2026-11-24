@@ -79,6 +79,7 @@ import {
   type ObservationSettings,
 } from "@/features/tenant/management/settings/type";
 import {
+  mockObservationPoint,
   registeredEdgeDeviceWire,
   sampleObservationDevicesWire,
 } from "@/mocks/fixtures/edges";
@@ -270,10 +271,6 @@ const registerEdgeDeviceInput = z
     eventId: z.string().min(1),
     name: z.string().trim().min(1),
     kind: z.enum(["observation_page", "camera"]).default("observation_page"),
-    observationPointNames: z
-      .array(z.string().trim().min(1))
-      .refine((names) => new Set(names).size === names.length)
-      .default([]),
     linkedObservationPointId: z.preprocess(
       (value) => (value === "" ? undefined : value),
       publicId.optional(),
@@ -281,13 +278,6 @@ const registerEdgeDeviceInput = z
   })
   .superRefine((input, ctx) => {
     if (input.kind === "camera") {
-      if (input.observationPointNames.length > 0) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["observationPointNames"],
-          message: "a camera edge device cannot own observation points",
-        });
-      }
       if (!input.linkedObservationPointId) {
         ctx.addIssue({
           code: "custom",
@@ -296,13 +286,6 @@ const registerEdgeDeviceInput = z
         });
       }
       return;
-    }
-    if (input.observationPointNames.length === 0) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["observationPointNames"],
-        message: "an observation page needs at least one observation point",
-      });
     }
     if (input.linkedObservationPointId) {
       ctx.addIssue({
@@ -1538,7 +1521,6 @@ export const router = {
             const res = await consoleEdgeDeviceClient.registerEdgeDevice({
               eventId: input.eventId,
               name: input.name,
-              observationPointNames: input.observationPointNames,
               kind: PROTO_EDGE_DEVICE_KINDS[input.kind],
               linkedObservationPointId: input.linkedObservationPointId ?? "",
             });
@@ -1631,6 +1613,30 @@ export const router = {
           }
         },
       ),
+    addObservationPoint: os
+      .input(edgeDeviceInput.extend({ name: displayName }))
+      .handler(async ({ input }): Promise<{ point: ObservationPoint }> => {
+        input = await observationDeviceForViewer(input);
+        if (observationMocking()) {
+          const device = sampleObservationDevicesWire.find(
+            (d) => d.edgeDeviceId === input.edgeDeviceId,
+          );
+          if (!device) throw new ORPCError("NOT_FOUND");
+          if (device.observationPoints.some((p) => p.name === input.name)) {
+            throw new ORPCError("CONFLICT");
+          }
+          return { point: mockObservationPoint(input.name) };
+        }
+        try {
+          const res = await edgeEdgeDeviceClient.addObservationPoint(input);
+          if (!res.point) {
+            throw new Error("AddObservationPoint returned no point");
+          }
+          return { point: toObservationPoint(res.point) };
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
     getFlowElementStates: os
       .input(z.object({ eventId: z.string().min(1) }))
       .handler(
@@ -1757,6 +1763,7 @@ for (const procedure of [
   router.observation.heartbeat,
   router.observation.reportMeasurements,
   router.observation.listObservationPoints,
+  router.observation.addObservationPoint,
   router.camera.listDelegatedCameras,
   router.signaling.requestCameraConnection,
   router.signaling.issueEdgeFirestoreToken,
