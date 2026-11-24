@@ -76,7 +76,7 @@ Better Auth の `baseURL` はルートドメインの origin です。`ROOT_DOMA
 
 仮テナントの所有権の取得（ClaimTenantOwnership）と招待の受諾（AcceptTenantInvitation）には、tolo-idp の `registration` トークンを使います。`registration` トークンはテナントを持たないので、`web` は認可、サインアップ、所有権の取得、受諾を同じテナントで行います（ADR-0124）。
 
-`registration` トークンの認可は、ログインと同じく `/auth/begin` から始めます。ルートドメインは `resource` にテナントの URI、`audience` に `backend-api`、`scope` に `tenant.join` だけを付けて認可へ進みます。PKCE と `state` は `web` が作り、`pendingLogin` の行に置きます。callback は同じ `<baseURL>/api/auth/callback/tolo-idp` で受け、`state` がこの行のものなら `web` が認可コードを交換します。それ以外の callback は Better Auth が処理します。callback の後は、ルートドメインのセッションも Better Auth のユーザーも作りません。`registration` トークンは一回限りの引き渡しコード（1 分）を付けて、認可を始めたホストへ渡します。
+`registration` トークンの認可は、ログインと同じく `/auth/begin` から始めます。ルートドメインは `resource` にテナントの URI、`audience` に `backend-api`、`scope` に `tenant.join` だけを付けて認可へ進みます。招待の受諾では `invitation_token` に招待トークンを、オンボーディングでは `ownership_claim_token` に所有権の取得のトークンを付けます（ADR-0139）。このトークンは認可を始めるまで `pendingLogin` の行に置き、認可へ進むときに消します。PKCE と `state` は `web` が作り、`pendingLogin` の行に置きます。callback は同じ `<baseURL>/api/auth/callback/tolo-idp` で受け、`state` がこの行のものなら `web` が認可コードを交換します。それ以外の callback は Better Auth が処理します。callback の後は、ルートドメインのセッションも Better Auth のユーザーも作りません。`registration` トークンは一回限りの引き渡しコード（1 分）を付けて、認可を始めたホストへ渡します。
 
 オンボーディングは次の順に進みます。
 
@@ -112,6 +112,8 @@ tolo-idp の `POST /api/login` の CORS では、ルートドメインの origin
 ### ログインに失敗したとき
 
 ログインの途中で失敗すると、ルートドメインの `/auth/error` へ移ります。たとえば、ログインの開始から 10 分を過ぎたとき、引き渡しのコードが使えないとき、tolo-idp が callback にエラーを返したときです。ログインを始めたテナントのホストが分かるときは、そのホストの管理ページへのリンクを出します。リンク先は、ルートドメインの 1 階層下のホストに限ります。
+
+`registration` トークンの認可が callback で失敗したときは、`/auth/error` ではなく、認可を始めたページへ戻します。招待の受諾では、tolo-idp が `access_denied` を返したときは招待が使えないことを、それ以外は参加できなかったことを `/invitation/accept` に出します。オンボーディングでは、テナントを作れなかったことを `/onboarding` に出します。どちらも Cookie と仮テナントの記録は消しません。
 
 ### ログアウト
 
