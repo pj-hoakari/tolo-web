@@ -121,6 +121,13 @@ vi.mock("../hooks/useMultiCameraDetectionLoop", async () => {
     },
   };
 });
+vi.mock("../hooks/useEdgeDeviceObservationPoints", () => ({
+  useEdgeDeviceObservationPoints: () => ({
+    points: null,
+    unregistered: false,
+    add: vi.fn(),
+  }),
+}));
 vi.mock("../hooks/useObservationReporting", () => ({
   useObservationReporting: () => ({ unregistered: false }),
 }));

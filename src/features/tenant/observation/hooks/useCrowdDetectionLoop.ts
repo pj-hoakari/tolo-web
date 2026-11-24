@@ -82,7 +82,7 @@ export type UseCrowdDetectionLoopParams = {
   settingsStore: DetectionSettingsStore;
   viewStateStore: DetectionViewStateStore;
   resultStore: DetectionResultStore;
-  observationPointIdByName: ReadonlyMap<string, string> | null;
+  knownPointIds: ReadonlySet<string> | null;
   onBroadcastStreamChange: (stream: MediaStream | null) => void;
   onDetectionFrame: (frame: DetectionOverlayFrame | null) => void;
   onDetectionError: (cause: unknown) => void;
@@ -106,7 +106,7 @@ export function useCrowdDetectionLoop({
   settingsStore,
   viewStateStore,
   resultStore,
-  observationPointIdByName,
+  knownPointIds,
   onBroadcastStreamChange,
   onDetectionFrame,
   onDetectionError,
@@ -115,10 +115,10 @@ export function useCrowdDetectionLoop({
   const onDetectionErrorRef = useRef(onDetectionError);
   onDetectionErrorRef.current = onDetectionError;
   const latestFrameRef = useRef<CrowdDetectionFrame | null>(null);
-  const pointIdByNameRef = useRef(observationPointIdByName);
+  const knownPointIdsRef = useRef(knownPointIds);
   useEffect(() => {
-    pointIdByNameRef.current = observationPointIdByName;
-  }, [observationPointIdByName]);
+    knownPointIdsRef.current = knownPointIds;
+  }, [knownPointIds]);
 
   // カウントラインが変わったら通過数を数え直す
   useEffect(() => {
@@ -230,7 +230,7 @@ export function useCrowdDetectionLoop({
             frame.detections.map(footPoint),
             observationPointAreas(
               countingLines,
-              pointIdByNameRef.current ?? new Map(),
+              knownPointIdsRef.current ?? new Set(),
             ),
           ),
         );

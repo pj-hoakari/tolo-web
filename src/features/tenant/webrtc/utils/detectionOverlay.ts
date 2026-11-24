@@ -22,6 +22,7 @@ export type DetectionOverlayBox = {
 export type DetectionOverlayLine = {
   id: string;
   name: string;
+  observationPointId: string | null;
   p1: DetectionOverlayPoint;
   p2: DetectionOverlayPoint;
   areaWidth: number;
@@ -52,6 +53,7 @@ export function toOverlayCountingLines(
   return countingLines.map((countingLine) => ({
     id: countingLine.id,
     name: countingLine.name,
+    observationPointId: countingLine.observationPointId,
     p1: {
       x: clampUnit(countingLine.p1.x) * width,
       y: clampUnit(countingLine.p1.y) * height,

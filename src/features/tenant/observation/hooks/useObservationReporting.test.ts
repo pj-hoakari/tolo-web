@@ -26,15 +26,12 @@ const heartbeat = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 const reportMeasurements = vi.hoisted(() =>
   vi.fn((_input: unknown) => Promise.resolve()),
 );
-const observationPoints = vi.hoisted(
-  () => [] as { observationPointId: string; name: string }[],
-);
+const ENTRANCE = { observationPointId: "a1b2c3d4e5f60718", name: "入口" };
 
 vi.mock("@/lib/orpc", () => ({
   orpc: {
     observation: {
       heartbeat,
-      listObservationPoints: () => Promise.resolve({ observationPoints }),
       reportMeasurements,
     },
   },
@@ -61,6 +58,7 @@ function renderReporting(initial: {
         status: "idle",
         settingsStore,
         resultStore,
+        observationPoints: [],
         isFresh: () => true,
         ...props,
       }),
@@ -73,7 +71,6 @@ beforeEach(() => {
   heartbeat.mockClear();
   reportMeasurements.mockReset();
   reportMeasurements.mockResolvedValue(undefined);
-  observationPoints.length = 0;
   localStorage.clear();
 });
 
@@ -100,6 +97,7 @@ describe("useObservationReporting", () => {
           status: "detecting",
           ...stores,
           cameras: [camera],
+          observationPoints: null,
           isFresh: () => true,
         }),
       { initialProps: { enabled: false }, wrapper: ReportingTestProvider },
@@ -150,6 +148,51 @@ describe("useObservationReporting", () => {
   });
 });
 
+describe("ローカルのラインの観測点", () => {
+  it("観測点の ID を割り当てたラインだけを Heartbeat の対象にし、名前では対応づけない", async () => {
+    const stores = createDetectionStores({
+      ...INITIAL_SETTINGS,
+      countingLines: [
+        {
+          ...INITIAL_SETTINGS.countingLines[0],
+          id: "linked",
+          name: "なんでも",
+          observationPointId: ENTRANCE.observationPointId,
+        },
+        {
+          ...INITIAL_SETTINGS.countingLines[0],
+          id: "named",
+          name: "出口",
+          observationPointId: null,
+        },
+      ],
+    });
+    renderHook(
+      () =>
+        useObservationReporting({
+          eventId: "test",
+          edgeDeviceId: "0123456789abcdef",
+          listening: true,
+          status: "detecting",
+          ...stores,
+          observationPoints: [
+            ENTRANCE,
+            { observationPointId: "b1b2c3d4e5f60718", name: "出口" },
+          ],
+          isFresh: () => true,
+        }),
+      { wrapper: ReportingTestProvider },
+    );
+    await act(() => vi.advanceTimersByTimeAsync(0));
+
+    expect(heartbeat).toHaveBeenLastCalledWith({
+      eventId: "test",
+      edgeDeviceId: "0123456789abcdef",
+      activeObservationPointIds: [ENTRANCE.observationPointId],
+    });
+  });
+});
+
 describe("計測値の送信に失敗したとき", () => {
   const REPORT_INTERVAL_MS = 30_000;
   const sentWindowStarts = (call: number) =>
@@ -160,10 +203,6 @@ describe("計測値の送信に失敗したとき", () => {
     ).measurements.map((m) => m.windowStart.getTime());
 
   async function startDetecting() {
-    observationPoints.push({
-      observationPointId: "a1b2c3d4e5f60718",
-      name: "入口",
-    });
     const stores = createDetectionStores({
       ...INITIAL_SETTINGS,
       countingLines: [
@@ -171,11 +210,15 @@ describe("計測値の送信に失敗したとき", () => {
           ...INITIAL_SETTINGS.countingLines[0],
           id: DEFAULT_LINE_ID,
           name: "入口",
+          observationPointId: ENTRANCE.observationPointId,
         },
       ],
     });
     const rendered = renderHook(
-      (props: { edgeDeviceId: string }) =>
+      (props: {
+        edgeDeviceId: string;
+        observationPoints?: { observationPointId: string; name: string }[];
+      }) =>
         useObservationReporting({
           eventId: "test",
           listening: false,
@@ -183,9 +226,13 @@ describe("計測値の送信に失敗したとき", () => {
           ...stores,
           isFresh: () => true,
           ...props,
+          observationPoints: props.observationPoints ?? [ENTRANCE],
         }),
       {
-        initialProps: { edgeDeviceId: "8c1f0e2a5d4b3c6e" },
+        initialProps: { edgeDeviceId: "8c1f0e2a5d4b3c6e" } as {
+          edgeDeviceId: string;
+          observationPoints?: { observationPointId: string; name: string }[];
+        },
         wrapper: ReportingTestProvider,
       },
     );
@@ -286,6 +333,22 @@ describe("計測値の送信に失敗したとき", () => {
     ).toEqual([false, true]);
   });
 
+  it("観測点が追加されても、集計中のウィンドウを切らずに送る", async () => {
+    const { rerender } = await startDetecting();
+    await act(() => vi.advanceTimersByTimeAsync(REPORT_INTERVAL_MS / 2));
+    rerender({
+      edgeDeviceId: "8c1f0e2a5d4b3c6e",
+      observationPoints: [
+        ENTRANCE,
+        { observationPointId: "b1b2c3d4e5f60718", name: "出口" },
+      ],
+    });
+    await act(() => vi.advanceTimersByTimeAsync(REPORT_INTERVAL_MS / 2));
+
+    expect(reportMeasurements).toHaveBeenCalledTimes(1);
+    expect(sentWindowStarts(0)).toHaveLength(1);
+  });
+
   it("観測デバイスが替わると、前の観測デバイスで送信に失敗したウィンドウの計測値を再送しない", async () => {
     reportMeasurements.mockRejectedValue(new Error("network"));
     const { rerender } = await startDetecting();
@@ -362,6 +425,7 @@ describe("複数カメラの計測報告", () => {
           settingsStore,
           resultStore: resultStore,
           cameras,
+          observationPoints: null,
           isFresh: options.isFresh ?? (() => true),
         }),
       { wrapper: ReportingTestProvider },

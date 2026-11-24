@@ -4,6 +4,7 @@ export type AreaPolygon = readonly DetectionPoint[];
 
 export type PixelAreaLine = {
   name: string;
+  observationPointId: string | null;
   p1: DetectionPoint;
   p2: DetectionPoint;
   areaWidth: number;
@@ -26,12 +27,12 @@ export function lineArea({ p1, p2, areaWidth }: PixelAreaLine): AreaPolygon {
 
 export function observationPointAreas(
   lines: readonly PixelAreaLine[],
-  pointIdByName: ReadonlyMap<string, string>,
+  knownPointIds: ReadonlySet<string>,
 ): Map<string, AreaPolygon[]> {
   const areas = new Map<string, AreaPolygon[]>();
   for (const line of lines) {
-    const pointId = pointIdByName.get(line.name);
-    if (pointId) {
+    const pointId = line.observationPointId;
+    if (pointId !== null && knownPointIds.has(pointId)) {
       areas.set(pointId, [...(areas.get(pointId) ?? []), lineArea(line)]);
     }
   }
@@ -104,7 +105,11 @@ export function findOverlappingAreaNames(
   const pairs = new Map<string, [string, string]>();
   for (const [index, a] of lines.entries()) {
     for (const b of lines.slice(index + 1)) {
-      if (!a.name || !b.name || a.name === b.name) {
+      if (
+        a.observationPointId === null ||
+        b.observationPointId === null ||
+        a.observationPointId === b.observationPointId
+      ) {
         continue;
       }
       const key = JSON.stringify([a.name, b.name].sort());

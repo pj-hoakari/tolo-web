@@ -33,6 +33,7 @@ it("未選択ラインは破線、編集中は実線と矢印で描く", () => {
       {
         id: "a",
         name: "",
+        observationPointId: null,
         p1: { x: 0, y: 0 },
         p2: { x: 100, y: 100 },
         areaWidth: 48,
@@ -40,6 +41,7 @@ it("未選択ラインは破線、編集中は実線と矢印で描く", () => {
       {
         id: "b",
         name: "",
+        observationPointId: null,
         p1: { x: 10, y: 0 },
         p2: { x: 110, y: 100 },
         areaWidth: 48,
