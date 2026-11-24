@@ -1346,7 +1346,7 @@ describe("registration authorization", () => {
     ).resolves.toBe(undefined);
   });
 
-  it("sends an error the IdP returns for a registration to the error page with the host that started it", async () => {
+  it("sends an error the IdP returns for a registration back to the page that started it, and forgets the login", async () => {
     idp();
     const testAuth = await createTestAuth();
     const rootJar = cookieJar();
@@ -1372,12 +1372,12 @@ describe("registration authorization", () => {
       ),
     );
 
-    expect(loginErrorPage(failed as Response)).toEqual({
-      status: 302,
-      page: "https://tolo.test/auth/error",
-      host: HOST,
-      error: "access_denied",
-    });
+    expect(failed?.status).toBe(302);
+    expect(failed?.headers.get("location")).toBe(
+      `https://${HOST}/invitation/handoff?error=access_denied`,
+    );
+    const ctx = await testAuth.auth.$context;
+    expect(await ctx.adapter.findMany({ model: "pendingLogin" })).toEqual([]);
   });
 });
 

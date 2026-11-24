@@ -600,7 +600,7 @@ export function createLoginFlow({ auth, env }: RealAuth) {
       if (!tokens) {
         await adapter.delete({ model: PENDING_LOGIN, where });
         return redirect(
-          loginErrorUrl(login.host, params.get("error") ?? "login_expired"),
+          `${new URL(rootOrigin()).protocol}//${login.host}${login.returnPath}?error=${encodeURIComponent(params.get("error") ?? "login_expired")}`,
         );
       }
       const handoffCode = randomToken();
