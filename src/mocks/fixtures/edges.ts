@@ -87,13 +87,11 @@ export function registeredEdgeDeviceWire({
   eventId,
   name,
   kind = "observation_page",
-  observationPointNames,
   linkedObservationPointId,
 }: {
   eventId: string;
   name: string;
   kind?: EdgeDeviceKind;
-  observationPointNames: string[];
   linkedObservationPointId?: string;
 }): RegisteredEdgeDevice {
   const edgeDeviceId = randomPublicId();
@@ -126,10 +124,7 @@ export function registeredEdgeDeviceWire({
       cameraLinks: [],
       online: false,
       lastHeartbeatAt: null,
-      observationPoints: observationPointNames.map((pointName) => ({
-        observationPointId: randomPublicId(),
-        name: pointName,
-      })),
+      observationPoints: [],
     },
     observationPagePath: `/event/${eventId}/observation/${edgeDeviceId}`,
   };

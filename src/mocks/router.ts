@@ -375,9 +375,6 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
             kind: z
               .enum(["observation_page", "camera"])
               .default("observation_page"),
-            observationPointNames: z
-              .array(z.string().trim().min(1))
-              .default([]),
             linkedObservationPointId: z.string().optional(),
           }),
         )

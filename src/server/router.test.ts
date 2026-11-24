@@ -1012,11 +1012,10 @@ describe("observation.registerEdgeDevice", () => {
   const register = (input: {
     name: string;
     kind?: "observation_page" | "camera";
-    observationPointNames: string[];
     linkedObservationPointId?: string;
   }) => call(router.observation.registerEdgeDevice, { eventId, ...input });
 
-  it("registers the trimmed names with the console credentials and returns the device and its observation page path", async () => {
+  it("registers an observation page by its trimmed name alone with the console credentials and returns the device and its observation page path", async () => {
     const consoleRegister = vi
       .spyOn(consoleEdgeDeviceClient, "registerEdgeDevice")
       .mockResolvedValue(
@@ -1032,7 +1031,7 @@ describe("observation.registerEdgeDevice", () => {
         name: " 受付カメラ ",
         observationPointNames: [" 受付 "],
         linkedObservationPointId: "",
-      }),
+      } as never),
     ).resolves.toEqual({
       device: wireDevice,
       observationPagePath: `/event/${eventId}/observation/0123456789abcdef`,
@@ -1040,14 +1039,13 @@ describe("observation.registerEdgeDevice", () => {
     expect(consoleRegister).toHaveBeenCalledWith({
       eventId,
       name: "受付カメラ",
-      observationPointNames: ["受付"],
       kind: EdgeDeviceKind.OBSERVATION_PAGE,
       linkedObservationPointId: "",
     });
     expect(edgeRegister).not.toHaveBeenCalled();
   });
 
-  it("registers a camera with one linked observation point and no point names", async () => {
+  it("registers a camera with one linked observation point", async () => {
     vi.mocked(addCameraToConnectionDelegation).mockClear();
     const consoleRegister = vi
       .spyOn(consoleEdgeDeviceClient, "registerEdgeDevice")
@@ -1067,14 +1065,12 @@ describe("observation.registerEdgeDevice", () => {
       register({
         name: " ESP32 カメラ ",
         kind: "camera",
-        observationPointNames: [],
         linkedObservationPointId: "1111111111111111",
       }),
     ).resolves.toEqual({ device: wireCamera, observationPagePath: "" });
     expect(consoleRegister).toHaveBeenCalledWith({
       eventId,
       name: "ESP32 カメラ",
-      observationPointNames: [],
       kind: EdgeDeviceKind.CAMERA,
       linkedObservationPointId: "1111111111111111",
     });
@@ -1101,7 +1097,6 @@ describe("observation.registerEdgeDevice", () => {
       register({
         name: "ESP32 カメラ",
         kind: "camera",
-        observationPointNames: [],
         linkedObservationPointId: "1111111111111111",
       }),
     ).resolves.toEqual({ device: wireCamera, observationPagePath: "" });
@@ -1109,25 +1104,14 @@ describe("observation.registerEdgeDevice", () => {
   });
 
   it.each([
-    { name: " ", observationPointNames: ["受付"] },
-    { name: "受付カメラ", observationPointNames: [] },
-    { name: "受付カメラ", observationPointNames: [" "] },
-    { name: "受付カメラ", observationPointNames: ["受付", " 受付"] },
+    { name: " " },
     {
       name: "ESP32 カメラ",
       kind: "camera",
-      observationPointNames: ["受付"],
-      linkedObservationPointId: "1111111111111111",
-    },
-    {
-      name: "ESP32 カメラ",
-      kind: "camera",
-      observationPointNames: [],
     },
     {
       name: "受付カメラ",
       kind: "observation_page",
-      observationPointNames: ["受付"],
       linkedObservationPointId: "1111111111111111",
     },
   ])(
@@ -1152,7 +1136,6 @@ describe("observation.registerEdgeDevice", () => {
 
     const error = await register({
       name: "受付カメラ",
-      observationPointNames: ["受付"],
     }).catch((e: unknown) => e);
 
     expect(error).toMatchObject({ code: "BAD_REQUEST" });
@@ -2660,12 +2643,12 @@ describe("observation procedures with OBSERVATION_API_MOCKING", () => {
     ).resolves.toBeUndefined();
     const { device: registered, observationPagePath } = await call(
       router.observation.registerEdgeDevice,
-      { eventId, name: "受付カメラ", observationPointNames: ["受付"] },
+      { eventId, name: "受付カメラ" },
     );
     expect(registered).toMatchObject({
       name: "受付カメラ",
       online: false,
-      observationPoints: [{ name: "受付" }],
+      observationPoints: [],
     });
     expect(observationPagePath).toBe(
       `/event/${eventId}/observation/${registered.edgeDeviceId}`,

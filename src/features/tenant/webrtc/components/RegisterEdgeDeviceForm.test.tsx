@@ -86,12 +86,10 @@ async function chooseCameraPoint(label: string) {
 }
 
 const nameField = () => screen.getByRole("textbox", { name: "デバイス名" });
-const pointsField = () => screen.getByRole("textbox", { name: /^観測点名/ });
 const submit = () => screen.getByRole("button", { name: "登録" });
 
-const fill = (name: string, points: string) => {
+const fill = (name: string) => {
   fireEvent.change(nameField(), { target: { value: name } });
-  fireEvent.change(pointsField(), { target: { value: points } });
 };
 
 describe("RegisterEdgeDeviceForm", () => {
@@ -99,7 +97,7 @@ describe("RegisterEdgeDeviceForm", () => {
     const onRegistered = vi.fn();
     renderForm(onRegistered);
 
-    fill("受付カメラ", "受付");
+    fill("受付カメラ");
     fireEvent.click(submit());
 
     const url = (await screen.findByRole("textbox", {
@@ -115,28 +113,17 @@ describe("RegisterEdgeDeviceForm", () => {
     ).toBe(new URL(url.value).pathname);
     expect(screen.getByText(/「受付カメラ」を登録しました。/)).toBeTruthy();
     expect((nameField() as HTMLInputElement).value).toBe("");
-    expect((pointsField() as HTMLTextAreaElement).value).toBe("");
     expect(onRegistered).toHaveBeenCalledOnce();
   });
 
-  it("観測点名は 1 行に 1 つとして、空行と前後の空白と重複を除いて登録する", async () => {
+  it("観測ページは観測点名を入力させず、デバイス名だけで登録できる", () => {
     renderForm();
 
-    fill("受付カメラ", "受付\n\n  出口 \n受付\n");
-    fireEvent.click(submit());
-
-    expect(await screen.findByText("観測点: 受付、出口")).toBeTruthy();
-  });
-
-  it("デバイス名か観測点名が空のあいだは登録できない", () => {
-    renderForm();
-
+    expect(screen.queryByRole("textbox", { name: /観測点名/ })).toBeNull();
     expect(submit().hasAttribute("disabled")).toBe(true);
-    fill("受付カメラ", " \n ");
+    fill(" ");
     expect(submit().hasAttribute("disabled")).toBe(true);
-    fill(" ", "受付");
-    expect(submit().hasAttribute("disabled")).toBe(true);
-    fill("受付カメラ", "受付");
+    fill("受付カメラ");
     expect(submit().hasAttribute("disabled")).toBe(false);
   });
 
@@ -147,26 +134,24 @@ describe("RegisterEdgeDeviceForm", () => {
     const onRegistered = vi.fn();
     renderForm(onRegistered);
 
-    fill("受付カメラ", "受付");
+    fill("受付カメラ");
     fireEvent.click(submit());
 
     expect((await screen.findByRole("alert")).textContent).toBe(
-      "デバイス名と観測点名を確認してください。",
+      "デバイス名を確認してください。",
     );
     expect((nameField() as HTMLInputElement).value).toBe("受付カメラ");
     expect(onRegistered).not.toHaveBeenCalled();
   });
 
-  it("カメラは紐づける観測点が選ばれるまで登録できず、観測点名の入力を隠す", async () => {
+  it("カメラは紐づける観測点が選ばれるまで登録できない", async () => {
     renderForm();
     fireEvent.change(nameField(), { target: { value: "監視カメラ" } });
 
-    expect(pointsField()).toBeTruthy();
-    expect(submit().hasAttribute("disabled")).toBe(true);
+    expect(submit().hasAttribute("disabled")).toBe(false);
 
     await chooseKind("カメラ");
 
-    expect(screen.queryByRole("textbox", { name: /^観測点名/ })).toBeNull();
     expect(submit().hasAttribute("disabled")).toBe(true);
 
     await chooseCameraPoint("入口端末 / 入口");
@@ -214,7 +199,7 @@ describe("RegisterEdgeDeviceForm", () => {
     vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
     renderForm();
 
-    fill("受付カメラ", "受付");
+    fill("受付カメラ");
     fireEvent.click(submit());
     const url = (await screen.findByRole("textbox", {
       name: "発行 URL",

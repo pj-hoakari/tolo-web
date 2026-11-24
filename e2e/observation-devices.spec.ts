@@ -42,9 +42,8 @@ const secondCameraRow = (page: Page) =>
     .getByRole("listitem")
     .filter({ has: page.getByText(secondCameraEdge, { exact: true }) })
     .filter({ has: cameraBadge(page) });
-const registerEdge = async (page: Page, name: string, points: string) => {
+const registerEdge = async (page: Page, name: string) => {
   await main(page).getByRole("textbox", { name: "デバイス名" }).fill(name);
-  await main(page).getByRole("textbox", { name: "観測点名" }).fill(points);
   await main(page).getByRole("button", { name: "登録", exact: true }).click();
 };
 const overrideMock = async (page: Page, overrides: MockOverrides) => {
@@ -263,13 +262,15 @@ test("接続に失敗した観測デバイスがオフラインになっても�
 test("観測デバイスを登録すると一覧に加わり発行 URL とこの端末で開くリンクが表示される", async ({
   page,
 }) => {
-  await registerEdge(page, "受付カメラ", "受付\n\n 出口 \n受付");
+  await registerEdge(page, "受付カメラ");
 
   const issuedUrl = main(page).getByRole("textbox", { name: "発行 URL" });
   await expect(issuedUrl).toHaveValue(
     /^http:\/\/test\.localhost:3100\/event\/test\/observation\/[0-9a-f]{16}$/,
   );
-  await expect(main(page)).toContainText("観測点: 受付、出口");
+  await expect(main(page)).toContainText(
+    "観測点はその観測ページで追加します。",
+  );
   await expect(
     main(page).getByRole("button", { name: "URL をコピー" }),
   ).toBeVisible();
@@ -296,10 +297,10 @@ test("観測デバイスの登録に失敗すると理由が表示され入力�
   page,
 }) => {
   await overrideMock(page, { registerEdgeDeviceError: "BAD_REQUEST" });
-  await registerEdge(page, "受付カメラ", "受付");
+  await registerEdge(page, "受付カメラ");
 
   await expect(main(page).getByRole("alert")).toHaveText(
-    "デバイス名と観測点名を確認してください。",
+    "デバイス名を確認してください。",
   );
   await expect(
     main(page).getByRole("textbox", { name: "デバイス名" }),
@@ -307,20 +308,18 @@ test("観測デバイスの登録に失敗すると理由が表示され入力�
   await expect(main(page)).toContainText("観測デバイス（5）");
 });
 
-test("デバイス名か観測点名が空のあいだは登録できない", async ({ page }) => {
+test("デバイス名が空のあいだは登録できない", async ({ page }) => {
   const submit = main(page).getByRole("button", {
     name: "登録",
     exact: true,
   });
 
   await expect(submit).toBeDisabled();
+  await main(page).getByRole("textbox", { name: "デバイス名" }).fill(" ");
+  await expect(submit).toBeDisabled();
   await main(page)
     .getByRole("textbox", { name: "デバイス名" })
     .fill("受付カメラ");
-  await expect(submit).toBeDisabled();
-  await main(page).getByRole("textbox", { name: "観測点名" }).fill(" \n ");
-  await expect(submit).toBeDisabled();
-  await main(page).getByRole("textbox", { name: "観測点名" }).fill("受付");
   await expect(submit).toBeEnabled();
 });
 
