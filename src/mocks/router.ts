@@ -43,6 +43,7 @@ import type {
   SavedGuideMap,
 } from "@/server/router";
 import {
+  mockObservationPoint,
   registeredEdgeDeviceWire,
   sampleObservationDevicesWire,
 } from "./fixtures/edges";
@@ -69,6 +70,7 @@ export type MockRouterOverrides = {
   registerEdgeDeviceError?: CommonORPCErrorCode;
   unregisterEdgeDeviceError?: CommonORPCErrorCode;
   listObservationPointsError?: CommonORPCErrorCode;
+  addObservationPointError?: CommonORPCErrorCode;
   heartbeatError?: CommonORPCErrorCode;
   reportMeasurementsError?: CommonORPCErrorCode;
   requestCameraConnectionError?: {
@@ -147,6 +149,7 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
     registerEdgeDeviceError,
     unregisterEdgeDeviceError,
     listObservationPointsError,
+    addObservationPointError,
     heartbeatError,
     reportMeasurementsError,
     requestCameraConnectionError,
@@ -423,6 +426,37 @@ export function createMockRouter(overrides: MockRouterOverrides = {}) {
               devices.find((d) => d.edgeDeviceId === input.edgeDeviceId)
                 ?.observationPoints ?? [],
           };
+        }),
+      addObservationPoint: os
+        .input(
+          z.object({
+            eventId: z.string().min(1),
+            edgeDeviceId: z.string().min(1),
+            name: z.string().trim().min(1),
+          }),
+        )
+        .handler(async ({ input }) => {
+          if (addObservationPointError !== undefined) {
+            throw new ORPCError(addObservationPointError, {
+              message: MOCK_SERVER_MESSAGE,
+            });
+          }
+          const device = devices.find(
+            (d) => d.edgeDeviceId === input.edgeDeviceId,
+          );
+          if (!device) {
+            throw new ORPCError("NOT_FOUND", { message: MOCK_SERVER_MESSAGE });
+          }
+          if (device.observationPoints.some((p) => p.name === input.name)) {
+            throw new ORPCError("CONFLICT", { message: MOCK_SERVER_MESSAGE });
+          }
+          const point = mockObservationPoint(input.name);
+          devices = devices.map((d) =>
+            d === device
+              ? { ...d, observationPoints: [...d.observationPoints, point] }
+              : d,
+          );
+          return { point };
         }),
       heartbeat: os.handler(async (): Promise<void> => {
         if (heartbeatError !== undefined) {

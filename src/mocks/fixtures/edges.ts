@@ -2,6 +2,7 @@ import type { EdgeDeviceItem } from "@/features/tenant/webrtc/type";
 import type {
   EdgeDevice,
   EdgeDeviceKind,
+  ObservationPoint,
   RegisteredEdgeDevice,
 } from "@/server/router";
 
@@ -77,6 +78,10 @@ export const sampleEdgeDevicesWire: EdgeDevice[] = [
 
 const randomPublicId = () =>
   crypto.randomUUID().replaceAll("-", "").slice(0, 16);
+
+export function mockObservationPoint(name: string): ObservationPoint {
+  return { observationPointId: randomPublicId(), name };
+}
 
 export function registeredEdgeDeviceWire({
   eventId,

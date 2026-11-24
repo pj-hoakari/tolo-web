@@ -79,6 +79,7 @@ import {
   type ObservationSettings,
 } from "@/features/tenant/management/settings/type";
 import {
+  mockObservationPoint,
   registeredEdgeDeviceWire,
   sampleObservationDevicesWire,
 } from "@/mocks/fixtures/edges";
@@ -1631,6 +1632,30 @@ export const router = {
           }
         },
       ),
+    addObservationPoint: os
+      .input(edgeDeviceInput.extend({ name: displayName }))
+      .handler(async ({ input }): Promise<{ point: ObservationPoint }> => {
+        input = await observationDeviceForViewer(input);
+        if (observationMocking()) {
+          const device = sampleObservationDevicesWire.find(
+            (d) => d.edgeDeviceId === input.edgeDeviceId,
+          );
+          if (!device) throw new ORPCError("NOT_FOUND");
+          if (device.observationPoints.some((p) => p.name === input.name)) {
+            throw new ORPCError("CONFLICT");
+          }
+          return { point: mockObservationPoint(input.name) };
+        }
+        try {
+          const res = await edgeEdgeDeviceClient.addObservationPoint(input);
+          if (!res.point) {
+            throw new Error("AddObservationPoint returned no point");
+          }
+          return { point: toObservationPoint(res.point) };
+        } catch (err) {
+          throw toORPCError(err);
+        }
+      }),
     getFlowElementStates: os
       .input(z.object({ eventId: z.string().min(1) }))
       .handler(
@@ -1757,6 +1782,7 @@ for (const procedure of [
   router.observation.heartbeat,
   router.observation.reportMeasurements,
   router.observation.listObservationPoints,
+  router.observation.addObservationPoint,
   router.camera.listDelegatedCameras,
   router.signaling.requestCameraConnection,
   router.signaling.issueEdgeFirestoreToken,

@@ -21,6 +21,7 @@ import {
   OpenGuestPageResponseSchema,
 } from "@pj-hoakari/tolo-guest-client-es/tolo/guest/v1/guest_pb";
 import {
+  AddObservationPointResponseSchema,
   CameraLinkSchema,
   EdgeDeviceKind,
   EdgeDeviceSchema,
@@ -1486,6 +1487,60 @@ describe("observation credentials by caller", () => {
     expect(consoleList).not.toHaveBeenCalled();
   });
 
+  it("adds an observation point to the edge device with the edge credentials", async () => {
+    const add = vi
+      .spyOn(edgeEdgeDeviceClient, "addObservationPoint")
+      .mockResolvedValue(
+        create(AddObservationPointResponseSchema, {
+          point: { observationPointId: "1111111111111111", name: "受付" },
+        }),
+      );
+    const consoleAdd = vi.spyOn(consoleEdgeDeviceClient, "addObservationPoint");
+
+    await expect(
+      call(router.observation.addObservationPoint, {
+        eventId,
+        edgeDeviceId: "0123456789abcdef",
+        name: "  受付 ",
+      }),
+    ).resolves.toEqual({
+      point: { observationPointId: "1111111111111111", name: "受付" },
+    });
+    expect(add).toHaveBeenCalledWith({
+      eventId,
+      edgeDeviceId: "0123456789abcdef",
+      name: "受付",
+    });
+    expect(consoleAdd).not.toHaveBeenCalled();
+  });
+
+  it("passes a duplicate observation point name to the browser as a conflict", async () => {
+    vi.spyOn(edgeEdgeDeviceClient, "addObservationPoint").mockRejectedValue(
+      new ConnectError("name already exists", Code.AlreadyExists),
+    );
+
+    await expect(
+      call(router.observation.addObservationPoint, {
+        eventId,
+        edgeDeviceId: "0123456789abcdef",
+        name: "受付",
+      }),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+  });
+
+  it("refuses a blank observation point name before reaching the gateway", async () => {
+    const add = vi.spyOn(edgeEdgeDeviceClient, "addObservationPoint");
+
+    await expect(
+      call(router.observation.addObservationPoint, {
+        eventId,
+        edgeDeviceId: "0123456789abcdef",
+        name: "   ",
+      }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(add).not.toHaveBeenCalled();
+  });
+
   it("sends heartbeats and measurements with the edge credentials", async () => {
     const edgeHeartbeat = vi
       .spyOn(edgeEdgeDeviceClient, "heartbeat")
@@ -2514,6 +2569,13 @@ describe("machine session procedure allowlist", () => {
     const report = vi
       .spyOn(edgeMeasurementIngestClient, "reportMeasurements")
       .mockResolvedValue(create(ReportMeasurementsResponseSchema));
+    const add = vi
+      .spyOn(edgeEdgeDeviceClient, "addObservationPoint")
+      .mockResolvedValue(
+        create(AddObservationPointResponseSchema, {
+          point: { observationPointId: "1111111111111111", name: "受付" },
+        }),
+      );
     const requested = {
       eventId: "aaaaaaaaaaaaaaaa",
       edgeDeviceId: "bbbbbbbbbbbbbbbb",
@@ -2529,6 +2591,10 @@ describe("machine session procedure allowlist", () => {
       ...requested,
       measurements: [],
     });
+    await call(router.observation.addObservationPoint, {
+      ...requested,
+      name: "受付",
+    });
 
     expect(points).toHaveBeenCalledWith(bound);
     expect(heartbeat).toHaveBeenCalledWith({
@@ -2536,6 +2602,7 @@ describe("machine session procedure allowlist", () => {
       activeObservationPointIds: [],
     });
     expect(report).toHaveBeenCalledWith({ ...bound, measurements: [] });
+    expect(add).toHaveBeenCalledWith({ ...bound, name: "受付" });
   });
 
   it("refuses ListEdgeDevices even though the device is in the session", async () => {
@@ -2609,6 +2676,26 @@ describe("observation procedures with OBSERVATION_API_MOCKING", () => {
         edgeDeviceId: registered.edgeDeviceId,
       }),
     ).resolves.toBeUndefined();
+  });
+
+  it("add an observation point and refuse a duplicate name without reaching the gateway in development", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("OBSERVATION_API_MOCKING", "enabled");
+
+    await expect(
+      call(router.observation.addObservationPoint, {
+        eventId,
+        edgeDeviceId: device.edgeDeviceId,
+        name: "新しい観測点",
+      }),
+    ).resolves.toMatchObject({ point: { name: "新しい観測点" } });
+    await expect(
+      call(router.observation.addObservationPoint, {
+        eventId,
+        edgeDeviceId: device.edgeDeviceId,
+        name: device.observationPoints[0].name,
+      }),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
   });
 
   it("answer the settings as unset and echo an update without reaching the gateway in development", async () => {
