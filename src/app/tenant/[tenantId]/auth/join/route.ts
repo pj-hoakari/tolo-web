@@ -7,7 +7,8 @@ export async function GET(
   { params }: { params: Promise<{ tenantId: string }> },
 ) {
   if (authMockingEnabled()) return new Response(null, { status: 404 });
-  if (!(await pendingInvitationToken())) {
+  const token = await pendingInvitationToken();
+  if (!token) {
     return new Response(null, {
       status: 302,
       headers: { location: "/invitation/accept" },
@@ -17,5 +18,6 @@ export async function GET(
     request.headers.get("host") ?? "",
     (await params).tenantId,
     "/invitation/handoff",
+    { type: "invitation_token", token },
   );
 }
