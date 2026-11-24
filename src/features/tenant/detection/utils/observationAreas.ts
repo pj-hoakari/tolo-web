@@ -112,7 +112,9 @@ export function findOverlappingAreaNames(
       ) {
         continue;
       }
-      const key = JSON.stringify([a.name, b.name].sort());
+      const key = JSON.stringify(
+        [a.observationPointId, b.observationPointId].sort(),
+      );
       if (!pairs.has(key) && areasOverlap(lineArea(a), lineArea(b))) {
         pairs.set(key, [a.name, b.name]);
       }

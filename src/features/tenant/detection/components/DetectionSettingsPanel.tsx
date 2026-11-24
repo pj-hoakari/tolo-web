@@ -66,7 +66,10 @@ function AreaOverlapWarningComponent({
           countingLines,
           frameSize.width,
           frameSize.height,
-        ),
+        ).map((line, index) => ({
+          ...line,
+          name: line.name || t("defaultName", { index: index + 1 }),
+        })),
       )
     : [];
 

@@ -204,7 +204,16 @@ describe("エリアの重なり", () => {
     ).toEqual([]);
   });
 
-  it("同じ名前の組は 1 回だけ返す", () => {
+  it("名前が同じでも違う観測点のラインどうしの重なりは返す", () => {
+    expect(
+      findOverlappingAreaNames([
+        line("gate", 0, 100, 100, 100, 20, "1"),
+        line("gate", 50, 50, 50, 150, 20, "2"),
+      ]),
+    ).toEqual([["gate", "gate"]]);
+  });
+
+  it("同じ観測点の組は 1 回だけ返す", () => {
     expect(
       findOverlappingAreaNames([
         line("gate", 0, 100, 100, 100),

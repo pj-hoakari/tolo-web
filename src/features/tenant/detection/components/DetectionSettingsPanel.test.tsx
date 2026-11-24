@@ -11,6 +11,7 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { IntlTestProvider } from "@/test/IntlTestProvider";
 import {
+  applyFrameSize,
   createDetectionStores,
   DEFAULT_COUNTING_LINES,
   INITIAL_SETTINGS,
@@ -104,6 +105,32 @@ const addPoint = (name: string) => {
   );
   fireEvent.click(screen.getByRole("button", { name: "観測点を追加" }));
 };
+
+describe("エリアの重なりの警告", () => {
+  it("名前のないラインは一覧と同じ既定の名前で伝える", () => {
+    const stores = createDetectionStores({
+      ...INITIAL_SETTINGS,
+      countingLines: [
+        { ...DEFAULT_COUNTING_LINES[0], observationPointId: "1" },
+        {
+          ...DEFAULT_COUNTING_LINES[0],
+          id: "second",
+          observationPointId: "2",
+          p1: { x: 0.5, y: 0 },
+          p2: { x: 0.5, y: 1 },
+        },
+      ],
+    });
+    applyFrameSize(stores.resultStore, 100, 100);
+    render(<DetectionSettingsPanel {...stores} />, {
+      wrapper: IntlTestProvider,
+    });
+
+    expect(screen.getByRole("alert").textContent).toBe(
+      "「ライン 1」と「ライン 2」のエリアが重なっています。重なった場所にいる人は両方の観測点に数えます。",
+    );
+  });
+});
 
 describe("選択ラインの観測点", () => {
   it("観測点を渡さなければ選べない", () => {
