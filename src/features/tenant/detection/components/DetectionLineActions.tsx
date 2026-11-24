@@ -1,11 +1,14 @@
 import { ArrowLeftRight, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { memo, useCallback } from "react";
+import { type FormEvent, memo, useCallback, useState } from "react";
 import { useStore } from "zustand";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/field";
-import { Input, TextField } from "@/components/ui/textfield";
+import { JollySelect, SelectItem } from "@/components/ui/select";
+import { Input, JollyTextField, TextField } from "@/components/ui/textfield";
 import { Toggle, ToggleButtonGroup } from "@/components/ui/toggle";
+import { type ErrorMessageKeys, errorMessageKey } from "@/lib/errorMessageKey";
+import type { ObservationPoint } from "@/server/router";
 import {
   applyCountingLines,
   DEFAULT_AREA_WIDTH,
@@ -24,6 +27,152 @@ type LineActionsProps = {
   settingsStore: DetectionSettingsStore;
   viewStateStore: DetectionViewStateStore;
 };
+
+export type LineObservationPoints = {
+  points: readonly ObservationPoint[];
+  add: (name: string) => Promise<ObservationPoint>;
+};
+
+const UNASSIGNED = "unassigned";
+
+const ADD_POINT_ERRORS: ErrorMessageKeys<
+  "pointInvalid" | "pointExists" | "pointAddFailed"
+> = {
+  byCode: { BAD_REQUEST: "pointInvalid", CONFLICT: "pointExists" },
+  fallback: "pointAddFailed",
+};
+
+type AddPointStatus =
+  | { kind: "idle" }
+  | { kind: "adding" }
+  | { kind: "existing"; name: string }
+  | { kind: "failed"; messageKey: (typeof ADD_POINT_ERRORS)["fallback"] };
+
+function SelectedLineObservationPointFieldComponent({
+  settingsStore,
+  viewStateStore,
+  observationPoints,
+}: LineActionsProps & { observationPoints: LineObservationPoints }) {
+  const selectedLineId = useStore(viewStateStore, selectSelectedLineId);
+  const selectSelectedLinePointId = useCallback(
+    (state: ReturnType<DetectionSettingsStore["getState"]>) =>
+      state.countingLines.find((line) => line.id === selectedLineId)
+        ?.observationPointId ?? null,
+    [selectedLineId],
+  );
+  const pointId = useStore(settingsStore, selectSelectedLinePointId);
+  const t = useTranslations("Detection.lines");
+  const [newName, setNewName] = useState("");
+  const [status, setStatus] = useState<AddPointStatus>({ kind: "idle" });
+  const { points, add } = observationPoints;
+  const items = [
+    { observationPointId: UNASSIGNED, name: t("unassigned") },
+    ...points,
+  ];
+  const selectedKey =
+    pointId !== null && points.some((p) => p.observationPointId === pointId)
+      ? pointId
+      : UNASSIGNED;
+
+  const assign = (lineId: string, nextPointId: string | null) => {
+    const { countingLines } = settingsStore.getState();
+    applyCountingLines(
+      settingsStore,
+      countingLines.map((line) =>
+        line.id === lineId
+          ? { ...line, observationPointId: nextPointId }
+          : line,
+      ),
+    );
+  };
+
+  async function addPoint(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const name = newName.trim();
+    if (!name) return;
+    const lineId = selectedLineId;
+    const existing = points.find((p) => p.name === name);
+    if (existing) {
+      assign(lineId, existing.observationPointId);
+      setNewName("");
+      setStatus({ kind: "existing", name });
+      return;
+    }
+    setStatus({ kind: "adding" });
+    try {
+      const point = await add(name);
+      assign(lineId, point.observationPointId);
+      setNewName("");
+      setStatus({ kind: "idle" });
+    } catch (err) {
+      setStatus({
+        kind: "failed",
+        messageKey: errorMessageKey(err, ADD_POINT_ERRORS),
+      });
+    }
+  }
+
+  return (
+    <div className="flex w-full flex-col gap-2">
+      <div className="flex w-full flex-wrap items-end gap-3">
+        <JollySelect<ObservationPoint>
+          className="w-full sm:max-w-xs"
+          label={t("pointLabel")}
+          items={items}
+          selectedKey={selectedKey}
+          onSelectionChange={(key) =>
+            assign(
+              selectedLineId,
+              key === null || key === UNASSIGNED ? null : String(key),
+            )
+          }
+        >
+          {(point) => (
+            <SelectItem id={point.observationPointId} textValue={point.name}>
+              {point.name}
+            </SelectItem>
+          )}
+        </JollySelect>
+        <form onSubmit={addPoint} className="flex flex-wrap items-end gap-2">
+          <JollyTextField
+            className="sm:max-w-xs"
+            label={t("newPointLabel")}
+            value={newName}
+            onChange={(value) => {
+              setNewName(value);
+              if (status.kind !== "adding") setStatus({ kind: "idle" });
+            }}
+            maxLength={64}
+            isDisabled={status.kind === "adding"}
+          />
+          <Button
+            type="submit"
+            variant="outline"
+            size="sm"
+            isDisabled={status.kind === "adding" || !newName.trim()}
+          >
+            <Plus className="mr-2 size-4" />
+            {t("addPoint")}
+          </Button>
+        </form>
+      </div>
+      {status.kind === "existing" && (
+        <p role="status" className="text-sm text-muted-foreground">
+          {t("pointExisting", { name: status.name })}
+        </p>
+      )}
+      {status.kind === "failed" && (
+        <p role="alert" className="text-sm text-destructive">
+          {t(status.messageKey)}
+        </p>
+      )}
+    </div>
+  );
+}
+
+const SelectedLineObservationPointField = memo(
+  SelectedLineObservationPointFieldComponent,
+);
 
 function SelectedLineNameFieldComponent({
   settingsStore,
@@ -253,13 +402,24 @@ function DetectionLineActionsComponent({
   settingsStore,
   viewStateStore,
   showLineCreationModeToggle = true,
-}: LineActionsProps & { showLineCreationModeToggle?: boolean }) {
+  observationPoints,
+}: LineActionsProps & {
+  showLineCreationModeToggle?: boolean;
+  observationPoints?: LineObservationPoints;
+}) {
   return (
     <div className="flex w-full flex-wrap items-end gap-3">
       <SelectedLineNameField
         settingsStore={settingsStore}
         viewStateStore={viewStateStore}
       />
+      {observationPoints && (
+        <SelectedLineObservationPointField
+          settingsStore={settingsStore}
+          viewStateStore={viewStateStore}
+          observationPoints={observationPoints}
+        />
+      )}
       <SelectedLineAreaWidthField
         settingsStore={settingsStore}
         viewStateStore={viewStateStore}

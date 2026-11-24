@@ -554,12 +554,21 @@
       "reset": "ラインを初期位置に戻す",
       "count": "ライン {index}: forward {forward} / backward {backward}",
       "namedCount": "{name}: forward {forward} / backward {backward}",
-      "nameLabel": "選択ラインの名前",
+      "nameLabel": "選択ラインの名前（表示用）",
       "namePlaceholder": "例：ホールA入口、連絡通路北側",
       "areaWidthLabel": "選択ラインのエリアの幅（%）",
-      "areaWidthDescription": "ラインを中心にした帯の全幅を、画面の短辺に対する割合で指定します。帯の中にいる人を、ラインの名前の観測点の人数として数えます。",
-      "reRegisterNote": "ラインの位置やエリアの幅を変えた観測点は、人数の履歴を切り直すために観測点を登録し直してください。",
-      "areaOverlapWarning": "「{first}」と「{second}」のエリアが重なっています。重なった場所にいる人は両方の観測点に数えます。"
+      "areaWidthDescription": "ラインを中心にした帯の全幅を、画面の短辺に対する割合で指定します。帯の中にいる人を、ラインに割り当てた観測点の人数として数えます。",
+      "reRegisterNote": "ラインの位置やエリアの幅を変えたときは、人数の履歴を切り直すために新しい観測点を追加してラインに割り当ててください。",
+      "areaOverlapWarning": "「{first}」と「{second}」のエリアが重なっています。重なった場所にいる人は両方の観測点に数えます。",
+      "pointCount": "{name}（{point}）: forward {forward} / backward {backward}",
+      "pointLabel": "選択ラインの観測点",
+      "unassigned": "未割り当て",
+      "newPointLabel": "新しい観測点の名前",
+      "addPoint": "観測点を追加",
+      "pointExisting": "「{name}」は登録済みのため、その観測点を割り当てました。",
+      "pointInvalid": "観測点の名前を入力してください。",
+      "pointExists": "同じ名前の観測点がすでにあります。",
+      "pointAddFailed": "観測点を追加できませんでした。"
     }
   },
   "Observation": {

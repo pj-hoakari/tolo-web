@@ -362,6 +362,14 @@ export function CrowdDetection({
     isFresh,
   });
   const unregistered = observationPoints.unregistered || reporting.unregistered;
+  const { points: loadedPoints, add: addObservationPoint } = observationPoints;
+  const lineObservationPoints = useMemo(
+    () =>
+      effectiveMode !== "esp" && loadedPoints
+        ? { points: loadedPoints, add: addObservationPoint }
+        : undefined,
+    [effectiveMode, loadedPoints, addObservationPoint],
+  );
 
   const localCountingLines = useStore(settingsStore, selectCountingLines);
   const unlinkedTargets =
@@ -607,6 +615,7 @@ export function CrowdDetection({
         resultStore={resultStore}
         viewStateStore={selectedViewStateStore}
         showDetectionStatus={effectiveMode !== "esp"}
+        observationPoints={lineObservationPoints}
       />
       <BroadcastIndicator active={active} edgeId={edgeId} />
     </div>

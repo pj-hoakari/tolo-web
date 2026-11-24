@@ -12,7 +12,10 @@ import {
 } from "../stores/detectionStore";
 import { findOverlappingAreaNames } from "../utils/observationAreas";
 import { DetectionAdvancedSettings } from "./DetectionAdvancedSettings";
-import { DetectionLineActions } from "./DetectionLineActions";
+import {
+  DetectionLineActions,
+  type LineObservationPoints,
+} from "./DetectionLineActions";
 import { DetectionPresetGroup } from "./DetectionPresetGroup";
 
 /** プリセットの表示名は Detection.presets の下のキーで解決する */
@@ -47,6 +50,7 @@ export type DetectionSettingsPanelProps = {
   viewStateStore: DetectionViewStateStore;
   resultStore: DetectionResultStore;
   showLineCreationModeToggle?: boolean;
+  observationPoints?: LineObservationPoints;
 };
 
 function AreaOverlapWarningComponent({
@@ -93,6 +97,7 @@ function DetectionSettingsPanelComponent({
   viewStateStore,
   resultStore,
   showLineCreationModeToggle,
+  observationPoints,
 }: DetectionSettingsPanelProps) {
   const t = useTranslations("Detection");
 
@@ -110,6 +115,7 @@ function DetectionSettingsPanelComponent({
           settingsStore={settingsStore}
           viewStateStore={viewStateStore}
           showLineCreationModeToggle={showLineCreationModeToggle}
+          observationPoints={observationPoints}
         />
         <div className="grid gap-1 text-sm text-muted-foreground">
           <p>{t("lines.areaWidthDescription")}</p>

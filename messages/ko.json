@@ -554,12 +554,21 @@
       "reset": "라인 위치 초기화",
       "count": "라인 {index}: forward {forward} / backward {backward}",
       "namedCount": "{name}: forward {forward} / backward {backward}",
-      "nameLabel": "선택한 라인 이름",
+      "nameLabel": "선택한 라인 이름(표시용)",
       "namePlaceholder": "예: A홀 입구, 북쪽 연결 통로",
       "areaWidthLabel": "선택한 라인의 영역 너비(%)",
-      "areaWidthDescription": "라인을 중심으로 한 띠의 전체 너비를 영상의 짧은 변에 대한 비율로 지정합니다. 띠 안에 있는 사람을 라인 이름의 관측 지점 인원으로 셉니다.",
-      "reRegisterNote": "라인의 위치나 영역 너비를 바꾼 관측 지점은 인원 기록을 새로 시작하도록 관측 지점을 다시 등록하세요.",
-      "areaOverlapWarning": "「{first}」와(과) 「{second}」의 영역이 겹칩니다. 겹친 곳에 있는 사람은 두 관측 지점 모두에 셉니다."
+      "areaWidthDescription": "라인을 중심으로 한 띠의 전체 너비를 영상의 짧은 변에 대한 비율로 지정합니다. 띠 안에 있는 사람을 라인에 할당한 관측 지점의 인원으로 셉니다.",
+      "reRegisterNote": "라인의 위치나 영역 너비를 바꿨다면, 인원 기록을 새로 시작하도록 새 관측 지점을 추가해 라인에 할당하세요.",
+      "areaOverlapWarning": "「{first}」와(과) 「{second}」의 영역이 겹칩니다. 겹친 곳에 있는 사람은 두 관측 지점 모두에 셉니다.",
+      "pointCount": "{name}({point}): forward {forward} / backward {backward}",
+      "pointLabel": "선택한 라인의 관측 지점",
+      "unassigned": "미할당",
+      "newPointLabel": "새 관측 지점 이름",
+      "addPoint": "관측 지점 추가",
+      "pointExisting": "\"{name}\"은(는) 이미 등록되어 있어 그 관측 지점을 할당했습니다.",
+      "pointInvalid": "관측 지점 이름을 입력하세요.",
+      "pointExists": "같은 이름의 관측 지점이 이미 있습니다.",
+      "pointAddFailed": "관측 지점을 추가하지 못했습니다."
     }
   },
   "Observation": {

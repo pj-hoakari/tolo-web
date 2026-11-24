@@ -554,12 +554,21 @@
       "reset": "重置线位置",
       "count": "线 {index}：forward {forward} / backward {backward}",
       "namedCount": "{name}：forward {forward} / backward {backward}",
-      "nameLabel": "所选线的名称",
+      "nameLabel": "所选线的名称（仅用于显示）",
       "namePlaceholder": "例如：A厅入口、北侧连廊",
       "areaWidthLabel": "所选线的区域宽度（%）",
-      "areaWidthDescription": "以线为中心的带状区域的总宽度，以画面短边的百分比表示。带内的人计入与线同名的观测点。",
-      "reRegisterNote": "移动了线或更改了区域宽度的观测点，请重新登记该观测点，以重新开始人数记录。",
-      "areaOverlapWarning": "“{first}”和“{second}”的区域重叠。位于重叠处的人会同时计入两个观测点。"
+      "areaWidthDescription": "以线为中心的带状区域的总宽度，以画面短边的百分比表示。带内的人计入分配给该线的观测点。",
+      "reRegisterNote": "移动了线或更改了区域宽度时，请添加新的观测点并分配给该线，以重新开始人数记录。",
+      "areaOverlapWarning": "“{first}”和“{second}”的区域重叠。位于重叠处的人会同时计入两个观测点。",
+      "pointCount": "{name}（{point}）：forward {forward} / backward {backward}",
+      "pointLabel": "所选线的观测点",
+      "unassigned": "未分配",
+      "newPointLabel": "新观测点的名称",
+      "addPoint": "添加观测点",
+      "pointExisting": "“{name}”已存在，因此分配了该观测点。",
+      "pointInvalid": "请输入观测点的名称。",
+      "pointExists": "已存在同名的观测点。",
+      "pointAddFailed": "无法添加观测点。"
     }
   },
   "Observation": {

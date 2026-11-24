@@ -554,12 +554,21 @@
       "reset": "Reset line positions",
       "count": "Line {index}: forward {forward} / backward {backward}",
       "namedCount": "{name}: forward {forward} / backward {backward}",
-      "nameLabel": "Selected line name",
+      "nameLabel": "Selected line name (display only)",
       "namePlaceholder": "e.g. Hall A entrance, north corridor",
       "areaWidthLabel": "Area width of the selected line (%)",
-      "areaWidthDescription": "The full width of the band centered on the line, as a percentage of the shorter side of the video. People inside the band are counted for the observation point named after the line.",
-      "reRegisterNote": "If you move a line or change its area width, register its observation point again so its people count history starts over.",
-      "areaOverlapWarning": "The areas of \"{first}\" and \"{second}\" overlap. People in the overlap are counted for both observation points."
+      "areaWidthDescription": "The full width of the band centered on the line, as a percentage of the shorter side of the video. People inside the band are counted for the observation point assigned to the line.",
+      "reRegisterNote": "If you move a line or change its area width, add a new observation point and assign it to the line so its people count history starts over.",
+      "areaOverlapWarning": "The areas of \"{first}\" and \"{second}\" overlap. People in the overlap are counted for both observation points.",
+      "pointCount": "{name} ({point}): forward {forward} / backward {backward}",
+      "pointLabel": "Observation point of the selected line",
+      "unassigned": "Unassigned",
+      "newPointLabel": "New observation point name",
+      "addPoint": "Add observation point",
+      "pointExisting": "\"{name}\" already exists, so that observation point was assigned.",
+      "pointInvalid": "Enter a name for the observation point.",
+      "pointExists": "An observation point with the same name already exists.",
+      "pointAddFailed": "The observation point could not be added."
     }
   },
   "Observation": {
