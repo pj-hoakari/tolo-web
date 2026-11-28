@@ -200,8 +200,8 @@ importers:
         specifier: 0.6.0
         version: 0.6.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
       '@pj-hoakari/tolo-graph-authoring-client-es':
-        specifier: 0.6.1
-        version: 0.6.1(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
+        specifier: 0.6.2
+        version: 0.6.2(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
       '@pj-hoakari/tolo-guest-client-es':
         specifier: 0.2.2
         version: 0.2.2(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
@@ -2105,8 +2105,8 @@ packages:
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
-  '@pj-hoakari/tolo-graph-authoring-client-es@0.6.1':
-    resolution: {integrity: sha512-XRb7HPgXB05nvpqVmwIAyMDyQ5D9UHRhs/a7SEqhOio/uaAxgE7qpXY99RYOPDk/pnAOTVONEBI+g/wqYyhJBQ==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-graph-authoring-client-es/0.6.1/721e33d00690dd52075a122cd9be35ed776a4401}
+  '@pj-hoakari/tolo-graph-authoring-client-es@0.6.2':
+    resolution: {integrity: sha512-lS3qkjDIGZd69CVmqP3PTwlvqtHvvPc+rQyBbEZEGiW60ub6sdsp4XoFPl64SyNhUgBiCO0nv4hj2PO3hvd5Yw==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-graph-authoring-client-es/0.6.2/0d754e35416cad719b11d975549d6aef8b93b7df}
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
@@ -7449,7 +7449,7 @@ snapshots:
       '@bufbuild/protobuf': 2.17.0
       '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.17.0)
 
-  '@pj-hoakari/tolo-graph-authoring-client-es@0.6.1(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))':
+  '@pj-hoakari/tolo-graph-authoring-client-es@0.6.2(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))':
     dependencies:
       '@bufbuild/protobuf': 2.17.0
       '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.17.0)

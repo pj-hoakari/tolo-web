@@ -29,7 +29,7 @@
     "@orpc/client": "^1.14.6",
     "@orpc/server": "^1.14.6",
     "@pj-hoakari/tolo-edge-bridge-client-es": "0.6.0",
-    "@pj-hoakari/tolo-graph-authoring-client-es": "0.6.1",
+    "@pj-hoakari/tolo-graph-authoring-client-es": "0.6.2",
     "@pj-hoakari/tolo-guest-client-es": "0.2.2",
     "@pj-hoakari/tolo-observation-client-es": "0.10.0",
     "@pj-hoakari/tolo-tenant-management-connect-es": "0.8.1",
