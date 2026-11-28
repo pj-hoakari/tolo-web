@@ -209,8 +209,8 @@ importers:
         specifier: 0.10.0
         version: 0.10.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
       '@pj-hoakari/tolo-tenant-management-connect-es':
-        specifier: 0.8.1
-        version: 0.8.1(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
+        specifier: 0.9.0
+        version: 0.9.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
       '@pj-hoakari/web-crowd-detection-utils':
         specifier: ^0.7.0
         version: 0.7.0
@@ -2120,8 +2120,8 @@ packages:
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
-  '@pj-hoakari/tolo-tenant-management-connect-es@0.8.1':
-    resolution: {integrity: sha512-Skq07WKisd3pePmA/B4MtzoDl0j9hDUcdVZz+QlQ2xxPP6efCfusG4R6+v+9Zr8IgTrfIpDIZQufEqbDGWH0pA==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-tenant-management-connect-es/0.8.1/b0e9513d43e628f9ccb02371475e1a04c430cf66}
+  '@pj-hoakari/tolo-tenant-management-connect-es@0.9.0':
+    resolution: {integrity: sha512-Ze8KvFcGB2t8HzZRDQ6keYqwBR1MAlWXOulhrAXwc4kALH0zLJ7vFwJlrj/mvWTBD+3wwdUjQhb9UVxKpzjiiw==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-tenant-management-connect-es/0.9.0/0aaee05ac214557fafd1a0da9592a33f6f67852f}
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
@@ -7464,7 +7464,7 @@ snapshots:
       '@bufbuild/protobuf': 2.17.0
       '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.17.0)
 
-  '@pj-hoakari/tolo-tenant-management-connect-es@0.8.1(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))':
+  '@pj-hoakari/tolo-tenant-management-connect-es@0.9.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))':
     dependencies:
       '@bufbuild/protobuf': 2.17.0
       '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.17.0)
