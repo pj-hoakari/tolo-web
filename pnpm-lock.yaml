@@ -206,8 +206,8 @@ importers:
         specifier: 0.2.2
         version: 0.2.2(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
       '@pj-hoakari/tolo-observation-client-es':
-        specifier: 0.10.0
-        version: 0.10.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
+        specifier: 0.11.0
+        version: 0.11.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
       '@pj-hoakari/tolo-tenant-management-connect-es':
         specifier: 0.8.1
         version: 0.8.1(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
@@ -2115,8 +2115,8 @@ packages:
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
-  '@pj-hoakari/tolo-observation-client-es@0.10.0':
-    resolution: {integrity: sha512-9vEKebmFA3SWRvvvyc2Ca+14PXLXKmqQ9WyXKKU2hQhwBSpb7+pOkaO9bnNxbsyadAmZbsrm4G1bJtZ13/DMkw==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-observation-client-es/0.10.0/1fb2dc3e49ccdc91d08bb7cf34ae37719264d837}
+  '@pj-hoakari/tolo-observation-client-es@0.11.0':
+    resolution: {integrity: sha512-tgIQ+2F+yO2nP9LL1s1mD5yEE3k84gpXTi7RPepEeNaxSxQWjz/PKZT1K/8iuzbKWCvn8ov7VDOOHaR235jTOA==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-observation-client-es/0.11.0/4a0a7714c65e4b8eb0c0f51677678e7a1404614d}
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
@@ -7459,7 +7459,7 @@ snapshots:
       '@bufbuild/protobuf': 2.17.0
       '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.17.0)
 
-  '@pj-hoakari/tolo-observation-client-es@0.10.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))':
+  '@pj-hoakari/tolo-observation-client-es@0.11.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))':
     dependencies:
       '@bufbuild/protobuf': 2.17.0
       '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.17.0)
