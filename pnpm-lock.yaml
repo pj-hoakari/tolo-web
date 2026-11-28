@@ -197,8 +197,8 @@ importers:
         specifier: ^1.14.6
         version: 1.16.5(@opentelemetry/api@1.10.0)(ws@8.23.0)
       '@pj-hoakari/tolo-edge-bridge-client-es':
-        specifier: 0.6.0
-        version: 0.6.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
+        specifier: 0.6.1
+        version: 0.6.1(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
       '@pj-hoakari/tolo-graph-authoring-client-es':
         specifier: 0.6.1
         version: 0.6.1(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))
@@ -2100,8 +2100,8 @@ packages:
     resolution: {integrity: sha512-7FNeNl8NCE7aINx7WXiKQrPYZWC/hvrTsmk6zmxbI7LTXE7hVek/n8AfVgpe2y82zl3w0HvCHN0bVKMBoJcC0w==}
     engines: {node: '>= 10.0.0'}
 
-  '@pj-hoakari/tolo-edge-bridge-client-es@0.6.0':
-    resolution: {integrity: sha512-LqYE1o0zVVGFVz5c01ieN7HaAsJvLMEmo5egf83nJVIcgszekOBKBrJaruoOQM85c6ZXX3Q8S1FMFKxmL6a0sA==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-edge-bridge-client-es/0.6.0/6e6057bd4b72c749c422a4814e370072bb4e5562}
+  '@pj-hoakari/tolo-edge-bridge-client-es@0.6.1':
+    resolution: {integrity: sha512-VAuHKq4jP+5x4/fzxVwJrHEcvxubioFRdzPWgFO6egTJzY/RP0X01558XTZTOUTqLkOFLS31NjRbIOds1PFjMA==, tarball: https://npm.pkg.github.com/download/@pj-hoakari/tolo-edge-bridge-client-es/0.6.1/e8be061282c6edbcbaaf874dc4ef90afd9a2d5b8}
     peerDependencies:
       '@connectrpc/connect': ^2.1.1
 
@@ -7444,7 +7444,7 @@ snapshots:
       '@parcel/watcher-win32-arm64': 2.6.0
       '@parcel/watcher-win32-x64': 2.6.0
 
-  '@pj-hoakari/tolo-edge-bridge-client-es@0.6.0(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))':
+  '@pj-hoakari/tolo-edge-bridge-client-es@0.6.1(@connectrpc/connect@2.3.0(@bufbuild/protobuf@2.17.0))':
     dependencies:
       '@bufbuild/protobuf': 2.17.0
       '@connectrpc/connect': 2.3.0(@bufbuild/protobuf@2.17.0)
